@@ -135,7 +135,7 @@ public interface Appendix {
 
         @Override
         public int getBaselineFeeHeight() {
-            return Constants.SHUFFLING_BLOCK;
+            return 0;
         }
 
         @Override
@@ -274,7 +274,7 @@ public interface Appendix {
 
         @Override
         void validate(Transaction transaction) throws NxtException.ValidationException {
-            if (Nxt.getBlockchain().getHeight() > Constants.SHUFFLING_BLOCK && message.length > Constants.MAX_ARBITRARY_MESSAGE_LENGTH) {
+            if (message.length > Constants.MAX_ARBITRARY_MESSAGE_LENGTH) {
                 throw new NxtException.NotValidException("Invalid arbitrary message length: " + message.length);
             }
         }
@@ -538,7 +538,7 @@ public interface Appendix {
 
         @Override
         void validate(Transaction transaction) throws NxtException.ValidationException {
-            if (Nxt.getBlockchain().getHeight() > Constants.SHUFFLING_BLOCK && getEncryptedDataLength() > Constants.MAX_ENCRYPTED_MESSAGE_LENGTH) {
+            if (getEncryptedDataLength() > Constants.MAX_ENCRYPTED_MESSAGE_LENGTH) {
                 throw new NxtException.NotValidException("Max encrypted message length exceeded");
             }
             if (encryptedData != null) {
@@ -1159,7 +1159,7 @@ public interface Appendix {
             if (publicKey.length != 32) {
                 throw new NxtException.NotValidException("Invalid recipient public key length: " + Convert.toHexString(publicKey));
             }
-            if (Nxt.getBlockchain().getHeight() > Constants.SHUFFLING_BLOCK && !Crypto.isCanonicalPublicKey(publicKey)) {
+            if (!Crypto.isCanonicalPublicKey(publicKey)) {
                 throw new NxtException.NotValidException("Invalid recipient public key: " + Convert.toHexString(publicKey));
             }
             long recipientId = transaction.getRecipientId();
@@ -1334,10 +1334,8 @@ public interface Appendix {
                     if (Convert.emptyToNull(hash) == null || hash.length != 32) {
                         throw new NxtException.NotValidException("Invalid linkedFullHash " + Convert.toHexString(hash));
                     }
-                    if (Nxt.getBlockchain().getHeight() > Constants.SHUFFLING_BLOCK) {
-                        if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
-                            throw new NxtException.NotValidException("Duplicate linked transaction ids");
-                        }
+                    if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
+                        throw new NxtException.NotValidException("Duplicate linked transaction ids");
                     }
                     TransactionImpl linkedTransaction = TransactionDb.findTransactionByFullHash(hash, currentHeight);
                     if (linkedTransaction != null) {
@@ -1427,7 +1425,7 @@ public interface Appendix {
         }
 
         void countVotes(TransactionImpl transaction) {
-            if (Nxt.getBlockchain().getHeight() > Constants.SHUFFLING_BLOCK && PhasingPoll.getResult(transaction.getId()) != null) {
+            if (PhasingPoll.getResult(transaction.getId()) != null) {
                 return;
             }
             PhasingPoll poll = PhasingPoll.getPoll(transaction.getId());

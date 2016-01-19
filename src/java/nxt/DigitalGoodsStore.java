@@ -46,7 +46,7 @@ public final class DigitalGoodsStore {
 
     static {
         Nxt.getBlockchainProcessor().addListener(block -> {
-            if (block.getHeight() <= Constants.DIGITAL_GOODS_STORE_BLOCK) {
+            if (block.getHeight() == 0) {
                 return;
             }
             List<Purchase> expiredPurchases = new ArrayList<>();

@@ -143,17 +143,17 @@ public final class Crypto {
         return signature;
     }
 
-    public static boolean verify(byte[] signature, byte[] message, byte[] publicKey, boolean enforceCanonical) {
+    public static boolean verify(byte[] signature, byte[] message, byte[] publicKey) {
         try {
             if (signature.length != 64) {
                 return false;
             }
-            if (enforceCanonical && !Curve25519.isCanonicalSignature(signature)) {
+            if (!Curve25519.isCanonicalSignature(signature)) {
                 Logger.logDebugMessage("Rejecting non-canonical signature");
                 return false;
             }
 
-            if (enforceCanonical && !Curve25519.isCanonicalPublicKey(publicKey)) {
+            if (!Curve25519.isCanonicalPublicKey(publicKey)) {
                 Logger.logDebugMessage("Rejecting non-canonical public key");
                 return false;
             }

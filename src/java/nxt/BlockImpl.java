@@ -329,7 +329,7 @@ final class BlockImpl implements Block {
     private boolean checkSignature() {
         if (! hasValidSignature) {
             byte[] data = Arrays.copyOf(bytes(), bytes.length - 64);
-            hasValidSignature = blockSignature != null && Crypto.verify(blockSignature, data, getGeneratorPublicKey(), version >= 3);
+            hasValidSignature = blockSignature != null && Crypto.verify(blockSignature, data, getGeneratorPublicKey());
         }
         return hasValidSignature;
     }
@@ -343,7 +343,7 @@ final class BlockImpl implements Block {
                 throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", this);
             }
 
-            if (version == 1 && !Crypto.verify(generationSignature, previousBlock.generationSignature, getGeneratorPublicKey(), version >= 3)) {
+            if (version == 1 && !Crypto.verify(generationSignature, previousBlock.generationSignature, getGeneratorPublicKey())) {
                 return false;
             }
 
@@ -367,8 +367,7 @@ final class BlockImpl implements Block {
 
             BigInteger hit = new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
 
-            return Generator.verifyHit(hit, BigInteger.valueOf(effectiveBalance), previousBlock, timestamp)
-                    || (this.height < Constants.TRANSPARENT_FORGING_BLOCK_5 && Arrays.binarySearch(badBlocks, this.getId()) >= 0);
+            return Generator.verifyHit(hit, BigInteger.valueOf(effectiveBalance), previousBlock, timestamp);
 
         } catch (RuntimeException e) {
 
@@ -379,18 +378,11 @@ final class BlockImpl implements Block {
 
     }
 
-    private static final long[] badBlocks = new long[] {
-            5113090348579089956L, 8032405266942971936L, 7702042872885598917L, -407022268390237559L, -3320029330888410250L,
-            -6568770202903512165L, 4288642518741472722L, 5315076199486616536L, -6175599071600228543L};
-    static {
-        Arrays.sort(badBlocks);
-    }
-
     void apply() {
         Account generatorAccount = Account.addOrGetAccount(getGeneratorId());
         generatorAccount.apply(getGeneratorPublicKey());
         long totalBackFees = 0;
-        if (this.height > Constants.SHUFFLING_BLOCK) {
+        if (this.height > 3) {
             long[] backFees = new long[3];
             for (TransactionImpl transaction : getTransactions()) {
                 long[] fees = transaction.getBackFees();
@@ -443,27 +435,7 @@ final class BlockImpl implements Block {
 
     private void calculateBaseTarget(BlockImpl previousBlock) {
         long prevBaseTarget = previousBlock.baseTarget;
-        if (previousBlock.getHeight() < Constants.SHUFFLING_BLOCK) {
-            baseTarget = BigInteger.valueOf(prevBaseTarget)
-                    .multiply(BigInteger.valueOf(this.timestamp - previousBlock.timestamp))
-                    .divide(BigInteger.valueOf(60)).longValue();
-            if (baseTarget < 0 || baseTarget > Constants.MAX_BASE_TARGET) {
-                baseTarget = Constants.MAX_BASE_TARGET;
-            }
-            if (baseTarget < prevBaseTarget / 2) {
-                baseTarget = prevBaseTarget / 2;
-            }
-            if (baseTarget == 0) {
-                baseTarget = 1;
-            }
-            long twofoldCurBaseTarget = prevBaseTarget * 2;
-            if (twofoldCurBaseTarget < 0) {
-                twofoldCurBaseTarget = Constants.MAX_BASE_TARGET;
-            }
-            if (baseTarget > twofoldCurBaseTarget) {
-                baseTarget = twofoldCurBaseTarget;
-            }
-        } else if (previousBlock.getHeight() % 2 == 0) {
+        if (previousBlock.getHeight() % 2 == 0) {
             BlockImpl block = BlockDb.findBlockAtHeight(previousBlock.getHeight() - 2);
             int blocktimeAverage = (this.timestamp - block.timestamp) / 3;
             if (blocktimeAverage > 60) {

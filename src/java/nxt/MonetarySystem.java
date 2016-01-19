@@ -155,8 +155,7 @@ public abstract class MonetarySystem extends TransactionType {
 
         @Override
         boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            return Nxt.getBlockchain().getHeight() > Constants.SHUFFLING_BLOCK
-                    && isDuplicate(CURRENCY_ISSUANCE, getName(), duplicates, true);
+            return isDuplicate(CURRENCY_ISSUANCE, getName(), duplicates, true);
         }
 
         @Override
@@ -486,13 +485,11 @@ public abstract class MonetarySystem extends TransactionType {
                     || attachment.getTotalSellLimit() < attachment.getInitialSellSupply()) {
                 throw new NxtException.NotValidException("Initial supplies must not exceed total limits");
             }
-            if (Nxt.getBlockchain().getHeight() > Constants.SHUFFLING_BLOCK) {
-                if (attachment.getTotalBuyLimit() == 0 && attachment.getTotalSellLimit() == 0) {
-                    throw new NxtException.NotValidException("Total buy and sell limits cannot be both 0");
-                }
-                if (attachment.getInitialBuySupply() == 0 && attachment.getInitialSellSupply() == 0) {
-                    throw new NxtException.NotValidException("Initial buy and sell supply cannot be both 0");
-                }
+            if (attachment.getTotalBuyLimit() == 0 && attachment.getTotalSellLimit() == 0) {
+                throw new NxtException.NotValidException("Total buy and sell limits cannot be both 0");
+            }
+            if (attachment.getInitialBuySupply() == 0 && attachment.getInitialSellSupply() == 0) {
+                throw new NxtException.NotValidException("Initial buy and sell supply cannot be both 0");
             }
             if (attachment.getExpirationHeight() <= attachment.getFinishValidationHeight(transaction)) {
                 throw new NxtException.NotCurrentlyValidException("Expiration height must be after transaction execution height");

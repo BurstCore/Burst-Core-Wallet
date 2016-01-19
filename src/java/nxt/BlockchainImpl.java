@@ -546,16 +546,14 @@ final class BlockchainImpl implements Blockchain {
         List<TransactionImpl> result = new ArrayList<>();
         readLock();
         try {
-            if (getHeight() >= Constants.PHASING_BLOCK) {
-                try (DbIterator<TransactionImpl> phasedTransactions = PhasingPoll.getFinishingTransactions(getHeight() + 1)) {
-                    for (TransactionImpl phasedTransaction : phasedTransactions) {
-                        try {
-                            phasedTransaction.validate();
-                            if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.ok(phasedTransaction)) {
-                                result.add(phasedTransaction);
-                            }
-                        } catch (NxtException.ValidationException ignore) {
+            try (DbIterator<TransactionImpl> phasedTransactions = PhasingPoll.getFinishingTransactions(getHeight() + 1)) {
+                for (TransactionImpl phasedTransaction : phasedTransactions) {
+                    try {
+                        phasedTransaction.validate();
+                        if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.ok(phasedTransaction)) {
+                            result.add(phasedTransaction);
                         }
+                    } catch (NxtException.ValidationException ignore) {
                     }
                 }
             }

@@ -112,7 +112,7 @@ public class BlockchainProcessorTest extends AbstractBlockchainTest {
 
     @Test
     public void reprocessTransactionsTest() {
-        int start = Constants.LAST_KNOWN_BLOCK - 2000;
+        int start = Math.max(Constants.LAST_KNOWN_BLOCK - 2000, 0);
         reset(start);
         int end;
         downloadTo(start);

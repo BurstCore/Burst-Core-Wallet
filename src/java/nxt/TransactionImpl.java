@@ -494,15 +494,11 @@ final class TransactionImpl implements Transaction {
             if (signature == null) {
                 throw new IllegalStateException("Transaction is not signed yet");
             }
-            if (useNQT()) {
-                byte[] data = zeroSignature(getBytes());
-                byte[] signatureHash = Crypto.sha256().digest(signature);
-                MessageDigest digest = Crypto.sha256();
-                digest.update(data);
-                fullHash = digest.digest(signatureHash);
-            } else {
-                fullHash = Crypto.sha256().digest(bytes());
-            }
+            byte[] data = zeroSignature(getBytes());
+            byte[] signatureHash = Crypto.sha256().digest(signature);
+            MessageDigest digest = Crypto.sha256();
+            digest.update(data);
+            fullHash = digest.digest(signatureHash);
             BigInteger bigInteger = new BigInteger(1, new byte[] {fullHash[7], fullHash[6], fullHash[5], fullHash[4], fullHash[3], fullHash[2], fullHash[1], fullHash[0]});
             id = bigInteger.longValue();
             stringId = bigInteger.toString();
@@ -615,22 +611,12 @@ final class TransactionImpl implements Transaction {
                 buffer.putShort(deadline);
                 buffer.put(getSenderPublicKey());
                 buffer.putLong(type.canHaveRecipient() ? recipientId : Genesis.CREATOR_ID);
-                if (useNQT()) {
-                    buffer.putLong(amountNQT);
-                    buffer.putLong(feeNQT);
-                    if (referencedTransactionFullHash != null) {
-                        buffer.put(referencedTransactionFullHash);
-                    } else {
-                        buffer.put(new byte[32]);
-                    }
+                buffer.putLong(amountNQT);
+                buffer.putLong(feeNQT);
+                if (referencedTransactionFullHash != null) {
+                    buffer.put(referencedTransactionFullHash);
                 } else {
-                    buffer.putInt((int) (amountNQT / Constants.ONE_NXT));
-                    buffer.putInt((int) (feeNQT / Constants.ONE_NXT));
-                    if (referencedTransactionFullHash != null) {
-                        buffer.putLong(Convert.fullHashToId(referencedTransactionFullHash));
-                    } else {
-                        buffer.putLong(0L);
-                    }
+                    buffer.put(new byte[32]);
                 }
                 buffer.put(signature != null ? signature : new byte[64]);
                 if (version > 0) {
@@ -898,7 +884,7 @@ final class TransactionImpl implements Transaction {
 
     private boolean checkSignature() {
         if (!hasValidSignature) {
-            hasValidSignature = signature != null && Crypto.verify(signature, zeroSignature(getBytes()), getSenderPublicKey(), useNQT());
+            hasValidSignature = signature != null && Crypto.verify(signature, zeroSignature(getBytes()), getSenderPublicKey());
         }
         return hasValidSignature;
     }
@@ -917,13 +903,7 @@ final class TransactionImpl implements Transaction {
     }
 
     private int signatureOffset() {
-        return 1 + 1 + 4 + 2 + 32 + 8 + (useNQT() ? 8 + 8 + 32 : 4 + 4 + 8);
-    }
-
-    private boolean useNQT() {
-        return this.height > Constants.NQT_BLOCK
-                && (this.timestamp > (Constants.isTestnet ? 12908200 : 14271000)
-                || Nxt.getBlockchain().getHeight() >= Constants.NQT_BLOCK);
+        return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32;
     }
 
     private byte[] zeroSignature(byte[] data) {
@@ -1042,8 +1022,7 @@ final class TransactionImpl implements Transaction {
                 recipientAccount = Account.addOrGetAccount(recipientId);
             }
         }
-        if (referencedTransactionFullHash != null
-                && timestamp > Constants.REFERENCED_TRANSACTION_FULL_HASH_BLOCK_TIMESTAMP) {
+        if (referencedTransactionFullHash != null) {
             senderAccount.addToUnconfirmedBalanceNQT(getType().getLedgerEvent(), getId(),
                     0, Constants.UNCONFIRMED_POOL_DEPOSIT_NQT);
         }

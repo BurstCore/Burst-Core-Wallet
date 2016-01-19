@@ -209,8 +209,7 @@ public final class Generator implements Comparable<Generator> {
         BigInteger prevTarget = effectiveBaseTarget.multiply(BigInteger.valueOf(elapsedTime - 1));
         BigInteger target = prevTarget.add(effectiveBaseTarget);
         return hit.compareTo(target) < 0
-                && (previousBlock.getHeight() < Constants.TRANSPARENT_FORGING_BLOCK_8
-                || hit.compareTo(prevTarget) >= 0
+                && (hit.compareTo(prevTarget) >= 0
                 || (Constants.isTestnet ? elapsedTime > 300 : elapsedTime > 3600)
                 || Constants.isOffline);
     }
@@ -222,9 +221,6 @@ public final class Generator implements Comparable<Generator> {
     static BigInteger getHit(byte[] publicKey, Block block) {
         if (allowsFakeForging(publicKey)) {
             return BigInteger.ZERO;
-        }
-        if (block.getHeight() < Constants.TRANSPARENT_FORGING_BLOCK) {
-            throw new IllegalArgumentException("Not supported below Transparent Forging Block");
         }
         MessageDigest digest = Crypto.sha256();
         digest.update(block.getGenerationSignature());

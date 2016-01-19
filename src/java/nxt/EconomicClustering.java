@@ -48,9 +48,6 @@ public final class EconomicClustering {
     }
 
     public static boolean verifyFork(Transaction transaction) {
-        if (blockchain.getHeight() < Constants.DIGITAL_GOODS_STORE_BLOCK) {
-            return true;
-        }
         if (transaction.getReferencedTransactionFullHash() != null) {
             return true;
         }

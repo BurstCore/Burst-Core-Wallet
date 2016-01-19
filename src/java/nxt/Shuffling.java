@@ -156,7 +156,7 @@ public final class Shuffling {
 
     static {
         Nxt.getBlockchainProcessor().addListener(block -> {
-            if (block.getHeight() < Constants.SHUFFLING_BLOCK || block.getTransactions().size() == Constants.MAX_NUMBER_OF_TRANSACTIONS
+            if (block.getTransactions().size() == Constants.MAX_NUMBER_OF_TRANSACTIONS
                     || block.getPayloadLength() > Constants.MAX_PAYLOAD_LENGTH - Constants.MIN_TRANSACTION_SIZE) {
                 return;
             }

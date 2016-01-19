@@ -330,7 +330,6 @@ public final class Nxt {
                 Alias.init();
                 Asset.init();
                 DigitalGoodsStore.init();
-                Hub.init();
                 Order.init();
                 Poll.init();
                 PhasingPoll.init();
