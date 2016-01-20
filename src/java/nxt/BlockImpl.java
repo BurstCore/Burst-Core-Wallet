@@ -246,9 +246,7 @@ final class BlockImpl implements Block {
         json.put("payloadHash", Convert.toHexString(payloadHash));
         json.put("generatorPublicKey", Convert.toHexString(getGeneratorPublicKey()));
         json.put("generationSignature", Convert.toHexString(generationSignature));
-        if (version > 1) {
-            json.put("previousBlockHash", Convert.toHexString(previousBlockHash));
-        }
+        json.put("previousBlockHash", Convert.toHexString(previousBlockHash));
         json.put("blockSignature", Convert.toHexString(blockSignature));
         JSONArray transactionsData = new JSONArray();
         getTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
@@ -292,26 +290,19 @@ final class BlockImpl implements Block {
 
     byte[] bytes() {
         if (bytes == null) {
-            ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 8 + 4 + (version < 3 ? (4 + 4) : (8 + 8)) + 4 + 32 + 32 + (32 + 32) + (blockSignature != null ? 64 : 0));
+            ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 8 + 4 + 8 + 8 + 4 + 32 + 32 + 32 + 32 + (blockSignature != null ? 64 : 0));
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.putInt(version);
             buffer.putInt(timestamp);
             buffer.putLong(previousBlockId);
             buffer.putInt(getTransactions().size());
-            if (version < 3) {
-                buffer.putInt((int) (totalAmountNQT / Constants.ONE_NXT));
-                buffer.putInt((int) (totalFeeNQT / Constants.ONE_NXT));
-            } else {
-                buffer.putLong(totalAmountNQT);
-                buffer.putLong(totalFeeNQT);
-            }
+            buffer.putLong(totalAmountNQT);
+            buffer.putLong(totalFeeNQT);
             buffer.putInt(payloadLength);
             buffer.put(payloadHash);
             buffer.put(getGeneratorPublicKey());
             buffer.put(generationSignature);
-            if (version > 1) {
-                buffer.put(previousBlockHash);
-            }
+            buffer.put(previousBlockHash);
             if (blockSignature != null) {
                 buffer.put(blockSignature);
             }
@@ -343,10 +334,6 @@ final class BlockImpl implements Block {
                 throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", this);
             }
 
-            if (version == 1 && !Crypto.verify(generationSignature, previousBlock.generationSignature, getGeneratorPublicKey())) {
-                return false;
-            }
-
             Account account = Account.getAccount(getGeneratorId());
             long effectiveBalance = account == null ? 0 : account.getEffectiveBalanceNXT();
             if (effectiveBalance <= 0) {
@@ -354,15 +341,10 @@ final class BlockImpl implements Block {
             }
 
             MessageDigest digest = Crypto.sha256();
-            byte[] generationSignatureHash;
-            if (version == 1) {
-                generationSignatureHash = digest.digest(generationSignature);
-            } else {
-                digest.update(previousBlock.generationSignature);
-                generationSignatureHash = digest.digest(getGeneratorPublicKey());
-                if (!Arrays.equals(generationSignature, generationSignatureHash)) {
-                    return false;
-                }
+            digest.update(previousBlock.generationSignature);
+            byte[] generationSignatureHash = digest.digest(getGeneratorPublicKey());
+            if (!Arrays.equals(generationSignature, generationSignatureHash)) {
+                return false;
             }
 
             BigInteger hit = new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
@@ -435,8 +417,9 @@ final class BlockImpl implements Block {
 
     private void calculateBaseTarget(BlockImpl previousBlock) {
         long prevBaseTarget = previousBlock.baseTarget;
-        if (previousBlock.getHeight() % 2 == 0) {
-            BlockImpl block = BlockDb.findBlockAtHeight(previousBlock.getHeight() - 2);
+        int blockchainHeight = previousBlock.height;
+        if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
+            BlockImpl block = BlockDb.findBlockAtHeight(blockchainHeight - 2);
             int blocktimeAverage = (this.timestamp - block.timestamp) / 3;
             if (blocktimeAverage > 60) {
                 baseTarget = (prevBaseTarget * Math.min(blocktimeAverage, Constants.MAX_BLOCKTIME_LIMIT)) / 60;

@@ -48,13 +48,14 @@ public abstract class TransactionType {
     private static final byte SUBTYPE_MESSAGING_ALIAS_ASSIGNMENT = 1;
     private static final byte SUBTYPE_MESSAGING_POLL_CREATION = 2;
     private static final byte SUBTYPE_MESSAGING_VOTE_CASTING = 3;
-    private static final byte SUBTYPE_MESSAGING_ACCOUNT_INFO = 4;
-    private static final byte SUBTYPE_MESSAGING_ALIAS_SELL = 5;
-    private static final byte SUBTYPE_MESSAGING_ALIAS_BUY = 6;
-    private static final byte SUBTYPE_MESSAGING_ALIAS_DELETE = 7;
-    private static final byte SUBTYPE_MESSAGING_PHASING_VOTE_CASTING = 8;
-    private static final byte SUBTYPE_MESSAGING_ACCOUNT_PROPERTY = 9;
-    private static final byte SUBTYPE_MESSAGING_ACCOUNT_PROPERTY_DELETE = 10;
+    private static final byte SUBTYPE_MESSAGING_HUB_ANNOUNCEMENT = 4;
+    private static final byte SUBTYPE_MESSAGING_ACCOUNT_INFO = 5;
+    private static final byte SUBTYPE_MESSAGING_ALIAS_SELL = 6;
+    private static final byte SUBTYPE_MESSAGING_ALIAS_BUY = 7;
+    private static final byte SUBTYPE_MESSAGING_ALIAS_DELETE = 8;
+    private static final byte SUBTYPE_MESSAGING_PHASING_VOTE_CASTING = 9;
+    private static final byte SUBTYPE_MESSAGING_ACCOUNT_PROPERTY = 10;
+    private static final byte SUBTYPE_MESSAGING_ACCOUNT_PROPERTY_DELETE = 11;
 
     private static final byte SUBTYPE_COLORED_COINS_ASSET_ISSUANCE = 0;
     private static final byte SUBTYPE_COLORED_COINS_ASSET_TRANSFER = 1;
@@ -194,7 +195,7 @@ public abstract class TransactionType {
 
     public abstract LedgerEvent getLedgerEvent();
 
-    abstract Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException;
+    abstract Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException;
 
     abstract Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException;
 
@@ -313,7 +314,7 @@ public abstract class TransactionType {
     }
 
     int getBaselineFeeHeight() {
-        return 0;
+        return 1;
     }
 
     int getNextFeeHeight() {
@@ -386,7 +387,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
+            Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
                 return Attachment.ORDINARY_PAYMENT;
             }
 
@@ -443,7 +444,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
+            Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
                 return Attachment.ARBITRARY_MESSAGE;
             }
 
@@ -515,8 +516,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAliasAssignment parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.MessagingAliasAssignment(buffer, transactionVersion);
+            Attachment.MessagingAliasAssignment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.MessagingAliasAssignment(buffer);
             }
 
             @Override
@@ -591,8 +592,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAliasSell parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.MessagingAliasSell(buffer, transactionVersion);
+            Attachment.MessagingAliasSell parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.MessagingAliasSell(buffer);
             }
 
             @Override
@@ -682,8 +683,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAliasBuy parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.MessagingAliasBuy(buffer, transactionVersion);
+            Attachment.MessagingAliasBuy parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.MessagingAliasBuy(buffer);
             }
 
             @Override
@@ -764,8 +765,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAliasDelete parseAttachment(final ByteBuffer buffer, final byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.MessagingAliasDelete(buffer, transactionVersion);
+            Attachment.MessagingAliasDelete parseAttachment(final ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.MessagingAliasDelete(buffer);
             }
 
             @Override
@@ -861,8 +862,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingPollCreation parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.MessagingPollCreation(buffer, transactionVersion);
+            Attachment.MessagingPollCreation parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.MessagingPollCreation(buffer);
             }
 
             @Override
@@ -962,8 +963,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingVoteCasting parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.MessagingVoteCasting(buffer, transactionVersion);
+            Attachment.MessagingVoteCasting parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.MessagingVoteCasting(buffer);
             }
 
             @Override
@@ -1066,8 +1067,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingPhasingVoteCasting parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.MessagingPhasingVoteCasting(buffer, transactionVersion);
+            Attachment.MessagingPhasingVoteCasting parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.MessagingPhasingVoteCasting(buffer);
             }
 
             @Override
@@ -1190,8 +1191,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAccountInfo parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.MessagingAccountInfo(buffer, transactionVersion);
+            Attachment.MessagingAccountInfo parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.MessagingAccountInfo(buffer);
             }
 
             @Override
@@ -1262,8 +1263,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAccountProperty parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.MessagingAccountProperty(buffer, transactionVersion);
+            Attachment.MessagingAccountProperty parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.MessagingAccountProperty(buffer);
             }
 
             @Override
@@ -1323,8 +1324,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAccountPropertyDelete parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.MessagingAccountPropertyDelete(buffer, transactionVersion);
+            Attachment.MessagingAccountPropertyDelete parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.MessagingAccountPropertyDelete(buffer);
             }
 
             @Override
@@ -1426,8 +1427,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsAssetIssuance parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.ColoredCoinsAssetIssuance(buffer, transactionVersion);
+            Attachment.ColoredCoinsAssetIssuance parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.ColoredCoinsAssetIssuance(buffer);
             }
 
             @Override
@@ -1516,8 +1517,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsAssetTransfer parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.ColoredCoinsAssetTransfer(buffer, transactionVersion);
+            Attachment.ColoredCoinsAssetTransfer parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.ColoredCoinsAssetTransfer(buffer);
             }
 
             @Override
@@ -1561,18 +1562,12 @@ public abstract class TransactionType {
             @Override
             void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
                 Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer)transaction.getAttachment();
-                if (transaction.getAmountNQT() != 0
-                        || attachment.getComment() != null && attachment.getComment().length() > Constants.MAX_ASSET_TRANSFER_COMMENT_LENGTH
-                        || attachment.getAssetId() == 0) {
-                    throw new NxtException.NotValidException("Invalid asset transfer amount or comment: " + attachment.getJSONObject());
+                if (transaction.getAmountNQT() != 0 || attachment.getAssetId() == 0) {
+                    throw new NxtException.NotValidException("Invalid asset transfer amount or asset: " + attachment.getJSONObject());
                 }
                 if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
                     throw new NxtException.NotValidException("Asset transfer to Genesis not allowed, "
                             + "use asset delete attachment instead");
-                }
-                if (transaction.getVersion() > 0 && attachment.getComment() != null) {
-                    throw new NxtException.NotValidException("Asset transfer comments no longer allowed, use message " +
-                            "or encrypted message appendix instead");
                 }
                 Asset asset = Asset.getAsset(attachment.getAssetId());
                 if (attachment.getQuantityQNT() <= 0 || (asset != null && attachment.getQuantityQNT() > asset.getInitialQuantityQNT())) {
@@ -1614,8 +1609,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsAssetDelete parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.ColoredCoinsAssetDelete(buffer, transactionVersion);
+            Attachment.ColoredCoinsAssetDelete parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.ColoredCoinsAssetDelete(buffer);
             }
 
             @Override
@@ -1727,8 +1722,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsAskOrderPlacement parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.ColoredCoinsAskOrderPlacement(buffer, transactionVersion);
+            Attachment.ColoredCoinsAskOrderPlacement parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.ColoredCoinsAskOrderPlacement(buffer);
             }
 
             @Override
@@ -1781,8 +1776,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsBidOrderPlacement parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.ColoredCoinsBidOrderPlacement(buffer, transactionVersion);
+            Attachment.ColoredCoinsBidOrderPlacement parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.ColoredCoinsBidOrderPlacement(buffer);
             }
 
             @Override
@@ -1857,8 +1852,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsAskOrderCancellation parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.ColoredCoinsAskOrderCancellation(buffer, transactionVersion);
+            Attachment.ColoredCoinsAskOrderCancellation parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.ColoredCoinsAskOrderCancellation(buffer);
             }
 
             @Override
@@ -1910,8 +1905,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsBidOrderCancellation parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.ColoredCoinsBidOrderCancellation(buffer, transactionVersion);
+            Attachment.ColoredCoinsBidOrderCancellation parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.ColoredCoinsBidOrderCancellation(buffer);
             }
 
             @Override
@@ -1963,8 +1958,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsDividendPayment parseAttachment(ByteBuffer buffer, byte transactionVersion) {
-                return new Attachment.ColoredCoinsDividendPayment(buffer, transactionVersion);
+            Attachment.ColoredCoinsDividendPayment parseAttachment(ByteBuffer buffer) {
+                return new Attachment.ColoredCoinsDividendPayment(buffer);
             }
 
             @Override
@@ -2106,8 +2101,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsListing parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.DigitalGoodsListing(buffer, transactionVersion);
+            Attachment.DigitalGoodsListing parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.DigitalGoodsListing(buffer);
             }
 
             @Override
@@ -2169,8 +2164,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsDelisting parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.DigitalGoodsDelisting(buffer, transactionVersion);
+            Attachment.DigitalGoodsDelisting parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.DigitalGoodsDelisting(buffer);
             }
 
             @Override
@@ -2233,8 +2228,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsPriceChange parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.DigitalGoodsPriceChange(buffer, transactionVersion);
+            Attachment.DigitalGoodsPriceChange parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.DigitalGoodsPriceChange(buffer);
             }
 
             @Override
@@ -2299,8 +2294,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsQuantityChange parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.DigitalGoodsQuantityChange(buffer, transactionVersion);
+            Attachment.DigitalGoodsQuantityChange parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.DigitalGoodsQuantityChange(buffer);
             }
 
             @Override
@@ -2366,8 +2361,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsPurchase parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.DigitalGoodsPurchase(buffer, transactionVersion);
+            Attachment.DigitalGoodsPurchase parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.DigitalGoodsPurchase(buffer);
             }
 
             @Override
@@ -2473,8 +2468,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsDelivery parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.DigitalGoodsDelivery(buffer, transactionVersion);
+            Attachment.DigitalGoodsDelivery parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.DigitalGoodsDelivery(buffer);
             }
 
             @Override
@@ -2552,8 +2547,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsFeedback parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.DigitalGoodsFeedback(buffer, transactionVersion);
+            Attachment.DigitalGoodsFeedback parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.DigitalGoodsFeedback(buffer);
             }
 
             @Override
@@ -2620,8 +2615,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsRefund parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.DigitalGoodsRefund(buffer, transactionVersion);
+            Attachment.DigitalGoodsRefund parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.DigitalGoodsRefund(buffer);
             }
 
             @Override
@@ -2727,8 +2722,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.AccountControlEffectiveBalanceLeasing(buffer, transactionVersion);
+            Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.AccountControlEffectiveBalanceLeasing(buffer);
             }
 
             @Override
@@ -2789,8 +2784,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            AbstractAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) {
-                return new Attachment.SetPhasingOnly(buffer, transactionVersion);
+            AbstractAttachment parseAttachment(ByteBuffer buffer) {
+                return new Attachment.SetPhasingOnly(buffer);
             }
 
             @Override
@@ -2919,8 +2914,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.TaggedDataUpload parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.TaggedDataUpload(buffer, transactionVersion);
+            Attachment.TaggedDataUpload parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.TaggedDataUpload(buffer);
             }
 
             @Override
@@ -2990,8 +2985,8 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.TaggedDataExtend parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-                return new Attachment.TaggedDataExtend(buffer, transactionVersion);
+            Attachment.TaggedDataExtend parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                return new Attachment.TaggedDataExtend(buffer);
             }
 
             @Override

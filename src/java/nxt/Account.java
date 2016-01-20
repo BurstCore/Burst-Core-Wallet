@@ -1183,24 +1183,18 @@ public final class Account {
     }
 
     public long getEffectiveBalanceNXT(int height) {
-        if (height >= 1440) {
-            if (this.publicKey == null) {
-                this.publicKey = publicKeyTable.get(accountDbKeyFactory.newKey(this));
+        if (height < 1440) {
+            int index = Arrays.binarySearch(Genesis.GENESIS_RECIPIENTS, id);
+            if (index < 0) {
+                return 0;
             }
-            if (this.publicKey == null || this.publicKey.publicKey == null || this.publicKey.height == 0 || height - this.publicKey.height <= 1440) {
-                return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
-            }
-        } else {
-            if (Arrays.binarySearch(Genesis.GENESIS_RECIPIENTS, id) >= 0) {
-                return balanceNQT / Constants.ONE_NXT;
-            }
-            long receivedInLastBlock = 0;
-            for (Transaction transaction : Nxt.getBlockchain().getBlockAtHeight(height).getTransactions()) {
-                if (id == transaction.getRecipientId()) {
-                    receivedInLastBlock += transaction.getAmountNQT();
-                }
-            }
-            return (balanceNQT - receivedInLastBlock) / Constants.ONE_NXT;
+            return Genesis.GENESIS_AMOUNTS[index];
+        }
+        if (this.publicKey == null) {
+            this.publicKey = publicKeyTable.get(accountDbKeyFactory.newKey(this));
+        }
+        if (this.publicKey == null || this.publicKey.publicKey == null || this.publicKey.height == 0 || height - this.publicKey.height <= 1440) {
+            return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         long effectiveBalanceNQT = getLessorsGuaranteedBalanceNQT(height);
         if (activeLesseeId == 0) {

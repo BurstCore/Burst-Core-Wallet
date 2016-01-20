@@ -619,11 +619,9 @@ final class TransactionImpl implements Transaction {
                     buffer.put(new byte[32]);
                 }
                 buffer.put(signature != null ? signature : new byte[64]);
-                if (version > 0) {
-                    buffer.putInt(getFlags());
-                    buffer.putInt(ecBlockHeight);
-                    buffer.putLong(ecBlockId);
-                }
+                buffer.putInt(getFlags());
+                buffer.putInt(ecBlockHeight);
+                buffer.putLong(ecBlockId);
                 for (Appendix appendage : appendages) {
                     appendage.putBytes(buffer);
                 }
@@ -669,7 +667,7 @@ final class TransactionImpl implements Transaction {
             }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
             TransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountNQT, feeNQT,
-                    deadline, transactionType.parseAttachment(buffer, version))
+                    deadline, transactionType.parseAttachment(buffer))
                     .timestamp(timestamp)
                     .referencedTransactionFullHash(referencedTransactionFullHash)
                     .signature(signature)
@@ -680,31 +678,31 @@ final class TransactionImpl implements Transaction {
             }
             int position = 1;
             if ((flags & position) != 0 || (version == 0 && transactionType == TransactionType.Messaging.ARBITRARY_MESSAGE)) {
-                builder.appendix(new Appendix.Message(buffer, version));
+                builder.appendix(new Appendix.Message(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new Appendix.EncryptedMessage(buffer, version));
+                builder.appendix(new Appendix.EncryptedMessage(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new Appendix.PublicKeyAnnouncement(buffer, version));
+                builder.appendix(new Appendix.PublicKeyAnnouncement(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new Appendix.EncryptToSelfMessage(buffer, version));
+                builder.appendix(new Appendix.EncryptToSelfMessage(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new Appendix.Phasing(buffer, version));
+                builder.appendix(new Appendix.Phasing(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new Appendix.PrunablePlainMessage(buffer, version));
+                builder.appendix(new Appendix.PrunablePlainMessage(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new Appendix.PrunableEncryptedMessage(buffer, version));
+                builder.appendix(new Appendix.PrunableEncryptedMessage(buffer));
             }
             if (buffer.hasRemaining()) {
                 throw new NxtException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
@@ -890,7 +888,7 @@ final class TransactionImpl implements Transaction {
     }
 
     private int getSize() {
-        return signatureOffset() + 64  + (version > 0 ? 4 + 4 + 8 : 0) + appendagesSize;
+        return signatureOffset() + 64  + 4 + 4 + 8 + appendagesSize;
     }
 
     @Override
@@ -972,7 +970,7 @@ final class TransactionImpl implements Transaction {
             }
         }
 
-        if (type.mustHaveRecipient() && version > 0) {
+        if (type.mustHaveRecipient()) {
             if (recipientId == 0) {
                 throw new NxtException.NotValidException("Transactions of this type must have a valid recipient");
             }
@@ -981,9 +979,8 @@ final class TransactionImpl implements Transaction {
         boolean validatingAtFinish = phasing != null && getSignature() != null && PhasingPoll.getPoll(getId()) != null;
         for (Appendix.AbstractAppendix appendage : appendages) {
             appendage.loadPrunable(this);
-            if (! appendage.verifyVersion(this.version)) {
-                throw new NxtException.NotValidException("Invalid attachment version " + appendage.getVersion()
-                        + " for transaction version " + this.version);
+            if (! appendage.verifyVersion()) {
+                throw new NxtException.NotValidException("Invalid attachment version " + appendage.getVersion());
             }
             if (validatingAtFinish) {
                 appendage.validateAtFinish(this);

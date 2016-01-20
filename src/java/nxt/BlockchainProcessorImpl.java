@@ -98,6 +98,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isProcessingBlock;
     private volatile boolean isRestoring;
     private volatile boolean alreadyInitialized = false;
+    private volatile long genesisBlockId;
 
     private final Runnable getMoreBlocksThread = new Runnable() {
 
@@ -187,9 +188,9 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     return;
                 }
 
-                long commonMilestoneBlockId = Genesis.GENESIS_BLOCK_ID;
+                long commonMilestoneBlockId = genesisBlockId;
 
-                if (blockchain.getLastBlock().getId() != Genesis.GENESIS_BLOCK_ID) {
+                if (blockchain.getHeight() > 0) {
                     commonMilestoneBlockId = getCommonMilestoneBlockId(peer);
                 }
                 if (commonMilestoneBlockId == 0 || !peerHasMore) {
@@ -302,7 +303,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     return 0;
                 }
                 if (milestoneBlockIds.isEmpty()) {
-                    return Genesis.GENESIS_BLOCK_ID;
+                    return genesisBlockId;
                 }
                 // prevent overloading with blockIds
                 if (milestoneBlockIds.size() > 20) {
@@ -1202,11 +1203,12 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private boolean addGenesisBlock() {
-        if (BlockDb.hasBlock(Genesis.GENESIS_BLOCK_ID, 0)) {
+        BlockImpl lastBlock = BlockDb.findLastBlock();
+        if (lastBlock != null) {
             Logger.logMessage("Genesis block already in database");
-            BlockImpl lastBlock = BlockDb.findLastBlock();
             blockchain.setLastBlock(lastBlock);
             popOffTo(lastBlock);
+            genesisBlockId = BlockDb.findBlockIdAtHeight(0);
             Logger.logMessage("Last block height: " + lastBlock.getHeight());
             return false;
         }
@@ -1219,11 +1221,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         Attachment.ORDINARY_PAYMENT)
                         .timestamp(0)
                         .recipientId(Genesis.GENESIS_RECIPIENTS[i])
-                        .signature(Genesis.GENESIS_SIGNATURES[i])
                         .height(0)
                         .ecBlockHeight(0)
                         .ecBlockId(0)
-                        .build();
+                        .build(Genesis.CREATOR_SECRET_PHRASE);
                 transactions.add(transaction);
             }
             Collections.sort(transactions, Comparator.comparingLong(Transaction::getId));
@@ -1232,9 +1233,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 digest.update(transaction.bytes());
             }
             BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 128, digest.digest(),
-                    Genesis.CREATOR_PUBLIC_KEY, new byte[64], Genesis.GENESIS_BLOCK_SIGNATURE, null, transactions);
+                    Genesis.CREATOR_PUBLIC_KEY, new byte[32], new byte[32], transactions, Genesis.CREATOR_SECRET_PHRASE);
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
+            genesisBlockId = genesisBlock.getId();
             return true;
         } catch (NxtException.ValidationException e) {
             Logger.logMessage(e.getMessage());
@@ -1339,7 +1341,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new BlockNotAcceptedException("Block timestamp " + block.getTimestamp() + " is before previous block timestamp "
                     + previousLastBlock.getTimestamp(), block);
         }
-        if (block.getVersion() != 1 && !Arrays.equals(Crypto.sha256().digest(previousLastBlock.bytes()), block.getPreviousBlockHash())) {
+        if (!Arrays.equals(Crypto.sha256().digest(previousLastBlock.bytes()), block.getPreviousBlockHash())) {
             throw new BlockNotAcceptedException("Previous block hash doesn't match", block);
         }
         if (block.getId() == 0L || BlockDb.hasBlock(block.getId(), previousLastBlock.getHeight())) {
@@ -1555,7 +1557,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 block.loadTransactions();
                 Logger.logDebugMessage("Rollback from block " + block.getStringId() + " at height " + block.getHeight()
                         + " to " + commonBlock.getStringId() + " at " + commonBlock.getHeight());
-                while (block.getId() != commonBlock.getId() && block.getId() != Genesis.GENESIS_BLOCK_ID) {
+                while (block.getId() != commonBlock.getId() && block.getHeight() > 0) {
                     poppedOffBlocks.add(block);
                     block = popLastBlock();
                 }
@@ -1580,7 +1582,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private BlockImpl popLastBlock() {
         BlockImpl block = blockchain.getLastBlock();
-        if (block.getId() == Genesis.GENESIS_BLOCK_ID) {
+        if (block.getHeight() == 0) {
             throw new RuntimeException("Cannot pop off genesis block");
         }
         BlockImpl previousBlock = blockchain.getBlock(block.getPreviousBlockId());
@@ -1607,7 +1609,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private int getBlockVersion(int previousBlockHeight) {
-        return 1;
+        return 3;
     }
 
     private int getTransactionVersion(int previousBlockHeight) {
@@ -1878,7 +1880,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                             List<TransactionImpl> validPhasedTransactions = new ArrayList<>();
                             List<TransactionImpl> invalidPhasedTransactions = new ArrayList<>();
                             validatePhasedTransactions(blockchain.getHeight(), validPhasedTransactions, invalidPhasedTransactions, duplicates);
-                            if (validate && currentBlockId != Genesis.GENESIS_BLOCK_ID) {
+                            if (validate && currentBlock.getHeight() > 0) {
                                 int curTime = Nxt.getEpochTime();
                                 validate(currentBlock, blockchain.getLastBlock(), curTime);
                                 byte[] blockBytes = currentBlock.bytes();

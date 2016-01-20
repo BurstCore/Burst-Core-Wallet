@@ -94,8 +94,8 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) {
-            return new Attachment.ShufflingCreation(buffer, transactionVersion);
+        Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) {
+            return new Attachment.ShufflingCreation(buffer);
         }
 
         @Override
@@ -217,8 +217,8 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) {
-            return new Attachment.ShufflingRegistration(buffer, transactionVersion);
+        Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) {
+            return new Attachment.ShufflingRegistration(buffer);
         }
 
         @Override
@@ -325,8 +325,8 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            return new Attachment.ShufflingProcessing(buffer, transactionVersion);
+        Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new Attachment.ShufflingProcessing(buffer);
         }
 
         @Override
@@ -447,8 +447,8 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            return new Attachment.ShufflingRecipients(buffer, transactionVersion);
+        Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new Attachment.ShufflingRecipients(buffer);
         }
 
         @Override
@@ -550,8 +550,8 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) {
-            return new Attachment.ShufflingVerification(buffer, transactionVersion);
+        Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) {
+            return new Attachment.ShufflingVerification(buffer);
         }
 
         @Override
@@ -641,8 +641,8 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            return new Attachment.ShufflingCancellation(buffer, transactionVersion);
+        Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new Attachment.ShufflingCancellation(buffer);
         }
 
         @Override

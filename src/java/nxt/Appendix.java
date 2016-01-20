@@ -66,16 +66,11 @@ public interface Appendix {
         private final byte version;
 
         AbstractAppendix(JSONObject attachmentData) {
-            Long l = (Long) attachmentData.get("version." + getAppendixName());
-            version = (byte) (l == null ? 0 : l);
+            version = ((Long) attachmentData.get("version." + getAppendixName())).byteValue();
         }
 
-        AbstractAppendix(ByteBuffer buffer, byte transactionVersion) {
-            if (transactionVersion == 0) {
-                version = 0;
-            } else {
-                version = buffer.get();
-            }
+        AbstractAppendix(ByteBuffer buffer) {
+            version = buffer.get();
         }
 
         AbstractAppendix(int version) {
@@ -90,12 +85,12 @@ public interface Appendix {
 
         @Override
         public final int getSize() {
-            return getMySize() + (version > 0 ? 1 : 0);
+            return getMySize() + 1;
         }
 
         @Override
         public final int getFullSize() {
-            return getMyFullSize() + (version > 0 ? 1 : 0);
+            return getMyFullSize() + 1;
         }
 
         abstract int getMySize();
@@ -106,9 +101,7 @@ public interface Appendix {
 
         @Override
         public final void putBytes(ByteBuffer buffer) {
-            if (version > 0) {
-                buffer.put(version);
-            }
+            buffer.put(version);
             putMyBytes(buffer);
         }
 
@@ -129,13 +122,13 @@ public interface Appendix {
             return version;
         }
 
-        boolean verifyVersion(byte transactionVersion) {
-            return transactionVersion == 0 ? version == 0 : version > 0;
+        boolean verifyVersion() {
+            return version == 1;
         }
 
         @Override
         public int getBaselineFeeHeight() {
-            return 0;
+            return 1;
         }
 
         @Override
@@ -204,8 +197,8 @@ public interface Appendix {
         private final byte[] message;
         private final boolean isText;
 
-        Message(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        Message(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             int messageLength = buffer.getInt();
             this.isText = messageLength < 0; // ugly hack
             if (messageLength < 0) {
@@ -320,8 +313,8 @@ public interface Appendix {
         private final boolean isText;
         private volatile PrunableMessage prunableMessage;
 
-        PrunablePlainMessage(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        PrunablePlainMessage(ByteBuffer buffer) {
+            super(buffer);
             this.hash = new byte[32];
             buffer.get(this.hash);
             this.message = null;
@@ -483,8 +476,8 @@ public interface Appendix {
         private final boolean isText;
         private final boolean isCompressed;
 
-        private AbstractEncryptedMessage(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        private AbstractEncryptedMessage(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             int length = buffer.getInt();
             this.isText = length < 0;
             if (length < 0) {
@@ -553,6 +546,11 @@ public interface Appendix {
         }
 
         @Override
+        boolean verifyVersion() {
+            return getVersion() == 1 || getVersion() == 2;
+        }
+
+        @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {}
 
         public final EncryptedData getEncryptedData() {
@@ -610,8 +608,8 @@ public interface Appendix {
         private final boolean isCompressed;
         private volatile PrunableMessage prunableMessage;
 
-        PrunableEncryptedMessage(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        PrunableEncryptedMessage(ByteBuffer buffer) {
+            super(buffer);
             this.hash = new byte[32];
             buffer.get(this.hash);
             this.encryptedData = null;
@@ -885,8 +883,8 @@ public interface Appendix {
             return new EncryptedMessage(attachmentData);
         }
 
-        EncryptedMessage(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        EncryptedMessage(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
         }
 
         EncryptedMessage(JSONObject attachmentData) {
@@ -1007,8 +1005,8 @@ public interface Appendix {
             return new EncryptToSelfMessage(attachmentData);
         }
 
-        EncryptToSelfMessage(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        EncryptToSelfMessage(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
         }
 
         EncryptToSelfMessage(JSONObject attachmentData) {
@@ -1116,8 +1114,8 @@ public interface Appendix {
 
         private final byte[] publicKey;
 
-        PublicKeyAnnouncement(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        PublicKeyAnnouncement(ByteBuffer buffer) {
+            super(buffer);
             this.publicKey = new byte[32];
             buffer.get(this.publicKey);
         }
@@ -1225,8 +1223,8 @@ public interface Appendix {
         private final byte[] hashedSecret;
         private final byte algorithm;
 
-        Phasing(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        Phasing(ByteBuffer buffer) {
+            super(buffer);
             finishHeight = buffer.getInt();
             params = new PhasingParams(buffer);
             

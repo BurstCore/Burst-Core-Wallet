@@ -420,9 +420,7 @@ final class JSONData {
         }
         json.put("payloadHash", Convert.toHexString(block.getPayloadHash()));
         json.put("generationSignature", Convert.toHexString(block.getGenerationSignature()));
-        if (block.getVersion() > 1) {
-            json.put("previousBlockHash", Convert.toHexString(block.getPreviousBlockHash()));
-        }
+        json.put("previousBlockHash", Convert.toHexString(block.getPreviousBlockHash()));
         json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
         JSONArray transactions = new JSONArray();
         if (includeTransactions) {
@@ -954,10 +952,8 @@ final class JSONData {
         putAccount(json, "sender", transaction.getSenderId());
         json.put("height", transaction.getHeight());
         json.put("version", transaction.getVersion());
-        if (transaction.getVersion() > 0) {
-            json.put("ecBlockId", Long.toUnsignedString(transaction.getECBlockId()));
-            json.put("ecBlockHeight", transaction.getECBlockHeight());
-        }
+        json.put("ecBlockId", Long.toUnsignedString(transaction.getECBlockId()));
+        json.put("ecBlockHeight", transaction.getECBlockHeight());
 
         return json;
     }

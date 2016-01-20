@@ -132,8 +132,8 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemCurrencyIssuance parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            return new Attachment.MonetarySystemCurrencyIssuance(buffer, transactionVersion);
+        Attachment.MonetarySystemCurrencyIssuance parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new Attachment.MonetarySystemCurrencyIssuance(buffer);
         }
 
         @Override
@@ -228,8 +228,8 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemReserveIncrease parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            return new Attachment.MonetarySystemReserveIncrease(buffer, transactionVersion);
+        Attachment.MonetarySystemReserveIncrease parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new Attachment.MonetarySystemReserveIncrease(buffer);
         }
 
         @Override
@@ -306,8 +306,8 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemReserveClaim parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            return new Attachment.MonetarySystemReserveClaim(buffer, transactionVersion);
+        Attachment.MonetarySystemReserveClaim parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new Attachment.MonetarySystemReserveClaim(buffer);
         }
 
         @Override
@@ -377,8 +377,8 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemCurrencyTransfer parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            return new Attachment.MonetarySystemCurrencyTransfer(buffer, transactionVersion);
+        Attachment.MonetarySystemCurrencyTransfer parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new Attachment.MonetarySystemCurrencyTransfer(buffer);
         }
 
         @Override
@@ -456,8 +456,8 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemPublishExchangeOffer parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            return new Attachment.MonetarySystemPublishExchangeOffer(buffer, transactionVersion);
+        Attachment.MonetarySystemPublishExchangeOffer parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new Attachment.MonetarySystemPublishExchangeOffer(buffer);
         }
 
         @Override
@@ -580,8 +580,8 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemExchangeBuy parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            return new Attachment.MonetarySystemExchangeBuy(buffer, transactionVersion);
+        Attachment.MonetarySystemExchangeBuy parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new Attachment.MonetarySystemExchangeBuy(buffer);
         }
 
         @Override
@@ -635,8 +635,8 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemExchangeSell parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            return new Attachment.MonetarySystemExchangeSell(buffer, transactionVersion);
+        Attachment.MonetarySystemExchangeSell parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new Attachment.MonetarySystemExchangeSell(buffer);
         }
 
         @Override
@@ -692,8 +692,8 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemCurrencyMinting parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            return new Attachment.MonetarySystemCurrencyMinting(buffer, transactionVersion);
+        Attachment.MonetarySystemCurrencyMinting parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new Attachment.MonetarySystemCurrencyMinting(buffer);
         }
 
         @Override
@@ -777,8 +777,8 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemCurrencyDeletion parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            return new Attachment.MonetarySystemCurrencyDeletion(buffer, transactionVersion);
+        Attachment.MonetarySystemCurrencyDeletion parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new Attachment.MonetarySystemCurrencyDeletion(buffer);
         }
 
         @Override

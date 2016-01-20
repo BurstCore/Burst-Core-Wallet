@@ -35,8 +35,8 @@ public interface Attachment extends Appendix {
 
     abstract class AbstractAttachment extends Appendix.AbstractAppendix implements Attachment {
 
-        private AbstractAttachment(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        private AbstractAttachment(ByteBuffer buffer) {
+            super(buffer);
         }
 
         private AbstractAttachment(JSONObject attachmentData) {
@@ -114,11 +114,6 @@ public interface Attachment extends Appendix {
         final void putMyJSON(JSONObject json) {
         }
 
-        @Override
-        final boolean verifyVersion(byte transactionVersion) {
-            return true;
-        }
-
     }
 
     EmptyAttachment ORDINARY_PAYMENT = new EmptyAttachment() {
@@ -145,8 +140,8 @@ public interface Attachment extends Appendix {
         private final String aliasName;
         private final String aliasURI;
 
-        MessagingAliasAssignment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        MessagingAliasAssignment(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH).trim();
             aliasURI = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ALIAS_URI_LENGTH).trim();
         }
@@ -202,8 +197,8 @@ public interface Attachment extends Appendix {
         private final String aliasName;
         private final long priceNQT;
 
-        MessagingAliasSell(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        MessagingAliasSell(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
             this.priceNQT = buffer.getLong();
         }
@@ -256,8 +251,8 @@ public interface Attachment extends Appendix {
 
         private final String aliasName;
 
-        MessagingAliasBuy(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        MessagingAliasBuy(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
         }
 
@@ -301,8 +296,8 @@ public interface Attachment extends Appendix {
 
         private final String aliasName;
 
-        MessagingAliasDelete(final ByteBuffer buffer, final byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        MessagingAliasDelete(final ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
         }
 
@@ -409,8 +404,8 @@ public interface Attachment extends Appendix {
         private final byte maxRangeValue;
         private final VoteWeighting voteWeighting;
 
-        MessagingPollCreation(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        MessagingPollCreation(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             this.pollName = Convert.readString(buffer, buffer.getShort(), Constants.MAX_POLL_NAME_LENGTH);
             this.pollDescription = Convert.readString(buffer, buffer.getShort(), Constants.MAX_POLL_DESCRIPTION_LENGTH);
 
@@ -593,8 +588,8 @@ public interface Attachment extends Appendix {
         private final long pollId;
         private final byte[] pollVote;
 
-        public MessagingVoteCasting(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        public MessagingVoteCasting(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             pollId = buffer.getLong();
             int numberOfOptions = buffer.get();
             if (numberOfOptions > Constants.MAX_POLL_OPTION_COUNT) {
@@ -662,8 +657,8 @@ public interface Attachment extends Appendix {
         private final List<byte[]> transactionFullHashes;
         private final byte[] revealedSecret;
 
-        MessagingPhasingVoteCasting(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        MessagingPhasingVoteCasting(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             byte length = buffer.get();
             transactionFullHashes = new ArrayList<>(length);
             for (int i = 0; i < length; i++) {
@@ -739,8 +734,8 @@ public interface Attachment extends Appendix {
         private final String name;
         private final String description;
 
-        MessagingAccountInfo(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        MessagingAccountInfo(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_ACCOUNT_NAME_LENGTH);
             this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ACCOUNT_DESCRIPTION_LENGTH);
         }
@@ -797,8 +792,8 @@ public interface Attachment extends Appendix {
         private final String property;
         private final String value;
 
-        MessagingAccountProperty(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        MessagingAccountProperty(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             this.property = Convert.readString(buffer, buffer.get(), Constants.MAX_ACCOUNT_PROPERTY_NAME_LENGTH).trim();
             this.value = Convert.readString(buffer, buffer.get(), Constants.MAX_ACCOUNT_PROPERTY_VALUE_LENGTH).trim();
         }
@@ -854,8 +849,8 @@ public interface Attachment extends Appendix {
 
         private final long propertyId;
 
-        MessagingAccountPropertyDelete(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        MessagingAccountPropertyDelete(ByteBuffer buffer) {
+            super(buffer);
             this.propertyId = buffer.getLong();
         }
 
@@ -901,8 +896,8 @@ public interface Attachment extends Appendix {
         private final long quantityQNT;
         private final byte decimals;
 
-        ColoredCoinsAssetIssuance(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        ColoredCoinsAssetIssuance(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_ASSET_NAME_LENGTH);
             this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ASSET_DESCRIPTION_LENGTH);
             this.quantityQNT = buffer.getLong();
@@ -975,51 +970,39 @@ public interface Attachment extends Appendix {
 
         private final long assetId;
         private final long quantityQNT;
-        private final String comment;
 
-        ColoredCoinsAssetTransfer(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        ColoredCoinsAssetTransfer(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             this.assetId = buffer.getLong();
             this.quantityQNT = buffer.getLong();
-            this.comment = getVersion() == 0 ? Convert.readString(buffer, buffer.getShort(), Constants.MAX_ASSET_TRANSFER_COMMENT_LENGTH) : null;
         }
 
         ColoredCoinsAssetTransfer(JSONObject attachmentData) {
             super(attachmentData);
             this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
             this.quantityQNT = Convert.parseLong(attachmentData.get("quantityQNT"));
-            this.comment = getVersion() == 0 ? Convert.nullToEmpty((String) attachmentData.get("comment")) : null;
         }
 
         public ColoredCoinsAssetTransfer(long assetId, long quantityQNT) {
             this.assetId = assetId;
             this.quantityQNT = quantityQNT;
-            this.comment = null;
         }
 
         @Override
         int getMySize() {
-            return 8 + 8 + (getVersion() == 0 ? (2 + Convert.toBytes(comment).length) : 0);
+            return 8 + 8;
         }
 
         @Override
         void putMyBytes(ByteBuffer buffer) {
             buffer.putLong(assetId);
             buffer.putLong(quantityQNT);
-            if (getVersion() == 0 && comment != null) {
-                byte[] commentBytes = Convert.toBytes(this.comment);
-                buffer.putShort((short) commentBytes.length);
-                buffer.put(commentBytes);
-            }
         }
 
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("asset", Long.toUnsignedString(assetId));
             attachment.put("quantityQNT", quantityQNT);
-            if (getVersion() == 0) {
-                attachment.put("comment", comment);
-            }
         }
 
         @Override
@@ -1035,10 +1018,6 @@ public interface Attachment extends Appendix {
             return quantityQNT;
         }
 
-        public String getComment() {
-            return comment;
-        }
-
     }
 
     final class ColoredCoinsAssetDelete extends AbstractAttachment {
@@ -1046,8 +1025,8 @@ public interface Attachment extends Appendix {
         private final long assetId;
         private final long quantityQNT;
 
-        ColoredCoinsAssetDelete(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        ColoredCoinsAssetDelete(ByteBuffer buffer) {
+            super(buffer);
             this.assetId = buffer.getLong();
             this.quantityQNT = buffer.getLong();
         }
@@ -1101,8 +1080,8 @@ public interface Attachment extends Appendix {
         private final long quantityQNT;
         private final long priceNQT;
 
-        private ColoredCoinsOrderPlacement(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        private ColoredCoinsOrderPlacement(ByteBuffer buffer) {
+            super(buffer);
             this.assetId = buffer.getLong();
             this.quantityQNT = buffer.getLong();
             this.priceNQT = buffer.getLong();
@@ -1155,8 +1134,8 @@ public interface Attachment extends Appendix {
 
     final class ColoredCoinsAskOrderPlacement extends ColoredCoinsOrderPlacement {
 
-        ColoredCoinsAskOrderPlacement(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        ColoredCoinsAskOrderPlacement(ByteBuffer buffer) {
+            super(buffer);
         }
 
         ColoredCoinsAskOrderPlacement(JSONObject attachmentData) {
@@ -1176,8 +1155,8 @@ public interface Attachment extends Appendix {
 
     final class ColoredCoinsBidOrderPlacement extends ColoredCoinsOrderPlacement {
 
-        ColoredCoinsBidOrderPlacement(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        ColoredCoinsBidOrderPlacement(ByteBuffer buffer) {
+            super(buffer);
         }
 
         ColoredCoinsBidOrderPlacement(JSONObject attachmentData) {
@@ -1199,8 +1178,8 @@ public interface Attachment extends Appendix {
 
         private final long orderId;
 
-        private ColoredCoinsOrderCancellation(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        private ColoredCoinsOrderCancellation(ByteBuffer buffer) {
+            super(buffer);
             this.orderId = buffer.getLong();
         }
 
@@ -1235,8 +1214,8 @@ public interface Attachment extends Appendix {
 
     final class ColoredCoinsAskOrderCancellation extends ColoredCoinsOrderCancellation {
 
-        ColoredCoinsAskOrderCancellation(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        ColoredCoinsAskOrderCancellation(ByteBuffer buffer) {
+            super(buffer);
         }
 
         ColoredCoinsAskOrderCancellation(JSONObject attachmentData) {
@@ -1256,8 +1235,8 @@ public interface Attachment extends Appendix {
 
     final class ColoredCoinsBidOrderCancellation extends ColoredCoinsOrderCancellation {
 
-        ColoredCoinsBidOrderCancellation(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        ColoredCoinsBidOrderCancellation(ByteBuffer buffer) {
+            super(buffer);
         }
 
         ColoredCoinsBidOrderCancellation(JSONObject attachmentData) {
@@ -1281,8 +1260,8 @@ public interface Attachment extends Appendix {
         private final int height;
         private final long amountNQTPerQNT;
 
-        ColoredCoinsDividendPayment(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        ColoredCoinsDividendPayment(ByteBuffer buffer) {
+            super(buffer);
             this.assetId = buffer.getLong();
             this.height = buffer.getInt();
             this.amountNQTPerQNT = buffer.getLong();
@@ -1347,8 +1326,8 @@ public interface Attachment extends Appendix {
         private final int quantity;
         private final long priceNQT;
 
-        DigitalGoodsListing(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        DigitalGoodsListing(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             this.name = Convert.readString(buffer, buffer.getShort(), Constants.MAX_DGS_LISTING_NAME_LENGTH);
             this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH);
             this.tags = Convert.readString(buffer, buffer.getShort(), Constants.MAX_DGS_LISTING_TAGS_LENGTH);
@@ -1424,8 +1403,8 @@ public interface Attachment extends Appendix {
 
         private final long goodsId;
 
-        DigitalGoodsDelisting(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        DigitalGoodsDelisting(ByteBuffer buffer) {
+            super(buffer);
             this.goodsId = buffer.getLong();
         }
 
@@ -1467,8 +1446,8 @@ public interface Attachment extends Appendix {
         private final long goodsId;
         private final long priceNQT;
 
-        DigitalGoodsPriceChange(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        DigitalGoodsPriceChange(ByteBuffer buffer) {
+            super(buffer);
             this.goodsId = buffer.getLong();
             this.priceNQT = buffer.getLong();
         }
@@ -1517,8 +1496,8 @@ public interface Attachment extends Appendix {
         private final long goodsId;
         private final int deltaQuantity;
 
-        DigitalGoodsQuantityChange(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        DigitalGoodsQuantityChange(ByteBuffer buffer) {
+            super(buffer);
             this.goodsId = buffer.getLong();
             this.deltaQuantity = buffer.getInt();
         }
@@ -1569,8 +1548,8 @@ public interface Attachment extends Appendix {
         private final long priceNQT;
         private final int deliveryDeadlineTimestamp;
 
-        DigitalGoodsPurchase(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        DigitalGoodsPurchase(ByteBuffer buffer) {
+            super(buffer);
             this.goodsId = buffer.getLong();
             this.quantity = buffer.getInt();
             this.priceNQT = buffer.getLong();
@@ -1635,8 +1614,8 @@ public interface Attachment extends Appendix {
         private final long discountNQT;
         private final boolean goodsIsText;
 
-        DigitalGoodsDelivery(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        DigitalGoodsDelivery(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             this.purchaseId = buffer.getLong();
             int length = buffer.getInt();
             goodsIsText = length < 0;
@@ -1786,8 +1765,8 @@ public interface Attachment extends Appendix {
 
         private final long purchaseId;
 
-        DigitalGoodsFeedback(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        DigitalGoodsFeedback(ByteBuffer buffer) {
+            super(buffer);
             this.purchaseId = buffer.getLong();
         }
 
@@ -1829,8 +1808,8 @@ public interface Attachment extends Appendix {
         private final long purchaseId;
         private final long refundNQT;
 
-        DigitalGoodsRefund(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        DigitalGoodsRefund(ByteBuffer buffer) {
+            super(buffer);
             this.purchaseId = buffer.getLong();
             this.refundNQT = buffer.getLong();
         }
@@ -1878,8 +1857,8 @@ public interface Attachment extends Appendix {
 
         private final int period;
 
-        AccountControlEffectiveBalanceLeasing(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        AccountControlEffectiveBalanceLeasing(ByteBuffer buffer) {
+            super(buffer);
             this.period = Short.toUnsignedInt(buffer.getShort());
         }
 
@@ -1940,8 +1919,8 @@ public interface Attachment extends Appendix {
         private final byte algorithm;
         private final byte decimals;
 
-        MonetarySystemCurrencyIssuance(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        MonetarySystemCurrencyIssuance(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_CURRENCY_NAME_LENGTH);
             this.code = Convert.readString(buffer, buffer.get(), Constants.MAX_CURRENCY_CODE_LENGTH);
             this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_CURRENCY_DESCRIPTION_LENGTH);
@@ -2110,8 +2089,8 @@ public interface Attachment extends Appendix {
         private final long currencyId;
         private final long amountPerUnitNQT;
 
-        MonetarySystemReserveIncrease(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        MonetarySystemReserveIncrease(ByteBuffer buffer) {
+            super(buffer);
             this.currencyId = buffer.getLong();
             this.amountPerUnitNQT = buffer.getLong();
         }
@@ -2165,8 +2144,8 @@ public interface Attachment extends Appendix {
         private final long currencyId;
         private final long units;
 
-        MonetarySystemReserveClaim(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        MonetarySystemReserveClaim(ByteBuffer buffer) {
+            super(buffer);
             this.currencyId = buffer.getLong();
             this.units = buffer.getLong();
         }
@@ -2220,8 +2199,8 @@ public interface Attachment extends Appendix {
         private final long currencyId;
         private final long units;
 
-        MonetarySystemCurrencyTransfer(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        MonetarySystemCurrencyTransfer(ByteBuffer buffer) {
+            super(buffer);
             this.currencyId = buffer.getLong();
             this.units = buffer.getLong();
         }
@@ -2280,8 +2259,8 @@ public interface Attachment extends Appendix {
         private final long initialSellSupply;
         private final int expirationHeight;
 
-        MonetarySystemPublishExchangeOffer(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        MonetarySystemPublishExchangeOffer(ByteBuffer buffer) {
+            super(buffer);
             this.currencyId = buffer.getLong();
             this.buyRateNQT = buffer.getLong();
             this.sellRateNQT = buffer.getLong();
@@ -2391,8 +2370,8 @@ public interface Attachment extends Appendix {
         private final long rateNQT;
         private final long units;
 
-        private MonetarySystemExchange(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        private MonetarySystemExchange(ByteBuffer buffer) {
+            super(buffer);
             this.currencyId = buffer.getLong();
             this.rateNQT = buffer.getLong();
             this.units = buffer.getLong();
@@ -2447,8 +2426,8 @@ public interface Attachment extends Appendix {
 
     final class MonetarySystemExchangeBuy extends MonetarySystemExchange {
 
-        MonetarySystemExchangeBuy(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        MonetarySystemExchangeBuy(ByteBuffer buffer) {
+            super(buffer);
         }
 
         MonetarySystemExchangeBuy(JSONObject attachmentData) {
@@ -2468,8 +2447,8 @@ public interface Attachment extends Appendix {
 
     final class MonetarySystemExchangeSell extends MonetarySystemExchange {
 
-        MonetarySystemExchangeSell(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        MonetarySystemExchangeSell(ByteBuffer buffer) {
+            super(buffer);
         }
 
         MonetarySystemExchangeSell(JSONObject attachmentData) {
@@ -2494,8 +2473,8 @@ public interface Attachment extends Appendix {
         private final long units;
         private final long counter;
 
-        MonetarySystemCurrencyMinting(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        MonetarySystemCurrencyMinting(ByteBuffer buffer) {
+            super(buffer);
             this.nonce = buffer.getLong();
             this.currencyId = buffer.getLong();
             this.units = buffer.getLong();
@@ -2566,8 +2545,8 @@ public interface Attachment extends Appendix {
 
         private final long currencyId;
 
-        MonetarySystemCurrencyDeletion(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        MonetarySystemCurrencyDeletion(ByteBuffer buffer) {
+            super(buffer);
             this.currencyId = buffer.getLong();
         }
 
@@ -2614,8 +2593,8 @@ public interface Attachment extends Appendix {
         private final byte participantCount;
         private final short registrationPeriod;
 
-        ShufflingCreation(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        ShufflingCreation(ByteBuffer buffer) {
+            super(buffer);
             this.holdingId = buffer.getLong();
             this.holdingType = HoldingType.get(buffer.get());
             this.amount = buffer.getLong();
@@ -2702,8 +2681,8 @@ public interface Attachment extends Appendix {
         private final long shufflingId;
         private final byte[] shufflingStateHash;
 
-        private AbstractShufflingAttachment(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        private AbstractShufflingAttachment(ByteBuffer buffer) {
+            super(buffer);
             this.shufflingId = buffer.getLong();
             this.shufflingStateHash = new byte[32];
             buffer.get(this.shufflingStateHash);
@@ -2753,8 +2732,8 @@ public interface Attachment extends Appendix {
 
         private final byte[] shufflingFullHash;
 
-        ShufflingRegistration(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        ShufflingRegistration(ByteBuffer buffer) {
+            super(buffer);
             this.shufflingFullHash = new byte[32];
             buffer.get(this.shufflingFullHash);
         }
@@ -2814,8 +2793,8 @@ public interface Attachment extends Appendix {
         private volatile byte[][] data;
         private final byte[] hash;
 
-        ShufflingProcessing(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        ShufflingProcessing(ByteBuffer buffer) {
+            super(buffer);
             this.hash = new byte[32];
             buffer.get(hash);
             this.data = Arrays.equals(hash, emptyDataHash) ? Convert.EMPTY_BYTES : null;
@@ -2926,8 +2905,8 @@ public interface Attachment extends Appendix {
 
         private final byte[][] recipientPublicKeys;
 
-        ShufflingRecipients(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        ShufflingRecipients(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             int count = buffer.get();
             if (count > Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS || count < 0) {
                 throw new NxtException.NotValidException("Invalid data count " + count);
@@ -2993,8 +2972,8 @@ public interface Attachment extends Appendix {
 
     final class ShufflingVerification extends AbstractShufflingAttachment {
 
-        ShufflingVerification(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        ShufflingVerification(ByteBuffer buffer) {
+            super(buffer);
         }
 
         ShufflingVerification(JSONObject attachmentData) {
@@ -3018,8 +2997,8 @@ public interface Attachment extends Appendix {
         private final byte[][] keySeeds;
         private final long cancellingAccountId;
 
-        ShufflingCancellation(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
-            super(buffer, transactionVersion);
+        ShufflingCancellation(ByteBuffer buffer) throws NxtException.NotValidException {
+            super(buffer);
             int count = buffer.get();
             if (count > Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS || count <= 0) {
                 throw new NxtException.NotValidException("Invalid data count " + count);
@@ -3153,8 +3132,8 @@ public interface Attachment extends Appendix {
         private final byte[] data;
         private volatile TaggedData taggedData;
 
-        private TaggedDataAttachment(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        private TaggedDataAttachment(ByteBuffer buffer) {
+            super(buffer);
             this.name = null;
             this.description = null;
             this.tags = null;
@@ -3333,8 +3312,8 @@ public interface Attachment extends Appendix {
 
         private final byte[] hash;
 
-        TaggedDataUpload(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        TaggedDataUpload(ByteBuffer buffer) {
+            super(buffer);
             this.hash = new byte[32];
             buffer.get(hash);
         }
@@ -3412,8 +3391,8 @@ public interface Attachment extends Appendix {
         private final long taggedDataId;
         private final boolean jsonIsPruned;
 
-        TaggedDataExtend(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        TaggedDataExtend(ByteBuffer buffer) {
+            super(buffer);
             this.taggedDataId = buffer.getLong();
             this.jsonIsPruned = false;
         }
@@ -3497,8 +3476,8 @@ public interface Attachment extends Appendix {
             this.maxDuration = maxDuration;
         }
 
-        SetPhasingOnly(ByteBuffer buffer, byte transactionVersion) {
-            super(buffer, transactionVersion);
+        SetPhasingOnly(ByteBuffer buffer) {
+            super(buffer);
             phasingParams = new PhasingParams(buffer);
             maxFees = buffer.getLong();
             minDuration = buffer.getShort();

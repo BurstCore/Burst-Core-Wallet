@@ -194,7 +194,7 @@ final class TransactionDb {
 
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, null,
-                    amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer, version))
+                    amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer))
                     .timestamp(timestamp)
                     .referencedTransactionFullHash(referencedTransactionFullHash)
                     .signature(signature)
@@ -214,25 +214,25 @@ final class TransactionDb {
                 }
             }
             if (rs.getBoolean("has_message")) {
-                builder.appendix(new Appendix.Message(buffer, version));
+                builder.appendix(new Appendix.Message(buffer));
             }
             if (rs.getBoolean("has_encrypted_message")) {
-                builder.appendix(new Appendix.EncryptedMessage(buffer, version));
+                builder.appendix(new Appendix.EncryptedMessage(buffer));
             }
             if (rs.getBoolean("has_public_key_announcement")) {
-                builder.appendix(new Appendix.PublicKeyAnnouncement(buffer, version));
+                builder.appendix(new Appendix.PublicKeyAnnouncement(buffer));
             }
             if (rs.getBoolean("has_encrypttoself_message")) {
-                builder.appendix(new Appendix.EncryptToSelfMessage(buffer, version));
+                builder.appendix(new Appendix.EncryptToSelfMessage(buffer));
             }
             if (rs.getBoolean("phased")) {
-                builder.appendix(new Appendix.Phasing(buffer, version));
+                builder.appendix(new Appendix.Phasing(buffer));
             }
             if (rs.getBoolean("has_prunable_message")) {
-                builder.appendix(new Appendix.PrunablePlainMessage(buffer, version));
+                builder.appendix(new Appendix.PrunablePlainMessage(buffer));
             }
             if (rs.getBoolean("has_prunable_encrypted_message")) {
-                builder.appendix(new Appendix.PrunableEncryptedMessage(buffer, version));
+                builder.appendix(new Appendix.PrunableEncryptedMessage(buffer));
             }
 
             return builder.build();
