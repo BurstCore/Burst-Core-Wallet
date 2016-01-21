@@ -114,6 +114,11 @@ public interface Attachment extends Appendix {
         final void putMyJSON(JSONObject json) {
         }
 
+        @Override
+        final boolean verifyVersion() {
+            return getVersion() == 0;
+        }
+
     }
 
     EmptyAttachment ORDINARY_PAYMENT = new EmptyAttachment() {

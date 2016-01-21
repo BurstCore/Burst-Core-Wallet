@@ -85,12 +85,12 @@ public interface Appendix {
 
         @Override
         public final int getSize() {
-            return getMySize() + 1;
+            return getMySize() + (version > 0 ? 1 : 0);
         }
 
         @Override
         public final int getFullSize() {
-            return getMyFullSize() + 1;
+            return getMyFullSize() + (version > 0 ? 1 : 0);
         }
 
         abstract int getMySize();
@@ -101,7 +101,9 @@ public interface Appendix {
 
         @Override
         public final void putBytes(ByteBuffer buffer) {
-            buffer.put(version);
+            if (version > 0) {
+                buffer.put(version);
+            }
             putMyBytes(buffer);
         }
 
