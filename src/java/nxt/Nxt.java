@@ -22,7 +22,6 @@ import nxt.env.RuntimeEnvironment;
 import nxt.env.RuntimeMode;
 import nxt.http.API;
 import nxt.peer.Peers;
-import nxt.user.Users;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import nxt.util.ThreadPool;
@@ -298,7 +297,6 @@ public final class Nxt {
     public static void shutdown() {
         Logger.logShutdownMessage("Shutting down...");
         API.shutdown();
-        Users.shutdown();
         ThreadPool.shutdown();
         Peers.shutdown();
         Db.shutdown();
@@ -353,7 +351,6 @@ public final class Nxt {
                 Peers.init();
                 Generator.init();
                 API.init();
-                Users.init();
                 DebugTrace.init();
                 int timeMultiplier = (Constants.isTestnet && Constants.isOffline) ? Math.max(Nxt.getIntProperty("nxt.timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
