@@ -1475,10 +1475,7 @@ public abstract class TransactionType {
 
             @Override
             boolean isBlockDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
-                if (isSingletonIssuance(transaction)) {
-                    return false;
-                }
-                return isDuplicate(ColoredCoins.ASSET_ISSUANCE, getName(), duplicates, true);
+                return !isSingletonIssuance(transaction) && isDuplicate(ColoredCoins.ASSET_ISSUANCE, getName(), duplicates, true);
             }
 
             @Override
@@ -2751,7 +2748,7 @@ public abstract class TransactionType {
                 }
                 byte[] recipientPublicKey = Account.getPublicKey(transaction.getRecipientId());
                 if (recipientPublicKey == null) {
-                    throw new NxtException.NotCurrentlyValidException("Invalid effective balance leasing: "
+                    throw new NxtException.NotValidException("Invalid effective balance leasing: "
                             + " recipient account " + Long.toUnsignedString(transaction.getRecipientId()) + " not found or no public key published");
                 }
                 if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
