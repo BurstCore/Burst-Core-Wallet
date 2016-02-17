@@ -1588,10 +1588,9 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         if (block.getHeight() == 0) {
             throw new RuntimeException("Cannot pop off genesis block");
         }
-        BlockImpl previousBlock = blockchain.getBlock(block.getPreviousBlockId());
+        BlockImpl previousBlock = BlockDb.deleteBlocksFrom(block.getId());
         previousBlock.loadTransactions();
         blockchain.setLastBlock(previousBlock);
-        BlockDb.deleteBlocksFrom(block.getId());
         blockListeners.notify(block, Event.BLOCK_POPPED);
         return previousBlock;
     }
@@ -1601,7 +1600,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             try {
                 scheduleScan(0, false);
-                BlockDb.deleteBlocksFrom(BlockDb.findBlockIdAtHeight(height));
+                BlockImpl lastBLock = BlockDb.deleteBlocksFrom(BlockDb.findBlockIdAtHeight(height));
+                blockchain.setLastBlock(lastBLock);
                 Logger.logDebugMessage("Deleted blocks starting from height %s", height);
             } finally {
                 scan(0, false);
@@ -1931,8 +1931,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                                     break;
                                 }
                             }
-                            BlockDb.deleteBlocksFrom(currentBlockId);
-                            BlockImpl lastBlock = BlockDb.findLastBlock();
+                            BlockImpl lastBlock = BlockDb.deleteBlocksFrom(currentBlockId);
                             blockchain.setLastBlock(lastBlock);
                             popOffTo(lastBlock);
                             break;

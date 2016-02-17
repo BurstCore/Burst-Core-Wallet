@@ -25,10 +25,10 @@ class NxtDbVersion extends DbVersion {
             case 1:
                 apply("CREATE TABLE IF NOT EXISTS block (db_id IDENTITY, id BIGINT NOT NULL, version INT NOT NULL, "
                         + "timestamp INT NOT NULL, previous_block_id BIGINT, "
-                        + "FOREIGN KEY (previous_block_id) REFERENCES block (id) ON DELETE CASCADE, total_amount BIGINT NOT NULL, "
+                        + "total_amount BIGINT NOT NULL, "
                         + "total_fee BIGINT NOT NULL, payload_length INT NOT NULL, "
                         + "previous_block_hash BINARY(32), cumulative_difficulty VARBINARY NOT NULL, base_target BIGINT NOT NULL, "
-                        + "next_block_id BIGINT, FOREIGN KEY (next_block_id) REFERENCES block (id) ON DELETE SET NULL, "
+                        + "next_block_id BIGINT, "
                         + "height INT NOT NULL, generation_signature BINARY(64) NOT NULL, "
                         + "block_signature BINARY(64) NOT NULL, payload_hash BINARY(32) NOT NULL, generator_id BIGINT NOT NULL)");
             case 2:

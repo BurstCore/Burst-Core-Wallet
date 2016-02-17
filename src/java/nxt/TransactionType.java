@@ -2004,14 +2004,6 @@ public abstract class TransactionType {
             @Override
             void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
                 Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment)transaction.getAttachment();
-                Asset asset = Asset.getAsset(attachment.getAssetId(), attachment.getHeight());
-                if (asset == null) {
-                    throw new NxtException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId())
-                            + " for dividend payment doesn't exist yet");
-                }
-                if (asset.getAccountId() != transaction.getSenderId() || attachment.getAmountNQTPerQNT() <= 0) {
-                    throw new NxtException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
-                }
                 if (attachment.getHeight() > Nxt.getBlockchain().getHeight()) {
                     throw new NxtException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight()
                             + ", must not exceed current blockchain height " + Nxt.getBlockchain().getHeight());
@@ -2020,6 +2012,14 @@ public abstract class TransactionType {
                     throw new NxtException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight()
                             + ", must be less than " + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK
                             + " blocks before " + attachment.getFinishValidationHeight(transaction));
+                }
+                Asset asset = Asset.getAsset(attachment.getAssetId(), attachment.getHeight());
+                if (asset == null) {
+                    throw new NxtException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId())
+                            + " for dividend payment doesn't exist yet");
+                }
+                if (asset.getAccountId() != transaction.getSenderId() || attachment.getAmountNQTPerQNT() <= 0) {
+                    throw new NxtException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
                 }
             }
 
