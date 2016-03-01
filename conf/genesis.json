@@ -1,0 +1,18 @@
+{
+  "genesisSecretPhrase": "qwerty",
+  "genesisRecipientPublicKeys": [
+    "34a7ca8bbded4e3f24c60ecb655f9235ac1b12d97aea698c554df8bf1d950f2d",
+    "b49f0c127818d83f1f712db6a7ffef49bff936211f49522a0f4fea01bd38d018",
+    "302126c9a930a4aa6e4a9bcec221d978ba07d274e6cf7b0ee3073f1f5b7b9250",
+    "30f36073f08c9cfeb826ef13f6ff24812eceb0b2f154c6c152f32ee916702e0c"
+  ],
+  "genesisAmounts": [
+    400000000,
+    300000000,
+    200000000,
+    100000000
+  ]
+}
+
+
+

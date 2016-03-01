@@ -18,23 +18,38 @@ package nxt;
 
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
 
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 public final class Genesis {
 
-    public static final String CREATOR_SECRET_PHRASE = Nxt.getStringProperty("nxt.genesisSecretPhrase");
+    private static final JSONObject genesisParameters;
+    static {
+        try (InputStream is = ClassLoader.getSystemResourceAsStream("genesis.json")) {
+            genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
+        } catch (IOException|ParseException e) {
+            throw new RuntimeException("Failed to load genesis parameters", e);
+        }
+    }
+
+    public static final String CREATOR_SECRET_PHRASE = (String)genesisParameters.get("genesisSecretPhrase");
     public static final byte[] CREATOR_PUBLIC_KEY = Crypto.getPublicKey(CREATOR_SECRET_PHRASE);
     public static final long CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
 
     public static final long[] GENESIS_RECIPIENTS;
     public static final byte[][] GENESIS_PUBLIC_KEYS;
     static {
-        List<String> recipientPublicKeys = Nxt.getStringListProperty("nxt.genesisRecipientPublicKeys");
+        JSONArray recipientPublicKeys = (JSONArray)genesisParameters.get("genesisRecipientPublicKeys");
         GENESIS_RECIPIENTS = new long[recipientPublicKeys.size()];
         GENESIS_PUBLIC_KEYS = new byte[GENESIS_RECIPIENTS.length][];
         for (int i = 0; i < GENESIS_RECIPIENTS.length; i++) {
-            GENESIS_PUBLIC_KEYS[i] = Convert.parseHexString(recipientPublicKeys.get(i));
+            GENESIS_PUBLIC_KEYS[i] = Convert.parseHexString((String)recipientPublicKeys.get(i));
             if (!Crypto.isCanonicalPublicKey(GENESIS_PUBLIC_KEYS[i])) {
                 throw new RuntimeException("Invalid genesis recipient public key " + recipientPublicKeys.get(i));
             }
@@ -47,11 +62,14 @@ public final class Genesis {
 
     public static final int[] GENESIS_AMOUNTS;
     static {
-        List<String> amounts = Nxt.getStringListProperty("nxt.genesisAmounts");
+        JSONArray amounts = (JSONArray)genesisParameters.get("genesisAmounts");
+        if (amounts.size() != GENESIS_RECIPIENTS.length) {
+            throw new RuntimeException("Number of genesis amounts does not match number of genesis recipients");
+        }
         GENESIS_AMOUNTS = new int[amounts.size()];
         long total = 0;
         for (int i = 0; i < GENESIS_AMOUNTS.length; i++) {
-            GENESIS_AMOUNTS[i] = Integer.parseInt(amounts.get(i));
+            GENESIS_AMOUNTS[i] = ((Long)amounts.get(i)).intValue();
             if (GENESIS_AMOUNTS[i] <= 0) {
                 throw new RuntimeException("Invalid genesis recipient amount " + amounts.get(i));
             }
