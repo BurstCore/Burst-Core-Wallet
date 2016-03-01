@@ -1227,6 +1227,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         .height(0)
                         .ecBlockHeight(0)
                         .ecBlockId(0)
+                        .appendix(new Appendix.PublicKeyAnnouncement(Genesis.GENESIS_PUBLIC_KEYS[i]))
                         .build(Genesis.CREATOR_SECRET_PHRASE);
                 transactions.add(transaction);
             }
@@ -1235,7 +1236,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             for (TransactionImpl transaction : transactions) {
                 digest.update(transaction.bytes());
             }
-            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 128, digest.digest(),
+            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
                     Genesis.CREATOR_PUBLIC_KEY, new byte[32], new byte[32], transactions, Genesis.CREATOR_SECRET_PHRASE);
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
