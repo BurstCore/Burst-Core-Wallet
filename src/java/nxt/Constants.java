@@ -16,9 +16,6 @@
 
 package nxt;
 
-import java.util.Calendar;
-import java.util.TimeZone;
-
 public final class Constants {
 
     public static final boolean isTestnet = Nxt.getBooleanProperty("nxt.isTestnet");
@@ -133,19 +130,6 @@ public final class Constants {
     public static final long SHUFFLING_DEPOSIT_NQT = (isTestnet ? 7 : 1000) * ONE_NXT;
 
     public static final boolean correctInvalidFees = Nxt.getBooleanProperty("nxt.correctInvalidFees");
-
-    public static final long EPOCH_BEGINNING;
-    static {
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        calendar.set(Calendar.YEAR, 2016);
-        calendar.set(Calendar.MONTH, Calendar.JANUARY);
-        calendar.set(Calendar.DAY_OF_MONTH, 20);
-        calendar.set(Calendar.HOUR_OF_DAY, 12);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        EPOCH_BEGINNING = calendar.getTimeInMillis();
-    }
 
     public static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
     public static final String ALLOWED_CURRENCY_CODE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

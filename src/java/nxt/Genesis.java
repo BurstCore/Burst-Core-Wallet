@@ -26,6 +26,8 @@ import org.json.simple.parser.ParseException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -83,6 +85,16 @@ public final class Genesis {
             throw new RuntimeException("Genesis amount total is " + total + ", must be " + Constants.MAX_BALANCE_NXT);
         }
         GENESIS_AMOUNTS = Collections.unmodifiableMap(map);
+    }
+
+    public static final long EPOCH_BEGINNING;
+    static {
+        try {
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+            EPOCH_BEGINNING = dateFormat.parse((String) genesisParameters.get("epochBeginning")).getTime();
+        } catch (java.text.ParseException e) {
+            throw new RuntimeException("Invalid epoch beginning " + genesisParameters.get("epochBeginning"));
+        }
     }
 
     private Genesis() {} // never
