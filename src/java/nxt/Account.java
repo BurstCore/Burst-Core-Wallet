@@ -1184,11 +1184,8 @@ public final class Account {
 
     public long getEffectiveBalanceNXT(int height) {
         if (height < 1440) {
-            int index = Arrays.binarySearch(Genesis.GENESIS_RECIPIENTS, id);
-            if (index < 0) {
-                return 0;
-            }
-            return Genesis.GENESIS_AMOUNTS[index];
+            Integer amount = Genesis.GENESIS_AMOUNTS.get(id);
+            return amount == null ? 0 : amount;
         }
         if (this.publicKey == null) {
             this.publicKey = publicKeyTable.get(accountDbKeyFactory.newKey(this));

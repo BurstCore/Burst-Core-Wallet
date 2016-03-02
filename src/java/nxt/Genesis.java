@@ -26,6 +26,9 @@ import org.json.simple.parser.ParseException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class Genesis {
 
@@ -60,24 +63,26 @@ public final class Genesis {
         }
     }
 
-    public static final int[] GENESIS_AMOUNTS;
+    public static final Map<Long, Integer> GENESIS_AMOUNTS;
     static {
         JSONArray amounts = (JSONArray)genesisParameters.get("genesisAmounts");
         if (amounts.size() != GENESIS_RECIPIENTS.length) {
             throw new RuntimeException("Number of genesis amounts does not match number of genesis recipients");
         }
-        GENESIS_AMOUNTS = new int[amounts.size()];
+        Map<Long,Integer> map = new HashMap<>();
         long total = 0;
-        for (int i = 0; i < GENESIS_AMOUNTS.length; i++) {
-            GENESIS_AMOUNTS[i] = ((Long)amounts.get(i)).intValue();
-            if (GENESIS_AMOUNTS[i] <= 0) {
-                throw new RuntimeException("Invalid genesis recipient amount " + amounts.get(i));
+        for (int i = 0; i < amounts.size(); i++) {
+            int amount = ((Long)amounts.get(i)).intValue();
+            if (amount <= 0) {
+                throw new RuntimeException("Invalid genesis recipient amount " + amount);
             }
-            total = Math.addExact(total, GENESIS_AMOUNTS[i]);
+            map.put(GENESIS_RECIPIENTS[i], amount);
+            total = Math.addExact(total, amount);
         }
         if (total != Constants.MAX_BALANCE_NXT) {
             throw new RuntimeException("Genesis amount total is " + total + ", must be " + Constants.MAX_BALANCE_NXT);
         }
+        GENESIS_AMOUNTS = Collections.unmodifiableMap(map);
     }
 
     private Genesis() {} // never
