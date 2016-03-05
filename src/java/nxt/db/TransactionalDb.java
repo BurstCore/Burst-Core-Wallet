@@ -252,6 +252,19 @@ public class TransactionalDb extends BasicDb {
                 throw new IllegalStateException("Previous connection not committed");
             }
         }
+
+        @Override
+        public void setSchema(String schema) throws SQLException {
+            try (Statement stmt = createStatement()) {
+                stmt.executeUpdate("SET SCHEMA " + schema);
+            }
+        }
+
+        @Override
+        public String getSchema() {
+            throw new UnsupportedOperationException("H2 connections do not support getSchema()");
+        }
+
     }
 
     private static final class DbStatement extends FilteredStatement {

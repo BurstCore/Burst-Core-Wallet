@@ -125,7 +125,7 @@ public class BasicDb {
         this.defaultLockTimeout = dbProperties.defaultLockTimeout;
     }
 
-    public void init(DbVersion dbVersion) {
+    public void init(DbVersion... dbVersions) {
         Logger.logDebugMessage("Database jdbc url set to %s username %s", dbUrl, dbUsername);
         FullTextTrigger.setActive(true);
         cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
@@ -137,7 +137,9 @@ public class BasicDb {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        dbVersion.init(this);
+        for (DbVersion dbVersion : dbVersions) {
+            dbVersion.init(this);
+        }
         initialized = true;
     }
 
@@ -168,6 +170,14 @@ public class BasicDb {
     public Connection getConnection() throws SQLException {
         Connection con = getPooledConnection();
         con.setAutoCommit(true);
+        return con;
+    }
+
+    public final Connection getConnection(String schema) throws SQLException {
+        Connection con = getConnection();
+        try (Statement stmt = con.createStatement()) {
+            stmt.executeUpdate("SET SCHEMA " + schema);
+        }
         return con;
     }
 

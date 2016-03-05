@@ -36,7 +36,7 @@ public final class Db {
     );
 
     static void init() {
-        db.init(new NxtDbVersion());
+        db.init(new NxtDbVersion(), new ChildDbVersion("NXT"));
     }
 
     static void shutdown() {
