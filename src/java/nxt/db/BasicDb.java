@@ -167,16 +167,12 @@ public class BasicDb {
         }
     }
 
-    public Connection getConnection() throws SQLException {
+    public Connection getConnection(String schema) throws SQLException {
         Connection con = getPooledConnection();
         con.setAutoCommit(true);
-        return con;
-    }
-
-    public final Connection getConnection(String schema) throws SQLException {
-        Connection con = getConnection();
         try (Statement stmt = con.createStatement()) {
             stmt.executeUpdate("SET SCHEMA " + schema);
+            stmt.executeUpdate("SET SCHEMA_SEARCH_PATH " + schema + ", PUBLIC");
         }
         return con;
     }

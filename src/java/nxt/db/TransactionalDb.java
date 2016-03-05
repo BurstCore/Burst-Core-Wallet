@@ -53,13 +53,20 @@ public class TransactionalDb extends BasicDb {
         super(dbProperties);
     }
 
-    @Override
     public Connection getConnection() throws SQLException {
+        return getConnection("NXT");
+    }
+
+    public Connection getConnection(String schema) throws SQLException {
         Connection con = localConnection.get();
-        if (con != null) {
-            return con;
+        if (con == null) {
+            con = getPooledConnection();
+            con.setAutoCommit(true);
+            con = new DbConnection(con, schema);
+        } else {
+            con.setSchema(schema);
         }
-        return new DbConnection(super.getConnection());
+        return con;
     }
 
     public boolean isInTransaction() {
@@ -67,13 +74,17 @@ public class TransactionalDb extends BasicDb {
     }
 
     public Connection beginTransaction() {
+        return beginTransaction("NXT");
+    }
+
+    public Connection beginTransaction(String schema) {
         if (localConnection.get() != null) {
             throw new IllegalStateException("Transaction already in progress");
         }
         try {
             Connection con = getPooledConnection();
             con.setAutoCommit(false);
-            con = new DbConnection(con);
+            con = new DbConnection(con, schema);
             ((DbConnection)con).txStart = System.currentTimeMillis();
             localConnection.set((DbConnection)con);
             transactionCaches.set(new HashMap<>());
@@ -204,9 +215,11 @@ public class TransactionalDb extends BasicDb {
     private final class DbConnection extends FilteredConnection {
 
         long txStart = 0;
+        private volatile String schema;
 
-        private DbConnection(Connection con) {
+        private DbConnection(Connection con, String schema) throws SQLException {
             super(con, factory);
+            setSchema(schema);
         }
 
         @Override
@@ -255,14 +268,19 @@ public class TransactionalDb extends BasicDb {
 
         @Override
         public void setSchema(String schema) throws SQLException {
+            if (schema.equals(this.schema)) {
+                return;
+            }
             try (Statement stmt = createStatement()) {
                 stmt.executeUpdate("SET SCHEMA " + schema);
+                stmt.executeUpdate("SET SCHEMA_SEARCH_PATH " + schema + ", PUBLIC");
+                this.schema = schema;
             }
         }
 
         @Override
         public String getSchema() {
-            throw new UnsupportedOperationException("H2 connections do not support getSchema()");
+            return schema;
         }
 
     }

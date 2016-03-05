@@ -188,9 +188,6 @@ class NxtDbVersion extends DbVersion {
             case 57:
                 apply("CREATE INDEX IF NOT EXISTS referenced_transaction_referenced_transaction_id_idx ON referenced_transaction (referenced_transaction_id)");
             case 58:
-                BlockchainProcessorImpl.getInstance().scheduleScan(0, false);
-                apply(null);
-            case 59:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate

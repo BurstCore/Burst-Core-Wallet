@@ -448,10 +448,13 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
 
     @Override
     public final void createSearchIndex(Connection con) throws SQLException {
+        //TODO: fix schema handling
+        /*
         if (fullTextSearchColumns != null) {
             Logger.logDebugMessage("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
             FullTextTrigger.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
         }
+        */
     }
 
 }

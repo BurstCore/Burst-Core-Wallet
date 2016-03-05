@@ -37,13 +37,13 @@ public abstract class DbVersion {
         Connection con = null;
         Statement stmt = null;
         try {
-            con = db.getConnection();
+            con = db.getConnection("PUBLIC");
             stmt = con.createStatement();
             stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS " + schema);
             stmt.executeUpdate("SET SCHEMA " + schema);
             int nextUpdate = 1;
             try {
-                ResultSet rs = stmt.executeQuery("SELECT next_update FROM version");
+                ResultSet rs = stmt.executeQuery("SELECT next_update FROM " + schema + ".version");
                 if (! rs.next()) {
                     throw new RuntimeException("Invalid version table");
                 }

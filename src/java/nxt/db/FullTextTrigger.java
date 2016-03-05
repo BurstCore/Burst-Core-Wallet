@@ -175,7 +175,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      */
     public static void init() {
         String ourClassName = FullTextTrigger.class.getName();
-        try (Connection conn = Db.db.getConnection();
+        try (Connection conn = Db.db.getConnection("PUBLIC");
                 Statement stmt = conn.createStatement();
                 Statement qstmt = conn.createStatement()) {
             //
