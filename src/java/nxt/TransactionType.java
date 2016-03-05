@@ -100,6 +100,8 @@ public abstract class TransactionType {
                         return Messaging.POLL_CREATION;
                     case SUBTYPE_MESSAGING_VOTE_CASTING:
                         return Messaging.VOTE_CASTING;
+                    case SUBTYPE_MESSAGING_HUB_ANNOUNCEMENT:
+                        throw new IllegalArgumentException("Hub Announcement no longer supported");
                     case SUBTYPE_MESSAGING_ACCOUNT_INFO:
                         return Messaging.ACCOUNT_INFO;
                     case SUBTYPE_MESSAGING_ALIAS_SELL:
