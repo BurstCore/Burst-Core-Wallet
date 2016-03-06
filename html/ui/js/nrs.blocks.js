@@ -57,7 +57,6 @@ var NRS = (function(NRS, $) {
 						//last week
 						NRS.setStateInterval(10);
 					}
-					NRS.downloadingBlockchain = true;
 					$("#nrs_update_explanation").find("span").hide();
 					$("#nrs_update_explanation_wait").attr("style", "display: none !important");
 					$("#downloading_blockchain, #nrs_update_explanation_blockchain_sync").show();
@@ -134,7 +133,6 @@ var NRS = (function(NRS, $) {
 						NRS.setStateInterval(10);
 						trackBlockchain = true;
 					}
-					NRS.downloadingBlockchain = false;
 					$("#dashboard_message").hide();
 					$("#downloading_blockchain, #nrs_update_explanation_blockchain_sync").hide();
 					$("#nrs_update_explanation_wait").removeAttr("style");

@@ -164,7 +164,7 @@ var NRS = (function(NRS, $, undefined) {
 		}
         NRS.sendRequest("getBlockchainTransactions", {
 			"account": NRS.account,
-			"timestamp": NRS.blocks[0].timestamp + 1,
+			"timestamp": Math.max(NRS.blocks[0].timestamp + 1, 0),
 			"firstIndex": 0,
 			"lastIndex": 0
 		}, function(response) {
