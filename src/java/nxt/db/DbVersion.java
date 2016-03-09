@@ -25,22 +25,35 @@ import java.sql.Statement;
 
 public abstract class DbVersion {
 
-    protected BasicDb db;
+    protected final BasicDb db;
     protected final String schema;
 
-    protected DbVersion(String schema) {
+    protected DbVersion(BasicDb db, String schema) {
+        this.db = db;
         this.schema = schema;
     }
 
-    void init(BasicDb db) {
-        this.db = db;
+    void createSchema() {
         Connection con = null;
         Statement stmt = null;
         try {
             con = db.getConnection("PUBLIC");
             stmt = con.createStatement();
             stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS " + schema);
-            stmt.executeUpdate("SET SCHEMA " + schema);
+        } catch (SQLException e) {
+            DbUtils.rollback(con);
+            throw new RuntimeException(e.toString(), e);
+        } finally {
+            DbUtils.close(stmt, con);
+        }
+    }
+
+    void init() {
+        Connection con = null;
+        Statement stmt = null;
+        try {
+            con = db.getConnection(schema);
+            stmt = con.createStatement();
             int nextUpdate = 1;
             try {
                 ResultSet rs = stmt.executeQuery("SELECT next_update FROM " + schema + ".version");
@@ -66,7 +79,6 @@ public abstract class DbVersion {
         } finally {
             DbUtils.close(stmt, con);
         }
-
     }
 
     protected void apply(String sql) {

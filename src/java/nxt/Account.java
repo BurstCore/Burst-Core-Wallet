@@ -470,7 +470,7 @@ public final class Account {
 
     };
 
-    private static final VersionedEntityDbTable<Account> accountTable = new VersionedEntityDbTable<Account>("account", accountDbKeyFactory) {
+    private static final VersionedEntityDbTable<Account> accountTable = new VersionedEntityDbTable<Account>("public.account", accountDbKeyFactory) {
 
         @Override
         protected Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -502,7 +502,7 @@ public final class Account {
 
     };
 
-    private static final VersionedEntityDbTable<AccountLease> accountLeaseTable = new VersionedEntityDbTable<AccountLease>("account_lease",
+    private static final VersionedEntityDbTable<AccountLease> accountLeaseTable = new VersionedEntityDbTable<AccountLease>("public.account_lease",
             accountLeaseDbKeyFactory) {
 
         @Override
@@ -517,7 +517,7 @@ public final class Account {
 
     };
 
-    private static final VersionedEntityDbTable<AccountInfo> accountInfoTable = new VersionedEntityDbTable<AccountInfo>("account_info",
+    private static final VersionedEntityDbTable<AccountInfo> accountInfoTable = new VersionedEntityDbTable<AccountInfo>("public.account_info",
             accountInfoDbKeyFactory, "name,description") {
 
         @Override
@@ -546,7 +546,7 @@ public final class Account {
 
     };
 
-    private static final VersionedPersistentDbTable<PublicKey> publicKeyTable = new VersionedPersistentDbTable<PublicKey>("public_key", publicKeyDbKeyFactory) {
+    private static final VersionedPersistentDbTable<PublicKey> publicKeyTable = new VersionedPersistentDbTable<PublicKey>("public.public_key", publicKeyDbKeyFactory) {
 
         @Override
         protected PublicKey load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -569,7 +569,7 @@ public final class Account {
 
     };
 
-    private static final VersionedEntityDbTable<AccountAsset> accountAssetTable = new VersionedEntityDbTable<AccountAsset>("account_asset", accountAssetDbKeyFactory) {
+    private static final VersionedEntityDbTable<AccountAsset> accountAssetTable = new VersionedEntityDbTable<AccountAsset>("public.account_asset", accountAssetDbKeyFactory) {
 
         @Override
         protected AccountAsset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -612,7 +612,7 @@ public final class Account {
 
     };
 
-    private static final VersionedEntityDbTable<AccountCurrency> accountCurrencyTable = new VersionedEntityDbTable<AccountCurrency>("account_currency", accountCurrencyDbKeyFactory) {
+    private static final VersionedEntityDbTable<AccountCurrency> accountCurrencyTable = new VersionedEntityDbTable<AccountCurrency>("public.account_currency", accountCurrencyDbKeyFactory) {
 
         @Override
         protected AccountCurrency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -631,7 +631,7 @@ public final class Account {
 
     };
 
-    private static final DerivedDbTable accountGuaranteedBalanceTable = new DerivedDbTable("account_guaranteed_balance") {
+    private static final DerivedDbTable accountGuaranteedBalanceTable = new DerivedDbTable("public.account_guaranteed_balance") {
 
         @Override
         public void trim(int height) {
@@ -656,7 +656,7 @@ public final class Account {
 
     };
 
-    private static final VersionedEntityDbTable<AccountProperty> accountPropertyTable = new VersionedEntityDbTable<AccountProperty>("account_property", accountPropertyDbKeyFactory) {
+    private static final VersionedEntityDbTable<AccountProperty> accountPropertyTable = new VersionedEntityDbTable<AccountProperty>("public.account_property", accountPropertyDbKeyFactory) {
 
         @Override
         protected AccountProperty load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

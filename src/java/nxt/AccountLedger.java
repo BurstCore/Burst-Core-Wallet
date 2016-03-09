@@ -101,7 +101,7 @@ public class AccountLedger {
          * Create the account ledger table
          */
         public AccountLedgerTable() {
-            super("account_ledger");
+            super("public.account_ledger");
         }
 
         /**

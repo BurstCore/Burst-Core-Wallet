@@ -16,12 +16,13 @@
 
 package nxt;
 
+import nxt.db.BasicDb;
 import nxt.db.DbVersion;
 
-class NxtDbVersion extends DbVersion {
+class FxtDbVersion extends DbVersion {
 
-    NxtDbVersion() {
-        super("PUBLIC");
+    FxtDbVersion(BasicDb db) {
+        super(db, "PUBLIC");
     }
 
     protected void update(int nextUpdate) {
@@ -38,32 +39,27 @@ class NxtDbVersion extends DbVersion {
             case 2:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_id_idx ON block (id)");
             case 3:
-                apply("CREATE TABLE IF NOT EXISTS transaction (db_id IDENTITY, id BIGINT NOT NULL, "
+                apply("CREATE TABLE IF NOT EXISTS transaction_fxt (db_id IDENTITY, id BIGINT NOT NULL, "
                         + "deadline SMALLINT NOT NULL, recipient_id BIGINT, transaction_index SMALLINT NOT NULL, "
                         + "amount BIGINT NOT NULL, fee BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
                         + "height INT NOT NULL, block_id BIGINT NOT NULL, FOREIGN KEY (block_id) REFERENCES block (id) ON DELETE CASCADE, "
                         + "signature BINARY(64) NOT NULL, timestamp INT NOT NULL, type TINYINT NOT NULL, subtype TINYINT NOT NULL, "
-                        + "sender_id BIGINT NOT NULL, block_timestamp INT NOT NULL, referenced_transaction_full_hash BINARY(32), "
-                        + "phased BOOLEAN NOT NULL DEFAULT FALSE, "
-                        + "attachment_bytes VARBINARY, version TINYINT NOT NULL, has_message BOOLEAN NOT NULL DEFAULT FALSE, "
-                        + "has_encrypted_message BOOLEAN NOT NULL DEFAULT FALSE, has_public_key_announcement BOOLEAN NOT NULL DEFAULT FALSE, "
-                        + "ec_block_height INT DEFAULT NULL, ec_block_id BIGINT DEFAULT NULL, has_encrypttoself_message BOOLEAN NOT NULL DEFAULT FALSE, "
-                        + "has_prunable_message BOOLEAN NOT NULL DEFAULT FALSE, has_prunable_encrypted_message BOOLEAN NOT NULL DEFAULT FALSE, "
-                        + "has_prunable_attachment BOOLEAN NOT NULL DEFAULT FALSE)");
+                        + "sender_id BIGINT NOT NULL, block_timestamp INT NOT NULL, "
+                        + "attachment_bytes VARBINARY, version TINYINT NOT NULL)");
             case 4:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_id_idx ON transaction (id)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_fxt_id_idx ON transaction_fxt (id)");
             case 5:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_height_idx ON block (height)");
             case 6:
                 apply("CREATE INDEX IF NOT EXISTS block_generator_id_idx ON block (generator_id)");
             case 7:
-                apply("CREATE INDEX IF NOT EXISTS transaction_sender_id_idx ON transaction (sender_id)");
+                apply("CREATE INDEX IF NOT EXISTS transaction_fxt_sender_id_idx ON transaction_fxt (sender_id)");
             case 8:
-                apply("CREATE INDEX IF NOT EXISTS transaction_recipient_id_idx ON transaction (recipient_id)");
+                apply("CREATE INDEX IF NOT EXISTS transaction_fxt_recipient_id_idx ON transaction_fxt (recipient_id)");
             case 9:
                 apply("CREATE TABLE IF NOT EXISTS peer (address VARCHAR PRIMARY KEY, last_updated INT, services BIGINT)");
             case 10:
-                apply("CREATE INDEX IF NOT EXISTS transaction_block_timestamp_idx ON transaction (block_timestamp DESC)");
+                apply("CREATE INDEX IF NOT EXISTS transaction_fxt_block_timestamp_idx ON transaction_fxt (block_timestamp DESC)");
             case 11:
                 apply("CREATE TABLE IF NOT EXISTS account (db_id IDENTITY, id BIGINT NOT NULL, "
                         + "balance BIGINT NOT NULL, unconfirmed_balance BIGINT NOT NULL, has_control_phasing BOOLEAN NOT NULL DEFAULT FALSE, "
@@ -182,12 +178,6 @@ class NxtDbVersion extends DbVersion {
             case 55:
                 apply("CREATE INDEX IF NOT EXISTS account_property_setter_recipient_idx ON account_property (setter_id, recipient_id)");
             case 56:
-                apply("CREATE TABLE IF NOT EXISTS referenced_transaction (db_id IDENTITY, transaction_id BIGINT NOT NULL, "
-                        + "FOREIGN KEY (transaction_id) REFERENCES transaction (id) ON DELETE CASCADE, "
-                        + "referenced_transaction_id BIGINT NOT NULL)");
-            case 57:
-                apply("CREATE INDEX IF NOT EXISTS referenced_transaction_referenced_transaction_id_idx ON referenced_transaction (referenced_transaction_id)");
-            case 58:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate

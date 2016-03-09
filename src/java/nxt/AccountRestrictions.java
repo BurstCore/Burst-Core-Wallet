@@ -181,7 +181,7 @@ public final class AccountRestrictions {
         }
     };
 
-    private static final VersionedEntityDbTable<PhasingOnly> phasingControlTable = new VersionedEntityDbTable<PhasingOnly>("account_control_phasing", phasingControlDbKeyFactory) {
+    private static final VersionedEntityDbTable<PhasingOnly> phasingControlTable = new VersionedEntityDbTable<PhasingOnly>("public.account_control_phasing", phasingControlDbKeyFactory) {
 
         @Override
         protected PhasingOnly load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

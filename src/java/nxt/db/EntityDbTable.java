@@ -44,6 +44,9 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         this.dbKeyFactory = dbKeyFactory;
         this.multiversion = multiversion;
         this.defaultSort = " ORDER BY " + (multiversion ? dbKeyFactory.getPKColumns() : " height DESC, db_id DESC ");
+        if (fullTextSearchColumns != null) {
+            fullTextSearchColumns = fullTextSearchColumns.toUpperCase();
+        }
         this.fullTextSearchColumns = fullTextSearchColumns;
     }
 
@@ -448,13 +451,10 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
 
     @Override
     public final void createSearchIndex(Connection con) throws SQLException {
-        //TODO: fix schema handling
-        /*
         if (fullTextSearchColumns != null) {
             Logger.logDebugMessage("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
-            FullTextTrigger.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
+            FullTextTrigger.createIndex(con, schema, table, fullTextSearchColumns);
         }
-        */
     }
 
 }

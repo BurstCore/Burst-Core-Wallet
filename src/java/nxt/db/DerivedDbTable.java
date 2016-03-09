@@ -29,9 +29,19 @@ public abstract class DerivedDbTable {
     protected static final TransactionalDb db = Db.db;
 
     protected final String table;
+    protected final String schema;
 
     protected DerivedDbTable(String table) {
-        this.table = table;
+        String[] tablename = table.split("\\.");
+        if (tablename.length == 1) {
+            this.schema = "NXT";
+            this.table = tablename[0].toUpperCase();
+        } else if (tablename.length == 2) {
+            this.schema = tablename[0].toUpperCase();
+            this.table = tablename[1].toUpperCase();
+        } else {
+            throw new IllegalArgumentException("Invalid table name " + table);
+        }
         Nxt.getBlockchainProcessor().registerDerivedTable(this);
     }
 
