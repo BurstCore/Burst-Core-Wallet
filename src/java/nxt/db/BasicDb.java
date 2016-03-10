@@ -23,6 +23,7 @@ import org.h2.jdbcx.JdbcConnectionPool;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 public class BasicDb {
 
@@ -125,7 +126,7 @@ public class BasicDb {
         this.defaultLockTimeout = dbProperties.defaultLockTimeout;
     }
 
-    public final void init(DbVersion... dbVersions) {
+    public final void init(List<DbVersion> dbVersions) {
         Logger.logDebugMessage("Database jdbc url set to %s username %s", dbUrl, dbUsername);
         FullTextTrigger.setActive(true);
         cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);

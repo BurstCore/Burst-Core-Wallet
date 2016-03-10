@@ -53,10 +53,6 @@ public class TransactionalDb extends BasicDb {
         super(dbProperties);
     }
 
-    public Connection getConnection() throws SQLException {
-        return getConnection("NXT");
-    }
-
     public Connection getConnection(String schema) throws SQLException {
         Connection con = localConnection.get();
         if (con == null) {
@@ -74,7 +70,7 @@ public class TransactionalDb extends BasicDb {
     }
 
     public Connection beginTransaction() {
-        return beginTransaction("NXT");
+        return beginTransaction("PUBLIC");
     }
 
     public Connection beginTransaction(String schema) {

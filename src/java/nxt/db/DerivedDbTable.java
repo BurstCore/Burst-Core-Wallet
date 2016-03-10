@@ -30,9 +30,10 @@ public abstract class DerivedDbTable {
 
     protected final String table;
     protected final String schema;
+    protected final String fullname;
 
-    protected DerivedDbTable(String table) {
-        String[] tablename = table.split("\\.");
+    protected DerivedDbTable(String name) {
+        String[] tablename = name.split("\\.");
         if (tablename.length == 1) {
             this.schema = "NXT";
             this.table = tablename[0].toUpperCase();
@@ -40,8 +41,9 @@ public abstract class DerivedDbTable {
             this.schema = tablename[0].toUpperCase();
             this.table = tablename[1].toUpperCase();
         } else {
-            throw new IllegalArgumentException("Invalid table name " + table);
+            throw new IllegalArgumentException("Invalid table name " + name);
         }
+        this.fullname = this.schema + "." + this.table;
         Nxt.getBlockchainProcessor().registerDerivedTable(this);
     }
 

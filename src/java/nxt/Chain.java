@@ -14,38 +14,21 @@
  *                                                                            *
  ******************************************************************************/
 
-package nxt.http;
+package nxt;
 
-import nxt.Account;
-import nxt.Nxt;
-import nxt.NxtException;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
+public abstract class Chain {
 
-import javax.servlet.http.HttpServletRequest;
+    private final String name;
 
-public final class GetGuaranteedBalance extends APIServlet.APIRequestHandler {
-
-    static final GetGuaranteedBalance instance = new GetGuaranteedBalance();
-
-    private GetGuaranteedBalance() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.FORGING}, "account", "numberOfConfirmations");
+    Chain(String name) {
+        this.name = name;
     }
 
-    @Override
-    JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-
-        Account account = ParameterParser.getAccount(req);
-        int numberOfConfirmations = ParameterParser.getNumberOfConfirmations(req);
-
-        JSONObject response = new JSONObject();
-        if (account == null) {
-            response.put("guaranteedBalanceNQT", "0");
-        } else {
-            response.put("guaranteedBalanceNQT", String.valueOf(account.getGuaranteedBalanceFQT(numberOfConfirmations, Nxt.getBlockchain().getHeight())));
-        }
-
-        return response;
+    public final String getName() {
+        return name;
     }
 
+    public String getDbSchema() {
+        return name;
+    }
 }

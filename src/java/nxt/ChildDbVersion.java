@@ -137,7 +137,7 @@ class ChildDbVersion extends DbVersion {
             case 34:
                 apply("CREATE INDEX IF NOT EXISTS purchase_deadline_idx ON purchase (deadline DESC, height DESC)");
             case 35:
-                apply("CREATE TABLE IF NOT EXISTS balance (db_id IDENTITY, id BIGINT NOT NULL, "
+                apply("CREATE TABLE IF NOT EXISTS balance (db_id IDENTITY, account_id BIGINT NOT NULL, "
                         + "balance BIGINT NOT NULL, unconfirmed_balance BIGINT NOT NULL, "
                         + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 36:

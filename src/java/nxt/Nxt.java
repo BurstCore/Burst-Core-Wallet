@@ -334,6 +334,7 @@ public final class Nxt {
                 TransactionProcessorImpl.getInstance();
                 BlockchainProcessorImpl.getInstance();
                 Account.init();
+                Balances.init();
                 AccountRestrictions.init();
                 AccountLedger.init();
                 Alias.init();

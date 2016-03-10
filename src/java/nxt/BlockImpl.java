@@ -339,7 +339,7 @@ final class BlockImpl implements Block {
             }
 
             Account account = Account.getAccount(getGeneratorId());
-            long effectiveBalance = account == null ? 0 : account.getEffectiveBalanceNXT();
+            long effectiveBalance = account == null ? 0 : account.getEffectiveBalanceFXT();
             if (effectiveBalance <= 0) {
                 return false;
             }

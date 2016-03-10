@@ -1056,9 +1056,9 @@ public final class Account {
     private final long id;
     private final DbKey dbKey;
     private PublicKey publicKey;
-    private long balanceNQT;
-    private long unconfirmedBalanceNQT;
-    private long forgedBalanceNQT;
+    private long balanceFQT;
+    private long unconfirmedBalanceFQT;
+    private long forgedBalanceFQT;
     private long activeLesseeId;
     private Set<ControlType> controls;
 
@@ -1074,15 +1074,15 @@ public final class Account {
     private Account(ResultSet rs, DbKey dbKey) throws SQLException {
         this.id = rs.getLong("id");
         this.dbKey = dbKey;
-        this.balanceNQT = rs.getLong("balance");
-        this.unconfirmedBalanceNQT = rs.getLong("unconfirmed_balance");
-        this.forgedBalanceNQT = rs.getLong("forged_balance");
+        this.forgedBalanceFQT = rs.getLong("forged_balance");
         this.activeLesseeId = rs.getLong("active_lessee_id");
         if (rs.getBoolean("has_control_phasing")) {
             controls = Collections.unmodifiableSet(EnumSet.of(ControlType.PHASING_ONLY));
         } else {
             controls = Collections.emptySet();
         }
+        this.balanceFQT = rs.getLong("balance");
+        this.unconfirmedBalanceFQT = rs.getLong("unconfirmed_balance");
     }
 
     private void save(Connection con) throws SQLException {
@@ -1092,9 +1092,9 @@ public final class Account {
                 + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
-            pstmt.setLong(++i, this.balanceNQT);
-            pstmt.setLong(++i, this.unconfirmedBalanceNQT);
-            pstmt.setLong(++i, this.forgedBalanceNQT);
+            pstmt.setLong(++i, this.balanceFQT);
+            pstmt.setLong(++i, this.unconfirmedBalanceFQT);
+            pstmt.setLong(++i, this.forgedBalanceFQT);
             DbUtils.setLongZeroToNull(pstmt, ++i, this.activeLesseeId);
             pstmt.setBoolean(++i, controls.contains(ControlType.PHASING_ONLY));
             pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
@@ -1103,7 +1103,7 @@ public final class Account {
     }
 
     private void save() {
-        if (balanceNQT == 0 && unconfirmedBalanceNQT == 0 && forgedBalanceNQT == 0 && activeLesseeId == 0 && controls.isEmpty()) {
+        if (balanceFQT == 0 && unconfirmedBalanceFQT == 0 && forgedBalanceFQT == 0 && activeLesseeId == 0 && controls.isEmpty()) {
             accountTable.delete(this, true);
         } else {
             accountTable.insert(this);
@@ -1166,23 +1166,23 @@ public final class Account {
         return decrypted;
     }
 
-    public long getBalanceNQT() {
-        return balanceNQT;
+    public long getBalanceFQT() {
+        return balanceFQT;
     }
 
-    public long getUnconfirmedBalanceNQT() {
-        return unconfirmedBalanceNQT;
+    public long getUnconfirmedBalanceFQT() {
+        return unconfirmedBalanceFQT;
     }
 
-    public long getForgedBalanceNQT() {
-        return forgedBalanceNQT;
+    public long getForgedBalanceFQT() {
+        return forgedBalanceFQT;
     }
 
-    public long getEffectiveBalanceNXT() {
-        return getEffectiveBalanceNXT(Nxt.getBlockchain().getHeight());
+    public long getEffectiveBalanceFXT() {
+        return getEffectiveBalanceFXT(Nxt.getBlockchain().getHeight());
     }
 
-    public long getEffectiveBalanceNXT(int height) {
+    public long getEffectiveBalanceFXT(int height) {
         if (height < 1440) {
             Integer amount = Genesis.GENESIS_AMOUNTS.get(id);
             return amount == null ? 0 : amount;
@@ -1193,14 +1193,14 @@ public final class Account {
         if (this.publicKey == null || this.publicKey.publicKey == null || this.publicKey.height == 0 || height - this.publicKey.height <= 1440) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
-        long effectiveBalanceNQT = getLessorsGuaranteedBalanceNQT(height);
+        long effectiveBalanceFQT = getLessorsGuaranteedBalanceFQT(height);
         if (activeLesseeId == 0) {
-            effectiveBalanceNQT += getGuaranteedBalanceNQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
+            effectiveBalanceFQT += getGuaranteedBalanceFQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
         }
-        return effectiveBalanceNQT < Constants.MIN_FORGING_BALANCE_NQT ? 0 : effectiveBalanceNQT / Constants.ONE_NXT;
+        return effectiveBalanceFQT < Constants.MIN_FORGING_BALANCE_FQT ? 0 : effectiveBalanceFQT / Constants.ONE_NXT;
     }
 
-    private long getLessorsGuaranteedBalanceNQT(int height) {
+    private long getLessorsGuaranteedBalanceFQT(int height) {
         List<Account> lessors = new ArrayList<>();
         try (DbIterator<Account> iterator = getLessors(height)) {
             while (iterator.hasNext()) {
@@ -1211,7 +1211,7 @@ public final class Account {
         long[] balances = new long[lessors.size()];
         for (int i = 0; i < lessors.size(); i++) {
             lessorIds[i] = lessors.get(i).getId();
-            balances[i] = lessors.get(i).getBalanceNQT();
+            balances[i] = lessors.get(i).getBalanceFQT();
         }
         try (Connection con = Db.db.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
@@ -1253,11 +1253,11 @@ public final class Account {
         return accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", id), height, 0, -1, " ORDER BY id ASC ");
     }
 
-    public long getGuaranteedBalanceNQT() {
-        return getGuaranteedBalanceNQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, Nxt.getBlockchain().getHeight());
+    public long getGuaranteedBalanceFQT() {
+        return getGuaranteedBalanceFQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, Nxt.getBlockchain().getHeight());
     }
 
-    public long getGuaranteedBalanceNQT(final int numberOfConfirmations, final int currentHeight) {
+    public long getGuaranteedBalanceFQT(final int numberOfConfirmations, final int currentHeight) {
         int height = currentHeight - numberOfConfirmations;
         if (height + Constants.GUARANTEED_BALANCE_CONFIRMATIONS < Nxt.getBlockchainProcessor().getMinRollbackHeight()
                 || height > Nxt.getBlockchain().getHeight()) {
@@ -1271,9 +1271,9 @@ public final class Account {
             pstmt.setInt(3, currentHeight);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (!rs.next()) {
-                    return balanceNQT;
+                    return balanceFQT;
                 }
-                return Math.max(Math.subtractExact(balanceNQT, rs.getLong("additions")), 0);
+                return Math.max(Math.subtractExact(balanceFQT, rs.getLong("additions")), 0);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -1613,100 +1613,100 @@ public final class Account {
         }
     }
 
-    void addToBalanceNQT(LedgerEvent event, long eventId, long amountNQT) {
-        addToBalanceNQT(event, eventId, amountNQT, 0);
+    void addToBalanceFQT(LedgerEvent event, long eventId, long amount) {
+        addToBalanceFQT(event, eventId, amount, 0);
     }
 
-    void addToBalanceNQT(LedgerEvent event, long eventId, long amountNQT, long feeNQT) {
-        if (amountNQT == 0 && feeNQT == 0) {
+    void addToBalanceFQT(LedgerEvent event, long eventId, long amount, long fee) {
+        if (amount == 0 && fee == 0) {
             return;
         }
-        long totalAmountNQT = Math.addExact(amountNQT, feeNQT);
-        this.balanceNQT = Math.addExact(this.balanceNQT, totalAmountNQT);
-        addToGuaranteedBalanceNQT(totalAmountNQT);
-        checkBalance(this.id, this.balanceNQT, this.unconfirmedBalanceNQT);
+        long totalAmount = Math.addExact(amount, fee);
+        this.balanceFQT = Math.addExact(this.balanceFQT, totalAmount);
+        addToGuaranteedBalanceFQT(totalAmount);
+        checkBalance(this.id, this.balanceFQT, this.unconfirmedBalanceFQT);
         save();
         listeners.notify(this, Event.BALANCE);
         if (AccountLedger.mustLogEntry(this.id, false)) {
-            if (feeNQT != 0) {
+            if (fee != 0) {
                 AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        LedgerHolding.NXT_BALANCE, null, feeNQT, this.balanceNQT - amountNQT));
+                        LedgerHolding.NXT_BALANCE, null, fee, this.balanceFQT - amount));
             }
-            if (amountNQT != 0) {
+            if (amount != 0) {
                 AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
-                        LedgerHolding.NXT_BALANCE, null, amountNQT, this.balanceNQT));
+                        LedgerHolding.NXT_BALANCE, null, amount, this.balanceFQT));
             }
         }
     }
 
-    void addToUnconfirmedBalanceNQT(LedgerEvent event, long eventId, long amountNQT) {
-        addToUnconfirmedBalanceNQT(event, eventId, amountNQT, 0);
+    void addToUnconfirmedBalanceFQT(LedgerEvent event, long eventId, long amount) {
+        addToUnconfirmedBalanceFQT(event, eventId, amount, 0);
     }
 
-    void addToUnconfirmedBalanceNQT(LedgerEvent event, long eventId, long amountNQT, long feeNQT) {
-        if (amountNQT == 0 && feeNQT == 0) {
+    void addToUnconfirmedBalanceFQT(LedgerEvent event, long eventId, long amount, long fee) {
+        if (amount == 0 && fee == 0) {
             return;
         }
-        long totalAmountNQT = Math.addExact(amountNQT, feeNQT);
-        this.unconfirmedBalanceNQT = Math.addExact(this.unconfirmedBalanceNQT, totalAmountNQT);
-        checkBalance(this.id, this.balanceNQT, this.unconfirmedBalanceNQT);
+        long totalAmount = Math.addExact(amount, fee);
+        this.unconfirmedBalanceFQT = Math.addExact(this.unconfirmedBalanceFQT, totalAmount);
+        checkBalance(this.id, this.balanceFQT, this.unconfirmedBalanceFQT);
         save();
         listeners.notify(this, Event.UNCONFIRMED_BALANCE);
         if (AccountLedger.mustLogEntry(this.id, true)) {
-            if (feeNQT != 0) {
+            if (fee != 0) {
                 AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, feeNQT, this.unconfirmedBalanceNQT - amountNQT));
+                        LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, fee, this.unconfirmedBalanceFQT - amount));
             }
-            if (amountNQT != 0) {
+            if (amount != 0) {
                 AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
-                        LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, amountNQT, this.unconfirmedBalanceNQT));
+                        LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, amount, this.unconfirmedBalanceFQT));
             }
         }
     }
 
-    void addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent event, long eventId, long amountNQT) {
-        addToBalanceAndUnconfirmedBalanceNQT(event, eventId, amountNQT, 0);
+    void addToBalanceAndUnconfirmedBalanceFQT(LedgerEvent event, long eventId, long amount) {
+        addToBalanceAndUnconfirmedBalanceFQT(event, eventId, amount, 0);
     }
 
-    void addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent event, long eventId, long amountNQT, long feeNQT) {
-        if (amountNQT == 0 && feeNQT == 0) {
+    void addToBalanceAndUnconfirmedBalanceFQT(LedgerEvent event, long eventId, long amount, long fee) {
+        if (amount == 0 && fee == 0) {
             return;
         }
-        long totalAmountNQT = Math.addExact(amountNQT, feeNQT);
-        this.balanceNQT = Math.addExact(this.balanceNQT, totalAmountNQT);
-        this.unconfirmedBalanceNQT = Math.addExact(this.unconfirmedBalanceNQT, totalAmountNQT);
-        addToGuaranteedBalanceNQT(totalAmountNQT);
-        checkBalance(this.id, this.balanceNQT, this.unconfirmedBalanceNQT);
+        long totalAmount = Math.addExact(amount, fee);
+        this.balanceFQT = Math.addExact(this.balanceFQT, totalAmount);
+        this.unconfirmedBalanceFQT = Math.addExact(this.unconfirmedBalanceFQT, totalAmount);
+        addToGuaranteedBalanceFQT(totalAmount);
+        checkBalance(this.id, this.balanceFQT, this.unconfirmedBalanceFQT);
         save();
         listeners.notify(this, Event.BALANCE);
         listeners.notify(this, Event.UNCONFIRMED_BALANCE);
         if (AccountLedger.mustLogEntry(this.id, true)) {
-            if (feeNQT != 0) {
+            if (fee != 0) {
                 AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, feeNQT, this.unconfirmedBalanceNQT - amountNQT));
+                        LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, fee, this.unconfirmedBalanceFQT - amount));
             }
-            if (amountNQT != 0) {
+            if (amount != 0) {
                 AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
-                        LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, amountNQT, this.unconfirmedBalanceNQT));
+                        LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, amount, this.unconfirmedBalanceFQT));
             }
         }
         if (AccountLedger.mustLogEntry(this.id, false)) {
-            if (feeNQT != 0) {
+            if (fee != 0) {
                 AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        LedgerHolding.NXT_BALANCE, null, feeNQT, this.balanceNQT - amountNQT));
+                        LedgerHolding.NXT_BALANCE, null, fee, this.balanceFQT - amount));
             }
-            if (amountNQT != 0) {
+            if (amount != 0) {
                 AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
-                        LedgerHolding.NXT_BALANCE, null, amountNQT, this.balanceNQT));
+                        LedgerHolding.NXT_BALANCE, null, amount, this.balanceFQT));
             }
         }
     }
 
-    void addToForgedBalanceNQT(long amountNQT) {
-        if (amountNQT == 0) {
+    void addToForgedBalanceFQT(long amount) {
+        if (amount == 0) {
             return;
         }
-        this.forgedBalanceNQT = Math.addExact(this.forgedBalanceNQT, amountNQT);
+        this.forgedBalanceFQT = Math.addExact(this.forgedBalanceFQT, amount);
         save();
     }
 
@@ -1725,8 +1725,8 @@ public final class Account {
         }
     }
 
-    private void addToGuaranteedBalanceNQT(long amountNQT) {
-        if (amountNQT <= 0) {
+    void addToGuaranteedBalanceFQT(long amount) {
+        if (amount <= 0) {
             return;
         }
         int blockchainHeight = Nxt.getBlockchain().getHeight();
@@ -1738,7 +1738,7 @@ public final class Account {
             pstmtSelect.setLong(1, this.id);
             pstmtSelect.setInt(2, blockchainHeight);
             try (ResultSet rs = pstmtSelect.executeQuery()) {
-                long additions = amountNQT;
+                long additions = amount;
                 if (rs.next()) {
                     additions = Math.addExact(additions, rs.getLong("additions"));
                 }
@@ -1752,7 +1752,7 @@ public final class Account {
         }
     }
 
-    void payDividends(final long transactionId, final long assetId, final int height, final long amountNQTPerQNT) {
+    void payDividends(ChildChain childChain, final long transactionId, final long assetId, final int height, final long amountNQTPerQNT) {
         long totalDividend = 0;
         List<AccountAsset> accountAssets = new ArrayList<>();
         try (DbIterator<AccountAsset> iterator = getAssetAccounts(assetId, height, 0, -1)) {
@@ -1760,15 +1760,16 @@ public final class Account {
                 accountAssets.add(iterator.next());
             }
         }
+        Balances balances = Balances.forChain(childChain);
         for (final AccountAsset accountAsset : accountAssets) {
             if (accountAsset.getAccountId() != this.id && accountAsset.getQuantityQNT() != 0) {
                 long dividend = Math.multiplyExact(accountAsset.getQuantityQNT(), amountNQTPerQNT);
-                Account.getAccount(accountAsset.getAccountId())
-                        .addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, dividend);
+                balances.getBalance(accountAsset.getAccountId())
+                        .addToBalanceAndUnconfirmedBalance(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, dividend);
                 totalDividend += dividend;
             }
         }
-        this.addToBalanceNQT(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
+        balances.getBalance(this.id).addToBalance(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
     }
 
     @Override

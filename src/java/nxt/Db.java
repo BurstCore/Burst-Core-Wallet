@@ -17,7 +17,11 @@
 package nxt;
 
 import nxt.db.BasicDb;
+import nxt.db.DbVersion;
 import nxt.db.TransactionalDb;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class Db {
 
@@ -36,7 +40,10 @@ public final class Db {
     );
 
     static void init() {
-        db.init(new FxtDbVersion(db), new ChildDbVersion(db, "NXT"));
+        List<DbVersion> dbVersions = new ArrayList<>();
+        dbVersions.add(new FxtDbVersion(db));
+        ChildChain.getAll().forEach(childchain -> dbVersions.add(new ChildDbVersion(db, childchain.getName())));
+        db.init(dbVersions);
     }
 
     static void shutdown() {

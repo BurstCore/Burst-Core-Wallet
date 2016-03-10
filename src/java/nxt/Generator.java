@@ -299,7 +299,7 @@ public final class Generator implements Comparable<Generator> {
 
     private void setLastBlock(Block lastBlock) {
         Account account = Account.getAccount(accountId);
-        effectiveBalance = BigInteger.valueOf(account == null || account.getEffectiveBalanceNXT() <= 0 ? 0 : account.getEffectiveBalanceNXT());
+        effectiveBalance = BigInteger.valueOf(account == null || account.getEffectiveBalanceFXT() <= 0 ? 0 : account.getEffectiveBalanceFXT());
         if (effectiveBalance.signum() == 0) {
             return;
         }

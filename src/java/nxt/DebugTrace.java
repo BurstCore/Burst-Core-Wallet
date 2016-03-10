@@ -288,7 +288,7 @@ public final class DebugTrace {
     private Map<String,String> lessorGuaranteedBalance(Account account, long lesseeId) {
         Map<String,String> map = new HashMap<>();
         map.put("account", Long.toUnsignedString(account.getId()));
-        map.put("lessor guaranteed balance", String.valueOf(account.getGuaranteedBalanceNQT()));
+        map.put("lessor guaranteed balance", String.valueOf(account.getGuaranteedBalanceFQT()));
         map.put("lessee", Long.toUnsignedString(lesseeId));
         map.put("timestamp", String.valueOf(Nxt.getBlockchain().getLastBlock().getTimestamp()));
         map.put("height", String.valueOf(Nxt.getBlockchain().getHeight()));
@@ -503,7 +503,7 @@ public final class DebugTrace {
                 long previousGeneratorId = BlockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId();
                 if (include(previousGeneratorId)) {
                     Map<String,String> map = getValues(previousGeneratorId, false);
-                    map.put("effective balance", String.valueOf(Account.getAccount(previousGeneratorId).getEffectiveBalanceNXT()));
+                    map.put("effective balance", String.valueOf(Account.getAccount(previousGeneratorId).getEffectiveBalanceFXT()));
                     map.put("generation fee", String.valueOf(backFees[i]));
                     map.put("block", block.getStringId());
                     map.put("event", "block");
@@ -514,7 +514,7 @@ public final class DebugTrace {
             }
         }
         Map<String,String> map = getValues(accountId, false);
-        map.put("effective balance", String.valueOf(Account.getAccount(accountId).getEffectiveBalanceNXT()));
+        map.put("effective balance", String.valueOf(Account.getAccount(accountId).getEffectiveBalanceFXT()));
         map.put("generation fee", String.valueOf(fee - totalBackFees));
         map.put("block", block.getStringId());
         map.put("event", "block");

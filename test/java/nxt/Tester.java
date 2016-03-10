@@ -52,7 +52,7 @@ public class Tester {
         if (account != null) {
             this.initialBalance = account.getBalanceNQT();
             this.initialUnconfirmedBalance = account.getUnconfirmedBalanceNQT();
-            this.initialEffectiveBalance = account.getEffectiveBalanceNXT();
+            this.initialEffectiveBalance = account.getEffectiveBalanceFXT();
             DbIterator<Account.AccountAsset> assets = account.getAssets(0, -1);
             for (Account.AccountAsset accountAsset : assets) {
                 initialAssetQuantity.put(accountAsset.getAssetId(), accountAsset.getQuantityQNT());

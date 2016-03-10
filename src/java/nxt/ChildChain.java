@@ -14,38 +14,31 @@
  *                                                                            *
  ******************************************************************************/
 
-package nxt.http;
+package nxt;
 
-import nxt.Account;
-import nxt.Nxt;
-import nxt.NxtException;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
+public final class ChildChain extends Chain {
 
-public final class GetGuaranteedBalance extends APIServlet.APIRequestHandler {
+    private static final Map<String, ChildChain> childChains = new HashMap<>();
+    private static final Collection<ChildChain> allChildChains = Collections.unmodifiableCollection(childChains.values());
 
-    static final GetGuaranteedBalance instance = new GetGuaranteedBalance();
+    public static final ChildChain NXT = new ChildChain("NXT");
 
-    private GetGuaranteedBalance() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.FORGING}, "account", "numberOfConfirmations");
+    public static ChildChain getChildChain(String name) {
+        return childChains.get(name);
     }
 
-    @Override
-    JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
+    public static Collection<ChildChain> getAll() {
+        return allChildChains;
+    }
 
-        Account account = ParameterParser.getAccount(req);
-        int numberOfConfirmations = ParameterParser.getNumberOfConfirmations(req);
-
-        JSONObject response = new JSONObject();
-        if (account == null) {
-            response.put("guaranteedBalanceNQT", "0");
-        } else {
-            response.put("guaranteedBalanceNQT", String.valueOf(account.getGuaranteedBalanceFQT(numberOfConfirmations, Nxt.getBlockchain().getHeight())));
-        }
-
-        return response;
+    private ChildChain(String name) {
+        super(name);
+        childChains.put(name, this);
     }
 
 }
