@@ -56,7 +56,6 @@ import nxt.VoteWeighting;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
 import nxt.db.DbIterator;
-import nxt.peer.Hallmark;
 import nxt.peer.Peer;
 import nxt.util.Convert;
 import nxt.util.Filter;
@@ -482,18 +481,6 @@ final class JSONData {
         return json;
     }
 
-    static JSONObject hallmark(Hallmark hallmark) {
-        JSONObject json = new JSONObject();
-        putAccount(json, "account", Account.getId(hallmark.getPublicKey()));
-        json.put("host", hallmark.getHost());
-        json.put("port", hallmark.getPort());
-        json.put("weight", hallmark.getWeight());
-        String dateString = Hallmark.formatDate(hallmark.getDate());
-        json.put("date", dateString);
-        json.put("valid", hallmark.isValid());
-        return json;
-    }
-
     static JSONObject token(Token token) {
         JSONObject json = new JSONObject();
         putAccount(json, "account", Account.getId(token.getPublicKey()));
@@ -509,10 +496,6 @@ final class JSONData {
         json.put("state", peer.getState().ordinal());
         json.put("announcedAddress", peer.getAnnouncedAddress());
         json.put("shareAddress", peer.shareAddress());
-        if (peer.getHallmark() != null) {
-            json.put("hallmark", peer.getHallmark().getHallmarkString());
-        }
-        json.put("weight", peer.getWeight());
         json.put("downloadedVolume", peer.getDownloadedVolume());
         json.put("uploadedVolume", peer.getUploadedVolume());
         json.put("application", peer.getApplication());
@@ -528,8 +511,6 @@ final class JSONData {
         json.put("lastUpdated", peer.getLastUpdated());
         json.put("lastConnectAttempt", peer.getLastConnectAttempt());
         json.put("inbound", peer.isInbound());
-        json.put("inboundWebSocket", peer.isInboundWebSocket());
-        json.put("outboundWebSocket", peer.isOutboundWebSocket());
         if (peer.isBlacklisted()) {
             json.put("blacklistingCause", peer.getBlacklistingCause());
         }

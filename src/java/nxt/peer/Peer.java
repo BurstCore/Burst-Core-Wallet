@@ -16,18 +16,24 @@
 
 package nxt.peer;
 
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
+import java.net.InetAddress;
 
-public interface Peer extends Comparable<Peer> {
+/**
+ * Peer network node
+ */
+public interface Peer {
 
+    /** Peer state */
     enum State {
-        NON_CONNECTED, CONNECTED, DISCONNECTED
+        NON_CONNECTED,                  // Node has never been connected
+        CONNECTED,                      // Node is connected
+        DISCONNECTED                    // Node is disconnected
     }
 
+    /** Peer services */
     enum Service {
-        HALLMARK(1),                    // Hallmarked node
-        PRUNABLE(2),                    // Stores expired prunable messages
+        HALLMARK(1),                    // Hallmarked node (no longer used)
+        PRUNABLE(2),                    // Stores expired prunable content
         API(4),                         // Provides open API access over http
         API_SSL(8);                     // Provides open API access over https
 
@@ -42,66 +48,189 @@ public interface Peer extends Comparable<Peer> {
         }
     }
 
-    boolean providesService(Service service);
-
-    boolean providesServices(long services);
-
-    String getHost();
-
-    int getPort();
-
-    String getAnnouncedAddress();
-
+    /**
+     * Get the peer state
+     *
+     * @return                          Current state
+     */
     State getState();
 
-    String getVersion();
+    /**
+     * Get the peer host address
+     *
+     * @return                          Host address
+     */
+    String getHost();
 
-    String getApplication();
+    /**
+     * Get the announced address
+     *
+     * @return                          Announced address
+     */
+    String getAnnouncedAddress();
 
-    String getPlatform();
-
-    String getSoftware();
-
-    int getApiPort();
-
-    int getApiSSLPort();
-
-    Hallmark getHallmark();
-
-    int getWeight();
-
-    boolean shareAddress();
-
-    boolean isBlacklisted();
-
-    void blacklist(Exception cause);
-
-    void blacklist(String cause);
-
-    void unBlacklist();
-
-    void deactivate();
-
-    void remove();
-
+    /**
+     * Get the download volume
+     *
+     * @return                          Download volume
+     */
     long getDownloadedVolume();
 
+    /**
+     * Get the upload volume
+     *
+     * @return                          Upload volume
+     */
     long getUploadedVolume();
 
-    int getLastUpdated();
+    /**
+     * Get the application name
+     *
+     * @return                          Application name or null
+     */
+    String getApplication();
 
-    int getLastConnectAttempt();
+    /**
+     * Get the application version
+     *
+     * @return                          Application version or null
+     */
+    String getVersion();
 
-    boolean isInbound();
+    /**
+     * Get the application platform
+     *
+     * @return                          Application platform or null
+     */
+    String getPlatform();
 
-    boolean isInboundWebSocket();
+    /**
+     * Get the software description as 'name(version)@platform'
+     *
+     * @return                          Software description
+     */
+    String getSoftware();
 
-    boolean isOutboundWebSocket();
+    /**
+     * Get the peer port
+     *
+     * @return                          Peer port or 0
+     */
+    int getPort();
 
+    /**
+     * Get the open API port
+     *
+     * @return                          API port or 0
+     */
+    int getApiPort();
+
+    /**
+     * Get the open SSL port
+     *
+     * @return                          SSL port or 0
+     */
+    int getApiSSLPort();
+
+    /**
+     * Check if address should be shared
+     *
+     * @return                          TRUE if address should be shared
+     */
+    boolean shareAddress();
+
+    /**
+     * Check if peer is blacklisted
+     *
+     * @return                          TRUE if peer is blacklisted
+     */
+    boolean isBlacklisted();
+
+    /**
+     * Get the blacklist reason
+     *
+     * @return                          Blacklist reason
+     */
     String getBlacklistingCause();
 
-    JSONObject send(JSONStreamAware request);
+    /**
+     * Connect the peer
+     */
+    void connectPeer();
 
-    JSONObject send(JSONStreamAware request, int maxResponseSize);
+    /**
+     * Disconnect the peer
+     */
+    void disconnectPeer();
 
+    /**
+     * Blacklist the peer
+     *
+     * @param   cause                   Exception causing the blacklist
+     */
+    void blacklist(Exception cause);
+
+    /**
+     * Blacklist the peer
+     *
+     * @param   cause                   Blacklist reason
+     */
+    void blacklist(String cause);
+
+    /**
+     * Unblacklist the peer
+     */
+    void unBlacklist();
+
+    /**
+     * Get the time when the last message was received from the peer
+     *
+     * @return                          Epoch time
+     */
+    int getLastUpdated();
+
+    /**
+     * Get the time of the last connect attempt
+     *
+     * @return                          Epoch time
+     */
+    int getLastConnectAttempt();
+
+    /**
+     * Check if this is an inbound connection
+     *
+     * @return                          TRUE if this is an inbound connection
+     */
+    boolean isInbound();
+
+    /**
+     * Check if the peer provides the specified service
+     *
+     * @param   service                 Service
+     * @return                          TRUE if the service is provided
+     */
+    boolean providesService(Service service);
+
+    /**
+     * Check if the peer provides the specifies services
+     *
+     * @param   services                Services as a bit map
+     * @return                          TRUE if the services are provided
+     */
+    boolean providesServices(long services);
+
+    /**
+     * Send an asynchronous message
+     *
+     * @param   message                 Network message
+     */
+    void sendMessage(NetworkMessage message);
+
+    /**
+     * Send a request and wait for a response
+     *
+     * @param   message                 Request message
+     * @return                          Response message or null if there is no response
+     */
+    NetworkMessage sendRequest(NetworkMessage message);
 }

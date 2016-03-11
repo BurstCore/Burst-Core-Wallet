@@ -37,6 +37,8 @@ import nxt.Shuffling;
 import nxt.TaggedData;
 import nxt.Trade;
 import nxt.Vote;
+import nxt.peer.NetworkHandler;
+import nxt.peer.Peer;
 import nxt.peer.Peers;
 import nxt.util.UPnP;
 import org.json.simple.JSONObject;
@@ -90,13 +92,13 @@ public final class GetState extends APIServlet.APIRequestHandler {
             response.put("numberOfPhasingOnlyAccounts", AccountRestrictions.PhasingOnly.getCount());
         }
         response.put("numberOfPeers", Peers.getAllPeers().size());
-        response.put("numberOfActivePeers", Peers.getActivePeers().size());
+        response.put("numberOfConnectedPeers", NetworkHandler.getConnectionCount());
         response.put("numberOfUnlockedAccounts", Generator.getAllGenerators().size());
         response.put("availableProcessors", Runtime.getRuntime().availableProcessors());
         response.put("maxMemory", Runtime.getRuntime().maxMemory());
         response.put("totalMemory", Runtime.getRuntime().totalMemory());
         response.put("freeMemory", Runtime.getRuntime().freeMemory());
-        response.put("peerPort", Peers.getDefaultPeerPort());
+        response.put("peerPort", NetworkHandler.getDefaultPeerPort());
         response.put("isOffline", Constants.isOffline);
         response.put("needsAdminPassword", !API.disableAdminPassword);
         InetAddress externalAddress = UPnP.getExternalAddress();

@@ -18,8 +18,6 @@ package nxt;
 
 import nxt.db.DbIterator;
 import nxt.util.Observable;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.util.Collection;
 import java.util.List;
@@ -53,11 +51,11 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
 
     void broadcast(Transaction transaction) throws NxtException.ValidationException;
 
-    void processPeerTransactions(JSONObject request) throws NxtException.ValidationException;
+    void processPeerTransactions(List<Transaction> transactions) throws NxtException.ValidationException;
 
     void processLater(Collection<? extends Transaction> transactions);
 
-    SortedSet<? extends Transaction> getCachedUnconfirmedTransactions(List<String> exclude);
+    SortedSet<? extends Transaction> getCachedUnconfirmedTransactions(List<Long> exclude);
 
-    List<Transaction> restorePrunableData(JSONArray transactions) throws NxtException.NotValidException;
+    List<Transaction> restorePrunableData(List<Transaction> transactions) throws NxtException.NotValidException;
 }

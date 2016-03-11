@@ -75,16 +75,11 @@ public class SetLogging extends APIServlet.APIRequestHandler {
     private static final JSONStreamAware INCORRECT_LEVEL =
             JSONResponses.incorrect("logLevel", "Log level must be DEBUG, INFO, WARN or ERROR");
 
-    /** Incorrect communication event */
-    private static final JSONStreamAware INCORRECT_EVENT =
-            JSONResponses.incorrect("communicationEvent",
-                                    "Communication event must be EXCEPTION, HTTP-ERROR or HTTP-OK");
-
     /**
      * Create the SetLogging instance
      */
     private SetLogging() {
-        super(new APITag[] {APITag.DEBUG}, "logLevel", "communicationEvent", "communicationEvent", "communicationEvent");
+        super(new APITag[] {APITag.DEBUG}, "logLevel");
     }
 
     /**
@@ -119,14 +114,6 @@ public class SetLogging extends APIServlet.APIRequestHandler {
             }
         } else {
             Logger.setLevel(Logger.Level.INFO);
-        }
-        //
-        // Get the communication events
-        //
-        if (response == null) {
-            String[] events = req.getParameterValues("communicationEvent");
-            if (!Peers.setCommunicationLoggingMask(events))
-                response = INCORRECT_EVENT;
         }
         //
         // Return the response

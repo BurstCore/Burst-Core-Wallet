@@ -39,21 +39,19 @@ public final class DumpPeers extends APIServlet.APIRequestHandler {
     JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         String version = Convert.nullToEmpty(req.getParameter("version"));
-        int weight = ParameterParser.getInt(req, "weight", 0, (int)Constants.MAX_BALANCE_NXT, false);
         boolean connect = "true".equalsIgnoreCase(req.getParameter("connect")) && API.checkPassword(req);
         if (connect) {
-            Peers.getAllPeers().parallelStream().unordered().forEach(Peers::connectPeer);
+            Peers.getAllPeers().parallelStream().unordered().forEach(Peer::connectPeer);
         }
         Set<String> addresses = new HashSet<>();
         Peers.getAllPeers().forEach(peer -> {
-                    if (peer.getState() == Peer.State.CONNECTED
-                            && peer.shareAddress()
-                            && !peer.isBlacklisted()
-                            && peer.getVersion() != null && peer.getVersion().startsWith(version)
-                            && (weight == 0 || peer.getWeight() > weight)) {
-                        addresses.add(peer.getAnnouncedAddress());
-                    }
-                });
+            if (peer.getState() == Peer.State.CONNECTED
+                    && peer.shareAddress()
+                    && !peer.isBlacklisted()
+                    && peer.getVersion() != null && peer.getVersion().startsWith(version)) {
+                addresses.add(peer.getAnnouncedAddress());
+            }
+        });
         StringBuilder buf = new StringBuilder();
         for (String address : addresses) {
             buf.append(address).append("; ");

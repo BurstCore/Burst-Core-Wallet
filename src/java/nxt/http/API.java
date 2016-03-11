@@ -70,6 +70,7 @@ public final class API {
 
     public static final int TESTNET_API_PORT = 6876;
     public static final int TESTNET_API_SSLPORT = 6877;
+    public static final int MIN_COMPRESS_SIZE = 256;
 
     public static final int openAPIPort;
     public static final int openAPISSLPort;
@@ -216,7 +217,7 @@ public final class API {
                 gzipHandler.setExcludedPaths("/nxt");
             }
             gzipHandler.setIncludedMethods("GET", "POST");
-            gzipHandler.setMinGzipSize(nxt.peer.Peers.MIN_COMPRESS_SIZE);
+            gzipHandler.setMinGzipSize(MIN_COMPRESS_SIZE);
             apiHandler.setGzipHandler(gzipHandler);
 
             apiHandler.addServlet(APITestServlet.class, "/test");

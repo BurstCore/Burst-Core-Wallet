@@ -145,7 +145,6 @@ public final class APIServlet extends HttpServlet {
         map.put("dgsPurchase", DGSPurchase.instance);
         map.put("dgsQuantityChange", DGSQuantityChange.instance);
         map.put("dgsRefund", DGSRefund.instance);
-        map.put("decodeHallmark", DecodeHallmark.instance);
         map.put("decodeToken", DecodeToken.instance);
         map.put("decodeFileToken", DecodeFileToken.instance);
         map.put("decodeQRCode", DecodeQRCode.instance);
@@ -220,7 +219,6 @@ public final class APIServlet extends HttpServlet {
         map.put("getDGSTagsLike", GetDGSTagsLike.instance);
         map.put("getGuaranteedBalance", GetGuaranteedBalance.instance);
         map.put("getECBlock", GetECBlock.instance);
-        map.put("getInboundPeers", GetInboundPeers.instance);
         map.put("getPlugins", GetPlugins.instance);
         map.put("getMyInfo", GetMyInfo.instance);
         //map.put("getNextBlockGenerators", GetNextBlockGenerators.instance);
@@ -296,7 +294,6 @@ public final class APIServlet extends HttpServlet {
         map.put("leaseBalance", LeaseBalance.instance);
         map.put("longConvert", LongConvert.instance);
         map.put("hexConvert", HexConvert.instance);
-        map.put("markHost", MarkHost.instance);
         map.put("parseTransaction", ParseTransaction.instance);
         map.put("placeAskOrder", PlaceAskOrder.instance);
         map.put("placeBidOrder", PlaceBidOrder.instance);

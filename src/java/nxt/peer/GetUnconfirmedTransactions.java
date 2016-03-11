@@ -18,46 +18,32 @@ package nxt.peer;
 
 import nxt.Nxt;
 import nxt.Transaction;
-import nxt.util.JSON;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
 
-final class GetUnconfirmedTransactions extends PeerServlet.PeerRequestHandler {
-
-    static final GetUnconfirmedTransactions instance = new GetUnconfirmedTransactions();
+final class GetUnconfirmedTransactions {
 
     private GetUnconfirmedTransactions() {}
 
-
-    @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
-
-        List<String> exclude = (List<String>)request.get("exclude");
-        if (exclude == null) {
-            return JSON.emptyJSON;
-        }
-
+    /**
+     * Process the GetUnconfirmedTransactions message and return the Transactions message
+     *
+     * @param   peer                    Peer
+     * @param   message                 Request message
+     * @return                          Response message
+     */
+    static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetUnconfirmedTransactionsMessage request) {
+        List<Long> exclude = request.getExclusions();
         SortedSet<? extends Transaction> transactionSet = Nxt.getTransactionProcessor().getCachedUnconfirmedTransactions(exclude);
-        JSONArray transactionsData = new JSONArray();
+        List<Transaction> transactions = new ArrayList<>(Math.min(100, transactionSet.size()));
         for (Transaction transaction : transactionSet) {
-            if (transactionsData.size() >= 100) {
+            transactions.add(transaction);
+            if (transactions.size() >= 100) {
                 break;
             }
-            transactionsData.add(transaction.getJSONObject());
         }
-        JSONObject response = new JSONObject();
-        response.put("unconfirmedTransactions", transactionsData);
-
-        return response;
+        return new NetworkMessage.TransactionsMessage(request.getMessageId(), transactions);
     }
-
-    @Override
-    boolean rejectWhileDownloading() {
-        return true;
-    }
-
 }

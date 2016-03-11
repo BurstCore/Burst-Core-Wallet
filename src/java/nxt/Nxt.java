@@ -21,6 +21,7 @@ import nxt.env.DirProvider;
 import nxt.env.RuntimeEnvironment;
 import nxt.env.RuntimeMode;
 import nxt.http.API;
+import nxt.peer.NetworkHandler;
 import nxt.peer.Peers;
 import nxt.util.Convert;
 import nxt.util.Logger;
@@ -262,6 +263,11 @@ public final class Nxt {
         return TransactionProcessorImpl.getInstance();
     }
 
+    public static Block newBlockBuilder(byte[] blockBytes, List<? extends Transaction> blockTransactions)
+            throws NxtException.NotValidException {
+        return new BlockImpl(blockBytes, blockTransactions);
+    }
+
     public static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline, Attachment attachment) {
         return new TransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
     }
@@ -310,6 +316,7 @@ public final class Nxt {
         API.shutdown();
         ThreadPool.shutdown();
         Peers.shutdown();
+        NetworkHandler.shutdown();
         Db.shutdown();
         Logger.logShutdownMessage("Nxt server " + VERSION + " stopped.");
         Logger.shutdown();
@@ -359,6 +366,7 @@ public final class Nxt {
                 ShufflingParticipant.init();
                 PrunableMessage.init();
                 TaggedData.init();
+                NetworkHandler.init();
                 Peers.init();
                 Generator.init();
                 API.init();

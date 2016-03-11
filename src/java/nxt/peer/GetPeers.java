@@ -16,36 +16,29 @@
 
 package nxt.peer;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
+import java.util.List;
 
-final class GetPeers extends PeerServlet.PeerRequestHandler {
-
-    static final GetPeers instance = new GetPeers();
+final class GetPeers {
 
     private GetPeers() {}
 
-    @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
-        JSONObject response = new JSONObject();
-        JSONArray jsonArray = new JSONArray();
-        JSONArray services = new JSONArray();
-        Peers.getAllPeers().forEach(otherPeer -> {
-            if (!otherPeer.isBlacklisted() && otherPeer.getAnnouncedAddress() != null
-                    && otherPeer.getState() == Peer.State.CONNECTED && otherPeer.shareAddress()) {
-                jsonArray.add(otherPeer.getAnnouncedAddress());
-                services.add(Long.toUnsignedString(((PeerImpl)otherPeer).getServices()));
-            }
-        });
-        response.put("peers", jsonArray);
-        response.put("services", services);         // Separate array for backwards compatibility
-        return response;
+    /**
+     * Process the GetPeers message and return the AddPeers message
+     *
+     * @param   peer                    Peer
+     * @param   message                 Request message
+     * @return                          Response message
+     */
+    static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetPeersMessage request) {
+        List<Peer> peerList = Peers.getPeers(p -> !p.isBlacklisted()
+                        && p.getState() == Peer.State.CONNECTED
+                        && p.getAnnouncedAddress() != null
+                        && p.shareAddress()
+                        && !p.getAnnouncedAddress().equals(peer.getAnnouncedAddress()),
+                    NetworkMessage.MAX_LIST_SIZE);
+        if (!peerList.isEmpty()) {
+            peer.sendMessage(new NetworkMessage.AddPeersMessage(peerList));
+        }
+        return null;
     }
-
-    @Override
-    boolean rejectWhileDownloading() {
-        return false;
-    }
-
 }

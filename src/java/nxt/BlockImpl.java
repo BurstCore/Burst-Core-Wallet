@@ -98,6 +98,35 @@ final class BlockImpl implements Block {
         this.blockTransactions = blockTransactions;
     }
 
+    BlockImpl(byte[] blockBytes, List<? extends Transaction> blockTransactions) throws NxtException.NotValidException {
+        ByteBuffer buffer = ByteBuffer.wrap(blockBytes);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        version = buffer.getInt();
+        timestamp = buffer.getInt();
+        previousBlockId = buffer.getLong();
+        int transactionCount = buffer.getInt();
+        totalAmountNQT = buffer.getLong();
+        totalFeeNQT = buffer.getLong();
+        payloadLength = buffer.getInt();
+        payloadHash = new byte[32];
+        buffer.get(payloadHash);
+        generatorPublicKey = new byte[32];
+        buffer.get(generatorPublicKey);
+        generationSignature = new byte[32];
+        buffer.get(generationSignature);
+        previousBlockHash = new byte[32];
+        buffer.get(previousBlockHash);
+        if (buffer.remaining() >= 64) {
+            blockSignature = new byte[64];
+            buffer.get(blockSignature);
+        }
+        if (transactionCount != blockTransactions.size()) {
+            throw new NxtException.NotValidException("Block transaction count " + transactionCount + " is incorrect");
+        }
+        this.blockTransactions = new ArrayList<>(transactionCount);
+        blockTransactions.forEach((transaction) -> this.blockTransactions.add((TransactionImpl)transaction));
+    }
+
     @Override
     public int getVersion() {
         return version;
@@ -397,7 +426,6 @@ final class BlockImpl implements Block {
     void setPrevious(BlockImpl block) {
         if (block != null) {
             if (block.getId() != getPreviousBlockId()) {
-                // shouldn't happen as previous id is already verified, but just in case
                 throw new IllegalStateException("Previous block id doesn't match");
             }
             this.height = block.getHeight() + 1;
@@ -442,5 +470,4 @@ final class BlockImpl implements Block {
         }
         cumulativeDifficulty = previousBlock.cumulativeDifficulty.add(Convert.two64.divide(BigInteger.valueOf(baseTarget)));
     }
-
 }

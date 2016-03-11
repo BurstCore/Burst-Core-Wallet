@@ -20,48 +20,34 @@ import nxt.Blockchain;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.Transaction;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 
-/**
- * Get the transactions
- */
-public class GetTransactions extends PeerServlet.PeerRequestHandler {
+import java.util.ArrayList;
+import java.util.List;
 
-    static final GetTransactions instance = new GetTransactions();
+public class GetTransactions {
 
     private GetTransactions() {}
 
-    @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
-        if (!Constants.INCLUDE_EXPIRED_PRUNABLE) {
-            return PeerServlet.UNSUPPORTED_REQUEST_TYPE;
+    /**
+     * Process the GetTransactions message and return the Transactions message
+     *
+     * @param   peer                    Peer
+     * @param   message                 Request message
+     * @return                          Response message
+     */
+    static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetTransactionsMessage request) {
+        List<Long> transactionIds = request.getTransactionIds();
+        if (transactionIds.size() > 100) {
+            throw new IllegalArgumentException(Errors.TOO_MANY_TRANSACTIONS_REQUESTED);
         }
-        JSONObject response = new JSONObject();
-        JSONArray transactionArray = new JSONArray();
-        JSONArray transactionIds = (JSONArray)request.get("transactionIds");
-        Blockchain blockchain = Nxt.getBlockchain();
-        //
-        // Return the transactions to the caller
-        //
-        if (transactionIds != null) {
-            transactionIds.forEach(transactionId -> {
-                long id = Long.parseUnsignedLong((String)transactionId);
-                Transaction transaction = blockchain.getTransaction(id);
-                if (transaction != null) {
-                    transaction.getAppendages(true);
-                    JSONObject transactionJSON = transaction.getJSONObject();
-                    transactionArray.add(transactionJSON);
-                }
-            });
+        List<Transaction> transactions = new ArrayList<>(transactionIds.size());
+        for (Long transactionId : transactionIds) {
+            Transaction transaction = Nxt.getBlockchain().getTransaction(transactionId);
+            if (transaction != null) {
+                transaction.getAppendages(true);
+                transactions.add(transaction);
+            }
         }
-        response.put("transactions", transactionArray);
-        return response;
-    }
-
-    @Override
-    boolean rejectWhileDownloading() {
-        return true;
+        return new NetworkMessage.TransactionsMessage(request.getMessageId(), transactions);
     }
 }

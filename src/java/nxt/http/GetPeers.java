@@ -41,7 +41,7 @@ public final class GetPeers extends APIServlet.APIRequestHandler {
         String stateValue = Convert.emptyToNull(req.getParameter("state"));
         String[] serviceValues = req.getParameterValues("service");
         boolean includePeerInfo = "true".equalsIgnoreCase(req.getParameter("includePeerInfo"));
-        Peer.State state;
+        final Peer.State state;
         if (stateValue != null) {
             try {
                 state = Peer.State.valueOf(stateValue);
@@ -62,7 +62,15 @@ public final class GetPeers extends APIServlet.APIRequestHandler {
             }
         }
 
-        Collection<? extends Peer> peers = active ? Peers.getActivePeers() : state != null ? Peers.getPeers(state) : Peers.getAllPeers();
+        Collection<Peer> peers;
+        if (active) {
+            peers = Peers.getPeers(p -> p.getState() != Peer.State.NON_CONNECTED);
+        } else if (state != null) {
+            peers = Peers.getPeers(p -> p.getState() == state);
+        } else {
+            peers = Peers.getAllPeers();
+        }
+
         JSONArray peersJSON = new JSONArray();
         if (serviceCodes != 0) {
             final long services = serviceCodes;

@@ -22,6 +22,7 @@ import nxt.Db;
 import nxt.Generator;
 import nxt.Nxt;
 import nxt.http.API;
+import nxt.peer.NetworkHandler;
 import nxt.peer.Peers;
 import nxt.util.Convert;
 import nxt.util.Logger;
@@ -152,7 +153,7 @@ public class DesktopSystemTray {
         addDataRow(statusPanel, "Network", (Constants.isTestnet) ? "TestNet" : "MainNet");
         addDataRow(statusPanel, "Working offline", "" + Constants.isOffline);
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getBrowserUri()));
-        addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));
+        addDataRow(statusPanel, "Peer port", String.valueOf(NetworkHandler.getDefaultPeerPort()));
         addDataRow(statusPanel, "Program folder", String.valueOf(Paths.get(".").toAbsolutePath().getParent()));
         addDataRow(statusPanel, "User folder", String.valueOf(Paths.get(Nxt.getUserHomeDir()).toAbsolutePath()));
         addDataRow(statusPanel, "Database URL", Db.db == null ? "unavailable" : Db.db.getUrl());

@@ -107,11 +107,16 @@ final class BlockchainImpl implements Blockchain {
 
     @Override
     public BlockImpl getBlock(long blockId) {
+        return getBlock(blockId, false);
+    }
+
+    @Override
+    public BlockImpl getBlock(long blockId, boolean loadTransactions) {
         BlockImpl block = lastBlock.get();
         if (block.getId() == blockId) {
             return block;
         }
-        return BlockDb.findBlock(blockId);
+        return BlockDb.findBlock(blockId, loadTransactions);
     }
 
     @Override
