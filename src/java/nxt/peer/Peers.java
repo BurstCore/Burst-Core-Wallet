@@ -60,7 +60,6 @@ public final class Peers {
         REMOVE_PEER,                    // Removed peer from peer list
         ADD_ACTIVE_PEER,                // Peer is now active
         CHANGE_ACTIVE_PEER,             // Active peer state changed
-
     }
 
     /** Maximum application version length */
@@ -489,6 +488,15 @@ public final class Peers {
      */
     public static Collection<Peer> getAllPeers() {
         return allPeers;
+    }
+
+    /**
+     * Return all connected peers
+     *
+     * @return                          List of connected peers
+     */
+    static List<Peer> getConnectedPeers() {
+        return new ArrayList<>(NetworkHandler.connectionMap.values());
     }
 
     /**

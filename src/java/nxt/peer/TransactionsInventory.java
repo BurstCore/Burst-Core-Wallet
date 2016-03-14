@@ -19,7 +19,6 @@ package nxt.peer;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.Transaction;
-import nxt.TransactionProcessor;
 
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
@@ -77,19 +76,37 @@ final class TransactionsInventory {
             //
             // Request the transactions
             //
-            NetworkMessage.TransactionsMessage response = (NetworkMessage.TransactionsMessage)peer.sendRequest(
-                    new NetworkMessage.GetTransactionsMessage(requestIds));
-            if (response == null || response.getTransactionCount() == 0) {
-                return;
-            }
-            //
-            // Process the transactions
-            //
             try {
-                List<Transaction> transactions = response.getTransactions();
-                Nxt.getTransactionProcessor().processPeerTransactions(transactions);
-            } catch (RuntimeException | NxtException.ValidationException e) {
-                peer.blacklist(e);
+                List<Peer> connectedPeers = Peers.getConnectedPeers();
+                if (connectedPeers.isEmpty()) {
+                        return;
+                }
+                int index = connectedPeers.indexOf(peer);
+                if (index < 0) {
+                    index = 0;
+                }
+                int startIndex = index;
+                while (!requestIds.isEmpty()) {
+                    Peer feederPeer = connectedPeers.get(index);
+                    NetworkMessage.TransactionsMessage response = (NetworkMessage.TransactionsMessage)feederPeer.sendRequest(
+                            new NetworkMessage.GetTransactionsMessage(requestIds));
+                    if (response == null || response.getTransactionCount() == 0) {
+                        index = (index < connectedPeers.size()-1 ? index+1 : 0);
+                        if (index == startIndex) {
+                            break;
+                        }
+                        continue;
+                    }
+                    try {
+                        List<Transaction> transactions = response.getTransactions();
+                        transactions.forEach(tx -> requestIds.remove(tx.getId()));
+                        Nxt.getTransactionProcessor().processPeerTransactions(transactions);
+                    } catch (RuntimeException | NxtException.ValidationException e) {
+                        feederPeer.blacklist(e);
+                    }
+                }
+            } finally {
+                requestIds.forEach(id -> transactionCache.remove(id));
             }
         });
         return null;

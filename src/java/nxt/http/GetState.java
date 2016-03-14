@@ -38,7 +38,6 @@ import nxt.TaggedData;
 import nxt.Trade;
 import nxt.Vote;
 import nxt.peer.NetworkHandler;
-import nxt.peer.Peer;
 import nxt.peer.Peers;
 import nxt.util.UPnP;
 import org.json.simple.JSONObject;

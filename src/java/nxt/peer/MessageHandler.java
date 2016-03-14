@@ -16,6 +16,7 @@ package nxt.peer;
 import nxt.util.Logger;
 
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -33,7 +34,6 @@ class MessageHandler implements Runnable {
      * Construct a message handler
      */
     MessageHandler() {
-
     }
 
     /**
@@ -85,11 +85,7 @@ class MessageHandler implements Runnable {
                 NetworkMessage response;
                 try {
                     message = NetworkMessage.getMessage(entry.getBytes());
-                    if (message.downloadNotAllowed()) {
-                        throw new IllegalStateException(Errors.DOWNLOADING);
-                    }
-                    response = message.processMessage(peer);
-                    if (response == null) {
+                    if (message.isResponse()) {
                         if (message.getMessageId() == 0) {
                             Logger.logErrorMessage("'" + message.getMessageName()
                                     + "' response message does not have a message identifier");
@@ -97,21 +93,38 @@ class MessageHandler implements Runnable {
                             peer.completeRequest(message);
                         }
                     } else {
-                        peer.sendMessage(response);
+                        if (message.downloadNotAllowed()) {
+                            throw new IllegalStateException(Errors.DOWNLOADING);
+                        }
+                        response = message.processMessage(peer);
+                        if (message.requiresResponse()) {
+                            if (response == null) {
+                                Logger.logErrorMessage("No response for '" + message.getMessageName() + "' message");
+                            } else {
+                                peer.sendMessage(response);
+                            }
+                        }
                     }
                 } catch (Exception exc) {
+                    String errorMessage = exc.getMessage() != null ? exc.getMessage() : exc.toString();
+                    Logger.logDebugMessage("Unable to process message from " + peer.getHost() + ": " + errorMessage);
                     if (message != null && message.requiresResponse()) {
-                        response = new NetworkMessage.ErrorMessage(
-                                message.getMessageId(),
-                                exc.getMessage() != null ? exc.getMessage() : exc.toString());
+                        response = new NetworkMessage.ErrorMessage(message.getMessageId(), errorMessage);
                         peer.sendMessage(response);
                     }
+                }
+                //
+                // Restart reads from the peer if the pending messages have been cleared
+                //
+                int count = peer.decrementInputCount();
+                if (count == 0) {
+                    peer.updateKey(SelectionKey.OP_READ, 0);
                 }
             }
         } catch (Throwable exc) {
             Logger.logErrorMessage("Message handler abnormally terminated", exc);
         }
-        Logger.logInfoMessage(Thread.currentThread().getName() +  " terminated");
+        Logger.logInfoMessage(Thread.currentThread().getName() +  " stopped");
     }
 
     /**

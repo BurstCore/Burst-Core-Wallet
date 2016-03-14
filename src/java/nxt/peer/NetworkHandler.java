@@ -22,29 +22,31 @@ import nxt.util.Logger;
 import nxt.util.ThreadPool;
 import nxt.util.UPnP;
 
-import java.io.InputStream;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
-import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.StandardSocketOptions;
 import java.net.UnknownHostException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.nio.channels.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
+import java.nio.ByteOrder;
+import java.nio.channels.ClosedSelectorException;
+import java.nio.channels.SelectableChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -66,9 +68,6 @@ import java.util.Set;
  */
 public final class NetworkHandler implements Runnable {
 
-    /** Network handler instance */
-    private static final NetworkHandler instance = new NetworkHandler();
-
     /** Default peer port */
     static final int DEFAULT_PEER_PORT = 7813;
 
@@ -78,14 +77,14 @@ public final class NetworkHandler implements Runnable {
     /** Maximum number of pending input messages for a single peer */
     private static final int MAX_INPUT_MESSAGES = 10;
 
-    /** Maximum number of pending output messages for a single peer */
-    private static final int MAX_OUTPUT_MESSAGES = 500;
+    /** Message header */
+    private static final byte[] MESSAGE_HEADER = new byte[] {(byte)0x03, (byte)0x2c, (byte)0x05, (byte)0xc2};
 
-    /** GetInfo message which is sent each time an outbound connection is created */
-    private static NetworkMessage getInfoMessage;
+    /** Maximum message size */
+    private static final int MAX_MESSAGE_SIZE = 1024 * 1024;
 
     /** Server port */
-    static final int serverPort = Constants.isTestnet ? TESTNET_PEER_PORT :
+    private static final int serverPort = Constants.isTestnet ? TESTNET_PEER_PORT :
             Nxt.getIntProperty("nxt.peerServerPort", DEFAULT_PEER_PORT);
 
     /** Enable UPnP */
@@ -108,6 +107,9 @@ public final class NetworkHandler implements Runnable {
 
     /** Listen address */
     private static final String listenAddress = Nxt.getStringProperty("nxt.peerServerHost", "0.0.0.0");
+
+    /** GetInfo message which is sent each time an outbound connection is created */
+    private static NetworkMessage getInfoMessage;
 
     /** My address */
     static String myAddress;
@@ -151,6 +153,9 @@ public final class NetworkHandler implements Runnable {
         }
     }
 
+    /** Network listener instance */
+    private static final NetworkHandler listener = new NetworkHandler();
+
     /** Network listener thread */
     private static Thread listenerThread;
 
@@ -169,14 +174,8 @@ public final class NetworkHandler implements Runnable {
     /** Network selector */
     private static Selector networkSelector;
 
-    /** Connections list */
-    private static final List<PeerImpl> connections = Collections.synchronizedList(new ArrayList<>(128));
-
-    /** Unmodifiable view of collections list */
-    private static final List<Peer> allConnections = Collections.unmodifiableList(connections);
-
     /** Connection map */
-    private static final Map<InetAddress, PeerImpl> connectionMap = new HashMap<>();
+    static final ConcurrentHashMap<InetAddress, PeerImpl> connectionMap = new ConcurrentHashMap<>();
 
     /** Network shutdown */
     private static volatile boolean networkShutdown = false;
@@ -206,7 +205,7 @@ public final class NetworkHandler implements Runnable {
             throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet");
         }
         String platform = Nxt.getStringProperty("nxt.myPlatform",
-                                                System.getProperty("os.name") + " " + System.getProperty("os.arch"));
+                                System.getProperty("os.name") + " " + System.getProperty("os.arch"));
         if (platform.length() > Peers.MAX_PLATFORM_LENGTH) {
             platform = platform.substring(0, Peers.MAX_PLATFORM_LENGTH);
         }
@@ -254,16 +253,44 @@ public final class NetworkHandler implements Runnable {
         }
         getInfoMessage = new NetworkMessage.GetInfoMessage(Nxt.APPLICATION, Nxt.VERSION, platform,
                 shareAddress, announcedAddress, serverPort, API.openAPIPort, API.openAPISSLPort, services);
+        try {
+            //
+            // Create the selector for listening for network events
+            //
+            networkSelector = Selector.open();
+            //
+            // Create the listen channel
+            //
+            listenChannel = ServerSocketChannel.open();
+            listenChannel.configureBlocking(false);
+            listenChannel.bind(new InetSocketAddress(listenAddress, serverPort), 10);
+            listenKey = listenChannel.register(networkSelector, SelectionKey.OP_ACCEPT);
+        } catch (IOException exc) {
+            networkShutdown = true;
+            throw new RuntimeException("Unable to create network listener", exc);
+        }
         //
-        // Start the network listener
+        // Start the network handler after server initialization has completed
         //
         ThreadPool.runAfterStart(() -> {
             if (enablePeerUPnP) {
                 UPnP.addPort(serverPort);
             }
-            listenerThread = new Thread(instance, "Network Listener");
+            //
+            // Start the network listener
+            //
+            listenerThread = new Thread(listener, "Network Listener");
             listenerThread.setDaemon(true);
             listenerThread.start();
+            //
+            // Start the message handlers
+            //
+            for (int i=0; i<8; i++) {
+                MessageHandler handler = new MessageHandler();
+                Thread handlerThread = new Thread(handler, "Message Handler " + i+1);
+                handlerThread.setDaemon(true);
+                handlerThread.start();
+            }
         });
     }
 
@@ -277,7 +304,7 @@ public final class NetworkHandler implements Runnable {
                 UPnP.deletePort(serverPort);
             }
             if (networkSelector != null) {
-                instance.wakeup();
+                listener.wakeup();
             }
         }
     }
@@ -292,23 +319,13 @@ public final class NetworkHandler implements Runnable {
     }
 
     /**
-     * Network handler
+     * Network listener
      */
     @Override
     public void run() {
         try {
             Logger.logInfoMessage("Network listener started");
-            //
-            // Create the selector for listening for network events
-            //
-            networkSelector = Selector.open();
-            //
-            // Create the listen channel
-            //
-            listenChannel = ServerSocketChannel.open();
-            listenChannel.configureBlocking(false);
-            listenChannel.bind(new InetSocketAddress(listenAddress, serverPort), 10);
-            listenKey = listenChannel.register(networkSelector, SelectionKey.OP_ACCEPT);
+
             //
             // Process network events
             //
@@ -367,32 +384,60 @@ public final class NetworkHandler implements Runnable {
     }
 
     /**
-     * Process OP_CONNECT event
+     * Create a new outbound connection
+     *
+     * @param   peer                    Target peer
+     */
+    static void createConnection(PeerImpl peer) {
+        try {
+            InetAddress address = InetAddress.getByName(peer.getHost());
+            InetSocketAddress remoteAddress = new InetSocketAddress(address, peer.getPort());
+            SocketChannel channel = SocketChannel.open();
+            channel.configureBlocking(false);
+            channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
+            channel.bind(null);
+            SelectionKey key = channel.register(networkSelector, SelectionKey.OP_CONNECT);
+            key.attach(peer);
+            connectionMap.put(address, peer);
+            outboundCount++;
+            peer.setConnectionAddress(remoteAddress);
+            peer.setChannel(channel);
+            peer.setKey(key);
+            channel.connect(remoteAddress);
+        } catch (BindException exc) {
+            Logger.logErrorMessage("Unable to bind local port: " + exc.toString());
+        } catch (UnknownHostException exc) {
+            Logger.logErrorMessage("Unable to resolve host " + peer.getHost() + ": " + exc.getMessage());
+        } catch (IOException exc) {
+            Logger.logErrorMessage("Unable to open connection to " + peer.getHost() + ": " + exc.getMessage());
+        }
+    }
+
+    /**
+     * Process OP_CONNECT event (outbound connect completed)
      *
      * @param   connectKey              Selection key
      */
     private void processConnect(SelectionKey connectKey) {
         PeerImpl peer = (PeerImpl)connectKey.attachment();
-        InetAddress address = peer.getHostAddress();
+        String hostAddress = peer.getConnectionAddress().getAddress().getHostAddress();
         SocketChannel channel = peer.getChannel();
         try {
             channel.finishConnect();
-            Logger.logDebugMessage("Connection established to %s", address.getHostAddress());
-            synchronized(peer) {
-                peer.getOutputList().add(getInfoMessage);
-                connectKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-            }
+            peer.connectComplete(true);
+            peer.updateKey(SelectionKey.OP_READ, 0);
+            sendGetInfoMessage(peer);
         } catch (SocketException exc) {
-            Logger.logDebugMessage(String.format("%s: Peer %s", exc.getLocalizedMessage(), address.getHostAddress()));
-            closeConnection(peer);
+            Logger.logDebugMessage(String.format("%s: Peer %s", exc.getMessage(), hostAddress));
+            peer.connectComplete(false);
         } catch (IOException exc) {
-            Logger.logDebugMessage(String.format("Connection failed to %s", address.getHostAddress()), exc);
-            closeConnection(peer);
+            Logger.logDebugMessage("Connection failed to " + hostAddress + ": " + exc.getMessage());
+            peer.connectComplete(false);
         }
     }
 
     /**
-     * Process OP_ACCEPT event
+     * Process OP_ACCEPT event (inbound connect received)
      *
      * @param   acceptKey               Selection key
      */
@@ -401,58 +446,178 @@ public final class NetworkHandler implements Runnable {
             SocketChannel channel = listenChannel.accept();
             if (channel != null) {
                 InetSocketAddress remoteAddress = (InetSocketAddress)channel.getRemoteAddress();
-                PeerAddress address = new PeerAddress(remoteAddress);
-                if (connections.size() >= maxConnections) {
+                String hostAddress = remoteAddress.getAddress().getHostAddress();
+                PeerImpl peer = Peers.findOrCreatePeer(remoteAddress.getAddress());
+                if (peer == null) {
                     channel.close();
-                    log.info(String.format("Max connections reached: Connection rejected from %s", address));
-                } else if (isBlacklisted(address.getAddress())) {
+                    Logger.logDebugMessage("Peer not accepted: Connection rejected from " + hostAddress);
+                } else if (inboundCount >= maxInbound) {
                     channel.close();
-                    log.info(String.format("Connection rejected from banned address %s", address));
-                } else if (connectionMap.get(address.getAddress()) != null) {
+                    Logger.logDebugMessage("Max inbound connections reached: Connection rejected from " + hostAddress);
+                } else if (peer.isBlacklisted()) {
                     channel.close();
-                    log.info(String.format("Duplicate connection rejected from %s", address));
+                    Logger.logDebugMessage("Peer is blacklisted: Connection rejected from " + hostAddress);
+                } else if (connectionMap.get(remoteAddress.getAddress()) != null || !peer.setInbound()) {
+                    channel.close();
+                    Logger.logDebugMessage("Connection already established with " + hostAddress);
                 } else {
-                    address.setTimeConnected(System.currentTimeMillis()/1000);
                     channel.configureBlocking(false);
                     channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
-                    SelectionKey key = channel.register(networkSelector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-                    Peer peer = new Peer(address, channel, key);
+                    SelectionKey key = channel.register(networkSelector, SelectionKey.OP_READ);
                     key.attach(peer);
-                    peer.setConnected(true);
-                    address.setConnected(true);
-                    log.info(String.format("Connection accepted from %s", address));
-                    Message msg = VersionMessage.buildVersionMessage(peer, Parameters.listenAddress,
-                                                                     Parameters.blockStore.getChainHeight());
-                    synchronized(connections) {
-                        connections.add(peer);
-                        connectionMap.put(address.getAddress(), peer);
-                        peer.getOutputList().add(msg);
-                    }
-                    log.info(String.format("Sent 'version' message to %s", address));
+                    peer.setConnectionAddress(remoteAddress);
+                    peer.setChannel(channel);
+                    peer.setKey(key);
+                    connectionMap.put(remoteAddress.getAddress(), peer);
+                    inboundCount++;
+                    Peers.addPeer(peer);
                 }
             }
         } catch (IOException exc) {
-            log.error("Unable to accept connection", exc);
+            Logger.logErrorMessage("Unable to accept connection", exc);
             networkShutdown = true;
         }
     }
 
     /**
-     * Process a read event
+     * Process OP_READ event (ready to read data)
      *
      * @param   readKey                 Network selection key
      */
     private void processRead(SelectionKey readKey) {
-
+        PeerImpl peer = (PeerImpl)readKey.attachment();
+        SocketChannel channel = peer.getChannel();
+        ByteBuffer buffer = peer.getInputBuffer();
+        peer.setLastUpdated(Nxt.getEpochTime());
+        try {
+            int count;
+            //
+            // Read data until we have a complete message or no more data is available
+            //
+            while (true) {
+                //
+                // Allocate a header buffer if no read is in progress
+                //   4-byte identifier
+                //   4-byte message length
+                //
+                if (buffer == null) {
+                    buffer = ByteBuffer.wrap(new byte[MESSAGE_HEADER.length + 4]);
+                    buffer.order(ByteOrder.LITTLE_ENDIAN);
+                    peer.setInputBuffer(buffer);
+                }
+                //
+                // Fill the input buffer (stop if no more data is available)
+                //
+                if (buffer.position() < buffer.limit()) {
+                    count = channel.read(buffer);
+                    if (count <= 0) {
+                        if (count < 0)
+                            peer.disconnectPeer();
+                        break;
+                    }
+                }
+                //
+                // Process the message header
+                //
+                if (buffer.position() == buffer.limit() && buffer.limit() == MESSAGE_HEADER.length + 4) {
+                    byte[] hdrBytes = new byte[MESSAGE_HEADER.length];
+                    buffer.get(hdrBytes);
+                    int length = buffer.getInt();
+                    if (!Arrays.equals(hdrBytes, MESSAGE_HEADER)) {
+                        Logger.logDebugMessage("Incorrect message header received from " + peer.getHost());
+                        peer.disconnectPeer();
+                        break;
+                    }
+                    if (length > MAX_MESSAGE_SIZE) {
+                        Logger.logDebugMessage("Message length " + length + " for message from " + peer.getHost()
+                                + " is too large");
+                        peer.disconnectPeer();
+                        break;
+                    }
+                    if (length > 0) {
+                        byte[] msgBytes = new byte[hdrBytes.length + length];
+                        System.arraycopy(hdrBytes, 0, msgBytes, 0, hdrBytes.length);
+                        buffer = ByteBuffer.wrap(msgBytes);
+                        buffer.order(ByteOrder.LITTLE_ENDIAN);
+                        buffer.position(hdrBytes.length);
+                        peer.setInputBuffer(buffer);
+                    }
+                }
+                //
+                // Queue the message for a message handler
+                //
+                // We will disable read operations for this peer if it has too many
+                // pending messages.  Read operations will be re-enabled once
+                // all of the messages have been processed.  We do this to keep
+                // one node from flooding us with requests.
+                //
+                if (buffer.position() == buffer.limit()) {
+                    peer.setInputBuffer(null);
+                    buffer.position(MESSAGE_HEADER.length + 4);
+                    MessageHandler.processMessage(peer, buffer);
+                    int inputCount = peer.incrementInputCount();
+                    if (inputCount >= MAX_INPUT_MESSAGES) {
+                        peer.updateKey(0, SelectionKey.OP_READ);
+                    }
+                    break;
+                }
+            }
+        } catch (IOException exc) {
+            peer.disconnectPeer();
+        }
     }
 
     /**
-     * Process a write event
+     * Process OP_WRITE event (ready to write data)
      *
      * @param   writeKey                Network selection key
      */
     private void processWrite(SelectionKey writeKey) {
-
+        PeerImpl peer = (PeerImpl)writeKey.attachment();
+        SocketChannel channel = peer.getChannel();
+        ByteBuffer buffer = peer.getOutputBuffer();
+        try {
+            //
+            // Write data until all pending messages have been sent or the socket buffer is full
+            //
+            while (true) {
+                //
+                // Get the next message if no write is in progress.  Disable write events
+                // if there are no more messages to write.
+                //
+                if (buffer == null) {
+                    NetworkMessage message = peer.getOutputQueue().poll();
+                    if (message == null) {
+                        peer.updateKey(0, SelectionKey.OP_WRITE);
+                        break;
+                    }
+                    int length = message.getLength();
+                    buffer = ByteBuffer.allocate(MESSAGE_HEADER.length + 4 + length);
+                    buffer.order(ByteOrder.LITTLE_ENDIAN);
+                    buffer.put(MESSAGE_HEADER);
+                    buffer.putInt(length);
+                    try {
+                        message.getBytes(buffer);
+                    } catch (BufferOverflowException exc) {
+                        Logger.logErrorMessage("Buffer is too short for '" + message.getMessageName()
+                                + "' message from " + peer.getHost());
+                        peer.disconnectPeer();
+                        break;
+                    }
+                    peer.setOutputBuffer(buffer);
+                }
+                //
+                // Write the current buffer to the channel
+                //
+                channel.write(buffer);
+                if (buffer.position() < buffer.limit())
+                    break;
+                buffer = null;
+                peer.setOutputBuffer(null);
+            }
+        } catch (IOException exc) {
+            peer.disconnectPeer();
+        }
     }
 
     /**
@@ -461,7 +626,23 @@ public final class NetworkHandler implements Runnable {
      * @param   peer                    Peer connection to close
      */
     static void closeConnection(PeerImpl peer) {
-
+        SocketChannel channel = peer.getChannel();
+        if (channel == null) {
+            return;
+        }
+        try {
+            if (peer.isInbound()) {
+                inboundCount = Math.max(0, inboundCount-1);
+            } else {
+                outboundCount = Math.max(0, outboundCount-1);
+            }
+            connectionMap.remove(peer.getConnectionAddress().getAddress());
+            if (channel.isOpen()) {
+                channel.close();
+            }
+        } catch (IOException exc) {
+            // Ignore
+        }
     }
 
     /**
@@ -472,7 +653,10 @@ public final class NetworkHandler implements Runnable {
      * @throws  NetworkException        Unable to send message
      */
     static void sendMessage(PeerImpl peer, NetworkMessage message) throws NetworkException {
-
+        if (peer.getState() == Peer.State.CONNECTED) {
+            peer.getOutputQueue().add(message);
+            peer.updateKey(SelectionKey.OP_WRITE, 0);
+        }
     }
 
     /**
@@ -481,16 +665,10 @@ public final class NetworkHandler implements Runnable {
      * @param   peer                    Target peer
      */
     static void sendGetInfoMessage(PeerImpl peer) {
-
-    }
-
-    /**
-     * Create a new outbound connections
-     *
-     * @param   peer                    Target peer
-     */
-    public static void createConnection(Peer peer) {
-
+        if (peer.getState() == Peer.State.CONNECTED) {
+            peer.getOutputQueue().add(getInfoMessage);
+            peer.updateKey(SelectionKey.OP_WRITE, 0);
+        }
     }
 
     /**
@@ -499,7 +677,12 @@ public final class NetworkHandler implements Runnable {
      * @param   message                 Message to send
      */
     public static void broadcastMessage(NetworkMessage message) {
-
+        connectionMap.values().forEach(peer -> {
+            if (peer.getState() == Peer.State.CONNECTED) {
+                peer.getOutputQueue().add(message);
+                peer.updateKey(SelectionKey.OP_WRITE, 0);
+            }
+        });
     }
 
     /**
@@ -530,21 +713,21 @@ public final class NetworkHandler implements Runnable {
     }
 
     /**
-     * Get the number of outbound connections
-     *
-     * @return                          Number of outbound connections
-     */
-    public static int getOutboundCount() {
-        return outboundCount;
-    }
-
-    /**
      * Return the maximum number of inbound connections
      *
      * @return                          Number of inbound connections
      */
     public static int getMaxInboundConnections() {
         return maxInbound;
+    }
+
+    /**
+     * Get the number of outbound connections
+     *
+     * @return                          Number of outbound connections
+     */
+    public static int getOutboundCount() {
+        return outboundCount;
     }
 
     /**

@@ -33,6 +33,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.SelectionKey;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -115,6 +116,9 @@ final class PeerImpl implements Peer {
     /** Input buffer */
     private ByteBuffer inputBuffer;
 
+    /** Input message count */
+    private final AtomicInteger inputCount = new AtomicInteger();
+
     /** Output buffer */
     private ByteBuffer outputBuffer;
 
@@ -144,7 +148,7 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Get the connection address
+     * Get the connection address (used by NetworkHandler)
      *
      * @return                          Connection address
      */
@@ -153,7 +157,7 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Set the connection address
+     * Set the connection address (used by NetworkHandler)
      *
      * @param   connectionAddress       Connection address
      */
@@ -162,7 +166,7 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Get the network channel
+     * Get the network channel (used by NetworkHandler)
      *
      * @return                          Socket channel
      */
@@ -171,7 +175,7 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Set the network channel
+     * Set the network channel (used by NetworkHandler)
      *
      * @param   channel                 Socket channel
      */
@@ -180,42 +184,44 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Get the network selection key
+     * Get the network selection key (used by NetworkHandler)
      *
      * @return                          Selection key
      */
-    SelectionKey getKey() {
+    synchronized SelectionKey getKey() {
         return key;
     }
 
     /**
-     * Update the network selection key
+     * Update the network selection key (used by NetworkHandler)
      *
      * @param   addOps                  Interest operations to add
      * @param   removeOps               Interest operations to remove
      */
     synchronized void updateKey(int addOps, int removeOps) {
-        key.interestOps((key.interestOps() | addOps) & (~removeOps));
+        if (key != null) {
+            key.interestOps((key.interestOps() | addOps) & (~removeOps));
+        }
     }
 
     /**
-     * Set the network selection key
+     * Set the network selection key (used by NetworkHandler)
      *
      * @param   key                     Selection key
      */
-    void setKey(SelectionKey key) {
+    synchronized void setKey(SelectionKey key) {
         this.key = key;
     }
 
     /**
-     * Get the output message queue
+     * Get the output message queue (used by NetworkHandler)
      */
     ConcurrentLinkedQueue<NetworkMessage> getOutputQueue() {
         return outputQueue;
     }
 
     /**
-     * Get the input buffer
+     * Get the input buffer (used by NetworkHandler)
      *
      * @return                          Input buffer
      */
@@ -224,7 +230,7 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Set the input buffer
+     * Set the input buffer (used by NetworkHandler)
      *
      * @param   inputBuffer             Input buffer
      */
@@ -233,7 +239,34 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Get the output buffer
+     * Get the input message count (used by NetworkHandler)
+     *
+     * @return                          Input message count
+     */
+    int getInputCount() {
+        return inputCount.get();
+    }
+
+    /**
+     * Increment the input message count (used by NetworkHandler)
+     *
+     * @return                          Updated message count
+     */
+    int incrementInputCount() {
+        return inputCount.incrementAndGet();
+    }
+
+    /**
+     * Decrement the input message count (used by MessageHandler)
+     *
+     * @return                          Updated message count
+     */
+    int decrementInputCount() {
+        return inputCount.decrementAndGet();
+    }
+
+    /**
+     * Get the output buffer (used by NetworkHandler)
      *
      * @return                          Output buffer
      */
@@ -242,11 +275,11 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Set the output buffer
+     * Set the output buffer (used by NetworkHandler)
      *
      * @param   outputBuffer            Output buffer
      */
-    void setoutputBuffer(ByteBuffer outputBuffer) {
+    void setOutputBuffer(ByteBuffer outputBuffer) {
         this.outputBuffer = outputBuffer;
     }
 
@@ -856,6 +889,8 @@ final class PeerImpl implements Peer {
             if (success) {
                 setState(State.CONNECTED);
                 Logger.logInfoMessage("Connection to " + host + " completed");
+            } else {
+                disconnectPeer();
             }
         } finally {
             connectLock.unlock();
@@ -870,15 +905,23 @@ final class PeerImpl implements Peer {
         connectLock.lock();
         try {
             if (state == State.CONNECTED) {
-                setState(State.DISCONNECTED);
-                NetworkHandler.closeConnection(this);
                 Logger.logInfoMessage("Connection to " + host + " closed");
             }
+            setState(State.DISCONNECTED);
+            NetworkHandler.closeConnection(this);
             outputQueue.clear();
             for (ResponseEntry entry : responseMap.values()) {
                 entry.responseSignal(null);
             }
             responseMap.clear();
+            isInbound = false;
+            downloadedVolume.set(0);
+            uploadedVolume.set(0);
+            inputBuffer = null;
+            outputBuffer = null;
+            channel = null;
+            key = null;
+            connectionAddress = null;
         } finally {
             connectLock.unlock();
         }

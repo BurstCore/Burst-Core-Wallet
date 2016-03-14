@@ -152,9 +152,9 @@ public abstract class NetworkMessage {
                 throw new NetworkException("'" + messageName + "' is not a valid peer message");
             }
         } catch (BufferUnderflowException exc) {
-            throw new NetworkException("Message is too short", exc);
+            throw new NetworkException("'" + messageName + "' message is too short", exc);
         } catch (BufferOverflowException exc) {
-            throw new NetworkException("Message buffer is too small", exc);
+            throw new NetworkException("'" + messageName + "' message buffer is too small", exc);
         }
         return networkMessage;
     }
@@ -737,6 +737,16 @@ public abstract class NetworkMessage {
         }
 
         /**
+         * Check if the message is a response
+         *
+         * @return                              TRUE if this is a response message
+         */
+        @Override
+        boolean isResponse() {
+            return true;
+        }
+
+        /**
          * Get the cumulative difficulty
          *
          * @return                      Cumulative difficulty
@@ -1228,6 +1238,16 @@ public abstract class NetworkMessage {
         }
 
         /**
+         * Check if the message is a response
+         *
+         * @return                              TRUE if this is a response message
+         */
+        @Override
+        boolean isResponse() {
+            return true;
+        }
+
+        /**
          * Get the last block indicator
          *
          * @return                          Last block indicator
@@ -1481,6 +1501,16 @@ public abstract class NetworkMessage {
             bytes.putLong(messageId);
             bytes.putShort((short)blockIds.size());
             blockIds.forEach((id) -> bytes.putLong(id));
+        }
+
+        /**
+         * Check if the message is a response
+         *
+         * @return                              TRUE if this is a response message
+         */
+        @Override
+        boolean isResponse() {
+            return true;
         }
 
         /**
@@ -1909,6 +1939,16 @@ public abstract class NetworkMessage {
         }
 
         /**
+         * Check if the message is a response
+         *
+         * @return                              TRUE if this is a response message
+         */
+        @Override
+        boolean isResponse() {
+            return true;
+        }
+
+        /**
          * Get the number of blocks
          *
          * @return                          Number of blocks
@@ -2316,6 +2356,16 @@ public abstract class NetworkMessage {
         }
 
         /**
+         * Check if the message is a response
+         *
+         * @return                              TRUE if this is a response message
+         */
+        @Override
+        boolean isResponse() {
+            return true;
+        }
+
+        /**
          * Get the transaction count
          *
          * @return                          Transaction count
@@ -2716,6 +2766,16 @@ public abstract class NetworkMessage {
             super.getBytes(bytes);
             bytes.putLong(messageId);
             encodeArray(bytes, errorMessageBytes);
+        }
+
+        /**
+         * Check if the message is a response
+         *
+         * @return                              TRUE if this is a response message
+         */
+        @Override
+        boolean isResponse() {
+            return true;
         }
 
         /**
