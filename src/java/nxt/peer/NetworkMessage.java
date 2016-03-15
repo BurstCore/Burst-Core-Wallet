@@ -44,10 +44,10 @@ import java.util.Map;
  */
 public abstract class NetworkMessage {
 
-    /** Current protocol level */
+    /** Current protocol level - change this whenever a message format changes */
     private static final int PROTOCOL_LEVEL = 1;
 
-    /** Minimum protocol level */
+    /** Minimum protocol level - message with a lower protocol level will be rejected */
     private static final int MIN_PROTOCOL_LEVEL = 1;
 
     /** Maximum byte array length */
@@ -449,9 +449,13 @@ public abstract class NetworkMessage {
          */
         @Override
         int getLength() {
-            return super.getLength() + getEncodedArrayLength(appNameBytes)
-                    + getEncodedArrayLength(appVersionBytes) + getEncodedArrayLength(appPlatformBytes)
-                    + 1 + getEncodedArrayLength(announcedAddressBytes) + 2 + 2 + 4;
+            return super.getLength()
+                    + getEncodedArrayLength(appNameBytes)
+                    + getEncodedArrayLength(appVersionBytes)
+                    + getEncodedArrayLength(appPlatformBytes)
+                    + 1
+                    + getEncodedArrayLength(announcedAddressBytes)
+                    + 2 + 2 + 8;
         }
 
         /**
@@ -1474,7 +1478,7 @@ public abstract class NetworkMessage {
                 throw new NetworkException("List size " + count + " exceeds the maximum of " + MAX_LIST_SIZE);
             }
             this.blockIds = new ArrayList<>(count);
-            for (int i=0; i < count; i++) {
+            for (int i=0; i<count; i++) {
                 blockIds.add(bytes.getLong());
             }
         }
@@ -2688,6 +2692,8 @@ public abstract class NetworkMessage {
      * The message identifier is obtained from the request message.
      * <p><ul>
      * <li>Message identifier (long)
+     * <li>Error severity (boolean)
+     * <li>Error name (string)
      * <li>Error message (string)
      * </ul>
      */
@@ -2695,6 +2701,12 @@ public abstract class NetworkMessage {
 
         /** Error message */
         private final byte[] errorMessageBytes;
+
+        /** Message name */
+        private final byte[] errorNameBytes;
+
+        /** Error severity */
+        private final boolean severeError;
 
         /**
          * Construct the message from the message bytes
@@ -2717,6 +2729,8 @@ public abstract class NetworkMessage {
         private ErrorMessage() {
             super("Error");
             messageId = 0;
+            severeError = false;
+            errorNameBytes = null;
             errorMessageBytes = null;
         }
 
@@ -2724,11 +2738,15 @@ public abstract class NetworkMessage {
          * Construct an Error message
          *
          * @param   messageId               Message identifier
+         * @param   severeError             TRUE if this is a severe error
+         * @param   errorName               Error name
          * @param   errorMessage            Error message
          */
-        public ErrorMessage(long messageId, String errorMessage) {
+        public ErrorMessage(long messageId, boolean severeError, String errorName, String errorMessage) {
             super("Error");
             this.messageId = messageId;
+            this.severeError = severeError;
+            this.errorNameBytes = errorName.getBytes(UTF8);
             this.errorMessageBytes = errorMessage.getBytes(UTF8);
         }
 
@@ -2742,6 +2760,8 @@ public abstract class NetworkMessage {
         private ErrorMessage(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
             super("Error", bytes);
             messageId = bytes.getLong();
+            severeError = (bytes.get() != (byte)0);
+            errorNameBytes = decodeArray(bytes);
             errorMessageBytes = decodeArray(bytes);
         }
 
@@ -2752,7 +2772,9 @@ public abstract class NetworkMessage {
          */
         @Override
         int getLength() {
-            return super.getLength() + 8 + getEncodedArrayLength(errorMessageBytes);
+            return super.getLength() + 8 + 1 +
+                    getEncodedArrayLength(errorNameBytes) +
+                    getEncodedArrayLength(errorMessageBytes);
         }
 
         /**
@@ -2765,6 +2787,8 @@ public abstract class NetworkMessage {
         void getBytes(ByteBuffer bytes) throws BufferOverflowException {
             super.getBytes(bytes);
             bytes.putLong(messageId);
+            bytes.put(severeError ? (byte)1 : (byte)0);
+            encodeArray(bytes, errorNameBytes);
             encodeArray(bytes, errorMessageBytes);
         }
 
@@ -2776,6 +2800,24 @@ public abstract class NetworkMessage {
         @Override
         boolean isResponse() {
             return true;
+        }
+
+        /**
+         * Check if this is a severe error
+         *
+         * @return                          TRUE if this is a severe error
+         */
+        public boolean isSevereError() {
+            return severeError;
+        }
+
+        /**
+         * Get the error name
+         *
+         * @return                          Error name
+         */
+        public String getErrorName() {
+            return new String(errorNameBytes, UTF8);
         }
 
         /**

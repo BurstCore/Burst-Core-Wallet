@@ -166,12 +166,12 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 long startTime = System.currentTimeMillis();
                 int numberOfForkConfirmations = blockchain.getHeight() > Constants.LAST_CHECKSUM_BLOCK - 720 ?
                         defaultNumberOfForkConfirmations : Math.min(1, defaultNumberOfForkConfirmations);
-                connectedPublicPeers = Peers.getPeers(peer -> peer.getState() == Peer.State.CONNECTED);
+                connectedPublicPeers = Peers.getConnectedPeers();
                 if (connectedPublicPeers.size() <= numberOfForkConfirmations) {
                     return;
                 }
                 peerHasMore = true;
-                final Peer peer = Peers.getAnyPeer(connectedPublicPeers, null);
+                final Peer peer = Peers.getAnyPeer(connectedPublicPeers);
                 if (peer == null) {
                     return;
                 }
@@ -932,6 +932,12 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             }
         }, false);
 
+        //
+        // Note: Peers broadcast new blocks to all connected peers.  So the only
+        //       need to get blocks is during server startup and when a fork
+        //       needs to be resolved.  The BlocksInventory processor will
+        //       suspend and resume the block download thread as needed.
+        //
         ThreadPool.scheduleThread("GetMoreBlocks", getMoreBlocksThread, 5);
 
     }
@@ -1011,6 +1017,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     @Override
     public void suspendDownload(boolean suspend) {
         this.isDownloadSuspended = suspend;
+    }
+
+    @Override
+    public boolean isDownloadSuspended() {
+        return isDownloadSuspended;
     }
 
     @Override

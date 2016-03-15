@@ -67,8 +67,10 @@ final class BlockInventory {
                 (invPreviousBlockId == invLastBlock.getPreviousBlockId() &&
                         invTimestamp < invLastBlock.getTimestamp()) ||
                 (invTipBlock != null && invTipBlock.getPreviousBlockId() == invLastBlock.getPreviousBlockId())) {
-            Logger.logDebugMessage("Suspending blockchain download - blockchain synchronized");
-            Nxt.getBlockchainProcessor().suspendDownload(true);
+            if (!Nxt.getBlockchainProcessor().isDownloadSuspended()) {
+                Logger.logDebugMessage("Suspending blockchain download - blockchain synchronized");
+                Nxt.getBlockchainProcessor().suspendDownload(true);
+            }
             pendingBlocks.add(invBlockId);
             Peers.peersService.execute(() -> {
                 Peer feederPeer = null;
@@ -139,9 +141,16 @@ final class BlockInventory {
                     pendingBlocks.remove(invBlockId);
                 }
             });
+        } else if (invBlockId == invLastBlock.getId()) {
+            if (!Nxt.getBlockchainProcessor().isDownloadSuspended()) {
+                Logger.logDebugMessage("Suspending blockchain download - blockchain synchronized");
+                Nxt.getBlockchainProcessor().suspendDownload(true);
+            }
         } else if (!Nxt.getBlockchain().hasBlock(invBlockId)) {
-            Logger.logDebugMessage("Resuming blockchain download - fork resolution required");
-            Nxt.getBlockchainProcessor().suspendDownload(false);
+            if (Nxt.getBlockchainProcessor().isDownloadSuspended()) {
+                Logger.logDebugMessage("Resuming blockchain download - fork resolution required");
+                Nxt.getBlockchainProcessor().suspendDownload(false);
+            }
         }
         return null;
     }

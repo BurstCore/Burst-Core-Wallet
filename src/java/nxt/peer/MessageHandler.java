@@ -13,6 +13,7 @@
  */
 package nxt.peer;
 
+import nxt.Nxt;
 import nxt.util.Logger;
 
 import java.nio.ByteBuffer;
@@ -61,7 +62,7 @@ class MessageHandler implements Runnable {
      */
     @Override
     public void run() {
-        Logger.logInfoMessage(Thread.currentThread().getName() + " started");
+        Logger.logDebugMessage(Thread.currentThread().getName() + " started");
         try {
             while (true) {
                 QueueEntry entry = messageQueue.take();
@@ -81,6 +82,9 @@ class MessageHandler implements Runnable {
                 // Process the message
                 //
                 PeerImpl peer = entry.getPeer();
+                if (peer.getState() != Peer.State.CONNECTED) {
+                    continue;
+                }
                 NetworkMessage message = null;
                 NetworkMessage response;
                 try {
@@ -93,7 +97,7 @@ class MessageHandler implements Runnable {
                             peer.completeRequest(message);
                         }
                     } else {
-                        if (message.downloadNotAllowed()) {
+                        if (Nxt.getBlockchainProcessor().isDownloading() && message.downloadNotAllowed()) {
                             throw new IllegalStateException(Errors.DOWNLOADING);
                         }
                         response = message.processMessage(peer);
@@ -106,25 +110,38 @@ class MessageHandler implements Runnable {
                         }
                     }
                 } catch (Exception exc) {
-                    String errorMessage = exc.getMessage() != null ? exc.getMessage() : exc.toString();
-                    Logger.logDebugMessage("Unable to process message from " + peer.getHost() + ": " + errorMessage);
+                    String errorMessage = (Peers.hideErrorDetails ? exc.getClass().getName() :
+                            (exc.getMessage() != null ? exc.getMessage() : exc.toString()));
+                    boolean severeError;
+                    if (exc instanceof IllegalStateException) {
+                        severeError = false;
+                    } else {
+                        severeError = true;
+                        Logger.logDebugMessage("Unable to process message from " + peer.getHost() + ": " + errorMessage);
+                    }
                     if (message != null && message.requiresResponse()) {
-                        response = new NetworkMessage.ErrorMessage(message.getMessageId(), errorMessage);
+                        response = new NetworkMessage.ErrorMessage(message.getMessageId(),
+                                severeError, message.getMessageName(), errorMessage);
                         peer.sendMessage(response);
                     }
                 }
                 //
                 // Restart reads from the peer if the pending messages have been cleared
                 //
-                int count = peer.decrementInputCount();
-                if (count == 0) {
-                    peer.updateKey(SelectionKey.OP_READ, 0);
+                if (peer.getState() == Peer.State.CONNECTED) {
+                    int count = peer.decrementInputCount();
+                    if (count == 0) {
+                        if ((peer.getKey().interestOps() & SelectionKey.OP_READ) == 0) {
+                            peer.updateKey(SelectionKey.OP_READ, 0);
+                            NetworkHandler.wakeup();
+                        }
+                    }
                 }
             }
         } catch (Throwable exc) {
             Logger.logErrorMessage("Message handler abnormally terminated", exc);
         }
-        Logger.logInfoMessage(Thread.currentThread().getName() +  " stopped");
+        Logger.logDebugMessage(Thread.currentThread().getName() +  " stopped");
     }
 
     /**

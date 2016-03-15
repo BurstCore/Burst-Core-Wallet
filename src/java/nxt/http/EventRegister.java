@@ -53,7 +53,7 @@ import java.util.List;
  * specified by nxt.apiMaxEventUsers has been reached.
  * <p>
  * Request parameters:
- * </p><ul>
+ * <ul>
  * <li>event - Event name.  The 'event' parameter can be
  * repeated to specify multiple events.  All events will be included
  * if the 'event' parameter is not specified.
@@ -62,18 +62,18 @@ import java.util.List;
  * </ul>
  * <p>
  * Response parameters:
- * <p><ul>
+ * <ul>
  * <li>registered - Set to 'true' if the events were processed.
  * </ul>
  * <p>
  * Error Response parameters:
- * <p><ul>
+ * <ul>
  * <li>errorCode - API error code
  * <li>errorDescription - API error description
  * </ul>
  * <p>
  * Event names:
- * <p><ul>
+ * <ul>
  * <li>Block.BLOCK_GENERATED
  * <li>Block.BLOCK_POPPED
  * <li>Block.BLOCK_PUSHED

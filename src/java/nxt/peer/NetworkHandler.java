@@ -43,6 +43,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -74,11 +75,14 @@ public final class NetworkHandler implements Runnable {
     /** Testnet peer port */
     static final int TESTNET_PEER_PORT = 6813;
 
-    /** Maximum number of pending input messages for a single peer */
-    private static final int MAX_INPUT_MESSAGES = 10;
+    /** Maximum number of pending messages for a single peer */
+    static final int MAX_PENDING_MESSAGES = 10;
 
-    /** Message header */
-    private static final byte[] MESSAGE_HEADER = new byte[] {(byte)0x03, (byte)0x2c, (byte)0x05, (byte)0xc2};
+    /** Message header magic bytes */
+    private static final byte[] MESSAGE_HEADER_MAGIC = new byte[] {(byte)0x03, (byte)0x2c, (byte)0x05, (byte)0xc2};
+
+    /** Message header length */
+    private static final int MESSAGE_HEADER_LENGTH = MESSAGE_HEADER_MAGIC.length + 4;
 
     /** Maximum message size */
     private static final int MAX_MESSAGE_SIZE = 1024 * 1024;
@@ -160,10 +164,10 @@ public final class NetworkHandler implements Runnable {
     private static Thread listenerThread;
 
     /** Current number of inbound connections */
-    private static int inboundCount;
+    private static final AtomicInteger inboundCount = new AtomicInteger(0);
 
     /** Current number of outbound connections */
-    private static int outboundCount;
+    private static final AtomicInteger outboundCount = new AtomicInteger(0);
 
     /** Listen channel */
     private static ServerSocketChannel listenChannel;
@@ -285,9 +289,9 @@ public final class NetworkHandler implements Runnable {
             //
             // Start the message handlers
             //
-            for (int i=0; i<8; i++) {
+            for (int i=1; i<=4; i++) {
                 MessageHandler handler = new MessageHandler();
-                Thread handlerThread = new Thread(handler, "Message Handler " + i+1);
+                Thread handlerThread = new Thread(handler, "Message Handler " + i);
                 handlerThread.setDaemon(true);
                 handlerThread.start();
             }
@@ -300,11 +304,12 @@ public final class NetworkHandler implements Runnable {
     public static void shutdown() {
         if (!networkShutdown) {
             networkShutdown = true;
+            MessageHandler.shutdown();
             if (enablePeerUPnP) {
                 UPnP.deletePort(serverPort);
             }
             if (networkSelector != null) {
-                listener.wakeup();
+                wakeup();
             }
         }
     }
@@ -312,7 +317,7 @@ public final class NetworkHandler implements Runnable {
     /**
      * Wakes up the network listener
      */
-    private void wakeup() {
+    static void wakeup() {
         if (Thread.currentThread() != listenerThread) {
             networkSelector.wakeup();
         }
@@ -324,7 +329,7 @@ public final class NetworkHandler implements Runnable {
     @Override
     public void run() {
         try {
-            Logger.logInfoMessage("Network listener started");
+            Logger.logDebugMessage("Network listener started");
 
             //
             // Process network events
@@ -336,7 +341,7 @@ public final class NetworkHandler implements Runnable {
             Logger.logErrorMessage("Network listener abnormally terminated", exc);
             networkShutdown = true;
         }
-        Logger.logInfoMessage("Network listener stopped");
+        Logger.logDebugMessage("Network listener stopped");
     }
 
     /**
@@ -398,11 +403,11 @@ public final class NetworkHandler implements Runnable {
             channel.bind(null);
             SelectionKey key = channel.register(networkSelector, SelectionKey.OP_CONNECT);
             key.attach(peer);
-            connectionMap.put(address, peer);
-            outboundCount++;
             peer.setConnectionAddress(remoteAddress);
             peer.setChannel(channel);
             peer.setKey(key);
+            connectionMap.put(address, peer);
+            outboundCount.incrementAndGet();
             channel.connect(remoteAddress);
         } catch (BindException exc) {
             Logger.logErrorMessage("Unable to bind local port: " + exc.toString());
@@ -424,8 +429,8 @@ public final class NetworkHandler implements Runnable {
         SocketChannel channel = peer.getChannel();
         try {
             channel.finishConnect();
+            peer.updateKey(SelectionKey.OP_READ, SelectionKey.OP_CONNECT);
             peer.connectComplete(true);
-            peer.updateKey(SelectionKey.OP_READ, 0);
             sendGetInfoMessage(peer);
         } catch (SocketException exc) {
             Logger.logDebugMessage(String.format("%s: Peer %s", exc.getMessage(), hostAddress));
@@ -451,7 +456,7 @@ public final class NetworkHandler implements Runnable {
                 if (peer == null) {
                     channel.close();
                     Logger.logDebugMessage("Peer not accepted: Connection rejected from " + hostAddress);
-                } else if (inboundCount >= maxInbound) {
+                } else if (inboundCount.get() >= maxInbound) {
                     channel.close();
                     Logger.logDebugMessage("Max inbound connections reached: Connection rejected from " + hostAddress);
                 } else if (peer.isBlacklisted()) {
@@ -469,7 +474,7 @@ public final class NetworkHandler implements Runnable {
                     peer.setChannel(channel);
                     peer.setKey(key);
                     connectionMap.put(remoteAddress.getAddress(), peer);
-                    inboundCount++;
+                    inboundCount.incrementAndGet();
                     Peers.addPeer(peer);
                 }
             }
@@ -497,68 +502,69 @@ public final class NetworkHandler implements Runnable {
             while (true) {
                 //
                 // Allocate a header buffer if no read is in progress
-                //   4-byte identifier
+                //   4-byte msgic bytes
                 //   4-byte message length
                 //
                 if (buffer == null) {
-                    buffer = ByteBuffer.wrap(new byte[MESSAGE_HEADER.length + 4]);
+                    buffer = ByteBuffer.wrap(new byte[MESSAGE_HEADER_LENGTH]);
                     buffer.order(ByteOrder.LITTLE_ENDIAN);
                     peer.setInputBuffer(buffer);
                 }
                 //
-                // Fill the input buffer (stop if no more data is available)
+                // Read until buffer is full or there is no more data available
                 //
                 if (buffer.position() < buffer.limit()) {
                     count = channel.read(buffer);
                     if (count <= 0) {
-                        if (count < 0)
+                        if (count < 0) {
                             peer.disconnectPeer();
+                        }
                         break;
                     }
+                    peer.updateDownloadedVolume(count);
                 }
                 //
-                // Process the message header
+                // Process the message header and allocate a new buffer to hold the complete message
                 //
-                if (buffer.position() == buffer.limit() && buffer.limit() == MESSAGE_HEADER.length + 4) {
-                    byte[] hdrBytes = new byte[MESSAGE_HEADER.length];
+                if (buffer.position() == buffer.limit() && buffer.limit() == MESSAGE_HEADER_LENGTH) {
+                    buffer.position(0);
+                    byte[] hdrBytes = new byte[MESSAGE_HEADER_MAGIC.length];
                     buffer.get(hdrBytes);
                     int length = buffer.getInt();
-                    if (!Arrays.equals(hdrBytes, MESSAGE_HEADER)) {
+                    if (!Arrays.equals(hdrBytes, MESSAGE_HEADER_MAGIC)) {
                         Logger.logDebugMessage("Incorrect message header received from " + peer.getHost());
                         peer.disconnectPeer();
                         break;
                     }
-                    if (length > MAX_MESSAGE_SIZE) {
+                    if ( length < 1 || length > MAX_MESSAGE_SIZE) {
                         Logger.logDebugMessage("Message length " + length + " for message from " + peer.getHost()
-                                + " is too large");
+                                + " is not valid");
                         peer.disconnectPeer();
                         break;
                     }
-                    if (length > 0) {
-                        byte[] msgBytes = new byte[hdrBytes.length + length];
-                        System.arraycopy(hdrBytes, 0, msgBytes, 0, hdrBytes.length);
-                        buffer = ByteBuffer.wrap(msgBytes);
-                        buffer.order(ByteOrder.LITTLE_ENDIAN);
-                        buffer.position(hdrBytes.length);
-                        peer.setInputBuffer(buffer);
-                    }
+                    byte[] msgBytes = new byte[MESSAGE_HEADER_LENGTH + length];
+                    buffer = ByteBuffer.wrap(msgBytes);
+                    buffer.order(ByteOrder.LITTLE_ENDIAN);
+                    buffer.put(hdrBytes);
+                    buffer.putInt(length);
+                    peer.setInputBuffer(buffer);
                 }
                 //
-                // Queue the message for a message handler
+                // Queue the message for the message handler if the buffer is full
                 //
                 // We will disable read operations for this peer if it has too many
                 // pending messages.  Read operations will be re-enabled once
-                // all of the messages have been processed.  We do this to keep
-                // one node from flooding us with requests.
+                // all of the pending messages have been processed.  We do this to keep
+                // one peer from flooding us with messages.
                 //
                 if (buffer.position() == buffer.limit()) {
                     peer.setInputBuffer(null);
-                    buffer.position(MESSAGE_HEADER.length + 4);
-                    MessageHandler.processMessage(peer, buffer);
+                    buffer.position(MESSAGE_HEADER_LENGTH);
                     int inputCount = peer.incrementInputCount();
-                    if (inputCount >= MAX_INPUT_MESSAGES) {
+                    if (inputCount >= MAX_PENDING_MESSAGES) {
                         peer.updateKey(0, SelectionKey.OP_READ);
                     }
+                    MessageHandler.processMessage(peer, buffer);
                     break;
                 }
             }
@@ -586,18 +592,19 @@ public final class NetworkHandler implements Runnable {
                 // if there are no more messages to write.
                 //
                 if (buffer == null) {
-                    NetworkMessage message = peer.getOutputQueue().poll();
+                    NetworkMessage message = peer.getQueuedMessage();
                     if (message == null) {
                         peer.updateKey(0, SelectionKey.OP_WRITE);
                         break;
                     }
                     int length = message.getLength();
-                    buffer = ByteBuffer.allocate(MESSAGE_HEADER.length + 4 + length);
+                    buffer = ByteBuffer.allocate(MESSAGE_HEADER_LENGTH + length);
                     buffer.order(ByteOrder.LITTLE_ENDIAN);
-                    buffer.put(MESSAGE_HEADER);
+                    buffer.put(MESSAGE_HEADER_MAGIC);
                     buffer.putInt(length);
                     try {
                         message.getBytes(buffer);
+                        buffer.flip();
                     } catch (BufferOverflowException exc) {
                         Logger.logErrorMessage("Buffer is too short for '" + message.getMessageName()
                                 + "' message from " + peer.getHost());
@@ -609,9 +616,13 @@ public final class NetworkHandler implements Runnable {
                 //
                 // Write the current buffer to the channel
                 //
-                channel.write(buffer);
-                if (buffer.position() < buffer.limit())
+                int count = channel.write(buffer);
+                if (count > 0) {
+                    peer.updateUploadedVolume(count);
+                }
+                if (buffer.position() < buffer.limit()) {
                     break;
+                }
                 buffer = null;
                 peer.setOutputBuffer(null);
             }
@@ -632,31 +643,27 @@ public final class NetworkHandler implements Runnable {
         }
         try {
             if (peer.isInbound()) {
-                inboundCount = Math.max(0, inboundCount-1);
+                inboundCount.decrementAndGet();
             } else {
-                outboundCount = Math.max(0, outboundCount-1);
+                outboundCount.decrementAndGet();
             }
             connectionMap.remove(peer.getConnectionAddress().getAddress());
             if (channel.isOpen()) {
                 channel.close();
             }
         } catch (IOException exc) {
-            // Ignore
+            // Ignore since the channel is closed in any event
         }
     }
 
     /**
-     * Send a message to a peer
+     * Send queued messages to a peer
      *
      * @param   peer                    Target peer
-     * @param   message                 Message to send
-     * @throws  NetworkException        Unable to send message
      */
-    static void sendMessage(PeerImpl peer, NetworkMessage message) throws NetworkException {
-        if (peer.getState() == Peer.State.CONNECTED) {
-            peer.getOutputQueue().add(message);
-            peer.updateKey(SelectionKey.OP_WRITE, 0);
-        }
+    static void sendMessage(PeerImpl peer) {
+        peer.updateKey(SelectionKey.OP_WRITE, 0);
+        wakeup();
     }
 
     /**
@@ -665,10 +672,7 @@ public final class NetworkHandler implements Runnable {
      * @param   peer                    Target peer
      */
     static void sendGetInfoMessage(PeerImpl peer) {
-        if (peer.getState() == Peer.State.CONNECTED) {
-            peer.getOutputQueue().add(getInfoMessage);
-            peer.updateKey(SelectionKey.OP_WRITE, 0);
-        }
+        peer.sendMessage(getInfoMessage);
     }
 
     /**
@@ -677,12 +681,8 @@ public final class NetworkHandler implements Runnable {
      * @param   message                 Message to send
      */
     public static void broadcastMessage(NetworkMessage message) {
-        connectionMap.values().forEach(peer -> {
-            if (peer.getState() == Peer.State.CONNECTED) {
-                peer.getOutputQueue().add(message);
-                peer.updateKey(SelectionKey.OP_WRITE, 0);
-            }
-        });
+        connectionMap.values().forEach(peer -> peer.sendMessage(message));
+        wakeup();
     }
 
     /**
@@ -700,7 +700,7 @@ public final class NetworkHandler implements Runnable {
      * @return                          Connected peer count
      */
     public static int getConnectionCount() {
-        return inboundCount + outboundCount;
+        return inboundCount.get() + outboundCount.get();
     }
 
     /**
@@ -709,7 +709,7 @@ public final class NetworkHandler implements Runnable {
      * @return                          Number of inbound connections
      */
     public static int getInboundCount() {
-        return inboundCount;
+        return inboundCount.get();
     }
 
     /**
@@ -727,7 +727,7 @@ public final class NetworkHandler implements Runnable {
      * @return                          Number of outbound connections
      */
     public static int getOutboundCount() {
-        return outboundCount;
+        return outboundCount.get();
     }
 
     /**

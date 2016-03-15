@@ -39,7 +39,7 @@ import java.util.List;
  * by the new EventWait.
  * <p>
  * Request parameters:
- * <p><ul>
+ * <ul>
  * <li>timeout - Number of seconds to wait for an event.  The EventWait
  * will complete normally if no event is received within the timeout interval.
  * nxt.apiEventTimeout will be used if no timeout value is specified or
@@ -47,12 +47,12 @@ import java.util.List;
  * </ul>
  * <p>
  * Response parameters:
- * <p><ul>
+ * <ul>
  * <li>events - An array of event objects
  * </ul>
  * <p>
  * Error Response parameters:
- * <p><ul>
+ * <ul>
  * <li>errorCode - API error code
  * <li>errorDescription - API error description
  * </ul>
@@ -64,7 +64,7 @@ import java.util.List;
  * </ul>
  * <p>
  * Event names:
- * <p><ul>
+ * <ul>
  * <li>Block.BLOCK_GENERATED
  * <li>Block.BLOCK_POPPED
  * <li>Block.BLOCK_PUSHED
@@ -86,7 +86,7 @@ import java.util.List;
  * </ul>
  * <p>
  * Event object identifiers:
- * <p><ul>
+ * <ul>
  * <li>Block string identifier for a Block event
  * <li>Peer network address for a Peer event
  * <li>Transaction string identifier for a Transaction event

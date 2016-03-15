@@ -30,6 +30,9 @@ final class GetInfo {
      * @return                          Always null since the response message is sent asynchronously
      */
     static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetInfoMessage message) {
+        //
+        // Process the peer information
+        //
         if (!Peers.ignorePeerAnnouncedAddress) {
             String announcedAddress = message.getAnnouncedAddress();
             if (announcedAddress != null) {
@@ -81,7 +84,15 @@ final class GetInfo {
             Peers.notifyListeners(peer, Peers.Event.CHANGE_SERVICES);
         }
 
-        NetworkHandler.sendGetInfoMessage(peer);
+        //
+        // Indicate connection handshake is complete.  For an inbound connection, we need
+        // to sendn our GetInfo message.  For an outbound connection, we have already sent our
+        // GetInfo message.
+        //
+        peer.handshakeComplete();
+        if (peer.isInbound()) {
+            NetworkHandler.sendGetInfoMessage(peer);
+        }
         return null;
     }
 }

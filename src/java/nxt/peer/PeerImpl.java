@@ -33,8 +33,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.SelectionKey;
 import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -96,10 +94,10 @@ final class PeerImpl implements Peer {
     private volatile State state = State.NON_CONNECTED;
 
     /** Peer downloaded volume */
-    private final AtomicLong downloadedVolume = new AtomicLong();
+    private long downloadedVolume;
 
     /** Peer uploaded volume */
-    private final AtomicLong uploadedVolume = new AtomicLong();
+    private long uploadedVolume;
 
     /** Connection address */
     private InetSocketAddress connectionAddress;
@@ -113,11 +111,14 @@ final class PeerImpl implements Peer {
     /** Output message list */
     private final ConcurrentLinkedQueue<NetworkMessage> outputQueue = new ConcurrentLinkedQueue<>();
 
+    /** Handshake message */
+    private NetworkMessage handshakeMessage;
+
     /** Input buffer */
     private ByteBuffer inputBuffer;
 
     /** Input message count */
-    private final AtomicInteger inputCount = new AtomicInteger();
+    private int inputCount;
 
     /** Output buffer */
     private ByteBuffer outputBuffer;
@@ -134,6 +135,9 @@ final class PeerImpl implements Peer {
     /** Connect in progress */
     private volatile boolean connectPending = false;
 
+    /** Handshake in progress */
+    private volatile boolean handshakePending = false;
+
     /**
      * Construct a PeerImpl
      *
@@ -145,142 +149,6 @@ final class PeerImpl implements Peer {
     PeerImpl(InetAddress hostAddress, String announcedAddress) {
         host = hostAddress.getHostAddress();
         setAnnouncedAddress(announcedAddress != null ? announcedAddress.toLowerCase().trim() : host);
-    }
-
-    /**
-     * Get the connection address (used by NetworkHandler)
-     *
-     * @return                          Connection address
-     */
-    InetSocketAddress getConnectionAddress() {
-        return connectionAddress;
-    }
-
-    /**
-     * Set the connection address (used by NetworkHandler)
-     *
-     * @param   connectionAddress       Connection address
-     */
-    void setConnectionAddress(InetSocketAddress connectionAddress) {
-        this.connectionAddress = connectionAddress;
-    }
-
-    /**
-     * Get the network channel (used by NetworkHandler)
-     *
-     * @return                          Socket channel
-     */
-    SocketChannel getChannel() {
-        return channel;
-    }
-
-    /**
-     * Set the network channel (used by NetworkHandler)
-     *
-     * @param   channel                 Socket channel
-     */
-    void setChannel(SocketChannel channel) {
-        this.channel = channel;
-    }
-
-    /**
-     * Get the network selection key (used by NetworkHandler)
-     *
-     * @return                          Selection key
-     */
-    synchronized SelectionKey getKey() {
-        return key;
-    }
-
-    /**
-     * Update the network selection key (used by NetworkHandler)
-     *
-     * @param   addOps                  Interest operations to add
-     * @param   removeOps               Interest operations to remove
-     */
-    synchronized void updateKey(int addOps, int removeOps) {
-        if (key != null) {
-            key.interestOps((key.interestOps() | addOps) & (~removeOps));
-        }
-    }
-
-    /**
-     * Set the network selection key (used by NetworkHandler)
-     *
-     * @param   key                     Selection key
-     */
-    synchronized void setKey(SelectionKey key) {
-        this.key = key;
-    }
-
-    /**
-     * Get the output message queue (used by NetworkHandler)
-     */
-    ConcurrentLinkedQueue<NetworkMessage> getOutputQueue() {
-        return outputQueue;
-    }
-
-    /**
-     * Get the input buffer (used by NetworkHandler)
-     *
-     * @return                          Input buffer
-     */
-    ByteBuffer getInputBuffer() {
-        return inputBuffer;
-    }
-
-    /**
-     * Set the input buffer (used by NetworkHandler)
-     *
-     * @param   inputBuffer             Input buffer
-     */
-    void setInputBuffer(ByteBuffer inputBuffer) {
-        this.inputBuffer = inputBuffer;
-    }
-
-    /**
-     * Get the input message count (used by NetworkHandler)
-     *
-     * @return                          Input message count
-     */
-    int getInputCount() {
-        return inputCount.get();
-    }
-
-    /**
-     * Increment the input message count (used by NetworkHandler)
-     *
-     * @return                          Updated message count
-     */
-    int incrementInputCount() {
-        return inputCount.incrementAndGet();
-    }
-
-    /**
-     * Decrement the input message count (used by MessageHandler)
-     *
-     * @return                          Updated message count
-     */
-    int decrementInputCount() {
-        return inputCount.decrementAndGet();
-    }
-
-    /**
-     * Get the output buffer (used by NetworkHandler)
-     *
-     * @return                          Output buffer
-     */
-    ByteBuffer getOutputBuffer() {
-        return outputBuffer;
-    }
-
-    /**
-     * Set the output buffer (used by NetworkHandler)
-     *
-     * @param   outputBuffer            Output buffer
-     */
-    void setOutputBuffer(ByteBuffer outputBuffer) {
-        this.outputBuffer = outputBuffer;
     }
 
     /**
@@ -306,7 +174,7 @@ final class PeerImpl implements Peer {
      *
      * @param   state                   New state
      */
-    void setState(State state) {
+    synchronized void setState(State state) {
         if (this.state != state) {
             if (this.state == State.NON_CONNECTED) {
                 this.state = state;
@@ -380,8 +248,8 @@ final class PeerImpl implements Peer {
      * @return                          Download volume
      */
     @Override
-    public long getDownloadedVolume() {
-        return downloadedVolume.get();
+    public synchronized long getDownloadedVolume() {
+        return downloadedVolume;
     }
 
     /**
@@ -389,8 +257,8 @@ final class PeerImpl implements Peer {
      *
      * @param   volume                  Volume update
      */
-    void updateDownloadedVolume(long volume) {
-        downloadedVolume.addAndGet(volume);
+    synchronized void updateDownloadedVolume(long volume) {
+        downloadedVolume += volume;
     }
 
     /**
@@ -399,8 +267,8 @@ final class PeerImpl implements Peer {
      * @return                          Upload volume
      */
     @Override
-    public long getUploadedVolume() {
-        return uploadedVolume.get();
+    public synchronized long getUploadedVolume() {
+        return uploadedVolume;
     }
 
     /**
@@ -408,8 +276,8 @@ final class PeerImpl implements Peer {
      *
      * @param   volume                  Volume update
      */
-    void updateUploadedVolume(long volume) {
-        uploadedVolume.addAndGet(volume);
+    synchronized void updateUploadedVolume(long volume) {
+        uploadedVolume += volume;
     }
 
     /**
@@ -818,6 +686,137 @@ final class PeerImpl implements Peer {
     }
 
     /**
+     * Get the connection address (used by NetworkHandler)
+     *
+     * @return                          Connection address
+     */
+    InetSocketAddress getConnectionAddress() {
+        return connectionAddress;
+    }
+
+    /**
+     * Set the connection address (used by NetworkHandler)
+     *
+     * @param   connectionAddress       Connection address
+     */
+    void setConnectionAddress(InetSocketAddress connectionAddress) {
+        this.connectionAddress = connectionAddress;
+    }
+
+    /**
+     * Get the network channel (used by NetworkHandler)
+     *
+     * @return                          Socket channel
+     */
+    SocketChannel getChannel() {
+        return channel;
+    }
+
+    /**
+     * Set the network channel (used by NetworkHandler)
+     *
+     * @param   channel                 Socket channel
+     */
+    void setChannel(SocketChannel channel) {
+        this.channel = channel;
+    }
+
+    /**
+     * Get the network selection key (used by NetworkHandler and MessageHandler)
+     *
+     * @return                          Selection key
+     */
+    synchronized SelectionKey getKey() {
+        return key;
+    }
+
+    /**
+     * Update the network selection key (used by NetworkHandler and MessageHandler)
+     *
+     * @param   addOps                  Interest operations to add
+     * @param   removeOps               Interest operations to remove
+     */
+    synchronized void updateKey(int addOps, int removeOps) {
+        if (key != null) {
+            key.interestOps((key.interestOps() | addOps) & (~removeOps));
+        }
+    }
+
+    /**
+     * Set the network selection key (used by NetworkHandler)
+     *
+     * @param   key                     Selection key
+     */
+    synchronized void setKey(SelectionKey key) {
+        this.key = key;
+    }
+
+    /**
+     * Get the input buffer (used by NetworkHandler)
+     *
+     * @return                          Input buffer
+     */
+    ByteBuffer getInputBuffer() {
+        return inputBuffer;
+    }
+
+    /**
+     * Set the input buffer (used by NetworkHandler)
+     *
+     * @param   inputBuffer             Input buffer
+     */
+    void setInputBuffer(ByteBuffer inputBuffer) {
+        this.inputBuffer = inputBuffer;
+    }
+
+    /**
+     * Get the input message count (used by NetworkHandler)
+     *
+     * @return                          Input message count
+     */
+    synchronized int getInputCount() {
+        return inputCount;
+    }
+
+    /**
+     * Increment the input message count (used by NetworkHandler)
+     *
+     * @return                          Updated message count
+     */
+    synchronized int incrementInputCount() {
+        inputCount++;
+        return inputCount;
+    }
+
+    /**
+     * Decrement the input message count (used by MessageHandler)
+     *
+     * @return                          Updated message count
+     */
+    synchronized int decrementInputCount() {
+        inputCount = (inputCount > 0 ? inputCount - 1 : 0);
+        return inputCount;
+    }
+
+    /**
+     * Get the output buffer (used by NetworkHandler)
+     *
+     * @return                          Output buffer
+     */
+    ByteBuffer getOutputBuffer() {
+        return outputBuffer;
+    }
+
+    /**
+     * Set the output buffer (used by NetworkHandler)
+     *
+     * @param   outputBuffer            Output buffer
+     */
+    void setOutputBuffer(ByteBuffer outputBuffer) {
+        this.outputBuffer = outputBuffer;
+    }
+
+    /**
      * Check if this is an inbound connection
      *
      * @return                          TRUE if inbound connection
@@ -828,7 +827,11 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Indicate this is an inbound connection
+     * Indicate this is an inbound connection (used by NetworkHandler)
+     *
+     * No messages will be sent on this connection until the GetInfo message is received.
+     * This include responses to requests sent by the peer.  The peer will be disconnected
+     * if the output queue reaches the maximum number of pending messages.
      *
      * @return                          TRUE if inbound state accepted
      */
@@ -836,9 +839,10 @@ final class PeerImpl implements Peer {
         boolean accepted = false;
         connectLock.lock();
         try {
-            if (state != Peer.State.CONNECTED) {
+            if (state != State.CONNECTED) {
                 isInbound = true;
-                setState(Peer.State.CONNECTED);
+                handshakePending = true;
+                setState(State.CONNECTED);
                 accepted = true;
                 Logger.logInfoMessage("Connection from " + host + " accepted");
             }
@@ -850,6 +854,9 @@ final class PeerImpl implements Peer {
 
     /**
      * Connect the peer
+     *
+     * Multiple connect requests will be queued until the connection is established and
+     * the peer state is changed to CONNECTED.
      */
     @Override
     public void connectPeer() {
@@ -862,6 +869,7 @@ final class PeerImpl implements Peer {
                     setLastConnectAttempt(Nxt.getEpochTime());
                     NetworkHandler.createConnection(this);
                     connectPending = true;
+                    handshakePending = true;
                 }
                 if (!connectCondition.await(NetworkHandler.peerConnectTimeout, TimeUnit.SECONDS)) {
                     Logger.logDebugMessage("Connect to " + host + " timed out");
@@ -869,6 +877,8 @@ final class PeerImpl implements Peer {
             }
         } catch (InterruptedException exc) {
             Logger.logDebugMessage("Connect to " + host + " interrupted");
+        } catch (Exception exc) {
+            Logger.logErrorMessage("Unable to wait for connect to complete", exc);
         } finally {
             connectLock.unlock();
         }
@@ -876,6 +886,9 @@ final class PeerImpl implements Peer {
 
     /**
      * Connect has completed
+     *
+     * An outbound connection has been established and our GetInfo message has been sent.
+     * We will not send any more messages until we receive the GetInfo message from the peer.
      *
      * @param   success                 TRUE if the connection is established
      */
@@ -886,7 +899,7 @@ final class PeerImpl implements Peer {
                 connectPending = false;
                 connectCondition.signalAll();
             }
-            if (success) {
+            if (success && channel != null) {
                 setState(State.CONNECTED);
                 Logger.logInfoMessage("Connection to " + host + " completed");
             } else {
@@ -894,6 +907,18 @@ final class PeerImpl implements Peer {
             }
         } finally {
             connectLock.unlock();
+        }
+    }
+
+    /**
+     * Connection handshake has completed
+     *
+     * Send any queued messages
+     */
+    synchronized void handshakeComplete() {
+        handshakePending = false;
+        if (!outputQueue.isEmpty()) {
+            NetworkHandler.sendMessage(this);
         }
     }
 
@@ -908,6 +933,10 @@ final class PeerImpl implements Peer {
                 Logger.logInfoMessage("Connection to " + host + " closed");
             }
             setState(State.DISCONNECTED);
+            if (connectPending) {
+                connectPending = false;
+                connectCondition.signalAll();
+            }
             NetworkHandler.closeConnection(this);
             outputQueue.clear();
             for (ResponseEntry entry : responseMap.values()) {
@@ -915,10 +944,13 @@ final class PeerImpl implements Peer {
             }
             responseMap.clear();
             isInbound = false;
-            downloadedVolume.set(0);
-            uploadedVolume.set(0);
+            handshakePending = false;
+            handshakeMessage = null;
+            downloadedVolume = 0;
+            uploadedVolume = 0;
             inputBuffer = null;
             outputBuffer = null;
+            inputCount = 0;
             channel = null;
             key = null;
             connectionAddress = null;
@@ -928,18 +960,46 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Send an asynchronous message
+     * Get the next queued message (used by NetworkHandler)
+     *
+     * All messages except the GetInfoMessage will be held until the connection handshake
+     * has been completed.
+     *
+     * @return                          Next message or null
+     */
+    synchronized NetworkMessage getQueuedMessage() {
+        NetworkMessage message;
+        if (handshakePending) {
+            message = handshakeMessage;
+            handshakeMessage = null;
+        } else {
+            message = outputQueue.poll();
+        }
+        return message;
+    }
+
+    /**
+     * Send a message
+     *
+     * All messages except the GetInfoMessage will be held until the connection handshake
+     * has been completed.
      *
      * @param   message                 Network message
      */
     @Override
-    public void sendMessage(NetworkMessage message) {
+    public synchronized void sendMessage(NetworkMessage message) {
         if (state == State.CONNECTED) {
-            try {
-                NetworkHandler.sendMessage(this, message);
-            } catch (NetworkException exc) {
-                Logger.logDebugMessage("Send to " + host + " failed: " + exc.getMessage());
+            if (handshakePending && message instanceof NetworkMessage.GetInfoMessage) {
+                handshakeMessage = message;
+                NetworkHandler.sendMessage(this);
+            } else if (outputQueue.size() >= NetworkHandler.MAX_PENDING_MESSAGES) {
+                Logger.logDebugMessage("Too many pending messages for " + host + ": Disconnected");
                 disconnectPeer();
+            } else {
+                outputQueue.add(message);
+                if (!handshakePending) {
+                    NetworkHandler.sendMessage(this);
+                }
             }
         }
     }
@@ -955,17 +1015,23 @@ final class PeerImpl implements Peer {
         if (state != State.CONNECTED) {
             return null;
         }
-        NetworkMessage response = null;
         ResponseEntry entry = new ResponseEntry();
         responseMap.put(message.getMessageId(), entry);
-        try {
-            NetworkHandler.sendMessage(this, message);
-            response = entry.responseWait();
-        } catch (NetworkException exc) {
-            Logger.logDebugMessage("Send to " + host + " failed: " + exc.getMessage());
-            disconnectPeer();
+        sendMessage(message);
+        if (state != State.CONNECTED) {
+            return null;
         }
+        NetworkMessage response = entry.responseWait();
         responseMap.remove(message.getMessageId());
+        if (response instanceof NetworkMessage.ErrorMessage) {
+            NetworkMessage.ErrorMessage error = (NetworkMessage.ErrorMessage)response;
+            if (error.isSevereError()) {
+                Logger.logDebugMessage("Error returned by " + host + " for '" + error.getErrorName() +
+                        "' message: " + error.getErrorMessage());
+                disconnectPeer();
+            }
+            response = null;
+        }
         return response;
     }
 

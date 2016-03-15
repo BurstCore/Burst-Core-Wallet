@@ -43,6 +43,8 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
 
     void suspendDownload(boolean suspend);
 
+    boolean isDownloadSuspended();
+
     int getMinRollbackHeight();
 
     int getInitialScanHeight();

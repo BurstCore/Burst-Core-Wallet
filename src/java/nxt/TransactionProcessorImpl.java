@@ -251,7 +251,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 if (Nxt.getBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
                     return;
                 }
-                Peer peer = Peers.getAnyPeer(p -> p.getState() == Peer.State.CONNECTED);
+                Peer peer = Peers.getAnyPeer(Peers.getConnectedPeers());
                 if (peer == null) {
                     return;
                 }
@@ -301,9 +301,13 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
     };
 
-
+    //
+    // Note: Peers broadcast new transactions to all connected peers.  So the only reason
+    //       to request unconfirmed transactions is during initial startup and to handle
+    //       the case where the connected peers have different sets of unconfirmed transactions.
+    //
     private TransactionProcessorImpl() {
-        ThreadPool.scheduleThread("ProcessTransactions", processTransactionsThread, 5);
+        ThreadPool.scheduleThread("ProcessTransactions", processTransactionsThread, 30);
         ThreadPool.scheduleThread("RemoveUnconfirmedTransactions", removeUnconfirmedTransactionsThread, 20);
         ThreadPool.scheduleThread("ProcessWaitingTransactions", processWaitingTransactionsThread, 1);
         ThreadPool.runAfterStart(this::rebroadcastAllUnconfirmedTransactions);

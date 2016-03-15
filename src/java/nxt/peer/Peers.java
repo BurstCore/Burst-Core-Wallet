@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright Ã‚Â© 2013-2016 The Nxt Core Developers.                             *
+ * Copyright © 2013-2016 The Nxt Core Developers.                             *
  *                                                                            *
  * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at      *
  * the top-level directory of this distribution for the individual copyright  *
@@ -346,7 +346,7 @@ public final class Peers {
         String host;
         int port;
         try {
-            URI uri = new URI(address);
+            URI uri = new URI("http://" + address);
             host = uri.getHost();
             if (host == null) {
                 return null;
@@ -411,14 +411,24 @@ public final class Peers {
     }
 
     /**
-     * Get a random peer that satisfies the supplied files
+     * Get a random peer that satisfies the supplied filter
      *
      * @param   filter                  Filter
-     * @return                          Selected peer or null if no peer satisfies the filter
+     * @return                          Selected peer or null
      */
     public static Peer getAnyPeer(Filter<Peer> filter) {
         List<? extends Peer> peerList = new ArrayList<>(peers.values());
         return getAnyPeer(peerList, filter);
+    }
+
+    /**
+     * Get a random peer from the supplied list
+     *
+     * @param   peerList                Peer list
+     * @return                          Selected peer or null
+     */
+    public static Peer getAnyPeer(List<? extends Peer> peerList) {
+        return getAnyPeer(peerList, null);
     }
 
     /**
@@ -429,6 +439,9 @@ public final class Peers {
      * @return                          Selected peer or null
      */
     public static Peer getAnyPeer(List<? extends Peer> peerList, Filter<Peer> filter) {
+        if (peerList.isEmpty()) {
+            return null;
+        }
         Peer peer = null;
         int start = ThreadLocalRandom.current().nextInt(peerList.size());
         boolean foundPeer = false;
@@ -495,7 +508,7 @@ public final class Peers {
      *
      * @return                          List of connected peers
      */
-    static List<Peer> getConnectedPeers() {
+    public static List<Peer> getConnectedPeers() {
         return new ArrayList<>(NetworkHandler.connectionMap.values());
     }
 
@@ -549,12 +562,14 @@ public final class Peers {
             if (connectCount > 0) {
                 for (String wellKnownPeer : wellKnownPeers) {
                     PeerImpl peer = (PeerImpl)findOrCreatePeer(wellKnownPeer, true);
-                    if (peer != null
-                            && !peer.isBlacklisted()
+                    if (peer == null) {
+                        Logger.logWarningMessage("Unable to create peer for well-known peer " + wellKnownPeer);
+                        continue;
+                    }
+                    if (!peer.isBlacklisted()
                             && peer.getAnnouncedAddress() != null
                             && peer.shareAddress()
                             && peer.getState() != Peer.State.CONNECTED
-                            && now - peer.getLastUpdated() > 60*60
                             && now - peer.getLastConnectAttempt() > 10*60) {
                         peer.setLastConnectAttempt(now);
                         connectList.add(peer);
@@ -608,7 +623,7 @@ public final class Peers {
      */
     private static final Runnable getMorePeersThread = () -> {
         try {
-            Peer peer = getAnyPeer(p -> p.getState() == Peer.State.CONNECTED);
+            Peer peer = getAnyPeer(getConnectedPeers());
             if (peer != null) {
                 //
                 // Request a list of connected peers (the response is asynchronous)
