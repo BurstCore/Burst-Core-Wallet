@@ -410,11 +410,14 @@ public final class NetworkHandler implements Runnable {
             outboundCount.incrementAndGet();
             channel.connect(remoteAddress);
         } catch (BindException exc) {
-            Logger.logErrorMessage("Unable to bind local port: " + exc.toString());
+            Logger.logErrorMessage("Unable to bind local port: " +
+                    (exc.getMessage() != null ? exc.getMessage() : exc.toString()));
         } catch (UnknownHostException exc) {
-            Logger.logErrorMessage("Unable to resolve host " + peer.getHost() + ": " + exc.getMessage());
+            Logger.logErrorMessage("Unable to resolve host " + peer.getHost() + ": " +
+                    (exc.getMessage() != null ? exc.getMessage() : exc.toString()));
         } catch (IOException exc) {
-            Logger.logErrorMessage("Unable to open connection to " + peer.getHost() + ": " + exc.getMessage());
+            Logger.logErrorMessage("Unable to open connection to " + peer.getHost() + ": " +
+                    (exc.getMessage() != null ? exc.getMessage() : exc.toString()));
         }
     }
 
@@ -436,7 +439,8 @@ public final class NetworkHandler implements Runnable {
             Logger.logDebugMessage(String.format("%s: Peer %s", exc.getMessage(), hostAddress));
             peer.connectComplete(false);
         } catch (IOException exc) {
-            Logger.logDebugMessage("Connection failed to " + hostAddress + ": " + exc.getMessage());
+            Logger.logDebugMessage("Connection failed to " + hostAddress + ": " +
+                    (exc.getMessage() != null ? exc.getMessage() : exc.toString()));
             peer.connectComplete(false);
         }
     }
@@ -533,6 +537,7 @@ public final class NetworkHandler implements Runnable {
                     int length = buffer.getInt();
                     if (!Arrays.equals(hdrBytes, MESSAGE_HEADER_MAGIC)) {
                         Logger.logDebugMessage("Incorrect message header received from " + peer.getHost());
+                        Logger.logDebugMessage("  " + Arrays.toString(hdrBytes));
                         peer.disconnectPeer();
                         break;
                     }

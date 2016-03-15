@@ -19,7 +19,11 @@ import nxt.Block;
 import nxt.Nxt;
 import nxt.NxtException.NotValidException;
 import nxt.Transaction;
+import nxt.util.JSON;
 import nxt.util.Logger;
+
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import java.math.BigInteger;
 import java.nio.BufferOverflowException;
@@ -2638,7 +2642,7 @@ public abstract class NetworkMessage {
          */
         @Override
         int getLength() {
-            return super.getLength() + 2 * (8 * transactionIds.size()) + (4 * timestamps.size());
+            return super.getLength() + 2 + (8 * transactionIds.size()) + (4 * timestamps.size());
         }
 
         /**
@@ -2925,11 +2929,19 @@ public abstract class NetworkMessage {
 
     /**
      * Encoded transaction bytes
+     * <p>
+     * <ul>
+     * <li>Transaction bytes
+     * <li>Prunable attachment bytes
+     * </ul>
      */
     private static class TransactionBytes {
 
         /** Transaction bytes */
         private final byte[] transactionBytes;
+
+        /** Prunable attachment bytes */
+        private final byte[] prunableAttachmentBytes;
 
         /**
          * Construct an encoded transaction
@@ -2938,6 +2950,13 @@ public abstract class NetworkMessage {
          */
         private TransactionBytes(Transaction transaction) {
             transactionBytes = transaction.getBytes();
+            transaction.getAppendages(false);
+            JSONObject prunableAttachment = transaction.getPrunableAttachmentJSON();
+            if (prunableAttachment != null) {
+                prunableAttachmentBytes = JSON.toJSONString(prunableAttachment).getBytes(UTF8);
+            } else {
+                prunableAttachmentBytes = new byte[0];
+            }
         }
 
         /**
@@ -2949,6 +2968,7 @@ public abstract class NetworkMessage {
          */
         private TransactionBytes(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
             transactionBytes = decodeArray(bytes);
+            prunableAttachmentBytes = decodeArray(bytes);
         }
 
         /**
@@ -2957,7 +2977,7 @@ public abstract class NetworkMessage {
          * @return                      Encoded transaction length
          */
         private int getLength() {
-            return getEncodedArrayLength(transactionBytes);
+            return getEncodedArrayLength(transactionBytes) + getEncodedArrayLength(prunableAttachmentBytes);
         }
 
         /**
@@ -2968,6 +2988,7 @@ public abstract class NetworkMessage {
          */
         private void getBytes(ByteBuffer bytes) {
             encodeArray(bytes, transactionBytes);
+            encodeArray(bytes, prunableAttachmentBytes);
         }
 
         /**
@@ -2977,7 +2998,13 @@ public abstract class NetworkMessage {
          * @throws  NotValidException   Transaction is not valid
          */
         private Transaction getTransaction() throws NotValidException {
-            Transaction.Builder builder = Nxt.newTransactionBuilder(transactionBytes);
+            JSONObject prunableAttachment;
+            if (prunableAttachmentBytes.length > 0) {
+                prunableAttachment = (JSONObject)JSONValue.parse(new String(prunableAttachmentBytes));
+            } else {
+                prunableAttachment = null;
+            }
+            Transaction.Builder builder = Nxt.newTransactionBuilder(transactionBytes, prunableAttachment);
             return builder.build();
         }
     }
