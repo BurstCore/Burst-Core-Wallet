@@ -244,44 +244,6 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
     };
 
-    private final Runnable processTransactionsThread = () -> {
-
-        try {
-            try {
-                if (Nxt.getBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
-                    return;
-                }
-                Peer peer = Peers.getAnyPeer(Peers.getConnectedPeers());
-                if (peer == null) {
-                    return;
-                }
-                List<Long> unconfirmed = getAllUnconfirmedTransactionIds();
-                Collections.sort(unconfirmed);
-                NetworkMessage.TransactionsMessage response = (NetworkMessage.TransactionsMessage)peer.sendRequest(
-                        new NetworkMessage.GetUnconfirmedTransactionsMessage(unconfirmed));
-                if (response == null) {
-                    return;
-                }
-                if (response.getTransactionCount() == 0) {
-                    return;
-                }
-                try {
-                    List<Transaction> transactions = response.getTransactions();
-                    processPeerTransactions(transactions);
-                } catch (NxtException.ValidationException | RuntimeException e) {
-                    peer.blacklist(e);
-                }
-            } catch (Exception e) {
-                Logger.logMessage("Error processing unconfirmed transactions", e);
-            }
-        } catch (Throwable t) {
-            Logger.logErrorMessage("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
-            t.printStackTrace();
-            System.exit(1);
-        }
-
-    };
-
     private final Runnable processWaitingTransactionsThread = () -> {
 
         try {
@@ -301,13 +263,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
     };
 
-    //
-    // Note: Peers broadcast new transactions to all connected peers.  So the only reason
-    //       to request unconfirmed transactions is during initial startup and to handle
-    //       the case where the connected peers have different sets of unconfirmed transactions.
-    //
     private TransactionProcessorImpl() {
-        ThreadPool.scheduleThread("ProcessTransactions", processTransactionsThread, 30);
         ThreadPool.scheduleThread("RemoveUnconfirmedTransactions", removeUnconfirmedTransactionsThread, 20);
         ThreadPool.scheduleThread("ProcessWaitingTransactions", processWaitingTransactionsThread, 1);
         ThreadPool.runAfterStart(this::rebroadcastAllUnconfirmedTransactions);
@@ -357,7 +313,8 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         return unconfirmedTransactionTable.get(dbKey);
     }
 
-    private List<Long> getAllUnconfirmedTransactionIds() {
+    @Override
+    public List<Long> getAllUnconfirmedTransactionIds() {
         List<Long> result = new ArrayList<>();
         try (Connection con = Db.db.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM unconfirmed_transaction");

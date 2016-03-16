@@ -16,7 +16,13 @@
 
 package nxt.peer;
 
+import nxt.Nxt;
+import nxt.NxtException;
+import nxt.Transaction;
 import nxt.util.Logger;
+
+import java.util.Collections;
+import java.util.List;
 
 final class GetInfo {
 
@@ -83,9 +89,8 @@ final class GetInfo {
         if (peer.getServices() != origServices) {
             Peers.notifyListeners(peer, Peers.Event.CHANGE_SERVICES);
         }
-
         //
-        // Indicate connection handshake is complete.  For an inbound connection, we need
+        // Indicate the connection handshake is complete.  For an inbound connection, we need
         // to sendn our GetInfo message.  For an outbound connection, we have already sent our
         // GetInfo message.
         //
@@ -93,6 +98,25 @@ final class GetInfo {
         if (peer.isInbound()) {
             NetworkHandler.sendGetInfoMessage(peer);
         }
+        //
+        // Get the unconfirmed transactions.  This is done when a connection is established
+        // to synchronize the unconfirmed transaction pools of both peers.
+        //
+        Peers.peersService.execute(() -> {
+            List<Long> unconfirmed = Nxt.getTransactionProcessor().getAllUnconfirmedTransactionIds();
+            Collections.sort(unconfirmed);
+            NetworkMessage.TransactionsMessage response = (NetworkMessage.TransactionsMessage)peer.sendRequest(
+                    new NetworkMessage.GetUnconfirmedTransactionsMessage(unconfirmed));
+            if (response == null || response.getTransactionCount() == 0) {
+                return;
+            }
+            try {
+                List<Transaction> transactions = response.getTransactions();
+                Nxt.getTransactionProcessor().processPeerTransactions(transactions);
+            } catch (NxtException.ValidationException | RuntimeException e) {
+                peer.blacklist(e);
+            }
+        });
         return null;
     }
 }

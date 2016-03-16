@@ -33,6 +33,8 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
         REJECT_PHASED_TRANSACTION
     }
 
+    List<Long> getAllUnconfirmedTransactionIds();
+    
     DbIterator<? extends Transaction> getAllUnconfirmedTransactions();
 
     DbIterator<? extends Transaction> getAllUnconfirmedTransactions(String sort);

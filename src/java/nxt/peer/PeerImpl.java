@@ -989,6 +989,7 @@ final class PeerImpl implements Peer {
     @Override
     public synchronized void sendMessage(NetworkMessage message) {
         if (state == State.CONNECTED) {
+            //Logger.logDebugMessage("****DEBUG**** Sending " + message.getMessageName() + " message to " + host);
             if (handshakePending && message instanceof NetworkMessage.GetInfoMessage) {
                 handshakeMessage = message;
                 NetworkHandler.sendMessage(this);

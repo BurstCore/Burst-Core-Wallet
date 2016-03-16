@@ -70,10 +70,10 @@ import java.util.Set;
 public final class NetworkHandler implements Runnable {
 
     /** Default peer port */
-    static final int DEFAULT_PEER_PORT = 7813;
+    static final int DEFAULT_PEER_PORT = 7873;
 
     /** Testnet peer port */
-    static final int TESTNET_PEER_PORT = 6813;
+    static final int TESTNET_PEER_PORT = 6873;
 
     /** Maximum number of pending messages for a single peer */
     static final int MAX_PENDING_MESSAGES = 10;
