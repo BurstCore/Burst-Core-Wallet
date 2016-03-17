@@ -570,16 +570,20 @@ public final class NetworkHandler implements Runnable {
         SocketChannel channel = peer.getChannel();
         try {
             channel.finishConnect();
-            peer.getKeyEvent().update(SelectionKey.OP_READ, SelectionKey.OP_CONNECT);
-            peer.connectComplete(true);
-            Peers.peersService.execute(() -> sendGetInfoMessage(peer));
+            if (peer.getState() != Peer.State.CONNECTED) {
+                peer.getKeyEvent().update(SelectionKey.OP_READ, SelectionKey.OP_CONNECT);
+                Peers.peersService.execute(() -> {
+                    peer.connectComplete(true);
+                    sendGetInfoMessage(peer);
+                });
+            }
         } catch (SocketException exc) {
             Logger.logDebugMessage(String.format("%s: Peer %s", exc.getMessage(), hostAddress));
-            peer.connectComplete(false);
+            Peers.peersService.execute(() -> peer.connectComplete(false));
         } catch (IOException exc) {
             Logger.logDebugMessage("Connection failed to " + hostAddress + ": " +
                     (exc.getMessage() != null ? exc.getMessage() : exc.toString()));
-            peer.connectComplete(false);
+            Peers.peersService.execute(() -> peer.connectComplete(false));
         }
     }
 
@@ -604,7 +608,7 @@ public final class NetworkHandler implements Runnable {
                 } else if (peer.isBlacklisted()) {
                     channel.close();
                     Logger.logDebugMessage("Peer is blacklisted: Connection rejected from " + hostAddress);
-                } else if (connectionMap.get(remoteAddress.getAddress()) != null || !peer.setInbound()) {
+                } else if (connectionMap.get(remoteAddress.getAddress()) != null) {
                     channel.close();
                     Logger.logDebugMessage("Connection already established with " + hostAddress);
                 } else {
@@ -619,6 +623,8 @@ public final class NetworkHandler implements Runnable {
                     SelectionKey key = event.register();
                     if (key == null) {
                         Logger.logErrorMessage("Unable to register socket channel for " + peer.getHost());
+                    } else {
+                        Peers.peersService.execute(() -> peer.setInbound());
                     }
                 }
             }

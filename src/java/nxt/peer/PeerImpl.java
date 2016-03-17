@@ -818,24 +818,19 @@ final class PeerImpl implements Peer {
      * No messages will be sent on this connection until the GetInfo message is received.
      * This include responses to requests sent by the peer.  The peer will be disconnected
      * if the output queue reaches the maximum number of pending messages.
-     *
-     * @return                          TRUE if inbound state accepted
      */
-    boolean setInbound() {
-        boolean accepted = false;
+    void setInbound() {
         connectLock.lock();
         try {
             if (state != State.CONNECTED) {
                 isInbound = true;
                 handshakePending = true;
                 setState(State.CONNECTED);
-                accepted = true;
                 Logger.logInfoMessage("Connection from " + host + " accepted");
             }
         } finally {
             connectLock.unlock();
         }
-        return accepted;
     }
 
     /**
