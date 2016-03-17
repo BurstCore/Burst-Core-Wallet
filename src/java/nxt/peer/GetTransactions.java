@@ -27,7 +27,10 @@ public class GetTransactions {
     private GetTransactions() {}
 
     /**
-     * Process the GetTransactions message and return the Transactions message
+     * Process the GetTransactions message and return the Transactions message.
+     * The request consists of a list of unconfirmed transactions to return.
+     *
+     * A maximum of 100 transactions can be requested.
      *
      * @param   peer                    Peer
      * @param   message                 Request message
@@ -40,9 +43,8 @@ public class GetTransactions {
         }
         List<Transaction> transactions = new ArrayList<>(transactionIds.size());
         for (Long transactionId : transactionIds) {
-            Transaction transaction = Nxt.getBlockchain().getTransaction(transactionId);
+            Transaction transaction = Nxt.getTransactionProcessor().getUnconfirmedTransaction(transactionId);
             if (transaction != null) {
-                transaction.getAppendages(false);
                 transactions.add(transaction);
             }
         }

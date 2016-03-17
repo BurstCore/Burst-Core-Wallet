@@ -22,8 +22,6 @@ import nxt.db.DbKey;
 import nxt.db.EntityDbTable;
 import nxt.peer.NetworkHandler;
 import nxt.peer.NetworkMessage;
-import nxt.peer.Peer;
-import nxt.peer.Peers;
 import nxt.util.Convert;
 import nxt.util.Listener;
 import nxt.util.Listeners;
@@ -223,7 +221,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                         broadcastedTransactions.remove(transaction);
                     } else if (transaction.getTimestamp() < curTime - 30) {
                         transactionList.add(transaction);
-                        if (transactionList.size() > NetworkMessage.MAX_LIST_SIZE) {
+                        if (transactionList.size() >= NetworkMessage.MAX_LIST_SIZE) {
                             break;
                         }
                     }
@@ -266,7 +264,6 @@ final class TransactionProcessorImpl implements TransactionProcessor {
     private TransactionProcessorImpl() {
         ThreadPool.scheduleThread("RemoveUnconfirmedTransactions", removeUnconfirmedTransactionsThread, 20);
         ThreadPool.scheduleThread("ProcessWaitingTransactions", processWaitingTransactionsThread, 1);
-        ThreadPool.runAfterStart(this::rebroadcastAllUnconfirmedTransactions);
         ThreadPool.scheduleThread("RebroadcastTransactions", rebroadcastTransactionsThread, 23);
     }
 

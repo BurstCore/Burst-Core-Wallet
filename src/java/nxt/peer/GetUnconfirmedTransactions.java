@@ -28,7 +28,10 @@ final class GetUnconfirmedTransactions {
     private GetUnconfirmedTransactions() {}
 
     /**
-     * Process the GetUnconfirmedTransactions message and return the Transactions message
+     * Process the GetUnconfirmedTransactions message and return the Transactions message.
+     * The request contains a list of unconfirmed transactions to exclude.
+     *
+     * A maximum of 100 unconfirmed transactions will be returned.
      *
      * @param   peer                    Peer
      * @param   message                 Request message

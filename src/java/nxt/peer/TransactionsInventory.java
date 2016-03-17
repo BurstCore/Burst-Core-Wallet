@@ -88,7 +88,7 @@ final class TransactionsInventory {
                         new NetworkMessage.GetTransactionsMessage(requestIds);
                 List<Peer> connectedPeers = Peers.getConnectedPeers();
                 if (connectedPeers.isEmpty()) {
-                        return;
+                    return;
                 }
                 int startIndex = connectedPeers.indexOf(peer);
                 if (startIndex < 0) {
