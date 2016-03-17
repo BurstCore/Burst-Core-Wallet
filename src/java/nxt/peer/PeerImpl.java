@@ -94,10 +94,10 @@ final class PeerImpl implements Peer {
     private volatile State state = State.NON_CONNECTED;
 
     /** Peer downloaded volume */
-    private long downloadedVolume;
+    private volatile long downloadedVolume;
 
     /** Peer uploaded volume */
-    private long uploadedVolume;
+    private volatile long uploadedVolume;
 
     /** Connection address */
     private InetSocketAddress connectionAddress;
@@ -118,7 +118,7 @@ final class PeerImpl implements Peer {
     private ByteBuffer inputBuffer;
 
     /** Input message count */
-    private int inputCount;
+    private volatile int inputCount;
 
     /** Output buffer */
     private ByteBuffer outputBuffer;
@@ -248,7 +248,7 @@ final class PeerImpl implements Peer {
      * @return                          Download volume
      */
     @Override
-    public synchronized long getDownloadedVolume() {
+    public long getDownloadedVolume() {
         return downloadedVolume;
     }
 
@@ -257,7 +257,7 @@ final class PeerImpl implements Peer {
      *
      * @param   volume                  Volume update
      */
-    synchronized void updateDownloadedVolume(long volume) {
+    void updateDownloadedVolume(long volume) {
         downloadedVolume += volume;
     }
 
@@ -267,7 +267,7 @@ final class PeerImpl implements Peer {
      * @return                          Upload volume
      */
     @Override
-    public synchronized long getUploadedVolume() {
+    public long getUploadedVolume() {
         return uploadedVolume;
     }
 
@@ -276,7 +276,7 @@ final class PeerImpl implements Peer {
      *
      * @param   volume                  Volume update
      */
-    synchronized void updateUploadedVolume(long volume) {
+    void updateUploadedVolume(long volume) {
         uploadedVolume += volume;
     }
 
@@ -772,8 +772,7 @@ final class PeerImpl implements Peer {
      * @return                          Updated message count
      */
     synchronized int incrementInputCount() {
-        inputCount++;
-        return inputCount;
+        return ++inputCount;
     }
 
     /**
@@ -782,8 +781,7 @@ final class PeerImpl implements Peer {
      * @return                          Updated message count
      */
     synchronized int decrementInputCount() {
-        inputCount = (inputCount > 0 ? inputCount - 1 : 0);
-        return inputCount;
+        return --inputCount;
     }
 
     /**
@@ -849,7 +847,6 @@ final class PeerImpl implements Peer {
     @Override
     public void connectPeer() {
         connectLock.lock();
-        //Logger.logDebugMessage("****DEBUG**** Connecting to " + host);
         try {
             if (state != State.CONNECTED) {
                 if (!connectPending) {

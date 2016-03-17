@@ -89,7 +89,6 @@ class MessageHandler implements Runnable {
                 NetworkMessage response;
                 try {
                     message = NetworkMessage.getMessage(entry.getBytes());
-                    //Logger.logDebugMessage("****DEBUG**** Processing " + message.getMessageName() + " message from " + peer.getHost());
                     if (message.isResponse()) {
                         if (message.getMessageId() == 0) {
                             Logger.logErrorMessage("'" + message.getMessageName()

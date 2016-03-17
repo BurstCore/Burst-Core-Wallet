@@ -207,41 +207,6 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
     };
 
-    private final Runnable rebroadcastTransactionsThread = () -> {
-
-        try {
-            try {
-                if (Nxt.getBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
-                    return;
-                }
-                List<Transaction> transactionList = new ArrayList<>();
-                int curTime = Nxt.getEpochTime();
-                for (TransactionImpl transaction : broadcastedTransactions) {
-                    if (transaction.getExpiration() < curTime || TransactionDb.hasTransaction(transaction.getId())) {
-                        broadcastedTransactions.remove(transaction);
-                    } else if (transaction.getTimestamp() < curTime - 30) {
-                        transactionList.add(transaction);
-                        if (transactionList.size() >= NetworkMessage.MAX_LIST_SIZE) {
-                            break;
-                        }
-                    }
-                }
-
-                if (!transactionList.isEmpty()) {
-                    NetworkHandler.broadcastMessage(new NetworkMessage.TransactionsInventoryMessage(transactionList));
-                }
-
-            } catch (Exception e) {
-                Logger.logMessage("Error in transaction re-broadcasting thread", e);
-            }
-        } catch (Throwable t) {
-            Logger.logErrorMessage("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
-            t.printStackTrace();
-            System.exit(1);
-        }
-
-    };
-
     private final Runnable processWaitingTransactionsThread = () -> {
 
         try {
@@ -264,7 +229,6 @@ final class TransactionProcessorImpl implements TransactionProcessor {
     private TransactionProcessorImpl() {
         ThreadPool.scheduleThread("RemoveUnconfirmedTransactions", removeUnconfirmedTransactionsThread, 20);
         ThreadPool.scheduleThread("ProcessWaitingTransactions", processWaitingTransactionsThread, 1);
-        ThreadPool.scheduleThread("RebroadcastTransactions", rebroadcastTransactionsThread, 23);
     }
 
     @Override

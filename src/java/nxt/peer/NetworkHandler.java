@@ -462,7 +462,6 @@ public final class NetworkHandler implements Runnable {
          * @param   removeOps           Operations to be removed
          */
         void update(int addOps, int removeOps) {
-            //Logger.logDebugMessage("****DEBUG**** Changing interest ops: AddOps " + addOps + ", removeOps " + removeOps);
             if (Thread.currentThread() == listenerThread) {
                 key.interestOps((key.interestOps() | addOps) & (~removeOps));
             } else {
@@ -529,7 +528,6 @@ public final class NetworkHandler implements Runnable {
      */
     static void createConnection(PeerImpl peer) {
         try {
-            //Logger.logDebugMessage("****DEBUG**** Creating connection to " + peer.getHost());
             InetAddress address = InetAddress.getByName(peer.getHost());
             InetSocketAddress remoteAddress = new InetSocketAddress(address, peer.getPort());
             SocketChannel channel = SocketChannel.open();
@@ -565,14 +563,16 @@ public final class NetworkHandler implements Runnable {
      */
     private void processConnect(SelectionKey connectKey) {
         PeerImpl peer = (PeerImpl)connectKey.attachment();
+        if (peer == null || peer.getChannel() == null) {
+            return;                     // Channel has been closed
+        }
         String hostAddress = peer.getConnectionAddress().getAddress().getHostAddress();
         SocketChannel channel = peer.getChannel();
-        //Logger.logDebugMessage("****DEBUG**** Processing OP_CONNECT event for " + peer.getHost());
         try {
             channel.finishConnect();
             peer.getKeyEvent().update(SelectionKey.OP_READ, SelectionKey.OP_CONNECT);
             peer.connectComplete(true);
-            sendGetInfoMessage(peer);
+            Peers.peersService.execute(() -> sendGetInfoMessage(peer));
         } catch (SocketException exc) {
             Logger.logDebugMessage(String.format("%s: Peer %s", exc.getMessage(), hostAddress));
             peer.connectComplete(false);
@@ -595,7 +595,6 @@ public final class NetworkHandler implements Runnable {
                 InetSocketAddress remoteAddress = (InetSocketAddress)channel.getRemoteAddress();
                 String hostAddress = remoteAddress.getAddress().getHostAddress();
                 PeerImpl peer = Peers.findOrCreatePeer(remoteAddress.getAddress());
-                //Logger.logDebugMessage("****DEBUG**** Processing OP_ACCEPT event for " + peer.getHost());
                 if (peer == null) {
                     channel.close();
                     Logger.logDebugMessage("Peer not accepted: Connection rejected from " + hostAddress);
@@ -639,7 +638,6 @@ public final class NetworkHandler implements Runnable {
         SocketChannel channel = peer.getChannel();
         ByteBuffer buffer = peer.getInputBuffer();
         peer.setLastUpdated(Nxt.getEpochTime());
-        //Logger.logDebugMessage("****DEBUG**** Processing OP_READ event for " + peer.getHost());
         try {
             int count;
             //
@@ -663,7 +661,7 @@ public final class NetworkHandler implements Runnable {
                     count = channel.read(buffer);
                     if (count <= 0) {
                         if (count < 0) {
-                            peer.disconnectPeer();
+                            Peers.peersService.execute(() -> peer.disconnectPeer());
                         }
                         break;
                     }
@@ -680,13 +678,13 @@ public final class NetworkHandler implements Runnable {
                     if (!Arrays.equals(hdrBytes, MESSAGE_HEADER_MAGIC)) {
                         Logger.logDebugMessage("Incorrect message header received from " + peer.getHost());
                         Logger.logDebugMessage("  " + Arrays.toString(hdrBytes));
-                        peer.disconnectPeer();
+                        Peers.peersService.execute(() -> peer.disconnectPeer());
                         break;
                     }
                     if ( length < 1 || length > MAX_MESSAGE_SIZE) {
                         Logger.logDebugMessage("Message length " + length + " for message from " + peer.getHost()
                                 + " is not valid");
-                        peer.disconnectPeer();
+                        Peers.peersService.execute(() -> peer.disconnectPeer());
                         break;
                     }
                     byte[] msgBytes = new byte[MESSAGE_HEADER_LENGTH + length];
@@ -716,7 +714,7 @@ public final class NetworkHandler implements Runnable {
                 }
             }
         } catch (IOException exc) {
-            peer.disconnectPeer();
+            Peers.peersService.execute(() -> peer.disconnectPeer());
         }
     }
 
@@ -729,7 +727,6 @@ public final class NetworkHandler implements Runnable {
         PeerImpl peer = (PeerImpl)writeKey.attachment();
         SocketChannel channel = peer.getChannel();
         ByteBuffer buffer = peer.getOutputBuffer();
-        //Logger.logDebugMessage("****DEBUG**** Processing OP_WRITE event for " + peer.getHost());
         try {
             //
             // Write data until all pending messages have been sent or the socket buffer is full
@@ -756,7 +753,7 @@ public final class NetworkHandler implements Runnable {
                     } catch (BufferOverflowException exc) {
                         Logger.logErrorMessage("Buffer is too short for '" + message.getMessageName()
                                 + "' message from " + peer.getHost());
-                        peer.disconnectPeer();
+                        Peers.peersService.execute(() -> peer.disconnectPeer());
                         break;
                     }
                     peer.setOutputBuffer(buffer);
@@ -775,7 +772,7 @@ public final class NetworkHandler implements Runnable {
                 peer.setOutputBuffer(null);
             }
         } catch (IOException exc) {
-            peer.disconnectPeer();
+            Peers.peersService.execute(() -> peer.disconnectPeer());
         }
     }
 
