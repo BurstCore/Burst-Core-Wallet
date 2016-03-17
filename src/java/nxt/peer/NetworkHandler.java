@@ -44,7 +44,10 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -172,11 +175,11 @@ public final class NetworkHandler implements Runnable {
     /** Listen channel */
     private static ServerSocketChannel listenChannel;
 
-    /** Listen selection key */
-    private static SelectionKey listenKey;
-
     /** Network selector */
     private static Selector networkSelector;
+
+    /** Channel register queue */
+    private static ConcurrentLinkedQueue<KeyEvent> keyEventQueue = new ConcurrentLinkedQueue<>();
 
     /** Connection map */
     static final ConcurrentHashMap<InetAddress, PeerImpl> connectionMap = new ConcurrentHashMap<>();
@@ -268,7 +271,7 @@ public final class NetworkHandler implements Runnable {
             listenChannel = ServerSocketChannel.open();
             listenChannel.configureBlocking(false);
             listenChannel.bind(new InetSocketAddress(listenAddress, serverPort), 10);
-            listenKey = listenChannel.register(networkSelector, SelectionKey.OP_ACCEPT);
+            listenChannel.register(networkSelector, SelectionKey.OP_ACCEPT);
         } catch (IOException exc) {
             networkShutdown = true;
             throw new RuntimeException("Unable to create network listener", exc);
@@ -330,7 +333,6 @@ public final class NetworkHandler implements Runnable {
     public void run() {
         try {
             Logger.logDebugMessage("Network listener started");
-
             //
             // Process network events
             //
@@ -350,6 +352,13 @@ public final class NetworkHandler implements Runnable {
     private void processEvents() {
         int count;
         try {
+            //
+            // Process pending selection key events
+            //
+            KeyEvent keyEvent;
+            while ((keyEvent = keyEventQueue.poll()) != null) {
+                keyEvent.process();
+            }
             //
             // Process selectable events
             //
@@ -389,26 +398,154 @@ public final class NetworkHandler implements Runnable {
     }
 
     /**
+     * We need to register channels and modify selection keys on the listener thread to
+     * avoid deadlocks in the network selector
+     */
+    static class KeyEvent {
+
+        /** Peer */
+        private final PeerImpl peer;
+
+        /** Socket channel */
+        private final SocketChannel channel;
+
+        /** Interest ops to add */
+        private int addOps;
+
+        /** Interest ops to remove */
+        private int removeOps;
+
+        /** Selection key */
+        private SelectionKey key = null;
+
+        /** Cyclic barrier used to wait for event completion */
+        private final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+
+        /**
+         * Construct a KeyEvent
+         *
+         * @param   peer                Peer
+         * @param   channel             Channel to register
+         * @param   initialOps          Initial interest operations
+         */
+        private KeyEvent(PeerImpl peer, SocketChannel channel, int initialOps) {
+            this.peer = peer;
+            this.channel = channel;
+            this.addOps = initialOps;
+        }
+
+        /**
+         * Register the channel and wait for completion (called by the thread creating the channel)
+         *
+         * @return                      Selection key assigned to the channel
+         */
+        private SelectionKey register() {
+            if (Thread.currentThread() == listenerThread) {
+                registerChannel();
+                return key;
+            }
+            keyEventQueue.add(this);
+            networkSelector.wakeup();
+            try {
+                cyclicBarrier.await();
+            } catch (BrokenBarrierException | InterruptedException exc) {
+                Logger.logErrorMessage("Thread interrupted while waiting for key event completion");
+            }
+            cyclicBarrier.reset();
+            return key;
+        }
+
+        /**
+         * Update the interest operations for the selection key
+         *
+         * @param   addOps              Operations to be added
+         * @param   removeOps           Operations to be removed
+         */
+        void update(int addOps, int removeOps) {
+            //Logger.logDebugMessage("****DEBUG**** Changing interest ops: AddOps " + addOps + ", removeOps " + removeOps);
+            if (Thread.currentThread() == listenerThread) {
+                key.interestOps((key.interestOps() | addOps) & (~removeOps));
+            } else {
+                synchronized(this) {
+                    this.addOps = addOps;
+                    this.removeOps = removeOps;
+                    keyEventQueue.add(this);
+                    networkSelector.wakeup();
+                    try {
+                        cyclicBarrier.await();
+                    } catch (BrokenBarrierException | InterruptedException exc) {
+                        Logger.logErrorMessage("Thread interrupted while waiting for key event completion");
+                    }
+                    cyclicBarrier.reset();
+                }
+            }
+        }
+
+        /**
+         * Process the key event (called on the listener thread)
+         *
+         * @param   key                 Selection key
+         */
+        private void process() {
+            try {
+                if (key == null) {
+                    registerChannel();
+                } else {
+                    key.interestOps((key.interestOps() | addOps) & (~removeOps));
+                }
+                cyclicBarrier.await();
+            } catch (BrokenBarrierException | InterruptedException exc) {
+                Logger.logErrorMessage("Thread interrupted while waiting for key event completion");
+            }
+        }
+
+        /**
+         * Register the channel
+         */
+        private void registerChannel() {
+            try {
+                key = channel.register(networkSelector, addOps);
+                key.attach(peer);
+                peer.setKeyEvent(this);
+            } catch (IOException exc) {
+                // Ignore - the channel has been closed
+            }
+        }
+
+        /**
+         * Get the selection key
+         *
+         * @return                      Selection key
+         */
+        SelectionKey getKey() {
+            return key;
+        }
+    }
+
+    /**
      * Create a new outbound connection
      *
      * @param   peer                    Target peer
      */
     static void createConnection(PeerImpl peer) {
         try {
+            //Logger.logDebugMessage("****DEBUG**** Creating connection to " + peer.getHost());
             InetAddress address = InetAddress.getByName(peer.getHost());
             InetSocketAddress remoteAddress = new InetSocketAddress(address, peer.getPort());
             SocketChannel channel = SocketChannel.open();
             channel.configureBlocking(false);
             channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
             channel.bind(null);
-            SelectionKey key = channel.register(networkSelector, SelectionKey.OP_CONNECT);
-            key.attach(peer);
+            channel.connect(remoteAddress);
             peer.setConnectionAddress(remoteAddress);
             peer.setChannel(channel);
-            peer.setKey(key);
             connectionMap.put(address, peer);
             outboundCount.incrementAndGet();
-            channel.connect(remoteAddress);
+            KeyEvent event = new KeyEvent(peer, channel, SelectionKey.OP_CONNECT);
+            SelectionKey key = event.register();
+            if (key == null) {
+                Logger.logErrorMessage("Unable to register socket channel for " + peer.getHost());
+            }
         } catch (BindException exc) {
             Logger.logErrorMessage("Unable to bind local port: " +
                     (exc.getMessage() != null ? exc.getMessage() : exc.toString()));
@@ -430,9 +567,10 @@ public final class NetworkHandler implements Runnable {
         PeerImpl peer = (PeerImpl)connectKey.attachment();
         String hostAddress = peer.getConnectionAddress().getAddress().getHostAddress();
         SocketChannel channel = peer.getChannel();
+        //Logger.logDebugMessage("****DEBUG**** Processing OP_CONNECT event for " + peer.getHost());
         try {
             channel.finishConnect();
-            peer.updateKey(SelectionKey.OP_READ, SelectionKey.OP_CONNECT);
+            peer.getKeyEvent().update(SelectionKey.OP_READ, SelectionKey.OP_CONNECT);
             peer.connectComplete(true);
             sendGetInfoMessage(peer);
         } catch (SocketException exc) {
@@ -457,6 +595,7 @@ public final class NetworkHandler implements Runnable {
                 InetSocketAddress remoteAddress = (InetSocketAddress)channel.getRemoteAddress();
                 String hostAddress = remoteAddress.getAddress().getHostAddress();
                 PeerImpl peer = Peers.findOrCreatePeer(remoteAddress.getAddress());
+                //Logger.logDebugMessage("****DEBUG**** Processing OP_ACCEPT event for " + peer.getHost());
                 if (peer == null) {
                     channel.close();
                     Logger.logDebugMessage("Peer not accepted: Connection rejected from " + hostAddress);
@@ -472,14 +611,16 @@ public final class NetworkHandler implements Runnable {
                 } else {
                     channel.configureBlocking(false);
                     channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
-                    SelectionKey key = channel.register(networkSelector, SelectionKey.OP_READ);
-                    key.attach(peer);
                     peer.setConnectionAddress(remoteAddress);
                     peer.setChannel(channel);
-                    peer.setKey(key);
                     connectionMap.put(remoteAddress.getAddress(), peer);
                     inboundCount.incrementAndGet();
                     Peers.addPeer(peer);
+                    KeyEvent event = new KeyEvent(peer, channel, SelectionKey.OP_READ);
+                    SelectionKey key = event.register();
+                    if (key == null) {
+                        Logger.logErrorMessage("Unable to register socket channel for " + peer.getHost());
+                    }
                 }
             }
         } catch (IOException exc) {
@@ -498,6 +639,7 @@ public final class NetworkHandler implements Runnable {
         SocketChannel channel = peer.getChannel();
         ByteBuffer buffer = peer.getInputBuffer();
         peer.setLastUpdated(Nxt.getEpochTime());
+        //Logger.logDebugMessage("****DEBUG**** Processing OP_READ event for " + peer.getHost());
         try {
             int count;
             //
@@ -567,7 +709,7 @@ public final class NetworkHandler implements Runnable {
                     buffer.position(MESSAGE_HEADER_LENGTH);
                     int inputCount = peer.incrementInputCount();
                     if (inputCount >= MAX_PENDING_MESSAGES) {
-                        peer.updateKey(0, SelectionKey.OP_READ);
+                        peer.getKeyEvent().update(0, SelectionKey.OP_READ);
                     }
                     MessageHandler.processMessage(peer, buffer);
                     break;
@@ -587,6 +729,7 @@ public final class NetworkHandler implements Runnable {
         PeerImpl peer = (PeerImpl)writeKey.attachment();
         SocketChannel channel = peer.getChannel();
         ByteBuffer buffer = peer.getOutputBuffer();
+        //Logger.logDebugMessage("****DEBUG**** Processing OP_WRITE event for " + peer.getHost());
         try {
             //
             // Write data until all pending messages have been sent or the socket buffer is full
@@ -599,7 +742,7 @@ public final class NetworkHandler implements Runnable {
                 if (buffer == null) {
                     NetworkMessage message = peer.getQueuedMessage();
                     if (message == null) {
-                        peer.updateKey(0, SelectionKey.OP_WRITE);
+                        peer.getKeyEvent().update(0, SelectionKey.OP_WRITE);
                         break;
                     }
                     int length = message.getLength();
@@ -659,16 +802,6 @@ public final class NetworkHandler implements Runnable {
         } catch (IOException exc) {
             // Ignore since the channel is closed in any event
         }
-    }
-
-    /**
-     * Send queued messages to a peer
-     *
-     * @param   peer                    Target peer
-     */
-    static void sendMessage(PeerImpl peer) {
-        peer.updateKey(SelectionKey.OP_WRITE, 0);
-        wakeup();
     }
 
     /**

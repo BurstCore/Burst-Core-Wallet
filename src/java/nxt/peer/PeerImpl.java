@@ -105,8 +105,8 @@ final class PeerImpl implements Peer {
     /** Socket channel */
     private SocketChannel channel;
 
-    /** Selection key */
-    private SelectionKey key;
+    /** Selection key event */
+    private NetworkHandler.KeyEvent keyEvent;
 
     /** Output message list */
     private final ConcurrentLinkedQueue<NetworkMessage> outputQueue = new ConcurrentLinkedQueue<>();
@@ -722,33 +722,21 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Get the network selection key (used by NetworkHandler and MessageHandler)
+     * Get the network section key event
      *
-     * @return                          Selection key
+     * @return                          Selection key event
      */
-    synchronized SelectionKey getKey() {
-        return key;
+    NetworkHandler.KeyEvent getKeyEvent() {
+        return keyEvent;
     }
 
     /**
-     * Update the network selection key (used by NetworkHandler and MessageHandler)
+     * Set the network selection key event (used by NetworkHandler and MessageHandler)
      *
-     * @param   addOps                  Interest operations to add
-     * @param   removeOps               Interest operations to remove
+     * @param   keyEvent                Selection key event
      */
-    synchronized void updateKey(int addOps, int removeOps) {
-        if (key != null) {
-            key.interestOps((key.interestOps() | addOps) & (~removeOps));
-        }
-    }
-
-    /**
-     * Set the network selection key (used by NetworkHandler)
-     *
-     * @param   key                     Selection key
-     */
-    synchronized void setKey(SelectionKey key) {
-        this.key = key;
+    void setKeyEvent(NetworkHandler.KeyEvent keyEvent) {
+        this.keyEvent = keyEvent;
     }
 
     /**
@@ -861,6 +849,7 @@ final class PeerImpl implements Peer {
     @Override
     public void connectPeer() {
         connectLock.lock();
+        //Logger.logDebugMessage("****DEBUG**** Connecting to " + host);
         try {
             if (state != State.CONNECTED) {
                 if (!connectPending) {
@@ -873,6 +862,7 @@ final class PeerImpl implements Peer {
                 }
                 if (!connectCondition.await(NetworkHandler.peerConnectTimeout, TimeUnit.SECONDS)) {
                     Logger.logDebugMessage("Connect to " + host + " timed out");
+                    disconnectPeer();
                 }
             }
         } catch (InterruptedException exc) {
@@ -915,10 +905,10 @@ final class PeerImpl implements Peer {
      *
      * Send any queued messages
      */
-    synchronized void handshakeComplete() {
+    void handshakeComplete() {
         handshakePending = false;
         if (!outputQueue.isEmpty()) {
-            NetworkHandler.sendMessage(this);
+            keyEvent.update(SelectionKey.OP_WRITE, 0);
         }
     }
 
@@ -952,7 +942,7 @@ final class PeerImpl implements Peer {
             outputBuffer = null;
             inputCount = 0;
             channel = null;
-            key = null;
+            keyEvent = null;
             connectionAddress = null;
         } finally {
             connectLock.unlock();
@@ -987,21 +977,25 @@ final class PeerImpl implements Peer {
      * @param   message                 Network message
      */
     @Override
-    public synchronized void sendMessage(NetworkMessage message) {
-        if (state == State.CONNECTED) {
-            //Logger.logDebugMessage("****DEBUG**** Sending " + message.getMessageName() + " message to " + host);
-            if (handshakePending && message instanceof NetworkMessage.GetInfoMessage) {
-                handshakeMessage = message;
-                NetworkHandler.sendMessage(this);
-            } else if (outputQueue.size() >= NetworkHandler.MAX_PENDING_MESSAGES) {
-                Logger.logDebugMessage("Too many pending messages for " + host + ": Disconnected");
-                disconnectPeer();
-            } else {
-                outputQueue.add(message);
-                if (!handshakePending) {
-                    NetworkHandler.sendMessage(this);
+    public void sendMessage(NetworkMessage message) {
+        boolean sendMessage = false;
+        synchronized(this) {
+            if (state == State.CONNECTED) {
+                if (handshakePending && message instanceof NetworkMessage.GetInfoMessage) {
+                    handshakeMessage = message;
+                    sendMessage = true;
+                } else if (outputQueue.size() >= NetworkHandler.MAX_PENDING_MESSAGES) {
+                    Logger.logErrorMessage("Too many pending messages for " + host);
+                } else {
+                    outputQueue.add(message);
+                    if (!handshakePending) {
+                        sendMessage = true;
+                    }
                 }
             }
+        }
+        if (sendMessage) {
+            keyEvent.update(SelectionKey.OP_WRITE, 0);
         }
     }
 

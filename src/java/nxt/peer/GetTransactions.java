@@ -16,8 +16,6 @@
 
 package nxt.peer;
 
-import nxt.Blockchain;
-import nxt.Constants;
 import nxt.Nxt;
 import nxt.Transaction;
 
@@ -44,7 +42,7 @@ public class GetTransactions {
         for (Long transactionId : transactionIds) {
             Transaction transaction = Nxt.getBlockchain().getTransaction(transactionId);
             if (transaction != null) {
-                transaction.getAppendages(true);
+                transaction.getAppendages(false);
                 transactions.add(transaction);
             }
         }

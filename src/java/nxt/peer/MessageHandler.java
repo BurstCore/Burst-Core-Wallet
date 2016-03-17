@@ -89,6 +89,7 @@ class MessageHandler implements Runnable {
                 NetworkMessage response;
                 try {
                     message = NetworkMessage.getMessage(entry.getBytes());
+                    //Logger.logDebugMessage("****DEBUG**** Processing " + message.getMessageName() + " message from " + peer.getHost());
                     if (message.isResponse()) {
                         if (message.getMessageId() == 0) {
                             Logger.logErrorMessage("'" + message.getMessageName()
@@ -131,8 +132,9 @@ class MessageHandler implements Runnable {
                 if (peer.getState() == Peer.State.CONNECTED) {
                     int count = peer.decrementInputCount();
                     if (count == 0) {
-                        if ((peer.getKey().interestOps() & SelectionKey.OP_READ) == 0) {
-                            peer.updateKey(SelectionKey.OP_READ, 0);
+                        NetworkHandler.KeyEvent event = peer.getKeyEvent();
+                        if ((event.getKey().interestOps() & SelectionKey.OP_READ) == 0) {
+                            event.update(SelectionKey.OP_READ, 0);
                             NetworkHandler.wakeup();
                         }
                     }

@@ -19,6 +19,7 @@ package nxt.peer;
 import nxt.Block;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.Transaction;
 import nxt.util.Logger;
 
 import java.util.ArrayList;
@@ -76,6 +77,22 @@ final class BlockInventory {
                 Peer feederPeer = null;
                 try {
                     //
+                    // Build the GetBlocks request.  We will exclude transactions that are
+                    // in the TransactionsInventory transaction cache.
+                    //
+                    List<Long> invTransactionIds = request.getTransactionIds();
+                    List<Long> excludedIds = new ArrayList<>(invTransactionIds.size());
+                    List<Transaction> cachedTransactions = new ArrayList<>(invTransactionIds.size());
+                    invTransactionIds.forEach(id -> {
+                        Transaction tx = TransactionsInventory.getCachedTransaction(id);
+                        if (tx != null) {
+                            cachedTransactions.add(tx);
+                            excludedIds.add(id);
+                        }
+                    });
+                    NetworkMessage.GetBlocksMessage blockRequest =
+                            new NetworkMessage.GetBlocksMessage(Collections.singletonList(invBlockId), excludedIds);
+                    //
                     // Request the block, starting with the peer that sent the BlocksInventory message
                     //
                     List<Peer> connectedPeers = Peers.getConnectedPeers();
@@ -87,17 +104,15 @@ final class BlockInventory {
                         index = 0;
                     }
                     int startIndex = index;
-                    List<Long> blockIdList = Collections.singletonList(invBlockId);
                     NetworkMessage.BlocksMessage response;
                     while (true) {
                         feederPeer = connectedPeers.get(index);
-                        response = (NetworkMessage.BlocksMessage)feederPeer.sendRequest(
-                                        new NetworkMessage.GetBlocksMessage(blockIdList));
+                        response = (NetworkMessage.BlocksMessage)feederPeer.sendRequest(blockRequest);
                         if (blockCache.get(invBlockId) != null) {
                             return;
                         }
                         if (response == null || response.getBlockCount() == 0) {
-                            index = (index < connectedPeers.size()-1 ? index+1 : 0);
+                            index = (index < connectedPeers.size() - 1 ? index + 1 : 0);
                             if (index == startIndex) {
                                 return;
                             }
@@ -108,7 +123,7 @@ final class BlockInventory {
                     //
                     // Process the block
                     //
-                    Block block = response.getBlocks().get(0);
+                    Block block = response.getBlocks(cachedTransactions).get(0);
                     long previousBlockId = block.getPreviousBlockId();
                     Block lastBlock = Nxt.getBlockchain().getLastBlock();
                     blockCache.put(block.getId(), block);
