@@ -635,7 +635,7 @@ public final class Account {
 
         @Override
         public void trim(int height) {
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = getConnection();
                  PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
                          + "WHERE height < ? AND height >= 0")) {
                 pstmtDelete.setInt(1, height - Constants.GUARANTEED_BALANCE_CONFIRMATIONS);
@@ -888,7 +888,7 @@ public final class Account {
     private static DbIterator<AccountLease> getLeaseChangingAccounts(final int height) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = accountLeaseTable.getConnection();
             PreparedStatement pstmt = con.prepareStatement(
                     "SELECT * FROM account_lease WHERE current_leasing_height_from = ? AND latest = TRUE "
                             + "UNION ALL SELECT * FROM account_lease WHERE current_leasing_height_to = ? AND latest = TRUE "
@@ -1213,7 +1213,7 @@ public final class Account {
             lessorIds[i] = lessors.get(i).getId();
             balances[i] = lessors.get(i).getBalanceFQT();
         }
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = accountGuaranteedBalanceTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
                      + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
                      + (height < Nxt.getBlockchain().getHeight() ? " AND height <= ? " : "")
@@ -1263,7 +1263,7 @@ public final class Account {
                 || height > Nxt.getBlockchain().getHeight()) {
             throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
         }
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = accountGuaranteedBalanceTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS additions "
                      + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
             pstmt.setLong(1, this.id);
@@ -1730,7 +1730,7 @@ public final class Account {
             return;
         }
         int blockchainHeight = Nxt.getBlockchain().getHeight();
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = accountGuaranteedBalanceTable.getConnection();
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
                      + "WHERE account_id = ? and height = ?");
              PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "

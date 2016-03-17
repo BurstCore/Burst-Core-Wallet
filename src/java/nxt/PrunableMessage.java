@@ -72,7 +72,7 @@ public final class PrunableMessage {
     public static DbIterator<PrunableMessage> getPrunableMessages(long accountId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = prunableMessageTable.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM prunable_message WHERE sender_id = ?"
                     + " UNION ALL SELECT * FROM prunable_message WHERE recipient_id = ? AND sender_id <> ? ORDER BY block_timestamp DESC, db_id DESC "
                     + DbUtils.limitsClause(from, to));
@@ -91,7 +91,7 @@ public final class PrunableMessage {
     public static DbIterator<PrunableMessage> getPrunableMessages(long accountId, long otherAccountId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = prunableMessageTable.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM prunable_message WHERE sender_id = ? AND recipient_id = ? "
                     + "UNION ALL SELECT * FROM prunable_message WHERE sender_id = ? AND recipient_id = ? AND sender_id <> recipient_id "
                     + "ORDER BY block_timestamp DESC, db_id DESC "
@@ -275,7 +275,7 @@ public final class PrunableMessage {
         if (!hasPrunablePlainMessage && !hasPrunableEncryptedMessage) {
             return false;
         }
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = prunableMessageTable.getConnection();
                 PreparedStatement pstmt = con.prepareStatement("SELECT message, encrypted_message FROM prunable_message WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {

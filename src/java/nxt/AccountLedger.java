@@ -110,7 +110,7 @@ public class AccountLedger {
          * @param   ledgerEntry             Ledger entry
          */
         public void insert(LedgerEntry ledgerEntry) {
-            try (Connection con = db.getConnection()) {
+            try (Connection con = getConnection()) {
                 ledgerEntry.save(con);
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
@@ -126,7 +126,7 @@ public class AccountLedger {
         public void trim(int height) {
             if (trimKeep <= 0)
                 return;
-            try (Connection con = db.getConnection();
+            try (Connection con = getConnection();
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM account_ledger WHERE height <= ?")) {
                 int trimHeight = Math.max(blockchain.getHeight() - trimKeep, 0);
                 pstmt.setInt(1, trimHeight);
@@ -279,7 +279,7 @@ public class AccountLedger {
         if (!ledgerEnabled)
             return null;
         LedgerEntry entry;
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = accountLedgerTable.getConnection();
                 PreparedStatement stmt = con.prepareStatement("SELECT * FROM account_ledger WHERE db_id = ?")) {
             stmt.setLong(1, ledgerId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -346,7 +346,7 @@ public class AccountLedger {
         // Get the ledger entries
         //
         blockchain.readLock();
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = accountLedgerTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sb.toString())) {
             int i = 0;
             if (accountId != 0) {

@@ -175,7 +175,7 @@ public final class DbShellServlet extends HttpServlet {
                 Shell shell = new Shell();
                 shell.setErr(out);
                 shell.setOut(out);
-                shell.runTool(Db.db.getConnection(), "-sql", line);
+                shell.runTool(Db.getConnection(), "-sql", line);
             } catch (SQLException e) {
                 out.println(e.toString());
             }

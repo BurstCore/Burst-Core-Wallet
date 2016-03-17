@@ -445,7 +445,7 @@ class ChildDbVersion extends DbVersion {
             case 160:
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_extend_height_id_idx ON tagged_data_extend(height, id)");
             case 161:
-                nxt.db.FullTextTrigger.init();
+                nxt.db.FullTextTrigger.init(db);
                 apply(null);
             case 162:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_id_height_idx ON asset (id, height DESC)");

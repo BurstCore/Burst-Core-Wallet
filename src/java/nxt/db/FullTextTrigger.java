@@ -64,7 +64,7 @@ import java.util.stream.Stream;
  * inserted, updated or deleted.  The DB_ID column is used to identify each row
  * and will be returned as the COLUMNS and KEYS values in the search results.
  *
- * Schema, table and column names are converted to uppercase to match the
+ * Schema, table and column names are expected to be in uppercase to match the
  * way H2 stores the information.  Function aliases and triggers are created in
  * the default schema (PUBLIC).
  *
@@ -131,7 +131,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     private volatile boolean isEnabled = false;
 
     /** Table name (schema.table) */
-    private String tableName;
+    private String schemaTable;
 
     /** Column names */
     private final List<String> columnNames = new ArrayList<>();
@@ -173,9 +173,9 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      * This method should be called from NxtDbVersion when performing the database version update
      * that enables NRS fulltext search support
      */
-    public static void init() {
+    public static void init(BasicDb db) {
         String ourClassName = FullTextTrigger.class.getName();
-        try (Connection conn = Db.db.getConnection("PUBLIC");
+        try (Connection conn = db.getConnection("PUBLIC");
                 Statement stmt = conn.createStatement();
                 Statement qstmt = conn.createStatement()) {
             //
@@ -229,10 +229,10 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                 while(rs.next()) {
                     String schema = rs.getString("SCHEMA");
                     String table = rs.getString("TABLE");
-                    stmt.execute("DROP TRIGGER IF EXISTS FTL_" + table);
-                    stmt.execute(String.format("CREATE TRIGGER FTL_%s AFTER INSERT,UPDATE,DELETE ON %s.%s "
+                    stmt.execute("DROP TRIGGER IF EXISTS FTL_" + table + "_" + schema);
+                    stmt.execute(String.format("CREATE TRIGGER FTL_%s_%s AFTER INSERT,UPDATE,DELETE ON %s.%s "
                             + "FOR EACH ROW CALL \"%s\"",
-                            table, schema, table, ourClassName));
+                            schema, table, schema, table, ourClassName));
                 }
             }
             //
@@ -288,9 +288,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      */
     public static void createIndex(Connection conn, String schema, String table, String columnList)
                                     throws SQLException {
-        String upperSchema = schema.toUpperCase();
-        String upperTable = table.toUpperCase();
-        String tableName = upperSchema + "." + upperTable;
+        String schemaTable = schema + "." + table;
         getIndexAccess(conn);
         //
         // Drop an existing index and the associated database trigger
@@ -303,24 +301,24 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(String.format("INSERT INTO FTL.INDEXES (schema, table, columns) "
                     + "VALUES('%s', '%s', '%s')",
-                    upperSchema, upperTable, columnList.toUpperCase()));
-            stmt.execute(String.format("CREATE TRIGGER FTL_%s AFTER INSERT,UPDATE,DELETE ON %s "
+                    schema, table, columnList));
+            stmt.execute(String.format("CREATE TRIGGER FTL_%s_%s AFTER INSERT,UPDATE,DELETE ON %s "
                     + "FOR EACH ROW CALL \"%s\"",
-                    upperTable, tableName, FullTextTrigger.class.getName()));
+                    schema, table, schemaTable, FullTextTrigger.class.getName()));
         }
         //
         // Index the table
         //
-        FullTextTrigger trigger = indexTriggers.get(tableName);
+        FullTextTrigger trigger = indexTriggers.get(schemaTable);
         if (trigger == null) {
-            Logger.logErrorMessage("NRS fulltext trigger for table " + tableName + " was not initialized");
+            Logger.logErrorMessage("NRS fulltext trigger for table " + schemaTable + " was not initialized");
         } else {
             try {
                 trigger.reindexTable(conn);
-                Logger.logInfoMessage("Lucene search index created for table " + tableName);
+                Logger.logInfoMessage("Lucene search index created for table " + schemaTable);
             } catch (SQLException exc) {
-                Logger.logErrorMessage("Unable to create Lucene search index for table " + tableName);
-                throw new SQLException("Unable to create Lucene search index for table " + tableName, exc);
+                Logger.logErrorMessage("Unable to create Lucene search index for table " + schemaTable);
+                throw new SQLException("Unable to create Lucene search index for table " + schemaTable, exc);
             }
         }
     }
@@ -334,8 +332,6 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      * @throws  SQLException        Unable to drop fulltext index
      */
     public static void dropIndex(Connection conn, String schema, String table) throws SQLException {
-        String upperSchema = schema.toUpperCase();
-        String upperTable = table.toUpperCase();
         boolean reindex = false;
         //
         // Drop an existing database trigger
@@ -344,11 +340,11 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                 Statement stmt = conn.createStatement()) {
             try (ResultSet rs = qstmt.executeQuery(String.format(
                     "SELECT COLUMNS FROM FTL.INDEXES WHERE SCHEMA = '%s' AND TABLE = '%s'",
-                    upperSchema, upperTable))) {
+                    schema, table))) {
                 if (rs.next()) {
-                    stmt.execute("DROP TRIGGER IF EXISTS FTL_" + upperTable);
+                    stmt.execute("DROP TRIGGER IF EXISTS FTL_" + schema + "." + table);
                     stmt.execute(String.format("DELETE FROM FTL.INDEXES WHERE SCHEMA = '%s' AND TABLE = '%s'",
-                            upperSchema, upperTable));
+                            schema, table));
                     reindex = true;
                 }
             }
@@ -373,10 +369,11 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         //
         try (Statement qstmt = conn.createStatement();
                 Statement stmt = conn.createStatement();
-                ResultSet rs = qstmt.executeQuery("SELECT TABLE FROM FTL.INDEXES")) {
+                ResultSet rs = qstmt.executeQuery("SELECT TABLE, SCHEMA FROM FTL.INDEXES")) {
             while(rs.next()) {
-                String table = rs.getString(1);
-                stmt.execute("DROP TRIGGER IF EXISTS FTL_" + table);
+                String table = rs.getString("TABLE");
+                String schema = rs.getString("SCHEMA");
+                stmt.execute("DROP TRIGGER IF EXISTS FTL_" + schema + "_" + table);
             }
             stmt.execute("TRUNCATE TABLE FTL.INDEXES");
             indexTriggers.clear();
@@ -490,7 +487,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         //
         // Get table and index information
         //
-        tableName = schema + "." + table;
+        schemaTable = schema + "." + table;
         try (Statement stmt = conn.createStatement()) {
             //
             // Get the table column information
@@ -512,7 +509,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                 }
             }
             if (dbColumn < 0) {
-                Logger.logErrorMessage("DB_ID column not found for table " + tableName);
+                Logger.logErrorMessage("DB_ID column not found for table " + schemaTable);
                 return;
             }
             //
@@ -531,23 +528,23 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                             if (columnTypes.get(pos).equals("VARCHAR")) {
                                 indexColumns.add(pos);
                             } else {
-                                Logger.logErrorMessage("Indexed column " + column + " in table " + tableName + " is not a string");
+                                Logger.logErrorMessage("Indexed column " + column + " in table " + schemaTable + " is not a string");
                             }
                         } else {
-                            Logger.logErrorMessage("Indexed column " + column + " not found in table " + tableName);
+                            Logger.logErrorMessage("Indexed column " + column + " not found in table " + schemaTable);
                         }
                     }
                 }
             }
             if (indexColumns.isEmpty()) {
-                Logger.logErrorMessage("No indexed columns found for table " + tableName);
+                Logger.logErrorMessage("No indexed columns found for table " + schemaTable);
                 return;
             }
             //
             // Trigger is enabled
             //
             isEnabled = true;
-            indexTriggers.put(tableName, this);
+            indexTriggers.put(schemaTable, this);
         } catch (SQLException exc) {
             Logger.logErrorMessage("Unable to get table information", exc);
         }
@@ -562,7 +559,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     public void close() throws SQLException {
         if (isEnabled) {
             isEnabled = false;
-            indexTriggers.remove(tableName);
+            indexTriggers.remove(schemaTable);
         }
     }
 
@@ -575,7 +572,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     public void remove() throws SQLException {
         if (isEnabled) {
             isEnabled = false;
-            indexTriggers.remove(tableName);
+            indexTriggers.remove(schemaTable);
         }
     }
 
@@ -709,7 +706,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         for (int index : indexColumns) {
             sb.append(", ").append(columnNames.get(index));
         }
-        sb.append(" FROM ").append(tableName);
+        sb.append(" FROM ").append(schemaTable);
         Object[] row = new Object[columnNames.size()];
         //
         // Index each row in the table
@@ -740,12 +737,12 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     private void indexRow(Object[] row) throws SQLException {
         indexLock.readLock().lock();
         try {
-            String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (Long)row[dbColumn];
+            String query = schemaTable + ";" + columnNames.get(dbColumn) + ";" + (Long)row[dbColumn];
             Document document = new Document();
             document.add(new StringField("_QUERY", query, Field.Store.YES));
             long now = System.currentTimeMillis();
             document.add(new TextField("_MODIFIED", DateTools.timeToString(now, DateTools.Resolution.SECOND), Field.Store.NO));
-            document.add(new TextField("_TABLE", tableName, Field.Store.NO));
+            document.add(new TextField("_TABLE", schemaTable, Field.Store.NO));
             StringJoiner sj = new StringJoiner(" ");
             for (int index : indexColumns) {
                 String data = (row[index] != null ? (String)row[index] : "NULL");
@@ -769,7 +766,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      * @throws  SQLException            Unable to delete row
      */
     private void deleteRow(Object[] row) throws SQLException {
-        String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (Long)row[dbColumn];
+        String query = schemaTable + ";" + columnNames.get(dbColumn) + ";" + (Long)row[dbColumn];
         indexLock.readLock().lock();
         try {
             indexWriter.deleteDocuments(new Term("_QUERY", query));

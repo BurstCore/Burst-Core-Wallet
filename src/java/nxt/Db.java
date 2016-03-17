@@ -20,6 +20,8 @@ import nxt.db.BasicDb;
 import nxt.db.DbVersion;
 import nxt.db.TransactionalDb;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +40,10 @@ public final class Db {
             .loginTimeout(Nxt.getIntProperty("nxt.dbLoginTimeout"))
             .defaultLockTimeout(Nxt.getIntProperty("nxt.dbDefaultLockTimeout") * 1000)
     );
+
+    public static Connection getConnection() throws SQLException {
+        return db.getConnection("PUBLIC");
+    }
 
     static void init() {
         List<DbVersion> dbVersions = new ArrayList<>();

@@ -17,6 +17,7 @@
 package nxt;
 
 import nxt.db.DbUtils;
+import nxt.db.Table;
 import nxt.util.Logger;
 
 import java.math.BigInteger;
@@ -32,6 +33,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 final class BlockDb {
+
+    private static final Table blockTable = new Table("PUBLIC.BLOCK");
 
     /** Block cache */
     static final int BLOCK_CACHE_SIZE = 10;
@@ -68,6 +71,10 @@ final class BlockDb {
         }
     }
 
+    static Connection getConnection() throws SQLException {
+        return blockTable.getConnection();
+    }
+
     static BlockImpl findBlock(long blockId) {
         // Check the block cache
         synchronized (blockCache) {
@@ -77,7 +84,7 @@ final class BlockDb {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE id = ?")) {
             pstmt.setLong(1, blockId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -105,7 +112,7 @@ final class BlockDb {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT height FROM block WHERE id = ?")) {
             pstmt.setLong(1, blockId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -125,7 +132,7 @@ final class BlockDb {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -148,7 +155,7 @@ final class BlockDb {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -166,7 +173,7 @@ final class BlockDb {
     }
 
     static BlockImpl findLastBlock() {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block ORDER BY timestamp DESC LIMIT 1")) {
             BlockImpl block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -181,7 +188,7 @@ final class BlockDb {
     }
 
     static BlockImpl findLastBlock(int timestamp) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE timestamp <= ? ORDER BY timestamp DESC LIMIT 1")) {
             pstmt.setInt(1, timestamp);
             BlockImpl block = null;
@@ -272,7 +279,7 @@ final class BlockDb {
 
     static void deleteBlocksFromHeight(int height) {
         long blockId;
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -304,7 +311,7 @@ final class BlockDb {
             }
             return lastBlock;
         }
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = getConnection();
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT db_id FROM block WHERE timestamp >= "
                      + "IFNULL ((SELECT timestamp FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY timestamp DESC");
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM block WHERE db_id = ?")) {
@@ -352,7 +359,7 @@ final class BlockDb {
             return;
         }
         Logger.logMessage("Deleting blockchain...");
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = getConnection();
              Statement stmt = con.createStatement()) {
             try {
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY FALSE");

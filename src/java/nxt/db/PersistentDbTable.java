@@ -18,16 +18,16 @@ package nxt.db;
 
 public abstract class PersistentDbTable<T> extends EntityDbTable<T> {
 
-    protected PersistentDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
-        super(table, dbKeyFactory, false, null);
+    protected PersistentDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory) {
+        super(schemaTable, dbKeyFactory, false, null);
     }
 
-    protected PersistentDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
-        super(table, dbKeyFactory, false, fullTextSearchColumns);
+    protected PersistentDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+        super(schemaTable, dbKeyFactory, false, fullTextSearchColumns);
     }
 
-    PersistentDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
-        super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
+    PersistentDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+        super(schemaTable, dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 
     @Override

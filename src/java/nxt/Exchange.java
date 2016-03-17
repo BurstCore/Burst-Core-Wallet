@@ -83,7 +83,7 @@ public final class Exchange {
     }
 
     public static List<Exchange> getLastExchanges(long[] currencyIds) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = exchangeTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM exchange WHERE currency_id = ? ORDER BY height DESC, db_id DESC LIMIT 1")) {
             List<Exchange> result = new ArrayList<>();
             for (long currencyId : currencyIds) {
@@ -103,7 +103,7 @@ public final class Exchange {
     public static DbIterator<Exchange> getAccountExchanges(long accountId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = exchangeTable.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM exchange WHERE seller_id = ?"
                     + " UNION ALL SELECT * FROM exchange WHERE buyer_id = ? AND seller_id <> ? ORDER BY height DESC, db_id DESC"
                     + DbUtils.limitsClause(from, to));
@@ -122,7 +122,7 @@ public final class Exchange {
     public static DbIterator<Exchange> getAccountCurrencyExchanges(long accountId, long currencyId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = exchangeTable.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM exchange WHERE seller_id = ? AND currency_id = ?"
                     + " UNION ALL SELECT * FROM exchange WHERE buyer_id = ? AND seller_id <> ? AND currency_id = ? ORDER BY height DESC, db_id DESC"
                     + DbUtils.limitsClause(from, to));

@@ -197,7 +197,7 @@ public abstract class Order {
 
             @Override
             protected void save(Connection con, Ask ask) throws SQLException {
-                ask.save(con, table);
+                ask.save(con, schemaTable);
             }
 
             @Override
@@ -238,7 +238,7 @@ public abstract class Order {
         }
 
         private static Ask getNextOrder(long assetId) {
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = askOrderTable.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT * FROM ask_order WHERE asset_id = ? "
                          + "AND latest = TRUE ORDER BY price ASC, creation_height ASC, transaction_height ASC, transaction_index ASC LIMIT 1")) {
                 pstmt.setLong(1, assetId);
@@ -326,7 +326,7 @@ public abstract class Order {
 
             @Override
             protected void save(Connection con, Bid bid) throws SQLException {
-                bid.save(con, table);
+                bid.save(con, schemaTable);
             }
 
             @Override
@@ -367,7 +367,7 @@ public abstract class Order {
         }
 
         private static Bid getNextOrder(long assetId) {
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = bidOrderTable.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT * FROM bid_order WHERE asset_id = ? "
                          + "AND latest = TRUE ORDER BY price DESC, creation_height ASC, transaction_height ASC, transaction_index ASC LIMIT 1")) {
                 pstmt.setLong(1, assetId);

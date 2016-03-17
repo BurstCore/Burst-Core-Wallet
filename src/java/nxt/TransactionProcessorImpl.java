@@ -95,7 +95,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
         @Override
         public void rollback(int height) {
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = unconfirmedTransactionTable.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT * FROM unconfirmed_transaction WHERE height > ?")) {
                 pstmt.setInt(1, height);
                 try (ResultSet rs = pstmt.executeQuery()) {
@@ -356,7 +356,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
     private List<Long> getAllUnconfirmedTransactionIds() {
         List<Long> result = new ArrayList<>();
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = unconfirmedTransactionTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM unconfirmed_transaction");
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
@@ -542,7 +542,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
             }
             return;
         }
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = unconfirmedTransactionTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM unconfirmed_transaction WHERE id = ?")) {
             pstmt.setLong(1, transaction.getId());
             int deleted = pstmt.executeUpdate();

@@ -28,12 +28,12 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
     private final boolean multiversion;
     protected final DbKey.Factory<T> dbKeyFactory;
 
-    protected ValuesDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
-        this(table, dbKeyFactory, false);
+    protected ValuesDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory) {
+        this(schemaTable, dbKeyFactory, false);
     }
 
-    ValuesDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion) {
-        super(table);
+    ValuesDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory, boolean multiversion) {
+        super(schemaTable);
         this.dbKeyFactory = dbKeyFactory;
         this.multiversion = multiversion;
     }
@@ -43,24 +43,24 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
     protected abstract void save(Connection con, T t, V v) throws SQLException;
 
     protected void clearCache() {
-        db.clearCache(table);
+        db.clearCache(schemaTable);
     }
 
     public final List<V> get(DbKey dbKey) {
         List<V> values;
         if (db.isInTransaction()) {
-            values = (List<V>) db.getCache(table).get(dbKey);
+            values = (List<V>) db.getCache(schemaTable).get(dbKey);
             if (values != null) {
                 return values;
             }
         }
-        try (Connection con = db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + dbKeyFactory.getPKClause()
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + schemaTable + dbKeyFactory.getPKClause()
                      + (multiversion ? " AND latest = TRUE" : "") + " ORDER BY db_id")) {
             dbKey.setPK(pstmt);
             values = get(con, pstmt);
             if (db.isInTransaction()) {
-                db.getCache(table).put(dbKey, values);
+                db.getCache(schemaTable).put(dbKey, values);
             }
             return values;
         } catch (SQLException e) {
@@ -90,10 +90,10 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
-        db.getCache(table).put(dbKey, values);
-        try (Connection con = db.getConnection()) {
+        db.getCache(schemaTable).put(dbKey, values);
+        try (Connection con = getConnection()) {
             if (multiversion) {
-                try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
+                try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + schemaTable
                         + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE")) {
                     dbKey.setPK(pstmt);
                     pstmt.executeUpdate();
@@ -110,7 +110,7 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
     @Override
     public final void rollback(int height) {
         if (multiversion) {
-            VersionedEntityDbTable.rollback(db, table, height, dbKeyFactory);
+            VersionedEntityDbTable.rollback(db, schema, schemaTable, height, dbKeyFactory);
         } else {
             super.rollback(height);
         }
@@ -119,7 +119,7 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
     @Override
     public final void trim(int height) {
         if (multiversion) {
-            VersionedEntityDbTable.trim(db, table, height, dbKeyFactory);
+            VersionedEntityDbTable.trim(db, schema, schemaTable, height, dbKeyFactory);
         } else {
             super.trim(height);
         }

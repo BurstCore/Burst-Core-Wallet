@@ -40,7 +40,7 @@ public class Helper {
             Shell shell = new Shell();
             shell.setErr(out);
             shell.setOut(out);
-            shell.runTool(Db.db.getConnection(), "-sql", line);
+            shell.runTool(Db.db.getConnection("PUBLIC"), "-sql", line);
         } catch (SQLException e) {
             out.println(e.toString());
         }
@@ -48,7 +48,7 @@ public class Helper {
     }
 
     public static int getCount(String table) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getConnection();
              Statement statement = con.createStatement();
              ResultSet rs = statement.executeQuery("select count(*) as c from " + table)) {
             rs.next();

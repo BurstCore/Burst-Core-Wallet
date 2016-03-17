@@ -22,12 +22,12 @@ import java.sql.SQLException;
 
 public abstract class VersionedPrunableDbTable<T> extends PrunableDbTable<T> {
 
-    protected VersionedPrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
-        super(table, dbKeyFactory, true, null);
+    protected VersionedPrunableDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory) {
+        super(schemaTable, dbKeyFactory, true, null);
     }
 
-    protected VersionedPrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
-        super(table, dbKeyFactory, true, fullTextSearchColumns);
+    protected VersionedPrunableDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+        super(schemaTable, dbKeyFactory, true, fullTextSearchColumns);
     }
 
     public final boolean delete(T t) {
@@ -39,10 +39,10 @@ public abstract class VersionedPrunableDbTable<T> extends PrunableDbTable<T> {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        try (Connection con = db.getConnection();
-             PreparedStatement pstmtSetLatest = con.prepareStatement("UPDATE " + table
+        try (Connection con = getConnection();
+             PreparedStatement pstmtSetLatest = con.prepareStatement("UPDATE " + schemaTable
                      + " AS a SET a.latest = TRUE WHERE a.latest = FALSE AND a.height = "
-                     + " (SELECT MAX(height) FROM " + table + " AS b WHERE " + dbKeyFactory.getSelfJoinClause() + ")")) {
+                     + " (SELECT MAX(height) FROM " + schemaTable + " AS b WHERE " + dbKeyFactory.getSelfJoinClause() + ")")) {
             pstmtSetLatest.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

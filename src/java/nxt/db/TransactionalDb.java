@@ -167,20 +167,20 @@ public class TransactionalDb extends BasicDb {
         callbacks.add(callback);
     }
 
-    Map<DbKey,Object> getCache(String tableName) {
+    Map<DbKey,Object> getCache(String schemaTable) {
         if (!isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        Map<DbKey,Object> cacheMap = transactionCaches.get().get(tableName);
+        Map<DbKey,Object> cacheMap = transactionCaches.get().get(schemaTable);
         if (cacheMap == null) {
             cacheMap = new HashMap<>();
-            transactionCaches.get().put(tableName, cacheMap);
+            transactionCaches.get().put(schemaTable, cacheMap);
         }
         return cacheMap;
     }
 
-    void clearCache(String tableName) {
-        Map<DbKey,Object> cacheMap = transactionCaches.get().get(tableName);
+    void clearCache(String schemaTable) {
+        Map<DbKey,Object> cacheMap = transactionCaches.get().get(schemaTable);
         if (cacheMap != null) {
             cacheMap.clear();
         }
@@ -264,6 +264,7 @@ public class TransactionalDb extends BasicDb {
 
         @Override
         public void setSchema(String schema) throws SQLException {
+            schema = schema.toUpperCase();
             if (schema.equals(this.schema)) {
                 return;
             }

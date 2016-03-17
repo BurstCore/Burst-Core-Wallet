@@ -14,55 +14,51 @@
  *                                                                            *
  ******************************************************************************/
 
-package nxt.http;
+package nxt.db;
 
 import nxt.Db;
-import nxt.db.FullTextTrigger;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 
-public final class LuceneReindex extends APIServlet.APIRequestHandler {
+public class Table {
 
-    static final LuceneReindex instance = new LuceneReindex();
+    protected static final TransactionalDb db = Db.db;
 
-    private LuceneReindex() {
-        super(new APITag[] {APITag.DEBUG});
-    }
+    protected final String schema;
+    protected final String table;
+    protected final String schemaTable;
 
-    @Override
-    JSONStreamAware processRequest(HttpServletRequest req) {
-        JSONObject response = new JSONObject();
-        try (Connection con = Db.getConnection()) {
-            FullTextTrigger.reindex(con);
-            response.put("done", true);
-        } catch (SQLException e) {
-            JSONData.putException(response, e);
+    public Table(String schemaTable) {
+        String[] s = schemaTable.toUpperCase().split("\\.");
+        if (s.length != 2) {
+            throw new IllegalArgumentException("Missing schema name " + schemaTable);
         }
-        return response;
+        this.schema = s[0];
+        this.table = s[1];
+        this.schemaTable = schemaTable;
+    }
+
+    public final Connection getConnection() throws SQLException {
+        return db.getConnection(schema);
+    }
+
+    public void truncate() {
+        if (!db.isInTransaction()) {
+            throw new IllegalStateException("Not in transaction");
+        }
+        try (Connection con = getConnection();
+             Statement stmt = con.createStatement()) {
+            stmt.executeUpdate("TRUNCATE TABLE " + schemaTable);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     @Override
-    final boolean requirePost() {
-        return true;
-    }
-
-    @Override
-    boolean requirePassword() {
-        return true;
-    }
-
-    @Override
-    boolean allowRequiredBlockParameters() {
-        return false;
-    }
-
-    @Override
-    boolean requireBlockchain() {
-        return false;
+    public final String toString() {
+        return schemaTable;
     }
 
 }

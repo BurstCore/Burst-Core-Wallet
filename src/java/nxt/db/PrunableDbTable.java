@@ -26,16 +26,16 @@ import java.sql.SQLException;
 
 public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
 
-    protected PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
-        super(table, dbKeyFactory);
+    protected PrunableDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory) {
+        super(schemaTable, dbKeyFactory);
     }
 
-    protected PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
-        super(table, dbKeyFactory, fullTextSearchColumns);
+    protected PrunableDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+        super(schemaTable, dbKeyFactory, fullTextSearchColumns);
     }
 
-    PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
-        super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
+    PrunableDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+        super(schemaTable, dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 
     @Override
@@ -46,12 +46,12 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
 
     protected void prune() {
         if (Constants.ENABLE_PRUNING) {
-            try (Connection con = db.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ?")) {
+            try (Connection con = getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + schemaTable + " WHERE transaction_timestamp < ?")) {
                 pstmt.setInt(1, Nxt.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME);
                 int deleted = pstmt.executeUpdate();
                 if (deleted > 0) {
-                    Logger.logDebugMessage("Deleted " + deleted + " expired prunable data from " + table);
+                    Logger.logDebugMessage("Deleted " + deleted + " expired prunable data from " + schemaTable);
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);

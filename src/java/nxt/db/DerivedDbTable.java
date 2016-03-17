@@ -16,34 +16,16 @@
 
 package nxt.db;
 
-import nxt.Db;
 import nxt.Nxt;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 
-public abstract class DerivedDbTable {
+public abstract class DerivedDbTable extends Table {
 
-    protected static final TransactionalDb db = Db.db;
-
-    protected final String table;
-    protected final String schema;
-    protected final String fullname;
-
-    protected DerivedDbTable(String name) {
-        String[] tablename = name.split("\\.");
-        if (tablename.length == 1) {
-            this.schema = "NXT";
-            this.table = tablename[0].toUpperCase();
-        } else if (tablename.length == 2) {
-            this.schema = tablename[0].toUpperCase();
-            this.table = tablename[1].toUpperCase();
-        } else {
-            throw new IllegalArgumentException("Invalid table name " + name);
-        }
-        this.fullname = this.schema + "." + this.table;
+    protected DerivedDbTable(String schemaTable) {
+        super(schemaTable);
         Nxt.getBlockchainProcessor().registerDerivedTable(this);
     }
 
@@ -51,22 +33,10 @@ public abstract class DerivedDbTable {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        try (Connection con = db.getConnection();
-             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?")) {
+        try (Connection con = getConnection();
+             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + schemaTable + " WHERE height > ?")) {
             pstmtDelete.setInt(1, height);
             pstmtDelete.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    public void truncate() {
-        if (!db.isInTransaction()) {
-            throw new IllegalStateException("Not in transaction");
-        }
-        try (Connection con = db.getConnection();
-             Statement stmt = con.createStatement()) {
-            stmt.executeUpdate("TRUNCATE TABLE " + table);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -82,11 +52,6 @@ public abstract class DerivedDbTable {
 
     public boolean isPersistent() {
         return false;
-    }
-
-    @Override
-    public final String toString() {
-        return table;
     }
 
 }

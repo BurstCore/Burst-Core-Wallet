@@ -31,16 +31,16 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     private final String defaultSort;
     private final String fullTextSearchColumns;
 
-    protected EntityDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
-        this(table, dbKeyFactory, false, null);
+    protected EntityDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory) {
+        this(schemaTable, dbKeyFactory, false, null);
     }
 
-    protected EntityDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
-        this(table, dbKeyFactory, false, fullTextSearchColumns);
+    protected EntityDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+        this(schemaTable, dbKeyFactory, false, fullTextSearchColumns);
     }
 
-    EntityDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
-        super(table);
+    EntityDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+        super(schemaTable);
         this.dbKeyFactory = dbKeyFactory;
         this.multiversion = multiversion;
         this.defaultSort = " ORDER BY " + (multiversion ? dbKeyFactory.getPKColumns() : " height DESC, db_id DESC ");
@@ -59,7 +59,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     protected void clearCache() {
-        db.clearCache(table);
+        db.clearCache(schemaTable);
     }
 
     public void checkAvailable(int height) {
@@ -74,14 +74,14 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     public final T newEntity(DbKey dbKey) {
         boolean cache = db.isInTransaction();
         if (cache) {
-            T t = (T) db.getCache(table).get(dbKey);
+            T t = (T) db.getCache(schemaTable).get(dbKey);
             if (t != null) {
                 return t;
             }
         }
         T t = dbKeyFactory.newEntity(dbKey);
         if (cache) {
-            db.getCache(table).put(dbKey, t);
+            db.getCache(schemaTable).put(dbKey, t);
         }
         return t;
     }
@@ -92,13 +92,13 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
 
     public final T get(DbKey dbKey, boolean cache) {
         if (cache && db.isInTransaction()) {
-            T t = (T) db.getCache(table).get(dbKey);
+            T t = (T) db.getCache(schemaTable).get(dbKey);
             if (t != null) {
                 return t;
             }
         }
-        try (Connection con = db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + dbKeyFactory.getPKClause()
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + schemaTable + dbKeyFactory.getPKClause()
              + (multiversion ? " AND latest = TRUE LIMIT 1" : ""))) {
             dbKey.setPK(pstmt);
             return get(con, pstmt, cache);
@@ -112,10 +112,10 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
             return get(dbKey);
         }
         checkAvailable(height);
-        try (Connection con = db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + dbKeyFactory.getPKClause()
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + schemaTable + dbKeyFactory.getPKClause()
                      + " AND height <= ?" + (multiversion ? " AND (latest = TRUE OR EXISTS ("
-                     + "SELECT 1 FROM " + table + dbKeyFactory.getPKClause() + " AND height > ?)) ORDER BY height DESC LIMIT 1" : ""))) {
+                     + "SELECT 1 FROM " + schemaTable + dbKeyFactory.getPKClause() + " AND height > ?)) ORDER BY height DESC LIMIT 1" : ""))) {
             int i = dbKey.setPK(pstmt);
             pstmt.setInt(i, height);
             if (multiversion) {
@@ -129,8 +129,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     public final T getBy(DbClause dbClause) {
-        try (Connection con = db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + schemaTable
                      + " WHERE " + dbClause.getClause() + (multiversion ? " AND latest = TRUE LIMIT 1" : ""))) {
             dbClause.set(pstmt, 1);
             return get(con, pstmt, true);
@@ -144,10 +144,10 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
             return getBy(dbClause);
         }
         checkAvailable(height);
-        try (Connection con = db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + " AS a WHERE " + dbClause.getClause()
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + schemaTable + " AS a WHERE " + dbClause.getClause()
                      + " AND height <= ?" + (multiversion ? " AND (latest = TRUE OR EXISTS ("
-                     + "SELECT 1 FROM " + table + " AS b WHERE " + dbKeyFactory.getSelfJoinClause()
+                     + "SELECT 1 FROM " + schemaTable + " AS b WHERE " + dbKeyFactory.getSelfJoinClause()
                      + " AND b.height > ?)) ORDER BY height DESC LIMIT 1" : ""))) {
             int i = 0;
             i = dbClause.set(pstmt, ++i);
@@ -171,12 +171,12 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
             DbKey dbKey = null;
             if (doCache) {
                 dbKey = dbKeyFactory.newKey(rs);
-                t = (T) db.getCache(table).get(dbKey);
+                t = (T) db.getCache(schemaTable).get(dbKey);
             }
             if (t == null) {
                 t = load(con, rs, dbKey);
                 if (doCache) {
-                    db.getCache(table).put(dbKey, t);
+                    db.getCache(schemaTable).put(dbKey, t);
                 }
             }
             if (rs.next()) {
@@ -193,8 +193,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     public final DbIterator<T> getManyBy(DbClause dbClause, int from, int to, String sort) {
         Connection con = null;
         try {
-            con = db.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table
+            con = getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + schemaTable
                     + " WHERE " + dbClause.getClause() + (multiversion ? " AND latest = TRUE " : " ") + sort
                     + DbUtils.limitsClause(from, to));
             int i = 0;
@@ -218,11 +218,11 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         checkAvailable(height);
         Connection con = null;
         try {
-            con = db.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + " AS a WHERE " + dbClause.getClause()
+            con = getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + schemaTable + " AS a WHERE " + dbClause.getClause()
                     + "AND a.height <= ?" + (multiversion ? " AND (a.latest = TRUE OR (a.latest = FALSE "
-                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + dbKeyFactory.getSelfJoinClause() + " AND b.height > ?) "
-                    + "AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + dbKeyFactory.getSelfJoinClause()
+                    + "AND EXISTS (SELECT 1 FROM " + schemaTable + " AS b WHERE " + dbKeyFactory.getSelfJoinClause() + " AND b.height > ?) "
+                    + "AND NOT EXISTS (SELECT 1 FROM " + schemaTable + " AS b WHERE " + dbKeyFactory.getSelfJoinClause()
                     + " AND b.height <= ? AND b.height > a.height))) "
                     : " ") + sort
                     + DbUtils.limitsClause(from, to));
@@ -248,12 +248,12 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
             DbKey dbKey = null;
             if (doCache) {
                 dbKey = dbKeyFactory.newKey(rs);
-                t = (T) db.getCache(table).get(dbKey);
+                t = (T) db.getCache(schemaTable).get(dbKey);
             }
             if (t == null) {
                 t = load(connection, rs, dbKey);
                 if (doCache) {
-                    db.getCache(table).put(dbKey, t);
+                    db.getCache(schemaTable).put(dbKey, t);
                 }
             }
             return t;
@@ -267,11 +267,11 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     public final DbIterator<T> search(String query, DbClause dbClause, int from, int to, String sort) {
         Connection con = null;
         try {
-            con = db.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
-                    ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
-                    + " WHERE " + table + ".db_id = ft.keys[0] "
-                    + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
+            con = getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT " + schemaTable + ".*, ft.score FROM " + schemaTable +
+                    ", ftl_search('PUBLIC', '" + schemaTable + "', ?, 2147483647, 0) ft "
+                    + " WHERE " + schemaTable + ".db_id = ft.keys[0] "
+                    + (multiversion ? " AND " + schemaTable + ".latest = TRUE " : " ")
                     + " AND " + dbClause.getClause() + sort
                     + DbUtils.limitsClause(from, to));
             int i = 0;
@@ -292,8 +292,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     public final DbIterator<T> getAll(int from, int to, String sort) {
         Connection con = null;
         try {
-            con = db.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table
+            con = getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + schemaTable
                      + (multiversion ? " WHERE latest = TRUE " : " ") + sort
                     + DbUtils.limitsClause(from, to));
             DbUtils.setLimits(1, pstmt, from, to);
@@ -315,11 +315,11 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         checkAvailable(height);
         Connection con = null;
         try {
-            con = db.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + " AS a WHERE height <= ?"
+            con = getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + schemaTable + " AS a WHERE height <= ?"
                     + (multiversion ? " AND (latest = TRUE OR (latest = FALSE "
-                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE b.height > ? AND " + dbKeyFactory.getSelfJoinClause()
-                    + ") AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE b.height <= ? AND " + dbKeyFactory.getSelfJoinClause()
+                    + "AND EXISTS (SELECT 1 FROM " + schemaTable + " AS b WHERE b.height > ? AND " + dbKeyFactory.getSelfJoinClause()
+                    + ") AND NOT EXISTS (SELECT 1 FROM " + schemaTable + " AS b WHERE b.height <= ? AND " + dbKeyFactory.getSelfJoinClause()
                     + " AND b.height > a.height))) " : " ") + sort
                     + DbUtils.limitsClause(from, to));
             int i = 0;
@@ -337,8 +337,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     public final int getCount() {
-        try (Connection con = db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + table
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + schemaTable
                      + (multiversion ? " WHERE latest = TRUE" : ""))) {
             return getCount(pstmt);
         } catch (SQLException e) {
@@ -347,8 +347,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     public final int getCount(DbClause dbClause) {
-        try (Connection con = db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + table
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + schemaTable
                      + " WHERE " + dbClause.getClause() + (multiversion ? " AND latest = TRUE" : ""))) {
             dbClause.set(pstmt, 1);
             return getCount(pstmt);
@@ -364,11 +364,11 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         checkAvailable(height);
         Connection con = null;
         try {
-            con = db.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + table + " AS a WHERE " + dbClause.getClause()
+            con = getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + schemaTable + " AS a WHERE " + dbClause.getClause()
                     + "AND a.height <= ?" + (multiversion ? " AND (a.latest = TRUE OR (a.latest = FALSE "
-                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + dbKeyFactory.getSelfJoinClause() + " AND b.height > ?) "
-                    + "AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + dbKeyFactory.getSelfJoinClause()
+                    + "AND EXISTS (SELECT 1 FROM " + schemaTable + " AS b WHERE " + dbKeyFactory.getSelfJoinClause() + " AND b.height > ?) "
+                    + "AND NOT EXISTS (SELECT 1 FROM " + schemaTable + " AS b WHERE " + dbKeyFactory.getSelfJoinClause()
                     + " AND b.height <= ? AND b.height > a.height))) "
                     : " "));
             int i = 0;
@@ -386,8 +386,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     public final int getRowCount() {
-        try (Connection con = db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + table)) {
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + schemaTable)) {
             return getCount(pstmt);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -409,17 +409,17 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
-        T cachedT = (T) db.getCache(table).get(dbKey);
+        T cachedT = (T) db.getCache(schemaTable).get(dbKey);
         if (cachedT == null) {
-            db.getCache(table).put(dbKey, t);
+            db.getCache(schemaTable).put(dbKey, t);
         } else if (t != cachedT) { // not a bug
             Logger.logDebugMessage("In cache : " + cachedT.toString() + ", inserting " + t.toString());
             throw new IllegalStateException("Different instance found in Db cache, perhaps trying to save an object "
                     + "that was read outside the current transaction");
         }
-        try (Connection con = db.getConnection()) {
+        try (Connection con = getConnection()) {
             if (multiversion) {
-                try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
+                try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + schemaTable
                         + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")) {
                     dbKey.setPK(pstmt);
                     pstmt.executeUpdate();
@@ -434,7 +434,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     @Override
     public void rollback(int height) {
         if (multiversion) {
-            VersionedEntityDbTable.rollback(db, table, height, dbKeyFactory);
+            VersionedEntityDbTable.rollback(db, schema, schemaTable, height, dbKeyFactory);
         } else {
             super.rollback(height);
         }
@@ -443,7 +443,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     @Override
     public void trim(int height) {
         if (multiversion) {
-            VersionedEntityDbTable.trim(db, table, height, dbKeyFactory);
+            VersionedEntityDbTable.trim(db, schema, schemaTable, height, dbKeyFactory);
         } else {
             super.trim(height);
         }
@@ -452,7 +452,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     @Override
     public final void createSearchIndex(Connection con) throws SQLException {
         if (fullTextSearchColumns != null) {
-            Logger.logDebugMessage("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
+            Logger.logDebugMessage("Creating search index on " + schemaTable + " (" + fullTextSearchColumns + ")");
             FullTextTrigger.createIndex(con, schema, table, fullTextSearchColumns);
         }
     }

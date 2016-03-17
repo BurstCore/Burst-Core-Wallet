@@ -16,7 +16,7 @@
 
 package nxt.peer;
 
-import nxt.Db;
+import nxt.db.Table;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -62,9 +62,11 @@ final class PeerDb {
         }
     }
 
+    private static Table peerTable = new Table("PUBLIC.PEER");
+
     static List<Entry> loadPeers() {
         List<Entry> peers = new ArrayList<>();
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = peerTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM peer");
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
@@ -77,7 +79,7 @@ final class PeerDb {
     }
 
     static void deletePeers(Collection<Entry> peers) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = peerTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?")) {
             for (Entry peer : peers) {
                 pstmt.setString(1, peer.getAddress());
@@ -89,7 +91,7 @@ final class PeerDb {
     }
 
     static void updatePeers(Collection<Entry> peers) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = peerTable.getConnection();
                 PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
                         + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
             for (Entry peer : peers) {
@@ -104,7 +106,7 @@ final class PeerDb {
     }
 
     static void updatePeer(PeerImpl peer) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = peerTable.getConnection();
                 PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
                         + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
             pstmt.setString(1, peer.getAnnouncedAddress());

@@ -155,7 +155,7 @@ class FxtDbVersion extends DbVersion {
             case 46:
                 apply("CREATE INDEX IF NOT EXISTS account_ledger_height_idx ON account_ledger(height)");
             case 47:
-                nxt.db.FullTextTrigger.init();
+                nxt.db.FullTextTrigger.init(db);
                 apply(null);
             case 48:
                 apply("CREATE TABLE IF NOT EXISTS account_control_phasing (db_id IDENTITY, account_id BIGINT NOT NULL, "

@@ -26,8 +26,8 @@ import java.util.List;
 
 public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
 
-    protected VersionedValuesDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
-        super(table, dbKeyFactory, true);
+    protected VersionedValuesDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory) {
+        super(schemaTable, dbKeyFactory, true);
     }
 
     public final boolean delete(T t) {
@@ -39,14 +39,14 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
         }
         DbKey dbKey = dbKeyFactory.newKey(t);
         int height = Nxt.getBlockchain().getHeight();
-        try (Connection con = db.getConnection();
-             PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + dbKeyFactory.getPKClause()
+        try (Connection con = getConnection();
+             PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + schemaTable + dbKeyFactory.getPKClause()
                      + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
             pstmtCount.setInt(i, height);
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
-                    try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
+                    try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + schemaTable
                             + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND height = ? AND latest = TRUE")) {
                         int j = dbKey.setPK(pstmt);
                         pstmt.setInt(j, height);
@@ -61,7 +61,7 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
                     for (V v : values) {
                         save(con, t, v);
                     }
-                    try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
+                    try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + schemaTable
                             + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE")) {
                         dbKey.setPK(pstmt);
                         if (pstmt.executeUpdate() == 0) {
@@ -70,7 +70,7 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
                     }
                     return true;
                 } else {
-                    try (PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + dbKeyFactory.getPKClause())) {
+                    try (PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + schemaTable + dbKeyFactory.getPKClause())) {
                         dbKey.setPK(pstmtDelete);
                         return pstmtDelete.executeUpdate() > 0;
                     }
@@ -79,7 +79,7 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         } finally {
-            db.getCache(table).remove(dbKey);
+            db.getCache(schemaTable).remove(dbKey);
         }
     }
     

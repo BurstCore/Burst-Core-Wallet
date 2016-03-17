@@ -123,7 +123,7 @@ final class BlockchainImpl implements Blockchain {
     public DbIterator<BlockImpl> getAllBlocks() {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = BlockDb.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block ORDER BY db_id ASC");
             return getBlocks(con, pstmt);
         } catch (SQLException e) {
@@ -136,7 +136,7 @@ final class BlockchainImpl implements Blockchain {
     public DbIterator<BlockImpl> getBlocks(int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = BlockDb.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height <= ? AND height >= ? ORDER BY height DESC");
             int blockchainHeight = getHeight();
             pstmt.setInt(1, blockchainHeight - from);
@@ -157,7 +157,7 @@ final class BlockchainImpl implements Blockchain {
     public DbIterator<BlockImpl> getBlocks(long accountId, int timestamp, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = BlockDb.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
                     + (timestamp > 0 ? " AND timestamp >= ? " : " ") + "ORDER BY height DESC"
                     + DbUtils.limitsClause(from, to));
@@ -176,7 +176,7 @@ final class BlockchainImpl implements Blockchain {
 
     @Override
     public int getBlockCount(long accountId) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = BlockDb.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM block WHERE generator_id = ?")) {
             pstmt.setLong(1, accountId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -211,7 +211,7 @@ final class BlockchainImpl implements Blockchain {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = BlockDb.getConnection();
                 PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block "
                             + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
                             + "ORDER BY db_id ASC LIMIT ?")) {
@@ -249,7 +249,7 @@ final class BlockchainImpl implements Blockchain {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = BlockDb.getConnection();
                 PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
                         + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
                         + "ORDER BY db_id ASC LIMIT ?")) {
@@ -288,7 +288,7 @@ final class BlockchainImpl implements Blockchain {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = BlockDb.getConnection();
                 PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
                         + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
                         + "ORDER BY db_id ASC LIMIT ?")) {
@@ -356,7 +356,8 @@ final class BlockchainImpl implements Blockchain {
 
     @Override
     public int getTransactionCount() {
-        try (Connection con = Db.db.getConnection(); PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM transaction");
+        try (Connection con = Db.db.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM transaction");
              ResultSet rs = pstmt.executeQuery()) {
             rs.next();
             return rs.getInt(1);

@@ -935,7 +935,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 boolean rescan;
                 boolean validate;
                 int height;
-                try (Connection con = Db.db.getConnection();
+                try (Connection con = Db.getConnection();
                      Statement stmt = con.createStatement();
                      ResultSet rs = stmt.executeQuery("SELECT * FROM scan")) {
                     rs.next();
@@ -1197,7 +1197,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void addBlock(BlockImpl block) {
-        try (Connection con = Db.db.getConnection()) {
+        try (Connection con = BlockDb.getConnection()) {
             BlockDb.saveBlock(con, block);
             blockchain.setLastBlock(block);
         } catch (SQLException e) {
@@ -1775,7 +1775,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     void scheduleScan(int height, boolean validate) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getConnection();
              PreparedStatement pstmt = con.prepareStatement("UPDATE scan SET rescan = TRUE, height = ?, validate = ?")) {
             pstmt.setInt(1, height);
             pstmt.setBoolean(2, validate);
@@ -1828,7 +1828,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             if (validate) {
                 Logger.logDebugMessage("Also verifying signatures and validating transactions...");
             }
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = Db.getConnection();
                  PreparedStatement pstmtSelect = con.prepareStatement("SELECT * FROM block " + (height > 0 ? "WHERE height >= ? " : "") + "ORDER BY db_id ASC");
                  PreparedStatement pstmtDone = con.prepareStatement("UPDATE scan SET rescan = FALSE, height = 0, validate = FALSE")) {
                 isScanning = true;

@@ -18,12 +18,12 @@ package nxt.db;
 
 public abstract class VersionedPersistentDbTable<T> extends VersionedPrunableDbTable<T> {
 
-    protected VersionedPersistentDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
-        super(table, dbKeyFactory);
+    protected VersionedPersistentDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory) {
+        super(schemaTable, dbKeyFactory);
     }
 
-    protected VersionedPersistentDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
-        super(table, dbKeyFactory, fullTextSearchColumns);
+    protected VersionedPersistentDbTable(String schemaTable, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+        super(schemaTable, dbKeyFactory, fullTextSearchColumns);
     }
 
     @Override

@@ -45,7 +45,7 @@ public final class CurrencyBuyOffer extends CurrencyExchangeOffer {
 
         @Override
         protected void save(Connection con, CurrencyBuyOffer buy) throws SQLException {
-            buy.save(con, table);
+            buy.save(con, schemaTable);
         }
 
     };
