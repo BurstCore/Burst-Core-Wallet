@@ -21,7 +21,7 @@ public abstract class Chain {
     private final String name;
 
     Chain(String name) {
-        this.name = name;
+        this.name = name.toUpperCase();
     }
 
     public final String getName() {
@@ -30,5 +30,12 @@ public abstract class Chain {
 
     public String getDbSchema() {
         return name;
+    }
+
+    public final String getSchemaTable(String table) {
+        if (table.contains(".")) {
+            throw new IllegalArgumentException("Schema already specified: " + table);
+        }
+        return getDbSchema() + "." + table.toUpperCase();
     }
 }

@@ -26,6 +26,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class Order {
 
@@ -41,7 +43,7 @@ public abstract class Order {
                 break;
             }
 
-            Trade trade = Trade.addTrade(assetId, askOrder, bidOrder);
+            TradeHome.Trade trade = tradeHome.addTrade(assetId, askOrder, bidOrder);
 
             askOrder.updateQuantityQNT(Math.subtractExact(askOrder.getQuantityQNT(), trade.getQuantityQNT()));
             Account askAccount = Account.getAccount(askOrder.getAccountId());

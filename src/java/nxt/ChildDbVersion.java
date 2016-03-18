@@ -66,12 +66,6 @@ class ChildDbVersion extends DbVersion {
                         + "height INT NOT NULL, latest BOOLEAN DEFAULT TRUE NOT NULL)");
             case 11:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS alias_offer_id_height_idx ON alias_offer (id, height DESC)");
-            case 12:
-                apply("CREATE TABLE IF NOT EXISTS asset (db_id IDENTITY, id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
-                        + "name VARCHAR NOT NULL, description VARCHAR, quantity BIGINT NOT NULL, decimals TINYINT NOT NULL, "
-                        + "initial_quantity BIGINT NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 13:
-                apply("CREATE INDEX IF NOT EXISTS asset_account_id_idx ON asset (account_id)");
             case 14:
                 apply("CREATE TABLE IF NOT EXISTS trade (db_id IDENTITY, asset_id BIGINT NOT NULL, block_id BIGINT NOT NULL, "
                         + "ask_order_id BIGINT NOT NULL, bid_order_id BIGINT NOT NULL, ask_order_height INT NOT NULL, "
@@ -152,18 +146,6 @@ class ChildDbVersion extends DbVersion {
                         + "VARCHAR NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 40:
                 apply("CREATE INDEX IF NOT EXISTS purchase_public_feedback_id_height_idx ON purchase_public_feedback (id, height DESC)");
-            case 41:
-                apply("CREATE TABLE IF NOT EXISTS asset_transfer (db_id IDENTITY, id BIGINT NOT NULL, asset_id BIGINT NOT NULL, "
-                        + "sender_id BIGINT NOT NULL, recipient_id BIGINT NOT NULL, quantity BIGINT NOT NULL, timestamp INT NOT NULL, "
-                        + "height INT NOT NULL)");
-            case 42:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_transfer_id_idx ON asset_transfer (id)");
-            case 43:
-                apply("CREATE INDEX IF NOT EXISTS asset_transfer_asset_id_idx ON asset_transfer (asset_id, height DESC)");
-            case 44:
-                apply("CREATE INDEX IF NOT EXISTS asset_transfer_sender_id_idx ON asset_transfer (sender_id, height DESC)");
-            case 45:
-                apply("CREATE INDEX IF NOT EXISTS asset_transfer_recipient_id_idx ON asset_transfer (recipient_id, height DESC)");
             case 46:
                 apply("CREATE INDEX IF NOT EXISTS purchase_timestamp_idx ON purchase (timestamp DESC, id)");
             case 47:
@@ -177,19 +159,6 @@ class ChildDbVersion extends DbVersion {
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS tag_tag_idx ON tag (tag, height DESC)");
             case 51:
                 apply("CREATE INDEX IF NOT EXISTS tag_in_stock_count_idx ON tag (in_stock_count DESC, height DESC)");
-            case 52:
-                apply("CREATE TABLE IF NOT EXISTS currency (db_id IDENTITY, id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
-                        + "name VARCHAR NOT NULL, name_lower VARCHAR AS LOWER (name) NOT NULL, code VARCHAR NOT NULL, "
-                        + "description VARCHAR, type INT NOT NULL, initial_supply BIGINT NOT NULL DEFAULT 0, "
-                        + "reserve_supply BIGINT NOT NULL, max_supply BIGINT NOT NULL, creation_height INT NOT NULL, issuance_height INT NOT NULL, "
-                        + "min_reserve_per_unit_nqt BIGINT NOT NULL, min_difficulty TINYINT NOT NULL, "
-                        + "max_difficulty TINYINT NOT NULL, ruleset TINYINT NOT NULL, algorithm TINYINT NOT NULL, "
-                        + "decimals TINYINT NOT NULL DEFAULT 0,"
-                        + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 53:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS currency_id_height_idx ON currency (id, height DESC)");
-            case 54:
-                apply("CREATE INDEX IF NOT EXISTS currency_account_id_idx ON currency (account_id)");
             case 55:
                 apply("CREATE TABLE IF NOT EXISTS currency_founder (db_id IDENTITY, currency_id BIGINT NOT NULL, "
                         + "account_id BIGINT NOT NULL, amount BIGINT NOT NULL, "
@@ -242,24 +211,10 @@ class ChildDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS currency_transfer_sender_id_idx ON currency_transfer (sender_id, height DESC)");
             case 74:
                 apply("CREATE INDEX IF NOT EXISTS currency_transfer_recipient_id_idx ON currency_transfer (recipient_id, height DESC)");
-            case 75:
-                apply("CREATE INDEX IF NOT EXISTS currency_name_idx ON currency (name_lower, height DESC)");
-            case 76:
-                apply("CREATE INDEX IF NOT EXISTS currency_code_idx ON currency (code, height DESC)");
             case 77:
                 apply("CREATE INDEX IF NOT EXISTS buy_offer_rate_height_idx ON buy_offer (rate DESC, creation_height ASC)");
             case 78:
                 apply("CREATE INDEX IF NOT EXISTS sell_offer_rate_height_idx ON sell_offer (rate ASC, creation_height ASC)");
-            case 79:
-                apply("CREATE INDEX IF NOT EXISTS currency_creation_height_idx ON currency (creation_height DESC)");
-            case 80:
-                apply("CREATE TABLE IF NOT EXISTS currency_supply (db_id IDENTITY, id BIGINT NOT NULL, "
-                        + "current_supply BIGINT NOT NULL, current_reserve_per_unit_nqt BIGINT NOT NULL, height INT NOT NULL, "
-                        + "latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 81:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS currency_supply_id_height_idx ON currency_supply (id, height DESC)");
-            case 82:
-                apply("CREATE INDEX IF NOT EXISTS asset_transfer_height_idx ON asset_transfer(height)");
             case 83:
                 apply("CREATE INDEX IF NOT EXISTS currency_transfer_height_idx ON currency_transfer(height)");
             case 84:
@@ -383,8 +338,6 @@ class ChildDbVersion extends DbVersion {
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS tagged_data_timestamp_id_height_idx ON tagged_data_timestamp (id, height DESC)");
             case 131:
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_channel_idx ON tagged_data (channel, height DESC)");
-            case 132:
-                apply("CREATE INDEX IF NOT EXISTS currency_issuance_height_idx ON currency (issuance_height)");
             case 133:
                 apply("CREATE INDEX IF NOT EXISTS balance_height_id_idx ON balance (height, id)");
             case 134:
@@ -397,14 +350,10 @@ class ChildDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS bid_order_height_id_idx ON bid_order (height, id)");
             case 138:
                 apply("CREATE INDEX IF NOT EXISTS buy_offer_height_id_idx ON buy_offer (height, id)");
-            case 139:
-                apply("CREATE INDEX IF NOT EXISTS currency_height_id_idx ON currency (height, id)");
             case 140:
                 apply("CREATE INDEX IF NOT EXISTS currency_founder_height_id_idx ON currency_founder (height, currency_id, account_id)");
             case 141:
                 apply("CREATE INDEX IF NOT EXISTS currency_mint_height_id_idx ON currency_mint (height, currency_id, account_id)");
-            case 142:
-                apply("CREATE INDEX IF NOT EXISTS currency_supply_height_id_idx ON currency_supply (height, id)");
             case 143:
                 apply("CREATE INDEX IF NOT EXISTS goods_height_id_idx ON goods (height, id)");
             case 144:
@@ -447,10 +396,6 @@ class ChildDbVersion extends DbVersion {
             case 161:
                 nxt.db.FullTextTrigger.init(db);
                 apply(null);
-            case 162:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_id_height_idx ON asset (id, height DESC)");
-            case 163:
-                apply("CREATE INDEX IF NOT EXISTS asset_height_id_idx ON asset (height, id)");
             case 164:
                 apply("CREATE TABLE IF NOT EXISTS shuffling (db_id IDENTITY, id BIGINT NOT NULL, holding_id BIGINT NULL, holding_type TINYINT NOT NULL, "
                         + "issuer_id BIGINT NOT NULL, amount BIGINT NOT NULL, participant_count TINYINT NOT NULL, blocks_remaining SMALLINT NULL, "
@@ -494,17 +439,6 @@ class ChildDbVersion extends DbVersion {
             case 178:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS phasing_poll_linked_transaction_link_id_idx "
                         + "ON phasing_poll_linked_transaction (linked_transaction_id, transaction_id)");
-            case 179:
-                apply("CREATE TABLE IF NOT EXISTS asset_delete (db_id IDENTITY, id BIGINT NOT NULL, asset_id BIGINT NOT NULL, "
-                        + "account_id BIGINT NOT NULL, quantity BIGINT NOT NULL, timestamp INT NOT NULL, height INT NOT NULL)");
-            case 180:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_delete_id_idx ON asset_delete (id)");
-            case 181:
-                apply("CREATE INDEX IF NOT EXISTS asset_delete_asset_id_idx ON asset_delete (asset_id, height DESC)");
-            case 182:
-                apply("CREATE INDEX IF NOT EXISTS asset_delete_account_id_idx ON asset_delete (account_id, height DESC)");
-            case 183:
-                apply("CREATE INDEX IF NOT EXISTS asset_delete_height_idx ON asset_delete (height)");
             case 184:
                 apply("CREATE TABLE IF NOT EXISTS referenced_transaction (db_id IDENTITY, transaction_id BIGINT NOT NULL, "
                         + "FOREIGN KEY (transaction_id) REFERENCES transaction (id) ON DELETE CASCADE, "

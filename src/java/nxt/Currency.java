@@ -47,7 +47,7 @@ public final class Currency {
 
     };
 
-    private static final VersionedEntityDbTable<Currency> currencyTable = new VersionedEntityDbTable<Currency>("currency", currencyDbKeyFactory, "code,name,description") {
+    private static final VersionedEntityDbTable<Currency> currencyTable = new VersionedEntityDbTable<Currency>("public.currency", currencyDbKeyFactory, "code,name,description") {
 
         @Override
         protected Currency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -108,7 +108,7 @@ public final class Currency {
 
     };
 
-    private static final VersionedEntityDbTable<CurrencySupply> currencySupplyTable = new VersionedEntityDbTable<CurrencySupply>("currency_supply", currencySupplyDbKeyFactory) {
+    private static final VersionedEntityDbTable<CurrencySupply> currencySupplyTable = new VersionedEntityDbTable<CurrencySupply>("public.currency_supply", currencySupplyDbKeyFactory) {
 
         @Override
         protected CurrencySupply load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

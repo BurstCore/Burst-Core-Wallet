@@ -1760,16 +1760,16 @@ public final class Account {
                 accountAssets.add(iterator.next());
             }
         }
-        Balances balances = Balances.forChain(childChain);
+        BalanceHome balanceHome = BalanceHome.forChain(childChain);
         for (final AccountAsset accountAsset : accountAssets) {
             if (accountAsset.getAccountId() != this.id && accountAsset.getQuantityQNT() != 0) {
                 long dividend = Math.multiplyExact(accountAsset.getQuantityQNT(), amountNQTPerQNT);
-                balances.getBalance(accountAsset.getAccountId())
+                balanceHome.getBalance(accountAsset.getAccountId())
                         .addToBalanceAndUnconfirmedBalance(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, dividend);
                 totalDividend += dividend;
             }
         }
-        balances.getBalance(this.id).addToBalance(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
+        balanceHome.getBalance(this.id).addToBalance(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
     }
 
     @Override

@@ -45,7 +45,7 @@ public final class AssetDelete {
 
     };
 
-    private static final EntityDbTable<AssetDelete> assetDeleteTable = new EntityDbTable<AssetDelete>("asset_delete", deleteDbKeyFactory) {
+    private static final EntityDbTable<AssetDelete> assetDeleteTable = new EntityDbTable<AssetDelete>("public.asset_delete", deleteDbKeyFactory) {
 
         @Override
         protected AssetDelete load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

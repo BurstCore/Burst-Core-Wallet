@@ -178,6 +178,72 @@ class FxtDbVersion extends DbVersion {
             case 55:
                 apply("CREATE INDEX IF NOT EXISTS account_property_setter_recipient_idx ON account_property (setter_id, recipient_id)");
             case 56:
+                apply("CREATE TABLE IF NOT EXISTS asset (db_id IDENTITY, id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
+                        + "name VARCHAR NOT NULL, description VARCHAR, quantity BIGINT NOT NULL, decimals TINYINT NOT NULL, "
+                        + "initial_quantity BIGINT NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+            case 57:
+                apply("CREATE INDEX IF NOT EXISTS asset_account_id_idx ON asset (account_id)");
+            case 58:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_id_height_idx ON asset (id, height DESC)");
+            case 59:
+                apply("CREATE INDEX IF NOT EXISTS asset_height_id_idx ON asset (height, id)");
+            case 60:
+                apply("CREATE TABLE IF NOT EXISTS asset_delete (db_id IDENTITY, id BIGINT NOT NULL, asset_id BIGINT NOT NULL, "
+                        + "account_id BIGINT NOT NULL, quantity BIGINT NOT NULL, timestamp INT NOT NULL, height INT NOT NULL)");
+            case 61:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_delete_id_idx ON asset_delete (id)");
+            case 62:
+                apply("CREATE INDEX IF NOT EXISTS asset_delete_asset_id_idx ON asset_delete (asset_id, height DESC)");
+            case 63:
+                apply("CREATE INDEX IF NOT EXISTS asset_delete_account_id_idx ON asset_delete (account_id, height DESC)");
+            case 64:
+                apply("CREATE INDEX IF NOT EXISTS asset_delete_height_idx ON asset_delete (height)");
+            case 65:
+                apply("CREATE TABLE IF NOT EXISTS asset_transfer (db_id IDENTITY, id BIGINT NOT NULL, asset_id BIGINT NOT NULL, "
+                        + "sender_id BIGINT NOT NULL, recipient_id BIGINT NOT NULL, quantity BIGINT NOT NULL, timestamp INT NOT NULL, "
+                        + "height INT NOT NULL)");
+            case 66:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_transfer_id_idx ON asset_transfer (id)");
+            case 67:
+                apply("CREATE INDEX IF NOT EXISTS asset_transfer_asset_id_idx ON asset_transfer (asset_id, height DESC)");
+            case 68:
+                apply("CREATE INDEX IF NOT EXISTS asset_transfer_sender_id_idx ON asset_transfer (sender_id, height DESC)");
+            case 69:
+                apply("CREATE INDEX IF NOT EXISTS asset_transfer_recipient_id_idx ON asset_transfer (recipient_id, height DESC)");
+            case 70:
+                apply("CREATE INDEX IF NOT EXISTS asset_transfer_height_idx ON asset_transfer (height)");
+            case 71:
+                apply("CREATE TABLE IF NOT EXISTS currency (db_id IDENTITY, id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
+                        + "name VARCHAR NOT NULL, name_lower VARCHAR AS LOWER (name) NOT NULL, code VARCHAR NOT NULL, "
+                        + "description VARCHAR, type INT NOT NULL, initial_supply BIGINT NOT NULL DEFAULT 0, "
+                        + "reserve_supply BIGINT NOT NULL, max_supply BIGINT NOT NULL, creation_height INT NOT NULL, issuance_height INT NOT NULL, "
+                        + "min_reserve_per_unit_nqt BIGINT NOT NULL, min_difficulty TINYINT NOT NULL, "
+                        + "max_difficulty TINYINT NOT NULL, ruleset TINYINT NOT NULL, algorithm TINYINT NOT NULL, "
+                        + "decimals TINYINT NOT NULL DEFAULT 0,"
+                        + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+            case 72:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS currency_id_height_idx ON currency (id, height DESC)");
+            case 73:
+                apply("CREATE INDEX IF NOT EXISTS currency_account_id_idx ON currency (account_id)");
+            case 74:
+                apply("CREATE INDEX IF NOT EXISTS currency_name_idx ON currency (name_lower, height DESC)");
+            case 75:
+                apply("CREATE INDEX IF NOT EXISTS currency_code_idx ON currency (code, height DESC)");
+            case 76:
+                apply("CREATE INDEX IF NOT EXISTS currency_creation_height_idx ON currency (creation_height DESC)");
+            case 77:
+                apply("CREATE INDEX IF NOT EXISTS currency_issuance_height_idx ON currency (issuance_height)");
+            case 78:
+                apply("CREATE INDEX IF NOT EXISTS currency_height_id_idx ON currency (height, id)");
+            case 79:
+                apply("CREATE TABLE IF NOT EXISTS currency_supply (db_id IDENTITY, id BIGINT NOT NULL, "
+                        + "current_supply BIGINT NOT NULL, current_reserve_per_unit_nqt BIGINT NOT NULL, height INT NOT NULL, "
+                        + "latest BOOLEAN NOT NULL DEFAULT TRUE)");
+            case 80:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS currency_supply_id_height_idx ON currency_supply (id, height DESC)");
+            case 81:
+                apply("CREATE INDEX IF NOT EXISTS currency_supply_height_id_idx ON currency_supply (height, id)");
+            case 82:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate

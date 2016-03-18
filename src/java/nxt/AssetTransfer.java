@@ -46,7 +46,7 @@ public final class AssetTransfer {
 
     };
 
-    private static final EntityDbTable<AssetTransfer> assetTransferTable = new EntityDbTable<AssetTransfer>("asset_transfer", transferDbKeyFactory) {
+    private static final EntityDbTable<AssetTransfer> assetTransferTable = new EntityDbTable<AssetTransfer>("public.asset_transfer", transferDbKeyFactory) {
 
         @Override
         protected AssetTransfer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

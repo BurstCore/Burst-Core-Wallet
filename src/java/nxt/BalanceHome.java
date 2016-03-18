@@ -26,23 +26,23 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Balances {
+public final class BalanceHome {
 
-    private static final Map<ChildChain,Balances> balances = new HashMap<>();
+    private static final Map<ChildChain, BalanceHome> balanceHomeMap = new HashMap<>();
 
-    public static Balances forChain(ChildChain childChain) {
-        return balances.get(childChain);
+    public static BalanceHome forChain(ChildChain childChain) {
+        return balanceHomeMap.get(childChain);
     }
 
     static void init() {
-        ChildChain.getAll().forEach(childchain -> balances.put(childchain, new Balances(childchain)));
+        ChildChain.getAll().forEach(childChain -> balanceHomeMap.put(childChain, new BalanceHome(childChain)));
     }
 
     private final DbKey.LongKeyFactory<Balance> balanceDbKeyFactory;
     private final VersionedEntityDbTable<Balance> balanceTable;
     private final ChildChain childChain;
 
-    private Balances(ChildChain childChain) {
+    private BalanceHome(ChildChain childChain) {
         this.childChain = childChain;
         this.balanceDbKeyFactory = new DbKey.LongKeyFactory<Balance>("account_id") {
             @Override
@@ -50,7 +50,7 @@ public class Balances {
                 return balance.dbKey == null ? newKey(balance.accountId) : balance.dbKey;
             }
         };
-        this.balanceTable = new VersionedEntityDbTable<Balance>(childChain.getDbSchema() + ".balance", balanceDbKeyFactory) {
+        this.balanceTable = new VersionedEntityDbTable<Balance>(childChain.getSchemaTable("balance"), balanceDbKeyFactory) {
             @Override
             protected Balance load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Balance(rs, dbKey);
@@ -70,7 +70,7 @@ public class Balances {
         return balanceTable.get(balanceDbKeyFactory.newKey(accountId), height);
     }
 
-    public class Balance {
+    public final class Balance {
 
         private final long accountId;
         private final DbKey dbKey;
