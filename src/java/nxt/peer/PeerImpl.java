@@ -300,7 +300,7 @@ final class PeerImpl implements Peer {
         if (hallmarkBalance == -1 || hallmarkBalanceHeight < Nxt.getBlockchain().getHeight() - 60) {
             long accountId = hallmark.getAccountId();
             Account account = Account.getAccount(accountId);
-            hallmarkBalance = account == null ? 0 : account.getBalanceNQT();
+            hallmarkBalance = account == null ? 0 : account.getBalanceFQT();
             hallmarkBalanceHeight = Nxt.getBlockchain().getHeight();
         }
         return (int)(adjustedWeight * (hallmarkBalance / Constants.ONE_NXT) / Constants.MAX_BALANCE_NXT);

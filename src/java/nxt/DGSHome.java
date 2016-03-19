@@ -35,22 +35,163 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public final class DigitalGoodsStore {
+public final class DGSHome {
 
     public enum Event {
         GOODS_LISTED, GOODS_DELISTED, GOODS_PRICE_CHANGE, GOODS_QUANTITY_CHANGE,
         PURCHASE, DELIVERY, REFUND, FEEDBACK
     }
 
+    private static final Map<ChildChain, DGSHome> dgsHomeMap = new HashMap<>();
+
+    public static DGSHome forChain(ChildChain childChain) {
+        return dgsHomeMap.get(childChain);
+    }
+
+    static void init() {}
+
     static {
+        ChildChain.getAll().forEach(childChain -> dgsHomeMap.put(childChain, new DGSHome(childChain)));
+    }
+
+    private final ChildChain childChain;
+    private final Listeners<Goods,Event> goodsListeners;
+    private final Listeners<Purchase,Event> purchaseListeners;
+    private final DbKey.StringKeyFactory<Tag> tagDbKeyFactory;
+    private final VersionedEntityDbTable<Tag> tagTable;
+    private final DbKey.LongKeyFactory<Goods> goodsDbKeyFactory;
+    private final VersionedEntityDbTable<Goods> goodsTable;
+    private final DbKey.LongKeyFactory<Purchase> purchaseDbKeyFactory;
+    private final VersionedEntityDbTable<Purchase> purchaseTable;
+    private final DbKey.LongKeyFactory<Purchase> feedbackDbKeyFactory;
+    private final VersionedValuesDbTable<Purchase, EncryptedData> feedbackTable;
+    private final DbKey.LongKeyFactory<Purchase> publicFeedbackDbKeyFactory;
+    private final VersionedValuesDbTable<Purchase, String> publicFeedbackTable;
+
+    private DGSHome(ChildChain childChain) {
+        this.childChain = childChain;
+        this.goodsListeners = new Listeners<>();
+        this.purchaseListeners = new Listeners<>();
+        this.tagDbKeyFactory = new DbKey.StringKeyFactory<Tag>("tag") {
+            @Override
+            public DbKey newKey(Tag tag) {
+                return tag.dbKey;
+            }
+        };
+        this.tagTable = new VersionedEntityDbTable<Tag>(childChain.getSchemaTable("tag"), tagDbKeyFactory) {
+            @Override
+            protected Tag load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+                return new Tag(rs, dbKey);
+            }
+            @Override
+            protected void save(Connection con, Tag tag) throws SQLException {
+                tag.save(con);
+            }
+            @Override
+            public String defaultSort() {
+                return " ORDER BY in_stock_count DESC, total_count DESC, tag ASC ";
+            }
+        };
+        this.goodsDbKeyFactory = new DbKey.LongKeyFactory<Goods>("id") {
+            @Override
+            public DbKey newKey(Goods goods) {
+                return goods.dbKey;
+            }
+        };
+        this.goodsTable = new VersionedEntityDbTable<Goods>(childChain.getSchemaTable("goods"), goodsDbKeyFactory, "name,description,tags") {
+            @Override
+            protected Goods load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+                return new Goods(rs, dbKey);
+            }
+            @Override
+            protected void save(Connection con, Goods goods) throws SQLException {
+                goods.save(con);
+            }
+            @Override
+            protected String defaultSort() {
+                return " ORDER BY timestamp DESC, id ASC ";
+            }
+        };
+        this.purchaseDbKeyFactory = new DbKey.LongKeyFactory<Purchase>("id") {
+            @Override
+            public DbKey newKey(Purchase purchase) {
+                return purchase.dbKey;
+            }
+        };
+        this.purchaseTable = new VersionedEntityDbTable<Purchase>(childChain.getSchemaTable("purchase"), purchaseDbKeyFactory) {
+            @Override
+            protected Purchase load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+                return new Purchase(rs, dbKey);
+            }
+            @Override
+            protected void save(Connection con, Purchase purchase) throws SQLException {
+                purchase.save(con);
+            }
+            @Override
+            protected String defaultSort() {
+                return " ORDER BY timestamp DESC, id ASC ";
+            }
+        };
+        this.feedbackDbKeyFactory = new DbKey.LongKeyFactory<Purchase>("id") {
+            @Override
+            public DbKey newKey(Purchase purchase) {
+                return purchase.dbKey == null ? newKey(purchase.id) : purchase.dbKey;
+            }
+        };
+        this.feedbackTable = new VersionedValuesDbTable<Purchase, EncryptedData>(childChain.getSchemaTable("purchase_feedback"), feedbackDbKeyFactory) {
+            @Override
+            protected EncryptedData load(Connection con, ResultSet rs) throws SQLException {
+                byte[] data = rs.getBytes("feedback_data");
+                byte[] nonce = rs.getBytes("feedback_nonce");
+                return new EncryptedData(data, nonce);
+            }
+            @Override
+            protected void save(Connection con, Purchase purchase, EncryptedData encryptedData) throws SQLException {
+                try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_feedback (id, feedback_data, feedback_nonce, "
+                        + "height, latest) VALUES (?, ?, ?, ?, TRUE)")) {
+                    int i = 0;
+                    pstmt.setLong(++i, purchase.getId());
+                    setEncryptedData(pstmt, encryptedData, ++i);
+                    ++i;
+                    pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
+                    pstmt.executeUpdate();
+                }
+            }
+        };
+        this.publicFeedbackDbKeyFactory = new DbKey.LongKeyFactory<Purchase>("id") {
+            @Override
+            public DbKey newKey(Purchase purchase) {
+                return purchase.dbKey == null ? newKey(purchase.id) : purchase.dbKey;
+            }
+        };
+        this.publicFeedbackTable = new VersionedValuesDbTable<Purchase, String>(childChain.getSchemaTable("purchase_public_feedback"), publicFeedbackDbKeyFactory) {
+            @Override
+            protected String load(Connection con, ResultSet rs) throws SQLException {
+                return rs.getString("public_feedback");
+            }
+            @Override
+            protected void save(Connection con, Purchase purchase, String publicFeedback) throws SQLException {
+                try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_public_feedback (id, public_feedback, "
+                        + "height, latest) VALUES (?, ?, ?, TRUE)")) {
+                    int i = 0;
+                    pstmt.setLong(++i, purchase.getId());
+                    pstmt.setString(++i, publicFeedback);
+                    pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
+                    pstmt.executeUpdate();
+                }
+            }
+        };
+
         Nxt.getBlockchainProcessor().addListener(block -> {
             if (block.getHeight() == 0) {
                 return;
             }
             List<Purchase> expiredPurchases = new ArrayList<>();
-            try (DbIterator<Purchase> iterator = Purchase.getExpiredPendingPurchases(block)) {
+            try (DbIterator<Purchase> iterator = getExpiredPendingPurchases(block)) {
                 while (iterator.hasNext()) {
                     expiredPurchases.add(iterator.next());
                 }
@@ -59,116 +200,78 @@ public final class DigitalGoodsStore {
                 Account buyer = Account.getAccount(purchase.getBuyerId());
                 buyer.addToUnconfirmedBalanceNQT(LedgerEvent.DIGITAL_GOODS_PURCHASE_EXPIRED, purchase.getId(),
                         Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceNQT()));
-                Goods.getGoods(purchase.getGoodsId()).changeQuantity(purchase.getQuantity());
+                getGoods(purchase.getGoodsId()).changeQuantity(purchase.getQuantity());
                 purchase.setPending(false);
             }
         }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
     }
 
-    private static final Listeners<Goods,Event> goodsListeners = new Listeners<>();
-
-    private static final Listeners<Purchase,Event> purchaseListeners = new Listeners<>();
-
-    public static boolean addGoodsListener(Listener<Goods> listener, Event eventType) {
+    public boolean addGoodsListener(Listener<Goods> listener, Event eventType) {
         return goodsListeners.addListener(listener, eventType);
     }
 
-    public static boolean removeGoodsListener(Listener<Goods> listener, Event eventType) {
+    public boolean removeGoodsListener(Listener<Goods> listener, Event eventType) {
         return goodsListeners.removeListener(listener, eventType);
     }
 
-    public static boolean addPurchaseListener(Listener<Purchase> listener, Event eventType) {
+    public boolean addPurchaseListener(Listener<Purchase> listener, Event eventType) {
         return purchaseListeners.addListener(listener, eventType);
     }
 
-    public static boolean removePurchaseListener(Listener<Purchase> listener, Event eventType) {
+    public boolean removePurchaseListener(Listener<Purchase> listener, Event eventType) {
         return purchaseListeners.removeListener(listener, eventType);
     }
 
-    static void init() {
-        Tag.init();
-        Goods.init();
-        Purchase.init();
+    public int getTagCount() {
+        return tagTable.getCount();
     }
 
-    public static final class Tag {
+    private static final DbClause inStockOnlyClause = new DbClause.IntClause("in_stock_count", DbClause.Op.GT, 0);
 
-        private static final DbKey.StringKeyFactory<Tag> tagDbKeyFactory = new DbKey.StringKeyFactory<Tag>("tag") {
-            @Override
-            public DbKey newKey(Tag tag) {
-                return tag.dbKey;
-            }
-        };
+    public int getTagCountInStock() {
+        return tagTable.getCount(inStockOnlyClause);
+    }
 
-        private static final VersionedEntityDbTable<Tag> tagTable = new VersionedEntityDbTable<Tag>("tag", tagDbKeyFactory) {
+    public DbIterator<Tag> getAllTags(int from, int to) {
+        return tagTable.getAll(from, to);
+    }
 
-            @Override
-            protected Tag load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-                return new Tag(rs, dbKey);
-            }
+    public DbIterator<Tag> getInStockTags(int from, int to) {
+        return tagTable.getManyBy(inStockOnlyClause, from, to);
+    }
 
-            @Override
-            protected void save(Connection con, Tag tag) throws SQLException {
-                tag.save(con);
-            }
-
-            @Override
-            public String defaultSort() {
-                return " ORDER BY in_stock_count DESC, total_count DESC, tag ASC ";
-            }
-
-        };
-
-        public static int getCount() {
-            return tagTable.getCount();
+    public DbIterator<Tag> getTagsLike(String prefix, boolean inStockOnly, int from, int to) {
+        DbClause dbClause = new DbClause.LikeClause("tag", prefix);
+        if (inStockOnly) {
+            dbClause = dbClause.and(inStockOnlyClause);
         }
+        return tagTable.getManyBy(dbClause, from, to, " ORDER BY tag ");
+    }
 
-        private static final DbClause inStockOnlyClause = new DbClause.IntClause("in_stock_count", DbClause.Op.GT, 0);
-
-        public static int getCountInStock() {
-            return tagTable.getCount(inStockOnlyClause);
-        }
-
-        public static DbIterator<Tag> getAllTags(int from, int to) {
-            return tagTable.getAll(from, to);
-        }
-
-        public static DbIterator<Tag> getInStockTags(int from, int to) {
-            return tagTable.getManyBy(inStockOnlyClause, from, to);
-        }
-
-        public static DbIterator<Tag> getTagsLike(String prefix, boolean inStockOnly, int from, int to) {
-            DbClause dbClause = new DbClause.LikeClause("tag", prefix);
-            if (inStockOnly) {
-                dbClause = dbClause.and(inStockOnlyClause);
+    private void addTags(Goods goods) {
+        for (String tagValue : goods.getParsedTags()) {
+            Tag tag = tagTable.get(tagDbKeyFactory.newKey(tagValue));
+            if (tag == null) {
+                tag = new Tag(tagValue);
             }
-            return tagTable.getManyBy(dbClause, from, to, " ORDER BY tag ");
+            tag.inStockCount += 1;
+            tag.totalCount += 1;
+            tagTable.insert(tag);
         }
+    }
 
-        private static void init() {}
-
-        private static void add(Goods goods) {
-            for (String tagValue : goods.getParsedTags()) {
-                Tag tag = tagTable.get(tagDbKeyFactory.newKey(tagValue));
-                if (tag == null) {
-                    tag = new Tag(tagValue);
-                }
-                tag.inStockCount += 1;
-                tag.totalCount += 1;
-                tagTable.insert(tag);
+    private void delistTags(Goods goods) {
+        for (String tagValue : goods.getParsedTags()) {
+            Tag tag = tagTable.get(tagDbKeyFactory.newKey(tagValue));
+            if (tag == null) {
+                throw new IllegalStateException("Unknown tag " + tagValue);
             }
+            tag.inStockCount -= 1;
+            tagTable.insert(tag);
         }
+    }
 
-        private static void delist(Goods goods) {
-            for (String tagValue : goods.getParsedTags()) {
-                Tag tag = tagTable.get(tagDbKeyFactory.newKey(tagValue));
-                if (tag == null) {
-                    throw new IllegalStateException("Unknown tag " + tagValue);
-                }
-                tag.inStockCount -= 1;
-                tagTable.insert(tag);
-            }
-        }
+    public final class Tag {
 
         private final String tag;
         private final DbKey dbKey;
@@ -213,79 +316,48 @@ public final class DigitalGoodsStore {
 
     }
 
-    public static final class Goods {
+    private static final DbClause inStockClause = new DbClause.BooleanClause("goods.delisted", false)
+            .and(new DbClause.LongClause("goods.quantity", DbClause.Op.GT, 0));
 
-        private static final DbKey.LongKeyFactory<Goods> goodsDbKeyFactory = new DbKey.LongKeyFactory<Goods>("id") {
+    public int getGoodsCount() {
+        return goodsTable.getCount();
+    }
 
-            @Override
-            public DbKey newKey(Goods goods) {
-                return goods.dbKey;
-            }
+    public int getGoodsInStockCount() {
+        return goodsTable.getCount(inStockClause);
+    }
 
-        };
+    public Goods getGoods(long goodsId) {
+        return goodsTable.get(goodsDbKeyFactory.newKey(goodsId));
+    }
 
-        private static final VersionedEntityDbTable<Goods> goodsTable = new VersionedEntityDbTable<Goods>("goods", goodsDbKeyFactory, "name,description,tags") {
+    public DbIterator<Goods> getAllGoods(int from, int to) {
+        return goodsTable.getAll(from, to);
+    }
 
-            @Override
-            protected Goods load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-                return new Goods(rs, dbKey);
-            }
+    public DbIterator<Goods> getGoodsInStock(int from, int to) {
+        return goodsTable.getManyBy(inStockClause, from, to);
+    }
 
-            @Override
-            protected void save(Connection con, Goods goods) throws SQLException {
-                goods.save(con);
-            }
+    public DbIterator<Goods> getSellerGoods(final long sellerId, final boolean inStockOnly, int from, int to) {
+        return goodsTable.getManyBy(new SellerDbClause(sellerId, inStockOnly), from, to, " ORDER BY name ASC, timestamp DESC, id ASC ");
+    }
 
-            @Override
-            protected String defaultSort() {
-                return " ORDER BY timestamp DESC, id ASC ";
-            }
+    public int getSellerGoodsCount(long sellerId, boolean inStockOnly) {
+        return goodsTable.getCount(new SellerDbClause(sellerId, inStockOnly));
+    }
 
-        };
+    public DbIterator<Goods> searchGoods(String query, boolean inStockOnly, int from, int to) {
+        return goodsTable.search(query, inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE, from, to,
+                " ORDER BY ft.score DESC, goods.timestamp DESC ");
+    }
 
-        private static final DbClause inStockClause = new DbClause.BooleanClause("goods.delisted", false)
-                .and(new DbClause.LongClause("goods.quantity", DbClause.Op.GT, 0));
+    public DbIterator<Goods> searchSellerGoods(String query, long sellerId, boolean inStockOnly, int from, int to) {
+        return goodsTable.search(query, new SellerDbClause(sellerId, inStockOnly), from, to,
+                " ORDER BY ft.score DESC, goods.name ASC, goods.timestamp DESC ");
+    }
 
-        public static int getCount() {
-            return goodsTable.getCount();
-        }
-
-        public static int getCountInStock() {
-            return goodsTable.getCount(inStockClause);
-        }
-
-        public static Goods getGoods(long goodsId) {
-            return goodsTable.get(goodsDbKeyFactory.newKey(goodsId));
-        }
-
-        public static DbIterator<Goods> getAllGoods(int from, int to) {
-            return goodsTable.getAll(from, to);
-        }
-
-        public static DbIterator<Goods> getGoodsInStock(int from, int to) {
-            return goodsTable.getManyBy(inStockClause, from, to);
-        }
-
-        public static DbIterator<Goods> getSellerGoods(final long sellerId, final boolean inStockOnly, int from, int to) {
-            return goodsTable.getManyBy(new SellerDbClause(sellerId, inStockOnly), from, to, " ORDER BY name ASC, timestamp DESC, id ASC ");
-        }
-
-        public static int getSellerGoodsCount(long sellerId, boolean inStockOnly) {
-            return goodsTable.getCount(new SellerDbClause(sellerId, inStockOnly));
-        }
-
-        public static DbIterator<Goods> searchGoods(String query, boolean inStockOnly, int from, int to) {
-            return goodsTable.search(query, inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE, from, to,
-                    " ORDER BY ft.score DESC, goods.timestamp DESC ");
-        }
-
-        public static DbIterator<Goods> searchSellerGoods(String query, long sellerId, boolean inStockOnly, int from, int to) {
-            return goodsTable.search(query, new SellerDbClause(sellerId, inStockOnly), from, to,
-                    " ORDER BY ft.score DESC, goods.name ASC, goods.timestamp DESC ");
-        }
-
-        private static void init() {}
-
+    public final class Goods {
 
         private final long id;
         private final DbKey dbKey;
@@ -377,7 +449,7 @@ public final class DigitalGoodsStore {
 
         private void changeQuantity(int deltaQuantity) {
             if (quantity == 0 && deltaQuantity > 0) {
-                Tag.add(this);
+                addTags(this);
             }
             quantity += deltaQuantity;
             if (quantity < 0) {
@@ -386,7 +458,7 @@ public final class DigitalGoodsStore {
                 quantity = Constants.MAX_DGS_LISTING_QUANTITY;
             }
             if (quantity == 0) {
-                Tag.delist(this);
+                delistTags(this);
             }
             goodsTable.insert(this);
         }
@@ -407,7 +479,7 @@ public final class DigitalGoodsStore {
         private void setDelisted(boolean delisted) {
             this.delisted = delisted;
             if (this.quantity > 0) {
-                Tag.delist(this);
+                delistTags(this);
             }
             goodsTable.insert(this);
         }
@@ -418,236 +490,142 @@ public final class DigitalGoodsStore {
 
     }
 
-    public static final class Purchase {
+    private static class PurchasesClause extends DbClause {
 
-        private static final DbKey.LongKeyFactory<Purchase> purchaseDbKeyFactory = new DbKey.LongKeyFactory<Purchase>("id") {
-
-            @Override
-            public DbKey newKey(Purchase purchase) {
-                return purchase.dbKey;
-            }
-
-        };
-
-        private static final VersionedEntityDbTable<Purchase> purchaseTable = new VersionedEntityDbTable<Purchase>("purchase", purchaseDbKeyFactory) {
-
-            @Override
-            protected Purchase load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-                return new Purchase(rs, dbKey);
-            }
-
-            @Override
-            protected void save(Connection con, Purchase purchase) throws SQLException {
-                purchase.save(con);
-            }
-
-            @Override
-            protected String defaultSort() {
-                return " ORDER BY timestamp DESC, id ASC ";
-            }
-
-        };
-
-        private static final DbKey.LongKeyFactory<Purchase> feedbackDbKeyFactory = new DbKey.LongKeyFactory<Purchase>("id") {
-
-            @Override
-            public DbKey newKey(Purchase purchase) {
-                return purchase.dbKey == null ? newKey(purchase.id) : purchase.dbKey;
-            }
-
-        };
-
-        private static final VersionedValuesDbTable<Purchase, EncryptedData> feedbackTable = new VersionedValuesDbTable<Purchase, EncryptedData>("purchase_feedback", feedbackDbKeyFactory) {
-
-            @Override
-            protected EncryptedData load(Connection con, ResultSet rs) throws SQLException {
-                byte[] data = rs.getBytes("feedback_data");
-                byte[] nonce = rs.getBytes("feedback_nonce");
-                return new EncryptedData(data, nonce);
-            }
-
-            @Override
-            protected void save(Connection con, Purchase purchase, EncryptedData encryptedData) throws SQLException {
-                try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_feedback (id, feedback_data, feedback_nonce, "
-                        + "height, latest) VALUES (?, ?, ?, ?, TRUE)")) {
-                    int i = 0;
-                    pstmt.setLong(++i, purchase.getId());
-                    setEncryptedData(pstmt, encryptedData, ++i);
-                    ++i;
-                    pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
-                    pstmt.executeUpdate();
-                }
-            }
-
-        };
-
-        private static final DbKey.LongKeyFactory<Purchase> publicFeedbackDbKeyFactory = new DbKey.LongKeyFactory<Purchase>("id") {
-
-            @Override
-            public DbKey newKey(Purchase purchase) {
-                return purchase.dbKey == null ? newKey(purchase.id) : purchase.dbKey;
-            }
-
-        };
-
-        private static final VersionedValuesDbTable<Purchase, String> publicFeedbackTable = new VersionedValuesDbTable<Purchase, String>("purchase_public_feedback", publicFeedbackDbKeyFactory) {
-
-            @Override
-            protected String load(Connection con, ResultSet rs) throws SQLException {
-                return rs.getString("public_feedback");
-            }
-
-            @Override
-            protected void save(Connection con, Purchase purchase, String publicFeedback) throws SQLException {
-                try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_public_feedback (id, public_feedback, "
-                        + "height, latest) VALUES (?, ?, ?, TRUE)")) {
-                    int i = 0;
-                    pstmt.setLong(++i, purchase.getId());
-                    pstmt.setString(++i, publicFeedback);
-                    pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
-                    pstmt.executeUpdate();
-                }
-            }
-
-        };
-
-        private static class PurchasesClause extends DbClause {
-
-            private PurchasesClause(String clause, boolean withPublicFeedbacksOnly, boolean completedOnly) {
-                super(clause + (completedOnly ? " AND goods IS NOT NULL " : " ")
-                        + (withPublicFeedbacksOnly ? " AND has_public_feedbacks = TRUE " : " "));
-            }
-
-            @Override
-            protected int set(PreparedStatement pstmt, int index) throws SQLException {
-                return index;
-            }
-
+        private PurchasesClause(String clause, boolean withPublicFeedbacksOnly, boolean completedOnly) {
+            super(clause + (completedOnly ? " AND goods IS NOT NULL " : " ")
+                    + (withPublicFeedbacksOnly ? " AND has_public_feedbacks = TRUE " : " "));
         }
 
-        private static final class LongPurchasesClause extends PurchasesClause {
-
-            private final long value;
-
-            private LongPurchasesClause(String columnName, long value, boolean withPublicFeedbacksOnly, boolean completedOnly) {
-                super(columnName + " = ? ", withPublicFeedbacksOnly, completedOnly);
-                this.value = value;
-            }
-
-            @Override
-            protected int set(PreparedStatement pstmt, int index) throws SQLException {
-                pstmt.setLong(index++, value);
-                return index;
-            }
-
+        @Override
+        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+            return index;
         }
 
-        private static final class SellerBuyerPurchasesClause extends PurchasesClause {
+    }
 
-            private final long sellerId;
-            private final long buyerId;
+    private static final class LongPurchasesClause extends PurchasesClause {
 
-            private SellerBuyerPurchasesClause(long sellerId, long buyerId, boolean withPublicFeedbacksOnly, boolean completedOnly) {
-                super(" seller_id = ? AND buyer_id = ? ", withPublicFeedbacksOnly, completedOnly);
-                this.sellerId = sellerId;
-                this.buyerId = buyerId;
-            }
+        private final long value;
 
-            @Override
-            protected int set(PreparedStatement pstmt, int index) throws SQLException {
-                pstmt.setLong(index++, sellerId);
-                pstmt.setLong(index++, buyerId);
-                return index;
-            }
-
+        private LongPurchasesClause(String columnName, long value, boolean withPublicFeedbacksOnly, boolean completedOnly) {
+            super(columnName + " = ? ", withPublicFeedbacksOnly, completedOnly);
+            this.value = value;
         }
 
-        public static int getCount() {
-            return purchaseTable.getCount();
+        @Override
+        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+            pstmt.setLong(index++, value);
+            return index;
         }
 
-        public static int getCount(boolean withPublicFeedbacksOnly, boolean completedOnly) {
-            return purchaseTable.getCount(new PurchasesClause(" TRUE ", withPublicFeedbacksOnly, completedOnly));
+    }
+
+    private static final class SellerBuyerPurchasesClause extends PurchasesClause {
+
+        private final long sellerId;
+        private final long buyerId;
+
+        private SellerBuyerPurchasesClause(long sellerId, long buyerId, boolean withPublicFeedbacksOnly, boolean completedOnly) {
+            super(" seller_id = ? AND buyer_id = ? ", withPublicFeedbacksOnly, completedOnly);
+            this.sellerId = sellerId;
+            this.buyerId = buyerId;
         }
 
-        public static DbIterator<Purchase> getAllPurchases(int from, int to) {
-            return purchaseTable.getAll(from, to);
+        @Override
+        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+            pstmt.setLong(index++, sellerId);
+            pstmt.setLong(index++, buyerId);
+            return index;
         }
 
-        public static DbIterator<Purchase> getPurchases(boolean withPublicFeedbacksOnly, boolean completedOnly, int from, int to) {
-            return purchaseTable.getManyBy(new PurchasesClause(" TRUE ", withPublicFeedbacksOnly, completedOnly), from, to);
+    }
+
+    public int getPurchaseCount() {
+        return purchaseTable.getCount();
+    }
+
+    public int getPurchaseCount(boolean withPublicFeedbacksOnly, boolean completedOnly) {
+        return purchaseTable.getCount(new PurchasesClause(" TRUE ", withPublicFeedbacksOnly, completedOnly));
+    }
+
+    public DbIterator<Purchase> getAllPurchases(int from, int to) {
+        return purchaseTable.getAll(from, to);
+    }
+
+    public DbIterator<Purchase> getPurchases(boolean withPublicFeedbacksOnly, boolean completedOnly, int from, int to) {
+        return purchaseTable.getManyBy(new PurchasesClause(" TRUE ", withPublicFeedbacksOnly, completedOnly), from, to);
+    }
+
+    public DbIterator<Purchase> getSellerPurchases(long sellerId, boolean withPublicFeedbacksOnly, boolean completedOnly, int from, int to) {
+        return purchaseTable.getManyBy(new LongPurchasesClause("seller_id", sellerId, withPublicFeedbacksOnly, completedOnly), from, to);
+    }
+
+    public int getSellerPurchaseCount(long sellerId, boolean withPublicFeedbacksOnly, boolean completedOnly) {
+        return purchaseTable.getCount(new LongPurchasesClause("seller_id", sellerId, withPublicFeedbacksOnly, completedOnly));
+    }
+
+    public DbIterator<Purchase> getBuyerPurchases(long buyerId, boolean withPublicFeedbacksOnly, boolean completedOnly, int from, int to) {
+        return purchaseTable.getManyBy(new LongPurchasesClause("buyer_id", buyerId, withPublicFeedbacksOnly, completedOnly), from, to);
+    }
+
+    public int getBuyerPurchaseCount(long buyerId, boolean withPublicFeedbacksOnly, boolean completedOnly) {
+        return purchaseTable.getCount(new LongPurchasesClause("buyer_id", buyerId, withPublicFeedbacksOnly, completedOnly));
+    }
+
+    public DbIterator<Purchase> getSellerBuyerPurchases(final long sellerId, final long buyerId,
+                                                               boolean withPublicFeedbacksOnly, boolean completedOnly, int from, int to) {
+        return purchaseTable.getManyBy(new SellerBuyerPurchasesClause(sellerId, buyerId, withPublicFeedbacksOnly, completedOnly), from, to);
+    }
+
+    public int getSellerBuyerPurchaseCount(final long sellerId, final long buyerId,
+                                                  boolean withPublicFeedbacksOnly, boolean completedOnly) {
+        return purchaseTable.getCount(new SellerBuyerPurchasesClause(sellerId, buyerId, withPublicFeedbacksOnly, completedOnly));
+    }
+
+    public DbIterator<Purchase> getGoodsPurchases(long goodsId, long buyerId, boolean withPublicFeedbacksOnly, boolean completedOnly, int from, int to) {
+        DbClause clause = new LongPurchasesClause("goods_id", goodsId, withPublicFeedbacksOnly, completedOnly);
+        if (buyerId != 0) {
+            clause = clause.and(new DbClause.LongClause("buyer_id", buyerId));
         }
+        return purchaseTable.getManyBy(clause, from, to);
+    }
 
-        public static DbIterator<Purchase> getSellerPurchases(long sellerId, boolean withPublicFeedbacksOnly, boolean completedOnly, int from, int to) {
-            return purchaseTable.getManyBy(new LongPurchasesClause("seller_id", sellerId, withPublicFeedbacksOnly, completedOnly), from, to);
-        }
+    public int getGoodsPurchaseCount(final long goodsId, boolean withPublicFeedbacksOnly, boolean completedOnly) {
+        return purchaseTable.getCount(new LongPurchasesClause("goods_id", goodsId, withPublicFeedbacksOnly, completedOnly));
+    }
 
-        public static int getSellerPurchaseCount(long sellerId, boolean withPublicFeedbacksOnly, boolean completedOnly) {
-            return purchaseTable.getCount(new LongPurchasesClause("seller_id", sellerId, withPublicFeedbacksOnly, completedOnly));
-        }
+    public Purchase getPurchase(long purchaseId) {
+        return purchaseTable.get(purchaseDbKeyFactory.newKey(purchaseId));
+    }
 
-        public static DbIterator<Purchase> getBuyerPurchases(long buyerId, boolean withPublicFeedbacksOnly, boolean completedOnly, int from, int to) {
-            return purchaseTable.getManyBy(new LongPurchasesClause("buyer_id", buyerId, withPublicFeedbacksOnly, completedOnly), from, to);
-        }
+    public DbIterator<Purchase> getPendingSellerPurchases(final long sellerId, int from, int to) {
+        DbClause dbClause = new DbClause.LongClause("seller_id", sellerId).and(new DbClause.BooleanClause("pending", true));
+        return purchaseTable.getManyBy(dbClause, from, to);
+    }
 
-        public static int getBuyerPurchaseCount(long buyerId, boolean withPublicFeedbacksOnly, boolean completedOnly) {
-            return purchaseTable.getCount(new LongPurchasesClause("buyer_id", buyerId, withPublicFeedbacksOnly, completedOnly));
-        }
+    public DbIterator<Purchase> getExpiredSellerPurchases(final long sellerId, int from, int to) {
+        DbClause dbClause = new DbClause.LongClause("seller_id", sellerId)
+                .and(new DbClause.BooleanClause("pending", false))
+                .and(new DbClause.NullClause("goods"));
+        return purchaseTable.getManyBy(dbClause, from, to);
+    }
 
-        public static DbIterator<Purchase> getSellerBuyerPurchases(final long sellerId, final long buyerId,
-                                                                   boolean withPublicFeedbacksOnly, boolean completedOnly, int from, int to) {
-            return purchaseTable.getManyBy(new SellerBuyerPurchasesClause(sellerId, buyerId, withPublicFeedbacksOnly, completedOnly), from, to);
-        }
+    Purchase getPendingPurchase(long purchaseId) {
+        Purchase purchase = getPurchase(purchaseId);
+        return purchase == null || ! purchase.isPending() ? null : purchase;
+    }
 
-        public static int getSellerBuyerPurchaseCount(final long sellerId, final long buyerId,
-                                                                   boolean withPublicFeedbacksOnly, boolean completedOnly) {
-            return purchaseTable.getCount(new SellerBuyerPurchasesClause(sellerId, buyerId, withPublicFeedbacksOnly, completedOnly));
-        }
+    private DbIterator<Purchase> getExpiredPendingPurchases(Block block) {
+        final int timestamp = block.getTimestamp();
+        final int previousTimestamp = Nxt.getBlockchain().getBlock(block.getPreviousBlockId()).getTimestamp();
+        DbClause dbClause = new DbClause.LongClause("deadline", DbClause.Op.LT, timestamp)
+                .and(new DbClause.LongClause("deadline", DbClause.Op.GTE, previousTimestamp))
+                .and(new DbClause.BooleanClause("pending", true));
+        return purchaseTable.getManyBy(dbClause, 0, -1);
+    }
 
-        public static DbIterator<Purchase> getGoodsPurchases(long goodsId, long buyerId, boolean withPublicFeedbacksOnly, boolean completedOnly, int from, int to) {
-            DbClause clause = new LongPurchasesClause("goods_id", goodsId, withPublicFeedbacksOnly, completedOnly);
-            if (buyerId != 0) {
-                clause = clause.and(new DbClause.LongClause("buyer_id", buyerId));
-            }
-            return purchaseTable.getManyBy(clause, from, to);
-        }
-
-        public static int getGoodsPurchaseCount(final long goodsId, boolean withPublicFeedbacksOnly, boolean completedOnly) {
-            return purchaseTable.getCount(new LongPurchasesClause("goods_id", goodsId, withPublicFeedbacksOnly, completedOnly));
-        }
-
-        public static Purchase getPurchase(long purchaseId) {
-            return purchaseTable.get(purchaseDbKeyFactory.newKey(purchaseId));
-        }
-
-        public static DbIterator<Purchase> getPendingSellerPurchases(final long sellerId, int from, int to) {
-            DbClause dbClause = new DbClause.LongClause("seller_id", sellerId).and(new DbClause.BooleanClause("pending", true));
-            return purchaseTable.getManyBy(dbClause, from, to);
-        }
-
-        public static DbIterator<Purchase> getExpiredSellerPurchases(final long sellerId, int from, int to) {
-            DbClause dbClause = new DbClause.LongClause("seller_id", sellerId)
-                    .and(new DbClause.BooleanClause("pending", false))
-                    .and(new DbClause.NullClause("goods"));
-            return purchaseTable.getManyBy(dbClause, from, to);
-        }
-
-        static Purchase getPendingPurchase(long purchaseId) {
-            Purchase purchase = getPurchase(purchaseId);
-            return purchase == null || ! purchase.isPending() ? null : purchase;
-        }
-
-        private static DbIterator<Purchase> getExpiredPendingPurchases(Block block) {
-            final int timestamp = block.getTimestamp();
-            final int previousTimestamp = Nxt.getBlockchain().getBlock(block.getPreviousBlockId()).getTimestamp();
-            DbClause dbClause = new DbClause.LongClause("deadline", DbClause.Op.LT, timestamp)
-                    .and(new DbClause.LongClause("deadline", DbClause.Op.GTE, previousTimestamp))
-                    .and(new DbClause.BooleanClause("pending", true));
-            return purchaseTable.getManyBy(dbClause, 0, -1);
-        }
-
-        private static void init() {}
-
+    public final class Purchase {
 
         private final long id;
         private final DbKey dbKey;
@@ -778,7 +756,7 @@ public final class DigitalGoodsStore {
         }
 
         public String getName() {
-            return Goods.getGoods(goodsId).getName();
+            return getGoods(goodsId).getName();
         }
 
         public EncryptedData getEncryptedGoods() {
@@ -889,15 +867,15 @@ public final class DigitalGoodsStore {
 
     }
 
-    static void listGoods(Transaction transaction, Attachment.DigitalGoodsListing attachment) {
+    void listGoods(Transaction transaction, Attachment.DigitalGoodsListing attachment) {
         Goods goods = new Goods(transaction, attachment);
-        Tag.add(goods);
-        Goods.goodsTable.insert(goods);
+        addTags(goods);
+        goodsTable.insert(goods);
         goodsListeners.notify(goods, Event.GOODS_LISTED);
     }
 
-    static void delistGoods(long goodsId) {
-        Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(goodsId));
+    void delistGoods(long goodsId) {
+        Goods goods = goodsTable.get(goodsDbKeyFactory.newKey(goodsId));
         if (! goods.isDelisted()) {
             goods.setDelisted(true);
             goodsListeners.notify(goods, Event.GOODS_DELISTED);
@@ -906,8 +884,8 @@ public final class DigitalGoodsStore {
         }
     }
 
-    static void changePrice(long goodsId, long priceNQT) {
-        Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(goodsId));
+    void changePrice(long goodsId, long priceNQT) {
+        Goods goods = goodsTable.get(goodsDbKeyFactory.newKey(goodsId));
         if (! goods.isDelisted()) {
             goods.changePrice(priceNQT);
             goodsListeners.notify(goods, Event.GOODS_PRICE_CHANGE);
@@ -916,8 +894,8 @@ public final class DigitalGoodsStore {
         }
     }
 
-    static void changeQuantity(long goodsId, int deltaQuantity) {
-        Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(goodsId));
+    void changeQuantity(long goodsId, int deltaQuantity) {
+        Goods goods = goodsTable.get(goodsDbKeyFactory.newKey(goodsId));
         if (! goods.isDelisted()) {
             goods.changeQuantity(deltaQuantity);
             goodsListeners.notify(goods, Event.GOODS_QUANTITY_CHANGE);
@@ -926,14 +904,14 @@ public final class DigitalGoodsStore {
         }
     }
 
-    static void purchase(Transaction transaction,  Attachment.DigitalGoodsPurchase attachment) {
-        Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(attachment.getGoodsId()));
+    void purchase(Transaction transaction,  Attachment.DigitalGoodsPurchase attachment) {
+        Goods goods = goodsTable.get(goodsDbKeyFactory.newKey(attachment.getGoodsId()));
         if (! goods.isDelisted()
                 && attachment.getQuantity() <= goods.getQuantity()
                 && attachment.getPriceNQT() == goods.getPriceNQT()) {
             goods.changeQuantity(-attachment.getQuantity());
             Purchase purchase = new Purchase(transaction, attachment, goods.getSellerId());
-            Purchase.purchaseTable.insert(purchase);
+            purchaseTable.insert(purchase);
             purchaseListeners.notify(purchase, Event.PURCHASE);
         } else {
             Account buyer = Account.getAccount(transaction.getSenderId());
@@ -943,8 +921,8 @@ public final class DigitalGoodsStore {
         }
     }
 
-    static void deliver(Transaction transaction, Attachment.DigitalGoodsDelivery attachment) {
-        Purchase purchase = Purchase.getPendingPurchase(attachment.getPurchaseId());
+    void deliver(Transaction transaction, Attachment.DigitalGoodsDelivery attachment) {
+        Purchase purchase = getPendingPurchase(attachment.getPurchaseId());
         purchase.setPending(false);
         long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceNQT());
         Account buyer = Account.getAccount(purchase.getBuyerId());
@@ -960,9 +938,9 @@ public final class DigitalGoodsStore {
         purchaseListeners.notify(purchase, Event.DELIVERY);
     }
 
-    static void refund(LedgerEvent event, long eventId, long sellerId, long purchaseId, long refundNQT,
+    void refund(LedgerEvent event, long eventId, long sellerId, long purchaseId, long refundNQT,
                        Appendix.EncryptedMessage encryptedMessage) {
-        Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
+        Purchase purchase = purchaseTable.get(purchaseDbKeyFactory.newKey(purchaseId));
         Account seller = Account.getAccount(sellerId);
         seller.addToBalanceNQT(event, eventId, -refundNQT);
         Account buyer = Account.getAccount(purchase.getBuyerId());
@@ -974,8 +952,8 @@ public final class DigitalGoodsStore {
         purchaseListeners.notify(purchase, Event.REFUND);
     }
 
-    static void feedback(long purchaseId, Appendix.EncryptedMessage encryptedMessage, Appendix.Message message) {
-        Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
+    void feedback(long purchaseId, Appendix.EncryptedMessage encryptedMessage, Appendix.Message message) {
+        Purchase purchase = purchaseTable.get(purchaseDbKeyFactory.newKey(purchaseId));
         if (encryptedMessage != null) {
             purchase.addFeedbackNote(encryptedMessage.getEncryptedData());
         }
