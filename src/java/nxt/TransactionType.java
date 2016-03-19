@@ -559,7 +559,7 @@ public abstract class TransactionType {
                         throw new NxtException.NotValidException("Invalid alias name: " + normalizedAlias);
                     }
                 }
-                Alias alias = Alias.getAlias(normalizedAlias);
+                AliasHome.Alias alias = Alias.getAlias(normalizedAlias);
                 if (alias != null && alias.getAccountId() != transaction.getSenderId()) {
                     throw new NxtException.NotCurrentlyValidException("Alias already owned by another account: " + normalizedAlias);
                 }
@@ -639,7 +639,7 @@ public abstract class TransactionType {
                         throw new NxtException.NotValidException("Missing alias transfer recipient");
                     }
                 }
-                final Alias alias = Alias.getAlias(aliasName);
+                AliasHome.Alias alias = Alias.getAlias(aliasName);
                 if (alias == null) {
                     throw new NxtException.NotCurrentlyValidException("No such alias: " + aliasName);
                 } else if (alias.getAccountId() != transaction.getSenderId()) {
@@ -714,14 +714,14 @@ public abstract class TransactionType {
                 final Attachment.MessagingAliasBuy attachment =
                         (Attachment.MessagingAliasBuy) transaction.getAttachment();
                 final String aliasName = attachment.getAliasName();
-                final Alias alias = Alias.getAlias(aliasName);
+                final AliasHome.Alias alias = Alias.getAlias(aliasName);
                 if (alias == null) {
                     throw new NxtException.NotCurrentlyValidException("No such alias: " + aliasName);
                 } else if (alias.getAccountId() != transaction.getRecipientId()) {
                     throw new NxtException.NotCurrentlyValidException("Alias is owned by account other than recipient: "
                             + Long.toUnsignedString(alias.getAccountId()));
                 }
-                Alias.Offer offer = Alias.getOffer(alias);
+                AliasHome.Offer offer = Alias.getOffer(alias);
                 if (offer == null) {
                     throw new NxtException.NotCurrentlyValidException("Alias is not for sale: " + aliasName);
                 }
@@ -798,7 +798,7 @@ public abstract class TransactionType {
                 if (aliasName == null || aliasName.length() == 0) {
                     throw new NxtException.NotValidException("Missing alias name");
                 }
-                final Alias alias = Alias.getAlias(aliasName);
+                final AliasHome.Alias alias = Alias.getAlias(aliasName);
                 if (alias == null) {
                     throw new NxtException.NotCurrentlyValidException("No such alias: " + aliasName);
                 } else if (alias.getAccountId() != transaction.getSenderId()) {
@@ -991,7 +991,7 @@ public abstract class TransactionType {
 
                 long pollId = attachment.getPollId();
 
-                Poll poll = Poll.getPoll(pollId);
+                PollHome.Poll poll = Poll.getPoll(pollId);
                 if (poll == null) {
                     throw new NxtException.NotCurrentlyValidException("Invalid poll: " + Long.toUnsignedString(attachment.getPollId()));
                 }
@@ -1106,7 +1106,7 @@ public abstract class TransactionType {
                         throw new NxtException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
                     }
 
-                    PhasingPoll poll = PhasingPoll.getPoll(phasedTransactionId);
+                    PhasingPollHome.PhasingPoll poll = PhasingPoll.getPoll(phasedTransactionId);
                     if (poll == null) {
                         throw new NxtException.NotCurrentlyValidException("Invalid phased transaction " + Long.toUnsignedString(phasedTransactionId)
                                 + ", or phasing is finished");
@@ -1745,7 +1745,7 @@ public abstract class TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsAskOrderPlacement attachment = (Attachment.ColoredCoinsAskOrderPlacement) transaction.getAttachment();
-                Order.Ask.addOrder(transaction, attachment);
+                OrderHome.Ask.addOrder(transaction, attachment);
             }
 
             @Override
@@ -1798,7 +1798,7 @@ public abstract class TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsBidOrderPlacement attachment = (Attachment.ColoredCoinsBidOrderPlacement) transaction.getAttachment();
-                Order.Bid.addOrder(transaction, attachment);
+                OrderHome.Bid.addOrder(transaction, attachment);
             }
 
             @Override
@@ -1863,8 +1863,8 @@ public abstract class TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsAskOrderCancellation attachment = (Attachment.ColoredCoinsAskOrderCancellation) transaction.getAttachment();
-                Order order = Order.Ask.getAskOrder(attachment.getOrderId());
-                Order.Ask.removeOrder(attachment.getOrderId());
+                OrderHome.Order order = Order.Ask.getAskOrder(attachment.getOrderId());
+                OrderHome.Ask.removeOrder(attachment.getOrderId());
                 if (order != null) {
                     senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
                             order.getAssetId(), order.getQuantityQNT());
@@ -1874,7 +1874,7 @@ public abstract class TransactionType {
             @Override
             void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
                 Attachment.ColoredCoinsAskOrderCancellation attachment = (Attachment.ColoredCoinsAskOrderCancellation) transaction.getAttachment();
-                Order ask = Order.Ask.getAskOrder(attachment.getOrderId());
+                OrderHome.Order ask = Order.Ask.getAskOrder(attachment.getOrderId());
                 if (ask == null) {
                     throw new NxtException.NotCurrentlyValidException("Invalid ask order: " + Long.toUnsignedString(attachment.getOrderId()));
                 }
@@ -1916,7 +1916,7 @@ public abstract class TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsBidOrderCancellation attachment = (Attachment.ColoredCoinsBidOrderCancellation) transaction.getAttachment();
-                Order order = Order.Bid.getBidOrder(attachment.getOrderId());
+                OrderHome.Order order = Order.Bid.getBidOrder(attachment.getOrderId());
                 Order.Bid.removeOrder(attachment.getOrderId());
                 if (order != null) {
                     senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
@@ -1927,7 +1927,7 @@ public abstract class TransactionType {
             @Override
             void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
                 Attachment.ColoredCoinsBidOrderCancellation attachment = (Attachment.ColoredCoinsBidOrderCancellation) transaction.getAttachment();
-                Order bid = Order.Bid.getBidOrder(attachment.getOrderId());
+                OrderHome.Order bid = Order.Bid.getBidOrder(attachment.getOrderId());
                 if (bid == null) {
                     throw new NxtException.NotCurrentlyValidException("Invalid bid order: " + Long.toUnsignedString(attachment.getOrderId()));
                 }
@@ -3015,7 +3015,7 @@ public abstract class TransactionType {
                                 + " upload hash: " + Convert.toHexString(taggedDataUpload.getHash()));
                     }
                 }
-                TaggedData taggedData = TaggedData.getData(attachment.getTaggedDataId());
+                TaggedDataHome.TaggedData taggedData = TaggedData.getData(attachment.getTaggedDataId());
                 if (taggedData != null && taggedData.getTransactionTimestamp() > Nxt.getEpochTime() + 6 * Constants.MIN_PRUNABLE_LIFETIME) {
                     throw new NxtException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
                 }
