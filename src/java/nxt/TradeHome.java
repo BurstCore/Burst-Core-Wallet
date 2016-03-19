@@ -45,7 +45,9 @@ public final class TradeHome {
         return tradeHomeMap.get(childChain);
     }
 
-    static void init() {
+    static void init() {}
+
+    static {
         ChildChain.getAll().forEach(childChain -> tradeHomeMap.put(childChain, new TradeHome(childChain)));
     }
 
@@ -56,14 +58,14 @@ public final class TradeHome {
 
     private TradeHome(ChildChain childChain) {
         this.childChain = childChain;
-        listeners = new Listeners<>();
-        tradeDbKeyFactory = new DbKey.LinkKeyFactory<Trade>("ask_order_id", "bid_order_id") {
+        this.listeners = new Listeners<>();
+        this.tradeDbKeyFactory = new DbKey.LinkKeyFactory<Trade>("ask_order_id", "bid_order_id") {
             @Override
             public DbKey newKey(Trade trade) {
                 return trade.dbKey;
             }
         };
-        tradeTable = new EntityDbTable<Trade>(childChain.getSchemaTable("trade"), tradeDbKeyFactory) {
+        this.tradeTable = new EntityDbTable<Trade>(childChain.getSchemaTable("trade"), tradeDbKeyFactory) {
             @Override
             protected Trade load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Trade(rs, dbKey);
@@ -169,7 +171,7 @@ public final class TradeHome {
         return tradeTable.getCount(new DbClause.LongClause("asset_id", assetId));
     }
 
-    Trade addTrade(long assetId, Order.Ask askOrder, Order.Bid bidOrder) {
+    Trade addTrade(long assetId, OrderHome.Ask askOrder, OrderHome.Bid bidOrder) {
         Trade trade = new Trade(assetId, askOrder, bidOrder);
         tradeTable.insert(trade);
         listeners.notify(trade, Event.TRADE);
@@ -193,7 +195,7 @@ public final class TradeHome {
         private final long priceNQT;
         private final boolean isBuy;
 
-        private Trade(long assetId, Order.Ask askOrder, Order.Bid bidOrder) {
+        private Trade(long assetId, OrderHome.Ask askOrder, OrderHome.Bid bidOrder) {
             Block block = Nxt.getBlockchain().getLastBlock();
             this.blockId = block.getId();
             this.height = block.getHeight();

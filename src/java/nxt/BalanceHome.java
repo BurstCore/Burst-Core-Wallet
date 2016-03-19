@@ -34,7 +34,9 @@ public final class BalanceHome {
         return balanceHomeMap.get(childChain);
     }
 
-    static void init() {
+    static void init() {}
+
+    static {
         ChildChain.getAll().forEach(childChain -> balanceHomeMap.put(childChain, new BalanceHome(childChain)));
     }
 

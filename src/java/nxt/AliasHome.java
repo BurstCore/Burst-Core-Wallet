@@ -37,7 +37,9 @@ public final class AliasHome {
         return aliasHomeMap.get(childChain);
     }
 
-    static void init() {
+    static void init() {}
+
+    static {
         ChildChain.getAll().forEach(childChain -> aliasHomeMap.put(childChain, new AliasHome(childChain)));
     }
 
@@ -49,13 +51,13 @@ public final class AliasHome {
 
     private AliasHome(ChildChain childChain) {
         this.childChain = childChain;
-        aliasDbKeyFactory = new DbKey.LongKeyFactory<Alias>("id") {
+        this.aliasDbKeyFactory = new DbKey.LongKeyFactory<Alias>("id") {
             @Override
             public DbKey newKey(Alias alias) {
                 return alias.dbKey;
             }
         };
-        aliasTable = new VersionedEntityDbTable<Alias>(childChain.getSchemaTable("alias"), aliasDbKeyFactory) {
+        this.aliasTable = new VersionedEntityDbTable<Alias>(childChain.getSchemaTable("alias"), aliasDbKeyFactory) {
             @Override
             protected Alias load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Alias(rs, dbKey);
@@ -69,13 +71,13 @@ public final class AliasHome {
                 return " ORDER BY alias_name_lower ";
             }
         };
-        offerDbKeyFactory = new DbKey.LongKeyFactory<Offer>("id") {
+        this.offerDbKeyFactory = new DbKey.LongKeyFactory<Offer>("id") {
             @Override
             public DbKey newKey(Offer offer) {
                 return offer.dbKey;
             }
         };
-        offerTable = new VersionedEntityDbTable<Offer>(childChain.getSchemaTable("alias_offer"), offerDbKeyFactory) {
+        this.offerTable = new VersionedEntityDbTable<Offer>(childChain.getSchemaTable("alias_offer"), offerDbKeyFactory) {
             @Override
             protected Offer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Offer(rs, dbKey);

@@ -82,7 +82,9 @@ public final class ShufflingParticipantHome {
         return shufflingParticipantHomeMap.get(childChain);
     }
 
-    static void init() {
+    static void init() {}
+
+    static {
         ChildChain.getAll().forEach(childChain -> shufflingParticipantHomeMap.put(childChain, new ShufflingParticipantHome(childChain)));
     }
 
@@ -95,14 +97,14 @@ public final class ShufflingParticipantHome {
 
     private ShufflingParticipantHome(ChildChain childChain) {
         this.childChain = childChain;
-        listeners = new Listeners<>();
-        shufflingParticipantDbKeyFactory = new DbKey.LinkKeyFactory<ShufflingParticipant>("shuffling_id", "account_id") {
+        this.listeners = new Listeners<>();
+        this.shufflingParticipantDbKeyFactory = new DbKey.LinkKeyFactory<ShufflingParticipant>("shuffling_id", "account_id") {
             @Override
             public DbKey newKey(ShufflingParticipant participant) {
                 return participant.dbKey;
             }
         };
-        shufflingParticipantTable = new VersionedEntityDbTable<ShufflingParticipant>(childChain.getSchemaTable("shuffling_participant"),
+        this.shufflingParticipantTable = new VersionedEntityDbTable<ShufflingParticipant>(childChain.getSchemaTable("shuffling_participant"),
                 shufflingParticipantDbKeyFactory) {
             @Override
             protected ShufflingParticipant load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -113,13 +115,13 @@ public final class ShufflingParticipantHome {
                 participant.save(con);
             }
         };
-        shufflingDataDbKeyFactory = new DbKey.LinkKeyFactory<ShufflingData>("shuffling_id", "account_id") {
+        this.shufflingDataDbKeyFactory = new DbKey.LinkKeyFactory<ShufflingData>("shuffling_id", "account_id") {
             @Override
             public DbKey newKey(ShufflingData shufflingData) {
                 return shufflingData.dbKey;
             }
         };
-        shufflingDataTable = new PrunableDbTable<ShufflingData>(childChain.getSchemaTable("shuffling_data"), shufflingDataDbKeyFactory) {
+        this.shufflingDataTable = new PrunableDbTable<ShufflingData>(childChain.getSchemaTable("shuffling_data"), shufflingDataDbKeyFactory) {
             @Override
             protected ShufflingData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new ShufflingData(rs, dbKey);

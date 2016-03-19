@@ -69,11 +69,14 @@ public final class PollHome {
         return pollHomeMap.get(childChain);
     }
 
-    static void init() {
+    static void init() {}
+
+    static {
         ChildChain.getAll().forEach(childChain -> pollHomeMap.put(childChain, new PollHome(childChain)));
     }
 
     private final ChildChain childChain;
+    private final VoteHome voteHome;
     private final DbKey.LongKeyFactory<Poll> pollDbKeyFactory;
     private final EntityDbTable<Poll> pollTable;
     private final DbKey.LongKeyFactory<Poll> pollResultsDbKeyFactory;
@@ -81,36 +84,35 @@ public final class PollHome {
 
     private PollHome(ChildChain childChain) {
         this.childChain = childChain;
-        pollDbKeyFactory = new DbKey.LongKeyFactory<Poll>("id") {
+        this.voteHome = VoteHome.forChain(childChain);
+        this.pollDbKeyFactory = new DbKey.LongKeyFactory<Poll>("id") {
             @Override
             public DbKey newKey(Poll poll) {
                 return poll.dbKey == null ? newKey(poll.id) : poll.dbKey;
             }
         };
-        pollTable = new EntityDbTable<Poll>(childChain.getSchemaTable("poll"), pollDbKeyFactory, "name,description") {
+        this.pollTable = new EntityDbTable<Poll>(childChain.getSchemaTable("poll"), pollDbKeyFactory, "name,description") {
             @Override
             protected Poll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Poll(rs, dbKey);
             }
-
             @Override
             protected void save(Connection con, Poll poll) throws SQLException {
                 poll.save(con);
             }
         };
-        pollResultsDbKeyFactory = new DbKey.LongKeyFactory<Poll>("poll_id") {
+        this.pollResultsDbKeyFactory = new DbKey.LongKeyFactory<Poll>("poll_id") {
             @Override
             public DbKey newKey(Poll poll) {
                 return poll.dbKey;
             }
         };
-        pollResultsTable = new ValuesDbTable<Poll, OptionResult>(childChain.getSchemaTable("poll_result"), pollResultsDbKeyFactory) {
+        this.pollResultsTable = new ValuesDbTable<Poll, OptionResult>(childChain.getSchemaTable("poll_result"), pollResultsDbKeyFactory) {
             @Override
             protected OptionResult load(Connection con, ResultSet rs) throws SQLException {
                 long weight = rs.getLong("weight");
                 return weight == 0 ? null : new OptionResult(rs.getLong("result"), weight);
             }
-
             @Override
             protected void save(Connection con, Poll poll, OptionResult optionResult) throws SQLException {
                 try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO poll_result (poll_id, "
@@ -275,8 +277,8 @@ public final class PollHome {
             }
         }
 
-        public DbIterator<Vote> getVotes() {
-            return Vote.getVotes(this.getId(), 0, -1);
+        public DbIterator<VoteHome.Vote> getVotes() {
+            return voteHome.getVotes(this.getId(), 0, -1);
         }
 
         public String getName() {
@@ -327,8 +329,8 @@ public final class PollHome {
         private List<OptionResult> countResults(VoteWeighting voteWeighting, int height) {
             final OptionResult[] result = new OptionResult[options.length];
             VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
-            try (DbIterator<Vote> votes = Vote.getVotes(this.getId(), 0, -1)) {
-                for (Vote vote : votes) {
+            try (DbIterator<VoteHome.Vote> votes = voteHome.getVotes(this.getId(), 0, -1)) {
+                for (VoteHome.Vote vote : votes) {
                     long weight = votingModel.calcWeight(voteWeighting, vote.getVoterId(), height);
                     if (weight <= 0) {
                         continue;
@@ -348,7 +350,7 @@ public final class PollHome {
             return Arrays.asList(result);
         }
 
-        private long[] countVote(Vote vote, long weight) {
+        private long[] countVote(VoteHome.Vote vote, long weight) {
             final long[] partialResult = new long[options.length];
             final byte[] optionValues = vote.getVoteBytes();
             for (int i = 0; i < optionValues.length; i++) {

@@ -43,7 +43,9 @@ public final class TaggedDataHome {
         return taggedDataHomeMap.get(childChain);
     }
 
-    static void init() {
+    static void init() {}
+
+    static {
         ChildChain.getAll().forEach(childChain -> taggedDataHomeMap.put(childChain, new TaggedDataHome(childChain)));
     }
 
@@ -59,13 +61,13 @@ public final class TaggedDataHome {
 
     private TaggedDataHome(ChildChain childChain) {
         this.childChain = childChain;
-        taggedDataKeyFactory = new DbKey.LongKeyFactory<TaggedData>("id") {
+        this.taggedDataKeyFactory = new DbKey.LongKeyFactory<TaggedData>("id") {
             @Override
             public DbKey newKey(TaggedData taggedData) {
                 return taggedData.dbKey;
             }
         };
-        taggedDataTable = new VersionedPrunableDbTable<TaggedData>(childChain.getSchemaTable("tagged_data"), taggedDataKeyFactory,
+        this.taggedDataTable = new VersionedPrunableDbTable<TaggedData>(childChain.getSchemaTable("tagged_data"), taggedDataKeyFactory,
                 "name,description,tags") {
             @Override
             protected TaggedData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -105,13 +107,13 @@ public final class TaggedDataHome {
                 super.prune();
             }
         };
-        timestampKeyFactory = new DbKey.LongKeyFactory<Timestamp>("id") {
+        this.timestampKeyFactory = new DbKey.LongKeyFactory<Timestamp>("id") {
             @Override
             public DbKey newKey(Timestamp timestamp) {
                 return timestamp.dbKey;
             }
         };
-        timestampTable = new VersionedEntityDbTable<Timestamp>(childChain.getSchemaTable("tagged_data_timestamp"), timestampKeyFactory) {
+        this.timestampTable = new VersionedEntityDbTable<Timestamp>(childChain.getSchemaTable("tagged_data_timestamp"), timestampKeyFactory) {
             @Override
             protected Timestamp load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Timestamp(rs, dbKey);
@@ -121,13 +123,13 @@ public final class TaggedDataHome {
                 timestamp.save(con);
             }
         };
-        extendDbKeyFactory = new DbKey.LongKeyFactory<Long>("id") {
+        this.extendDbKeyFactory = new DbKey.LongKeyFactory<Long>("id") {
             @Override
             public DbKey newKey(Long taggedDataId) {
                 return newKey(taggedDataId.longValue());
             }
         };
-        extendTable = new VersionedValuesDbTable<Long, Long>(childChain.getSchemaTable("tagged_data_extend"), extendDbKeyFactory) {
+        this.extendTable = new VersionedValuesDbTable<Long, Long>(childChain.getSchemaTable("tagged_data_extend"), extendDbKeyFactory) {
             @Override
             protected Long load(Connection con, ResultSet rs) throws SQLException {
                 return rs.getLong("extend_id");
@@ -144,13 +146,13 @@ public final class TaggedDataHome {
                 }
             }
         };
-        tagDbKeyFactory = new DbKey.StringKeyFactory<Tag>("tag") {
+        this.tagDbKeyFactory = new DbKey.StringKeyFactory<Tag>("tag") {
             @Override
             public DbKey newKey(Tag tag) {
                 return tag.dbKey;
             }
         };
-        tagTable = new VersionedPersistentDbTable<Tag>(childChain.getSchemaTable("data_tag"), tagDbKeyFactory) {
+        this.tagTable = new VersionedPersistentDbTable<Tag>(childChain.getSchemaTable("data_tag"), tagDbKeyFactory) {
             @Override
             protected Tag load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Tag(rs, dbKey);

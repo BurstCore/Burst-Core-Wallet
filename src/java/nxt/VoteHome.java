@@ -36,7 +36,9 @@ public final class VoteHome {
         return voteHomeMap.get(childChain);
     }
 
-    static void init() {
+    static void init() {}
+
+    static {
         ChildChain.getAll().forEach(childChain -> voteHomeMap.put(childChain, new VoteHome(childChain)));
     }
 
@@ -48,23 +50,21 @@ public final class VoteHome {
     private VoteHome(ChildChain childChain) {
         this.childChain = childChain;
         this.pollHome = PollHome.forChain(childChain);
-        voteDbKeyFactory = new DbKey.LongKeyFactory<Vote>("id") {
+        this.voteDbKeyFactory = new DbKey.LongKeyFactory<Vote>("id") {
             @Override
             public DbKey newKey(Vote vote) {
                 return vote.dbKey;
             }
         };
-        voteTable = new EntityDbTable<Vote>(childChain.getSchemaTable("vote"), voteDbKeyFactory) {
+        this.voteTable = new EntityDbTable<Vote>(childChain.getSchemaTable("vote"), voteDbKeyFactory) {
             @Override
             protected Vote load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Vote(rs, dbKey);
             }
-
             @Override
             protected void save(Connection con, Vote vote) throws SQLException {
                 vote.save(con);
             }
-
             @Override
             public void trim(int height) {
                 super.trim(height);

@@ -37,7 +37,9 @@ public final class PrunableMessageHome {
         return prunableMessageHomeMap.get(childChain);
     }
 
-    static void init() {
+    static void init() {}
+
+    static {
         ChildChain.getAll().forEach(childChain -> prunableMessageHomeMap.put(childChain, new PrunableMessageHome(childChain)));
     }
 
@@ -47,13 +49,13 @@ public final class PrunableMessageHome {
 
     private PrunableMessageHome(ChildChain childChain) {
         this.childChain = childChain;
-        prunableMessageKeyFactory = new DbKey.LongKeyFactory<PrunableMessage>("id") {
+        this.prunableMessageKeyFactory = new DbKey.LongKeyFactory<PrunableMessage>("id") {
             @Override
             public DbKey newKey(PrunableMessage prunableMessage) {
                 return prunableMessage.dbKey;
             }
         };
-        prunableMessageTable = new PrunableDbTable<PrunableMessage>(childChain.getSchemaTable("prunable_message"), prunableMessageKeyFactory) {
+        this.prunableMessageTable = new PrunableDbTable<PrunableMessage>(childChain.getSchemaTable("prunable_message"), prunableMessageKeyFactory) {
             @Override
             protected PrunableMessage load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new PrunableMessage(rs, dbKey);

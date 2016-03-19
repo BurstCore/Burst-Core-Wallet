@@ -189,8 +189,8 @@ public final class Asset {
         return Account.getAssetAccounts(this.assetId, height, from, to);
     }
 
-    public DbIterator<Trade> getTrades(int from, int to) {
-        return Trade.getAssetTrades(this.assetId, from, to);
+    public DbIterator<TradeHome.Trade> getTrades(ChildChain childChain, int from, int to) {
+        return TradeHome.forChain(childChain).getAssetTrades(this.assetId, from, to);
     }
 
     public DbIterator<AssetTransfer> getAssetTransfers(int from, int to) {

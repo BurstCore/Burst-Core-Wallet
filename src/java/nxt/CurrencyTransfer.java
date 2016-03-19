@@ -46,7 +46,7 @@ public final class CurrencyTransfer {
 
     };
 
-    private static final EntityDbTable<CurrencyTransfer> currencyTransferTable = new EntityDbTable<CurrencyTransfer>("currency_transfer", currencyTransferDbKeyFactory) {
+    private static final EntityDbTable<CurrencyTransfer> currencyTransferTable = new EntityDbTable<CurrencyTransfer>("public.currency_transfer", currencyTransferDbKeyFactory) {
 
         @Override
         protected CurrencyTransfer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

@@ -138,7 +138,9 @@ public final class ShufflingHome {
         return shufflingHomeMap.get(childChain);
     }
 
-    static void init() {
+    static void init() {}
+
+    static {
         ChildChain.getAll().forEach(childChain -> shufflingHomeMap.put(childChain, new ShufflingHome(childChain)));
     }
 
@@ -149,25 +151,23 @@ public final class ShufflingHome {
 
     private ShufflingHome(ChildChain childChain) {
         this.childChain = childChain;
-        listeners = new Listeners<>();
-        shufflingDbKeyFactory = new DbKey.LongKeyFactory<Shuffling>("id") {
+        this.listeners = new Listeners<>();
+        this.shufflingDbKeyFactory = new DbKey.LongKeyFactory<Shuffling>("id") {
             @Override
             public DbKey newKey(Shuffling shuffling) {
                 return shuffling.dbKey;
             }
         };
-        shufflingTable = new VersionedEntityDbTable<Shuffling>(childChain.getSchemaTable("shuffling"), shufflingDbKeyFactory) {
+        this.shufflingTable = new VersionedEntityDbTable<Shuffling>(childChain.getSchemaTable("shuffling"), shufflingDbKeyFactory) {
             @Override
             protected Shuffling load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Shuffling(rs, dbKey);
             }
-
             @Override
             protected void save(Connection con, Shuffling shuffling) throws SQLException {
                 shuffling.save(con);
             }
         };
-
         Nxt.getBlockchainProcessor().addListener(block -> {
             if (block.getTransactions().size() == Constants.MAX_NUMBER_OF_TRANSACTIONS
                     || block.getPayloadLength() > Constants.MAX_PAYLOAD_LENGTH - Constants.MIN_TRANSACTION_SIZE) {
