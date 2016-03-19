@@ -167,7 +167,7 @@ public final class ExchangeHome {
         return exchangeTable.getCount(new DbClause.LongClause("currency_id", currencyId));
     }
 
-    Exchange addExchange(Transaction transaction, long currencyId, CurrencyExchangeOfferHome.CurrencyExchangeOffer offer, long sellerId, long buyerId, long units) {
+    Exchange addExchange(Transaction transaction, long currencyId, ExchangeOfferHome.ExchangeOffer offer, long sellerId, long buyerId, long units) {
         Exchange exchange = new Exchange(transaction.getId(), currencyId, offer, sellerId, buyerId, units);
         exchangeTable.insert(exchange);
         listeners.notify(exchange, Event.EXCHANGE);
@@ -189,7 +189,7 @@ public final class ExchangeHome {
         private final long units;
         private final long rate;
 
-        private Exchange(long transactionId, long currencyId, CurrencyExchangeOfferHome.CurrencyExchangeOffer offer, long sellerId, long buyerId, long units) {
+        private Exchange(long transactionId, long currencyId, ExchangeOfferHome.ExchangeOffer offer, long sellerId, long buyerId, long units) {
             Block block = Nxt.getBlockchain().getLastBlock();
             this.transactionId = transactionId;
             this.blockId = block.getId();

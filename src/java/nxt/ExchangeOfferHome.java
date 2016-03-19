@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class CurrencyExchangeOfferHome {
+public final class ExchangeOfferHome {
 
     public static final class AvailableOffers {
 
@@ -59,9 +59,9 @@ public final class CurrencyExchangeOfferHome {
 
     }
 
-    private static final Map<ChildChain, CurrencyExchangeOfferHome> currencyExchangeOfferHomeMap = new HashMap<>();
+    private static final Map<ChildChain, ExchangeOfferHome> currencyExchangeOfferHomeMap = new HashMap<>();
 
-    public static CurrencyExchangeOfferHome forChain(ChildChain childChain) {
+    public static ExchangeOfferHome forChain(ChildChain childChain) {
         return currencyExchangeOfferHomeMap.get(childChain);
     }
 
@@ -69,55 +69,55 @@ public final class CurrencyExchangeOfferHome {
     }
 
     static {
-        ChildChain.getAll().forEach(childChain -> currencyExchangeOfferHomeMap.put(childChain, new CurrencyExchangeOfferHome(childChain)));
+        ChildChain.getAll().forEach(childChain -> currencyExchangeOfferHomeMap.put(childChain, new ExchangeOfferHome(childChain)));
     }
 
     private final ChildChain childChain;
     private final ExchangeHome exchangeHome;
-    private final DbKey.LongKeyFactory<CurrencyBuyOffer> buyOfferDbKeyFactory;
-    private final VersionedEntityDbTable<CurrencyBuyOffer> buyOfferTable;
-    private final DbKey.LongKeyFactory<CurrencySellOffer> sellOfferDbKeyFactory;
-    private final VersionedEntityDbTable<CurrencySellOffer> sellOfferTable;
+    private final DbKey.LongKeyFactory<BuyOffer> buyOfferDbKeyFactory;
+    private final VersionedEntityDbTable<BuyOffer> buyOfferTable;
+    private final DbKey.LongKeyFactory<SellOffer> sellOfferDbKeyFactory;
+    private final VersionedEntityDbTable<SellOffer> sellOfferTable;
 
-    private CurrencyExchangeOfferHome(ChildChain childChain) {
+    private ExchangeOfferHome(ChildChain childChain) {
         this.childChain = childChain;
         this.exchangeHome = ExchangeHome.forChain(childChain);
-        this.buyOfferDbKeyFactory = new DbKey.LongKeyFactory<CurrencyBuyOffer>("id") {
+        this.buyOfferDbKeyFactory = new DbKey.LongKeyFactory<BuyOffer>("id") {
             @Override
-            public DbKey newKey(CurrencyBuyOffer offer) {
+            public DbKey newKey(BuyOffer offer) {
                 return offer.dbKey;
             }
         };
-        this.buyOfferTable = new VersionedEntityDbTable<CurrencyBuyOffer>(childChain.getSchemaTable("buy_offer"), buyOfferDbKeyFactory) {
+        this.buyOfferTable = new VersionedEntityDbTable<BuyOffer>(childChain.getSchemaTable("buy_offer"), buyOfferDbKeyFactory) {
             @Override
-            protected CurrencyBuyOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-                return new CurrencyBuyOffer(rs, dbKey);
+            protected BuyOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+                return new BuyOffer(rs, dbKey);
             }
             @Override
-            protected void save(Connection con, CurrencyBuyOffer buy) throws SQLException {
+            protected void save(Connection con, BuyOffer buy) throws SQLException {
                 buy.save(con, schemaTable);
             }
         };
-        this.sellOfferDbKeyFactory = new DbKey.LongKeyFactory<CurrencySellOffer>("id") {
+        this.sellOfferDbKeyFactory = new DbKey.LongKeyFactory<SellOffer>("id") {
             @Override
-            public DbKey newKey(CurrencySellOffer sell) {
+            public DbKey newKey(SellOffer sell) {
                 return sell.dbKey;
             }
         };
-        this.sellOfferTable = new VersionedEntityDbTable<CurrencySellOffer>(childChain.getSchemaTable("sell_offer"), sellOfferDbKeyFactory) {
+        this.sellOfferTable = new VersionedEntityDbTable<SellOffer>(childChain.getSchemaTable("sell_offer"), sellOfferDbKeyFactory) {
             @Override
-            protected CurrencySellOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-                return new CurrencySellOffer(rs, dbKey);
+            protected SellOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+                return new SellOffer(rs, dbKey);
             }
             @Override
-            protected void save(Connection con, CurrencySellOffer sell) throws SQLException {
+            protected void save(Connection con, SellOffer sell) throws SQLException {
                 sell.save(con, schemaTable);
             }
         };
         Nxt.getBlockchainProcessor().addListener(block -> {
-            List<CurrencyBuyOffer> expired = new ArrayList<>();
-            try (DbIterator<CurrencyBuyOffer> offers = getBuyOffers(new DbClause.IntClause("expiration_height", block.getHeight()), 0, -1)) {
-                for (CurrencyBuyOffer offer : offers) {
+            List<BuyOffer> expired = new ArrayList<>();
+            try (DbIterator<BuyOffer> offers = getBuyOffers(new DbClause.IntClause("expiration_height", block.getHeight()), 0, -1)) {
+                for (BuyOffer offer : offers) {
                     expired.add(offer);
                 }
             }
@@ -126,7 +126,7 @@ public final class CurrencyExchangeOfferHome {
     }
 
     void publishOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
-        CurrencyBuyOffer previousOffer = getBuyOffer(attachment.getCurrencyId(), transaction.getSenderId());
+        BuyOffer previousOffer = getBuyOffer(attachment.getCurrencyId(), transaction.getSenderId());
         if (previousOffer != null) {
             removeOffer(LedgerEvent.CURRENCY_OFFER_REPLACED, previousOffer);
         }
@@ -134,11 +134,11 @@ public final class CurrencyExchangeOfferHome {
         addSellOffer(transaction, attachment);
     }
 
-    private AvailableOffers calculateTotal(List<CurrencyExchangeOffer> offers, final long units) {
+    private AvailableOffers calculateTotal(List<ExchangeOffer> offers, final long units) {
         long totalAmountNQT = 0;
         long remainingUnits = units;
         long rateNQT = 0;
-        for (CurrencyExchangeOffer offer : offers) {
+        for (ExchangeOffer offer : offers) {
             if (remainingUnits == 0) {
                 break;
             }
@@ -158,27 +158,27 @@ public final class CurrencyExchangeOfferHome {
         return calculateTotal(getAvailableBuyOffers(currencyId, 0L), units);
     }
 
-    private List<CurrencyExchangeOffer> getAvailableBuyOffers(long currencyId, long minRateNQT) {
-        List<CurrencyExchangeOffer> currencyExchangeOffers = new ArrayList<>();
+    private List<ExchangeOffer> getAvailableBuyOffers(long currencyId, long minRateNQT) {
+        List<ExchangeOffer> exchangeOffers = new ArrayList<>();
         DbClause dbClause = new DbClause.LongClause("currency_id", currencyId).and(availableOnlyDbClause);
         if (minRateNQT > 0) {
             dbClause = dbClause.and(new DbClause.LongClause("rate", DbClause.Op.GTE, minRateNQT));
         }
-        try (DbIterator<CurrencyBuyOffer> offers = getBuyOffers(dbClause, 0, -1,
+        try (DbIterator<BuyOffer> offers = getBuyOffers(dbClause, 0, -1,
                 " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ")) {
-            for (CurrencyBuyOffer offer : offers) {
-                currencyExchangeOffers.add(offer);
+            for (BuyOffer offer : offers) {
+                exchangeOffers.add(offer);
             }
         }
-        return currencyExchangeOffers;
+        return exchangeOffers;
     }
 
     void exchangeCurrencyForNXT(Transaction transaction, Account account, final long currencyId, final long rateNQT, final long units) {
-        List<CurrencyExchangeOffer> currencyBuyOffers = getAvailableBuyOffers(currencyId, rateNQT);
+        List<ExchangeOffer> currencyBuyOffers = getAvailableBuyOffers(currencyId, rateNQT);
 
         long totalAmountNQT = 0;
         long remainingUnits = units;
-        for (CurrencyExchangeOffer offer : currencyBuyOffers) {
+        for (ExchangeOffer offer : currencyBuyOffers) {
             if (remainingUnits == 0) {
                 break;
             }
@@ -207,15 +207,15 @@ public final class CurrencyExchangeOfferHome {
         return calculateTotal(getAvailableSellOffers(currencyId, 0L), units);
     }
 
-    private List<CurrencyExchangeOffer> getAvailableSellOffers(long currencyId, long maxRateNQT) {
-        List<CurrencyExchangeOffer> currencySellOffers = new ArrayList<>();
+    private List<ExchangeOffer> getAvailableSellOffers(long currencyId, long maxRateNQT) {
+        List<ExchangeOffer> currencySellOffers = new ArrayList<>();
         DbClause dbClause = new DbClause.LongClause("currency_id", currencyId).and(availableOnlyDbClause);
         if (maxRateNQT > 0) {
             dbClause = dbClause.and(new DbClause.LongClause("rate", DbClause.Op.LTE, maxRateNQT));
         }
-        try (DbIterator<CurrencySellOffer> offers = getSellOffers(dbClause, 0, -1,
+        try (DbIterator<SellOffer> offers = getSellOffers(dbClause, 0, -1,
                 " ORDER BY rate ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ")) {
-            for (CurrencySellOffer offer : offers) {
+            for (SellOffer offer : offers) {
                 currencySellOffers.add(offer);
             }
         }
@@ -223,11 +223,11 @@ public final class CurrencyExchangeOfferHome {
     }
 
     void exchangeNXTForCurrency(Transaction transaction, Account account, final long currencyId, final long rateNQT, final long units) {
-        List<CurrencyExchangeOffer> currencySellOffers = getAvailableSellOffers(currencyId, rateNQT);
+        List<ExchangeOffer> currencySellOffers = getAvailableSellOffers(currencyId, rateNQT);
         long totalAmountNQT = 0;
         long remainingUnits = units;
 
-        for (CurrencyExchangeOffer offer : currencySellOffers) {
+        for (ExchangeOffer offer : currencySellOffers) {
             if (remainingUnits == 0) {
                 break;
             }
@@ -258,8 +258,8 @@ public final class CurrencyExchangeOfferHome {
         account.addToUnconfirmedBalanceNQT(LedgerEvent.CURRENCY_EXCHANGE, transactionId, Math.multiplyExact(units, rateNQT) - totalAmountNQT);
     }
 
-    void removeOffer(LedgerEvent event, CurrencyBuyOffer buyOffer) {
-        CurrencySellOffer sellOffer = buyOffer.getCounterOffer();
+    void removeOffer(LedgerEvent event, BuyOffer buyOffer) {
+        SellOffer sellOffer = buyOffer.getCounterOffer();
 
         removeBuyOffer(buyOffer);
         removeSellOffer(sellOffer);
@@ -269,7 +269,7 @@ public final class CurrencyExchangeOfferHome {
         account.addToUnconfirmedCurrencyUnits(event, buyOffer.getId(), buyOffer.getCurrencyId(), sellOffer.getSupply());
     }
 
-    public abstract class CurrencyExchangeOffer {
+    public abstract class ExchangeOffer {
 
         final long id;
         private final long currencyId;
@@ -282,8 +282,8 @@ public final class CurrencyExchangeOfferHome {
         private final short transactionIndex;
         private final int transactionHeight;
 
-        CurrencyExchangeOffer(long id, long currencyId, long accountId, long rateNQT, long limit, long supply,
-                              int expirationHeight, int transactionHeight, short transactionIndex) {
+        ExchangeOffer(long id, long currencyId, long accountId, long rateNQT, long limit, long supply,
+                      int expirationHeight, int transactionHeight, short transactionIndex) {
             this.id = id;
             this.currencyId = currencyId;
             this.accountId = accountId;
@@ -296,7 +296,7 @@ public final class CurrencyExchangeOfferHome {
             this.transactionHeight = transactionHeight;
         }
 
-        CurrencyExchangeOffer(ResultSet rs) throws SQLException {
+        ExchangeOffer(ResultSet rs) throws SQLException {
             this.id = rs.getLong("id");
             this.currencyId = rs.getLong("currency_id");
             this.accountId = rs.getLong("account_id");
@@ -361,7 +361,7 @@ public final class CurrencyExchangeOfferHome {
             return creationHeight;
         }
 
-        public abstract CurrencyExchangeOffer getCounterOffer();
+        public abstract ExchangeOffer getCounterOffer();
 
         long increaseSupply(long delta) {
             long excess = Math.max(Math.addExact(supply, Math.subtractExact(delta, limit)), 0);
@@ -379,19 +379,19 @@ public final class CurrencyExchangeOfferHome {
         return buyOfferTable.getCount();
     }
 
-    public CurrencyBuyOffer getBuyOffer(long offerId) {
+    public BuyOffer getBuyOffer(long offerId) {
         return buyOfferTable.get(buyOfferDbKeyFactory.newKey(offerId));
     }
 
-    public DbIterator<CurrencyBuyOffer> getAllBuyOffers(int from, int to) {
+    public DbIterator<BuyOffer> getAllBuyOffers(int from, int to) {
         return buyOfferTable.getAll(from, to);
     }
 
-    public DbIterator<CurrencyBuyOffer> getBuyOffers(Currency currency, int from, int to) {
+    public DbIterator<BuyOffer> getBuyOffers(Currency currency, int from, int to) {
         return getCurrencyBuyOffers(currency.getId(), false, from, to);
     }
 
-    public DbIterator<CurrencyBuyOffer> getCurrencyBuyOffers(long currencyId, boolean availableOnly, int from, int to) {
+    public DbIterator<BuyOffer> getCurrencyBuyOffers(long currencyId, boolean availableOnly, int from, int to) {
         DbClause dbClause = new DbClause.LongClause("currency_id", currencyId);
         if (availableOnly) {
             dbClause = dbClause.and(availableOnlyDbClause);
@@ -399,7 +399,7 @@ public final class CurrencyExchangeOfferHome {
         return buyOfferTable.getManyBy(dbClause, from, to, " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
     }
 
-    public DbIterator<CurrencyBuyOffer> getAccountBuyOffers(long accountId, boolean availableOnly, int from, int to) {
+    public DbIterator<BuyOffer> getAccountBuyOffers(long accountId, boolean availableOnly, int from, int to) {
         DbClause dbClause = new DbClause.LongClause("account_id", accountId);
         if (availableOnly) {
             dbClause = dbClause.and(availableOnlyDbClause);
@@ -407,49 +407,49 @@ public final class CurrencyExchangeOfferHome {
         return buyOfferTable.getManyBy(dbClause, from, to, " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
     }
 
-    public CurrencyBuyOffer getBuyOffer(Currency currency, Account account) {
+    public BuyOffer getBuyOffer(Currency currency, Account account) {
         return getBuyOffer(currency.getId(), account.getId());
     }
 
-    public CurrencyBuyOffer getBuyOffer(final long currencyId, final long accountId) {
+    public BuyOffer getBuyOffer(final long currencyId, final long accountId) {
         return buyOfferTable.getBy(new DbClause.LongClause("currency_id", currencyId).and(new DbClause.LongClause("account_id", accountId)));
     }
 
-    public DbIterator<CurrencyBuyOffer> getBuyOffers(DbClause dbClause, int from, int to) {
+    public DbIterator<BuyOffer> getBuyOffers(DbClause dbClause, int from, int to) {
         return buyOfferTable.getManyBy(dbClause, from, to);
     }
 
-    public DbIterator<CurrencyBuyOffer> getBuyOffers(DbClause dbClause, int from, int to, String sort) {
+    public DbIterator<BuyOffer> getBuyOffers(DbClause dbClause, int from, int to, String sort) {
         return buyOfferTable.getManyBy(dbClause, from, to, sort);
     }
 
     void addBuyOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
-        buyOfferTable.insert(new CurrencyBuyOffer(transaction, attachment));
+        buyOfferTable.insert(new BuyOffer(transaction, attachment));
     }
 
-    void removeBuyOffer(CurrencyBuyOffer buyOffer) {
+    void removeBuyOffer(BuyOffer buyOffer) {
         buyOfferTable.delete(buyOffer);
     }
 
 
-    public final class CurrencyBuyOffer extends CurrencyExchangeOffer {
+    public final class BuyOffer extends ExchangeOffer {
 
         private final DbKey dbKey;
 
-        private CurrencyBuyOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
+        private BuyOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
             super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getBuyRateNQT(),
                     attachment.getTotalBuyLimit(), attachment.getInitialBuySupply(), attachment.getExpirationHeight(), transaction.getHeight(),
                     transaction.getIndex());
             this.dbKey = buyOfferDbKeyFactory.newKey(id);
         }
 
-        private CurrencyBuyOffer(ResultSet rs, DbKey dbKey) throws SQLException {
+        private BuyOffer(ResultSet rs, DbKey dbKey) throws SQLException {
             super(rs);
             this.dbKey = dbKey;
         }
 
         @Override
-        public CurrencySellOffer getCounterOffer() {
+        public SellOffer getCounterOffer() {
             return getSellOffer(id);
         }
 
@@ -470,19 +470,19 @@ public final class CurrencyExchangeOfferHome {
         return sellOfferTable.getCount();
     }
 
-    public CurrencySellOffer getSellOffer(long id) {
+    public SellOffer getSellOffer(long id) {
         return sellOfferTable.get(sellOfferDbKeyFactory.newKey(id));
     }
 
-    public DbIterator<CurrencySellOffer> getAllSellOffers(int from, int to) {
+    public DbIterator<SellOffer> getAllSellOffers(int from, int to) {
         return sellOfferTable.getAll(from, to);
     }
 
-    public DbIterator<CurrencySellOffer> getSellOffers(Currency currency, int from, int to) {
+    public DbIterator<SellOffer> getSellOffers(Currency currency, int from, int to) {
         return getCurrencySellOffers(currency.getId(), false, from, to);
     }
 
-    public DbIterator<CurrencySellOffer> getCurrencySellOffers(long currencyId, boolean availableOnly, int from, int to) {
+    public DbIterator<SellOffer> getCurrencySellOffers(long currencyId, boolean availableOnly, int from, int to) {
         DbClause dbClause = new DbClause.LongClause("currency_id", currencyId);
         if (availableOnly) {
             dbClause = dbClause.and(availableOnlyDbClause);
@@ -490,7 +490,7 @@ public final class CurrencyExchangeOfferHome {
         return sellOfferTable.getManyBy(dbClause, from, to, " ORDER BY rate ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
     }
 
-    public DbIterator<CurrencySellOffer> getAccountSellOffers(long accountId, boolean availableOnly, int from, int to) {
+    public DbIterator<SellOffer> getAccountSellOffers(long accountId, boolean availableOnly, int from, int to) {
         DbClause dbClause = new DbClause.LongClause("account_id", accountId);
         if (availableOnly) {
             dbClause = dbClause.and(availableOnlyDbClause);
@@ -498,49 +498,49 @@ public final class CurrencyExchangeOfferHome {
         return sellOfferTable.getManyBy(dbClause, from, to, " ORDER BY rate ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
     }
 
-    public CurrencySellOffer getSellOffer(Currency currency, Account account) {
+    public SellOffer getSellOffer(Currency currency, Account account) {
         return getSellOffer(currency.getId(), account.getId());
     }
 
-    public CurrencySellOffer getSellOffer(final long currencyId, final long accountId) {
+    public SellOffer getSellOffer(final long currencyId, final long accountId) {
         return sellOfferTable.getBy(new DbClause.LongClause("currency_id", currencyId).and(new DbClause.LongClause("account_id", accountId)));
     }
 
-    public DbIterator<CurrencySellOffer> getSellOffers(DbClause dbClause, int from, int to) {
+    public DbIterator<SellOffer> getSellOffers(DbClause dbClause, int from, int to) {
         return sellOfferTable.getManyBy(dbClause, from, to);
     }
 
-    public DbIterator<CurrencySellOffer> getSellOffers(DbClause dbClause, int from, int to, String sort) {
+    public DbIterator<SellOffer> getSellOffers(DbClause dbClause, int from, int to, String sort) {
         return sellOfferTable.getManyBy(dbClause, from, to, sort);
     }
 
     void addSellOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
-        sellOfferTable.insert(new CurrencySellOffer(transaction, attachment));
+        sellOfferTable.insert(new SellOffer(transaction, attachment));
     }
 
-    void removeSellOffer(CurrencySellOffer sellOffer) {
+    void removeSellOffer(SellOffer sellOffer) {
         sellOfferTable.delete(sellOffer);
     }
 
 
-    public final class CurrencySellOffer extends CurrencyExchangeOffer {
+    public final class SellOffer extends ExchangeOffer {
 
         private final DbKey dbKey;
 
-        private CurrencySellOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
+        private SellOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
             super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateNQT(),
                     attachment.getTotalSellLimit(), attachment.getInitialSellSupply(), attachment.getExpirationHeight(), transaction.getHeight(),
                     transaction.getIndex());
             this.dbKey = sellOfferDbKeyFactory.newKey(id);
         }
 
-        private CurrencySellOffer(ResultSet rs, DbKey dbKey) throws SQLException {
+        private SellOffer(ResultSet rs, DbKey dbKey) throws SQLException {
             super(rs);
             this.dbKey = dbKey;
         }
 
         @Override
-        public CurrencyBuyOffer getCounterOffer() {
+        public BuyOffer getCounterOffer() {
             return getBuyOffer(id);
         }
 

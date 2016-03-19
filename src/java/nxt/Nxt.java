@@ -349,7 +349,7 @@ public final class Nxt {
                 VoteHome.init();
                 PhasingVoteHome.init();
                 Currency.init();
-                CurrencyExchangeOfferHome.init();
+                ExchangeOfferHome.init();
                 CurrencyFounderHome.init();
                 CurrencyMint.init();
                 CurrencyTransfer.init();
