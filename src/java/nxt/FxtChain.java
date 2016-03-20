@@ -16,11 +16,11 @@
 
 package nxt;
 
-public final class ForgingChain extends Chain {
+public final class FxtChain extends Chain {
 
-    public static final ForgingChain FXT = new ForgingChain();
+    public static final FxtChain FXT = new FxtChain();
 
-    private ForgingChain() {
+    private FxtChain() {
         super("FXT");
     }
 

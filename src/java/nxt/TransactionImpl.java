@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-final class TransactionImpl implements Transaction {
+final class TransactionImpl implements ChildTransaction {
 
     static final class BuilderImpl implements Builder {
 

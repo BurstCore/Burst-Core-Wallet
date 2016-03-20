@@ -27,22 +27,6 @@ public interface Transaction {
 
         Builder recipientId(long recipientId);
 
-        Builder referencedTransactionFullHash(String referencedTransactionFullHash);
-
-        Builder appendix(Appendix.Message message);
-
-        Builder appendix(Appendix.EncryptedMessage encryptedMessage);
-
-        Builder appendix(Appendix.EncryptToSelfMessage encryptToSelfMessage);
-
-        Builder appendix(Appendix.PublicKeyAnnouncement publicKeyAnnouncement);
-
-        Builder appendix(Appendix.PrunablePlainMessage prunablePlainMessage);
-
-        Builder appendix(Appendix.PrunableEncryptedMessage prunableEncryptedMessage);
-
-        Builder appendix(Appendix.Phasing phasing);
-
         Builder timestamp(int timestamp);
 
         Builder ecBlockHeight(int height);
@@ -58,6 +42,8 @@ public interface Transaction {
     long getId();
 
     String getStringId();
+
+    Chain getChain();
 
     long getSenderId();
 
@@ -81,11 +67,9 @@ public interface Transaction {
 
     int getExpiration();
 
-    long getAmountNQT();
+    long getAmount();
 
-    long getFeeNQT();
-
-    String getReferencedTransactionFullHash();
+    long getFee();
 
     byte[] getSignature();
 
@@ -110,18 +94,6 @@ public interface Transaction {
     byte getVersion();
 
     int getFullSize();
-
-    Appendix.Message getMessage();
-
-    Appendix.EncryptedMessage getEncryptedMessage();
-
-    Appendix.EncryptToSelfMessage getEncryptToSelfMessage();
-
-    Appendix.Phasing getPhasing();
-
-    Appendix.PrunablePlainMessage getPrunablePlainMessage();
-
-    Appendix.PrunableEncryptedMessage getPrunableEncryptedMessage();
 
     List<? extends Appendix> getAppendages();
 
