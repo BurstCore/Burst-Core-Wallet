@@ -56,6 +56,10 @@ public class Table {
         }
     }
 
+    public final String getSchemaTable() {
+        return schemaTable;
+    }
+
     @Override
     public final String toString() {
         return schemaTable;

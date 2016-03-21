@@ -17,6 +17,7 @@
 package nxt;
 
 import nxt.db.DbUtils;
+import nxt.db.Table;
 import nxt.util.Convert;
 
 import java.nio.ByteBuffer;
@@ -28,15 +29,43 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-final class TransactionDb {
+final class TransactionHome {
 
-    static TransactionImpl findTransaction(long transactionId) {
+    private static final Map<Chain, TransactionHome> transactionHomeMap = new HashMap<>();
+
+    public static TransactionHome forChain(Chain chain) {
+        return transactionHomeMap.get(chain);
+    }
+
+    static void init() {}
+
+    static {
+        ChildChain.getAll().forEach(childChain -> transactionHomeMap.put(childChain, new TransactionHome(childChain)));
+        transactionHomeMap.put(FxtChain.FXT, new TransactionHome(FxtChain.FXT));
+    }
+
+    private final Chain chain;
+    private final Table transactionTable;
+
+    private TransactionHome(ChildChain chain) {
+        this.chain = chain;
+        transactionTable = new Table(chain.getSchemaTable("transaction"));
+    }
+
+    private TransactionHome(FxtChain chain) {
+        this.chain = chain;
+        transactionTable = new Table(chain.getSchemaTable("transaction_fxt"));
+    }
+
+    TransactionImpl findTransaction(long transactionId) {
         return findTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    static TransactionImpl findTransaction(long transactionId, int height) {
+    TransactionImpl findTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized (BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
@@ -45,8 +74,8 @@ final class TransactionDb {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE id = ?")) {
+        try (Connection con = transactionTable.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next() && rs.getInt("height") <= height) {
@@ -61,11 +90,11 @@ final class TransactionDb {
         }
     }
 
-    static TransactionImpl findTransactionByFullHash(byte[] fullHash) {
+    TransactionImpl findTransactionByFullHash(byte[] fullHash) {
         return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
-    static TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
+    TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
         synchronized(BlockDb.blockCache) {
@@ -76,8 +105,8 @@ final class TransactionDb {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE id = ?")) {
+        try (Connection con = transactionTable.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
@@ -93,11 +122,11 @@ final class TransactionDb {
         }
     }
 
-    static boolean hasTransaction(long transactionId) {
+    boolean hasTransaction(long transactionId) {
         return hasTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    static boolean hasTransaction(long transactionId, int height) {
+    boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
@@ -106,8 +135,8 @@ final class TransactionDb {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT height FROM transaction WHERE id = ?")) {
+        try (Connection con = transactionTable.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT height FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() && rs.getInt("height") <= height;
@@ -117,11 +146,11 @@ final class TransactionDb {
         }
     }
 
-    static boolean hasTransactionByFullHash(byte[] fullHash) {
+    boolean hasTransactionByFullHash(byte[] fullHash) {
         return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash)));
     }
 
-    static boolean hasTransactionByFullHash(byte[] fullHash, int height) {
+    boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
         synchronized(BlockDb.blockCache) {
@@ -132,8 +161,8 @@ final class TransactionDb {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT full_hash, height FROM transaction WHERE id = ?")) {
+        try (Connection con = transactionTable.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT full_hash, height FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height;
@@ -143,7 +172,7 @@ final class TransactionDb {
         }
     }
 
-    static byte[] getFullHash(long transactionId) {
+    byte[] getFullHash(long transactionId) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
@@ -152,8 +181,8 @@ final class TransactionDb {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT full_hash FROM transaction WHERE id = ?")) {
+        try (Connection con = transactionTable.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT full_hash FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() ? rs.getBytes("full_hash") : null;
@@ -163,7 +192,7 @@ final class TransactionDb {
         }
     }
 
-    static TransactionImpl loadTransaction(Connection con, ResultSet rs) throws NxtException.NotValidException {
+    TransactionImpl loadTransaction(Connection con, ResultSet rs) throws NxtException.NotValidException {
         try {
 
             byte type = rs.getByte("type");
@@ -242,7 +271,7 @@ final class TransactionDb {
         }
     }
 
-    static List<TransactionImpl> findBlockTransactions(long blockId) {
+    List<TransactionImpl> findBlockTransactions(long blockId) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {
             BlockImpl block = BlockDb.blockCache.get(blockId);
@@ -251,15 +280,15 @@ final class TransactionDb {
             }
         }
         // Search the database
-        try (Connection con = Db.db.getConnection()) {
+        try (Connection con = transactionTable.getConnection()) {
             return findBlockTransactions(con, blockId);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
-    static List<TransactionImpl> findBlockTransactions(Connection con, long blockId) {
-        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE block_id = ? ORDER BY transaction_index")) {
+    List<TransactionImpl> findBlockTransactions(Connection con, long blockId) {
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable() + " WHERE block_id = ? ORDER BY transaction_index")) {
             pstmt.setLong(1, blockId);
             pstmt.setFetchSize(50);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -277,13 +306,13 @@ final class TransactionDb {
         }
     }
 
-    static List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
+    List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
         List<PrunableTransaction> result = new ArrayList<>();
         try (PreparedStatement pstmt = con.prepareStatement("SELECT id, type, subtype, "
                 + "has_prunable_attachment AS prunable_attachment, "
                 + "has_prunable_message AS prunable_plain_message, "
                 + "has_prunable_encrypted_message AS prunable_encrypted_message "
-                + "FROM transaction WHERE (timestamp BETWEEN ? AND ?) AND "
+                + "FROM " + transactionTable.getSchemaTable() + " WHERE (timestamp BETWEEN ? AND ?) AND "
                 + "(has_prunable_attachment = TRUE OR has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE)")) {
             pstmt.setInt(1, minTimestamp);
             pstmt.setInt(2, maxTimestamp);
@@ -305,12 +334,12 @@ final class TransactionDb {
         return result;
     }
 
-    static void saveTransactions(Connection con, List<TransactionImpl> transactions) {
+    void saveTransactions(Connection con, List<TransactionImpl> transactions) {
         try {
             short index = 0;
             for (TransactionImpl transaction : transactions) {
-                try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO transaction (id, deadline, "
-                        + "recipient_id, amount, fee, referenced_transaction_full_hash, height, "
+                try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + transactionTable.getSchemaTable()
+                        + " (id, deadline, recipient_id, amount, fee, referenced_transaction_full_hash, height, "
                         + "block_id, signature, timestamp, type, subtype, sender_id, attachment_bytes, "
                         + "block_timestamp, full_hash, version, has_message, has_encrypted_message, has_public_key_announcement, "
                         + "has_encrypttoself_message, phased, has_prunable_message, has_prunable_encrypted_message, "

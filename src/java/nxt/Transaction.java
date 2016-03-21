@@ -43,8 +43,6 @@ public interface Transaction {
 
     String getStringId();
 
-    Chain getChain();
-
     long getSenderId();
 
     byte[] getSenderPublicKey();
@@ -67,9 +65,9 @@ public interface Transaction {
 
     int getExpiration();
 
-    long getAmount();
+    long getAmountNQT();
 
-    long getFee();
+    long getFeeNQT();
 
     byte[] getSignature();
 

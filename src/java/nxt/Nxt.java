@@ -331,6 +331,7 @@ public final class Nxt {
                 setServerStatus("NXT Server - Loading database", null);
                 Db.init();
                 setServerStatus("NXT Server - Loading resources", null);
+                TransactionHome.init();
                 TransactionProcessorImpl.getInstance();
                 BlockchainProcessorImpl.getInstance();
                 Account.init();
@@ -339,7 +340,7 @@ public final class Nxt {
                 AccountLedger.init();
                 AliasHome.init();
                 Asset.init();
-                DigitalGoodsStore.init();
+                DGSHome.init();
                 OrderHome.init();
                 PollHome.init();
                 PhasingPollHome.init();
