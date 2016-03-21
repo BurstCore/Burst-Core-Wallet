@@ -90,7 +90,7 @@ public interface Attachment extends Appendix {
         }
 
         final int getFinishValidationHeight(Transaction transaction) {
-            return isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : Nxt.getBlockchain().getHeight();
+            return isPhased(transaction) ? ((ChildTransaction)transaction).getPhasing().getFinishHeight() - 1 : Nxt.getBlockchain().getHeight();
         }
 
     }
@@ -2890,7 +2890,7 @@ public interface Attachment extends Appendix {
         @Override
         void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
             if (data == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-                data = ShufflingParticipant.getData(getShufflingId(), transaction.getSenderId());
+                data = ShufflingParticipantHome.forChain((ChildChain)transaction.getChain()).getData(getShufflingId(), transaction.getSenderId());
             }
         }
 
@@ -2901,7 +2901,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-            ShufflingParticipant.restoreData(getShufflingId(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
+            ShufflingParticipantHome.forChain((ChildChain)transaction.getChain()).restoreData(getShufflingId(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
         }
 
     }
@@ -3135,7 +3135,7 @@ public interface Attachment extends Appendix {
         private final boolean isText;
         private final String filename;
         private final byte[] data;
-        private volatile TaggedData taggedData;
+        private volatile TaggedDataHome.TaggedData taggedData;
 
         private TaggedDataAttachment(ByteBuffer buffer) {
             super(buffer);
@@ -3293,7 +3293,7 @@ public interface Attachment extends Appendix {
         @Override
         void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
             if (data == null && taggedData == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-                taggedData = TaggedData.getData(getTaggedDataId(transaction));
+                taggedData = TaggedDataHome.forChain((ChildChain)transaction.getChain()).getData(getTaggedDataId(transaction));
             }
         }
 
@@ -3378,7 +3378,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-            TaggedData.restore(transaction, this, blockTimestamp, height);
+            TaggedDataHome.forChain((ChildChain)transaction.getChain()).restore(transaction, this, blockTimestamp, height);
         }
 
     }
@@ -3408,7 +3408,7 @@ public interface Attachment extends Appendix {
             this.jsonIsPruned = attachmentData.get("data") == null;
         }
 
-        public TaggedDataExtend(TaggedData taggedData) {
+        public TaggedDataExtend(TaggedDataHome.TaggedData taggedData) {
             super(taggedData.getName(), taggedData.getDescription(), taggedData.getTags(), taggedData.getType(),
                     taggedData.getChannel(), taggedData.isText(), taggedData.getFilename(), taggedData.getData());
             this.taggedDataId = taggedData.getId();
@@ -3446,7 +3446,7 @@ public interface Attachment extends Appendix {
                 hash = super.getHash();
             }
             if (hash == null) {
-                TaggedDataUpload taggedDataUpload = (TaggedDataUpload)TransactionDb.findTransaction(taggedDataId).getAttachment();
+                TaggedDataUpload taggedDataUpload = (TaggedDataUpload)TransactionHome.findTransaction(taggedDataId).getAttachment();
                 hash = taggedDataUpload.getHash();
             }
             return hash;

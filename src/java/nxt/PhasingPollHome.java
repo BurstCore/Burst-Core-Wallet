@@ -378,7 +378,7 @@ public final class PhasingPollHome {
             List<TransactionImpl> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    transactions.add(TransactionDb.findTransaction(rs.getLong("transaction_id")));
+                    transactions.add(TransactionHome.findTransaction(rs.getLong("transaction_id")));
                 }
             }
             return transactions;
@@ -462,7 +462,7 @@ public final class PhasingPollHome {
         }
 
         public byte[] getFullHash() {
-            return TransactionDb.getFullHash(this.id);
+            return TransactionHome.forChain(childChain).getFullHash(this.id);
         }
 
         public List<byte[]> getLinkedFullHashes() {
@@ -490,7 +490,7 @@ public final class PhasingPollHome {
             if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
                 int count = 0;
                 for (byte[] hash : getLinkedFullHashes()) {
-                    if (TransactionDb.hasTransactionByFullHash(hash, height)) {
+                    if (TransactionHome.hasTransactionByFullHash(hash, height)) {
                         count += 1;
                     }
                 }

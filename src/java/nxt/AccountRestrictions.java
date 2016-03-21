@@ -122,8 +122,10 @@ public final class AccountRestrictions {
             return maxDuration;
         }
 
+        //TODO: must check all chains
         private void checkTransaction(Transaction transaction, boolean validatingAtFinish) throws AccountControlException {
-            if (!validatingAtFinish && maxFees > 0 && Math.addExact(transaction.getFeeNQT(), PhasingPoll.getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
+            if (!validatingAtFinish && maxFees > 0 && Math.addExact(transaction.getFeeNQT(),
+                    PhasingPollHome.forChain((ChildChain)transaction.getChain()).getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
                 throw new AccountControlException(String.format("Maximum total fees limit of %f NXT exceeded", ((double)maxFees)/Constants.ONE_NXT));
             }
             if (transaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING) {
@@ -135,7 +137,7 @@ public final class AccountRestrictions {
                 Logger.logDebugMessage("Account control no longer valid: " + e.getMessage());
                 return;
             }
-            Appendix.Phasing phasingAppendix = transaction.getPhasing();
+            Appendix.Phasing phasingAppendix = ((ChildTransaction)transaction).getPhasing();
             if (phasingAppendix == null) {
                 throw new AccountControlException("Non-phased transaction when phasing account control is enabled");
             }

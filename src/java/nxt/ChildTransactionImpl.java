@@ -17,12 +17,18 @@
 package nxt;
 
 import nxt.crypto.Crypto;
+import nxt.db.DbUtils;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,6 +39,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
 
     static final class BuilderImpl extends TransactionImpl.BuilderImpl implements ChildTransaction.Builder {
 
+        private final ChildChain childChain;
         private byte[] referencedTransactionFullHash;
         private List<Appendix.AbstractAppendix> appendages;
         private Appendix.Message message;
@@ -43,9 +50,10 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         private Appendix.PrunablePlainMessage prunablePlainMessage;
         private Appendix.PrunableEncryptedMessage prunableEncryptedMessage;
 
-        BuilderImpl(byte version, byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline,
+        BuilderImpl(ChildChain childChain, byte version, byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline,
                     Attachment.AbstractAttachment attachment) {
             super(version, senderPublicKey, amountNQT, feeNQT, deadline, attachment);
+            this.childChain = childChain;
         }
 
         @Override
@@ -148,6 +156,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         }
     }
 
+    private final ChildChain childChain;
     private final long feeNQT;
     private final byte[] signature;
     private final byte[] referencedTransactionFullHash;
@@ -161,6 +170,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
 
     private ChildTransactionImpl(BuilderImpl builder, String secretPhrase) throws NxtException.NotValidException {
         super(builder);
+        this.childChain = builder.childChain;
         this.referencedTransactionFullHash = builder.referencedTransactionFullHash;
         this.message  = builder.message;
         this.encryptedMessage = builder.encryptedMessage;
@@ -190,6 +200,11 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         } else {
             this.signature = null;
         }
+    }
+
+    @Override
+    public ChildChain getChain() {
+        return childChain;
     }
 
     @Override
@@ -324,7 +339,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         if (referencedTransactionFullHash != null && referencedTransactionFullHash.length != 32) {
             throw new NxtException.NotValidException("Invalid referenced transaction full hash " + Convert.toHexString(referencedTransactionFullHash));
         }
-        boolean validatingAtFinish = phasing != null && getSignature() != null && PhasingPoll.getPoll(getId()) != null;
+        boolean validatingAtFinish = phasing != null && getSignature() != null && PhasingPollHome.forChain(childChain).getPoll(getId()) != null;
         for (Appendix.AbstractAppendix appendage : appendages()) {
             appendage.loadPrunable(this);
             if (! appendage.verifyVersion()) {
@@ -368,11 +383,11 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             }
         }
         if (referencedTransactionFullHash != null) {
-            senderAccount.addToUnconfirmedBalanceNQT(getType().getLedgerEvent(), getId(),
+            BalanceHome.forChain(childChain).getBalance(getSenderId()).addToUnconfirmedBalance(getType().getLedgerEvent(), getId(),
                     0, Constants.UNCONFIRMED_POOL_DEPOSIT_NQT);
         }
         if (attachmentIsPhased()) {
-            senderAccount.addToBalanceNQT(getType().getLedgerEvent(), getId(), 0, -feeNQT);
+            BalanceHome.forChain(childChain).getBalance(getSenderId()).addToBalance(getType().getLedgerEvent(), getId(), 0, -feeNQT);
         }
         for (Appendix.AbstractAppendix appendage : appendages()) {
             if (!appendage.isPhased(this)) {
@@ -451,6 +466,146 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         return flags;
     }
 
+    @Override
+    void save(Connection con, String schemaTable) throws SQLException {
+        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + schemaTable
+                + " (id, deadline, recipient_id, amount, fee, referenced_transaction_full_hash, height, "
+                + "block_id, signature, timestamp, type, subtype, sender_id, attachment_bytes, "
+                + "block_timestamp, full_hash, version, has_message, has_encrypted_message, has_public_key_announcement, "
+                + "has_encrypttoself_message, phased, has_prunable_message, has_prunable_encrypted_message, "
+                + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            int i = 0;
+            pstmt.setLong(++i, getId());
+            pstmt.setShort(++i, getDeadline());
+            DbUtils.setLongZeroToNull(pstmt, ++i, getRecipientId());
+            pstmt.setLong(++i, getAmountNQT());
+            pstmt.setLong(++i, getFeeNQT());
+            DbUtils.setBytes(pstmt, ++i, referencedTransactionFullHash());
+            pstmt.setInt(++i, getHeight());
+            pstmt.setLong(++i, getBlockId());
+            pstmt.setBytes(++i, getSignature());
+            pstmt.setInt(++i, getTimestamp());
+            pstmt.setByte(++i, getType().getType());
+            pstmt.setByte(++i, getType().getSubtype());
+            pstmt.setLong(++i, getSenderId());
+            int bytesLength = 0;
+            for (Appendix appendage : getAppendages()) {
+                bytesLength += appendage.getSize();
+            }
+            if (bytesLength == 0) {
+                pstmt.setNull(++i, Types.VARBINARY);
+            } else {
+                ByteBuffer buffer = ByteBuffer.allocate(bytesLength);
+                buffer.order(ByteOrder.LITTLE_ENDIAN);
+                for (Appendix appendage : getAppendages()) {
+                    appendage.putBytes(buffer);
+                }
+                pstmt.setBytes(++i, buffer.array());
+            }
+            pstmt.setInt(++i, getBlockTimestamp());
+            pstmt.setBytes(++i, fullHash());
+            pstmt.setByte(++i, getVersion());
+            pstmt.setBoolean(++i, getMessage() != null);
+            pstmt.setBoolean(++i, getEncryptedMessage() != null);
+            pstmt.setBoolean(++i, getPublicKeyAnnouncement() != null);
+            pstmt.setBoolean(++i, getEncryptToSelfMessage() != null);
+            pstmt.setBoolean(++i, getPhasing() != null);
+            pstmt.setBoolean(++i, hasPrunablePlainMessage());
+            pstmt.setBoolean(++i, hasPrunableEncryptedMessage());
+            pstmt.setBoolean(++i, getAttachment() instanceof Appendix.Prunable);
+            pstmt.setInt(++i, getECBlockHeight());
+            DbUtils.setLongZeroToNull(pstmt, ++i, getECBlockId());
+            pstmt.setShort(++i, getIndex());
+            pstmt.executeUpdate();
+        }
+        if (referencedTransactionFullHash() != null) {
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO referenced_transaction "
+                    + "(transaction_id, referenced_transaction_id) VALUES (?, ?)")) {
+                pstmt.setLong(1, getId());
+                pstmt.setLong(2, Convert.fullHashToId(referencedTransactionFullHash()));
+                pstmt.executeUpdate();
+            }
+        }
+    }
+
+    static ChildTransactionImpl loadTransaction(ChildChain childChain, Connection con, ResultSet rs) throws NxtException.NotValidException {
+        try {
+            byte type = rs.getByte("type");
+            byte subtype = rs.getByte("subtype");
+            int timestamp = rs.getInt("timestamp");
+            short deadline = rs.getShort("deadline");
+            long amountNQT = rs.getLong("amount");
+            long feeNQT = rs.getLong("fee");
+            byte[] referencedTransactionFullHash = rs.getBytes("referenced_transaction_full_hash");
+            int ecBlockHeight = rs.getInt("ec_block_height");
+            long ecBlockId = rs.getLong("ec_block_id");
+            byte[] signature = rs.getBytes("signature");
+            long blockId = rs.getLong("block_id");
+            int height = rs.getInt("height");
+            long id = rs.getLong("id");
+            long senderId = rs.getLong("sender_id");
+            byte[] attachmentBytes = rs.getBytes("attachment_bytes");
+            int blockTimestamp = rs.getInt("block_timestamp");
+            byte[] fullHash = rs.getBytes("full_hash");
+            byte version = rs.getByte("version");
+            short transactionIndex = rs.getShort("transaction_index");
+
+            ByteBuffer buffer = null;
+            if (attachmentBytes != null) {
+                buffer = ByteBuffer.wrap(attachmentBytes);
+                buffer.order(ByteOrder.LITTLE_ENDIAN);
+            }
+
+            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            ChildTransactionImpl.BuilderImpl builder = new ChildTransactionImpl.BuilderImpl(childChain, version, null,
+                    amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer));
+            builder.referencedTransactionFullHash(referencedTransactionFullHash)
+                    .timestamp(timestamp)
+                    .signature(signature)
+                    .blockId(blockId)
+                    .height(height)
+                    .id(id)
+                    .senderId(senderId)
+                    .blockTimestamp(blockTimestamp)
+                    .fullHash(fullHash)
+                    .ecBlockHeight(ecBlockHeight)
+                    .ecBlockId(ecBlockId)
+                    .index(transactionIndex);
+            if (transactionType.canHaveRecipient()) {
+                long recipientId = rs.getLong("recipient_id");
+                if (! rs.wasNull()) {
+                    builder.recipientId(recipientId);
+                }
+            }
+            if (rs.getBoolean("has_message")) {
+                builder.appendix(new Appendix.Message(buffer));
+            }
+            if (rs.getBoolean("has_encrypted_message")) {
+                builder.appendix(new Appendix.EncryptedMessage(buffer));
+            }
+            if (rs.getBoolean("has_public_key_announcement")) {
+                builder.appendix(new Appendix.PublicKeyAnnouncement(buffer));
+            }
+            if (rs.getBoolean("has_encrypttoself_message")) {
+                builder.appendix(new Appendix.EncryptToSelfMessage(buffer));
+            }
+            if (rs.getBoolean("phased")) {
+                builder.appendix(new Appendix.Phasing(buffer));
+            }
+            if (rs.getBoolean("has_prunable_message")) {
+                builder.appendix(new Appendix.PrunablePlainMessage(buffer));
+            }
+            if (rs.getBoolean("has_prunable_encrypted_message")) {
+                builder.appendix(new Appendix.PrunableEncryptedMessage(buffer));
+            }
+            return builder.build();
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    //TODO: child chain id in bytes
     static ChildTransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws NxtException.NotValidException {
         try {
             ByteBuffer buffer = ByteBuffer.wrap(bytes);
@@ -481,7 +636,8 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
                 ecBlockId = buffer.getLong();
             }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
-            ChildTransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountNQT, feeNQT,
+            //TODO: child chain from bytes
+            ChildTransactionImpl.BuilderImpl builder = new BuilderImpl(ChildChain.NXT, version, senderPublicKey, amountNQT, feeNQT,
                     deadline, transactionType.parseAttachment(buffer));
             builder.referencedTransactionFullHash(referencedTransactionFullHash)
                     .timestamp(timestamp)
@@ -529,7 +685,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         }
     }
 
-    static TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
+    static ChildTransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
         BuilderImpl builder = newTransactionBuilder(bytes);
         if (prunableAttachments != null) {
             Attachment.ShufflingProcessing shufflingProcessing = Attachment.ShufflingProcessing.parse(prunableAttachments);
@@ -564,6 +720,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         return transaction;
     }
 
+    //TODO: child chain in JSON
     static ChildTransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws NxtException.NotValidException {
         try {
             byte type = ((Long) transactionData.get("type")).byteValue();
@@ -589,7 +746,8 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             if (transactionType == null) {
                 throw new NxtException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
             }
-            ChildTransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey,
+            //TODO: child chain from JSON
+            ChildTransactionImpl.BuilderImpl builder = new BuilderImpl(ChildChain.NXT, version, senderPublicKey,
                     amountNQT, feeNQT, deadline,
                     transactionType.parseAttachment(attachmentData));
             builder.referencedTransactionFullHash(referencedTransactionFullHash)

@@ -39,6 +39,8 @@ public interface Transaction {
 
     }
 
+    Chain getChain();
+
     long getId();
 
     String getStringId();

@@ -169,7 +169,7 @@ public interface Appendix {
 
         @Override
         public final boolean isPhased(Transaction transaction) {
-            return isPhasable() && transaction.getPhasing() != null;
+            return isPhasable() && transaction instanceof ChildTransaction && ((ChildTransaction)transaction).getPhasing() != null;
         }
 
     }
@@ -313,7 +313,7 @@ public interface Appendix {
         private final byte[] hash;
         private final byte[] message;
         private final boolean isText;
-        private volatile PrunableMessage prunableMessage;
+        private volatile PrunableMessageHome.PrunableMessage prunableMessage;
 
         PrunablePlainMessage(ByteBuffer buffer) {
             super(buffer);
@@ -395,7 +395,7 @@ public interface Appendix {
 
         @Override
         void validate(Transaction transaction) throws NxtException.ValidationException {
-            if (transaction.getMessage() != null) {
+            if (((ChildTransaction)transaction).getMessage() != null) {
                 throw new NxtException.NotValidException("Cannot have both message and prunable message attachments");
             }
             byte[] msg = getMessage();
@@ -410,7 +410,7 @@ public interface Appendix {
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
             if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
-                PrunableMessage.add((TransactionImpl)transaction, this);
+                PrunableMessageHome.forChain((ChildChain)transaction.getChain()).add((TransactionImpl)transaction, this);
             }
         }
 
@@ -442,7 +442,8 @@ public interface Appendix {
         @Override
         final void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
             if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-                PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transaction.getId());
+                PrunableMessageHome.PrunableMessage prunableMessage = PrunableMessageHome.forChain((ChildChain)transaction.getChain())
+                        .getPrunableMessage(transaction.getId());
                 if (prunableMessage != null && prunableMessage.getMessage() != null) {
                     this.prunableMessage = prunableMessage;
                 }
@@ -461,7 +462,7 @@ public interface Appendix {
 
         @Override
         public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-            PrunableMessage.add((TransactionImpl)transaction, this, blockTimestamp, height);
+            PrunableMessageHome.forChain((ChildChain)transaction.getChain()).add((TransactionImpl)transaction, this, blockTimestamp, height);
         }
     }
 
@@ -608,7 +609,7 @@ public interface Appendix {
         private EncryptedData encryptedData;
         private final boolean isText;
         private final boolean isCompressed;
-        private volatile PrunableMessage prunableMessage;
+        private volatile PrunableMessageHome.PrunableMessage prunableMessage;
 
         PrunableEncryptedMessage(ByteBuffer buffer) {
             super(buffer);
@@ -692,7 +693,7 @@ public interface Appendix {
 
         @Override
         void validate(Transaction transaction) throws NxtException.ValidationException {
-            if (transaction.getEncryptedMessage() != null) {
+            if (((ChildTransaction)transaction).getEncryptedMessage() != null) {
                 throw new NxtException.NotValidException("Cannot have both encrypted and prunable encrypted message attachments");
             }
             EncryptedData ed = getEncryptedData();
@@ -717,7 +718,7 @@ public interface Appendix {
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
             if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
-                PrunableMessage.add((TransactionImpl)transaction, this);
+                PrunableMessageHome.forChain((ChildChain)transaction.getChain()).add((TransactionImpl)transaction, this);
             }
         }
 
@@ -766,7 +767,8 @@ public interface Appendix {
         @Override
         void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
             if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-                PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transaction.getId());
+                PrunableMessageHome.PrunableMessage prunableMessage = PrunableMessageHome.forChain((ChildChain)transaction.getChain())
+                        .getPrunableMessage(transaction.getId());
                 if (prunableMessage != null && prunableMessage.getEncryptedData() != null) {
                     this.prunableMessage = prunableMessage;
                 }
@@ -785,7 +787,7 @@ public interface Appendix {
 
         @Override
         public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-            PrunableMessage.add((TransactionImpl)transaction, this, blockTimestamp, height);
+            PrunableMessageHome.forChain((ChildChain)transaction.getChain()).add((TransactionImpl)transaction, this, blockTimestamp, height);
         }
     }
 
@@ -1335,12 +1337,12 @@ public interface Appendix {
                     if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
                         throw new NxtException.NotValidException("Duplicate linked transaction ids");
                     }
-                    TransactionImpl linkedTransaction = TransactionDb.findTransactionByFullHash(hash, currentHeight);
+                    TransactionImpl linkedTransaction = TransactionHome.findTransactionByFullHash(hash, currentHeight);
                     if (linkedTransaction != null) {
                         if (transaction.getTimestamp() - linkedTransaction.getTimestamp() > Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN) {
                             throw new NxtException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");
                         }
-                        if (linkedTransaction.getPhasing() != null) {
+                        if (linkedTransaction instanceof ChildTransaction && ((ChildTransaction)linkedTransaction).getPhasing() != null) {
                             throw new NxtException.NotCurrentlyValidException("Cannot link to an already existing phased transaction");
                         }
                     }
@@ -1362,7 +1364,7 @@ public interface Appendix {
                 if (hashedSecret.length == 0 || hashedSecret.length > Byte.MAX_VALUE) {
                     throw new NxtException.NotValidException("Invalid hashedSecret " + Convert.toHexString(hashedSecret));
                 }
-                if (PhasingPoll.getHashFunction(algorithm) == null) {
+                if (PhasingPollHome.getHashFunction(algorithm) == null) {
                     throw new NxtException.NotValidException("Invalid hashedSecretAlgorithm " + algorithm);
                 }
             } else {
@@ -1387,7 +1389,7 @@ public interface Appendix {
 
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            PhasingPoll.addPoll(transaction, this);
+            PhasingPollHome.forChain((ChildChain)transaction.getChain()).addPoll(transaction, this);
         }
 
         @Override
@@ -1415,7 +1417,8 @@ public interface Appendix {
         void reject(TransactionImpl transaction) {
             Account senderAccount = Account.getAccount(transaction.getSenderId());
             transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
-            senderAccount.addToUnconfirmedBalanceNQT(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
+            BalanceHome.forChain((ChildChain)transaction.getChain()).getBalance(transaction.getSenderId())
+                    .addToUnconfirmedBalance(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
                                                      transaction.getAmountNQT());
             TransactionProcessorImpl.getInstance()
                     .notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
@@ -1423,10 +1426,10 @@ public interface Appendix {
         }
 
         void countVotes(TransactionImpl transaction) {
-            if (PhasingPoll.getResult(transaction.getId()) != null) {
+            if (PhasingPollHome.forChain((ChildChain)transaction.getChain()).getResult(transaction.getId()) != null) {
                 return;
             }
-            PhasingPoll poll = PhasingPoll.getPoll(transaction.getId());
+            PhasingPollHome.PhasingPoll poll = PhasingPollHome.forChain((ChildChain)transaction.getChain()).getPoll(transaction.getId());
             long result = poll.countVotes();
             poll.finish(result);
             if (result >= poll.getQuorum()) {
@@ -1442,10 +1445,10 @@ public interface Appendix {
         }
 
         void tryCountVotes(TransactionImpl transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            PhasingPoll poll = PhasingPoll.getPoll(transaction.getId());
+            PhasingPollHome.PhasingPoll poll = PhasingPollHome.forChain((ChildChain)transaction.getChain()).getPoll(transaction.getId());
             long result = poll.countVotes();
             if (result >= poll.getQuorum()) {
-                if (!transaction.attachmentIsDuplicate(duplicates, false)) {
+                if (!((ChildTransactionImpl)transaction).attachmentIsDuplicate(duplicates, false)) {
                     try {
                         release(transaction);
                         poll.finish(result);

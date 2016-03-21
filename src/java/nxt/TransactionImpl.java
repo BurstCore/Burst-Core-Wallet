@@ -26,6 +26,8 @@ import org.json.simple.JSONObject;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -560,5 +562,7 @@ abstract class TransactionImpl implements Transaction {
         }
         return totalFee;
     }
+
+    abstract void save(Connection con, String schemaTable) throws SQLException;
 
 }

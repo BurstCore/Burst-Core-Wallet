@@ -262,20 +262,20 @@ public final class Nxt {
         return TransactionProcessorImpl.getInstance();
     }
 
-    public static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline, Attachment attachment) {
-        return new TransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
+    public static ChildTransaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline, Attachment attachment) {
+        return new ChildTransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
     }
 
-    public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws NxtException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes);
+    public static ChildTransaction.Builder newTransactionBuilder(byte[] transactionBytes) throws NxtException.NotValidException {
+        return ChildTransactionImpl.newTransactionBuilder(transactionBytes);
     }
 
-    public static Transaction.Builder newTransactionBuilder(JSONObject transactionJSON) throws NxtException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionJSON);
+    public static ChildTransaction.Builder newTransactionBuilder(JSONObject transactionJSON) throws NxtException.NotValidException {
+        return ChildTransactionImpl.newTransactionBuilder(transactionJSON);
     }
 
-    public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
+    public static ChildTransaction.Builder newTransactionBuilder(byte[] transactionBytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
+        return ChildTransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
     }
 
     public static int getEpochTime() {

@@ -1288,8 +1288,8 @@ public final class Account {
         return accountAssetTable.getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
     }
 
-    public DbIterator<Trade> getTrades(int from, int to) {
-        return Trade.getAccountTrades(this.id, from, to);
+    public DbIterator<TradeHome.Trade> getTrades(ChildChain childChain, int from, int to) {
+        return TradeHome.forChain(childChain).getAccountTrades(this.id, from, to);
     }
 
     public DbIterator<AssetTransfer> getAssetTransfers(int from, int to) {
@@ -1300,8 +1300,8 @@ public final class Account {
         return CurrencyTransfer.getAccountCurrencyTransfers(this.id, from, to);
     }
 
-    public DbIterator<Exchange> getExchanges(int from, int to) {
-        return Exchange.getAccountExchanges(this.id, from, to);
+    public DbIterator<ExchangeHome.Exchange> getExchanges(ChildChain childChain, int from, int to) {
+        return ExchangeHome.forChain(childChain).getAccountExchanges(this.id, from, to);
     }
 
     public AccountAsset getAsset(long assetId) {
