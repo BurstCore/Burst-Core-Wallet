@@ -443,7 +443,7 @@ public final class ShufflingHome {
         }
 
         public byte[] getFullHash() {
-            return TransactionDb.getFullHash(id);
+            return TransactionHome.getFullHash(id);
         }
 
         public Attachment.ShufflingAttachment process(final long accountId, final String secretPhrase, final byte[] recipientPublicKey) {

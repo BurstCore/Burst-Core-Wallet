@@ -262,8 +262,8 @@ public final class Nxt {
         return TransactionProcessorImpl.getInstance();
     }
 
-    public static ChildTransaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline, Attachment attachment) {
-        return new ChildTransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
+    public static ChildTransaction.Builder newTransactionBuilder(ChildChain childChain, byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline, Attachment attachment) {
+        return new ChildTransactionImpl.BuilderImpl(childChain, (byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
     }
 
     public static ChildTransaction.Builder newTransactionBuilder(byte[] transactionBytes) throws NxtException.NotValidException {
@@ -276,6 +276,22 @@ public final class Nxt {
 
     public static ChildTransaction.Builder newTransactionBuilder(byte[] transactionBytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
         return ChildTransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
+    }
+
+    public static FxtTransaction.Builder newFxtTransactionBuilder(byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline, Attachment attachment) {
+        return new FxtTransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
+    }
+
+    public static FxtTransaction.Builder newFxtTransactionBuilder(byte[] transactionBytes) throws NxtException.NotValidException {
+        return FxtTransactionImpl.newTransactionBuilder(transactionBytes);
+    }
+
+    public static FxtTransaction.Builder newFxtTransactionBuilder(JSONObject transactionJSON) throws NxtException.NotValidException {
+        return FxtTransactionImpl.newTransactionBuilder(transactionJSON);
+    }
+
+    public static FxtTransaction.Builder newFxtTransactionBuilder(byte[] transactionBytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
+        return FxtTransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
     }
 
     public static int getEpochTime() {

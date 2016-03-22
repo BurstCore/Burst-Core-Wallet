@@ -48,7 +48,7 @@ public final class EconomicClustering {
     }
 
     public static boolean verifyFork(Transaction transaction) {
-        if (transaction.getReferencedTransactionFullHash() != null) {
+        if (transaction instanceof ChildTransaction && ((ChildTransaction)transaction).getReferencedTransactionFullHash() != null) {
             return true;
         }
         if (blockchain.getHeight() - transaction.getECBlockHeight() > Constants.EC_BLOCK_DISTANCE_LIMIT) {

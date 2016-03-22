@@ -62,8 +62,8 @@ public final class DebugTrace {
 
     public static DebugTrace addDebugTrace(Set<Long> accountIds, String logName) {
         final DebugTrace debugTrace = new DebugTrace(accountIds, logName);
-        Trade.addListener(debugTrace::trace, Trade.Event.TRADE);
-        Exchange.addListener(debugTrace::trace, Exchange.Event.EXCHANGE);
+        Trade.addListener(debugTrace::trace, TradeHome.Event.TRADE);
+        Exchange.addListener(debugTrace::trace, ExchangeHome.Event.EXCHANGE);
         Currency.addListener(debugTrace::crowdfunding, Currency.Event.BEFORE_DISTRIBUTE_CROWDFUNDING);
         Currency.addListener(debugTrace::undoCrowdfunding, Currency.Event.BEFORE_UNDO_CROWDFUNDING);
         Currency.addListener(debugTrace::delete, Currency.Event.BEFORE_DELETE);
@@ -85,8 +85,8 @@ public final class DebugTrace {
         Nxt.getBlockchainProcessor().addListener(debugTrace::traceBeforeAccept, BlockchainProcessor.Event.BEFORE_BLOCK_ACCEPT);
         Nxt.getBlockchainProcessor().addListener(debugTrace::trace, BlockchainProcessor.Event.BEFORE_BLOCK_APPLY);
         Nxt.getTransactionProcessor().addListener(transactions -> debugTrace.traceRelease(transactions.get(0)), TransactionProcessor.Event.RELEASE_PHASED_TRANSACTION);
-        Shuffling.addListener(debugTrace::traceShufflingDistribute, Shuffling.Event.SHUFFLING_DONE);
-        Shuffling.addListener(debugTrace::traceShufflingCancel, Shuffling.Event.SHUFFLING_CANCELLED);
+        Shuffling.addListener(debugTrace::traceShufflingDistribute, ShufflingHome.Event.SHUFFLING_DONE);
+        Shuffling.addListener(debugTrace::traceShufflingCancel, ShufflingHome.Event.SHUFFLING_CANCELLED);
         return debugTrace;
     }
 
@@ -139,9 +139,9 @@ public final class DebugTrace {
     }
 
     // Note: Trade events occur before the change in account balances
-    private void trace(Trade trade) {
-        long askAccountId = Order.Ask.getAskOrder(trade.getAskOrderId()).getAccountId();
-        long bidAccountId = Order.Bid.getBidOrder(trade.getBidOrderId()).getAccountId();
+    private void trace(TradeHome.Trade trade) {
+        long askAccountId = OrderHome.getAskOrder(trade.getAskOrderId()).getAccountId();
+        long bidAccountId = OrderHome.getBidOrder(trade.getBidOrderId()).getAccountId();
         if (include(askAccountId)) {
             log(getValues(askAccountId, trade, true));
         }
@@ -150,7 +150,7 @@ public final class DebugTrace {
         }
     }
 
-    private void trace(Exchange exchange) {
+    private void trace(ExchangeHome.Exchange exchange) {
         long sellerAccountId = exchange.getSellerId();
         long buyerAccountId = exchange.getBuyerId();
         if (include(sellerAccountId)) {
@@ -242,8 +242,8 @@ public final class DebugTrace {
         }
     }
 
-    private void traceShufflingDistribute(Shuffling shuffling) {
-        ShufflingParticipant.getParticipants(shuffling.getId()).forEach(shufflingParticipant -> {
+    private void traceShufflingDistribute(ShufflingHome.Shuffling shuffling) {
+        ShufflingParticipantHome.getParticipants(shuffling.getId()).forEach(shufflingParticipant -> {
             if (include(shufflingParticipant.getAccountId())) {
                 log(getValues(shufflingParticipant.getAccountId(), shuffling, false));
             }
@@ -256,7 +256,7 @@ public final class DebugTrace {
         }
     }
 
-    private void traceShufflingCancel(Shuffling shuffling) {
+    private void traceShufflingCancel(ShufflingHome.Shuffling shuffling) {
         long blamedAccountId = shuffling.getAssigneeAccountId();
         if (blamedAccountId != 0 && include(blamedAccountId)) {
             Map<String,String> map = getValues(blamedAccountId, false);
@@ -300,14 +300,14 @@ public final class DebugTrace {
         long totalAmountPerUnit = 0;
         long foundersTotal = 0;
         final long remainingSupply = currency.getReserveSupply() - currency.getInitialSupply();
-        List<CurrencyFounder> currencyFounders = new ArrayList<>();
-        try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
-            for (CurrencyFounder founder : founders) {
+        List<CurrencyFounderHome.CurrencyFounder> currencyFounders = new ArrayList<>();
+        try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+            for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                 totalAmountPerUnit += founder.getAmountPerUnitNQT();
                 currencyFounders.add(founder);
             }
         }
-        for (CurrencyFounder founder : currencyFounders) {
+        for (CurrencyFounderHome.CurrencyFounder founder : currencyFounders) {
             long units = Math.multiplyExact(remainingSupply, founder.getAmountPerUnitNQT()) / totalAmountPerUnit;
             Map<String,String> founderMap = getValues(founder.getAccountId(), false);
             founderMap.put("currency", Long.toUnsignedString(currency.getId()));
@@ -328,8 +328,8 @@ public final class DebugTrace {
     }
 
     private void undoCrowdfunding(Currency currency) {
-        try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
-            for (CurrencyFounder founder : founders) {
+        try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+            for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                 Map<String,String> founderMap = getValues(founder.getAccountId(), false);
                 founderMap.put("currency", Long.toUnsignedString(currency.getId()));
                 founderMap.put("currency cost", String.valueOf(Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitNQT())));
@@ -368,8 +368,8 @@ public final class DebugTrace {
                 map.put("currency cost", String.valueOf(Math.multiplyExact(units, currency.getCurrentReservePerUnitNQT())));
             }
             if (!currency.isActive()) {
-                try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
-                    for (CurrencyFounder founder : founders) {
+                try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+                    for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                         Map<String,String> founderMap = getValues(founder.getAccountId(), false);
                         founderMap.put("currency", Long.toUnsignedString(currency.getId()));
                         founderMap.put("currency cost", String.valueOf(Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitNQT())));
@@ -407,7 +407,7 @@ public final class DebugTrace {
         return map;
     }
 
-    private Map<String,String> getValues(long accountId, Trade trade, boolean isAsk) {
+    private Map<String,String> getValues(long accountId, TradeHome.Trade trade, boolean isAsk) {
         Map<String,String> map = getValues(accountId, false);
         map.put("asset", Long.toUnsignedString(trade.getAssetId()));
         map.put("trade quantity", String.valueOf(isAsk ? - trade.getQuantityQNT() : trade.getQuantityQNT()));
@@ -418,7 +418,7 @@ public final class DebugTrace {
         return map;
     }
 
-    private Map<String,String> getValues(long accountId, Exchange exchange, boolean isSell) {
+    private Map<String,String> getValues(long accountId, ExchangeHome.Exchange exchange, boolean isSell) {
         Map<String,String> map = getValues(accountId, false);
         map.put("currency", Long.toUnsignedString(exchange.getCurrencyId()));
         map.put("exchange quantity", String.valueOf(isSell ? -exchange.getUnits() : exchange.getUnits()));
@@ -429,7 +429,7 @@ public final class DebugTrace {
         return map;
     }
 
-    private Map<String,String> getValues(long accountId, Shuffling shuffling, boolean isRecipient) {
+    private Map<String,String> getValues(long accountId, ShufflingHome.Shuffling shuffling, boolean isRecipient) {
         Map<String,String> map = getValues(accountId, false);
         map.put("shuffling", Long.toUnsignedString(shuffling.getId()));
         String amount = String.valueOf(isRecipient ? shuffling.getAmount() : -shuffling.getAmount());
@@ -619,13 +619,13 @@ public final class DebugTrace {
         } else if (attachment instanceof Attachment.DigitalGoodsPurchase) {
             Attachment.DigitalGoodsPurchase purchase = (Attachment.DigitalGoodsPurchase)transaction.getAttachment();
             if (isRecipient) {
-                map = getValues(DigitalGoodsStore.Goods.getGoods(purchase.getGoodsId()).getSellerId(), false);
+                map = getValues(DGSHome.getGoods(purchase.getGoodsId()).getSellerId(), false);
             }
             map.put("event", "purchase");
             map.put("purchase", transaction.getStringId());
         } else if (attachment instanceof Attachment.DigitalGoodsDelivery) {
             Attachment.DigitalGoodsDelivery delivery = (Attachment.DigitalGoodsDelivery)transaction.getAttachment();
-            DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(delivery.getPurchaseId());
+            DGSHome.Purchase purchase = DGSHome.getPurchase(delivery.getPurchaseId());
             if (isRecipient) {
                 map = getValues(purchase.getBuyerId(), false);
             }
@@ -646,7 +646,7 @@ public final class DebugTrace {
         } else if (attachment instanceof Attachment.DigitalGoodsRefund) {
             Attachment.DigitalGoodsRefund refund = (Attachment.DigitalGoodsRefund)transaction.getAttachment();
             if (isRecipient) {
-                map = getValues(DigitalGoodsStore.Purchase.getPurchase(refund.getPurchaseId()).getBuyerId(), false);
+                map = getValues(DGSHome.getPurchase(refund.getPurchaseId()).getBuyerId(), false);
             }
             map.put("event", "refund");
             map.put("purchase", Long.toUnsignedString(refund.getPurchaseId()));

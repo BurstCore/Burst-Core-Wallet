@@ -103,6 +103,11 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
+    public Chain getChain() {
+        return transaction.getChain();
+    }
+
+    @Override
     public long getId() {
         return transaction.getId();
     }
@@ -177,11 +182,6 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public String getReferencedTransactionFullHash() {
-        return transaction.getReferencedTransactionFullHash();
-    }
-
-    @Override
     public byte[] getSignature() {
         return transaction.getSignature();
     }
@@ -239,35 +239,6 @@ class UnconfirmedTransaction implements Transaction {
     @Override
     public int getFullSize() {
         return transaction.getFullSize();
-    }
-
-    @Override
-    public Appendix.Message getMessage() {
-        return transaction.getMessage();
-    }
-
-    @Override
-    public Appendix.PrunablePlainMessage getPrunablePlainMessage() {
-        return transaction.getPrunablePlainMessage();
-    }
-
-    @Override
-    public Appendix.EncryptedMessage getEncryptedMessage() {
-        return transaction.getEncryptedMessage();
-    }
-
-    @Override
-    public Appendix.PrunableEncryptedMessage getPrunableEncryptedMessage() {
-        return transaction.getPrunableEncryptedMessage();
-    }
-
-    public Appendix.EncryptToSelfMessage getEncryptToSelfMessage() {
-        return transaction.getEncryptToSelfMessage();
-    }
-
-    @Override
-    public Appendix.Phasing getPhasing() {
-        return transaction.getPhasing();
     }
 
     @Override

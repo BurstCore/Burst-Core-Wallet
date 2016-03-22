@@ -183,7 +183,7 @@ public final class Shuffler {
 
     static {
 
-        Shuffling.addListener(shuffling -> {
+        ShufflingHome.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
             if (shufflerMap != null) {
                 shufflerMap.values().forEach(shuffler -> {
@@ -199,7 +199,7 @@ public final class Shuffler {
             }
         }, ShufflingHome.Event.SHUFFLING_CREATED);
 
-        Shuffling.addListener(shuffling -> {
+        ShufflingHome.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
             if (shufflerMap != null) {
                 Shuffler shuffler = shufflerMap.get(shuffling.getAssigneeAccountId());
@@ -214,7 +214,7 @@ public final class Shuffler {
             }
         }, ShufflingHome.Event.SHUFFLING_PROCESSING_ASSIGNED);
 
-        Shuffling.addListener(shuffling -> {
+        ShufflingHome.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
             if (shufflerMap != null) {
                 shufflerMap.values().forEach(shuffler -> {
@@ -228,7 +228,7 @@ public final class Shuffler {
             }
         }, ShufflingHome.Event.SHUFFLING_PROCESSING_FINISHED);
 
-        Shuffling.addListener(shuffling -> {
+        ShufflingHome.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
             if (shufflerMap != null) {
                 shufflerMap.values().forEach(shuffler -> {
@@ -242,9 +242,9 @@ public final class Shuffler {
             }
         }, ShufflingHome.Event.SHUFFLING_BLAME_STARTED);
 
-        Shuffling.addListener(Shuffler::scheduleExpiration, ShufflingHome.Event.SHUFFLING_DONE);
+        ShufflingHome.addListener(Shuffler::scheduleExpiration, ShufflingHome.Event.SHUFFLING_DONE);
 
-        Shuffling.addListener(Shuffler::scheduleExpiration, ShufflingHome.Event.SHUFFLING_CANCELLED);
+        ShufflingHome.addListener(Shuffler::scheduleExpiration, ShufflingHome.Event.SHUFFLING_CANCELLED);
 
         BlockchainProcessorImpl.getInstance().addListener(block -> {
             Set<String> expired = expirations.get(block.getHeight());
@@ -446,7 +446,8 @@ public final class Shuffler {
             }
         }
         try {
-            Transaction.Builder builder = Nxt.newTransactionBuilder(Crypto.getPublicKey(secretPhrase), 0, 0,
+            //TODO: child chain
+            Transaction.Builder builder = Nxt.newTransactionBuilder(ChildChain.NXT, Crypto.getPublicKey(secretPhrase), 0, 0,
                     (short) 1440, attachment);
             builder.timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(secretPhrase);

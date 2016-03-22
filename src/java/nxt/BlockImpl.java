@@ -159,7 +159,7 @@ final class BlockImpl implements Block {
     @Override
     public List<TransactionImpl> getTransactions() {
         if (this.blockTransactions == null) {
-            List<TransactionImpl> transactions = Collections.unmodifiableList(TransactionDb.findBlockTransactions(getId()));
+            List<TransactionImpl> transactions = Collections.unmodifiableList(TransactionHome.findBlockTransactions(getId()));
             for (TransactionImpl transaction : transactions) {
                 transaction.setBlock(this);
             }

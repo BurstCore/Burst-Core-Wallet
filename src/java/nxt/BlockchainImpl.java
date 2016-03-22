@@ -336,22 +336,22 @@ final class BlockchainImpl implements Blockchain {
 
     @Override
     public TransactionImpl getTransaction(long transactionId) {
-        return TransactionDb.findTransaction(transactionId);
+        return TransactionHome.findTransaction(transactionId);
     }
 
     @Override
     public TransactionImpl getTransactionByFullHash(String fullHash) {
-        return TransactionDb.findTransactionByFullHash(Convert.parseHexString(fullHash));
+        return TransactionHome.findTransactionByFullHash(Convert.parseHexString(fullHash));
     }
 
     @Override
     public boolean hasTransaction(long transactionId) {
-        return TransactionDb.hasTransaction(transactionId);
+        return TransactionHome.hasTransaction(transactionId);
     }
 
     @Override
     public boolean hasTransactionByFullHash(String fullHash) {
-        return TransactionDb.hasTransactionByFullHash(Convert.parseHexString(fullHash));
+        return TransactionHome.hasTransactionByFullHash(Convert.parseHexString(fullHash));
     }
 
     @Override
@@ -531,7 +531,7 @@ final class BlockchainImpl implements Blockchain {
 
     @Override
     public DbIterator<TransactionImpl> getTransactions(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, TransactionDb::loadTransaction);
+        return new DbIterator<>(con, pstmt, TransactionHome::loadTransaction);
     }
 
     @Override
@@ -541,8 +541,8 @@ final class BlockchainImpl implements Blockchain {
         List<TransactionImpl> result = new ArrayList<>();
         readLock();
         try {
-            try (DbIterator<TransactionImpl> phasedTransactions = PhasingPoll.getFinishingTransactions(getHeight() + 1)) {
-                for (TransactionImpl phasedTransaction : phasedTransactions) {
+            try (DbIterator<ChildTransactionImpl> phasedTransactions = PhasingPollHome.getFinishingTransactions(getHeight() + 1)) {
+                for (ChildTransactionImpl phasedTransaction : phasedTransactions) {
                     try {
                         phasedTransaction.validate();
                         if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.ok(phasedTransaction)) {
@@ -555,7 +555,7 @@ final class BlockchainImpl implements Blockchain {
             blockchainProcessor.selectUnconfirmedTransactions(duplicates, getLastBlock(), -1).forEach(
                     unconfirmedTransaction -> {
                         TransactionImpl transaction = unconfirmedTransaction.getTransaction();
-                        if (transaction.getPhasing() == null && filter.ok(transaction)) {
+                        if ((transaction instanceof FxtTransaction || ((ChildTransaction)transaction).getPhasing() == null) && filter.ok(transaction)) {
                             result.add(transaction);
                         }
                     }

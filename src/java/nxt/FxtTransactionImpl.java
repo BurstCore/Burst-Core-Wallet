@@ -18,6 +18,9 @@ package nxt;
 
 import nxt.crypto.Crypto;
 import nxt.db.DbUtils;
+import nxt.util.Convert;
+import nxt.util.Logger;
+import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -26,9 +29,48 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
+
+    static final class BuilderImpl extends TransactionImpl.BuilderImpl {
+
+        private List<Appendix.AbstractAppendix> appendages;
+
+        BuilderImpl(byte version, byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline,
+                    Attachment.AbstractAttachment attachment) {
+            super(version, senderPublicKey, amountNQT, feeNQT, deadline, attachment);
+        }
+
+        @Override
+        public FxtTransactionImpl build(String secretPhrase) throws NxtException.NotValidException {
+            preBuild(secretPhrase);
+            return new FxtTransactionImpl(this, secretPhrase);
+        }
+
+        @Override
+        public FxtTransactionImpl build() throws NxtException.NotValidException {
+            return build(null);
+        }
+
+        void preBuild(String secretPhrase) throws NxtException.NotValidException {
+            List<Appendix.AbstractAppendix> list = new ArrayList<>();
+            if (getAttachment() != null) {
+                list.add(getAttachment());
+            }
+            this.appendages = Collections.unmodifiableList(list);
+            super.preBuild(secretPhrase);
+        }
+
+        @Override
+        List<Appendix.AbstractAppendix> getAppendages() {
+            return appendages;
+        }
+    }
+
 
     private final long feeNQT;
     private final byte[] signature;
@@ -58,6 +100,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
         }
     }
 
+    @Override
     public final Chain getChain() {
         return FxtChain.FXT;
     }
@@ -80,8 +123,39 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
 
     @Override
     int signatureOffset() {
-        //TODO
-        return 0;
+        return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8;
+    }
+
+    @Override
+    boolean attachmentIsPhased() {
+        return false;
+    }
+
+    @Override
+    void apply() {
+        Account senderAccount = Account.getAccount(getSenderId());
+        senderAccount.apply(getSenderPublicKey());
+        Account recipientAccount = null;
+        if (getRecipientId() != 0) {
+            recipientAccount = Account.getAccount(getRecipientId());
+            if (recipientAccount == null) {
+                recipientAccount = Account.addOrGetAccount(getRecipientId());
+            }
+        }
+        for (Appendix.AbstractAppendix appendage : appendages()) {
+            appendage.loadPrunable(this);
+            appendage.apply(this, senderAccount, recipientAccount);
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof FxtTransactionImpl && this.getId() == ((Transaction)o).getId();
+    }
+
+    @Override
+    public int hashCode() {
+        return (int)(getId() ^ (getId() >>> 32));
     }
 
     static FxtTransactionImpl loadTransaction(Connection con, ResultSet rs) throws NxtException.NotValidException {
@@ -112,8 +186,8 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
             }
 
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
-            TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, null,
-                    amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer)) {};
+            FxtTransactionImpl.BuilderImpl builder = new FxtTransactionImpl.BuilderImpl(version, null,
+                    amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer));
             builder.timestamp(timestamp)
                     .signature(signature)
                     .blockId(blockId)
@@ -137,6 +211,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
         }
     }
 
+    @Override
     void save(Connection con, String schemaTable) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + schemaTable
                 + " (id, deadline, recipient_id, amount, fee, height, "
@@ -182,14 +257,102 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
         }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        return o instanceof FxtTransactionImpl && this.getId() == ((Transaction)o).getId();
+    //TODO: factor out common code with ChildTransactionImpl
+    static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws NxtException.NotValidException {
+        try {
+            ByteBuffer buffer = ByteBuffer.wrap(bytes);
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
+            byte type = buffer.get();
+            byte subtype = buffer.get();
+            byte version = (byte) ((subtype & 0xF0) >> 4);
+            subtype = (byte) (subtype & 0x0F);
+            int timestamp = buffer.getInt();
+            short deadline = buffer.getShort();
+            byte[] senderPublicKey = new byte[32];
+            buffer.get(senderPublicKey);
+            long recipientId = buffer.getLong();
+            long amountNQT = buffer.getLong();
+            long feeNQT = buffer.getLong();
+            byte[] signature = new byte[64];
+            buffer.get(signature);
+            signature = Convert.emptyToNull(signature);
+            int flags = 0;
+            int ecBlockHeight = 0;
+            long ecBlockId = 0;
+            if (version > 0) {
+                flags = buffer.getInt();
+                ecBlockHeight = buffer.getInt();
+                ecBlockId = buffer.getLong();
+            }
+            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            FxtTransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountNQT, feeNQT,
+                    deadline, transactionType.parseAttachment(buffer));
+            builder.timestamp(timestamp)
+                    .signature(signature)
+                    .ecBlockHeight(ecBlockHeight)
+                    .ecBlockId(ecBlockId);
+            if (transactionType.canHaveRecipient()) {
+                builder.recipientId(recipientId);
+            }
+            if (buffer.hasRemaining()) {
+                throw new NxtException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
+            }
+            return builder;
+        } catch (NxtException.NotValidException|RuntimeException e) {
+            Logger.logDebugMessage("Failed to parse transaction bytes: " + Convert.toHexString(bytes));
+            throw e;
+        }
     }
 
-    @Override
-    public int hashCode() {
-        return (int)(getId() ^ (getId() >>> 32));
+    static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
+        BuilderImpl builder = newTransactionBuilder(bytes);
+        if (prunableAttachments != null) {
+            //TODO: childchainBlock transactions would have prunable attachments to be handled here
+        }
+        return builder;
+    }
+
+    //TODO: factor out common code with ChildTransactionImpl
+    static FxtTransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws NxtException.NotValidException {
+        try {
+            byte type = ((Long) transactionData.get("type")).byteValue();
+            byte subtype = ((Long) transactionData.get("subtype")).byteValue();
+            int timestamp = ((Long) transactionData.get("timestamp")).intValue();
+            short deadline = ((Long) transactionData.get("deadline")).shortValue();
+            byte[] senderPublicKey = Convert.parseHexString((String) transactionData.get("senderPublicKey"));
+            long amountNQT = Convert.parseLong(transactionData.get("amountNQT"));
+            long feeNQT = Convert.parseLong(transactionData.get("feeNQT"));
+            byte[] signature = Convert.parseHexString((String) transactionData.get("signature"));
+            Long versionValue = (Long) transactionData.get("version");
+            byte version = versionValue == null ? 0 : versionValue.byteValue();
+            JSONObject attachmentData = (JSONObject) transactionData.get("attachment");
+            int ecBlockHeight = 0;
+            long ecBlockId = 0;
+            if (version > 0) {
+                ecBlockHeight = ((Long) transactionData.get("ecBlockHeight")).intValue();
+                ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
+            }
+
+            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            if (transactionType == null) {
+                throw new NxtException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
+            }
+            FxtTransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey,
+                    amountNQT, feeNQT, deadline,
+                    transactionType.parseAttachment(attachmentData));
+            builder.timestamp(timestamp)
+                    .signature(signature)
+                    .ecBlockHeight(ecBlockHeight)
+                    .ecBlockId(ecBlockId);
+            if (transactionType.canHaveRecipient()) {
+                long recipientId = Convert.parseUnsignedLong((String) transactionData.get("recipient"));
+                builder.recipientId(recipientId);
+            }
+            return builder;
+        } catch (NxtException.NotValidException|RuntimeException e) {
+            Logger.logDebugMessage("Failed to parse transaction: " + transactionData.toJSONString());
+            throw e;
+        }
     }
 
 }

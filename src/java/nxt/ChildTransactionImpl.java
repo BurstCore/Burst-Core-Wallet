@@ -236,6 +236,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         return phasing;
     }
 
+    @Override
     boolean attachmentIsPhased() {
         return attachment.isPhased(this);
     }
@@ -366,12 +367,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         AccountRestrictions.checkTransaction(this, validatingAtFinish);
     }
 
-    // returns false iff double spending
-    boolean applyUnconfirmed() {
-        Account senderAccount = Account.getAccount(getSenderId());
-        return senderAccount != null && getType().applyUnconfirmed(this, senderAccount);
-    }
-
+    @Override
     void apply() {
         Account senderAccount = Account.getAccount(getSenderId());
         senderAccount.apply(getSenderPublicKey());
@@ -395,11 +391,6 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
                 appendage.apply(this, senderAccount, recipientAccount);
             }
         }
-    }
-
-    void undoUnconfirmed() {
-        Account senderAccount = Account.getAccount(getSenderId());
-        getType().undoUnconfirmed(this, senderAccount);
     }
 
     boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
@@ -605,6 +596,14 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         }
     }
 
+    static ChildTransactionImpl parseTransaction(JSONObject transactionData) throws NxtException.NotValidException {
+        ChildTransactionImpl transaction = newTransactionBuilder(transactionData).build();
+        if (transaction.getSignature() != null && !transaction.checkSignature()) {
+            throw new NxtException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
+        }
+        return transaction;
+    }
+
     //TODO: child chain id in bytes
     static ChildTransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws NxtException.NotValidException {
         try {
@@ -710,14 +709,6 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             }
         }
         return builder;
-    }
-
-    static ChildTransactionImpl parseTransaction(JSONObject transactionData) throws NxtException.NotValidException {
-        ChildTransactionImpl transaction = newTransactionBuilder(transactionData).build();
-        if (transaction.getSignature() != null && !transaction.checkSignature()) {
-            throw new NxtException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
-        }
-        return transaction;
     }
 
     //TODO: child chain in JSON

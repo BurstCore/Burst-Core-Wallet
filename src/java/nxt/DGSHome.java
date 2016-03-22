@@ -648,7 +648,7 @@ public final class DGSHome {
         private long discountNQT;
         private long refundNQT;
 
-        private Purchase(Transaction transaction, Attachment.DigitalGoodsPurchase attachment, long sellerId) {
+        private Purchase(ChildTransaction transaction, Attachment.DigitalGoodsPurchase attachment, long sellerId) {
             this.id = transaction.getId();
             this.dbKey = purchaseDbKeyFactory.newKey(this.id);
             this.buyerId = transaction.getSenderId();
@@ -904,7 +904,7 @@ public final class DGSHome {
         }
     }
 
-    void purchase(Transaction transaction,  Attachment.DigitalGoodsPurchase attachment) {
+    void purchase(ChildTransaction transaction,  Attachment.DigitalGoodsPurchase attachment) {
         Goods goods = goodsTable.get(goodsDbKeyFactory.newKey(attachment.getGoodsId()));
         if (! goods.isDelisted()
                 && attachment.getQuantity() <= goods.getQuantity()
