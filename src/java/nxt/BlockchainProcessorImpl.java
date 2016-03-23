@@ -1309,7 +1309,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                                             Map<TransactionType, Map<String, Integer>> duplicates) {
         try (DbIterator<ChildTransactionImpl> phasedTransactions = PhasingPollHome.getFinishingTransactions(height + 1)) {
             for (ChildTransactionImpl phasedTransaction : phasedTransactions) {
-                if (PhasingPollHome.getResult(phasedTransaction.getId()) != null) {
+                if (PhasingPollHome.forChain(phasedTransaction.getChain()).getResult(phasedTransaction.getId()) != null) {
                     continue;
                 }
                 try {
@@ -1482,7 +1482,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             SortedSet<ChildTransactionImpl> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
             block.getTransactions().forEach(transaction -> {
-                PhasingPoll.getLinkedPhasedTransactions(transaction.fullHash()).forEach(phasedTransaction -> {
+                PhasingPollHome.getLinkedPhasedTransactions(transaction.fullHash()).forEach(phasedTransaction -> {
                     if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
                         possiblyApprovedTransactions.add(phasedTransaction);
                     }
@@ -1490,9 +1490,9 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (transaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
                     Attachment.MessagingPhasingVoteCasting voteCasting = (Attachment.MessagingPhasingVoteCasting)transaction.getAttachment();
                     voteCasting.getTransactionFullHashes().forEach(hash -> {
-                        PhasingPollHome.PhasingPoll phasingPoll = PhasingPoll.getPoll(Convert.fullHashToId(hash));
+                        PhasingPollHome.PhasingPoll phasingPoll = PhasingPollHome.forChain((ChildChain)transaction.getChain()).getPoll(Convert.fullHashToId(hash));
                         if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                            possiblyApprovedTransactions.add(TransactionHome.findTransaction(phasingPoll.getId()));
+                            possiblyApprovedTransactions.add((ChildTransactionImpl)TransactionHome.findTransaction(phasingPoll.getId()));
                         }
                     });
                 }
@@ -1505,7 +1505,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         phasingVoteCasting.getTransactionFullHashes().forEach(hash -> {
                             PhasingPollHome.PhasingPoll phasingPoll = PhasingPoll.getPoll(Convert.fullHashToId(hash));
                             if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                                possiblyApprovedTransactions.add(TransactionHome.findTransaction(phasingPoll.getId()));
+                                possiblyApprovedTransactions.add((ChildTransactionImpl)TransactionHome.findTransaction(phasingPoll.getId()));
                             }
                         });
                     }
@@ -1710,8 +1710,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     void generateBlock(String secretPhrase, int blockTimestamp) throws BlockNotAcceptedException {
 
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
-        try (DbIterator<TransactionImpl> phasedTransactions = PhasingPoll.getFinishingTransactions(blockchain.getHeight() + 1)) {
-            for (TransactionImpl phasedTransaction : phasedTransactions) {
+        try (DbIterator<ChildTransactionImpl> phasedTransactions = PhasingPollHome.getFinishingTransactions(blockchain.getHeight() + 1)) {
+            for (ChildTransactionImpl phasedTransaction : phasedTransactions) {
                 try {
                     phasedTransaction.validate();
                     phasedTransaction.attachmentIsDuplicate(duplicates, false); // pre-populate duplicates map
@@ -1768,12 +1768,16 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     boolean hasAllReferencedTransactions(TransactionImpl transaction, int timestamp, int count) {
-        if (transaction.referencedTransactionFullHash() == null) {
-            return timestamp - transaction.getTimestamp() < Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN && count < 10;
+        if (! (transaction instanceof ChildTransaction)) {
+            return true;
         }
-        TransactionImpl referencedTransaction = TransactionHome.findTransactionByFullHash(transaction.referencedTransactionFullHash());
+        ChildTransactionImpl childTransaction = (ChildTransactionImpl)transaction;
+        if (childTransaction.referencedTransactionFullHash() == null) {
+            return timestamp - childTransaction.getTimestamp() < Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN && count < 10;
+        }
+        TransactionImpl referencedTransaction = TransactionHome.findTransactionByFullHash(childTransaction.referencedTransactionFullHash());
         return referencedTransaction != null
-                && referencedTransaction.getHeight() < transaction.getHeight()
+                && referencedTransaction.getHeight() < childTransaction.getHeight()
                 && hasAllReferencedTransactions(referencedTransaction, timestamp, count + 1);
     }
 
@@ -1884,8 +1888,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                                 throw new NxtException.NotValidException("Database blocks in the wrong order!");
                             }
                             Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
-                            List<TransactionImpl> validPhasedTransactions = new ArrayList<>();
-                            List<TransactionImpl> invalidPhasedTransactions = new ArrayList<>();
+                            List<ChildTransactionImpl> validPhasedTransactions = new ArrayList<>();
+                            List<ChildTransactionImpl> invalidPhasedTransactions = new ArrayList<>();
                             validatePhasedTransactions(blockchain.getHeight(), validPhasedTransactions, invalidPhasedTransactions, duplicates);
                             if (validate && currentBlock.getHeight() > 0) {
                                 int curTime = Nxt.getEpochTime();

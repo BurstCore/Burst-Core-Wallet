@@ -25,10 +25,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+//TODO: all queries over multiple tables should be replaced with a view, or a single id lookup table
 final class TransactionHome {
 
     private static final Map<Chain, TransactionHome> transactionHomeMap = new HashMap<>();
@@ -57,11 +60,43 @@ final class TransactionHome {
         transactionTable = new Table(chain.getSchemaTable("transaction_fxt"));
     }
 
-    TransactionImpl findTransaction(long transactionId) {
-        return findTransaction(transactionId, Integer.MAX_VALUE);
+    static TransactionImpl findTransaction(long transactionId) {
+        return TransactionHome.findTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    TransactionImpl findTransaction(long transactionId, int height) {
+    static TransactionImpl findTransaction(long transactionId, int height) {
+        // Check the block cache
+        synchronized (BlockDb.blockCache) {
+            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
+            if (transaction != null) {
+                return transaction.getHeight() <= height ? transaction : null;
+            }
+        }
+        for (TransactionHome transactionHome : transactionHomeMap.values()) {
+            Table transactionTable = transactionHome.transactionTable;
+            // Search the database
+            try (Connection con = transactionTable.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
+                pstmt.setLong(1, transactionId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next() && rs.getInt("height") <= height) {
+                        return loadTransaction(transactionHome.chain, con, rs);
+                    }
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            } catch (NxtException.ValidationException e) {
+                throw new RuntimeException("Transaction already in database, id = " + transactionId + ", does not pass validation!", e);
+            }
+        }
+        return null;
+    }
+
+    TransactionImpl findChainTransaction(long transactionId) {
+        return findChainTransaction(transactionId, Integer.MAX_VALUE);
+    }
+
+    TransactionImpl findChainTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized (BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
@@ -75,7 +110,7 @@ final class TransactionHome {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next() && rs.getInt("height") <= height) {
-                    return loadTransaction(con, rs);
+                    return loadTransaction(chain, con, rs);
                 }
                 return null;
             }
@@ -86,11 +121,46 @@ final class TransactionHome {
         }
     }
 
-    TransactionImpl findTransactionByFullHash(byte[] fullHash) {
-        return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
+    static TransactionImpl findTransactionByFullHash(byte[] fullHash) {
+        return TransactionHome.findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
-    TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
+    static TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
+        long transactionId = Convert.fullHashToId(fullHash);
+        // Check the cache
+        synchronized(BlockDb.blockCache) {
+            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
+            if (transaction != null) {
+                return (transaction.getHeight() <= height &&
+                        Arrays.equals(transaction.fullHash(), fullHash) ? transaction : null);
+            }
+        }
+        for (TransactionHome transactionHome : transactionHomeMap.values()) {
+            Table transactionTable = transactionHome.transactionTable;
+            // Search the database
+            try (Connection con = transactionTable.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
+                pstmt.setLong(1, transactionId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
+                        return loadTransaction(transactionHome.chain, con, rs);
+                    }
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            } catch (NxtException.ValidationException e) {
+                throw new RuntimeException("Transaction already in database, full_hash = " + Convert.toHexString(fullHash)
+                        + ", does not pass validation!", e);
+            }
+        }
+        return null;
+    }
+
+    TransactionImpl findChainTransactionByFullHash(byte[] fullHash) {
+        return findChainTransactionByFullHash(fullHash, Integer.MAX_VALUE);
+    }
+
+    TransactionImpl findChainTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
         synchronized(BlockDb.blockCache) {
@@ -106,7 +176,7 @@ final class TransactionHome {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
-                    return loadTransaction(con, rs);
+                    return loadTransaction(chain, con, rs);
                 }
                 return null;
             }
@@ -118,11 +188,41 @@ final class TransactionHome {
         }
     }
 
-    boolean hasTransaction(long transactionId) {
-        return hasTransaction(transactionId, Integer.MAX_VALUE);
+    static boolean hasTransaction(long transactionId) {
+        return TransactionHome.hasTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    boolean hasTransaction(long transactionId, int height) {
+    static boolean hasTransaction(long transactionId, int height) {
+        // Check the block cache
+        synchronized(BlockDb.blockCache) {
+            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
+            if (transaction != null) {
+                return (transaction.getHeight() <= height);
+            }
+        }
+        for (TransactionHome transactionHome : transactionHomeMap.values()) {
+            Table transactionTable = transactionHome.transactionTable;
+            // Search the database
+            try (Connection con = transactionTable.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("SELECT height FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
+                pstmt.setLong(1, transactionId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next() && rs.getInt("height") <= height) {
+                        return true;
+                    }
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
+        }
+        return false;
+    }
+
+    boolean hasChainTransaction(long transactionId) {
+        return hasChainTransaction(transactionId, Integer.MAX_VALUE);
+    }
+
+    boolean hasChainTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
@@ -142,11 +242,43 @@ final class TransactionHome {
         }
     }
 
-    boolean hasTransactionByFullHash(byte[] fullHash) {
-        return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash)));
+    static boolean hasTransactionByFullHash(byte[] fullHash) {
+        return hasTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
-    boolean hasTransactionByFullHash(byte[] fullHash, int height) {
+    static boolean hasTransactionByFullHash(byte[] fullHash, int height) {
+        long transactionId = Convert.fullHashToId(fullHash);
+        // Check the block cache
+        synchronized(BlockDb.blockCache) {
+            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
+            if (transaction != null) {
+                return (transaction.getHeight() <= height &&
+                        Arrays.equals(transaction.fullHash(), fullHash));
+            }
+        }
+        for (TransactionHome transactionHome : transactionHomeMap.values()) {
+            Table transactionTable = transactionHome.transactionTable;
+            // Search the database
+            try (Connection con = transactionTable.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("SELECT full_hash, height FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
+                pstmt.setLong(1, transactionId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
+                        return true;
+                    }
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
+        }
+        return false;
+    }
+
+    boolean hasChainTransactionByFullHash(byte[] fullHash) {
+        return hasChainTransactionByFullHash(fullHash, Integer.MAX_VALUE);
+    }
+
+    boolean hasChainTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
         synchronized(BlockDb.blockCache) {
@@ -168,7 +300,33 @@ final class TransactionHome {
         }
     }
 
-    byte[] getFullHash(long transactionId) {
+    static byte[] getTransactionFullHash(long transactionId) {
+        // Check the block cache
+        synchronized(BlockDb.blockCache) {
+            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
+            if (transaction != null) {
+                return transaction.fullHash();
+            }
+        }
+        for (TransactionHome transactionHome : transactionHomeMap.values()) {
+            Table transactionTable = transactionHome.transactionTable;
+            // Search the database
+            try (Connection con = transactionTable.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("SELECT full_hash FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
+                pstmt.setLong(1, transactionId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getBytes("full_hash");
+                    }
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
+        }
+        return null;
+    }
+
+    byte[] getChainTransactionFullHash(long transactionId) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
@@ -188,7 +346,7 @@ final class TransactionHome {
         }
     }
 
-    TransactionImpl loadTransaction(Connection con, ResultSet rs) throws NxtException.NotValidException {
+    static TransactionImpl loadTransaction(Chain chain, Connection con, ResultSet rs) throws NxtException.NotValidException {
         if (chain == FxtChain.FXT) {
             return FxtTransactionImpl.loadTransaction(con, rs);
         } else {
@@ -196,7 +354,7 @@ final class TransactionHome {
         }
     }
 
-    List<TransactionImpl> findBlockTransactions(long blockId) {
+    static List<TransactionImpl> findBlockTransactions(long blockId) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {
             BlockImpl block = BlockDb.blockCache.get(blockId);
@@ -205,31 +363,35 @@ final class TransactionHome {
             }
         }
         // Search the database
-        try (Connection con = transactionTable.getConnection()) {
+        try (Connection con = Db.getConnection()) {
             return findBlockTransactions(con, blockId);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
-    List<TransactionImpl> findBlockTransactions(Connection con, long blockId) {
-        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable()
-                + " WHERE block_id = ? ORDER BY transaction_index")) {
-            pstmt.setLong(1, blockId);
-            pstmt.setFetchSize(50);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                List<TransactionImpl> list = new ArrayList<>();
-                while (rs.next()) {
-                    list.add(loadTransaction(con, rs));
+    static List<TransactionImpl> findBlockTransactions(Connection con, long blockId) {
+        List<TransactionImpl> list = new ArrayList<>();
+        for (TransactionHome transactionHome : transactionHomeMap.values()) {
+            Table transactionTable = transactionHome.transactionTable;
+            try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable()
+                    + " WHERE block_id = ? ORDER BY transaction_index")) {
+                pstmt.setLong(1, blockId);
+                pstmt.setFetchSize(50);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(loadTransaction(transactionHome.chain, con, rs));
+                    }
                 }
-                return list;
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            } catch (NxtException.ValidationException e) {
+                throw new RuntimeException("Transaction already in database for block_id = " + Long.toUnsignedString(blockId)
+                        + " does not pass validation!", e);
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        } catch (NxtException.ValidationException e) {
-            throw new RuntimeException("Transaction already in database for block_id = " + Long.toUnsignedString(blockId)
-                    + " does not pass validation!", e);
         }
+        Collections.sort(list, Comparator.comparingInt(TransactionImpl::getIndex));
+        return list;
     }
 
     List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
@@ -260,12 +422,13 @@ final class TransactionHome {
         return result;
     }
 
-    void saveTransactions(Connection con, List<TransactionImpl> transactions) {
+    static void saveTransactions(Connection con, List<TransactionImpl> transactions) {
         try {
             short index = 0;
             for (TransactionImpl transaction : transactions) {
                 transaction.setIndex(index++);
-                transaction.save(con, transactionTable.getSchemaTable());
+                TransactionHome transactionHome = transactionHomeMap.get(transaction.getChain());
+                transaction.save(con, transactionHome.transactionTable.getSchemaTable());
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

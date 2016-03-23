@@ -368,17 +368,17 @@ public final class PhasingPollHome {
         }
     }
 
-    public List<? extends Transaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
+    public List<? extends ChildTransactionImpl> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
         try (Connection con = linkedTransactionTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id FROM phasing_poll_linked_transaction " +
                      "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
             int i = 0;
             pstmt.setLong(++i, Convert.fullHashToId(linkedTransactionFullHash));
             pstmt.setBytes(++i, linkedTransactionFullHash);
-            List<TransactionImpl> transactions = new ArrayList<>();
+            List<ChildTransactionImpl> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    transactions.add(TransactionHome.findTransaction(rs.getLong("transaction_id")));
+                    transactions.add((ChildTransactionImpl)TransactionHome.findTransaction(rs.getLong("transaction_id")));
                 }
             }
             return transactions;
@@ -462,7 +462,7 @@ public final class PhasingPollHome {
         }
 
         public byte[] getFullHash() {
-            return TransactionHome.forChain(childChain).getFullHash(this.id);
+            return TransactionHome.forChain(childChain).getChainTransactionFullHash(this.id);
         }
 
         public List<byte[]> getLinkedFullHashes() {

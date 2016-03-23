@@ -356,6 +356,9 @@ final class BlockchainImpl implements Blockchain {
 
     @Override
     public int getTransactionCount() {
+        return 0;
+        //TODO
+        /*
         try (Connection con = Db.db.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM transaction");
              ResultSet rs = pstmt.executeQuery()) {
@@ -364,19 +367,7 @@ final class BlockchainImpl implements Blockchain {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-    }
-
-    @Override
-    public DbIterator<TransactionImpl> getAllTransactions() {
-        Connection con = null;
-        try {
-            con = Db.db.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction ORDER BY db_id ASC");
-            return getTransactions(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
+        */
     }
 
     @Override

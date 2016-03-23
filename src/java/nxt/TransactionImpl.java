@@ -72,7 +72,7 @@ abstract class TransactionImpl implements Transaction {
         }
 
         @Override
-        public abstract TransactionImpl build();
+        public abstract TransactionImpl build() throws NxtException.NotValidException;
 
         void preBuild(String secretPhrase) throws NxtException.NotValidException {
             if (timestamp == Integer.MAX_VALUE) {
