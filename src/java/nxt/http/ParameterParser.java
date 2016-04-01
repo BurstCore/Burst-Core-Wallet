@@ -26,6 +26,7 @@ import nxt.Currency;
 import nxt.CurrencyBuyOffer;
 import nxt.CurrencySellOffer;
 import nxt.DigitalGoodsStore;
+import nxt.HoldingType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.Poll;
@@ -509,6 +510,26 @@ final class ParameterParser {
         return -1;
     }
 
+    static HoldingType getHoldingType(HttpServletRequest req) throws ParameterException {
+        return HoldingType.get(ParameterParser.getByte(req, "holdingType", (byte) 0, (byte) 2, false));
+    }
+
+    static long getHoldingId(HttpServletRequest req, HoldingType holdingType) throws ParameterException {
+        long holdingId = ParameterParser.getUnsignedLong(req, "holding", holdingType != HoldingType.NXT);
+        if (holdingType == HoldingType.NXT && holdingId != 0) {
+            throw new ParameterException(JSONResponses.incorrect("holding", "holding id should not be specified if holdingType is NXT"));
+        }
+        return holdingId;
+    }
+
+    static String getAccountProperty(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+        String property = Convert.emptyToNull(req.getParameter("property"));
+        if (property == null && isMandatory) {
+            throw new ParameterException(MISSING_PROPERTY);
+        }
+        return property;
+    }
+
     static String getSearchQuery(HttpServletRequest req) throws ParameterException {
         String query = Convert.nullToEmpty(req.getParameter("query")).trim();
         String tags = Convert.nullToEmpty(req.getParameter("tag")).trim();
@@ -573,7 +594,25 @@ final class ParameterParser {
                 throw new ParameterException(INCORRECT_ARBITRARY_MESSAGE);
             }
         }
-        return null;
+        if (req.getContentType() == null || !req.getContentType().startsWith("multipart/form-data")) {
+            return null;
+        }
+        try {
+            Part part = req.getPart("messageFile");
+            if (part == null) {
+                return null;
+            }
+            FileData fileData = new FileData(part).invoke();
+            byte[] message = fileData.getData();
+            if (prunable) {
+                return new Appendix.PrunablePlainMessage(message);
+            } else {
+                return new Appendix.Message(message);
+            }
+        } catch (IOException | ServletException e) {
+            Logger.logDebugMessage("error in reading file data", e);
+            throw new ParameterException(INCORRECT_ARBITRARY_MESSAGE);
+        }
     }
 
     static Appendix getEncryptedMessage(HttpServletRequest req, Account recipient, boolean prunable) throws ParameterException {

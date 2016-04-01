@@ -56,6 +56,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -85,7 +86,8 @@ public final class API {
     static final boolean enableAPIUPnP = Nxt.getBooleanProperty("nxt.enableAPIUPnP");
 
     private static final Server apiServer;
-    private static URI browserUri;
+    private static URI welcomePageUri;
+    private static URI serverRootUri;
 
     static {
         List<String> disabled = Nxt.getStringListProperty("nxt.disabledAPIs");
@@ -151,7 +153,7 @@ public final class API {
                 https_config.setSecurePort(sslPort);
                 https_config.addCustomizer(new SecureRequestCustomizer());
                 sslContextFactory = new SslContextFactory();
-                sslContextFactory.setKeyStorePath(Nxt.getStringProperty("nxt.keyStorePath"));
+                sslContextFactory.setKeyStorePath(Paths.get(Nxt.getUserHomeDir(), Nxt.getStringProperty("nxt.keyStorePath")).toString());
                 sslContextFactory.setKeyStorePassword(Nxt.getStringProperty("nxt.keyStorePassword", null, true));
                 sslContextFactory.addExcludeCipherSuites("SSL_RSA_WITH_DES_CBC_SHA", "SSL_DHE_RSA_WITH_DES_CBC_SHA",
                         "SSL_DHE_DSS_WITH_DES_CBC_SHA", "SSL_RSA_EXPORT_WITH_RC4_40_MD5", "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
@@ -172,8 +174,10 @@ public final class API {
             } else {
                 sslContextFactory = null;
             }
+            String localhost = "0.0.0.0".equals(host) || "127.0.0.1".equals(host) ? "localhost" : host;
             try {
-                browserUri = new URI(enableSSL ? "https" : "http", null, "localhost", enableSSL ? sslPort : port, "/index.html", null, null);
+                welcomePageUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "/index.html", null, null);
+                serverRootUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "", null, null);
             } catch (URISyntaxException e) {
                 Logger.logInfoMessage("Cannot resolve browser URI", e);
             }
@@ -374,8 +378,12 @@ public final class API {
 
     }
 
-    public static URI getBrowserUri() {
-        return browserUri;
+    public static URI getWelcomePageUri() {
+        return welcomePageUri;
+    }
+
+    public static URI getServerRootUri() {
+        return serverRootUri;
     }
 
     private API() {} // never
