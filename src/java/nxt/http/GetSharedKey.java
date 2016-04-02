@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.Account;
 import nxt.NxtException;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
@@ -29,15 +30,19 @@ public final class GetSharedKey extends APIServlet.APIRequestHandler {
     static final GetSharedKey instance = new GetSharedKey();
 
     private GetSharedKey() {
-        super(new APITag[] {APITag.MESSAGES}, "secretPhrase", "nonce", "theirPublicKey");
+        super(new APITag[] {APITag.MESSAGES}, "account", "secretPhrase", "nonce");
     }
 
     @Override
-    JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
         String secretPhrase = ParameterParser.getSecretPhrase(req, true);
         byte[] nonce = ParameterParser.getBytes(req, "nonce", true);
-        byte[] publicKey = ParameterParser.getBytes(req, "theirPublicKey", true);
+        long accountId = ParameterParser.getAccountId(req, "account", true);
+        byte[] publicKey = Account.getPublicKey(accountId);
+        if (publicKey == null) {
+            return JSONResponses.INCORRECT_ACCOUNT;
+        }
         byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), publicKey, nonce);
         JSONObject response = new JSONObject();
         response.put("sharedKey", Convert.toHexString(sharedKey));
@@ -46,12 +51,7 @@ public final class GetSharedKey extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    boolean allowRequiredBlockParameters() {
-        return false;
-    }
-
-    @Override
-    boolean requireBlockchain() {
+    protected boolean allowRequiredBlockParameters() {
         return false;
     }
 
