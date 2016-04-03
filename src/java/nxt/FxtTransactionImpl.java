@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
 
@@ -119,6 +120,17 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
     ByteBuffer generateBytes() {
         //TODO
         return null;
+    }
+
+    @Override
+    byte[] referencedTransactionFullHash() {
+        return null;
+    }
+
+    @Override
+    boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates) {
+        //TODO
+        return false;
     }
 
     @Override

@@ -1174,6 +1174,15 @@ public final class Account {
         return unconfirmedBalanceFQT;
     }
 
+    //TODO: skip retrieving the Account when only the balance is needed
+    public long getBalance(ChildChain childChain) {
+        return BalanceHome.forChain(childChain).getBalance(id).getBalance();
+    }
+
+    public long getUnconfirmedBalance(ChildChain childChain) {
+        return BalanceHome.forChain(childChain).getBalance(id).getUnconfirmedBalance();
+    }
+
     public long getForgedBalanceFQT() {
         return forgedBalanceFQT;
     }
@@ -1700,6 +1709,19 @@ public final class Account {
                         LedgerHolding.NXT_BALANCE, null, amount, this.balanceFQT));
             }
         }
+    }
+
+    //TODO: skip retrieving the Account when only balance needs to be updated
+    void addToBalance(ChildChain childChain, LedgerEvent event, long eventId, long amount) {
+        BalanceHome.forChain(childChain).getBalance(id).addToBalance(event, eventId, amount);
+    }
+
+    void addToUnconfirmedBalance(ChildChain childChain, LedgerEvent event, long eventId, long amount) {
+        BalanceHome.forChain(childChain).getBalance(id).addToUnconfirmedBalance(event, eventId, amount);
+    }
+
+    void addToBalanceAndUnconfirmedBalance(ChildChain childChain, LedgerEvent event, long eventId, long amount) {
+        BalanceHome.forChain(childChain).getBalance(id).addToBalanceAndUnconfirmedBalance(event, eventId, amount);
     }
 
     void addToForgedBalanceFQT(long amount) {

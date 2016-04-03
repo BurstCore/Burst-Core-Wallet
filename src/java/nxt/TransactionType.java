@@ -1788,8 +1788,8 @@ public abstract class TransactionType {
             @Override
             boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsBidOrderPlacement attachment = (Attachment.ColoredCoinsBidOrderPlacement) transaction.getAttachment();
-                if (senderAccount.getUnconfirmedBalanceNQT() >= Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT())) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+                if (senderAccount.getUnconfirmedBalance((ChildChain)transaction.getChain()) >= Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT())) {
+                    senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
                             -Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT()));
                     return true;
                 }
@@ -1805,7 +1805,7 @@ public abstract class TransactionType {
             @Override
             void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsBidOrderPlacement attachment = (Attachment.ColoredCoinsBidOrderPlacement) transaction.getAttachment();
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
                         Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT()));
             }
 
@@ -1920,7 +1920,7 @@ public abstract class TransactionType {
                 OrderHome.Order order = OrderHome.forChain((ChildChain)transaction.getChain()).getBidOrder(attachment.getOrderId());
                 OrderHome.forChain((ChildChain)transaction.getChain()).removeBidOrder(attachment.getOrderId());
                 if (order != null) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+                    senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
                             Math.multiplyExact(order.getQuantityQNT(), order.getPriceNQT()));
                 }
             }
@@ -1977,8 +1977,8 @@ public abstract class TransactionType {
                 }
                 long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
                 long totalDividendPayment = Math.multiplyExact(attachment.getAmountNQTPerQNT(), quantityQNT);
-                if (senderAccount.getUnconfirmedBalanceNQT() >= totalDividendPayment) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -totalDividendPayment);
+                if (senderAccount.getUnconfirmedBalance((ChildChain)transaction.getChain()) >= totalDividendPayment) {
+                    senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(), -totalDividendPayment);
                     return true;
                 }
                 return false;
@@ -1987,7 +1987,7 @@ public abstract class TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment)transaction.getAttachment();
-                senderAccount.payDividends(transaction.getId(), attachment.getAssetId(), attachment.getHeight(),
+                senderAccount.payDividends((ChildChain)transaction.getChain(), transaction.getId(), attachment.getAssetId(), attachment.getHeight(),
                         attachment.getAmountNQTPerQNT());
             }
 
@@ -2001,7 +2001,7 @@ public abstract class TransactionType {
                 }
                 long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
                 long totalDividendPayment = Math.multiplyExact(attachment.getAmountNQTPerQNT(), quantityQNT);
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), totalDividendPayment);
+                senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(), totalDividendPayment);
             }
 
             @Override
@@ -2373,8 +2373,8 @@ public abstract class TransactionType {
             @Override
             boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
-                if (senderAccount.getUnconfirmedBalanceNQT() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT())) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+                if (senderAccount.getUnconfirmedBalance((ChildChain)transaction.getChain()) >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT())) {
+                    senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
                             -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
                     return true;
                 }
@@ -2384,7 +2384,7 @@ public abstract class TransactionType {
             @Override
             void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
                         Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
             }
 
@@ -2483,7 +2483,7 @@ public abstract class TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsDelivery attachment = (Attachment.DigitalGoodsDelivery)transaction.getAttachment();
-                DGSHome.forChain((ChildChain)transaction.getChain()).deliver(transaction, attachment);
+                DGSHome.forChain((ChildChain)transaction.getChain()).deliver((ChildTransaction)transaction, attachment);
             }
 
             @Override
@@ -2629,8 +2629,8 @@ public abstract class TransactionType {
             @Override
             boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
-                if (senderAccount.getUnconfirmedBalanceNQT() >= attachment.getRefundNQT()) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -attachment.getRefundNQT());
+                if (senderAccount.getUnconfirmedBalance((ChildChain)transaction.getChain()) >= attachment.getRefundNQT()) {
+                    senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(), -attachment.getRefundNQT());
                     return true;
                 }
                 return false;
@@ -2639,7 +2639,7 @@ public abstract class TransactionType {
             @Override
             void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), attachment.getRefundNQT());
+                senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(), attachment.getRefundNQT());
             }
 
             @Override

@@ -250,8 +250,8 @@ public abstract class MonetarySystem extends TransactionType {
         boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.MonetarySystemReserveIncrease attachment = (Attachment.MonetarySystemReserveIncrease) transaction.getAttachment();
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
-            if (senderAccount.getUnconfirmedBalanceNQT() >= Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitNQT())) {
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+            if (senderAccount.getUnconfirmedBalance((ChildChain)transaction.getChain()) >= Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitNQT())) {
+                senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
                         -Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitNQT()));
                 return true;
             }
@@ -270,7 +270,7 @@ public abstract class MonetarySystem extends TransactionType {
                 Attachment.MonetarySystemCurrencyIssuance currencyIssuanceAttachment = (Attachment.MonetarySystemCurrencyIssuance) currencyIssuance.getAttachment();
                 reserveSupply = currencyIssuanceAttachment.getReserveSupply();
             }
-            senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+            senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
                     Math.multiplyExact(reserveSupply, attachment.getAmountPerUnitNQT()));
         }
 
@@ -348,7 +348,7 @@ public abstract class MonetarySystem extends TransactionType {
         @Override
         void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             Attachment.MonetarySystemReserveClaim attachment = (Attachment.MonetarySystemReserveClaim) transaction.getAttachment();
-            Currency.claimReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(),
+            Currency.claimReserve((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(),
                     attachment.getUnits());
         }
 
@@ -504,9 +504,9 @@ public abstract class MonetarySystem extends TransactionType {
         @Override
         boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer) transaction.getAttachment();
-            if (senderAccount.getUnconfirmedBalanceNQT() >= Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateNQT())
+            if (senderAccount.getUnconfirmedBalance((ChildChain)transaction.getChain()) >= Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateNQT())
                     && senderAccount.getUnconfirmedCurrencyUnits(attachment.getCurrencyId()) >= attachment.getInitialSellSupply()) {
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
                         -Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateNQT()));
                 senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), transaction.getId(),
                         attachment.getCurrencyId(), -attachment.getInitialSellSupply());
@@ -518,7 +518,7 @@ public abstract class MonetarySystem extends TransactionType {
         @Override
         void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer) transaction.getAttachment();
-            senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+            senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
                     Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateNQT()));
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             if (currency != null) {
@@ -593,8 +593,8 @@ public abstract class MonetarySystem extends TransactionType {
         @Override
         boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.MonetarySystemExchangeBuy attachment = (Attachment.MonetarySystemExchangeBuy) transaction.getAttachment();
-            if (senderAccount.getUnconfirmedBalanceNQT() >= Math.multiplyExact(attachment.getUnits(), attachment.getRateNQT())) {
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+            if (senderAccount.getUnconfirmedBalance((ChildChain)transaction.getChain()) >= Math.multiplyExact(attachment.getUnits(), attachment.getRateNQT())) {
+                senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
                         -Math.multiplyExact(attachment.getUnits(), attachment.getRateNQT()));
                 return true;
             }
@@ -604,7 +604,7 @@ public abstract class MonetarySystem extends TransactionType {
         @Override
         void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.MonetarySystemExchangeBuy attachment = (Attachment.MonetarySystemExchangeBuy) transaction.getAttachment();
-            senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+            senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
                     Math.multiplyExact(attachment.getUnits(), attachment.getRateNQT()));
         }
 

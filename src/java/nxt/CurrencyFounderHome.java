@@ -111,7 +111,7 @@ public final class CurrencyFounderHome {
 
     void increaseReserve(AccountLedger.LedgerEvent event, long eventId, Account account, long currencyId, long amountPerUnitNQT) {
         Currency currency = Currency.getCurrency(currencyId);
-        account.addToBalanceNQT(event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitNQT));
+        account.addToBalance(childChain, event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitNQT));
         currency.increaseReserve(amountPerUnitNQT);
         addOrUpdateFounder(currencyId, account.getId(), amountPerUnitNQT);
     }

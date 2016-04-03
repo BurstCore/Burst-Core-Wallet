@@ -192,13 +192,13 @@ public final class ExchangeOfferHome {
             long excess = offer.getCounterOffer().increaseSupply(curUnits);
 
             Account counterAccount = Account.getAccount(offer.getAccountId());
-            counterAccount.addToBalanceNQT(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), -curAmountNQT);
+            counterAccount.addToBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), -curAmountNQT);
             counterAccount.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, curUnits);
             counterAccount.addToUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, excess);
             exchangeHome.addExchange(transaction, currencyId, offer, account.getId(), offer.getAccountId(), curUnits);
         }
         long transactionId = transaction.getId();
-        account.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.CURRENCY_EXCHANGE, transactionId, totalAmountNQT);
+        account.addToBalanceAndUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, transactionId, totalAmountNQT);
         account.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, transactionId, currencyId, -(units - remainingUnits));
         account.addToUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, transactionId, currencyId, remainingUnits);
     }
@@ -241,8 +241,8 @@ public final class ExchangeOfferHome {
             long excess = offer.getCounterOffer().increaseSupply(curUnits);
 
             Account counterAccount = Account.getAccount(offer.getAccountId());
-            counterAccount.addToBalanceNQT(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), curAmountNQT);
-            counterAccount.addToUnconfirmedBalanceNQT(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(),
+            counterAccount.addToBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), curAmountNQT);
+            counterAccount.addToUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(),
                     Math.addExact(
                             Math.multiplyExact(curUnits - excess, offer.getRateNQT() - offer.getCounterOffer().getRateNQT()),
                             Math.multiplyExact(excess, offer.getRateNQT())
@@ -254,8 +254,8 @@ public final class ExchangeOfferHome {
         long transactionId = transaction.getId();
         account.addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, transactionId,
                 currencyId, Math.subtractExact(units, remainingUnits));
-        account.addToBalanceNQT(LedgerEvent.CURRENCY_EXCHANGE, transactionId, -totalAmountNQT);
-        account.addToUnconfirmedBalanceNQT(LedgerEvent.CURRENCY_EXCHANGE, transactionId, Math.multiplyExact(units, rateNQT) - totalAmountNQT);
+        account.addToBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, transactionId, -totalAmountNQT);
+        account.addToUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, transactionId, Math.multiplyExact(units, rateNQT) - totalAmountNQT);
     }
 
     void removeOffer(LedgerEvent event, BuyOffer buyOffer) {
@@ -265,7 +265,7 @@ public final class ExchangeOfferHome {
         removeSellOffer(sellOffer);
 
         Account account = Account.getAccount(buyOffer.getAccountId());
-        account.addToUnconfirmedBalanceNQT(event, buyOffer.getId(), Math.multiplyExact(buyOffer.getSupply(), buyOffer.getRateNQT()));
+        account.addToUnconfirmedBalance(childChain, event, buyOffer.getId(), Math.multiplyExact(buyOffer.getSupply(), buyOffer.getRateNQT()));
         account.addToUnconfirmedCurrencyUnits(event, buyOffer.getId(), buyOffer.getCurrencyId(), sellOffer.getSupply());
     }
 

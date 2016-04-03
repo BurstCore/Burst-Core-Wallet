@@ -371,13 +371,13 @@ final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public DbIterator<TransactionImpl> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
+    public DbIterator<TransactionImpl> getTransactions(Chain chain, long accountId, byte type, byte subtype, int blockTimestamp,
                                                        boolean includeExpiredPrunable) {
-        return getTransactions(accountId, 0, type, subtype, blockTimestamp, false, false, false, 0, -1, includeExpiredPrunable, false);
+        return getTransactions(chain, accountId, 0, type, subtype, blockTimestamp, false, false, false, 0, -1, includeExpiredPrunable, false);
     }
 
     @Override
-    public DbIterator<TransactionImpl> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
+    public DbIterator<TransactionImpl> getTransactions(Chain chain, long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                        int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                        int from, int to, boolean includeExpiredPrunable, boolean executedOnly) {
         if (phasedOnly && nonPhasedOnly) {
@@ -452,7 +452,7 @@ final class BlockchainImpl implements Blockchain {
 
             buf.append("ORDER BY block_timestamp DESC, transaction_index DESC");
             buf.append(DbUtils.limitsClause(from, to));
-            con = Db.db.getConnection();
+            con = Db.db.getConnection(chain.getDbSchema());
             PreparedStatement pstmt;
             int i = 0;
             pstmt = con.prepareStatement(buf.toString());
@@ -493,7 +493,7 @@ final class BlockchainImpl implements Blockchain {
                 pstmt.setInt(++i, prunableExpiration);
             }
             DbUtils.setLimits(++i, pstmt, from, to);
-            return getTransactions(con, pstmt);
+            return getTransactions(chain, con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -501,10 +501,10 @@ final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public DbIterator<TransactionImpl> getReferencingTransactions(long transactionId, int from, int to) {
+    public DbIterator<TransactionImpl> getReferencingTransactions(Chain chain, long transactionId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.db.getConnection(chain.getDbSchema());
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, referenced_transaction "
                     + "WHERE referenced_transaction.referenced_transaction_id = ? "
                     + "AND referenced_transaction.transaction_id = transaction.id "
@@ -513,7 +513,7 @@ final class BlockchainImpl implements Blockchain {
             int i = 0;
             pstmt.setLong(++i, transactionId);
             DbUtils.setLimits(++i, pstmt, from, to);
-            return getTransactions(con, pstmt);
+            return getTransactions(chain, con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -521,8 +521,13 @@ final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public DbIterator<TransactionImpl> getTransactions(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, TransactionHome::loadTransaction);
+    public DbIterator<TransactionImpl> getTransactions(Chain chain, Connection con, PreparedStatement pstmt) {
+        return new DbIterator<>(con, pstmt, new DbIterator.ResultSetReader<TransactionImpl>() {
+            @Override
+            public TransactionImpl get(Connection con, ResultSet rs) throws Exception {
+                return TransactionHome.loadTransaction(chain, con, rs);
+            }
+        });
     }
 
     @Override
@@ -532,17 +537,20 @@ final class BlockchainImpl implements Blockchain {
         List<TransactionImpl> result = new ArrayList<>();
         readLock();
         try {
-            try (DbIterator<ChildTransactionImpl> phasedTransactions = PhasingPollHome.getFinishingTransactions(getHeight() + 1)) {
-                for (ChildTransactionImpl phasedTransaction : phasedTransactions) {
-                    try {
-                        phasedTransaction.validate();
-                        if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.ok(phasedTransaction)) {
-                            result.add(phasedTransaction);
+            //TODO: use a global finishing phased transaction table, sort result before processing
+            ChildChain.getAll().forEach(childChain -> {
+                try (DbIterator<TransactionImpl> phasedTransactions = PhasingPollHome.forChain(childChain).getFinishingTransactions(getHeight() + 1)) {
+                    for (TransactionImpl phasedTransaction : phasedTransactions) {
+                        try {
+                            phasedTransaction.validate();
+                            if (!((ChildTransactionImpl)phasedTransaction).attachmentIsDuplicate(duplicates, false) && filter.ok(phasedTransaction)) {
+                                result.add(phasedTransaction);
+                            }
+                        } catch (NxtException.ValidationException ignore) {
                         }
-                    } catch (NxtException.ValidationException ignore) {
                     }
                 }
-            }
+            });
             blockchainProcessor.selectUnconfirmedTransactions(duplicates, getLastBlock(), -1).forEach(
                     unconfirmedTransaction -> {
                         TransactionImpl transaction = unconfirmedTransaction.getTransaction();

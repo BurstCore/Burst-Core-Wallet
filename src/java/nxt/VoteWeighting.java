@@ -25,7 +25,7 @@ public final class VoteWeighting {
                 return false;
             }
             @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
+            public final long calcWeight(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
                 throw new UnsupportedOperationException("No voting possible for VotingModel.NONE");
             }
             @Override
@@ -35,8 +35,9 @@ public final class VoteWeighting {
         },
         ACCOUNT(0) {
             @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                return (voteWeighting.minBalance == 0 || voteWeighting.minBalanceModel.getBalance(voteWeighting, voterId, height) >= voteWeighting.minBalance) ? 1 : 0;
+            public final long calcWeight(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
+                return (voteWeighting.minBalance == 0 ||
+                        voteWeighting.minBalanceModel.getBalance(childChain, voteWeighting, voterId, height) >= voteWeighting.minBalance) ? 1 : 0;
             }
             @Override
             public final MinBalanceModel getMinBalanceModel() {
@@ -45,8 +46,8 @@ public final class VoteWeighting {
         },
         NQT(1) {
             @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long nqtBalance = Account.getAccount(voterId, height).getBalanceNQT();
+            public final long calcWeight(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
+                long nqtBalance = BalanceHome.forChain(childChain).getBalance(voterId, height).getBalance();
                 return nqtBalance >= voteWeighting.minBalance ? nqtBalance : 0;
             }
             @Override
@@ -56,7 +57,7 @@ public final class VoteWeighting {
         },
         ASSET(2) {
             @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
+            public final long calcWeight(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
                 long qntBalance = Account.getAssetBalanceQNT(voterId, voteWeighting.holdingId, height);
                 return qntBalance >= voteWeighting.minBalance ? qntBalance : 0;
             }
@@ -67,7 +68,7 @@ public final class VoteWeighting {
         },
         CURRENCY(3) {
             @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
+            public final long calcWeight(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
                 long units = Account.getCurrencyUnits(voterId, voteWeighting.holdingId, height);
                 return units >= voteWeighting.minBalance ? units : 0;
             }
@@ -82,7 +83,7 @@ public final class VoteWeighting {
                 return false;
             }
             @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
+            public final long calcWeight(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
                 throw new UnsupportedOperationException("No voting possible for VotingModel.TRANSACTION");
             }
             @Override
@@ -92,7 +93,7 @@ public final class VoteWeighting {
         },
         HASH(5) {
             @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
+            public final long calcWeight(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
                 return 1;
             }
             @Override
@@ -111,7 +112,7 @@ public final class VoteWeighting {
             return code;
         }
 
-        public abstract long calcWeight(VoteWeighting voteWeighting, long voterId, int height);
+        public abstract long calcWeight(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height);
 
         public abstract MinBalanceModel getMinBalanceModel();
 
@@ -132,25 +133,25 @@ public final class VoteWeighting {
     public enum MinBalanceModel {
         NONE(0) {
             @Override
-            public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
+            public final long getBalance(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
                 throw new UnsupportedOperationException();
             }
         },
         NQT(1) {
             @Override
-            public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return Account.getAccount(voterId, height).getBalanceNQT();
+            public final long getBalance(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
+                return BalanceHome.forChain(childChain).getBalance(voterId, height).getBalance();
             }
         },
         ASSET(2) {
             @Override
-            public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
+            public final long getBalance(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
                 return Account.getAssetBalanceQNT(voterId, voteWeighting.holdingId, height);
             }
         },
         CURRENCY(3) {
             @Override
-            public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
+            public final long getBalance(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
                 return Account.getCurrencyUnits(voterId, voteWeighting.holdingId, height);
             }
         };
@@ -165,7 +166,7 @@ public final class VoteWeighting {
             return code;
         }
 
-        public abstract long getBalance(VoteWeighting voteWeighting, long voterId, int height);
+        public abstract long getBalance(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height);
 
         public static MinBalanceModel get(byte code) {
             for (MinBalanceModel minBalanceModel : values()) {

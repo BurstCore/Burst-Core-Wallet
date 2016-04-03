@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//TODO: all queries over multiple tables should be replaced with a view, or a single id lookup table
+//TODO: all queries over multiple tables should be replaced with a single id lookup table
 final class TransactionHome {
 
     private static final Map<Chain, TransactionHome> transactionHomeMap = new HashMap<>();
@@ -72,6 +72,7 @@ final class TransactionHome {
                 return transaction.getHeight() <= height ? transaction : null;
             }
         }
+        //TODO: use global id map table
         for (TransactionHome transactionHome : transactionHomeMap.values()) {
             Table transactionTable = transactionHome.transactionTable;
             // Search the database
@@ -135,6 +136,7 @@ final class TransactionHome {
                         Arrays.equals(transaction.fullHash(), fullHash) ? transaction : null);
             }
         }
+        //TODO: use global id map table
         for (TransactionHome transactionHome : transactionHomeMap.values()) {
             Table transactionTable = transactionHome.transactionTable;
             // Search the database
@@ -200,6 +202,7 @@ final class TransactionHome {
                 return (transaction.getHeight() <= height);
             }
         }
+        //TODO: use global id map table
         for (TransactionHome transactionHome : transactionHomeMap.values()) {
             Table transactionTable = transactionHome.transactionTable;
             // Search the database
@@ -256,6 +259,7 @@ final class TransactionHome {
                         Arrays.equals(transaction.fullHash(), fullHash));
             }
         }
+        //TODO: use global id map table
         for (TransactionHome transactionHome : transactionHomeMap.values()) {
             Table transactionTable = transactionHome.transactionTable;
             // Search the database
@@ -371,6 +375,8 @@ final class TransactionHome {
     }
 
     static List<TransactionImpl> findBlockTransactions(Connection con, long blockId) {
+        //TODO: after implementing ChildchainBlock transactions, get FXT transactions from fxt chain,
+        // then for each ChildchainBlock attachment look for its transactions in its child chain only
         List<TransactionImpl> list = new ArrayList<>();
         for (TransactionHome transactionHome : transactionHomeMap.values()) {
             Table transactionTable = transactionHome.transactionTable;

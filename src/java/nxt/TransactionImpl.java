@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 abstract class TransactionImpl implements Transaction {
 
@@ -436,6 +437,9 @@ abstract class TransactionImpl implements Transaction {
         return zeroSignature(getBytes());
     }
 
+    //TODO: really needed?
+    abstract byte[] referencedTransactionFullHash();
+
     @Override
     public JSONObject getJSONObject() {
         JSONObject json = new JSONObject();
@@ -568,7 +572,9 @@ abstract class TransactionImpl implements Transaction {
 
     abstract boolean attachmentIsPhased();
 
-    // returns false iff double spending
+    abstract boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates);
+
+        // returns false iff double spending
     boolean applyUnconfirmed() {
         Account senderAccount = Account.getAccount(getSenderId());
         return senderAccount != null && getType().applyUnconfirmed(this, senderAccount);

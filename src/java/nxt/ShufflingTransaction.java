@@ -147,16 +147,18 @@ public abstract class ShufflingTransaction extends TransactionType {
         boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
+            ChildChain childChain = (ChildChain) transaction.getChain();
+            //TODO: change deposit to be always in FXT
             if (holdingType != HoldingType.NXT) {
-                if (holdingType.getUnconfirmedBalance(senderAccount, attachment.getHoldingId()) >= attachment.getAmount()
-                        && senderAccount.getUnconfirmedBalanceNQT() >= Constants.SHUFFLING_DEPOSIT_NQT) {
-                    holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), -attachment.getAmount());
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -Constants.SHUFFLING_DEPOSIT_NQT);
+                if (holdingType.getUnconfirmedBalance(childChain, senderAccount, attachment.getHoldingId()) >= attachment.getAmount()
+                        && senderAccount.getUnconfirmedBalance(childChain) >= Constants.SHUFFLING_DEPOSIT_NQT) {
+                    holdingType.addToUnconfirmedBalance(childChain, senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), -attachment.getAmount());
+                    senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), -Constants.SHUFFLING_DEPOSIT_NQT);
                     return true;
                 }
             } else {
-                if (senderAccount.getUnconfirmedBalanceNQT() >= attachment.getAmount()) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -attachment.getAmount());
+                if (senderAccount.getUnconfirmedBalance(childChain) >= attachment.getAmount()) {
+                    senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), -attachment.getAmount());
                     return true;
                 }
             }
@@ -173,11 +175,13 @@ public abstract class ShufflingTransaction extends TransactionType {
         void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
+            ChildChain childChain = (ChildChain) transaction.getChain();
+            //TODO: change deposit to be always in FXT
             if (holdingType != HoldingType.NXT) {
-                holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), attachment.getAmount());
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), Constants.SHUFFLING_DEPOSIT_NQT);
+                holdingType.addToUnconfirmedBalance(childChain, senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), attachment.getAmount());
+                senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), Constants.SHUFFLING_DEPOSIT_NQT);
             } else {
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), attachment.getAmount());
+                senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), attachment.getAmount());
             }
         }
 
@@ -262,18 +266,20 @@ public abstract class ShufflingTransaction extends TransactionType {
         @Override
         boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ShufflingHome.forChain((ChildChain)transaction.getChain()).getShuffling(attachment.getShufflingId());
+            ChildChain childChain = (ChildChain) transaction.getChain();
+            //TODO: change deposit to be always in FXT
+            ShufflingHome.Shuffling shuffling = ShufflingHome.forChain(childChain).getShuffling(attachment.getShufflingId());
             HoldingType holdingType = shuffling.getHoldingType();
             if (holdingType != HoldingType.NXT) {
-                if (holdingType.getUnconfirmedBalance(senderAccount, shuffling.getHoldingId()) >= shuffling.getAmount()
-                        && senderAccount.getUnconfirmedBalanceNQT() >= Constants.SHUFFLING_DEPOSIT_NQT) {
-                    holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -Constants.SHUFFLING_DEPOSIT_NQT);
+                if (holdingType.getUnconfirmedBalance(childChain, senderAccount, shuffling.getHoldingId()) >= shuffling.getAmount()
+                        && senderAccount.getUnconfirmedBalance(childChain) >= Constants.SHUFFLING_DEPOSIT_NQT) {
+                    holdingType.addToUnconfirmedBalance(childChain, senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
+                    senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), -Constants.SHUFFLING_DEPOSIT_NQT);
                     return true;
                 }
             } else {
-                if (senderAccount.getUnconfirmedBalanceNQT() >= shuffling.getAmount()) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -shuffling.getAmount());
+                if (senderAccount.getUnconfirmedBalance(childChain) >= shuffling.getAmount()) {
+                    senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), -shuffling.getAmount());
                     return true;
                 }
             }
@@ -290,13 +296,15 @@ public abstract class ShufflingTransaction extends TransactionType {
         @Override
         void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ShufflingHome.forChain((ChildChain)transaction.getChain()).getShuffling(attachment.getShufflingId());
+            ChildChain childChain = (ChildChain) transaction.getChain();
+            //TODO: change deposit to be always in FXT
+            ShufflingHome.Shuffling shuffling = ShufflingHome.forChain(childChain).getShuffling(attachment.getShufflingId());
             HoldingType holdingType = shuffling.getHoldingType();
             if (holdingType != HoldingType.NXT) {
-                holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), shuffling.getAmount());
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), Constants.SHUFFLING_DEPOSIT_NQT);
+                holdingType.addToUnconfirmedBalance(childChain, senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), shuffling.getAmount());
+                senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), Constants.SHUFFLING_DEPOSIT_NQT);
             } else {
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), shuffling.getAmount());
+                senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), shuffling.getAmount());
             }
         }
 

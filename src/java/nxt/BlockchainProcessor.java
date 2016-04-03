@@ -62,7 +62,7 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
 
     void trimDerivedTables();
 
-    int restorePrunedData();
+    int restorePrunedData(Chain chain);
 
     Transaction restorePrunedTransaction(long transactionId);
 

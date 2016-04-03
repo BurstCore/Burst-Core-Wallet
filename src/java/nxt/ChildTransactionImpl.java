@@ -212,6 +212,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         return Convert.toHexString(referencedTransactionFullHash);
     }
 
+    @Override
     byte[] referencedTransactionFullHash() {
         return referencedTransactionFullHash;
     }
@@ -415,6 +416,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         return getType().isDuplicate(this, duplicates);
     }
 
+    @Override
     boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates) {
         return getType().isUnconfirmedDuplicate(this, duplicates);
     }

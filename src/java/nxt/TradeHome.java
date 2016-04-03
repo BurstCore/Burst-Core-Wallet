@@ -255,6 +255,10 @@ public final class TradeHome {
             }
         }
 
+        public final ChildChain getChildChain() {
+            return TradeHome.this.childChain;
+        }
+
         public long getBlockId() {
             return blockId;
         }

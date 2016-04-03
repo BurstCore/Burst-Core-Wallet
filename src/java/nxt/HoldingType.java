@@ -21,43 +21,43 @@ public enum HoldingType {
     NXT((byte)0) {
 
         @Override
-        public long getBalance(Account account, long holdingId) {
+        public long getBalance(ChildChain childChain, Account account, long holdingId) {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
-            return account.getBalanceNQT();
+            return account.getBalance(childChain);
         }
 
         @Override
-        public long getUnconfirmedBalance(Account account, long holdingId) {
+        public long getUnconfirmedBalance(ChildChain childChain, Account account, long holdingId) {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
-            return account.getUnconfirmedBalanceNQT();
+            return account.getUnconfirmedBalance(childChain);
         }
 
         @Override
-        void addToBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        void addToBalance(ChildChain childChain, Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
-            account.addToBalanceNQT(event, eventId, amount);
+            account.addToBalance(childChain, event, eventId, amount);
         }
 
         @Override
-        void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        void addToUnconfirmedBalance(ChildChain childChain, Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
-            account.addToUnconfirmedBalanceNQT(event, eventId, amount);
+            account.addToUnconfirmedBalance(childChain, event, eventId, amount);
         }
 
         @Override
-        void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        void addToBalanceAndUnconfirmedBalance(ChildChain childChain, Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
-            account.addToBalanceAndUnconfirmedBalanceNQT(event, eventId, amount);
+            account.addToBalanceAndUnconfirmedBalance(childChain, event, eventId, amount);
         }
 
     },
@@ -65,27 +65,27 @@ public enum HoldingType {
     ASSET((byte)1) {
 
         @Override
-        public long getBalance(Account account, long holdingId) {
+        public long getBalance(ChildChain childChain, Account account, long holdingId) {
             return account.getAssetBalanceQNT(holdingId);
         }
 
         @Override
-        public long getUnconfirmedBalance(Account account, long holdingId) {
+        public long getUnconfirmedBalance(ChildChain childChain, Account account, long holdingId) {
             return account.getUnconfirmedAssetBalanceQNT(holdingId);
         }
 
         @Override
-        void addToBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        void addToBalance(ChildChain childChain, Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
             account.addToAssetBalanceQNT(event, eventId, holdingId, amount);
         }
 
         @Override
-        void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        void addToUnconfirmedBalance(ChildChain childChain, Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
             account.addToUnconfirmedAssetBalanceQNT(event, eventId, holdingId, amount);
         }
 
         @Override
-        void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        void addToBalanceAndUnconfirmedBalance(ChildChain childChain, Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
             account.addToAssetAndUnconfirmedAssetBalanceQNT(event, eventId, holdingId, amount);
         }
 
@@ -94,27 +94,27 @@ public enum HoldingType {
     CURRENCY((byte)2) {
 
         @Override
-        public long getBalance(Account account, long holdingId) {
+        public long getBalance(ChildChain childChain, Account account, long holdingId) {
             return account.getCurrencyUnits(holdingId);
         }
 
         @Override
-        public long getUnconfirmedBalance(Account account, long holdingId) {
+        public long getUnconfirmedBalance(ChildChain childChain, Account account, long holdingId) {
             return account.getUnconfirmedCurrencyUnits(holdingId);
         }
 
         @Override
-        void addToBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        void addToBalance(ChildChain childChain, Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
             account.addToCurrencyUnits(event, eventId, holdingId, amount);
         }
 
         @Override
-        void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        void addToUnconfirmedBalance(ChildChain childChain, Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
             account.addToUnconfirmedCurrencyUnits(event, eventId, holdingId, amount);
         }
 
         @Override
-        void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        void addToBalanceAndUnconfirmedBalance(ChildChain childChain, Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
             account.addToCurrencyAndUnconfirmedCurrencyUnits(event, eventId, holdingId, amount);
         }
 
@@ -139,14 +139,14 @@ public enum HoldingType {
         return code;
     }
 
-    public abstract long getBalance(Account account, long holdingId);
+    public abstract long getBalance(ChildChain childChain, Account account, long holdingId);
 
-    public abstract long getUnconfirmedBalance(Account account, long holdingId);
+    public abstract long getUnconfirmedBalance(ChildChain childChain, Account account, long holdingId);
 
-    abstract void addToBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount);
+    abstract void addToBalance(ChildChain childChain, Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount);
 
-    abstract void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount);
+    abstract void addToUnconfirmedBalance(ChildChain childChain, Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount);
 
-    abstract void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount);
+    abstract void addToBalanceAndUnconfirmedBalance(ChildChain childChain, Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount);
 
 }

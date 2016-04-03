@@ -253,6 +253,7 @@ public final class PhasingPollHome {
         return phasingPollTable.get(phasingPollDbKeyFactory.newKey(id));
     }
 
+    //TODO: use a global table for phasing transaction finish height to id and chain mapping
     DbIterator<TransactionImpl> getFinishingTransactions(int height) {
         Connection con = null;
         try {
@@ -261,7 +262,7 @@ public final class PhasingPollHome {
                     "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = ? " +
                     "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
             pstmt.setInt(1, height);
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return BlockchainImpl.getInstance().getTransactions(childChain, con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -287,7 +288,7 @@ public final class PhasingPollHome {
             pstmt.setLong(++i, voterId);
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return BlockchainImpl.getInstance().getTransactions(childChain, con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -318,7 +319,7 @@ public final class PhasingPollHome {
             }
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return BlockchainImpl.getInstance().getTransactions(childChain, con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -341,7 +342,7 @@ public final class PhasingPollHome {
             pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return BlockchainImpl.getInstance().getTransactions(childChain, con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -503,7 +504,7 @@ public final class PhasingPollHome {
             long cumulativeWeight = 0;
             try (DbIterator<PhasingVoteHome.PhasingVote> votes = phasingVoteHome.getVotes(this.id, 0, Integer.MAX_VALUE)) {
                 for (PhasingVoteHome.PhasingVote vote : votes) {
-                    cumulativeWeight += votingModel.calcWeight(voteWeighting, vote.getVoterId(), height);
+                    cumulativeWeight += votingModel.calcWeight(childChain, voteWeighting, vote.getVoterId(), height);
                 }
             }
             return cumulativeWeight;

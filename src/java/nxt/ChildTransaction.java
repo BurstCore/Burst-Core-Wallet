@@ -38,6 +38,8 @@ public interface ChildTransaction extends Transaction {
 
     }
 
+    ChildChain getChain();
+
     String getReferencedTransactionFullHash();
 
     Appendix.Message getMessage();
