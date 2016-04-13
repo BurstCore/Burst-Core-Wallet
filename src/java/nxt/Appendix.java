@@ -1419,7 +1419,7 @@ public interface Appendix {
             transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
             BalanceHome.forChain((ChildChain)transaction.getChain()).getBalance(transaction.getSenderId())
                     .addToUnconfirmedBalance(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
-                                                     transaction.getAmountNQT());
+                                                     transaction.getAmount());
             TransactionProcessorImpl.getInstance()
                     .notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
             Logger.logDebugMessage("Transaction " + transaction.getStringId() + " has been rejected");

@@ -1433,8 +1433,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }
             }
-            calculatedTotalAmount += transaction.getAmountNQT();
-            calculatedTotalFee += transaction.getFeeNQT();
+            calculatedTotalAmount += transaction.getAmount();
+            calculatedTotalFee += transaction.getFee();
             payloadLength += transaction.getFullSize();
             digest.update(transaction.bytes());
         }
@@ -1491,7 +1491,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         possiblyApprovedTransactions.add(phasedTransaction);
                     }
                 });
-                if (transaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
+                if (transaction.getType() == ChildTransactionType.Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
                     Attachment.MessagingPhasingVoteCasting voteCasting = (Attachment.MessagingPhasingVoteCasting)transaction.getAttachment();
                     voteCasting.getTransactionFullHashes().forEach(hash -> {
                         PhasingPollHome.PhasingPoll phasingPoll = PhasingPollHome.forChain((ChildChain)transaction.getChain()).getPoll(Convert.fullHashToId(hash));
@@ -1502,7 +1502,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             });
             validPhasedTransactions.forEach(phasedTransaction -> {
-                if (phasedTransaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING) {
+                if (phasedTransaction.getType() == ChildTransactionType.Messaging.PHASING_VOTE_CASTING) {
                     PhasingPollHome.PhasingPollResult result = PhasingPollHome.forChain(phasedTransaction.getChain()).getResult(phasedTransaction.getId());
                     if (result != null && result.isApproved()) {
                         Attachment.MessagingPhasingVoteCasting phasingVoteCasting = (Attachment.MessagingPhasingVoteCasting) phasedTransaction.getAttachment();
@@ -1737,8 +1737,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             TransactionImpl transaction = unconfirmedTransaction.getTransaction();
             blockTransactions.add(transaction);
             digest.update(transaction.bytes());
-            totalAmountNQT += transaction.getAmountNQT();
-            totalFeeNQT += transaction.getFeeNQT();
+            totalAmountNQT += transaction.getAmount();
+            totalFeeNQT += transaction.getFee();
             payloadLength += transaction.getFullSize();
         }
         byte[] payloadHash = digest.digest();

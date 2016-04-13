@@ -18,11 +18,11 @@ package nxt.http;
 
 import nxt.Account;
 import nxt.Attachment;
+import nxt.ChildTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.TaggedData;
 import nxt.Transaction;
-import nxt.TransactionType;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,7 +46,7 @@ public final class ExtendTaggedData extends CreateTransaction {
         TaggedData taggedData = TaggedData.getData(transactionId);
         if (taggedData == null) {
             Transaction transaction = Nxt.getBlockchain().getTransaction(transactionId);
-            if (transaction == null || transaction.getType() != TransactionType.Data.TAGGED_DATA_UPLOAD) {
+            if (transaction == null || transaction.getType() != ChildTransactionType.Data.TAGGED_DATA_UPLOAD) {
                 return UNKNOWN_TRANSACTION;
             }
             Attachment.TaggedDataUpload taggedDataUpload = ParameterParser.getTaggedData(req);

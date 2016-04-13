@@ -17,11 +17,11 @@
 package nxt.http;
 
 import nxt.Attachment;
+import nxt.ChildTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.Order;
 import nxt.Transaction;
-import nxt.TransactionType;
 import nxt.db.DbIterator;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;
@@ -50,7 +50,7 @@ public final class GetAskOrders extends APIServlet.APIRequestHandler {
 
         long[] cancellations = null;
         if (showExpectedCancellations) {
-            Filter<Transaction> filter = transaction -> transaction.getType() == TransactionType.ColoredCoins.ASK_ORDER_CANCELLATION;
+            Filter<Transaction> filter = transaction -> transaction.getType() == ChildTransactionType.ColoredCoins.ASK_ORDER_CANCELLATION;
             List<? extends Transaction> transactions = Nxt.getBlockchain().getExpectedTransactions(filter);
             cancellations = new long[transactions.size()];
             for (int i = 0; i < transactions.size(); i++) {

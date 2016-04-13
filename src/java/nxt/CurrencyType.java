@@ -259,7 +259,7 @@ public enum CurrencyType {
     }
 
     private static void validate(Currency currency, int type, Transaction transaction) throws NxtException.ValidationException {
-        if (transaction.getAmountNQT() != 0) {
+        if (transaction.getAmount() != 0) {
             throw new NxtException.NotValidException("Currency transaction NXT amount must be 0");
         }
 

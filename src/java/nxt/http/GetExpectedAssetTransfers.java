@@ -17,10 +17,10 @@
 package nxt.http;
 
 import nxt.Attachment;
+import nxt.ChildTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.Transaction;
-import nxt.TransactionType;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -45,7 +45,7 @@ public final class GetExpectedAssetTransfers extends APIServlet.APIRequestHandle
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
 
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != TransactionType.ColoredCoins.ASSET_TRANSFER) {
+            if (transaction.getType() != ChildTransactionType.ColoredCoins.ASSET_TRANSFER) {
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId) {

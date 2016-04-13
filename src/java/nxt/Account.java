@@ -1716,8 +1716,16 @@ public final class Account {
         BalanceHome.forChain(childChain).getBalance(id).addToBalance(event, eventId, amount);
     }
 
+    void addToBalance(ChildChain childChain, LedgerEvent event, long eventId, long amount, long fee) {
+        BalanceHome.forChain(childChain).getBalance(id).addToBalance(event, eventId, amount, fee);
+    }
+
     void addToUnconfirmedBalance(ChildChain childChain, LedgerEvent event, long eventId, long amount) {
         BalanceHome.forChain(childChain).getBalance(id).addToUnconfirmedBalance(event, eventId, amount);
+    }
+
+    void addToUnconfirmedBalance(ChildChain childChain, LedgerEvent event, long eventId, long amount, long fee) {
+        BalanceHome.forChain(childChain).getBalance(id).addToUnconfirmedBalance(event, eventId, amount, fee);
     }
 
     void addToBalanceAndUnconfirmedBalance(ChildChain childChain, LedgerEvent event, long eventId, long amount) {

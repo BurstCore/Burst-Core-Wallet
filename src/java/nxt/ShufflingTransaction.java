@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class ShufflingTransaction extends TransactionType {
+public abstract class ShufflingTransaction extends ChildTransactionType {
 
     private static final byte SUBTYPE_SHUFFLING_CREATION = 0;
     private static final byte SUBTYPE_SHUFFLING_REGISTRATION = 1;
@@ -62,7 +62,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
     @Override
     public final byte getType() {
-        return TransactionType.TYPE_SHUFFLING;
+        return ChildTransactionType.TYPE_SHUFFLING;
     }
 
     @Override

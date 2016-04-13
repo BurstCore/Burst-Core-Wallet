@@ -415,7 +415,7 @@ final class TransactionHome {
                     long id = rs.getLong("id");
                     byte type = rs.getByte("type");
                     byte subtype = rs.getByte("subtype");
-                    TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+                    TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
                     result.add(new PrunableTransaction(id, transactionType,
                             rs.getBoolean("prunable_attachment"),
                             rs.getBoolean("prunable_plain_message"),

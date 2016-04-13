@@ -459,7 +459,7 @@ public final class Shuffler {
             failedTransaction = null;
             failureCause = null;
             Account participantAccount = Account.getAccount(this.accountId);
-            if (participantAccount == null || transaction.getFeeNQT() > participantAccount.getUnconfirmedBalance(childChain)) {
+            if (participantAccount == null || transaction.getFee() > participantAccount.getUnconfirmedBalance(childChain)) {
                 failedTransaction = transaction;
                 failureCause = new NxtException.NotCurrentlyValidException("Insufficient balance");
                 Logger.logDebugMessage("Error submitting shuffler transaction", failureCause);

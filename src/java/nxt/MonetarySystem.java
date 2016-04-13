@@ -22,7 +22,7 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-public abstract class MonetarySystem extends TransactionType {
+public abstract class MonetarySystem extends ChildTransactionType {
 
     private static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_ISSUANCE = 0;
     private static final byte SUBTYPE_MONETARY_SYSTEM_RESERVE_INCREASE = 1;
@@ -63,7 +63,7 @@ public abstract class MonetarySystem extends TransactionType {
 
     @Override
     public final byte getType() {
-        return TransactionType.TYPE_MONETARY_SYSTEM;
+        return ChildTransactionType.TYPE_MONETARY_SYSTEM;
     }
 
     @Override
@@ -127,7 +127,7 @@ public abstract class MonetarySystem extends TransactionType {
 
         @Override
         long[] getBackFees(Transaction transaction) {
-            long feeNQT = transaction.getFeeNQT();
+            long feeNQT = transaction.getFee();
             return new long[] {feeNQT * 3 / 10, feeNQT * 2 / 10, feeNQT / 10};
         }
 

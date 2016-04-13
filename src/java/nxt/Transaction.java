@@ -67,9 +67,9 @@ public interface Transaction {
 
     int getExpiration();
 
-    long getAmountNQT();
+    long getAmount();
 
-    long getFeeNQT();
+    long getFee();
 
     byte[] getSignature();
 

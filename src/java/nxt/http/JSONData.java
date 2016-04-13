@@ -918,8 +918,8 @@ final class JSONData {
         if (transaction.getRecipientId() != 0) {
             putAccount(json, "recipient", transaction.getRecipientId());
         }
-        json.put("amountNQT", String.valueOf(transaction.getAmountNQT()));
-        json.put("feeNQT", String.valueOf(transaction.getFeeNQT()));
+        json.put("amountNQT", String.valueOf(transaction.getAmount()));
+        json.put("feeNQT", String.valueOf(transaction.getFee()));
         String referencedTransactionFullHash = transaction.getReferencedTransactionFullHash();
         if (referencedTransactionFullHash != null) {
             json.put("referencedTransactionFullHash", referencedTransactionFullHash);

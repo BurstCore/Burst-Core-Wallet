@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.ChildTransactionType;
 import nxt.Constants;
 import nxt.CurrencyMinting;
 import nxt.CurrencyType;
@@ -63,7 +64,7 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                     for (int subtype = 0; ; subtype++) {
                         TransactionType transactionType;
                         try {
-                            transactionType = TransactionType.findTransactionType((byte) type, (byte) subtype);
+                            transactionType = ChildTransactionType.findTransactionType((byte) type, (byte) subtype);
                         } catch (IllegalArgumentException ignore) {
                             continue;
                         }

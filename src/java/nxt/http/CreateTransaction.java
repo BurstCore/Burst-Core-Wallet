@@ -204,7 +204,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             builder.appendix(prunableEncryptedMessage);
             Transaction transaction = builder.build(secretPhrase);
             try {
-                if (Math.addExact(amountNQT, transaction.getFeeNQT()) > senderAccount.getUnconfirmedBalanceNQT()) {
+                if (Math.addExact(amountNQT, transaction.getFee()) > senderAccount.getUnconfirmedBalanceNQT()) {
                     return NOT_ENOUGH_FUNDS;
                 }
             } catch (ArithmeticException e) {

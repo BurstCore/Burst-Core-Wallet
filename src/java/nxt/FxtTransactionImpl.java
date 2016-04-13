@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
 
@@ -107,7 +106,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
     }
 
     @Override
-    public long getFeeNQT() {
+    public long getFee() {
         return feeNQT;
     }
 
@@ -125,12 +124,6 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
     @Override
     byte[] referencedTransactionFullHash() {
         return null;
-    }
-
-    @Override
-    boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates) {
-        //TODO
-        return false;
     }
 
     @Override
@@ -197,7 +190,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
             }
 
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
             FxtTransactionImpl.BuilderImpl builder = new FxtTransactionImpl.BuilderImpl(version, null,
                     amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer));
             builder.timestamp(timestamp)
@@ -235,8 +228,8 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
             pstmt.setLong(++i, getId());
             pstmt.setShort(++i, getDeadline());
             DbUtils.setLongZeroToNull(pstmt, ++i, getRecipientId());
-            pstmt.setLong(++i, getAmountNQT());
-            pstmt.setLong(++i, getFeeNQT());
+            pstmt.setLong(++i, getAmount());
+            pstmt.setLong(++i, getFee());
             pstmt.setInt(++i, getHeight());
             pstmt.setLong(++i, getBlockId());
             pstmt.setBytes(++i, getSignature());
@@ -296,7 +289,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
                 ecBlockHeight = buffer.getInt();
                 ecBlockId = buffer.getLong();
             }
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
             FxtTransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountNQT, feeNQT,
                     deadline, transactionType.parseAttachment(buffer));
             builder.timestamp(timestamp)
@@ -345,7 +338,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
                 ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
             }
 
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
             if (transactionType == null) {
                 throw new NxtException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
             }

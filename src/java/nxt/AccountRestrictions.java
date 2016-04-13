@@ -124,11 +124,11 @@ public final class AccountRestrictions {
 
         //TODO: must check all chains
         private void checkTransaction(Transaction transaction, boolean validatingAtFinish) throws AccountControlException {
-            if (!validatingAtFinish && maxFees > 0 && Math.addExact(transaction.getFeeNQT(),
+            if (!validatingAtFinish && maxFees > 0 && Math.addExact(transaction.getFee(),
                     PhasingPollHome.forChain((ChildChain)transaction.getChain()).getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
                 throw new AccountControlException(String.format("Maximum total fees limit of %f NXT exceeded", ((double)maxFees)/Constants.ONE_NXT));
             }
-            if (transaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING) {
+            if (transaction.getType() == ChildTransactionType.Messaging.PHASING_VOTE_CASTING) {
                 return;
             }
             try {
@@ -218,8 +218,8 @@ public final class AccountRestrictions {
         if (PhasingOnly.get(transaction.getSenderId()).getMaxFees() == 0) {
             return false;
         }
-        return transaction.getType() != TransactionType.AccountControl.SET_PHASING_ONLY &&
-                TransactionType.isDuplicate(TransactionType.AccountControl.SET_PHASING_ONLY, Long.toUnsignedString(senderAccount.getId()),
+        return transaction.getType() != ChildTransactionType.AccountControl.SET_PHASING_ONLY &&
+                TransactionType.isDuplicate(ChildTransactionType.AccountControl.SET_PHASING_ONLY, Long.toUnsignedString(senderAccount.getId()),
                         duplicates, true);
     }
 

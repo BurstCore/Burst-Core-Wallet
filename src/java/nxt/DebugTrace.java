@@ -222,7 +222,7 @@ public final class DebugTrace {
                 log(getValues(senderId, transaction, transaction.getAttachment(), false));
             }
             long recipientId = transaction.getRecipientId();
-            if (transaction.getAmountNQT() > 0 && recipientId == 0) {
+            if (transaction.getAmount() > 0 && recipientId == 0) {
                 recipientId = Genesis.CREATOR_ID;
             }
             if (include(recipientId)) {
@@ -463,8 +463,8 @@ public final class DebugTrace {
     }
 
     private Map<String,String> getValues(long accountId, Transaction transaction, boolean isRecipient, boolean logFee, boolean logAmount) {
-        long amount = transaction.getAmountNQT();
-        long fee = transaction.getFeeNQT();
+        long amount = transaction.getAmount();
+        long fee = transaction.getFee();
         if (isRecipient) {
             fee = 0; // fee doesn't affect recipient account
         } else {

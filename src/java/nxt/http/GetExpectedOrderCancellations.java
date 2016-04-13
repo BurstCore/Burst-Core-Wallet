@@ -16,10 +16,10 @@
 
 package nxt.http;
 
+import nxt.ChildTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.Transaction;
-import nxt.TransactionType;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -38,8 +38,8 @@ public final class GetExpectedOrderCancellations extends APIServlet.APIRequestHa
 
     @Override
     JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        Filter<Transaction> filter = transaction -> transaction.getType() == TransactionType.ColoredCoins.ASK_ORDER_CANCELLATION
-                || transaction.getType() == TransactionType.ColoredCoins.BID_ORDER_CANCELLATION;
+        Filter<Transaction> filter = transaction -> transaction.getType() == ChildTransactionType.ColoredCoins.ASK_ORDER_CANCELLATION
+                || transaction.getType() == ChildTransactionType.ColoredCoins.BID_ORDER_CANCELLATION;
 
         List<? extends Transaction> transactions = Nxt.getBlockchain().getExpectedTransactions(filter);
         JSONArray cancellations = new JSONArray();

@@ -17,10 +17,10 @@
 package nxt.http;
 
 import nxt.Attachment;
+import nxt.ChildTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.Transaction;
-import nxt.TransactionType;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -51,7 +51,7 @@ public final class GetExpectedBidOrders extends APIServlet.APIRequestHandler {
         long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
         boolean sortByPrice = "true".equalsIgnoreCase(req.getParameter("sortByPrice"));
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != TransactionType.ColoredCoins.BID_ORDER_PLACEMENT) {
+            if (transaction.getType() != ChildTransactionType.ColoredCoins.BID_ORDER_PLACEMENT) {
                 return false;
             }
             Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement)transaction.getAttachment();

@@ -239,7 +239,7 @@ abstract class TransactionImpl implements Transaction {
     }
 
     @Override
-    public long getAmountNQT() {
+    public long getAmount() {
         return amountNQT;
     }
 
@@ -452,7 +452,7 @@ abstract class TransactionImpl implements Transaction {
             json.put("recipient", Long.toUnsignedString(recipientId));
         }
         json.put("amountNQT", amountNQT);
-        json.put("feeNQT", getFeeNQT());
+        json.put("feeNQT", getFee());
         json.put("ecBlockHeight", ecBlockHeight);
         json.put("ecBlockId", Long.toUnsignedString(ecBlockId));
         json.put("signature", Convert.toHexString(getSignature()));
@@ -532,20 +532,20 @@ abstract class TransactionImpl implements Transaction {
 
     @Override
     public void validate() throws NxtException.ValidationException {
-        if (timestamp == 0 ? (deadline != 0 || getFeeNQT() != 0) : (deadline < 1 || getFeeNQT() <= 0)
-                || getFeeNQT() > Constants.MAX_BALANCE_NQT
+        if (timestamp == 0 ? (deadline != 0 || getFee() != 0) : (deadline < 1 || getFee() <= 0)
+                || getFee() > Constants.MAX_BALANCE_NQT
                 || amountNQT < 0
                 || amountNQT > Constants.MAX_BALANCE_NQT
                 || type == null) {
             throw new NxtException.NotValidException("Invalid transaction parameters:\n type: " + type + ", timestamp: " + timestamp
-                    + ", deadline: " + deadline + ", fee: " + getFeeNQT() + ", amount: " + amountNQT);
+                    + ", deadline: " + deadline + ", fee: " + getFee() + ", amount: " + amountNQT);
         }
         if (attachment == null || type != attachment.getTransactionType()) {
             throw new NxtException.NotValidException("Invalid attachment " + attachment + " for transaction of type " + type);
         }
 
         if (!type.canHaveRecipient()) {
-            if (recipientId != 0 || getAmountNQT() != 0) {
+            if (recipientId != 0 || getAmount() != 0) {
                 throw new NxtException.NotValidException("Transactions of this type must have recipient == 0, amount == 0");
             }
         }
@@ -572,7 +572,31 @@ abstract class TransactionImpl implements Transaction {
 
     abstract boolean attachmentIsPhased();
 
-    abstract boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates);
+    final boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+        if (!attachmentIsPhased() && !atAcceptanceHeight) {
+            // can happen for phased transactions having non-phasable attachment
+            return false;
+        }
+        if (atAcceptanceHeight) {
+            if (AccountRestrictions.isBlockDuplicate(this, duplicates)) {
+                return true;
+            }
+            // all are checked at acceptance height for block duplicates
+            if (getType().isBlockDuplicate(this, duplicates)) {
+                return true;
+            }
+            // phased are not further checked at acceptance height
+            if (attachmentIsPhased()) {
+                return false;
+            }
+        }
+        // non-phased at acceptance height, and phased at execution height
+        return getType().isDuplicate(this, duplicates);
+    }
+
+    final boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates) {
+        return getType().isUnconfirmedDuplicate(this, duplicates);
+    }
 
         // returns false iff double spending
     boolean applyUnconfirmed() {

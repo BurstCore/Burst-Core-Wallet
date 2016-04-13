@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 final class ChildTransactionImpl extends TransactionImpl implements ChildTransaction {
 
@@ -271,7 +270,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     }
 
     @Override
-    public long getFeeNQT() {
+    public long getFee() {
         return feeNQT;
     }
 
@@ -308,8 +307,8 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         buffer.putShort(getDeadline());
         buffer.put(getSenderPublicKey());
         buffer.putLong(getType().canHaveRecipient() ? getRecipientId() : Genesis.CREATOR_ID);
-        buffer.putLong(getAmountNQT());
-        buffer.putLong(getFeeNQT());
+        buffer.putLong(getAmount());
+        buffer.putLong(getFee());
         if (referencedTransactionFullHash != null) {
             buffer.put(referencedTransactionFullHash);
         } else {
@@ -394,33 +393,6 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         }
     }
 
-    boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
-        if (!attachmentIsPhased() && !atAcceptanceHeight) {
-            // can happen for phased transactions having non-phasable attachment
-            return false;
-        }
-        if (atAcceptanceHeight) {
-            if (AccountRestrictions.isBlockDuplicate(this, duplicates)) {
-                return true;
-            }
-            // all are checked at acceptance height for block duplicates
-            if (getType().isBlockDuplicate(this, duplicates)) {
-                return true;
-            }
-            // phased are not further checked at acceptance height
-            if (attachmentIsPhased()) {
-                return false;
-            }
-        }
-        // non-phased at acceptance height, and phased at execution height
-        return getType().isDuplicate(this, duplicates);
-    }
-
-    @Override
-    boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates) {
-        return getType().isUnconfirmedDuplicate(this, duplicates);
-    }
-
     @Override
     int signatureOffset() {
         return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32;
@@ -472,8 +444,8 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             pstmt.setLong(++i, getId());
             pstmt.setShort(++i, getDeadline());
             DbUtils.setLongZeroToNull(pstmt, ++i, getRecipientId());
-            pstmt.setLong(++i, getAmountNQT());
-            pstmt.setLong(++i, getFeeNQT());
+            pstmt.setLong(++i, getAmount());
+            pstmt.setLong(++i, getFee());
             DbUtils.setBytes(pstmt, ++i, referencedTransactionFullHash());
             pstmt.setInt(++i, getHeight());
             pstmt.setLong(++i, getBlockId());
@@ -550,7 +522,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
             }
 
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
             ChildTransactionImpl.BuilderImpl builder = new ChildTransactionImpl.BuilderImpl(childChain, version, null,
                     amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer));
             builder.referencedTransactionFullHash(referencedTransactionFullHash)
@@ -636,7 +608,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
                 ecBlockHeight = buffer.getInt();
                 ecBlockId = buffer.getLong();
             }
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
             //TODO: child chain from bytes
             ChildTransactionImpl.BuilderImpl builder = new BuilderImpl(ChildChain.NXT, version, senderPublicKey, amountNQT, feeNQT,
                     deadline, transactionType.parseAttachment(buffer));
@@ -649,7 +621,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
                 builder.recipientId(recipientId);
             }
             int position = 1;
-            if ((flags & position) != 0 || (version == 0 && transactionType == TransactionType.Messaging.ARBITRARY_MESSAGE)) {
+            if ((flags & position) != 0 || (version == 0 && transactionType == ChildTransactionType.Messaging.ARBITRARY_MESSAGE)) {
                 builder.appendix(new Appendix.Message(buffer));
             }
             position <<= 1;
@@ -735,7 +707,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
                 ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
             }
 
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
             if (transactionType == null) {
                 throw new NxtException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
             }
