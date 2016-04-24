@@ -82,7 +82,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
         @Override
         protected UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new UnconfirmedTransaction(rs);
+            return UnconfirmedTransaction.load(rs);
         }
 
         @Override
@@ -336,6 +336,11 @@ final class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     @Override
+    public DbIterator<UnconfirmedTransaction> getUnconfirmedFxtTransactions() {
+        return unconfirmedTransactionTable.getManyBy(new DbClause.StringClause("chain", "FXT"), 0, -1);
+    }
+
+    @Override
     public Transaction getUnconfirmedTransaction(long transactionId) {
         DbKey dbKey = unconfirmedTransactionDbKeyFactory.newKey(transactionId);
         return getUnconfirmedTransaction(dbKey);
@@ -413,7 +418,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 return;
             }
             transaction.validate();
-            UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction((TransactionImpl) transaction, System.currentTimeMillis());
+            UnconfirmedTransaction unconfirmedTransaction = UnconfirmedTransaction.wrap((TransactionImpl) transaction, System.currentTimeMillis());
             boolean broadcastLater = BlockchainProcessorImpl.getInstance().isProcessingBlock();
             if (broadcastLater) {
                 waitingTransactions.add(unconfirmedTransaction);
@@ -564,7 +569,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         try {
             for (Transaction transaction : transactions) {
                 ((TransactionImpl)transaction).unsetBlock();
-                waitingTransactions.add(new UnconfirmedTransaction((TransactionImpl)transaction, Math.min(currentTime, Convert.fromEpochTime(transaction.getTimestamp()))));
+                waitingTransactions.add(UnconfirmedTransaction.wrap((TransactionImpl)transaction, Math.min(currentTime, Convert.fromEpochTime(transaction.getTimestamp()))));
             }
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
@@ -624,7 +629,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                     continue;
                 }
                 transaction.validate();
-                UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, arrivalTimestamp);
+                UnconfirmedTransaction unconfirmedTransaction = UnconfirmedTransaction.wrap(transaction, arrivalTimestamp);
                 processTransaction(unconfirmedTransaction);
                 if (broadcastedTransactions.contains(transaction)) {
                     Logger.logDebugMessage("Received back transaction " + transaction.getStringId()

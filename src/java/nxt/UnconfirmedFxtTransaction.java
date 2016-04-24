@@ -16,34 +16,28 @@
 
 package nxt;
 
-public abstract class Chain {
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
-    public static Chain getChain(String name) {
-        if ("FXT".equals(name)) {
-            return FxtChain.FXT;
-        } else {
-            return ChildChain.getChain(name);
-        }
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTransaction {
+
+    UnconfirmedFxtTransaction(FxtTransactionImpl transaction, long arrivalTimestamp) {
+        super(transaction, arrivalTimestamp);
     }
 
-    private final String name;
-
-    Chain(String name) {
-        this.name = name.toUpperCase();
+    UnconfirmedFxtTransaction(ResultSet rs) throws SQLException, NxtException.NotValidException {
+        super(FxtTransactionImpl.newTransactionBuilder(
+                rs.getBytes("transaction_bytes"),
+                (JSONObject) (rs.getString("prunable_json") != null ? JSONValue.parse(rs.getString("prunable_json")) : null)),
+                rs);
     }
 
-    public final String getName() {
-        return name;
+    @Override
+    FxtTransactionImpl getTransaction() {
+        return (FxtTransactionImpl)super.getTransaction();
     }
 
-    public String getDbSchema() {
-        return name;
-    }
-
-    public final String getSchemaTable(String table) {
-        if (table.contains(".")) {
-            throw new IllegalArgumentException("Schema already specified: " + table);
-        }
-        return getDbSchema() + "." + table.toUpperCase();
-    }
 }

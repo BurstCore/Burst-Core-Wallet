@@ -1655,20 +1655,21 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    SortedSet<UnconfirmedTransaction> selectUnconfirmedTransactions(Map<TransactionType, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp) {
-        List<UnconfirmedTransaction> orderedUnconfirmedTransactions = new ArrayList<>();
+    SortedSet<UnconfirmedFxtTransaction> selectUnconfirmedFxtTransactions(Map<TransactionType, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp) {
+        List<UnconfirmedFxtTransaction> orderedUnconfirmedTransactions = new ArrayList<>();
         try (FilteringIterator<UnconfirmedTransaction> unconfirmedTransactions = new FilteringIterator<>(
                 TransactionProcessorImpl.getInstance().getAllUnconfirmedTransactions(),
-                transaction -> hasAllReferencedTransactions(transaction.getTransaction(), transaction.getTimestamp(), 0))) {
+                transaction -> transaction.getTransaction() instanceof FxtTransaction
+                        && hasAllReferencedTransactions(transaction.getTransaction(), transaction.getTimestamp(), 0))) {
             for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
-                orderedUnconfirmedTransactions.add(unconfirmedTransaction);
+                orderedUnconfirmedTransactions.add((UnconfirmedFxtTransaction)unconfirmedTransaction);
             }
         }
-        SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
+        SortedSet<UnconfirmedFxtTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
         while (payloadLength <= Constants.MAX_PAYLOAD_LENGTH && sortedTransactions.size() <= Constants.MAX_NUMBER_OF_TRANSACTIONS) {
             int prevNumberOfNewTransactions = sortedTransactions.size();
-            for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
+            for (UnconfirmedFxtTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
                 int transactionLength = unconfirmedTransaction.getTransaction().getFullSize();
                 if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > Constants.MAX_PAYLOAD_LENGTH) {
                     continue;
@@ -1678,6 +1679,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 if (blockTimestamp > 0 && (unconfirmedTransaction.getTimestamp() > blockTimestamp + Constants.MAX_TIMEDRIFT
                         || unconfirmedTransaction.getExpiration() < blockTimestamp)) {
+                    //TODO: check expiration of child transactions within each fxt transaction
                     continue;
                 }
                 try {
@@ -1720,14 +1722,14 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 for (TransactionImpl phasedTransaction : phasedTransactions) {
                     try {
                         phasedTransaction.validate();
-                        ((ChildTransactionImpl)phasedTransaction).attachmentIsDuplicate(duplicates, false); // pre-populate duplicates map
+                        phasedTransaction.attachmentIsDuplicate(duplicates, false); // pre-populate duplicates map
                     } catch (NxtException.ValidationException ignore) {
                     }
                 }
             }
         });
         BlockImpl previousBlock = blockchain.getLastBlock();
-        SortedSet<UnconfirmedTransaction> sortedTransactions = selectUnconfirmedTransactions(duplicates, previousBlock, blockTimestamp);
+        SortedSet<UnconfirmedFxtTransaction> sortedTransactions = selectUnconfirmedFxtTransactions(duplicates, previousBlock, blockTimestamp);
         List<TransactionImpl> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
         long totalAmountNQT = 0;
@@ -1775,6 +1777,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     boolean hasAllReferencedTransactions(TransactionImpl transaction, int timestamp, int count) {
         if (! (transaction instanceof ChildTransaction)) {
+            //TODO: check hasAllReferencedTransactions for each ChildTransaction within an FxtTransaction
             return true;
         }
         ChildTransactionImpl childTransaction = (ChildTransactionImpl)transaction;

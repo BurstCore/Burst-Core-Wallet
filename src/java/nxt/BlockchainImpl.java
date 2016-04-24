@@ -530,6 +530,7 @@ final class BlockchainImpl implements Blockchain {
         });
     }
 
+    //TODO: handle child transactions
     @Override
     public List<TransactionImpl> getExpectedTransactions(Filter<Transaction> filter) {
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
@@ -551,7 +552,7 @@ final class BlockchainImpl implements Blockchain {
                     }
                 }
             });
-            blockchainProcessor.selectUnconfirmedTransactions(duplicates, getLastBlock(), -1).forEach(
+            blockchainProcessor.selectUnconfirmedFxtTransactions(duplicates, getLastBlock(), -1).forEach(
                     unconfirmedTransaction -> {
                         TransactionImpl transaction = unconfirmedTransaction.getTransaction();
                         if ((transaction instanceof FxtTransaction || ((ChildTransaction)transaction).getPhasing() == null) && filter.ok(transaction)) {
