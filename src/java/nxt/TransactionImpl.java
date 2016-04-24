@@ -39,13 +39,13 @@ abstract class TransactionImpl implements Transaction {
 
         private final short deadline;
         final byte[] senderPublicKey;
-        private final long amountNQT;
+        private final long amount;
         private final TransactionType type;
         private final byte version;
 
         private Attachment.AbstractAttachment attachment;
         private int appendagesSize;
-        long feeNQT;
+        long fee;
 
         private long recipientId;
         byte[] signature;
@@ -61,13 +61,13 @@ abstract class TransactionImpl implements Transaction {
         private long ecBlockId;
         private short index = -1;
 
-        BuilderImpl(byte version, byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline,
+        BuilderImpl(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
                     Attachment.AbstractAttachment attachment) {
             this.version = version;
             this.deadline = deadline;
             this.senderPublicKey = senderPublicKey;
-            this.amountNQT = amountNQT;
-            this.feeNQT = feeNQT;
+            this.amount = amount;
+            this.fee = fee;
             this.attachment = attachment;
             this.type = attachment.getTransactionType();
         }
@@ -175,7 +175,7 @@ abstract class TransactionImpl implements Transaction {
     private final short deadline;
     private volatile byte[] senderPublicKey;
     private final long recipientId;
-    private final long amountNQT;
+    private final long amount;
     private final TransactionType type;
     private final int ecBlockHeight;
     private final long ecBlockId;
@@ -203,7 +203,7 @@ abstract class TransactionImpl implements Transaction {
         this.deadline = builder.deadline;
         this.senderPublicKey = builder.senderPublicKey;
         this.recipientId = builder.recipientId;
-        this.amountNQT = builder.amountNQT;
+        this.amount = builder.amount;
         this.type = builder.type;
         this.attachment = builder.attachment;
         this.appendages = builder.getAppendages();
@@ -240,7 +240,7 @@ abstract class TransactionImpl implements Transaction {
 
     @Override
     public long getAmount() {
-        return amountNQT;
+        return amount;
     }
 
     long[] getBackFees() {
@@ -451,7 +451,7 @@ abstract class TransactionImpl implements Transaction {
         if (type.canHaveRecipient()) {
             json.put("recipient", Long.toUnsignedString(recipientId));
         }
-        json.put("amountNQT", amountNQT);
+        json.put("amountNQT", amount);
         json.put("feeNQT", getFee());
         json.put("ecBlockHeight", ecBlockHeight);
         json.put("ecBlockId", Long.toUnsignedString(ecBlockId));
@@ -534,11 +534,11 @@ abstract class TransactionImpl implements Transaction {
     public void validate() throws NxtException.ValidationException {
         if (timestamp == 0 ? (deadline != 0 || getFee() != 0) : (deadline < 1 || getFee() <= 0)
                 || getFee() > Constants.MAX_BALANCE_NQT
-                || amountNQT < 0
-                || amountNQT > Constants.MAX_BALANCE_NQT
+                || amount < 0
+                || amount > Constants.MAX_BALANCE_NQT
                 || type == null) {
             throw new NxtException.NotValidException("Invalid transaction parameters:\n type: " + type + ", timestamp: " + timestamp
-                    + ", deadline: " + deadline + ", fee: " + getFee() + ", amount: " + amountNQT);
+                    + ", deadline: " + deadline + ", fee: " + getFee() + ", amount: " + amount);
         }
         if (attachment == null || type != attachment.getTransactionType()) {
             throw new NxtException.NotValidException("Invalid attachment " + attachment + " for transaction of type " + type);
@@ -555,9 +555,10 @@ abstract class TransactionImpl implements Transaction {
                 throw new NxtException.NotValidException("Transactions of this type must have a valid recipient");
             }
         }
+
     }
 
-    long getMinimumFeeNQT(int blockchainHeight) {
+    long getMinimumFeeFQT(int blockchainHeight) {
         long totalFee = 0;
         for (Appendix.AbstractAppendix appendage : appendages) {
             appendage.loadPrunable(this);

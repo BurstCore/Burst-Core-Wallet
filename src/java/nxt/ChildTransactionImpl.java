@@ -156,7 +156,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     }
 
     private final ChildChain childChain;
-    private final long feeNQT;
+    private final long fee;
     private final byte[] signature;
     private final byte[] referencedTransactionFullHash;
     private final Appendix.Message message;
@@ -178,13 +178,20 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         this.phasing = builder.phasing;
         this.prunablePlainMessage = builder.prunablePlainMessage;
         this.prunableEncryptedMessage = builder.prunableEncryptedMessage;
-        if (builder.feeNQT <= 0 || (Constants.correctInvalidFees && builder.signature == null)) {
-            int effectiveHeight = (getHeight() < Integer.MAX_VALUE ? getHeight() : Nxt.getBlockchain().getHeight());
-            long minFee = getMinimumFeeNQT(effectiveHeight);
-            this.feeNQT = Math.max(minFee, builder.feeNQT);
-        } else {
-            this.feeNQT = builder.feeNQT;
+        if (builder.fee <= 0) {
+            //TODO
+            throw new NxtException.NotValidException("Minimum fee calculation not yet implemented");
         }
+        this.fee = builder.fee;
+        /*
+        if (builder.fee <= 0 || (Constants.correctInvalidFees && builder.signature == null)) {
+            int effectiveHeight = (getHeight() < Integer.MAX_VALUE ? getHeight() : Nxt.getBlockchain().getHeight());
+            long minFee = getMinimumFeeFQT(effectiveHeight);
+            this.feeNQT = Math.max(minFee, builder.fee);
+        } else {
+            this.feeNQT = builder.fee;
+        }
+        */
         if (builder.signature != null && secretPhrase != null) {
             throw new NxtException.NotValidException("Transaction is already signed");
         } else if (builder.signature != null) {
@@ -271,7 +278,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
 
     @Override
     public long getFee() {
-        return feeNQT;
+        return fee;
     }
 
     @Override
@@ -289,8 +296,8 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     }
 
     @Override
-    long getMinimumFeeNQT(int blockchainHeight) {
-        long totalFee = super.getMinimumFeeNQT(blockchainHeight);
+    long getMinimumFeeFQT(int blockchainHeight) {
+        long totalFee = super.getMinimumFeeFQT(blockchainHeight);
         if (referencedTransactionFullHash != null) {
             totalFee = Math.addExact(totalFee, Constants.ONE_NXT);
         }
@@ -356,14 +363,6 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         if (getFullSize() > Constants.MAX_PAYLOAD_LENGTH) {
             throw new NxtException.NotValidException("Transaction size " + getFullSize() + " exceeds maximum payload size");
         }
-
-        if (!validatingAtFinish) {
-            long minimumFeeNQT = getMinimumFeeNQT(Nxt.getBlockchain().getHeight());
-            if (feeNQT < minimumFeeNQT) {
-                throw new NxtException.NotCurrentlyValidException(String.format("Transaction fee %f NXT less than minimum fee %f NXT at height %d",
-                        ((double) feeNQT) / Constants.ONE_NXT, ((double) minimumFeeNQT) / Constants.ONE_NXT, Nxt.getBlockchain().getHeight()));
-            }
-        }
         AccountRestrictions.checkTransaction(this, validatingAtFinish);
     }
 
@@ -383,7 +382,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
                     0, Constants.UNCONFIRMED_POOL_DEPOSIT_NQT);
         }
         if (attachmentIsPhased()) {
-            BalanceHome.forChain(childChain).getBalance(getSenderId()).addToBalance(getType().getLedgerEvent(), getId(), 0, -feeNQT);
+            BalanceHome.forChain(childChain).getBalance(getSenderId()).addToBalance(getType().getLedgerEvent(), getId(), 0, -fee);
         }
         for (Appendix.AbstractAppendix appendage : appendages()) {
             if (!appendage.isPhased(this)) {

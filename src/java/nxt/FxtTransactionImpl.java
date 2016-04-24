@@ -72,17 +72,17 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
     }
 
 
-    private final long feeNQT;
+    private final long feeFQT;
     private final byte[] signature;
 
     private FxtTransactionImpl(BuilderImpl builder, String secretPhrase) throws NxtException.NotValidException {
         super(builder);
-        if (builder.feeNQT <= 0 || (Constants.correctInvalidFees && builder.signature == null)) {
+        if (builder.fee <= 0 || (Constants.correctInvalidFees && builder.signature == null)) {
             int effectiveHeight = (getHeight() < Integer.MAX_VALUE ? getHeight() : Nxt.getBlockchain().getHeight());
-            long minFee = getMinimumFeeNQT(effectiveHeight);
-            this.feeNQT = Math.max(minFee, builder.feeNQT);
+            long minFee = getMinimumFeeFQT(effectiveHeight);
+            this.feeFQT = Math.max(minFee, builder.fee);
         } else {
-            this.feeNQT = builder.feeNQT;
+            this.feeFQT = builder.fee;
         }
         if (builder.signature != null && secretPhrase != null) {
             throw new NxtException.NotValidException("Transaction is already signed");
@@ -107,7 +107,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
 
     @Override
     public long getFee() {
-        return feeNQT;
+        return feeFQT;
     }
 
     @Override
@@ -134,6 +134,28 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
     @Override
     boolean attachmentIsPhased() {
         return false;
+    }
+
+    @Override
+    public void validate() throws NxtException.ValidationException {
+        super.validate();
+        for (Appendix.AbstractAppendix appendage : appendages()) {
+            appendage.loadPrunable(this);
+            if (! appendage.verifyVersion()) {
+                throw new NxtException.NotValidException("Invalid attachment version " + appendage.getVersion());
+            }
+            appendage.validate(this);
+        }
+        if (getFullSize() > Constants.MAX_PAYLOAD_LENGTH) {
+            throw new NxtException.NotValidException("Transaction size " + getFullSize() + " exceeds maximum payload size");
+        }
+        long minimumFeeFQT = getMinimumFeeFQT(Nxt.getBlockchain().getHeight());
+        if (feeFQT < minimumFeeFQT) {
+            throw new NxtException.NotCurrentlyValidException(String.format("Transaction fee %f FXT less than minimum fee %f FXT at height %d",
+                    ((double) feeFQT) / Constants.ONE_NXT, ((double) minimumFeeFQT) / Constants.ONE_NXT, Nxt.getBlockchain().getHeight()));
+        }
+        //TODO: account control for FXT?
+        AccountRestrictions.checkTransaction(this, false);
     }
 
     @Override
