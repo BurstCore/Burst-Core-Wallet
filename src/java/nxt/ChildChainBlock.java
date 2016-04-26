@@ -22,18 +22,22 @@ import java.nio.ByteBuffer;
 
 //TODO
 public final class ChildChainBlock extends FxtTransactionType {
+
+    public static final ChildChainBlock instance = new ChildChainBlock();
+
     @Override
     public byte getType() {
-        return 0;
+        return FxtTransactionType.TYPE_CHILDCHAIN_BLOCK;
     }
 
     @Override
     public byte getSubtype() {
-        return 0;
+        return FxtTransactionType.SUBTYPE_CHILDCHAIN_BLOCK;
     }
 
     @Override
     public AccountLedger.LedgerEvent getLedgerEvent() {
+        //TODO
         return null;
     }
 
@@ -73,12 +77,7 @@ public final class ChildChainBlock extends FxtTransactionType {
     }
 
     @Override
-    public boolean isPhasingSafe() {
-        return false;
-    }
-
-    @Override
     public String getName() {
-        return null;
+        return "ChildChainBlock";
     }
 }

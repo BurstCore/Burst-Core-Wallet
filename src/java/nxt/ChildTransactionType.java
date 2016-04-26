@@ -25,15 +25,18 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class ChildTransactionType extends TransactionType {
-    static final byte TYPE_MONETARY_SYSTEM = 5;
-    static final byte TYPE_SHUFFLING = 7;
+
     private static final byte TYPE_PAYMENT = 0;
     private static final byte TYPE_MESSAGING = 1;
     private static final byte TYPE_COLORED_COINS = 2;
     private static final byte TYPE_DIGITAL_GOODS = 3;
     private static final byte TYPE_ACCOUNT_CONTROL = 4;
+    static final byte TYPE_MONETARY_SYSTEM = 5;
     private static final byte TYPE_DATA = 6;
+    static final byte TYPE_SHUFFLING = 7;
+
     private static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
+
     private static final byte SUBTYPE_MESSAGING_ARBITRARY_MESSAGE = 0;
     private static final byte SUBTYPE_MESSAGING_ALIAS_ASSIGNMENT = 1;
     private static final byte SUBTYPE_MESSAGING_POLL_CREATION = 2;
@@ -46,6 +49,7 @@ public abstract class ChildTransactionType extends TransactionType {
     private static final byte SUBTYPE_MESSAGING_PHASING_VOTE_CASTING = 9;
     private static final byte SUBTYPE_MESSAGING_ACCOUNT_PROPERTY = 10;
     private static final byte SUBTYPE_MESSAGING_ACCOUNT_PROPERTY_DELETE = 11;
+
     private static final byte SUBTYPE_COLORED_COINS_ASSET_ISSUANCE = 0;
     private static final byte SUBTYPE_COLORED_COINS_ASSET_TRANSFER = 1;
     private static final byte SUBTYPE_COLORED_COINS_ASK_ORDER_PLACEMENT = 2;
@@ -54,6 +58,7 @@ public abstract class ChildTransactionType extends TransactionType {
     private static final byte SUBTYPE_COLORED_COINS_BID_ORDER_CANCELLATION = 5;
     private static final byte SUBTYPE_COLORED_COINS_DIVIDEND_PAYMENT = 6;
     private static final byte SUBTYPE_COLORED_COINS_ASSET_DELETE = 7;
+
     private static final byte SUBTYPE_DIGITAL_GOODS_LISTING = 0;
     private static final byte SUBTYPE_DIGITAL_GOODS_DELISTING = 1;
     private static final byte SUBTYPE_DIGITAL_GOODS_PRICE_CHANGE = 2;
@@ -62,8 +67,10 @@ public abstract class ChildTransactionType extends TransactionType {
     private static final byte SUBTYPE_DIGITAL_GOODS_DELIVERY = 5;
     private static final byte SUBTYPE_DIGITAL_GOODS_FEEDBACK = 6;
     private static final byte SUBTYPE_DIGITAL_GOODS_REFUND = 7;
+
     private static final byte SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING = 0;
     private static final byte SUBTYPE_ACCOUNT_CONTROL_PHASING_ONLY = 1;
+
     private static final byte SUBTYPE_DATA_TAGGED_DATA_UPLOAD = 0;
     private static final byte SUBTYPE_DATA_TAGGED_DATA_EXTEND = 1;
 

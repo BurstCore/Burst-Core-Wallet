@@ -212,7 +212,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
             }
 
-            TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
+            TransactionType transactionType = FxtTransactionType.findTransactionType(type, subtype);
             FxtTransactionImpl.BuilderImpl builder = new FxtTransactionImpl.BuilderImpl(version, null,
                     amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer));
             builder.timestamp(timestamp)
@@ -311,7 +311,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
                 ecBlockHeight = buffer.getInt();
                 ecBlockId = buffer.getLong();
             }
-            TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
+            TransactionType transactionType = FxtTransactionType.findTransactionType(type, subtype);
             FxtTransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountNQT, feeNQT,
                     deadline, transactionType.parseAttachment(buffer));
             builder.timestamp(timestamp)
@@ -360,7 +360,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
                 ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
             }
 
-            TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
+            TransactionType transactionType = FxtTransactionType.findTransactionType(type, subtype);
             if (transactionType == null) {
                 throw new NxtException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
             }

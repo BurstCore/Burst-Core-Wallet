@@ -25,8 +25,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -358,7 +356,7 @@ final class TransactionHome {
         }
     }
 
-    static List<TransactionImpl> findBlockTransactions(long blockId) {
+    static List<FxtTransactionImpl> findBlockTransactions(long blockId) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {
             BlockImpl block = BlockDb.blockCache.get(blockId);
@@ -374,29 +372,23 @@ final class TransactionHome {
         }
     }
 
-    static List<TransactionImpl> findBlockTransactions(Connection con, long blockId) {
-        //TODO: after implementing ChildchainBlock transactions, get FXT transactions from fxt chain,
-        // then for each ChildchainBlock attachment look for its transactions in its child chain only
-        List<TransactionImpl> list = new ArrayList<>();
-        for (TransactionHome transactionHome : transactionHomeMap.values()) {
-            Table transactionTable = transactionHome.transactionTable;
-            try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable()
-                    + " WHERE block_id = ? ORDER BY transaction_index")) {
-                pstmt.setLong(1, blockId);
-                pstmt.setFetchSize(50);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    while (rs.next()) {
-                        list.add(loadTransaction(transactionHome.chain, con, rs));
-                    }
+    static List<FxtTransactionImpl> findBlockTransactions(Connection con, long blockId) {
+        List<FxtTransactionImpl> list = new ArrayList<>();
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction_fxt"
+                + " WHERE block_id = ? ORDER BY transaction_index")) {
+            pstmt.setLong(1, blockId);
+            pstmt.setFetchSize(50);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(FxtTransactionImpl.loadTransaction(con, rs));
                 }
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            } catch (NxtException.ValidationException e) {
-                throw new RuntimeException("Transaction already in database for block_id = " + Long.toUnsignedString(blockId)
-                        + " does not pass validation!", e);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        } catch (NxtException.ValidationException e) {
+            throw new RuntimeException("Transaction already in database for block_id = " + Long.toUnsignedString(blockId)
+                    + " does not pass validation!", e);
         }
-        Collections.sort(list, Comparator.comparingInt(TransactionImpl::getIndex));
         return list;
     }
 

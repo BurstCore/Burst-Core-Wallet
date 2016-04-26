@@ -1218,19 +1218,17 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         Logger.logMessage("Genesis block not in database, starting from scratch");
         try {
-            List<TransactionImpl> transactions = new ArrayList<>();
+            List<FxtTransactionImpl> transactions = new ArrayList<>();
             for (int i = 0; i < Genesis.GENESIS_RECIPIENTS.length; i++) {
-                Transaction transaction = new FxtTransactionImpl.BuilderImpl((byte) 0, Genesis.CREATOR_PUBLIC_KEY,
+                FxtTransactionImpl.BuilderImpl builder = new FxtTransactionImpl.BuilderImpl((byte) 0, Genesis.CREATOR_PUBLIC_KEY,
                         Genesis.GENESIS_AMOUNTS.get(Genesis.GENESIS_RECIPIENTS[i]) * Constants.ONE_NXT, 0, (short) 0,
-                        Attachment.ORDINARY_PAYMENT)
-                        .timestamp(0)
+                        Attachment.ORDINARY_PAYMENT);
+                builder.timestamp(0)
                         .recipientId(Genesis.GENESIS_RECIPIENTS[i])
                         .height(0)
                         .ecBlockHeight(0)
-                        .ecBlockId(0)
-                        //TODO? .appendix(new Appendix.PublicKeyAnnouncement(Genesis.GENESIS_PUBLIC_KEYS[i]))
-                        .build(Genesis.CREATOR_SECRET_PHRASE);
-                transactions.add((TransactionImpl)transaction);
+                        .ecBlockId(0);
+                transactions.add(builder.build(Genesis.CREATOR_SECRET_PHRASE));
             }
             Collections.sort(transactions, Comparator.comparingLong(Transaction::getId));
             MessageDigest digest = Crypto.sha256();
@@ -1730,17 +1728,17 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         });
         BlockImpl previousBlock = blockchain.getLastBlock();
         SortedSet<UnconfirmedFxtTransaction> sortedTransactions = selectUnconfirmedFxtTransactions(duplicates, previousBlock, blockTimestamp);
-        List<TransactionImpl> blockTransactions = new ArrayList<>();
+        List<FxtTransactionImpl> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
-        long totalAmountNQT = 0;
-        long totalFeeNQT = 0;
+        long totalAmountFQT = 0;
+        long totalFeeFQT = 0;
         int payloadLength = 0;
-        for (UnconfirmedTransaction unconfirmedTransaction : sortedTransactions) {
-            TransactionImpl transaction = unconfirmedTransaction.getTransaction();
+        for (UnconfirmedFxtTransaction unconfirmedTransaction : sortedTransactions) {
+            FxtTransactionImpl transaction = unconfirmedTransaction.getTransaction();
             blockTransactions.add(transaction);
             digest.update(transaction.bytes());
-            totalAmountNQT += transaction.getAmount();
-            totalFeeNQT += transaction.getFee();
+            totalAmountFQT += transaction.getAmount();
+            totalFeeFQT += transaction.getFee();
             payloadLength += transaction.getFullSize();
         }
         byte[] payloadHash = digest.digest();
@@ -1749,7 +1747,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         byte[] generationSignature = digest.digest(publicKey);
         byte[] previousBlockHash = Crypto.sha256().digest(previousBlock.bytes());
 
-        BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountNQT, totalFeeNQT, payloadLength,
+        BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountFQT, totalFeeFQT, payloadLength,
                 payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase);
 
         try {
@@ -1875,6 +1873,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (height == 0) {
                     blockchain.setLastBlock(currentBlock); // special case to avoid no last block
                     Account.addOrGetAccount(Genesis.CREATOR_ID).apply(Genesis.CREATOR_PUBLIC_KEY);
+                    for (int i = 0; i < Genesis.GENESIS_RECIPIENTS.length; i++) {
+                        Account recipient = Account.addOrGetAccount(Genesis.GENESIS_RECIPIENTS[i]);
+                        recipient.apply(Genesis.GENESIS_PUBLIC_KEYS[i]);
+                    }
                 } else {
                     blockchain.setLastBlock(BlockDb.findBlockAtHeight(height - 1));
                 }

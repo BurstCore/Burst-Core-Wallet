@@ -23,8 +23,33 @@ import java.util.Arrays;
 
 public abstract class FxtTransactionType extends TransactionType {
 
-    private static final byte TYPE_PAYMENT = 0;
+    static final byte TYPE_CHILDCHAIN_BLOCK = -1;
+    private static final byte TYPE_PAYMENT = -2;
+
+    static final byte SUBTYPE_CHILDCHAIN_BLOCK = 0;
+
     private static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
+
+    public static TransactionType findTransactionType(byte type, byte subtype) {
+        switch (type) {
+            case TYPE_CHILDCHAIN_BLOCK:
+                switch (subtype) {
+                    case SUBTYPE_CHILDCHAIN_BLOCK:
+                        return ChildChainBlock.instance;
+                    default:
+                        return null;
+                }
+            case TYPE_PAYMENT:
+                switch (subtype) {
+                    case SUBTYPE_PAYMENT_ORDINARY_PAYMENT:
+                        return FxtTransactionType.Payment.ORDINARY;
+                    default:
+                        return null;
+                }
+            default:
+                return null;
+        }
+    }
 
     @Override
     final boolean applyUnconfirmed(TransactionImpl transaction, Account senderAccount) {
@@ -67,6 +92,11 @@ public abstract class FxtTransactionType extends TransactionType {
                 transaction.getAmount(), transaction.getFee());
     }
 
+    //TODO: remove?
+    @Override
+    public final boolean isPhasingSafe() {
+        return true;
+    }
 
 
     public static abstract class Payment extends FxtTransactionType {
@@ -97,11 +127,6 @@ public abstract class FxtTransactionType extends TransactionType {
             return true;
         }
 
-        @Override
-        public final boolean isPhasingSafe() {
-            return true;
-        }
-
         public static final TransactionType ORDINARY = new Payment() {
 
             @Override
@@ -111,12 +136,13 @@ public abstract class FxtTransactionType extends TransactionType {
 
             @Override
             public final AccountLedger.LedgerEvent getLedgerEvent() {
-                return AccountLedger.LedgerEvent.ORDINARY_PAYMENT;
+                //TODO
+                return null;
             }
 
             @Override
             public String getName() {
-                return "OrdinaryPayment";
+                return "FxtPayment";
             }
 
             @Override

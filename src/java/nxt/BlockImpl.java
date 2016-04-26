@@ -44,7 +44,7 @@ final class BlockImpl implements Block {
     private final int payloadLength;
     private final byte[] generationSignature;
     private final byte[] payloadHash;
-    private volatile List<TransactionImpl> blockTransactions;
+    private volatile List<FxtTransactionImpl> blockTransactions;
 
     private byte[] blockSignature;
     private BigInteger cumulativeDifficulty = BigInteger.ZERO;
@@ -58,7 +58,7 @@ final class BlockImpl implements Block {
 
 
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<TransactionImpl> transactions, String secretPhrase) {
+              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions, String secretPhrase) {
         this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
                 generatorPublicKey, generationSignature, null, previousBlockHash, transactions);
         blockSignature = Crypto.sign(bytes(), secretPhrase);
@@ -66,7 +66,7 @@ final class BlockImpl implements Block {
     }
 
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<TransactionImpl> transactions) {
+              byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions) {
         this.version = version;
         this.timestamp = timestamp;
         this.previousBlockId = previousBlockId;
@@ -86,7 +86,7 @@ final class BlockImpl implements Block {
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength,
               byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
               byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id,
-              List<TransactionImpl> blockTransactions) {
+              List<FxtTransactionImpl> blockTransactions) {
         this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
                 null, generationSignature, blockSignature, previousBlockHash, null);
         this.cumulativeDifficulty = cumulativeDifficulty;
@@ -157,10 +157,10 @@ final class BlockImpl implements Block {
     }
 
     @Override
-    public List<TransactionImpl> getTransactions() {
+    public List<FxtTransactionImpl> getTransactions() {
         if (this.blockTransactions == null) {
-            List<TransactionImpl> transactions = Collections.unmodifiableList(TransactionHome.findBlockTransactions(getId()));
-            for (TransactionImpl transaction : transactions) {
+            List<FxtTransactionImpl> transactions = Collections.unmodifiableList(TransactionHome.findBlockTransactions(getId()));
+            for (FxtTransactionImpl transaction : transactions) {
                 transaction.setBlock(this);
             }
             this.blockTransactions = transactions;
@@ -271,9 +271,9 @@ final class BlockImpl implements Block {
             byte[] generationSignature = Convert.parseHexString((String) blockData.get("generationSignature"));
             byte[] blockSignature = Convert.parseHexString((String) blockData.get("blockSignature"));
             byte[] previousBlockHash = version == 1 ? null : Convert.parseHexString((String) blockData.get("previousBlockHash"));
-            List<TransactionImpl> blockTransactions = new ArrayList<>();
+            List<FxtTransactionImpl> blockTransactions = new ArrayList<>();
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
-                blockTransactions.add(TransactionImpl.parseTransaction((JSONObject) transactionData));
+                blockTransactions.add((FxtTransactionImpl)TransactionImpl.parseTransaction((JSONObject) transactionData));
             }
             BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash, generatorPublicKey,
                     generationSignature, blockSignature, previousBlockHash, blockTransactions);
