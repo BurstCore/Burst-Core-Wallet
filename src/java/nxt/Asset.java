@@ -190,7 +190,7 @@ public final class Asset {
     }
 
     public DbIterator<TradeHome.Trade> getTrades(ChildChain childChain, int from, int to) {
-        return TradeHome.forChain(childChain).getAssetTrades(this.assetId, from, to);
+        return childChain.getTradeHome().getAssetTrades(this.assetId, from, to);
     }
 
     public DbIterator<AssetTransfer> getAssetTransfers(int from, int to) {

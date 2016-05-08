@@ -25,21 +25,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class ExchangeRequestHome {
 
-    private static final Map<ChildChain, ExchangeRequestHome> exchangeRequestHomeMap = new HashMap<>();
-
-    public static ExchangeRequestHome forChain(ChildChain childChain) {
-        return exchangeRequestHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> exchangeRequestHomeMap.put(childChain, new ExchangeRequestHome(childChain)));
+    static ExchangeRequestHome forChain(ChildChain childChain) {
+        if (childChain.getExchangeRequestHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new ExchangeRequestHome(childChain);
     }
 
     private final ChildChain childChain;

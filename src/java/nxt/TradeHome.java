@@ -29,9 +29,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class TradeHome {
 
@@ -39,16 +37,11 @@ public final class TradeHome {
         TRADE
     }
 
-    private static final Map<ChildChain, TradeHome> tradeHomeMap = new HashMap<>();
-
-    public static TradeHome forChain(ChildChain childChain) {
-        return tradeHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> tradeHomeMap.put(childChain, new TradeHome(childChain)));
+    static TradeHome forChain(ChildChain childChain) {
+        if (childChain.getTradeHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new TradeHome(childChain);
     }
 
     private final Listeners<Trade, Event> listeners;

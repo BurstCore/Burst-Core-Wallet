@@ -1176,11 +1176,11 @@ public final class Account {
 
     //TODO: skip retrieving the Account when only the balance is needed
     public long getBalance(ChildChain childChain) {
-        return BalanceHome.forChain(childChain).getBalance(id).getBalance();
+        return childChain.getBalanceHome().getBalance(id).getBalance();
     }
 
     public long getUnconfirmedBalance(ChildChain childChain) {
-        return BalanceHome.forChain(childChain).getBalance(id).getUnconfirmedBalance();
+        return childChain.getBalanceHome().getBalance(id).getUnconfirmedBalance();
     }
 
     public long getForgedBalanceFQT() {
@@ -1298,7 +1298,7 @@ public final class Account {
     }
 
     public DbIterator<TradeHome.Trade> getTrades(ChildChain childChain, int from, int to) {
-        return TradeHome.forChain(childChain).getAccountTrades(this.id, from, to);
+        return childChain.getTradeHome().getAccountTrades(this.id, from, to);
     }
 
     public DbIterator<AssetTransfer> getAssetTransfers(int from, int to) {
@@ -1310,7 +1310,7 @@ public final class Account {
     }
 
     public DbIterator<ExchangeHome.Exchange> getExchanges(ChildChain childChain, int from, int to) {
-        return ExchangeHome.forChain(childChain).getAccountExchanges(this.id, from, to);
+        return childChain.getExchangeHome().getAccountExchanges(this.id, from, to);
     }
 
     public AccountAsset getAsset(long assetId) {
@@ -1713,23 +1713,23 @@ public final class Account {
 
     //TODO: skip retrieving the Account when only balance needs to be updated
     void addToBalance(ChildChain childChain, LedgerEvent event, long eventId, long amount) {
-        BalanceHome.forChain(childChain).getBalance(id).addToBalance(event, eventId, amount);
+        childChain.getBalanceHome().getBalance(id).addToBalance(event, eventId, amount);
     }
 
     void addToBalance(ChildChain childChain, LedgerEvent event, long eventId, long amount, long fee) {
-        BalanceHome.forChain(childChain).getBalance(id).addToBalance(event, eventId, amount, fee);
+        childChain.getBalanceHome().getBalance(id).addToBalance(event, eventId, amount, fee);
     }
 
     void addToUnconfirmedBalance(ChildChain childChain, LedgerEvent event, long eventId, long amount) {
-        BalanceHome.forChain(childChain).getBalance(id).addToUnconfirmedBalance(event, eventId, amount);
+        childChain.getBalanceHome().getBalance(id).addToUnconfirmedBalance(event, eventId, amount);
     }
 
     void addToUnconfirmedBalance(ChildChain childChain, LedgerEvent event, long eventId, long amount, long fee) {
-        BalanceHome.forChain(childChain).getBalance(id).addToUnconfirmedBalance(event, eventId, amount, fee);
+        childChain.getBalanceHome().getBalance(id).addToUnconfirmedBalance(event, eventId, amount, fee);
     }
 
     void addToBalanceAndUnconfirmedBalance(ChildChain childChain, LedgerEvent event, long eventId, long amount) {
-        BalanceHome.forChain(childChain).getBalance(id).addToBalanceAndUnconfirmedBalance(event, eventId, amount);
+        childChain.getBalanceHome().getBalance(id).addToBalanceAndUnconfirmedBalance(event, eventId, amount);
     }
 
     void addToForgedBalanceFQT(long amount) {
@@ -1790,7 +1790,7 @@ public final class Account {
                 accountAssets.add(iterator.next());
             }
         }
-        BalanceHome balanceHome = BalanceHome.forChain(childChain);
+        BalanceHome balanceHome = childChain.getBalanceHome();
         for (final AccountAsset accountAsset : accountAssets) {
             if (accountAsset.getAccountId() != this.id && accountAsset.getQuantityQNT() != 0) {
                 long dividend = Math.multiplyExact(accountAsset.getQuantityQNT(), amountNQTPerQNT);

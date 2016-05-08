@@ -277,7 +277,7 @@ public abstract class MonetarySystem extends ChildTransactionType {
         @Override
         void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             Attachment.MonetarySystemReserveIncrease attachment = (Attachment.MonetarySystemReserveIncrease) transaction.getAttachment();
-            CurrencyFounderHome.forChain((ChildChain)transaction.getChain()).increaseReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(),
+            ((ChildChain) transaction.getChain()).getCurrencyFounderHome().increaseReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(),
                     attachment.getAmountPerUnitNQT());
         }
 
@@ -530,7 +530,7 @@ public abstract class MonetarySystem extends ChildTransactionType {
         @Override
         void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer) transaction.getAttachment();
-            ExchangeOfferHome.forChain((ChildChain)transaction.getChain()).publishOffer(transaction, attachment);
+            ((ChildChain) transaction.getChain()).getExchangeOfferHome().publishOffer(transaction, attachment);
         }
 
         @Override
@@ -611,8 +611,8 @@ public abstract class MonetarySystem extends ChildTransactionType {
         @Override
         void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             Attachment.MonetarySystemExchangeBuy attachment = (Attachment.MonetarySystemExchangeBuy) transaction.getAttachment();
-            ExchangeRequestHome.forChain((ChildChain)transaction.getChain()).addExchangeRequest(transaction, attachment);
-            ExchangeOfferHome.forChain((ChildChain)transaction.getChain()).exchangeNXTForCurrency(transaction, senderAccount, attachment.getCurrencyId(), attachment.getRateNQT(), attachment.getUnits());
+            ((ChildChain) transaction.getChain()).getExchangeRequestHome().addExchangeRequest(transaction, attachment);
+            ((ChildChain) transaction.getChain()).getExchangeOfferHome().exchangeNXTForCurrency(transaction, senderAccount, attachment.getCurrencyId(), attachment.getRateNQT(), attachment.getUnits());
         }
 
     };
@@ -668,8 +668,8 @@ public abstract class MonetarySystem extends ChildTransactionType {
         @Override
         void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             Attachment.MonetarySystemExchangeSell attachment = (Attachment.MonetarySystemExchangeSell) transaction.getAttachment();
-            ExchangeRequestHome.forChain((ChildChain)transaction.getChain()).addExchangeRequest(transaction, attachment);
-            ExchangeOfferHome.forChain((ChildChain)transaction.getChain()).exchangeCurrencyForNXT(transaction, senderAccount, attachment.getCurrencyId(), attachment.getRateNQT(), attachment.getUnits());
+            ((ChildChain) transaction.getChain()).getExchangeRequestHome().addExchangeRequest(transaction, attachment);
+            ((ChildChain) transaction.getChain()).getExchangeOfferHome().exchangeCurrencyForNXT(transaction, senderAccount, attachment.getCurrencyId(), attachment.getRateNQT(), attachment.getUnits());
         }
 
     };

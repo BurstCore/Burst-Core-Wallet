@@ -54,7 +54,7 @@ public final class Shuffler {
                 throw new ShufflerLimitException("Cannot run more than " + MAX_SHUFFLERS + " shufflers on the same node");
             }
             if (shuffler == null) {
-                ShufflingHome.Shuffling shuffling = ShufflingHome.forChain(chain).getShuffling(shufflingFullHash);
+                ShufflingHome.Shuffling shuffling = chain.getShufflingHome().getShuffling(shufflingFullHash);
                 if (shuffling == null && Account.getAccount(recipientPublicKey) != null) {
                     throw new InvalidRecipientException("Existing account cannot be used as shuffling recipient");
                 }
@@ -184,7 +184,7 @@ public final class Shuffler {
     static {
 
         ChildChain.getAll().forEach(childChain -> {
-            ShufflingHome shufflingHome = ShufflingHome.forChain(childChain);
+            ShufflingHome shufflingHome = childChain.getShufflingHome();
             shufflingHome.addListener(shuffling -> {
                 Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
                 if (shufflerMap != null) {

@@ -125,7 +125,7 @@ public final class AccountRestrictions {
         //TODO: must check all chains
         private void checkTransaction(Transaction transaction, boolean validatingAtFinish) throws AccountControlException {
             if (!validatingAtFinish && maxFees > 0 && Math.addExact(transaction.getFee(),
-                    PhasingPollHome.forChain((ChildChain)transaction.getChain()).getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
+                    ((ChildChain) transaction.getChain()).getPhasingPollHome().getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
                 throw new AccountControlException(String.format("Maximum total fees limit of %f NXT exceeded", ((double)maxFees)/Constants.ONE_NXT));
             }
             if (transaction.getType() == ChildTransactionType.Messaging.PHASING_VOTE_CASTING) {

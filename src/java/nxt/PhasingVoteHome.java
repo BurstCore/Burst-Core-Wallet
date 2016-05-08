@@ -25,21 +25,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class PhasingVoteHome {
 
-    private static final Map<ChildChain, PhasingVoteHome> phasingVoteHomeMap = new HashMap<>();
-
-    public static PhasingVoteHome forChain(ChildChain childChain) {
-        return phasingVoteHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> phasingVoteHomeMap.put(childChain, new PhasingVoteHome(childChain)));
+    static PhasingVoteHome forChain(ChildChain childChain) {
+        if (childChain.getPhasingVoteHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new PhasingVoteHome(childChain);
     }
 
     private final ChildChain childChain;

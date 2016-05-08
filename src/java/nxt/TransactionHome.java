@@ -34,28 +34,21 @@ final class TransactionHome {
 
     private static final Map<Chain, TransactionHome> transactionHomeMap = new HashMap<>();
 
-    public static TransactionHome forChain(Chain chain) {
-        return transactionHomeMap.get(chain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> transactionHomeMap.put(childChain, new TransactionHome(childChain)));
-        transactionHomeMap.put(FxtChain.FXT, new TransactionHome(FxtChain.FXT));
+    static TransactionHome forChain(Chain chain) {
+        if (chain.getTransactionHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        TransactionHome transactionHome = new TransactionHome(chain);
+        transactionHomeMap.put(chain, transactionHome);
+        return transactionHome;
     }
 
     private final Chain chain;
     private final Table transactionTable;
 
-    private TransactionHome(ChildChain chain) {
+    private TransactionHome(Chain chain) {
         this.chain = chain;
-        transactionTable = new Table(chain.getSchemaTable("transaction"));
-    }
-
-    private TransactionHome(FxtChain chain) {
-        this.chain = chain;
-        transactionTable = new Table(chain.getSchemaTable("transaction_fxt"));
+        transactionTable = new Table(chain.getSchemaTable(chain instanceof FxtChain ? "transaction_fxt" : "transaction"));
     }
 
     static TransactionImpl findTransaction(long transactionId) {
@@ -420,13 +413,13 @@ final class TransactionHome {
         return result;
     }
 
-    static void saveTransactions(Connection con, List<TransactionImpl> transactions) {
+    static void saveTransactions(Connection con, List<FxtTransactionImpl> transactions) {
         try {
             short index = 0;
-            for (TransactionImpl transaction : transactions) {
+            for (FxtTransactionImpl transaction : transactions) {
                 transaction.setIndex(index++);
-                TransactionHome transactionHome = transactionHomeMap.get(transaction.getChain());
-                transaction.save(con, transactionHome.transactionTable.getSchemaTable());
+                transaction.save(con, "transaction_fxt");
+                //TODO: for each ChildChainBlock transaction, save all ChildTransactions in their transaction tables too
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

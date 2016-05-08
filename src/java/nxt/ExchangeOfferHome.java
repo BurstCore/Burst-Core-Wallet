@@ -27,9 +27,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class ExchangeOfferHome {
 
@@ -59,17 +57,11 @@ public final class ExchangeOfferHome {
 
     }
 
-    private static final Map<ChildChain, ExchangeOfferHome> currencyExchangeOfferHomeMap = new HashMap<>();
-
-    public static ExchangeOfferHome forChain(ChildChain childChain) {
-        return currencyExchangeOfferHomeMap.get(childChain);
-    }
-
-    static void init() {
-    }
-
-    static {
-        ChildChain.getAll().forEach(childChain -> currencyExchangeOfferHomeMap.put(childChain, new ExchangeOfferHome(childChain)));
+    static ExchangeOfferHome forChain(ChildChain childChain) {
+        if (childChain.getExchangeOfferHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new ExchangeOfferHome(childChain);
     }
 
     private final ChildChain childChain;
@@ -81,7 +73,7 @@ public final class ExchangeOfferHome {
 
     private ExchangeOfferHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.exchangeHome = ExchangeHome.forChain(childChain);
+        this.exchangeHome = childChain.getExchangeHome();
         this.buyOfferDbKeyFactory = new DbKey.LongKeyFactory<BuyOffer>("id") {
             @Override
             public DbKey newKey(BuyOffer offer) {

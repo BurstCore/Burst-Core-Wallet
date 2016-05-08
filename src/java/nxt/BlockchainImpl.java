@@ -540,7 +540,7 @@ final class BlockchainImpl implements Blockchain {
         try {
             //TODO: use a global finishing phased transaction table, sort result before processing
             ChildChain.getAll().forEach(childChain -> {
-                try (DbIterator<TransactionImpl> phasedTransactions = PhasingPollHome.forChain(childChain).getFinishingTransactions(getHeight() + 1)) {
+                try (DbIterator<TransactionImpl> phasedTransactions = childChain.getPhasingPollHome().getFinishingTransactions(getHeight() + 1)) {
                     for (TransactionImpl phasedTransaction : phasedTransactions) {
                         try {
                             phasedTransaction.validate();

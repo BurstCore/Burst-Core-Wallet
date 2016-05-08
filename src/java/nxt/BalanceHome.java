@@ -23,21 +23,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class BalanceHome {
 
-    private static final Map<ChildChain, BalanceHome> balanceHomeMap = new HashMap<>();
-
-    public static BalanceHome forChain(ChildChain childChain) {
-        return balanceHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> balanceHomeMap.put(childChain, new BalanceHome(childChain)));
+    static BalanceHome forChain(ChildChain childChain) {
+        if (childChain.getBalanceHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new BalanceHome(childChain);
     }
 
     private final DbKey.LongKeyFactory<Balance> balanceDbKeyFactory;

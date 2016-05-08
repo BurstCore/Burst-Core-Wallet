@@ -52,7 +52,7 @@ public final class OrderHome {
 
     private OrderHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.tradeHome = TradeHome.forChain(childChain);
+        this.tradeHome = childChain.getTradeHome();
         this.askOrderDbKeyFactory = new DbKey.LongKeyFactory<Ask>("id") {
             @Override
             public DbKey newKey(Ask ask) {

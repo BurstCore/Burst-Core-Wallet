@@ -63,10 +63,10 @@ public final class DebugTrace {
     public static DebugTrace addDebugTrace(Set<Long> accountIds, String logName) {
         final DebugTrace debugTrace = new DebugTrace(accountIds, logName);
         ChildChain.getAll().forEach(childChain -> {
-            TradeHome.forChain(childChain).addListener(debugTrace::trace, TradeHome.Event.TRADE);
-            ExchangeHome.forChain(childChain).addListener(debugTrace::trace, ExchangeHome.Event.EXCHANGE);
-            ShufflingHome.forChain(childChain).addListener(debugTrace::traceShufflingDistribute, ShufflingHome.Event.SHUFFLING_DONE);
-            ShufflingHome.forChain(childChain).addListener(debugTrace::traceShufflingCancel, ShufflingHome.Event.SHUFFLING_CANCELLED);
+            childChain.getTradeHome().addListener(debugTrace::trace, TradeHome.Event.TRADE);
+            childChain.getExchangeHome().addListener(debugTrace::trace, ExchangeHome.Event.EXCHANGE);
+            childChain.getShufflingHome().addListener(debugTrace::traceShufflingDistribute, ShufflingHome.Event.SHUFFLING_DONE);
+            childChain.getShufflingHome().addListener(debugTrace::traceShufflingCancel, ShufflingHome.Event.SHUFFLING_CANCELLED);
         });
         Currency.addListener(debugTrace::crowdfunding, Currency.Event.BEFORE_DISTRIBUTE_CROWDFUNDING);
         Currency.addListener(debugTrace::undoCrowdfunding, Currency.Event.BEFORE_UNDO_CROWDFUNDING);
@@ -306,7 +306,7 @@ public final class DebugTrace {
         List<CurrencyFounderHome.CurrencyFounder> currencyFounders = new ArrayList<>();
         //TODO: child chain
         ChildChain childChain = ChildChain.NXT;
-        try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = CurrencyFounderHome.forChain(childChain).getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+        try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
             for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                 totalAmountPerUnit += founder.getAmountPerUnitNQT();
                 currencyFounders.add(founder);
@@ -335,7 +335,7 @@ public final class DebugTrace {
     private void undoCrowdfunding(Currency currency) {
         //TODO: child chain
         ChildChain childChain = ChildChain.NXT;
-        try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = CurrencyFounderHome.forChain(childChain).getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+        try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
             for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                 Map<String,String> founderMap = getValues(founder.getAccountId(), false);
                 founderMap.put("currency", Long.toUnsignedString(currency.getId()));
@@ -377,7 +377,7 @@ public final class DebugTrace {
             if (!currency.isActive()) {
                 //TODO: child chain
                 ChildChain childChain = ChildChain.NXT;
-                try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = CurrencyFounderHome.forChain(childChain).getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+                try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                     for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                         Map<String,String> founderMap = getValues(founder.getAccountId(), false);
                         founderMap.put("currency", Long.toUnsignedString(currency.getId()));
@@ -630,13 +630,13 @@ public final class DebugTrace {
         } else if (attachment instanceof Attachment.DigitalGoodsPurchase) {
             Attachment.DigitalGoodsPurchase purchase = (Attachment.DigitalGoodsPurchase)transaction.getAttachment();
             if (isRecipient) {
-                map = getValues(DGSHome.forChain((ChildChain)transaction.getChain()).getGoods(purchase.getGoodsId()).getSellerId(), false);
+                map = getValues(((ChildChain) transaction.getChain()).getDGSHome().getGoods(purchase.getGoodsId()).getSellerId(), false);
             }
             map.put("event", "purchase");
             map.put("purchase", transaction.getStringId());
         } else if (attachment instanceof Attachment.DigitalGoodsDelivery) {
             Attachment.DigitalGoodsDelivery delivery = (Attachment.DigitalGoodsDelivery)transaction.getAttachment();
-            DGSHome.Purchase purchase = DGSHome.forChain((ChildChain)transaction.getChain()).getPurchase(delivery.getPurchaseId());
+            DGSHome.Purchase purchase = ((ChildChain) transaction.getChain()).getDGSHome().getPurchase(delivery.getPurchaseId());
             if (isRecipient) {
                 map = getValues(purchase.getBuyerId(), false);
             }
@@ -657,7 +657,7 @@ public final class DebugTrace {
         } else if (attachment instanceof Attachment.DigitalGoodsRefund) {
             Attachment.DigitalGoodsRefund refund = (Attachment.DigitalGoodsRefund)transaction.getAttachment();
             if (isRecipient) {
-                map = getValues(DGSHome.forChain((ChildChain)transaction.getChain()).getPurchase(refund.getPurchaseId()).getBuyerId(), false);
+                map = getValues(((ChildChain) transaction.getChain()).getDGSHome().getPurchase(refund.getPurchaseId()).getBuyerId(), false);
             }
             map.put("event", "refund");
             map.put("purchase", Long.toUnsignedString(refund.getPurchaseId()));

@@ -2890,7 +2890,7 @@ public interface Attachment extends Appendix {
         @Override
         void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
             if (data == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-                data = ShufflingParticipantHome.forChain((ChildChain)transaction.getChain()).getData(getShufflingId(), transaction.getSenderId());
+                data = ((ChildChain) transaction.getChain()).getShufflingParticipantHome().getData(getShufflingId(), transaction.getSenderId());
             }
         }
 
@@ -2901,7 +2901,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-            ShufflingParticipantHome.forChain((ChildChain)transaction.getChain()).restoreData(getShufflingId(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
+            ((ChildChain) transaction.getChain()).getShufflingParticipantHome().restoreData(getShufflingId(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
         }
 
     }
@@ -3293,7 +3293,7 @@ public interface Attachment extends Appendix {
         @Override
         void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
             if (data == null && taggedData == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-                taggedData = TaggedDataHome.forChain((ChildChain)transaction.getChain()).getData(getTaggedDataId(transaction));
+                taggedData = ((ChildChain) transaction.getChain()).getTaggedDataHome().getData(getTaggedDataId(transaction));
             }
         }
 
@@ -3378,7 +3378,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-            TaggedDataHome.forChain((ChildChain)transaction.getChain()).restore(transaction, this, blockTimestamp, height);
+            ((ChildChain) transaction.getChain()).getTaggedDataHome().restore(transaction, this, blockTimestamp, height);
         }
 
     }

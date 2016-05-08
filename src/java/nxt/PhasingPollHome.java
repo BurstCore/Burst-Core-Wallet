@@ -33,9 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public final class PhasingPollHome {
@@ -54,16 +52,11 @@ public final class PhasingPollHome {
         return null;
     }
 
-    private static final Map<ChildChain, PhasingPollHome> phasingPollHomeMap = new HashMap<>();
-
-    public static PhasingPollHome forChain(ChildChain childChain) {
-        return phasingPollHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> phasingPollHomeMap.put(childChain, new PhasingPollHome(childChain)));
+    static PhasingPollHome forChain(ChildChain childChain) {
+        if (childChain.getPhasingPollHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new PhasingPollHome(childChain);
     }
 
     private final ChildChain childChain;
@@ -79,7 +72,7 @@ public final class PhasingPollHome {
 
     private PhasingPollHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.phasingVoteHome = PhasingVoteHome.forChain(childChain);
+        this.phasingVoteHome = childChain.getPhasingVoteHome();
         this.phasingPollDbKeyFactory = new DbKey.LongKeyFactory<PhasingPoll>("id") {
             @Override
             public DbKey newKey(PhasingPoll poll) {
@@ -463,7 +456,7 @@ public final class PhasingPollHome {
         }
 
         public byte[] getFullHash() {
-            return TransactionHome.forChain(childChain).getChainTransactionFullHash(this.id);
+            return childChain.getTransactionHome().getChainTransactionFullHash(this.id);
         }
 
         public List<byte[]> getLinkedFullHashes() {

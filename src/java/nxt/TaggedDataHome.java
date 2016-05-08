@@ -37,16 +37,11 @@ import java.util.Map;
 
 public final class TaggedDataHome {
 
-    private static final Map<ChildChain, TaggedDataHome> taggedDataHomeMap = new HashMap<>();
-
-    public static TaggedDataHome forChain(ChildChain childChain) {
-        return taggedDataHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> taggedDataHomeMap.put(childChain, new TaggedDataHome(childChain)));
+    static TaggedDataHome forChain(ChildChain childChain) {
+        if (childChain.getTaggedDataHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new TaggedDataHome(childChain);
     }
 
     private final ChildChain childChain;

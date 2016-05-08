@@ -1114,12 +1114,12 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             int minTimestamp = Math.max(1, now - Constants.MAX_PRUNABLE_LIFETIME);
             int maxTimestamp = Math.max(minTimestamp, now - Constants.MIN_PRUNABLE_LIFETIME) - 1;
             List<TransactionHome.PrunableTransaction> transactionList =
-                    TransactionHome.forChain(chain).findPrunableTransactions(con, minTimestamp, maxTimestamp);
+                    chain.getTransactionHome().findPrunableTransactions(con, minTimestamp, maxTimestamp);
             transactionList.forEach(prunableTransaction -> {
                 long id = prunableTransaction.getId();
                 if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(id)) ||
                         (chain instanceof ChildChain &&
-                        PrunableMessageHome.forChain((ChildChain)chain).isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage()))) {
+                        ((ChildChain) chain).getPrunableMessageHome().isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage()))) {
                     synchronized (prunableTransactions) {
                         prunableTransactions.add(id);
                     }
@@ -1307,10 +1307,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                                             Map<TransactionType, Map<String, Integer>> duplicates) {
         //TODO: use a global finishing phased transaction table, sort result before processing
         ChildChain.getAll().forEach(childChain -> {
-            try (DbIterator<TransactionImpl> phasedTransactions = PhasingPollHome.forChain(childChain).getFinishingTransactions(height + 1)) {
+            try (DbIterator<TransactionImpl> phasedTransactions = childChain.getPhasingPollHome().getFinishingTransactions(height + 1)) {
                 for (TransactionImpl t : phasedTransactions) {
                     ChildTransactionImpl phasedTransaction = (ChildTransactionImpl)t;
-                    if (PhasingPollHome.forChain(childChain).getResult(phasedTransaction.getId()) != null) {
+                    if (childChain.getPhasingPollHome().getResult(phasedTransaction.getId()) != null) {
                         continue;
                     }
                     try {
@@ -1484,7 +1484,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             SortedSet<ChildTransactionImpl> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
             block.getTransactions().forEach(transaction -> {
-                PhasingPollHome.forChain((ChildChain)transaction.getChain()).getLinkedPhasedTransactions(transaction.fullHash()).forEach(phasedTransaction -> {
+                ((ChildChain) transaction.getChain()).getPhasingPollHome().getLinkedPhasedTransactions(transaction.fullHash()).forEach(phasedTransaction -> {
                     if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
                         possiblyApprovedTransactions.add(phasedTransaction);
                     }
@@ -1492,7 +1492,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (transaction.getType() == ChildTransactionType.Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
                     Attachment.MessagingPhasingVoteCasting voteCasting = (Attachment.MessagingPhasingVoteCasting)transaction.getAttachment();
                     voteCasting.getTransactionFullHashes().forEach(hash -> {
-                        PhasingPollHome.PhasingPoll phasingPoll = PhasingPollHome.forChain((ChildChain)transaction.getChain()).getPoll(Convert.fullHashToId(hash));
+                        PhasingPollHome.PhasingPoll phasingPoll = ((ChildChain) transaction.getChain()).getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
                         if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
                             possiblyApprovedTransactions.add((ChildTransactionImpl)TransactionHome.findTransaction(phasingPoll.getId()));
                         }
@@ -1501,11 +1501,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             });
             validPhasedTransactions.forEach(phasedTransaction -> {
                 if (phasedTransaction.getType() == ChildTransactionType.Messaging.PHASING_VOTE_CASTING) {
-                    PhasingPollHome.PhasingPollResult result = PhasingPollHome.forChain(phasedTransaction.getChain()).getResult(phasedTransaction.getId());
+                    PhasingPollHome.PhasingPollResult result = phasedTransaction.getChain().getPhasingPollHome().getResult(phasedTransaction.getId());
                     if (result != null && result.isApproved()) {
                         Attachment.MessagingPhasingVoteCasting phasingVoteCasting = (Attachment.MessagingPhasingVoteCasting) phasedTransaction.getAttachment();
                         phasingVoteCasting.getTransactionFullHashes().forEach(hash -> {
-                            PhasingPollHome.PhasingPoll phasingPoll = PhasingPollHome.forChain(phasedTransaction.getChain()).getPoll(Convert.fullHashToId(hash));
+                            PhasingPollHome.PhasingPoll phasingPoll = phasedTransaction.getChain().getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
                             if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
                                 possiblyApprovedTransactions.add((ChildTransactionImpl)TransactionHome.findTransaction(phasingPoll.getId()));
                             }
@@ -1514,7 +1514,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             });
             possiblyApprovedTransactions.forEach(transaction -> {
-                if (PhasingPollHome.forChain(transaction.getChain()).getResult(transaction.getId()) == null) {
+                if (transaction.getChain().getPhasingPollHome().getResult(transaction.getId()) == null) {
                     try {
                         transaction.validate();
                         transaction.getPhasing().tryCountVotes(transaction, duplicates);
@@ -1716,7 +1716,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
         //TODO: use global table, sort results before processing
         ChildChain.getAll().forEach(childChain -> {
-            try (DbIterator<TransactionImpl> phasedTransactions = PhasingPollHome.forChain(childChain).getFinishingTransactions(blockchain.getHeight() + 1)) {
+            try (DbIterator<TransactionImpl> phasedTransactions = childChain.getPhasingPollHome().getFinishingTransactions(blockchain.getHeight() + 1)) {
                 for (TransactionImpl phasedTransaction : phasedTransactions) {
                     try {
                         phasedTransaction.validate();

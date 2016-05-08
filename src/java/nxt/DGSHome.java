@@ -35,9 +35,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class DGSHome {
 
@@ -46,16 +44,11 @@ public final class DGSHome {
         PURCHASE, DELIVERY, REFUND, FEEDBACK
     }
 
-    private static final Map<ChildChain, DGSHome> dgsHomeMap = new HashMap<>();
-
-    public static DGSHome forChain(ChildChain childChain) {
-        return dgsHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> dgsHomeMap.put(childChain, new DGSHome(childChain)));
+    static DGSHome forChain(ChildChain childChain) {
+        if (childChain.getDGSHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new DGSHome(childChain);
     }
 
     private final ChildChain childChain;

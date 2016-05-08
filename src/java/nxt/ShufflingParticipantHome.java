@@ -35,8 +35,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class ShufflingParticipantHome {
 
@@ -76,16 +74,11 @@ public final class ShufflingParticipantHome {
         PARTICIPANT_REGISTERED, PARTICIPANT_PROCESSED, PARTICIPANT_VERIFIED, PARTICIPANT_CANCELLED
     }
 
-    private static final Map<ChildChain, ShufflingParticipantHome> shufflingParticipantHomeMap = new HashMap<>();
-
-    public static ShufflingParticipantHome forChain(ChildChain childChain) {
-        return shufflingParticipantHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> shufflingParticipantHomeMap.put(childChain, new ShufflingParticipantHome(childChain)));
+    static ShufflingParticipantHome forChain(ChildChain childChain) {
+        if (childChain.getShufflingParticipantHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new ShufflingParticipantHome(childChain);
     }
 
     private final Listeners<ShufflingParticipant, Event> listeners;

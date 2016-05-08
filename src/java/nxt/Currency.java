@@ -422,7 +422,7 @@ public final class Currency {
     }
 
     public DbIterator<ExchangeHome.Exchange> getExchanges(ChildChain childChain, int from, int to) {
-        return ExchangeHome.forChain(childChain).getCurrencyExchanges(this.currencyId, from, to);
+        return childChain.getExchangeHome().getCurrencyExchanges(this.currencyId, from, to);
     }
 
     public DbIterator<CurrencyTransfer> getTransfers(int from, int to) {
@@ -435,7 +435,7 @@ public final class Currency {
 
     public boolean canBeDeletedBy(long senderAccountId) {
         for (ChildChain chain : ChildChain.getAll()) {
-            if (!is(CurrencyType.NON_SHUFFLEABLE) && ShufflingHome.forChain(chain).getHoldingShufflingCount(currencyId, false) > 0) {
+            if (!is(CurrencyType.NON_SHUFFLEABLE) && chain.getShufflingHome().getHoldingShufflingCount(currencyId, false) > 0) {
                 return false;
             }
         }
@@ -464,7 +464,7 @@ public final class Currency {
                 Currency.claimReserve(chain, event, eventId, senderAccount, currencyId, senderAccount.getCurrencyUnits(currencyId));
             }
             if (!isActive()) {
-                try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = CurrencyFounderHome.forChain(chain).getCurrencyFounders(currencyId, 0, Integer.MAX_VALUE)) {
+                try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = chain.getCurrencyFounderHome().getCurrencyFounders(currencyId, 0, Integer.MAX_VALUE)) {
                     for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                         Account.getAccount(founder.getAccountId())
                                 .addToBalanceAndUnconfirmedBalance(chain, event, eventId, Math.multiplyExact(reserveSupply,
@@ -472,11 +472,11 @@ public final class Currency {
                     }
                 }
             }
-            CurrencyFounderHome.forChain(chain).remove(currencyId);
+            chain.getCurrencyFounderHome().remove(currencyId);
         }
         if (is(CurrencyType.EXCHANGEABLE)) {
             for (ChildChain chain : ChildChain.getAll()) {
-                ExchangeOfferHome exchangeOfferHome = ExchangeOfferHome.forChain(chain);
+                ExchangeOfferHome exchangeOfferHome = chain.getExchangeOfferHome();
                 List<ExchangeOfferHome.BuyOffer> buyOffers = new ArrayList<>();
                 try (DbIterator<ExchangeOfferHome.BuyOffer> offers = exchangeOfferHome.getBuyOffers(this, 0, -1)) {
                     while (offers.hasNext()) {
@@ -514,7 +514,7 @@ public final class Currency {
 
         private void undoCrowdFunding(Currency currency) {
             ChildChain chain = ChildChain.NXT; //TODO
-            try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = CurrencyFounderHome.forChain(chain).getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+            try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = chain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                     Account.getAccount(founder.getAccountId())
                             .addToBalanceAndUnconfirmedBalance(chain, LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
@@ -526,7 +526,7 @@ public final class Currency {
                     .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
                             currency.getId(), - currency.getInitialSupply());
             currencyTable.delete(currency);
-            CurrencyFounderHome.forChain(chain).remove(currency.getId());
+            chain.getCurrencyFounderHome().remove(currency.getId());
         }
 
         private void distributeCurrency(Currency currency) {
@@ -534,7 +534,7 @@ public final class Currency {
             long totalAmountPerUnit = 0;
             final long remainingSupply = currency.getReserveSupply() - currency.getInitialSupply();
             List<CurrencyFounderHome.CurrencyFounder> currencyFounders = new ArrayList<>();
-            try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = CurrencyFounderHome.forChain(chain).getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+            try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = chain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                     totalAmountPerUnit += founder.getAmountPerUnitNQT();
                     currencyFounders.add(founder);

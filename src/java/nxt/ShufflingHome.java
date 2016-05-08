@@ -36,10 +36,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public final class ShufflingHome {
@@ -132,16 +130,11 @@ public final class ShufflingHome {
 
     private static final boolean deleteFinished = Nxt.getBooleanProperty("nxt.deleteFinishedShufflings");
 
-    private static final Map<ChildChain, ShufflingHome> shufflingHomeMap = new HashMap<>();
-
-    public static ShufflingHome forChain(ChildChain childChain) {
-        return shufflingHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> shufflingHomeMap.put(childChain, new ShufflingHome(childChain)));
+    static ShufflingHome forChain(ChildChain childChain) {
+        if (childChain.getShufflingHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new ShufflingHome(childChain);
     }
 
     //TODO: static listeners?
@@ -278,7 +271,7 @@ public final class ShufflingHome {
     void addShuffling(Transaction transaction, Attachment.ShufflingCreation attachment) {
         Shuffling shuffling = new Shuffling(transaction, attachment);
         shufflingTable.insert(shuffling);
-        ShufflingParticipantHome.forChain(childChain).addParticipant(shuffling.getId(), transaction.getSenderId(), 0);
+        childChain.getShufflingParticipantHome().addParticipant(shuffling.getId(), transaction.getSenderId(), 0);
         listeners.notify(shuffling, Event.SHUFFLING_CREATED);
     }
 
@@ -290,7 +283,7 @@ public final class ShufflingHome {
 
     public final class Shuffling {
 
-        private final ShufflingParticipantHome shufflingParticipantHome = ShufflingParticipantHome.forChain(childChain);
+        private final ShufflingParticipantHome shufflingParticipantHome = childChain.getShufflingParticipantHome();
         private final long id;
         private final DbKey dbKey;
         private final long holdingId;

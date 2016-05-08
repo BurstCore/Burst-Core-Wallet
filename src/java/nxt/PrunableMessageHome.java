@@ -26,21 +26,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class PrunableMessageHome {
 
-    private static final Map<ChildChain, PrunableMessageHome> prunableMessageHomeMap = new HashMap<>();
-
-    public static PrunableMessageHome forChain(ChildChain childChain) {
-        return prunableMessageHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> prunableMessageHomeMap.put(childChain, new PrunableMessageHome(childChain)));
+    static PrunableMessageHome forChain(ChildChain childChain) {
+        if (childChain.getPrunableMessageHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new PrunableMessageHome(childChain);
     }
 
     private final DbKey.LongKeyFactory<PrunableMessage> prunableMessageKeyFactory;

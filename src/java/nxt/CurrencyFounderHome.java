@@ -26,9 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Each CurrencyFounder instance represents a single founder contribution for a non issued currency
@@ -37,16 +35,11 @@ import java.util.Map;
  */
 public final class CurrencyFounderHome {
 
-    private static final Map<ChildChain, CurrencyFounderHome> currencyFounderHomeMap = new HashMap<>();
-
-    public static CurrencyFounderHome forChain(ChildChain childChain) {
-        return currencyFounderHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> currencyFounderHomeMap.put(childChain, new CurrencyFounderHome(childChain)));
+    static CurrencyFounderHome forChain(ChildChain childChain) {
+        if (childChain.getCurrencyFounderHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new CurrencyFounderHome(childChain);
     }
 
     private final ChildChain childChain;

@@ -25,21 +25,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class VoteHome {
 
-    private static final Map<ChildChain, VoteHome> voteHomeMap = new HashMap<>();
-
-    public static VoteHome forChain(ChildChain childChain) {
-        return voteHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> voteHomeMap.put(childChain, new VoteHome(childChain)));
+    static VoteHome forChain(ChildChain childChain) {
+        if (childChain.getVoteHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new VoteHome(childChain);
     }
 
     private final ChildChain childChain;
@@ -49,7 +42,7 @@ public final class VoteHome {
 
     private VoteHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.pollHome = PollHome.forChain(childChain);
+        this.pollHome = childChain.getPollHome();
         this.voteDbKeyFactory = new DbKey.LongKeyFactory<Vote>("id") {
             @Override
             public DbKey newKey(Vote vote) {

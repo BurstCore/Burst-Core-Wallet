@@ -410,7 +410,7 @@ public interface Appendix {
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
             if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
-                PrunableMessageHome.forChain((ChildChain)transaction.getChain()).add((TransactionImpl)transaction, this);
+                ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this);
             }
         }
 
@@ -442,7 +442,7 @@ public interface Appendix {
         @Override
         final void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
             if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-                PrunableMessageHome.PrunableMessage prunableMessage = PrunableMessageHome.forChain((ChildChain)transaction.getChain())
+                PrunableMessageHome.PrunableMessage prunableMessage = ((ChildChain) transaction.getChain()).getPrunableMessageHome()
                         .getPrunableMessage(transaction.getId());
                 if (prunableMessage != null && prunableMessage.getMessage() != null) {
                     this.prunableMessage = prunableMessage;
@@ -462,7 +462,7 @@ public interface Appendix {
 
         @Override
         public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-            PrunableMessageHome.forChain((ChildChain)transaction.getChain()).add((TransactionImpl)transaction, this, blockTimestamp, height);
+            ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this, blockTimestamp, height);
         }
     }
 
@@ -718,7 +718,7 @@ public interface Appendix {
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
             if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
-                PrunableMessageHome.forChain((ChildChain)transaction.getChain()).add((TransactionImpl)transaction, this);
+                ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this);
             }
         }
 
@@ -767,7 +767,7 @@ public interface Appendix {
         @Override
         void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
             if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-                PrunableMessageHome.PrunableMessage prunableMessage = PrunableMessageHome.forChain((ChildChain)transaction.getChain())
+                PrunableMessageHome.PrunableMessage prunableMessage = ((ChildChain) transaction.getChain()).getPrunableMessageHome()
                         .getPrunableMessage(transaction.getId());
                 if (prunableMessage != null && prunableMessage.getEncryptedData() != null) {
                     this.prunableMessage = prunableMessage;
@@ -787,7 +787,7 @@ public interface Appendix {
 
         @Override
         public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-            PrunableMessageHome.forChain((ChildChain)transaction.getChain()).add((TransactionImpl)transaction, this, blockTimestamp, height);
+            ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this, blockTimestamp, height);
         }
     }
 
@@ -1389,7 +1389,7 @@ public interface Appendix {
 
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            PhasingPollHome.forChain((ChildChain)transaction.getChain()).addPoll(transaction, this);
+            ((ChildChain) transaction.getChain()).getPhasingPollHome().addPoll(transaction, this);
         }
 
         @Override
@@ -1417,7 +1417,7 @@ public interface Appendix {
         void reject(TransactionImpl transaction) {
             Account senderAccount = Account.getAccount(transaction.getSenderId());
             transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
-            BalanceHome.forChain((ChildChain)transaction.getChain()).getBalance(transaction.getSenderId())
+            ((ChildChain) transaction.getChain()).getBalanceHome().getBalance(transaction.getSenderId())
                     .addToUnconfirmedBalance(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
                                                      transaction.getAmount());
             TransactionProcessorImpl.getInstance()
@@ -1426,10 +1426,10 @@ public interface Appendix {
         }
 
         void countVotes(TransactionImpl transaction) {
-            if (PhasingPollHome.forChain((ChildChain)transaction.getChain()).getResult(transaction.getId()) != null) {
+            if (((ChildChain) transaction.getChain()).getPhasingPollHome().getResult(transaction.getId()) != null) {
                 return;
             }
-            PhasingPollHome.PhasingPoll poll = PhasingPollHome.forChain((ChildChain)transaction.getChain()).getPoll(transaction.getId());
+            PhasingPollHome.PhasingPoll poll = ((ChildChain) transaction.getChain()).getPhasingPollHome().getPoll(transaction.getId());
             long result = poll.countVotes();
             poll.finish(result);
             if (result >= poll.getQuorum()) {
@@ -1445,7 +1445,7 @@ public interface Appendix {
         }
 
         void tryCountVotes(TransactionImpl transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            PhasingPollHome.PhasingPoll poll = PhasingPollHome.forChain((ChildChain)transaction.getChain()).getPoll(transaction.getId());
+            PhasingPollHome.PhasingPoll poll = ((ChildChain) transaction.getChain()).getPhasingPollHome().getPoll(transaction.getId());
             long result = poll.countVotes();
             if (result >= poll.getQuorum()) {
                 if (!((ChildTransactionImpl)transaction).attachmentIsDuplicate(duplicates, false)) {

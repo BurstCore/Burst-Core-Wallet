@@ -46,4 +46,6 @@ public abstract class Chain {
         }
         return getDbSchema() + "." + table.toUpperCase();
     }
+
+    public abstract TransactionHome getTransactionHome();
 }

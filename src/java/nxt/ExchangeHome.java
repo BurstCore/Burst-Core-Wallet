@@ -29,9 +29,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class ExchangeHome {
 
@@ -39,16 +37,11 @@ public final class ExchangeHome {
         EXCHANGE
     }
 
-    private static final Map<ChildChain, ExchangeHome> exchangeHomeMap = new HashMap<>();
-
-    public static ExchangeHome forChain(ChildChain childChain) {
-        return exchangeHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> exchangeHomeMap.put(childChain, new ExchangeHome(childChain)));
+    static ExchangeHome forChain(ChildChain childChain) {
+        if (childChain.getExchangeHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new ExchangeHome(childChain);
     }
 
     private final ChildChain childChain;

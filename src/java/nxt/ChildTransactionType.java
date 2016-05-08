@@ -423,7 +423,7 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingAliasAssignment attachment = (Attachment.MessagingAliasAssignment) transaction.getAttachment();
-                AliasHome.forChain((ChildChain)transaction.getChain()).addOrUpdateAlias(transaction, attachment);
+                ((ChildChain) transaction.getChain()).getAliasHome().addOrUpdateAlias(transaction, attachment);
             }
 
             @Override
@@ -434,7 +434,7 @@ public abstract class ChildTransactionType extends TransactionType {
 
             @Override
             boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-                return AliasHome.forChain((ChildChain)transaction.getChain()).getAlias(((Attachment.MessagingAliasAssignment) transaction.getAttachment()).getAliasName()) == null
+                return ((ChildChain) transaction.getChain()).getAliasHome().getAlias(((Attachment.MessagingAliasAssignment) transaction.getAttachment()).getAliasName()) == null
                         && isDuplicate(Messaging.ALIAS_ASSIGNMENT, "", duplicates, true);
             }
 
@@ -452,7 +452,7 @@ public abstract class ChildTransactionType extends TransactionType {
                         throw new NxtException.NotValidException("Invalid alias name: " + normalizedAlias);
                     }
                 }
-                AliasHome.Alias alias = AliasHome.forChain((ChildChain)transaction.getChain()).getAlias(normalizedAlias);
+                AliasHome.Alias alias = ((ChildChain) transaction.getChain()).getAliasHome().getAlias(normalizedAlias);
                 if (alias != null && alias.getAccountId() != transaction.getSenderId()) {
                     throw new NxtException.NotCurrentlyValidException("Alias already owned by another account: " + normalizedAlias);
                 }
@@ -499,7 +499,7 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingAliasSell attachment = (Attachment.MessagingAliasSell) transaction.getAttachment();
-                AliasHome.forChain((ChildChain)transaction.getChain()).sellAlias(transaction, attachment);
+                ((ChildChain) transaction.getChain()).getAliasHome().sellAlias(transaction, attachment);
             }
 
             @Override
@@ -532,7 +532,7 @@ public abstract class ChildTransactionType extends TransactionType {
                         throw new NxtException.NotValidException("Missing alias transfer recipient");
                     }
                 }
-                AliasHome.Alias alias = AliasHome.forChain((ChildChain)transaction.getChain()).getAlias(aliasName);
+                AliasHome.Alias alias = ((ChildChain) transaction.getChain()).getAliasHome().getAlias(aliasName);
                 if (alias == null) {
                     throw new NxtException.NotCurrentlyValidException("No such alias: " + aliasName);
                 } else if (alias.getAccountId() != transaction.getSenderId()) {
@@ -592,7 +592,7 @@ public abstract class ChildTransactionType extends TransactionType {
                 final Attachment.MessagingAliasBuy attachment =
                         (Attachment.MessagingAliasBuy) transaction.getAttachment();
                 final String aliasName = attachment.getAliasName();
-                AliasHome.forChain((ChildChain)transaction.getChain()).changeOwner(transaction.getSenderId(), aliasName);
+                ((ChildChain) transaction.getChain()).getAliasHome().changeOwner(transaction.getSenderId(), aliasName);
             }
 
             @Override
@@ -604,7 +604,7 @@ public abstract class ChildTransactionType extends TransactionType {
 
             @Override
             void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
-                AliasHome aliasHome = AliasHome.forChain((ChildChain)transaction.getChain());
+                AliasHome aliasHome = ((ChildChain) transaction.getChain()).getAliasHome();
                 final Attachment.MessagingAliasBuy attachment =
                         (Attachment.MessagingAliasBuy) transaction.getAttachment();
                 final String aliasName = attachment.getAliasName();
@@ -674,7 +674,7 @@ public abstract class ChildTransactionType extends TransactionType {
             void applyAttachment(final Transaction transaction, final Account senderAccount, final Account recipientAccount) {
                 final Attachment.MessagingAliasDelete attachment =
                         (Attachment.MessagingAliasDelete) transaction.getAttachment();
-                AliasHome.forChain((ChildChain)transaction.getChain()).deleteAlias(attachment.getAliasName());
+                ((ChildChain) transaction.getChain()).getAliasHome().deleteAlias(attachment.getAliasName());
             }
 
             @Override
@@ -692,7 +692,7 @@ public abstract class ChildTransactionType extends TransactionType {
                 if (aliasName == null || aliasName.length() == 0) {
                     throw new NxtException.NotValidException("Missing alias name");
                 }
-                final AliasHome.Alias alias = AliasHome.forChain((ChildChain)transaction.getChain()).getAlias(aliasName);
+                final AliasHome.Alias alias = ((ChildChain) transaction.getChain()).getAliasHome().getAlias(aliasName);
                 if (alias == null) {
                     throw new NxtException.NotCurrentlyValidException("No such alias: " + aliasName);
                 } else if (alias.getAccountId() != transaction.getSenderId()) {
@@ -770,7 +770,7 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingPollCreation attachment = (Attachment.MessagingPollCreation) transaction.getAttachment();
-                PollHome.forChain((ChildChain)transaction.getChain()).addPoll(transaction, attachment);
+                ((ChildChain) transaction.getChain()).getPollHome().addPoll(transaction, attachment);
             }
 
             @Override
@@ -871,7 +871,7 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingVoteCasting attachment = (Attachment.MessagingVoteCasting) transaction.getAttachment();
-                VoteHome.forChain((ChildChain)transaction.getChain()).addVote(transaction, attachment);
+                ((ChildChain) transaction.getChain()).getVoteHome().addVote(transaction, attachment);
             }
 
             @Override
@@ -885,12 +885,12 @@ public abstract class ChildTransactionType extends TransactionType {
 
                 long pollId = attachment.getPollId();
 
-                PollHome.Poll poll = PollHome.forChain((ChildChain)transaction.getChain()).getPoll(pollId);
+                PollHome.Poll poll = ((ChildChain) transaction.getChain()).getPollHome().getPoll(pollId);
                 if (poll == null) {
                     throw new NxtException.NotCurrentlyValidException("Invalid poll: " + Long.toUnsignedString(attachment.getPollId()));
                 }
 
-                if (VoteHome.forChain((ChildChain)transaction.getChain()).getVote(pollId, transaction.getSenderId()) != null) {
+                if (((ChildChain) transaction.getChain()).getVoteHome().getVote(pollId, transaction.getSenderId()) != null) {
                     throw new NxtException.NotCurrentlyValidException("Double voting attempt");
                 }
 
@@ -1000,7 +1000,7 @@ public abstract class ChildTransactionType extends TransactionType {
                         throw new NxtException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
                     }
 
-                    PhasingPollHome.PhasingPoll poll = PhasingPollHome.forChain((ChildChain)transaction.getChain()).getPoll(phasedTransactionId);
+                    PhasingPollHome.PhasingPoll poll = ((ChildChain) transaction.getChain()).getPhasingPollHome().getPoll(phasedTransactionId);
                     if (poll == null) {
                         throw new NxtException.NotCurrentlyValidException("Invalid phased transaction " + Long.toUnsignedString(phasedTransactionId)
                                 + ", or phasing is finished");
@@ -1045,7 +1045,7 @@ public abstract class ChildTransactionType extends TransactionType {
                 Attachment.MessagingPhasingVoteCasting attachment = (Attachment.MessagingPhasingVoteCasting) transaction.getAttachment();
                 List<byte[]> hashes = attachment.getTransactionFullHashes();
                 for (byte[] hash : hashes) {
-                    PhasingVoteHome.forChain((ChildChain)transaction.getChain()).addVote(transaction, senderAccount, Convert.fullHashToId(hash));
+                    ((ChildChain) transaction.getChain()).getPhasingVoteHome().addVote(transaction, senderAccount, Convert.fullHashToId(hash));
                 }
             }
 
@@ -2006,7 +2006,7 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsListing attachment = (Attachment.DigitalGoodsListing) transaction.getAttachment();
-                DGSHome.forChain((ChildChain)transaction.getChain()).listGoods(transaction, attachment);
+                ((ChildChain) transaction.getChain()).getDGSHome().listGoods(transaction, attachment);
             }
 
             @Override
@@ -2069,13 +2069,13 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsDelisting attachment = (Attachment.DigitalGoodsDelisting) transaction.getAttachment();
-                DGSHome.forChain((ChildChain)transaction.getChain()).delistGoods(attachment.getGoodsId());
+                ((ChildChain) transaction.getChain()).getDGSHome().delistGoods(attachment.getGoodsId());
             }
 
             @Override
             void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsDelisting attachment = (Attachment.DigitalGoodsDelisting) transaction.getAttachment();
-                DGSHome.Goods goods = DGSHome.forChain((ChildChain)transaction.getChain()).getGoods(attachment.getGoodsId());
+                DGSHome.Goods goods = ((ChildChain) transaction.getChain()).getDGSHome().getGoods(attachment.getGoodsId());
                 if (goods != null && transaction.getSenderId() != goods.getSellerId()) {
                     throw new NxtException.NotValidException("Invalid digital goods delisting - seller is different: " + attachment.getJSONObject());
                 }
@@ -2133,13 +2133,13 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsPriceChange attachment = (Attachment.DigitalGoodsPriceChange) transaction.getAttachment();
-                DGSHome.forChain((ChildChain)transaction.getChain()).changePrice(attachment.getGoodsId(), attachment.getPriceNQT());
+                ((ChildChain) transaction.getChain()).getDGSHome().changePrice(attachment.getGoodsId(), attachment.getPriceNQT());
             }
 
             @Override
             void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsPriceChange attachment = (Attachment.DigitalGoodsPriceChange) transaction.getAttachment();
-                DGSHome.Goods goods = DGSHome.forChain((ChildChain)transaction.getChain()).getGoods(attachment.getGoodsId());
+                DGSHome.Goods goods = ((ChildChain) transaction.getChain()).getDGSHome().getGoods(attachment.getGoodsId());
                 if (attachment.getPriceNQT() <= 0 || attachment.getPriceNQT() > Constants.MAX_BALANCE_NQT
                         || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
                     throw new NxtException.NotValidException("Invalid digital goods price change: " + attachment.getJSONObject());
@@ -2199,13 +2199,13 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsQuantityChange attachment = (Attachment.DigitalGoodsQuantityChange) transaction.getAttachment();
-                DGSHome.forChain((ChildChain)transaction.getChain()).changeQuantity(attachment.getGoodsId(), attachment.getDeltaQuantity());
+                ((ChildChain) transaction.getChain()).getDGSHome().changeQuantity(attachment.getGoodsId(), attachment.getDeltaQuantity());
             }
 
             @Override
             void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsQuantityChange attachment = (Attachment.DigitalGoodsQuantityChange) transaction.getAttachment();
-                DGSHome.Goods goods = DGSHome.forChain((ChildChain)transaction.getChain()).getGoods(attachment.getGoodsId());
+                DGSHome.Goods goods = ((ChildChain) transaction.getChain()).getDGSHome().getGoods(attachment.getGoodsId());
                 if (attachment.getDeltaQuantity() < -Constants.MAX_DGS_LISTING_QUANTITY
                         || attachment.getDeltaQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
                         || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
@@ -2284,13 +2284,13 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
-                DGSHome.forChain((ChildChain)transaction.getChain()).purchase((ChildTransaction)transaction, attachment);
+                ((ChildChain) transaction.getChain()).getDGSHome().purchase((ChildTransaction)transaction, attachment);
             }
 
             @Override
             void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
-                DGSHome.Goods goods = DGSHome.forChain((ChildChain)transaction.getChain()).getGoods(attachment.getGoodsId());
+                DGSHome.Goods goods = ((ChildChain) transaction.getChain()).getDGSHome().getGoods(attachment.getGoodsId());
                 if (attachment.getQuantity() <= 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
                         || attachment.getPriceNQT() <= 0 || attachment.getPriceNQT() > Constants.MAX_BALANCE_NQT
                         || (goods != null && goods.getSellerId() != transaction.getRecipientId())) {
@@ -2376,13 +2376,13 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsDelivery attachment = (Attachment.DigitalGoodsDelivery)transaction.getAttachment();
-                DGSHome.forChain((ChildChain)transaction.getChain()).deliver((ChildTransaction)transaction, attachment);
+                ((ChildChain) transaction.getChain()).getDGSHome().deliver((ChildTransaction)transaction, attachment);
             }
 
             @Override
             void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsDelivery attachment = (Attachment.DigitalGoodsDelivery) transaction.getAttachment();
-                DGSHome.Purchase purchase = DGSHome.forChain((ChildChain)transaction.getChain()).getPendingPurchase(attachment.getPurchaseId());
+                DGSHome.Purchase purchase = ((ChildChain) transaction.getChain()).getDGSHome().getPendingPurchase(attachment.getPurchaseId());
                 if (attachment.getGoodsDataLength() > Constants.MAX_DGS_GOODS_LENGTH) {
                     throw new NxtException.NotValidException("Invalid digital goods delivery data length: " + attachment.getGoodsDataLength());
                 }
@@ -2452,7 +2452,7 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsFeedback attachment = (Attachment.DigitalGoodsFeedback)transaction.getAttachment();
-                DGSHome.forChain((ChildChain)transaction.getChain()).feedback(attachment.getPurchaseId(),
+                ((ChildChain) transaction.getChain()).getDGSHome().feedback(attachment.getPurchaseId(),
                         ((ChildTransaction)transaction).getEncryptedMessage(), ((ChildTransaction)transaction).getMessage());
             }
 
@@ -2460,7 +2460,7 @@ public abstract class ChildTransactionType extends TransactionType {
             void doValidateAttachment(Transaction t) throws NxtException.ValidationException {
                 ChildTransaction transaction = (ChildTransaction)t;
                 Attachment.DigitalGoodsFeedback attachment = (Attachment.DigitalGoodsFeedback) transaction.getAttachment();
-                DGSHome.Purchase purchase = DGSHome.forChain((ChildChain)transaction.getChain()).getPurchase(attachment.getPurchaseId());
+                DGSHome.Purchase purchase = ((ChildChain) transaction.getChain()).getDGSHome().getPurchase(attachment.getPurchaseId());
                 if (purchase != null &&
                         (purchase.getSellerId() != transaction.getRecipientId()
                                 || transaction.getSenderId() != purchase.getBuyerId())) {
@@ -2538,14 +2538,14 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
-                DGSHome.forChain((ChildChain)transaction.getChain()).refund(getLedgerEvent(), transaction.getId(), transaction.getSenderId(),
+                ((ChildChain) transaction.getChain()).getDGSHome().refund(getLedgerEvent(), transaction.getId(), transaction.getSenderId(),
                         attachment.getPurchaseId(), attachment.getRefundNQT(), ((ChildTransaction)transaction).getEncryptedMessage());
             }
 
             @Override
             void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
-                DGSHome.Purchase purchase = DGSHome.forChain((ChildChain)transaction.getChain()).getPurchase(attachment.getPurchaseId());
+                DGSHome.Purchase purchase = ((ChildChain) transaction.getChain()).getDGSHome().getPurchase(attachment.getPurchaseId());
                 if (attachment.getRefundNQT() < 0 || attachment.getRefundNQT() > Constants.MAX_BALANCE_NQT
                         || (purchase != null &&
                         (purchase.getBuyerId() != transaction.getRecipientId()
@@ -2853,7 +2853,7 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.TaggedDataUpload attachment = (Attachment.TaggedDataUpload) transaction.getAttachment();
-                TaggedDataHome.forChain((ChildChain)transaction.getChain()).add((TransactionImpl)transaction, attachment);
+                ((ChildChain) transaction.getChain()).getTaggedDataHome().add((TransactionImpl)transaction, attachment);
             }
 
             @Override
@@ -2864,7 +2864,7 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             boolean isPruned(long transactionId) {
                 Transaction transaction = TransactionHome.findTransaction(transactionId);
-                return TaggedDataHome.forChain((ChildChain)transaction.getChain()).isPruned(transactionId);
+                return ((ChildChain) transaction.getChain()).getTaggedDataHome().isPruned(transactionId);
             }
 
         };
@@ -2912,7 +2912,7 @@ public abstract class ChildTransactionType extends TransactionType {
                                 + " upload hash: " + Convert.toHexString(taggedDataUpload.getHash()));
                     }
                 }
-                TaggedDataHome.TaggedData taggedData = TaggedDataHome.forChain((ChildChain)transaction.getChain()).getData(attachment.getTaggedDataId());
+                TaggedDataHome.TaggedData taggedData = ((ChildChain) transaction.getChain()).getTaggedDataHome().getData(attachment.getTaggedDataId());
                 if (taggedData != null && taggedData.getTransactionTimestamp() > Nxt.getEpochTime() + 6 * Constants.MIN_PRUNABLE_LIFETIME) {
                     throw new NxtException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
                 }
@@ -2921,7 +2921,7 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.TaggedDataExtend attachment = (Attachment.TaggedDataExtend) transaction.getAttachment();
-                TaggedDataHome.forChain((ChildChain)transaction.getChain()).extend(transaction, attachment);
+                ((ChildChain) transaction.getChain()).getTaggedDataHome().extend(transaction, attachment);
             }
 
             @Override

@@ -347,7 +347,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         if (referencedTransactionFullHash != null && referencedTransactionFullHash.length != 32) {
             throw new NxtException.NotValidException("Invalid referenced transaction full hash " + Convert.toHexString(referencedTransactionFullHash));
         }
-        boolean validatingAtFinish = phasing != null && getSignature() != null && PhasingPollHome.forChain(childChain).getPoll(getId()) != null;
+        boolean validatingAtFinish = phasing != null && getSignature() != null && childChain.getPhasingPollHome().getPoll(getId()) != null;
         for (Appendix.AbstractAppendix appendage : appendages()) {
             appendage.loadPrunable(this);
             if (! appendage.verifyVersion()) {
@@ -378,11 +378,11 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             }
         }
         if (referencedTransactionFullHash != null) {
-            BalanceHome.forChain(childChain).getBalance(getSenderId()).addToUnconfirmedBalance(getType().getLedgerEvent(), getId(),
+            childChain.getBalanceHome().getBalance(getSenderId()).addToUnconfirmedBalance(getType().getLedgerEvent(), getId(),
                     0, Constants.UNCONFIRMED_POOL_DEPOSIT_NQT);
         }
         if (attachmentIsPhased()) {
-            BalanceHome.forChain(childChain).getBalance(getSenderId()).addToBalance(getType().getLedgerEvent(), getId(), 0, -fee);
+            childChain.getBalanceHome().getBalance(getSenderId()).addToBalance(getType().getLedgerEvent(), getId(), 0, -fee);
         }
         for (Appendix.AbstractAppendix appendage : appendages()) {
             if (!appendage.isPhased(this)) {

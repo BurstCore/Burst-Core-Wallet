@@ -26,21 +26,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class AliasHome {
 
-    private static final Map<ChildChain, AliasHome> aliasHomeMap = new HashMap<>();
-
-    public static AliasHome forChain(ChildChain childChain) {
-        return aliasHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> aliasHomeMap.put(childChain, new AliasHome(childChain)));
+    static AliasHome forChain(ChildChain childChain) {
+        if (childChain.getAliasHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new AliasHome(childChain);
     }
 
     private final DbKey.LongKeyFactory<Alias> aliasDbKeyFactory;

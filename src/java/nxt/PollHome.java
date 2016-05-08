@@ -30,9 +30,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class PollHome {
 
@@ -63,16 +61,11 @@ public final class PollHome {
 
     }
 
-    private static final Map<ChildChain, PollHome> pollHomeMap = new HashMap<>();
-
-    public static PollHome forChain(ChildChain childChain) {
-        return pollHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> pollHomeMap.put(childChain, new PollHome(childChain)));
+    static PollHome forChain(ChildChain childChain) {
+        if (childChain.getPollHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new PollHome(childChain);
     }
 
     private final ChildChain childChain;
@@ -84,7 +77,7 @@ public final class PollHome {
 
     private PollHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.voteHome = VoteHome.forChain(childChain);
+        this.voteHome = childChain.getVoteHome();
         this.pollDbKeyFactory = new DbKey.LongKeyFactory<Poll>("id") {
             @Override
             public DbKey newKey(Poll poll) {
