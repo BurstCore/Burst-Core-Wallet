@@ -25,10 +25,13 @@ public abstract class FxtTransactionType extends TransactionType {
 
     static final byte TYPE_CHILDCHAIN_BLOCK = -1;
     private static final byte TYPE_PAYMENT = -2;
+    private static final byte TYPE_ACCOUNT_CONTROL = -3;
 
     static final byte SUBTYPE_CHILDCHAIN_BLOCK = 0;
 
     private static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
+
+    private static final byte SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING = 0;
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {
@@ -43,6 +46,13 @@ public abstract class FxtTransactionType extends TransactionType {
                 switch (subtype) {
                     case SUBTYPE_PAYMENT_ORDINARY_PAYMENT:
                         return FxtTransactionType.Payment.ORDINARY;
+                    default:
+                        return null;
+                }
+            case TYPE_ACCOUNT_CONTROL:
+                switch (subtype) {
+                    case SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING:
+                        return AccountControl.EFFECTIVE_BALANCE_LEASING;
                     default:
                         return null;
                 }
@@ -165,6 +175,89 @@ public abstract class FxtTransactionType extends TransactionType {
 
         };
 
+    }
+
+    public static abstract class AccountControl extends FxtTransactionType {
+
+        private AccountControl() {
+        }
+
+        @Override
+        public final byte getType() {
+            return FxtTransactionType.TYPE_ACCOUNT_CONTROL;
+        }
+
+        @Override
+        final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            return true;
+        }
+
+        @Override
+        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        }
+
+        public static final TransactionType EFFECTIVE_BALANCE_LEASING = new AccountControl() {
+
+            @Override
+            public final byte getSubtype() {
+                return FxtTransactionType.SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING;
+            }
+
+            @Override
+            public AccountLedger.LedgerEvent getLedgerEvent() {
+                return AccountLedger.LedgerEvent.ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING;
+            }
+
+            @Override
+            public String getName() {
+                return "EffectiveBalanceLeasing";
+            }
+
+            @Override
+            Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+                //TODO?
+                return new Attachment.AccountControlEffectiveBalanceLeasing(buffer);
+            }
+
+            @Override
+            Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
+                return new Attachment.AccountControlEffectiveBalanceLeasing(attachmentData);
+            }
+
+            @Override
+            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+                Attachment.AccountControlEffectiveBalanceLeasing attachment = (Attachment.AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
+                Account.getAccount(transaction.getSenderId()).leaseEffectiveBalance(transaction.getRecipientId(), attachment.getPeriod());
+            }
+
+            @Override
+            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+                Attachment.AccountControlEffectiveBalanceLeasing attachment = (Attachment.AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
+                if (transaction.getSenderId() == transaction.getRecipientId()) {
+                    throw new NxtException.NotValidException("Account cannot lease balance to itself");
+                }
+                if (transaction.getAmount() != 0) {
+                    throw new NxtException.NotValidException("Transaction amount must be 0 for effective balance leasing");
+                }
+                if (attachment.getPeriod() < Constants.LEASING_DELAY || attachment.getPeriod() > 65535) {
+                    throw new NxtException.NotValidException("Invalid effective balance leasing period: " + attachment.getPeriod());
+                }
+                byte[] recipientPublicKey = Account.getPublicKey(transaction.getRecipientId());
+                if (recipientPublicKey == null) {
+                    throw new NxtException.NotValidException("Invalid effective balance leasing: "
+                            + " recipient account " + Long.toUnsignedString(transaction.getRecipientId()) + " not found or no public key published");
+                }
+                if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+                    throw new NxtException.NotValidException("Leasing to Genesis account not allowed");
+                }
+            }
+
+            @Override
+            public boolean canHaveRecipient() {
+                return true;
+            }
+
+        };
     }
 
 }
