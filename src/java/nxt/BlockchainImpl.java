@@ -530,6 +530,15 @@ final class BlockchainImpl implements Blockchain {
         });
     }
 
+    public DbIterator<ChildTransactionImpl> getTransactions(ChildChain childChain, Connection con, PreparedStatement pstmt) {
+        return new DbIterator<>(con, pstmt, new DbIterator.ResultSetReader<ChildTransactionImpl>() {
+            @Override
+            public ChildTransactionImpl get(Connection con, ResultSet rs) throws Exception {
+                return ChildTransactionImpl.loadTransaction(childChain, con, rs);
+            }
+        });
+    }
+
     //TODO: handle child transactions
     @Override
     public List<TransactionImpl> getExpectedTransactions(Filter<Transaction> filter) {
@@ -540,11 +549,11 @@ final class BlockchainImpl implements Blockchain {
         try {
             //TODO: use a global finishing phased transaction table, sort result before processing
             ChildChain.getAll().forEach(childChain -> {
-                try (DbIterator<TransactionImpl> phasedTransactions = childChain.getPhasingPollHome().getFinishingTransactions(getHeight() + 1)) {
-                    for (TransactionImpl phasedTransaction : phasedTransactions) {
+                try (DbIterator<ChildTransactionImpl> phasedTransactions = childChain.getPhasingPollHome().getFinishingTransactions(getHeight() + 1)) {
+                    for (ChildTransactionImpl phasedTransaction : phasedTransactions) {
                         try {
                             phasedTransaction.validate();
-                            if (!((ChildTransactionImpl)phasedTransaction).attachmentIsDuplicate(duplicates, false) && filter.ok(phasedTransaction)) {
+                            if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.ok(phasedTransaction)) {
                                 result.add(phasedTransaction);
                             }
                         } catch (NxtException.ValidationException ignore) {
@@ -554,8 +563,8 @@ final class BlockchainImpl implements Blockchain {
             });
             blockchainProcessor.selectUnconfirmedFxtTransactions(duplicates, getLastBlock(), -1).forEach(
                     unconfirmedTransaction -> {
-                        TransactionImpl transaction = unconfirmedTransaction.getTransaction();
-                        if ((transaction instanceof FxtTransaction || ((ChildTransaction)transaction).getPhasing() == null) && filter.ok(transaction)) {
+                        FxtTransactionImpl transaction = unconfirmedTransaction.getTransaction();
+                        if (filter.ok(transaction)) {
                             result.add(transaction);
                         }
                     }

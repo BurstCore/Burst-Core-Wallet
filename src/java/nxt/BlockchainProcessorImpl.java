@@ -1307,9 +1307,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                                             Map<TransactionType, Map<String, Integer>> duplicates) {
         //TODO: use a global finishing phased transaction table, sort result before processing
         ChildChain.getAll().forEach(childChain -> {
-            try (DbIterator<TransactionImpl> phasedTransactions = childChain.getPhasingPollHome().getFinishingTransactions(height + 1)) {
-                for (TransactionImpl t : phasedTransactions) {
-                    ChildTransactionImpl phasedTransaction = (ChildTransactionImpl)t;
+            try (DbIterator<ChildTransactionImpl> phasedTransactions = childChain.getPhasingPollHome().getFinishingTransactions(height + 1)) {
+                for (ChildTransactionImpl phasedTransaction : phasedTransactions) {
                     if (childChain.getPhasingPollHome().getResult(phasedTransaction.getId()) != null) {
                         continue;
                     }
@@ -1716,7 +1715,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
         //TODO: use global table, sort results before processing
         ChildChain.getAll().forEach(childChain -> {
-            try (DbIterator<TransactionImpl> phasedTransactions = childChain.getPhasingPollHome().getFinishingTransactions(blockchain.getHeight() + 1)) {
+            try (DbIterator<ChildTransactionImpl> phasedTransactions = childChain.getPhasingPollHome().getFinishingTransactions(blockchain.getHeight() + 1)) {
                 for (TransactionImpl phasedTransaction : phasedTransactions) {
                     try {
                         phasedTransaction.validate();

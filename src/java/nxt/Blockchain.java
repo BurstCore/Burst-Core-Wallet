@@ -86,6 +86,8 @@ public interface Blockchain {
 
     DbIterator<? extends Transaction> getTransactions(Chain chain, Connection con, PreparedStatement pstmt);
 
+    DbIterator<? extends ChildTransaction> getTransactions(ChildChain childChain, Connection con, PreparedStatement pstmt);
+
     List<? extends Transaction> getExpectedTransactions(Filter<Transaction> filter);
 
     DbIterator<? extends Transaction> getReferencingTransactions(Chain chain, long transactionId, int from, int to);

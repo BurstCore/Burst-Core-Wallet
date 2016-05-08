@@ -247,7 +247,7 @@ public final class PhasingPollHome {
     }
 
     //TODO: use a global table for phasing transaction finish height to id and chain mapping
-    DbIterator<TransactionImpl> getFinishingTransactions(int height) {
+    DbIterator<ChildTransactionImpl> getFinishingTransactions(int height) {
         Connection con = null;
         try {
             con = phasingPollTable.getConnection();
@@ -262,7 +262,7 @@ public final class PhasingPollHome {
         }
     }
 
-    public DbIterator<TransactionImpl> getVoterPhasedTransactions(long voterId, int from, int to) {
+    public DbIterator<ChildTransactionImpl> getVoterPhasedTransactions(long voterId, int from, int to) {
         Connection con = null;
         try {
             con = phasingPollTable.getConnection();
@@ -288,7 +288,7 @@ public final class PhasingPollHome {
         }
     }
 
-    public DbIterator<TransactionImpl> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
+    public DbIterator<ChildTransactionImpl> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                                     long accountId, boolean withoutWhitelist, int from, int to) {
         Connection con = null;
         try {
@@ -319,7 +319,7 @@ public final class PhasingPollHome {
         }
     }
 
-    public DbIterator<TransactionImpl> getAccountPhasedTransactions(long accountId, int from, int to) {
+    public DbIterator<ChildTransactionImpl> getAccountPhasedTransactions(long accountId, int from, int to) {
         Connection con = null;
         try {
             con = phasingPollTable.getConnection();
