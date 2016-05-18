@@ -21,9 +21,9 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 
 //TODO
-public final class ChildChainBlock extends FxtTransactionType {
+public final class ChildBlockTransactionType extends FxtTransactionType {
 
-    public static final ChildChainBlock instance = new ChildChainBlock();
+    public static final ChildBlockTransactionType instance = new ChildBlockTransactionType();
 
     @Override
     public byte getType() {

@@ -1374,7 +1374,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         long calculatedTotalFee = 0;
         MessageDigest digest = Crypto.sha256();
         boolean hasPrunedTransactions = false;
-        for (TransactionImpl transaction : block.getTransactions()) {
+        for (FxtTransactionImpl transaction : block.getTransactions()) {
             if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT) {
                 throw new BlockOutOfOrderException("Invalid transaction timestamp: " + transaction.getTimestamp()
                         + ", current time is " + curTime, block);
@@ -1382,6 +1382,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             if (!transaction.verifySignature()) {
                 throw new TransactionNotAcceptedException("Transaction signature verification failed at height " + previousLastBlock.getHeight(), transaction);
             }
+            //TODO: recursively validate childchainblock transactions, refactor
             if (fullValidation) {
                 if (transaction.getTimestamp() > block.getTimestamp() + Constants.MAX_TIMEDRIFT
                         || transaction.getExpiration() < block.getTimestamp()) {
@@ -1391,6 +1392,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (TransactionHome.hasTransaction(transaction.getId(), previousLastBlock.getHeight())) {
                     throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
                 }
+                //TODO: only for child transactions
+                /*
                 if (transaction instanceof ChildTransaction && ((ChildTransactionImpl)transaction).referencedTransactionFullHash() != null
                         && !hasAllReferencedTransactions(transaction, transaction.getTimestamp(), 0)) {
                     throw new TransactionNotAcceptedException("Missing or invalid referenced transaction "
@@ -1400,6 +1403,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new TransactionNotAcceptedException("Invalid transaction version " + transaction.getVersion()
                             + " at height " + previousLastBlock.getHeight(), transaction);
                 }
+                */
                 /*
                     if (!EconomicClustering.verifyFork(transaction)) {
                         Logger.logDebugMessage("Block " + block.getStringId() + " height " + (previousLastBlock.getHeight() + 1)
@@ -1418,8 +1422,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new TransactionNotAcceptedException(e.getMessage(), transaction);
                 }
             }
-            //TODO: duplicates check for Fxt transactions too
-            if (transaction instanceof ChildTransaction && ((ChildTransactionImpl)transaction).attachmentIsDuplicate(duplicates, true)) {
+            if (transaction.attachmentIsDuplicate(duplicates, true)) {
                 throw new TransactionNotAcceptedException("Transaction is a duplicate", transaction);
             }
             if (!hasPrunedTransactions) {
