@@ -1374,38 +1374,38 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         long calculatedTotalFee = 0;
         MessageDigest digest = Crypto.sha256();
         boolean hasPrunedTransactions = false;
-        for (FxtTransactionImpl transaction : block.getTransactions()) {
-            validateTransaction(transaction, block, previousLastBlock, curTime);
+        for (FxtTransactionImpl fxtTransaction : block.getTransactions()) {
+            validateTransaction(fxtTransaction, block, previousLastBlock, curTime);
             if (fullValidation) {
-                fullyValidateTransaction(transaction, block, previousLastBlock, curTime);
+                fullyValidateTransaction(fxtTransaction, block, previousLastBlock, curTime);
             }
             if (!hasPrunedTransactions) {
-                for (Appendix.AbstractAppendix appendage : transaction.getAppendages()) {
+                for (Appendix.AbstractAppendix appendage : fxtTransaction.getAppendages()) {
                     if ((appendage instanceof Appendix.Prunable) && !((Appendix.Prunable)appendage).hasPrunableData()) {
                         hasPrunedTransactions = true;
                         break;
                     }
                 }
             }
-            if (transaction.getType() == ChildBlockTransactionType.instance) {
-                ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)transaction.getAttachment();
+            if (fxtTransaction.getType() == ChildBlockTransactionType.instance) {
+                ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)fxtTransaction.getAttachment();
                 for (ChildTransactionImpl childTransaction : childBlockAttachment.getChildTransactions()) {
-                    validateTransaction(transaction, block, previousLastBlock, curTime);
+                    validateTransaction(childTransaction, block, previousLastBlock, curTime);
                     if (fullValidation) {
                         fullyValidateTransaction(childTransaction, block, previousLastBlock, curTime);
                     }
-                    if (transaction.attachmentIsDuplicate(duplicates, true)) {
-                        throw new TransactionNotAcceptedException("Transaction is a duplicate", transaction);
+                    if (childTransaction.attachmentIsDuplicate(duplicates, true)) {
+                        throw new TransactionNotAcceptedException("Transaction is a duplicate", childTransaction);
                     }
                 }
             }
-            if (transaction.attachmentIsDuplicate(duplicates, true)) {
-                throw new TransactionNotAcceptedException("Transaction is a duplicate", transaction);
+            if (fxtTransaction.attachmentIsDuplicate(duplicates, true)) {
+                throw new TransactionNotAcceptedException("Transaction is a duplicate", fxtTransaction);
             }
-            calculatedTotalAmount += transaction.getAmount();
-            calculatedTotalFee += transaction.getFee();
-            payloadLength += transaction.getFullSize();
-            digest.update(transaction.bytes());
+            calculatedTotalAmount += fxtTransaction.getAmount();
+            calculatedTotalFee += fxtTransaction.getFee();
+            payloadLength += fxtTransaction.getFullSize();
+            digest.update(fxtTransaction.bytes());
         }
         if (calculatedTotalAmount != block.getTotalAmountNQT() || calculatedTotalFee != block.getTotalFeeNQT()) {
             throw new BlockNotAcceptedException("Total amount or fee don't match transaction totals", block);
