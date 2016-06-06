@@ -1375,55 +1375,9 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         MessageDigest digest = Crypto.sha256();
         boolean hasPrunedTransactions = false;
         for (FxtTransactionImpl transaction : block.getTransactions()) {
-            if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT) {
-                throw new BlockOutOfOrderException("Invalid transaction timestamp: " + transaction.getTimestamp()
-                        + ", current time is " + curTime, block);
-            }
-            if (!transaction.verifySignature()) {
-                throw new TransactionNotAcceptedException("Transaction signature verification failed at height " + previousLastBlock.getHeight(), transaction);
-            }
-            //TODO: recursively validate childchainblock transactions, refactor
+            validateTransaction(transaction, block, previousLastBlock, curTime);
             if (fullValidation) {
-                if (transaction.getTimestamp() > block.getTimestamp() + Constants.MAX_TIMEDRIFT
-                        || transaction.getExpiration() < block.getTimestamp()) {
-                    throw new TransactionNotAcceptedException("Invalid transaction timestamp " + transaction.getTimestamp()
-                            + ", current time is " + curTime + ", block timestamp is " + block.getTimestamp(), transaction);
-                }
-                if (TransactionHome.hasTransaction(transaction.getId(), previousLastBlock.getHeight())) {
-                    throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
-                }
-                //TODO: only for child transactions
-                /*
-                if (transaction instanceof ChildTransaction && ((ChildTransactionImpl)transaction).referencedTransactionFullHash() != null
-                        && !hasAllReferencedTransactions(transaction, transaction.getTimestamp(), 0)) {
-                    throw new TransactionNotAcceptedException("Missing or invalid referenced transaction "
-                            + ((ChildTransaction)transaction).getReferencedTransactionFullHash(), transaction);
-                }
-                if (transaction.getVersion() != getTransactionVersion(previousLastBlock.getHeight())) {
-                    throw new TransactionNotAcceptedException("Invalid transaction version " + transaction.getVersion()
-                            + " at height " + previousLastBlock.getHeight(), transaction);
-                }
-                */
-                /*
-                    if (!EconomicClustering.verifyFork(transaction)) {
-                        Logger.logDebugMessage("Block " + block.getStringId() + " height " + (previousLastBlock.getHeight() + 1)
-                                + " contains transaction that was generated on a fork: "
-                                + transaction.getStringId() + " ecBlockHeight " + transaction.getECBlockHeight() + " ecBlockId "
-                                + Convert.toUnsignedLong(transaction.getECBlockId()));
-                        //throw new TransactionNotAcceptedException("Transaction belongs to a different fork", transaction);
-                    }
-                    */
-                if (transaction.getId() == 0L) {
-                    throw new TransactionNotAcceptedException("Invalid transaction id 0", transaction);
-                }
-                try {
-                    transaction.validate();
-                } catch (NxtException.ValidationException e) {
-                    throw new TransactionNotAcceptedException(e.getMessage(), transaction);
-                }
-            }
-            if (transaction.attachmentIsDuplicate(duplicates, true)) {
-                throw new TransactionNotAcceptedException("Transaction is a duplicate", transaction);
+                fullyValidateTransaction(transaction, block, previousLastBlock, curTime);
             }
             if (!hasPrunedTransactions) {
                 for (Appendix.AbstractAppendix appendage : transaction.getAppendages()) {
@@ -1432,6 +1386,21 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         break;
                     }
                 }
+            }
+            if (transaction.getType() == ChildBlockTransactionType.instance) {
+                ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)transaction.getAttachment();
+                for (ChildTransactionImpl childTransaction : childBlockAttachment.getChildTransactions()) {
+                    validateTransaction(transaction, block, previousLastBlock, curTime);
+                    if (fullValidation) {
+                        fullyValidateTransaction(childTransaction, block, previousLastBlock, curTime);
+                    }
+                    if (transaction.attachmentIsDuplicate(duplicates, true)) {
+                        throw new TransactionNotAcceptedException("Transaction is a duplicate", transaction);
+                    }
+                }
+            }
+            if (transaction.attachmentIsDuplicate(duplicates, true)) {
+                throw new TransactionNotAcceptedException("Transaction is a duplicate", transaction);
             }
             calculatedTotalAmount += transaction.getAmount();
             calculatedTotalFee += transaction.getFee();
@@ -1447,6 +1416,61 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         if (hasPrunedTransactions ? payloadLength > block.getPayloadLength() : payloadLength != block.getPayloadLength()) {
             throw new BlockNotAcceptedException("Transaction payload length " + payloadLength + " does not match block payload length "
                     + block.getPayloadLength(), block);
+        }
+    }
+
+    private void validateTransaction(TransactionImpl transaction, BlockImpl block, BlockImpl previousLastBlock, int curTime)
+            throws BlockNotAcceptedException {
+        if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT) {
+            throw new BlockOutOfOrderException("Invalid transaction timestamp: " + transaction.getTimestamp()
+                    + ", current time is " + curTime, block);
+        }
+        if (!transaction.verifySignature()) {
+            throw new TransactionNotAcceptedException("Transaction signature verification failed at height " + previousLastBlock.getHeight(), transaction);
+        }
+    }
+
+    private void fullyValidateTransaction(FxtTransactionImpl transaction, BlockImpl block, BlockImpl previousLastBlock, int curTime)
+            throws BlockNotAcceptedException {
+        if (transaction.getTimestamp() > block.getTimestamp() + Constants.MAX_TIMEDRIFT
+                || transaction.getExpiration() < block.getTimestamp()) {
+            throw new TransactionNotAcceptedException("Invalid transaction timestamp " + transaction.getTimestamp()
+                    + ", current time is " + curTime + ", block timestamp is " + block.getTimestamp(), transaction);
+        }
+        if (TransactionHome.hasTransaction(transaction.getId(), previousLastBlock.getHeight())) {
+            throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
+        }
+        if (transaction.getId() == 0L) {
+            throw new TransactionNotAcceptedException("Invalid transaction id 0", transaction);
+        }
+        try {
+            transaction.validate(); // recursively validates child transactions for Fxt transactions
+        } catch (NxtException.ValidationException e) {
+            throw new TransactionNotAcceptedException(e.getMessage(), transaction);
+        }
+    }
+
+    private void fullyValidateTransaction(ChildTransactionImpl transaction, BlockImpl block, BlockImpl previousLastBlock, int curTime)
+            throws BlockNotAcceptedException {
+        //TODO: use FxtTransaction timestamp instead of block timestamp as limit?
+        if (transaction.getTimestamp() > block.getTimestamp() + Constants.MAX_TIMEDRIFT
+                || transaction.getExpiration() < block.getTimestamp()) {
+            throw new TransactionNotAcceptedException("Invalid transaction timestamp " + transaction.getTimestamp()
+                    + ", current time is " + curTime + ", block timestamp is " + block.getTimestamp(), transaction);
+        }
+        if (TransactionHome.hasTransaction(transaction.getId(), previousLastBlock.getHeight())) {
+            throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
+        }
+        if (transaction.referencedTransactionFullHash() != null && !hasAllReferencedTransactions(transaction, transaction.getTimestamp(), 0)) {
+            throw new TransactionNotAcceptedException("Missing or invalid referenced transaction "
+                    + transaction.getReferencedTransactionFullHash(), transaction);
+        }
+        if (transaction.getVersion() != getTransactionVersion(previousLastBlock.getHeight())) {
+            throw new TransactionNotAcceptedException("Invalid transaction version " + transaction.getVersion()
+                    + " at height " + previousLastBlock.getHeight(), transaction);
+        }
+        if (transaction.getId() == 0L) {
+            throw new TransactionNotAcceptedException("Invalid transaction id 0", transaction);
         }
     }
 

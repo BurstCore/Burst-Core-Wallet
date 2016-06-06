@@ -43,32 +43,50 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
 
     @Override
     Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
-        return null;
+        return new ChildBlockAttachment(buffer);
     }
 
     @Override
     Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
-        return null;
+        return new ChildBlockAttachment(attachmentData);
     }
 
     @Override
     void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
-
+        ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
+        //TODO: its own validation?
+        for (ChildTransaction childTransaction : attachment.getChildTransactions()) {
+            childTransaction.validate();
+        }
     }
 
     @Override
     boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        return false;
+        ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
+        //TODO: apply fees
+        for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
+            childTransaction.applyUnconfirmed();
+        }
+        //TODO: if any of the child transactions fails to apply, undo the already applied ones, and return false
+        return true;
     }
 
     @Override
     void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-
+        ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
+        //TODO: apply fees
+        for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
+            childTransaction.apply();
+        }
     }
 
     @Override
     void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-
+        ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
+        //TODO: undo fees
+        for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
+            childTransaction.undoUnconfirmed();
+        }
     }
 
     @Override

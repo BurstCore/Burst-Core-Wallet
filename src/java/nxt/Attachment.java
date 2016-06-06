@@ -35,19 +35,19 @@ public interface Attachment extends Appendix {
 
     abstract class AbstractAttachment extends Appendix.AbstractAppendix implements Attachment {
 
-        private AbstractAttachment(ByteBuffer buffer) {
+        AbstractAttachment(ByteBuffer buffer) {
             super(buffer);
         }
 
-        private AbstractAttachment(JSONObject attachmentData) {
+        AbstractAttachment(JSONObject attachmentData) {
             super(attachmentData);
         }
 
-        private AbstractAttachment(int version) {
+        AbstractAttachment(int version) {
             super(version);
         }
 
-        private AbstractAttachment() {}
+        AbstractAttachment() {}
 
         @Override
         final String getAppendixName() {
@@ -1893,7 +1893,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return ChildTransactionType.AccountControl.EFFECTIVE_BALANCE_LEASING;
+            return FxtTransactionType.AccountControl.EFFECTIVE_BALANCE_LEASING;
         }
 
         public int getPeriod() {
