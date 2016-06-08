@@ -1414,10 +1414,10 @@ public interface Appendix {
             Logger.logDebugMessage("Transaction " + transaction.getStringId() + " has been released");
         }
 
-        void reject(TransactionImpl transaction) {
+        void reject(ChildTransactionImpl transaction) {
             Account senderAccount = Account.getAccount(transaction.getSenderId());
             transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
-            ((ChildChain) transaction.getChain()).getBalanceHome().getBalance(transaction.getSenderId())
+            transaction.getChain().getBalanceHome().getBalance(transaction.getSenderId())
                     .addToUnconfirmedBalance(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
                                                      transaction.getAmount());
             TransactionProcessorImpl.getInstance()
@@ -1425,11 +1425,12 @@ public interface Appendix {
             Logger.logDebugMessage("Transaction " + transaction.getStringId() + " has been rejected");
         }
 
-        void countVotes(TransactionImpl transaction) {
-            if (((ChildChain) transaction.getChain()).getPhasingPollHome().getResult(transaction.getId()) != null) {
+        void countVotes(ChildTransactionImpl transaction) {
+            PhasingPollHome phasingPollHome = transaction.getChain().getPhasingPollHome();
+            if (phasingPollHome.getResult(transaction.getId()) != null) {
                 return;
             }
-            PhasingPollHome.PhasingPoll poll = ((ChildChain) transaction.getChain()).getPhasingPollHome().getPoll(transaction.getId());
+            PhasingPollHome.PhasingPoll poll = phasingPollHome.getPoll(transaction.getId());
             long result = poll.countVotes();
             poll.finish(result);
             if (result >= poll.getQuorum()) {
@@ -1444,11 +1445,11 @@ public interface Appendix {
             }
         }
 
-        void tryCountVotes(TransactionImpl transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            PhasingPollHome.PhasingPoll poll = ((ChildChain) transaction.getChain()).getPhasingPollHome().getPoll(transaction.getId());
+        void tryCountVotes(ChildTransactionImpl transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            PhasingPollHome.PhasingPoll poll = transaction.getChain().getPhasingPollHome().getPoll(transaction.getId());
             long result = poll.countVotes();
             if (result >= poll.getQuorum()) {
-                if (!((ChildTransactionImpl)transaction).attachmentIsDuplicate(duplicates, false)) {
+                if (!transaction.attachmentIsDuplicate(duplicates, false)) {
                     try {
                         release(transaction);
                         poll.finish(result);

@@ -279,6 +279,7 @@ abstract class TransactionImpl implements Transaction {
         return block;
     }
 
+    //TODO: child transactions set block?
     void setBlock(BlockImpl block) {
         this.block = block;
         this.blockId = block.getId();
@@ -532,7 +533,7 @@ abstract class TransactionImpl implements Transaction {
 
     @Override
     public void validate() throws NxtException.ValidationException {
-        if (timestamp == 0 ? (deadline != 0 || getFee() != 0) : (deadline < 1 || getFee() <= 0)
+        if (timestamp == 0 ? (deadline != 0 || getFee() != 0) : (deadline < 1 || getFee() < 0)
                 || getFee() > Constants.MAX_BALANCE_NQT
                 || amount < 0
                 || amount > Constants.MAX_BALANCE_NQT

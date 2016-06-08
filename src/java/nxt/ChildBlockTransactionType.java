@@ -16,9 +16,11 @@
 
 package nxt;
 
+import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 //TODO
 public final class ChildBlockTransactionType extends FxtTransactionType {
@@ -55,7 +57,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
         //TODO: its own validation?
-        for (ChildTransaction childTransaction : attachment.getChildTransactions()) {
+        for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
             childTransaction.validate();
         }
     }
@@ -63,11 +65,15 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     @Override
     boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
-        //TODO: apply fees
-        for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
-            childTransaction.applyUnconfirmed();
+        List<ChildTransactionImpl> childTransactions = attachment.getChildTransactions();
+        for (int i = 0; i < childTransactions.size(); i++) {
+            if (!childTransactions.get(i).applyUnconfirmed()) {
+                for (int j = 0; j < i; j++) {
+                    childTransactions.get(j).undoUnconfirmed();
+                }
+                return false;
+            }
         }
-        //TODO: if any of the child transactions fails to apply, undo the already applied ones, and return false
         return true;
     }
 
@@ -98,4 +104,11 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     public String getName() {
         return "ChildChainBlock";
     }
+
+    @Override
+    long[] getBackFees(Transaction transaction) {
+        //TODO
+        return Convert.EMPTY_LONG;
+    }
+
 }

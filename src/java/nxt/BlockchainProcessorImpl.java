@@ -1394,6 +1394,14 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     if (fullValidation) {
                         fullyValidateTransaction(childTransaction, block, previousLastBlock, curTime);
                     }
+                    if (!hasPrunedTransactions) {
+                        for (Appendix.AbstractAppendix appendage : childTransaction.getAppendages()) {
+                            if ((appendage instanceof Appendix.Prunable) && !((Appendix.Prunable)appendage).hasPrunableData()) {
+                                hasPrunedTransactions = true;
+                                break;
+                            }
+                        }
+                    }
                     if (childTransaction.attachmentIsDuplicate(duplicates, true)) {
                         throw new TransactionNotAcceptedException("Transaction is a duplicate", childTransaction);
                     }
@@ -1407,12 +1415,14 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             payloadLength += fxtTransaction.getFullSize();
             digest.update(fxtTransaction.bytes());
         }
+        //TODO: remove block total amount field completely
         if (calculatedTotalAmount != block.getTotalAmountNQT() || calculatedTotalFee != block.getTotalFeeNQT()) {
             throw new BlockNotAcceptedException("Total amount or fee don't match transaction totals", block);
         }
         if (!Arrays.equals(digest.digest(), block.getPayloadHash())) {
             throw new BlockNotAcceptedException("Payload hash doesn't match", block);
         }
+        //TODO: enforce max transaction deadline to be < min prunable lifetime, then replace hasPrunedTransaction with min prunable check on block timestamp
         if (hasPrunedTransactions ? payloadLength > block.getPayloadLength() : payloadLength != block.getPayloadLength()) {
             throw new BlockNotAcceptedException("Transaction payload length " + payloadLength + " does not match block payload length "
                     + block.getPayloadLength(), block);
@@ -1478,7 +1488,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         Map<TransactionType, Map<String, Integer>> duplicates) throws TransactionNotAcceptedException {
         try {
             isProcessingBlock = true;
-            for (TransactionImpl transaction : block.getTransactions()) {
+            for (FxtTransactionImpl transaction : block.getTransactions()) {
                 if (! transaction.applyUnconfirmed()) {
                     throw new TransactionNotAcceptedException("Double spending", transaction);
                 }
@@ -1488,19 +1498,14 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotes(transaction));
             invalidPhasedTransactions.forEach(transaction -> transaction.getPhasing().reject(transaction));
             int fromTimestamp = Nxt.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME;
-            for (TransactionImpl transaction : block.getTransactions()) {
+            for (FxtTransactionImpl transaction : block.getTransactions()) {
                 try {
                     transaction.apply();
-                    if (transaction.getTimestamp() > fromTimestamp) {
-                        for (Appendix.AbstractAppendix appendage : transaction.getAppendages(true)) {
-                            if ((appendage instanceof Appendix.Prunable) &&
-                                        !((Appendix.Prunable)appendage).hasPrunableData()) {
-                                synchronized (prunableTransactions) {
-                                    prunableTransactions.add(transaction.getId());
-                                }
-                                lastRestoreTime = 0;
-                                break;
-                            }
+                    checkMissingPrunable(transaction, fromTimestamp);
+                    if (transaction.getType() == ChildBlockTransactionType.instance) {
+                        ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
+                        for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
+                            checkMissingPrunable(childTransaction, fromTimestamp);
                         }
                     }
                 } catch (RuntimeException e) {
@@ -1509,20 +1514,25 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             }
             SortedSet<ChildTransactionImpl> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
-            block.getTransactions().forEach(transaction -> {
-                ((ChildChain) transaction.getChain()).getPhasingPollHome().getLinkedPhasedTransactions(transaction.fullHash()).forEach(phasedTransaction -> {
-                    if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
-                        possiblyApprovedTransactions.add(phasedTransaction);
-                    }
-                });
-                if (transaction.getType() == ChildTransactionType.Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
-                    Attachment.MessagingPhasingVoteCasting voteCasting = (Attachment.MessagingPhasingVoteCasting)transaction.getAttachment();
-                    voteCasting.getTransactionFullHashes().forEach(hash -> {
-                        PhasingPollHome.PhasingPoll phasingPoll = ((ChildChain) transaction.getChain()).getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
-                        if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                            possiblyApprovedTransactions.add((ChildTransactionImpl)TransactionHome.findTransaction(phasingPoll.getId()));
+            block.getTransactions().forEach(fxtTransaction -> {
+                if (fxtTransaction.getType() == ChildBlockTransactionType.instance) {
+                    ChildBlockAttachment attachment = (ChildBlockAttachment) fxtTransaction.getAttachment();
+                    for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
+                        childTransaction.getChain().getPhasingPollHome().getLinkedPhasedTransactions(childTransaction.fullHash()).forEach(phasedTransaction -> {
+                            if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
+                                possiblyApprovedTransactions.add(phasedTransaction);
+                            }
+                        });
+                        if (childTransaction.getType() == ChildTransactionType.Messaging.PHASING_VOTE_CASTING && !childTransaction.attachmentIsPhased()) {
+                            Attachment.MessagingPhasingVoteCasting voteCasting = (Attachment.MessagingPhasingVoteCasting) childTransaction.getAttachment();
+                            voteCasting.getTransactionFullHashes().forEach(hash -> {
+                                PhasingPollHome.PhasingPoll phasingPoll = childTransaction.getChain().getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
+                                if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
+                                    possiblyApprovedTransactions.add((ChildTransactionImpl) TransactionHome.findTransaction(phasingPoll.getId()));
+                                }
+                            });
                         }
-                    });
+                    }
                 }
             });
             validPhasedTransactions.forEach(phasedTransaction -> {
@@ -1561,6 +1571,22 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
+    private void checkMissingPrunable(TransactionImpl transaction, int fromTimestamp) {
+        if (transaction.getTimestamp() > fromTimestamp) {
+            for (Appendix.AbstractAppendix appendage : transaction.getAppendages(true)) {
+                if ((appendage instanceof Appendix.Prunable) &&
+                        !((Appendix.Prunable)appendage).hasPrunableData()) {
+                    synchronized (prunableTransactions) {
+                        prunableTransactions.add(transaction.getId());
+                    }
+                    lastRestoreTime = 0;
+                    break;
+                }
+            }
+        }
+    }
+
+    //TODO: sorting of child transactions
     private static final Comparator<Transaction> finishingTransactionsComparator = Comparator
             .comparingInt(Transaction::getHeight)
             .thenComparingInt(Transaction::getIndex)
