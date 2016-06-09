@@ -45,6 +45,7 @@ public final class ChildChain extends Chain {
     private final ExchangeHome exchangeHome;
     private final ExchangeOfferHome exchangeOfferHome;
     private final ExchangeRequestHome exchangeRequestHome;
+    private final OrderHome orderHome;
     private final PhasingPollHome phasingPollHome;
     private final PhasingVoteHome phasingVoteHome;
     private final PollHome pollHome;
@@ -65,6 +66,7 @@ public final class ChildChain extends Chain {
         this.exchangeHome = ExchangeHome.forChain(this);
         this.exchangeOfferHome = ExchangeOfferHome.forChain(this);
         this.exchangeRequestHome = ExchangeRequestHome.forChain(this);
+        this.orderHome = OrderHome.forChain(this);
         this.phasingPollHome = PhasingPollHome.forChain(this);
         this.phasingVoteHome = PhasingVoteHome.forChain(this);
         this.pollHome = PollHome.forChain(this);
@@ -104,6 +106,10 @@ public final class ChildChain extends Chain {
 
     public ExchangeRequestHome getExchangeRequestHome() {
         return exchangeRequestHome;
+    }
+
+    public OrderHome getOrderHome() {
+        return orderHome;
     }
 
     public PhasingPollHome getPhasingPollHome() {

@@ -104,7 +104,7 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+        void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
             long amount = attachment.getAmount();
@@ -144,10 +144,10 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
-            ChildChain childChain = (ChildChain) transaction.getChain();
+            ChildChain childChain = transaction.getChain();
             //TODO: change deposit to be always in FXT
             if (holdingType != HoldingType.NXT) {
                 if (holdingType.getUnconfirmedBalance(childChain, senderAccount, attachment.getHoldingId()) >= attachment.getAmount()
@@ -166,16 +166,16 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
-            ((ChildChain) transaction.getChain()).getShufflingHome().addShuffling(transaction, attachment);
+            transaction.getChain().getShufflingHome().addShuffling(transaction, attachment);
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
-            ChildChain childChain = (ChildChain) transaction.getChain();
+            ChildChain childChain = transaction.getChain();
             //TODO: change deposit to be always in FXT
             if (holdingType != HoldingType.NXT) {
                 holdingType.addToUnconfirmedBalance(childChain, senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), attachment.getAmount());
@@ -231,9 +231,9 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+        void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
             if (shuffling == null) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
@@ -264,9 +264,9 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
-            ChildChain childChain = (ChildChain) transaction.getChain();
+            ChildChain childChain = transaction.getChain();
             //TODO: change deposit to be always in FXT
             ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(attachment.getShufflingId());
             HoldingType holdingType = shuffling.getHoldingType();
@@ -287,16 +287,16 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
             shuffling.addParticipant(transaction.getSenderId());
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
-            ChildChain childChain = (ChildChain) transaction.getChain();
+            ChildChain childChain = transaction.getChain();
             //TODO: change deposit to be always in FXT
             ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(attachment.getShufflingId());
             HoldingType holdingType = shuffling.getHoldingType();
@@ -343,9 +343,9 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+        void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
             if (shuffling == null) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
@@ -404,19 +404,19 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
             ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
             shuffling.updateParticipantData(transaction, attachment);
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {}
 
         @Override
         public boolean isPhasable() {
@@ -465,9 +465,9 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+        void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             Attachment.ShufflingRecipients attachment = (Attachment.ShufflingRecipients)transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
             if (shuffling == null) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
@@ -519,19 +519,19 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingRecipients attachment = (Attachment.ShufflingRecipients)transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
             shuffling.updateRecipients(transaction, attachment);
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {}
 
         @Override
         public boolean isPhasable() {
@@ -568,9 +568,9 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+        void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             Attachment.ShufflingVerification attachment = (Attachment.ShufflingVerification) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
             if (shuffling == null) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
@@ -604,19 +604,19 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingVerification attachment = (Attachment.ShufflingVerification) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
             shuffling.verify(transaction.getSenderId());
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
         }
 
         @Override
@@ -659,9 +659,9 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+        void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             Attachment.ShufflingCancellation attachment = (Attachment.ShufflingCancellation) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
             if (shuffling == null) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
@@ -717,20 +717,20 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingCancellation attachment = (Attachment.ShufflingCancellation) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
-            ShufflingParticipantHome.ShufflingParticipant participant = ((ChildChain) transaction.getChain()).getShufflingParticipantHome().getParticipant(shuffling.getId(), senderAccount.getId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingParticipantHome.ShufflingParticipant participant = transaction.getChain().getShufflingParticipantHome().getParticipant(shuffling.getId(), senderAccount.getId());
             shuffling.cancelBy(participant, attachment.getBlameData(), attachment.getKeySeeds());
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {}
 
         @Override
         public boolean isPhasable() {

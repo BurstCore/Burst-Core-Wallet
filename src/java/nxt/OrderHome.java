@@ -26,21 +26,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class OrderHome {
 
-    private static final Map<ChildChain, OrderHome> orderHomeMap = new HashMap<>();
-
-    public static OrderHome forChain(ChildChain childChain) {
-        return orderHomeMap.get(childChain);
-    }
-
-    static void init() {}
-
-    static {
-        ChildChain.getAll().forEach(childChain -> orderHomeMap.put(childChain, new OrderHome(childChain)));
+    static OrderHome forChain(ChildChain childChain) {
+        if (childChain.getOrderHome() != null) {
+            throw new IllegalStateException("already set");
+        }
+        return new OrderHome(childChain);
     }
 
     private final ChildChain childChain;

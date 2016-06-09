@@ -102,6 +102,34 @@ public abstract class FxtTransactionType extends TransactionType {
                 transaction.getAmount(), transaction.getFee());
     }
 
+    @Override
+    final void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+        validateAttachment((FxtTransactionImpl)transaction);
+    }
+
+    abstract void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException;
+
+    @Override
+    final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        return applyAttachmentUnconfirmed((FxtTransactionImpl)transaction, senderAccount);
+    }
+
+    abstract boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount);
+
+    @Override
+    final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        applyAttachment((FxtTransactionImpl)transaction, senderAccount, recipientAccount);
+    }
+
+    abstract void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount);
+
+    @Override
+    final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        undoAttachmentUnconfirmed((FxtTransactionImpl)transaction, senderAccount);
+    }
+
+    abstract void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount);
+
     //TODO: remove?
     @Override
     public final boolean isPhasingSafe() {
@@ -120,16 +148,16 @@ public abstract class FxtTransactionType extends TransactionType {
         }
 
         @Override
-        final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        final boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        final void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
         }
 
         @Override
-        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        final void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
         }
 
         @Override
@@ -167,7 +195,7 @@ public abstract class FxtTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException {
                 if (transaction.getAmount() <= 0 || transaction.getAmount() >= Constants.MAX_BALANCE_NQT) {
                     throw new NxtException.NotValidException("Invalid ordinary payment");
                 }
@@ -188,12 +216,12 @@ public abstract class FxtTransactionType extends TransactionType {
         }
 
         @Override
-        final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        final boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        final void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
         }
 
         public static final TransactionType EFFECTIVE_BALANCE_LEASING = new AccountControl() {
@@ -225,13 +253,13 @@ public abstract class FxtTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.AccountControlEffectiveBalanceLeasing attachment = (Attachment.AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
                 Account.getAccount(transaction.getSenderId()).leaseEffectiveBalance(transaction.getRecipientId(), attachment.getPeriod());
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.AccountControlEffectiveBalanceLeasing attachment = (Attachment.AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
                 if (transaction.getSenderId() == transaction.getRecipientId()) {
                     throw new NxtException.NotValidException("Account cannot lease balance to itself");

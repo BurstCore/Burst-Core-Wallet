@@ -142,7 +142,7 @@ public final class DebugTrace {
 
     // Note: Trade events occur before the change in account balances
     private void trace(TradeHome.Trade trade) {
-        OrderHome orderHome = OrderHome.forChain(trade.getChildChain());
+        OrderHome orderHome = trade.getChildChain().getOrderHome();
         long askAccountId = orderHome.getAskOrder(trade.getAskOrderId()).getAccountId();
         long bidAccountId = orderHome.getBidOrder(trade.getBidOrderId()).getAccountId();
         if (include(askAccountId)) {

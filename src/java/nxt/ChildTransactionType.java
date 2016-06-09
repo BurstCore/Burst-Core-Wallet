@@ -231,6 +231,35 @@ public abstract class ChildTransactionType extends TransactionType {
         }
     }
 
+    @Override
+    final void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+        validateAttachment((ChildTransactionImpl)transaction);
+    }
+
+    abstract void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException;
+
+    @Override
+    final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        return applyAttachmentUnconfirmed((ChildTransactionImpl)transaction, senderAccount);
+    }
+
+    abstract boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount);
+
+    @Override
+    final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        applyAttachment((ChildTransactionImpl)transaction, senderAccount, recipientAccount);
+    }
+
+    abstract void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount);
+
+    @Override
+    final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        undoAttachmentUnconfirmed((ChildTransactionImpl)transaction, senderAccount);
+    }
+
+    abstract void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount);
+
+
     public static abstract class Payment extends ChildTransactionType {
 
         private Payment() {
@@ -242,16 +271,16 @@ public abstract class ChildTransactionType extends TransactionType {
         }
 
         @Override
-        final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        final boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        final void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
         }
 
         @Override
-        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        final void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
         }
 
         @Override
@@ -292,7 +321,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 if (transaction.getAmount() <= 0 || transaction.getAmount() >= Constants.MAX_BALANCE_NQT) {
                     throw new NxtException.NotValidException("Invalid ordinary payment");
                 }
@@ -313,12 +342,12 @@ public abstract class ChildTransactionType extends TransactionType {
         }
 
         @Override
-        final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        final boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        final void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
         }
 
         public final static TransactionType ARBITRARY_MESSAGE = new Messaging() {
@@ -349,11 +378,11 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment attachment = transaction.getAttachment();
                 if (transaction.getAmount() != 0) {
                     throw new NxtException.NotValidException("Invalid arbitrary message: " + attachment.getJSONObject());
@@ -421,9 +450,9 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingAliasAssignment attachment = (Attachment.MessagingAliasAssignment) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getAliasHome().addOrUpdateAlias(transaction, attachment);
+                transaction.getChain().getAliasHome().addOrUpdateAlias(transaction, attachment);
             }
 
             @Override
@@ -439,7 +468,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.MessagingAliasAssignment attachment = (Attachment.MessagingAliasAssignment) transaction.getAttachment();
                 if (attachment.getAliasName().length() == 0
                         || attachment.getAliasName().length() > Constants.MAX_ALIAS_LENGTH
@@ -452,7 +481,7 @@ public abstract class ChildTransactionType extends TransactionType {
                         throw new NxtException.NotValidException("Invalid alias name: " + normalizedAlias);
                     }
                 }
-                AliasHome.Alias alias = ((ChildChain) transaction.getChain()).getAliasHome().getAlias(normalizedAlias);
+                AliasHome.Alias alias = transaction.getChain().getAliasHome().getAlias(normalizedAlias);
                 if (alias != null && alias.getAccountId() != transaction.getSenderId()) {
                     throw new NxtException.NotCurrentlyValidException("Alias already owned by another account: " + normalizedAlias);
                 }
@@ -497,9 +526,9 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingAliasSell attachment = (Attachment.MessagingAliasSell) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getAliasHome().sellAlias(transaction, attachment);
+                transaction.getChain().getAliasHome().sellAlias(transaction, attachment);
             }
 
             @Override
@@ -510,7 +539,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 if (transaction.getAmount() != 0) {
                     throw new NxtException.NotValidException("Invalid sell alias transaction: " +
                             transaction.getJSONObject());
@@ -532,7 +561,7 @@ public abstract class ChildTransactionType extends TransactionType {
                         throw new NxtException.NotValidException("Missing alias transfer recipient");
                     }
                 }
-                AliasHome.Alias alias = ((ChildChain) transaction.getChain()).getAliasHome().getAlias(aliasName);
+                AliasHome.Alias alias = transaction.getChain().getAliasHome().getAlias(aliasName);
                 if (alias == null) {
                     throw new NxtException.NotCurrentlyValidException("No such alias: " + aliasName);
                 } else if (alias.getAccountId() != transaction.getSenderId()) {
@@ -588,11 +617,11 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 final Attachment.MessagingAliasBuy attachment =
                         (Attachment.MessagingAliasBuy) transaction.getAttachment();
                 final String aliasName = attachment.getAliasName();
-                ((ChildChain) transaction.getChain()).getAliasHome().changeOwner(transaction.getSenderId(), aliasName);
+                transaction.getChain().getAliasHome().changeOwner(transaction.getSenderId(), aliasName);
             }
 
             @Override
@@ -603,8 +632,8 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
-                AliasHome aliasHome = ((ChildChain) transaction.getChain()).getAliasHome();
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
+                AliasHome aliasHome = transaction.getChain().getAliasHome();
                 final Attachment.MessagingAliasBuy attachment =
                         (Attachment.MessagingAliasBuy) transaction.getAttachment();
                 final String aliasName = attachment.getAliasName();
@@ -671,10 +700,10 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(final Transaction transaction, final Account senderAccount, final Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 final Attachment.MessagingAliasDelete attachment =
                         (Attachment.MessagingAliasDelete) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getAliasHome().deleteAlias(attachment.getAliasName());
+                transaction.getChain().getAliasHome().deleteAlias(attachment.getAliasName());
             }
 
             @Override
@@ -685,14 +714,14 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(final Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 final Attachment.MessagingAliasDelete attachment =
                         (Attachment.MessagingAliasDelete) transaction.getAttachment();
                 final String aliasName = attachment.getAliasName();
                 if (aliasName == null || aliasName.length() == 0) {
                     throw new NxtException.NotValidException("Missing alias name");
                 }
-                final AliasHome.Alias alias = ((ChildChain) transaction.getChain()).getAliasHome().getAlias(aliasName);
+                final AliasHome.Alias alias = transaction.getChain().getAliasHome().getAlias(aliasName);
                 if (alias == null) {
                     throw new NxtException.NotCurrentlyValidException("No such alias: " + aliasName);
                 } else if (alias.getAccountId() != transaction.getSenderId()) {
@@ -768,13 +797,13 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingPollCreation attachment = (Attachment.MessagingPollCreation) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getPollHome().addPoll(transaction, attachment);
+                transaction.getChain().getPollHome().addPoll(transaction, attachment);
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
 
                 Attachment.MessagingPollCreation attachment = (Attachment.MessagingPollCreation) transaction.getAttachment();
 
@@ -869,13 +898,13 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingVoteCasting attachment = (Attachment.MessagingVoteCasting) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getVoteHome().addVote(transaction, attachment);
+                transaction.getChain().getVoteHome().addVote(transaction, attachment);
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
 
                 Attachment.MessagingVoteCasting attachment = (Attachment.MessagingVoteCasting) transaction.getAttachment();
                 if (attachment.getPollId() == 0 || attachment.getPollVote() == null
@@ -885,12 +914,12 @@ public abstract class ChildTransactionType extends TransactionType {
 
                 long pollId = attachment.getPollId();
 
-                PollHome.Poll poll = ((ChildChain) transaction.getChain()).getPollHome().getPoll(pollId);
+                PollHome.Poll poll = transaction.getChain().getPollHome().getPoll(pollId);
                 if (poll == null) {
                     throw new NxtException.NotCurrentlyValidException("Invalid poll: " + Long.toUnsignedString(attachment.getPollId()));
                 }
 
-                if (((ChildChain) transaction.getChain()).getVoteHome().getVote(pollId, transaction.getSenderId()) != null) {
+                if (transaction.getChain().getVoteHome().getVote(pollId, transaction.getSenderId()) != null) {
                     throw new NxtException.NotCurrentlyValidException("Double voting attempt");
                 }
 
@@ -978,7 +1007,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
 
                 Attachment.MessagingPhasingVoteCasting attachment = (Attachment.MessagingPhasingVoteCasting) transaction.getAttachment();
                 byte[] revealedSecret = attachment.getRevealedSecret();
@@ -1000,7 +1029,7 @@ public abstract class ChildTransactionType extends TransactionType {
                         throw new NxtException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
                     }
 
-                    PhasingPollHome.PhasingPoll poll = ((ChildChain) transaction.getChain()).getPhasingPollHome().getPoll(phasedTransactionId);
+                    PhasingPollHome.PhasingPoll poll = transaction.getChain().getPhasingPollHome().getPoll(phasedTransactionId);
                     if (poll == null) {
                         throw new NxtException.NotCurrentlyValidException("Invalid phased transaction " + Long.toUnsignedString(phasedTransactionId)
                                 + ", or phasing is finished");
@@ -1041,11 +1070,11 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            final void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingPhasingVoteCasting attachment = (Attachment.MessagingPhasingVoteCasting) transaction.getAttachment();
                 List<byte[]> hashes = attachment.getTransactionFullHashes();
                 for (byte[] hash : hashes) {
-                    ((ChildChain) transaction.getChain()).getPhasingVoteHome().addVote(transaction, senderAccount, Convert.fullHashToId(hash));
+                    transaction.getChain().getPhasingVoteHome().addVote(transaction, senderAccount, Convert.fullHashToId(hash));
                 }
             }
 
@@ -1097,7 +1126,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.MessagingAccountInfo attachment = (Attachment.MessagingAccountInfo)transaction.getAttachment();
                 if (attachment.getName().length() > Constants.MAX_ACCOUNT_NAME_LENGTH
                         || attachment.getDescription().length() > Constants.MAX_ACCOUNT_DESCRIPTION_LENGTH) {
@@ -1106,7 +1135,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingAccountInfo attachment = (Attachment.MessagingAccountInfo) transaction.getAttachment();
                 senderAccount.setAccountInfo(attachment.getName(), attachment.getDescription());
             }
@@ -1169,7 +1198,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.MessagingAccountProperty attachment = (Attachment.MessagingAccountProperty)transaction.getAttachment();
                 if (attachment.getProperty().length() > Constants.MAX_ACCOUNT_PROPERTY_NAME_LENGTH
                         || attachment.getProperty().length() == 0
@@ -1185,7 +1214,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingAccountProperty attachment = (Attachment.MessagingAccountProperty) transaction.getAttachment();
                 recipientAccount.setProperty(transaction, senderAccount, attachment.getProperty(), attachment.getValue());
             }
@@ -1230,7 +1259,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.MessagingAccountPropertyDelete attachment = (Attachment.MessagingAccountPropertyDelete)transaction.getAttachment();
                 Account.AccountProperty accountProperty = Account.getProperty(attachment.getPropertyId());
                 if (accountProperty == null) {
@@ -1253,7 +1282,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingAccountPropertyDelete attachment = (Attachment.MessagingAccountPropertyDelete) transaction.getAttachment();
                 senderAccount.deleteProperty(attachment.getPropertyId());
             }
@@ -1333,12 +1362,12 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 return true;
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance) transaction.getAttachment();
                 long assetId = transaction.getId();
                 Asset.addAsset(transaction, attachment);
@@ -1346,11 +1375,11 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance)transaction.getAttachment();
                 if (attachment.getName().length() < Constants.MIN_ASSET_NAME_LENGTH
                         || attachment.getName().length() > Constants.MAX_ASSET_NAME_LENGTH
@@ -1420,7 +1449,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
                 long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceQNT(attachment.getAssetId());
                 if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityQNT()) {
@@ -1432,7 +1461,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
                 senderAccount.addToAssetBalanceQNT(getLedgerEvent(), transaction.getId(), attachment.getAssetId(),
                         -attachment.getQuantityQNT());
@@ -1446,14 +1475,14 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
                 senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
                         attachment.getAssetId(), attachment.getQuantityQNT());
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer)transaction.getAttachment();
                 if (transaction.getAmount() != 0 || attachment.getAssetId() == 0) {
                     throw new NxtException.NotValidException("Invalid asset transfer amount or asset: " + attachment.getJSONObject());
@@ -1512,7 +1541,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
                 long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceQNT(attachment.getAssetId());
                 if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityQNT()) {
@@ -1524,7 +1553,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
                 senderAccount.addToAssetBalanceQNT(getLedgerEvent(), transaction.getId(), attachment.getAssetId(),
                         -attachment.getQuantityQNT());
@@ -1532,14 +1561,14 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
                 senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
                         attachment.getAssetId(), attachment.getQuantityQNT());
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
                 if (attachment.getAssetId() == 0) {
                     throw new NxtException.NotValidException("Invalid asset identifier: " + attachment.getJSONObject());
@@ -1569,7 +1598,7 @@ public abstract class ChildTransactionType extends TransactionType {
         abstract static class ColoredCoinsOrderPlacement extends ColoredCoins {
 
             @Override
-            final void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            final void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement)transaction.getAttachment();
                 if (attachment.getPriceNQT() <= 0 || attachment.getPriceNQT() > Constants.MAX_BALANCE_NQT
                         || attachment.getAssetId() == 0) {
@@ -1625,7 +1654,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAskOrderPlacement attachment = (Attachment.ColoredCoinsAskOrderPlacement) transaction.getAttachment();
                 long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceQNT(attachment.getAssetId());
                 if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityQNT()) {
@@ -1637,13 +1666,13 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsAskOrderPlacement attachment = (Attachment.ColoredCoinsAskOrderPlacement) transaction.getAttachment();
-                OrderHome.forChain((ChildChain)transaction.getChain()).addAskOrder(transaction, attachment);
+                transaction.getChain().getOrderHome().addAskOrder(transaction, attachment);
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAskOrderPlacement attachment = (Attachment.ColoredCoinsAskOrderPlacement) transaction.getAttachment();
                 senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
                         attachment.getAssetId(), attachment.getQuantityQNT());
@@ -1679,7 +1708,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.ColoredCoinsBidOrderPlacement attachment = (Attachment.ColoredCoinsBidOrderPlacement) transaction.getAttachment();
                 if (senderAccount.getUnconfirmedBalance((ChildChain)transaction.getChain()) >= Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT())) {
                     senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
@@ -1690,15 +1719,15 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsBidOrderPlacement attachment = (Attachment.ColoredCoinsBidOrderPlacement) transaction.getAttachment();
-                OrderHome.forChain((ChildChain)transaction.getChain()).addBidOrder(transaction, attachment);
+                transaction.getChain().getOrderHome().addBidOrder(transaction, attachment);
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.ColoredCoinsBidOrderPlacement attachment = (Attachment.ColoredCoinsBidOrderPlacement) transaction.getAttachment();
-                senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
                         Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT()));
             }
 
@@ -1707,12 +1736,12 @@ public abstract class ChildTransactionType extends TransactionType {
         abstract static class ColoredCoinsOrderCancellation extends ColoredCoins {
 
             @Override
-            final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            final boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 return true;
             }
 
             @Override
-            final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            final void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             }
 
             @Override
@@ -1755,10 +1784,11 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsAskOrderCancellation attachment = (Attachment.ColoredCoinsAskOrderCancellation) transaction.getAttachment();
-                OrderHome.Order order = OrderHome.forChain((ChildChain)transaction.getChain()).getAskOrder(attachment.getOrderId());
-                OrderHome.forChain((ChildChain)transaction.getChain()).removeAskOrder(attachment.getOrderId());
+                OrderHome orderHome = transaction.getChain().getOrderHome();
+                OrderHome.Order order = orderHome.getAskOrder(attachment.getOrderId());
+                orderHome.removeAskOrder(attachment.getOrderId());
                 if (order != null) {
                     senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
                             order.getAssetId(), order.getQuantityQNT());
@@ -1766,9 +1796,9 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.ColoredCoinsAskOrderCancellation attachment = (Attachment.ColoredCoinsAskOrderCancellation) transaction.getAttachment();
-                OrderHome.Order ask = OrderHome.forChain((ChildChain)transaction.getChain()).getAskOrder(attachment.getOrderId());
+                OrderHome.Order ask = transaction.getChain().getOrderHome().getAskOrder(attachment.getOrderId());
                 if (ask == null) {
                     throw new NxtException.NotCurrentlyValidException("Invalid ask order: " + Long.toUnsignedString(attachment.getOrderId()));
                 }
@@ -1808,20 +1838,21 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsBidOrderCancellation attachment = (Attachment.ColoredCoinsBidOrderCancellation) transaction.getAttachment();
-                OrderHome.Order order = OrderHome.forChain((ChildChain)transaction.getChain()).getBidOrder(attachment.getOrderId());
-                OrderHome.forChain((ChildChain)transaction.getChain()).removeBidOrder(attachment.getOrderId());
+                OrderHome orderHome = transaction.getChain().getOrderHome();
+                OrderHome.Order order = orderHome.getBidOrder(attachment.getOrderId());
+                orderHome.removeBidOrder(attachment.getOrderId());
                 if (order != null) {
-                    senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
+                    senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
                             Math.multiplyExact(order.getQuantityQNT(), order.getPriceNQT()));
                 }
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.ColoredCoinsBidOrderCancellation attachment = (Attachment.ColoredCoinsBidOrderCancellation) transaction.getAttachment();
-                OrderHome.Order bid = OrderHome.forChain((ChildChain)transaction.getChain()).getBidOrder(attachment.getOrderId());
+                OrderHome.Order bid = transaction.getChain().getOrderHome().getBidOrder(attachment.getOrderId());
                 if (bid == null) {
                     throw new NxtException.NotCurrentlyValidException("Invalid bid order: " + Long.toUnsignedString(attachment.getOrderId()));
                 }
@@ -1861,7 +1892,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment)transaction.getAttachment();
                 long assetId = attachment.getAssetId();
                 Asset asset = Asset.getAsset(assetId, attachment.getHeight());
@@ -1870,22 +1901,22 @@ public abstract class ChildTransactionType extends TransactionType {
                 }
                 long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
                 long totalDividendPayment = Math.multiplyExact(attachment.getAmountNQTPerQNT(), quantityQNT);
-                if (senderAccount.getUnconfirmedBalance((ChildChain)transaction.getChain()) >= totalDividendPayment) {
-                    senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(), -totalDividendPayment);
+                if (senderAccount.getUnconfirmedBalance(transaction.getChain()) >= totalDividendPayment) {
+                    senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(), -totalDividendPayment);
                     return true;
                 }
                 return false;
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment)transaction.getAttachment();
-                senderAccount.payDividends((ChildChain)transaction.getChain(), transaction.getId(), attachment.getAssetId(), attachment.getHeight(),
+                senderAccount.payDividends(transaction.getChain(), transaction.getId(), attachment.getAssetId(), attachment.getHeight(),
                         attachment.getAmountNQTPerQNT());
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment)transaction.getAttachment();
                 long assetId = attachment.getAssetId();
                 Asset asset = Asset.getAsset(assetId, attachment.getHeight());
@@ -1894,11 +1925,11 @@ public abstract class ChildTransactionType extends TransactionType {
                 }
                 long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
                 long totalDividendPayment = Math.multiplyExact(attachment.getAmountNQTPerQNT(), quantityQNT);
-                senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(), totalDividendPayment);
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(), totalDividendPayment);
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment)transaction.getAttachment();
                 if (attachment.getHeight() > Nxt.getBlockchain().getHeight()) {
                     throw new NxtException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight()
@@ -1944,23 +1975,23 @@ public abstract class ChildTransactionType extends TransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
         }
 
         @Override
-        final void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+        final void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             if (transaction.getAmount() != 0) {
                 throw new NxtException.NotValidException("Invalid digital goods transaction");
             }
             doValidateAttachment(transaction);
         }
 
-        abstract void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException;
+        abstract void doValidateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException;
 
 
         public static final TransactionType LISTING = new DigitalGoods() {
@@ -2004,13 +2035,13 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsListing attachment = (Attachment.DigitalGoodsListing) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getDGSHome().listGoods(transaction, attachment);
+                transaction.getChain().getDGSHome().listGoods(transaction, attachment);
             }
 
             @Override
-            void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void doValidateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsListing attachment = (Attachment.DigitalGoodsListing) transaction.getAttachment();
                 if (attachment.getName().length() == 0
                         || attachment.getName().length() > Constants.MAX_DGS_LISTING_NAME_LENGTH
@@ -2067,15 +2098,15 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsDelisting attachment = (Attachment.DigitalGoodsDelisting) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getDGSHome().delistGoods(attachment.getGoodsId());
+                transaction.getChain().getDGSHome().delistGoods(attachment.getGoodsId());
             }
 
             @Override
-            void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void doValidateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsDelisting attachment = (Attachment.DigitalGoodsDelisting) transaction.getAttachment();
-                DGSHome.Goods goods = ((ChildChain) transaction.getChain()).getDGSHome().getGoods(attachment.getGoodsId());
+                DGSHome.Goods goods = transaction.getChain().getDGSHome().getGoods(attachment.getGoodsId());
                 if (goods != null && transaction.getSenderId() != goods.getSellerId()) {
                     throw new NxtException.NotValidException("Invalid digital goods delisting - seller is different: " + attachment.getJSONObject());
                 }
@@ -2131,15 +2162,15 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsPriceChange attachment = (Attachment.DigitalGoodsPriceChange) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getDGSHome().changePrice(attachment.getGoodsId(), attachment.getPriceNQT());
+                transaction.getChain().getDGSHome().changePrice(attachment.getGoodsId(), attachment.getPriceNQT());
             }
 
             @Override
-            void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void doValidateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsPriceChange attachment = (Attachment.DigitalGoodsPriceChange) transaction.getAttachment();
-                DGSHome.Goods goods = ((ChildChain) transaction.getChain()).getDGSHome().getGoods(attachment.getGoodsId());
+                DGSHome.Goods goods = transaction.getChain().getDGSHome().getGoods(attachment.getGoodsId());
                 if (attachment.getPriceNQT() <= 0 || attachment.getPriceNQT() > Constants.MAX_BALANCE_NQT
                         || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
                     throw new NxtException.NotValidException("Invalid digital goods price change: " + attachment.getJSONObject());
@@ -2197,15 +2228,15 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsQuantityChange attachment = (Attachment.DigitalGoodsQuantityChange) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getDGSHome().changeQuantity(attachment.getGoodsId(), attachment.getDeltaQuantity());
+                transaction.getChain().getDGSHome().changeQuantity(attachment.getGoodsId(), attachment.getDeltaQuantity());
             }
 
             @Override
-            void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void doValidateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsQuantityChange attachment = (Attachment.DigitalGoodsQuantityChange) transaction.getAttachment();
-                DGSHome.Goods goods = ((ChildChain) transaction.getChain()).getDGSHome().getGoods(attachment.getGoodsId());
+                DGSHome.Goods goods = transaction.getChain().getDGSHome().getGoods(attachment.getGoodsId());
                 if (attachment.getDeltaQuantity() < -Constants.MAX_DGS_LISTING_QUANTITY
                         || attachment.getDeltaQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
                         || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
@@ -2264,10 +2295,10 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
-                if (senderAccount.getUnconfirmedBalance((ChildChain)transaction.getChain()) >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT())) {
-                    senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
+                if (senderAccount.getUnconfirmedBalance(transaction.getChain()) >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT())) {
+                    senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
                             -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
                     return true;
                 }
@@ -2275,28 +2306,28 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
-                senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
                         Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getDGSHome().purchase((ChildTransaction)transaction, attachment);
+                transaction.getChain().getDGSHome().purchase(transaction, attachment);
             }
 
             @Override
-            void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void doValidateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
-                DGSHome.Goods goods = ((ChildChain) transaction.getChain()).getDGSHome().getGoods(attachment.getGoodsId());
+                DGSHome.Goods goods = transaction.getChain().getDGSHome().getGoods(attachment.getGoodsId());
                 if (attachment.getQuantity() <= 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
                         || attachment.getPriceNQT() <= 0 || attachment.getPriceNQT() > Constants.MAX_BALANCE_NQT
                         || (goods != null && goods.getSellerId() != transaction.getRecipientId())) {
                     throw new NxtException.NotValidException("Invalid digital goods purchase: " + attachment.getJSONObject());
                 }
-                if (((ChildTransaction)transaction).getEncryptedMessage() != null && ! ((ChildTransaction)transaction).getEncryptedMessage().isText()) {
+                if (transaction.getEncryptedMessage() != null && ! transaction.getEncryptedMessage().isText()) {
                     throw new NxtException.NotValidException("Only text encrypted messages allowed");
                 }
                 if (goods == null || goods.isDelisted()) {
@@ -2374,15 +2405,15 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsDelivery attachment = (Attachment.DigitalGoodsDelivery)transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getDGSHome().deliver((ChildTransaction)transaction, attachment);
+                transaction.getChain().getDGSHome().deliver(transaction, attachment);
             }
 
             @Override
-            void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void doValidateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsDelivery attachment = (Attachment.DigitalGoodsDelivery) transaction.getAttachment();
-                DGSHome.Purchase purchase = ((ChildChain) transaction.getChain()).getDGSHome().getPendingPurchase(attachment.getPurchaseId());
+                DGSHome.Purchase purchase = transaction.getChain().getDGSHome().getPendingPurchase(attachment.getPurchaseId());
                 if (attachment.getGoodsDataLength() > Constants.MAX_DGS_GOODS_LENGTH) {
                     throw new NxtException.NotValidException("Invalid digital goods delivery data length: " + attachment.getGoodsDataLength());
                 }
@@ -2450,17 +2481,16 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsFeedback attachment = (Attachment.DigitalGoodsFeedback)transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getDGSHome().feedback(attachment.getPurchaseId(),
-                        ((ChildTransaction)transaction).getEncryptedMessage(), ((ChildTransaction)transaction).getMessage());
+                transaction.getChain().getDGSHome().feedback(attachment.getPurchaseId(),
+                        transaction.getEncryptedMessage(), transaction.getMessage());
             }
 
             @Override
-            void doValidateAttachment(Transaction t) throws NxtException.ValidationException {
-                ChildTransaction transaction = (ChildTransaction)t;
+            void doValidateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsFeedback attachment = (Attachment.DigitalGoodsFeedback) transaction.getAttachment();
-                DGSHome.Purchase purchase = ((ChildChain) transaction.getChain()).getDGSHome().getPurchase(attachment.getPurchaseId());
+                DGSHome.Purchase purchase = transaction.getChain().getDGSHome().getPurchase(attachment.getPurchaseId());
                 if (purchase != null &&
                         (purchase.getSellerId() != transaction.getRecipientId()
                                 || transaction.getSenderId() != purchase.getBuyerId())) {
@@ -2520,39 +2550,39 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
-                if (senderAccount.getUnconfirmedBalance((ChildChain)transaction.getChain()) >= attachment.getRefundNQT()) {
-                    senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(), -attachment.getRefundNQT());
+                if (senderAccount.getUnconfirmedBalance(transaction.getChain()) >= attachment.getRefundNQT()) {
+                    senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(), -attachment.getRefundNQT());
                     return true;
                 }
                 return false;
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
-                senderAccount.addToUnconfirmedBalance((ChildChain)transaction.getChain(), getLedgerEvent(), transaction.getId(), attachment.getRefundNQT());
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(), attachment.getRefundNQT());
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getDGSHome().refund(getLedgerEvent(), transaction.getId(), transaction.getSenderId(),
-                        attachment.getPurchaseId(), attachment.getRefundNQT(), ((ChildTransaction)transaction).getEncryptedMessage());
+                transaction.getChain().getDGSHome().refund(getLedgerEvent(), transaction.getId(), transaction.getSenderId(),
+                        attachment.getPurchaseId(), attachment.getRefundNQT(), transaction.getEncryptedMessage());
             }
 
             @Override
-            void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void doValidateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
-                DGSHome.Purchase purchase = ((ChildChain) transaction.getChain()).getDGSHome().getPurchase(attachment.getPurchaseId());
+                DGSHome.Purchase purchase = transaction.getChain().getDGSHome().getPurchase(attachment.getPurchaseId());
                 if (attachment.getRefundNQT() < 0 || attachment.getRefundNQT() > Constants.MAX_BALANCE_NQT
                         || (purchase != null &&
                         (purchase.getBuyerId() != transaction.getRecipientId()
                                 || transaction.getSenderId() != purchase.getSellerId()))) {
                     throw new NxtException.NotValidException("Invalid digital goods refund: " + attachment.getJSONObject());
                 }
-                if (((ChildTransaction)transaction).getEncryptedMessage() != null && ! ((ChildTransaction)transaction).getEncryptedMessage().isText()) {
+                if (transaction.getEncryptedMessage() != null && ! transaction.getEncryptedMessage().isText()) {
                     throw new NxtException.NotValidException("Only text encrypted messages allowed");
                 }
                 if (purchase == null || purchase.getEncryptedGoods() == null || purchase.getRefundNQT() != 0) {
@@ -2591,12 +2621,12 @@ public abstract class ChildTransactionType extends TransactionType {
         }
 
         @Override
-        final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        final boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        final void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
         }
 
         public static final TransactionType SET_PHASING_ONLY = new AccountControl() {
@@ -2622,7 +2652,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.SetPhasingOnly attachment = (Attachment.SetPhasingOnly)transaction.getAttachment();
                 VoteWeighting.VotingModel votingModel = attachment.getPhasingParams().getVoteWeighting().getVotingModel();
                 attachment.getPhasingParams().validate();
@@ -2660,7 +2690,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.SetPhasingOnly attachment = (Attachment.SetPhasingOnly)transaction.getAttachment();
                 AccountRestrictions.PhasingOnly.set(senderAccount, attachment);
             }
@@ -2707,12 +2737,12 @@ public abstract class ChildTransactionType extends TransactionType {
         }
 
         @Override
-        final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        final boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        final void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
         }
 
         @Override
@@ -2753,7 +2783,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.TaggedDataUpload attachment = (Attachment.TaggedDataUpload) transaction.getAttachment();
                 if (attachment.getData() == null && Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MIN_PRUNABLE_LIFETIME) {
                     throw new NxtException.NotCurrentlyValidException("Data has been pruned prematurely");
@@ -2784,9 +2814,9 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.TaggedDataUpload attachment = (Attachment.TaggedDataUpload) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getTaggedDataHome().add((TransactionImpl)transaction, attachment);
+                transaction.getChain().getTaggedDataHome().add(transaction, attachment);
             }
 
             @Override
@@ -2825,7 +2855,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
                 Attachment.TaggedDataExtend attachment = (Attachment.TaggedDataExtend) transaction.getAttachment();
                 if ((attachment.jsonIsPruned() || attachment.getData() == null) && Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MIN_PRUNABLE_LIFETIME) {
                     throw new NxtException.NotCurrentlyValidException("Data has been pruned prematurely");
@@ -2845,16 +2875,16 @@ public abstract class ChildTransactionType extends TransactionType {
                                 + " upload hash: " + Convert.toHexString(taggedDataUpload.getHash()));
                     }
                 }
-                TaggedDataHome.TaggedData taggedData = ((ChildChain) transaction.getChain()).getTaggedDataHome().getData(attachment.getTaggedDataId());
+                TaggedDataHome.TaggedData taggedData = transaction.getChain().getTaggedDataHome().getData(attachment.getTaggedDataId());
                 if (taggedData != null && taggedData.getTransactionTimestamp() > Nxt.getEpochTime() + 6 * Constants.MIN_PRUNABLE_LIFETIME) {
                     throw new NxtException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
                 }
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.TaggedDataExtend attachment = (Attachment.TaggedDataExtend) transaction.getAttachment();
-                ((ChildChain) transaction.getChain()).getTaggedDataHome().extend(transaction, attachment);
+                transaction.getChain().getTaggedDataHome().extend(transaction, attachment);
             }
 
             @Override

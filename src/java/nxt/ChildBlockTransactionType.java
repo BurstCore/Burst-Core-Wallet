@@ -54,7 +54,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     }
 
     @Override
-    void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+    void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
         //TODO: its own validation?
         for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
@@ -63,7 +63,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     }
 
     @Override
-    boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
         List<ChildTransactionImpl> childTransactions = attachment.getChildTransactions();
         for (int i = 0; i < childTransactions.size(); i++) {
@@ -78,7 +78,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     }
 
     @Override
-    void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
         //TODO: apply fees
         for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
@@ -87,7 +87,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     }
 
     @Override
-    void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
         //TODO: undo fees
         for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
