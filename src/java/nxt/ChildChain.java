@@ -24,12 +24,18 @@ import java.util.Map;
 public final class ChildChain extends Chain {
 
     private static final Map<String, ChildChain> childChains = new HashMap<>();
+    private static final Map<Integer, ChildChain> childChainsById = new HashMap<>();
+
     private static final Collection<ChildChain> allChildChains = Collections.unmodifiableCollection(childChains.values());
 
-    public static final ChildChain NXT = new ChildChain("NXT");
+    public static final ChildChain NXT = new ChildChain(2, "NXT");
 
     public static ChildChain getChildChain(String name) {
         return childChains.get(name);
+    }
+
+    public static ChildChain getChildChain(int id) {
+        return childChainsById.get(id);
     }
 
     public static Collection<ChildChain> getAll() {
@@ -57,8 +63,8 @@ public final class ChildChain extends Chain {
     private final TransactionHome transactionHome;
     private final VoteHome voteHome;
 
-    private ChildChain(String name) {
-        super(name);
+    private ChildChain(int id, String name) {
+        super(id, name);
         this.aliasHome = AliasHome.forChain(this);
         this.balanceHome = BalanceHome.forChain(this);
         this.currencyFounderHome = CurrencyFounderHome.forChain(this);
@@ -78,6 +84,7 @@ public final class ChildChain extends Chain {
         this.transactionHome = TransactionHome.forChain(this);
         this.voteHome = VoteHome.forChain(this);
         childChains.put(name, this);
+        childChainsById.put(id, this);
     }
 
     public AliasHome getAliasHome() {

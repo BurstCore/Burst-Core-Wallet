@@ -25,7 +25,7 @@ public final class FxtChain extends Chain {
     private final TransactionHome transactionHome;
 
     private FxtChain() {
-        super("FXT");
+        super(1, "FXT");
         this.transactionHome = TransactionHome.forChain(this);
     }
 

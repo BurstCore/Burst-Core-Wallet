@@ -27,13 +27,19 @@ public abstract class Chain {
     }
 
     private final String name;
+    private final int id;
 
-    Chain(String name) {
+    Chain(int id, String name) {
+        this.id = id;
         this.name = name.toUpperCase();
     }
 
     public final String getName() {
         return name;
+    }
+
+    public final int getId() {
+        return id;
     }
 
     public String getDbSchema() {

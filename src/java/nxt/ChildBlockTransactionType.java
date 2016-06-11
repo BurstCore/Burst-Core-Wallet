@@ -67,6 +67,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
         List<ChildTransactionImpl> childTransactions = attachment.getChildTransactions();
         for (int i = 0; i < childTransactions.size(); i++) {
+            //TODO: if a child transaction is already in unconfirmed pool, should not call applyUnconfirmed on it again
             if (!childTransactions.get(i).applyUnconfirmed()) {
                 for (int j = 0; j < i; j++) {
                     childTransactions.get(j).undoUnconfirmed();
@@ -90,6 +91,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
         //TODO: undo fees
+        //TODO: do not undo if child transaction is not going to be expunged from unconfirmed pool
         for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
             childTransaction.undoUnconfirmed();
         }
