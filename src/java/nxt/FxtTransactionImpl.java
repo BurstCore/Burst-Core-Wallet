@@ -128,7 +128,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
 
     @Override
     int signatureOffset() {
-        return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8;
+        return 1 + 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8;
     }
 
     @Override
@@ -291,8 +291,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             byte type = buffer.get();
             byte subtype = buffer.get();
-            byte version = (byte) ((subtype & 0xF0) >> 4);
-            subtype = (byte) (subtype & 0x0F);
+            byte version = buffer.get();
             int timestamp = buffer.getInt();
             short deadline = buffer.getShort();
             byte[] senderPublicKey = new byte[32];

@@ -118,10 +118,15 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
             TransactionHome transactionHome = ChildChain.getChildChain(chainId).getTransactionHome();
             childTransactions = new ArrayList<>();
             for (byte[] fullHash : childTransactionFullHashes) {
+                //TODO: handle missing child transaction
                 childTransactions.add((ChildTransactionImpl)transactionHome.findChainTransactionByFullHash(fullHash));
             }
         }
         return childTransactions;
+    }
+
+    public int getChainId() {
+        return chainId;
     }
 
     //Prunable:

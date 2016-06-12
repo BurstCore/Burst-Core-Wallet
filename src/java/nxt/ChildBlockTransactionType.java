@@ -56,6 +56,9 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     @Override
     void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
+        if (ChildChain.getChildChain(attachment.getChainId()) == null) {
+            throw new NxtException.NotValidException("No such child chain id: " + attachment.getChainId());
+        }
         //TODO: its own validation?
         for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
             childTransaction.validate();

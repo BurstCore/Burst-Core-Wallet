@@ -289,6 +289,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     @Override
     public JSONObject getJSONObject() {
         JSONObject json = super.getJSONObject();
+        json.put("chain", childChain.getId());
         if (referencedTransactionFullHash != null) {
             json.put("referencedTransactionFullHash", Convert.toHexString(referencedTransactionFullHash));
         }
@@ -308,8 +309,10 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     ByteBuffer generateBytes() {
         ByteBuffer buffer = ByteBuffer.allocate(getSize());
         buffer.order(ByteOrder.LITTLE_ENDIAN);
+        buffer.putInt(childChain.getId());
         buffer.put(getType().getType());
-        buffer.put((byte) ((getVersion() << 4) | getType().getSubtype()));
+        buffer.put(getType().getSubtype());
+        buffer.put(getVersion());
         buffer.putInt(getTimestamp());
         buffer.putShort(getDeadline());
         buffer.put(getSenderPublicKey());
@@ -394,7 +397,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
 
     @Override
     int signatureOffset() {
-        return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32;
+        return 4 + 1 + 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32;
     }
 
     private int getFlags() {
@@ -577,15 +580,14 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         return transaction;
     }
 
-    //TODO: child chain id in bytes
     static ChildTransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws NxtException.NotValidException {
         try {
             ByteBuffer buffer = ByteBuffer.wrap(bytes);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
+            int chainId = buffer.getInt();
             byte type = buffer.get();
             byte subtype = buffer.get();
-            byte version = (byte) ((subtype & 0xF0) >> 4);
-            subtype = (byte) (subtype & 0x0F);
+            byte version = buffer.get();
             int timestamp = buffer.getInt();
             short deadline = buffer.getShort();
             byte[] senderPublicKey = new byte[32];
@@ -608,8 +610,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
                 ecBlockId = buffer.getLong();
             }
             TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
-            //TODO: child chain from bytes
-            ChildTransactionImpl.BuilderImpl builder = new BuilderImpl(ChildChain.NXT, version, senderPublicKey, amountNQT, feeNQT,
+            ChildTransactionImpl.BuilderImpl builder = new BuilderImpl(ChildChain.getChildChain(chainId), version, senderPublicKey, amountNQT, feeNQT,
                     deadline, transactionType.parseAttachment(buffer));
             builder.referencedTransactionFullHash(referencedTransactionFullHash)
                     .timestamp(timestamp)
@@ -684,9 +685,9 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         return builder;
     }
 
-    //TODO: child chain in JSON
     static ChildTransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws NxtException.NotValidException {
         try {
+            int chainId = ((Long) transactionData.get("chain")).intValue();
             byte type = ((Long) transactionData.get("type")).byteValue();
             byte subtype = ((Long) transactionData.get("subtype")).byteValue();
             int timestamp = ((Long) transactionData.get("timestamp")).intValue();
@@ -710,8 +711,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             if (transactionType == null) {
                 throw new NxtException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
             }
-            //TODO: child chain from JSON
-            ChildTransactionImpl.BuilderImpl builder = new BuilderImpl(ChildChain.NXT, version, senderPublicKey,
+            ChildTransactionImpl.BuilderImpl builder = new BuilderImpl(ChildChain.getChildChain(chainId), version, senderPublicKey,
                     amountNQT, feeNQT, deadline,
                     transactionType.parseAttachment(attachmentData));
             builder.referencedTransactionFullHash(referencedTransactionFullHash)
