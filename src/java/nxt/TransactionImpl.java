@@ -279,7 +279,6 @@ abstract class TransactionImpl implements Transaction {
         return block;
     }
 
-    //TODO: child transactions set block?
     void setBlock(BlockImpl block) {
         this.block = block;
         this.blockId = block.getId();
@@ -291,7 +290,6 @@ abstract class TransactionImpl implements Transaction {
         this.block = null;
         this.blockId = 0;
         this.blockTimestamp = -1;
-        this.index = -1;
         // must keep the height set, as transactions already having been included in a popped-off block before
         // get priority when sorted for inclusion in a new block
     }
@@ -304,6 +302,7 @@ abstract class TransactionImpl implements Transaction {
         return index;
     }
 
+    //TODO: set index for child transactions
     void setIndex(int index) {
         this.index = (short) index;
     }

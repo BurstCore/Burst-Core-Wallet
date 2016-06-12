@@ -1387,7 +1387,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }
             }
-            if (fxtTransaction.getType() == ChildBlockTransactionType.instance) {
+            if (fxtTransaction.getType() == ChildBlockTransactionType.INSTANCE) {
                 ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)fxtTransaction.getAttachment();
                 for (ChildTransactionImpl childTransaction : childBlockAttachment.getChildTransactions()) {
                     validateTransaction(childTransaction, block, previousLastBlock, curTime);
@@ -1502,7 +1502,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 try {
                     transaction.apply();
                     checkMissingPrunable(transaction, fromTimestamp);
-                    if (transaction.getType() == ChildBlockTransactionType.instance) {
+                    if (transaction.getType() == ChildBlockTransactionType.INSTANCE) {
                         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
                         for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
                             checkMissingPrunable(childTransaction, fromTimestamp);
@@ -1515,7 +1515,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             SortedSet<ChildTransactionImpl> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
             block.getTransactions().forEach(fxtTransaction -> {
-                if (fxtTransaction.getType() == ChildBlockTransactionType.instance) {
+                if (fxtTransaction.getType() == ChildBlockTransactionType.INSTANCE) {
                     ChildBlockAttachment attachment = (ChildBlockAttachment) fxtTransaction.getAttachment();
                     for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
                         childTransaction.getChain().getPhasingPollHome().getLinkedPhasedTransactions(childTransaction.fullHash()).forEach(phasedTransaction -> {

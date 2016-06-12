@@ -29,7 +29,7 @@ import java.util.List;
 public class ChildBlockAttachment extends Attachment.AbstractAttachment implements Appendix.Prunable {
 
     static ChildBlockAttachment parse(JSONObject attachmentData) throws NxtException.NotValidException {
-        if (!Appendix.hasAppendix(ChildBlockTransactionType.instance.getName(), attachmentData)) {
+        if (!Appendix.hasAppendix(ChildBlockTransactionType.INSTANCE.getName(), attachmentData)) {
             return null;
         }
         return new ChildBlockAttachment(attachmentData);
@@ -109,7 +109,7 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     @Override
     public TransactionType getTransactionType() {
-        return ChildBlockTransactionType.instance;
+        return ChildBlockTransactionType.INSTANCE;
     }
 
 

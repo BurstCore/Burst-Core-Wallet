@@ -25,7 +25,7 @@ import java.util.List;
 //TODO
 public final class ChildBlockTransactionType extends FxtTransactionType {
 
-    public static final ChildBlockTransactionType instance = new ChildBlockTransactionType();
+    public static final ChildBlockTransactionType INSTANCE = new ChildBlockTransactionType();
 
     @Override
     public byte getType() {

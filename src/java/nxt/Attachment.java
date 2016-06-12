@@ -130,6 +130,15 @@ public interface Attachment extends Appendix {
 
     };
 
+    EmptyAttachment FXT_PAYMENT = new EmptyAttachment() {
+
+        @Override
+        public TransactionType getTransactionType() {
+            return FxtTransactionType.Payment.ORDINARY;
+        }
+
+    };
+
     // the message payload is in the Appendix
     EmptyAttachment ARBITRARY_MESSAGE = new EmptyAttachment() {
 

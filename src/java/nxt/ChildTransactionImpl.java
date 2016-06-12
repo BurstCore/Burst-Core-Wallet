@@ -40,6 +40,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
 
         private final ChildChain childChain;
         private byte[] referencedTransactionFullHash;
+        private long fxtTransactionId;
         private List<Appendix.AbstractAppendix> appendages;
         private Appendix.Message message;
         private Appendix.EncryptedMessage encryptedMessage;
@@ -107,6 +108,11 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             return this;
         }
 
+        BuilderImpl fxtTransactionId(long fxtTransactionId) {
+            this.fxtTransactionId = fxtTransactionId;
+            return this;
+        }
+
         @Override
         public BuilderImpl appendix(Appendix.Message message) {
             this.message = message;
@@ -167,10 +173,14 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     private final Appendix.PrunablePlainMessage prunablePlainMessage;
     private final Appendix.PrunableEncryptedMessage prunableEncryptedMessage;
 
+    private volatile FxtTransactionImpl fxtTransaction;
+    private volatile long fxtTransactionId;
+
     private ChildTransactionImpl(BuilderImpl builder, String secretPhrase) throws NxtException.NotValidException {
         super(builder);
         this.childChain = builder.childChain;
         this.referencedTransactionFullHash = builder.referencedTransactionFullHash;
+        this.fxtTransactionId = builder.fxtTransactionId;
         this.message  = builder.message;
         this.encryptedMessage = builder.encryptedMessage;
         this.publicKeyAnnouncement = builder.publicKeyAnnouncement;
@@ -211,6 +221,31 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     @Override
     public ChildChain getChain() {
         return childChain;
+    }
+
+    @Override
+    public FxtTransactionImpl getFxtTransaction() {
+        if (fxtTransaction == null && fxtTransactionId != 0) {
+            fxtTransaction = (FxtTransactionImpl)FxtChain.FXT.getTransactionHome().findChainTransaction(fxtTransactionId);
+        }
+        return fxtTransaction;
+    }
+
+    @Override
+    public long getFxtTransactionId() {
+        return fxtTransactionId;
+    }
+
+    //TODO: set when including in a ChildBlock
+    void setFxtTransaction(FxtTransactionImpl fxtTransaction) {
+        this.fxtTransactionId = fxtTransaction.getId();
+        this.fxtTransaction = fxtTransaction;
+    }
+
+    //TODO: unset - when?
+    void unsetFxtTransaction() {
+        this.fxtTransactionId = 0;
+        this.fxtTransaction = null;
     }
 
     @Override
@@ -440,8 +475,8 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
                 + "block_id, signature, timestamp, type, subtype, sender_id, attachment_bytes, "
                 + "block_timestamp, full_hash, version, has_message, has_encrypted_message, has_public_key_announcement, "
                 + "has_encrypttoself_message, phased, has_prunable_message, has_prunable_encrypted_message, "
-                + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index, fxt_transaction_id) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, getId());
             pstmt.setShort(++i, getDeadline());
@@ -484,6 +519,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             pstmt.setInt(++i, getECBlockHeight());
             DbUtils.setLongZeroToNull(pstmt, ++i, getECBlockId());
             pstmt.setShort(++i, getIndex());
+            pstmt.setLong(++i, getFxtTransactionId());
             pstmt.executeUpdate();
         }
         if (referencedTransactionFullHash() != null) {
@@ -517,6 +553,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             byte[] fullHash = rs.getBytes("full_hash");
             byte version = rs.getByte("version");
             short transactionIndex = rs.getShort("transaction_index");
+            long fxtTransactionId = rs.getLong("fxt_transaction_id");
 
             ByteBuffer buffer = null;
             if (attachmentBytes != null) {
@@ -528,6 +565,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             ChildTransactionImpl.BuilderImpl builder = new ChildTransactionImpl.BuilderImpl(childChain, version, null,
                     amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer));
             builder.referencedTransactionFullHash(referencedTransactionFullHash)
+                    .fxtTransactionId(fxtTransactionId)
                     .timestamp(timestamp)
                     .signature(signature)
                     .blockId(blockId)

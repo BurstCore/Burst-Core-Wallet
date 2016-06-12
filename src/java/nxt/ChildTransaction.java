@@ -40,6 +40,10 @@ public interface ChildTransaction extends Transaction {
 
     ChildChain getChain();
 
+    FxtTransaction getFxtTransaction();
+
+    long getFxtTransactionId();
+
     String getReferencedTransactionFullHash();
 
     Appendix.Message getMessage();

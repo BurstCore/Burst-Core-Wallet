@@ -38,7 +38,7 @@ public abstract class FxtTransactionType extends TransactionType {
             case TYPE_CHILDCHAIN_BLOCK:
                 switch (subtype) {
                     case SUBTYPE_CHILDCHAIN_BLOCK:
-                        return ChildBlockTransactionType.instance;
+                        return ChildBlockTransactionType.INSTANCE;
                     default:
                         return null;
                 }
@@ -185,13 +185,12 @@ public abstract class FxtTransactionType extends TransactionType {
 
             @Override
             Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
-                //TODO: need different attachment
-                return Attachment.ORDINARY_PAYMENT;
+                return Attachment.FXT_PAYMENT;
             }
 
             @Override
             Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
-                return Attachment.ORDINARY_PAYMENT;
+                return Attachment.FXT_PAYMENT;
             }
 
             @Override
@@ -243,7 +242,6 @@ public abstract class FxtTransactionType extends TransactionType {
 
             @Override
             Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
-                //TODO?
                 return new Attachment.AccountControlEffectiveBalanceLeasing(buffer);
             }
 

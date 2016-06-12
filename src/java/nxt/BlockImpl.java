@@ -406,7 +406,6 @@ final class BlockImpl implements Block {
             this.height = 0;
         }
         short index = 0;
-        //TODO: set block for child transactions?
         for (FxtTransactionImpl transaction : getTransactions()) {
             transaction.setBlock(this);
             transaction.setIndex(index++);

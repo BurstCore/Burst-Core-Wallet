@@ -176,6 +176,25 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
     }
 
     @Override
+    void setBlock(BlockImpl block) {
+        super.setBlock(block);
+        if (getType() == ChildBlockTransactionType.INSTANCE) {
+            ChildBlockAttachment attachment = (ChildBlockAttachment)getAttachment();
+            attachment.getChildTransactions().forEach(childTransaction -> childTransaction.setBlock(block));
+        }
+    }
+
+    @Override
+    void unsetBlock() {
+        super.unsetBlock();
+        setIndex(-1);
+        if (getType() == ChildBlockTransactionType.INSTANCE) {
+            ChildBlockAttachment attachment = (ChildBlockAttachment)getAttachment();
+            attachment.getChildTransactions().forEach(childTransaction -> childTransaction.unsetBlock());
+        }
+    }
+
+    @Override
     public boolean equals(Object o) {
         return o instanceof FxtTransactionImpl && this.getId() == ((Transaction)o).getId();
     }

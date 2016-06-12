@@ -46,6 +46,16 @@ class UnconfirmedChildTransaction extends UnconfirmedTransaction implements Chil
     }
 
     @Override
+    public FxtTransaction getFxtTransaction() {
+        return getTransaction().getFxtTransaction();
+    }
+
+    @Override
+    public long getFxtTransactionId() {
+        return getTransaction().getFxtTransactionId();
+    }
+
+    @Override
     public String getReferencedTransactionFullHash() {
         return getTransaction().getReferencedTransactionFullHash();
     }
