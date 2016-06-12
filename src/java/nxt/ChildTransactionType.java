@@ -2860,7 +2860,8 @@ public abstract class ChildTransactionType extends TransactionType {
                 if ((attachment.jsonIsPruned() || attachment.getData() == null) && Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MIN_PRUNABLE_LIFETIME) {
                     throw new NxtException.NotCurrentlyValidException("Data has been pruned prematurely");
                 }
-                TransactionImpl uploadTransaction = TransactionHome.findTransaction(attachment.getTaggedDataId(), Nxt.getBlockchain().getHeight());
+                ChildChain childChain = transaction.getChain();
+                TransactionImpl uploadTransaction = childChain.getTransactionHome().findChainTransaction(attachment.getTaggedDataId(), Nxt.getBlockchain().getHeight());
                 if (uploadTransaction == null) {
                     throw new NxtException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
                 }
@@ -2875,7 +2876,7 @@ public abstract class ChildTransactionType extends TransactionType {
                                 + " upload hash: " + Convert.toHexString(taggedDataUpload.getHash()));
                     }
                 }
-                TaggedDataHome.TaggedData taggedData = transaction.getChain().getTaggedDataHome().getData(attachment.getTaggedDataId());
+                TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(attachment.getTaggedDataId());
                 if (taggedData != null && taggedData.getTransactionTimestamp() > Nxt.getEpochTime() + 6 * Constants.MIN_PRUNABLE_LIFETIME) {
                     throw new NxtException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
                 }

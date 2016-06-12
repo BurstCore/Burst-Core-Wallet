@@ -411,7 +411,7 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         @Override
         void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
             shuffling.updateParticipantData(transaction, attachment);
         }
 

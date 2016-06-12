@@ -301,6 +301,20 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
             pstmt.setShort(++i, getIndex());
             pstmt.executeUpdate();
         }
+        if (getType() == ChildBlockTransactionType.INSTANCE) {
+            ChildBlockAttachment attachment = (ChildBlockAttachment)getAttachment();
+            ChildChain childChain = ChildChain.getChildChain(attachment.getChainId());
+            String childChainSchemaTable = childChain.getSchemaTable("transaction");
+            short index = 0;
+            for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
+                try {
+                    childTransaction.setIndex(index++);
+                    childTransaction.save(con, childChainSchemaTable);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e.toString(), e);
+                }
+            }
+        }
     }
 
     //TODO: factor out common code with ChildTransactionImpl

@@ -293,7 +293,7 @@ public final class TaggedDataHome {
         if (Nxt.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
-                TransactionImpl uploadTransaction = TransactionHome.findTransaction(taggedDataId);
+                TransactionImpl uploadTransaction = transaction.getChain().getTransactionHome().findChainTransaction(taggedDataId);
                 taggedData = new TaggedData(uploadTransaction, attachment);
                 addTags(taggedData);
             }
@@ -312,7 +312,7 @@ public final class TaggedDataHome {
         addTags(taggedData, height);
         int timestamp = transaction.getTimestamp();
         for (long extendTransactionId : getExtendTransactionIds(transaction.getId())) {
-            Transaction extendTransaction = TransactionHome.findTransaction(extendTransactionId);
+            Transaction extendTransaction = transaction.getChain().getTransactionHome().findChainTransaction(extendTransactionId);
             if (extendTransaction.getTimestamp() - Constants.MIN_PRUNABLE_LIFETIME > timestamp) {
                 timestamp = extendTransaction.getTimestamp();
             } else {

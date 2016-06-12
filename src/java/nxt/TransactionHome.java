@@ -419,7 +419,6 @@ final class TransactionHome {
             for (FxtTransactionImpl transaction : transactions) {
                 transaction.setIndex(index++);
                 transaction.save(con, "transaction_fxt");
-                //TODO: for each ChildChainBlock transaction, save all ChildTransactions in their transaction tables too
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
