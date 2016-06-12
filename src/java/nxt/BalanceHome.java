@@ -129,7 +129,7 @@ public final class BalanceHome {
             }
             long totalAmount = Math.addExact(amount, fee);
             this.balance = Math.addExact(this.balance, totalAmount);
-            //TODO: Account.checkBalance(accountId, this.balanceNQT, this.unconfirmedBalanceNQT);
+            Account.checkBalance(this.accountId, this.balance, this.unconfirmedBalance);
             save();
             //TODO: Account.listeners.notify(this, Event.BALANCE);
             if (AccountLedger.mustLogEntry(this.accountId, false)) {
@@ -154,7 +154,7 @@ public final class BalanceHome {
             }
             long totalAmount = Math.addExact(amount, fee);
             this.unconfirmedBalance = Math.addExact(this.unconfirmedBalance, totalAmount);
-            //TODO: Account.checkBalance(this.id, this.balanceNQT, this.unconfirmedBalanceNQT);
+            Account.checkBalance(this.accountId, this.balance, this.unconfirmedBalance);
             save();
             //TODO: listeners.notify(this, Event.UNCONFIRMED_BALANCE);
             //TODO: use chain holding id in account ledger
@@ -181,7 +181,7 @@ public final class BalanceHome {
             long totalAmount = Math.addExact(amount, fee);
             this.balance = Math.addExact(this.balance, totalAmount);
             this.unconfirmedBalance = Math.addExact(this.unconfirmedBalance, totalAmount);
-            //TODO: Account.checkBalance(this.id, this.balanceNQT, this.unconfirmedBalanceNQT);
+            Account.checkBalance(this.accountId, this.balance, this.unconfirmedBalance);
             save();
             //TODO: Account.listeners.notify(this, Event.BALANCE);
             //TODO: Account.listeners.notify(this, Event.UNCONFIRMED_BALANCE);

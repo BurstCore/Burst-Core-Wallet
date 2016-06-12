@@ -1740,7 +1740,7 @@ public final class Account {
         save();
     }
 
-    private static void checkBalance(long accountId, long confirmed, long unconfirmed) {
+    static void checkBalance(long accountId, long confirmed, long unconfirmed) {
         if (accountId == Genesis.CREATOR_ID) {
             return;
         }
