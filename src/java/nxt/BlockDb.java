@@ -228,10 +228,10 @@ final class BlockDb {
 
     static void saveBlock(Connection con, BlockImpl block) {
         try {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, timestamp, previous_block_id, "
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO block (id, version, timestamp, previous_block_id, "
                     + "total_amount, total_fee, payload_length, previous_block_hash, cumulative_difficulty, "
                     + "base_target, height, generation_signature, block_signature, payload_hash, generator_id) "
-                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                    + " KEY (height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, block.getId());
                 pstmt.setInt(++i, block.getVersion());
@@ -243,7 +243,7 @@ final class BlockDb {
                 pstmt.setBytes(++i, block.getPreviousBlockHash());
                 pstmt.setBytes(++i, block.getCumulativeDifficulty().toByteArray());
                 pstmt.setLong(++i, block.getBaseTarget());
-                pstmt.setInt(++i, block.getHeight());
+                pstmt.setShort(++i, (short)block.getHeight());
                 pstmt.setBytes(++i, block.getGenerationSignature());
                 pstmt.setBytes(++i, block.getBlockSignature());
                 pstmt.setBytes(++i, block.getPayloadHash());

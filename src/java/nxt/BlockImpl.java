@@ -400,7 +400,7 @@ final class BlockImpl implements Block {
                 // shouldn't happen as previous id is already verified, but just in case
                 throw new IllegalStateException("Previous block id doesn't match");
             }
-            this.height = block.getHeight() + 1;
+            this.height = (block.getHeight() + 1) % Short.MAX_VALUE;
             this.calculateBaseTarget(block);
         } else {
             this.height = 0;
@@ -437,6 +437,8 @@ final class BlockImpl implements Block {
             if (baseTarget < Constants.MIN_BASE_TARGET) {
                 baseTarget = Constants.MIN_BASE_TARGET;
             }
+            baseTarget = baseTarget / (1 + (blockchainHeight * Constants.MIN_BLOCKTIME_LIMIT_2 / Constants.INITIAL_BASE_TARGET)
+                    * (blockchainHeight - Constants.INITIAL_BASE_TARGET / Constants.MIN_BLOCKTIME_LIMIT_2));
         } else {
             baseTarget = prevBaseTarget;
         }

@@ -33,6 +33,7 @@ public final class Constants {
     public static final long MIN_BASE_TARGET = INITIAL_BASE_TARGET * 9 / 10;
     public static final int MIN_BLOCKTIME_LIMIT = 53;
     public static final int MAX_BLOCKTIME_LIMIT = 67;
+    public static final int MIN_BLOCKTIME_LIMIT_2 = 4500;
     public static final int BASE_TARGET_GAMMA = 64;
     public static final int MAX_ROLLBACK = Math.max(Nxt.getIntProperty("nxt.maxRollback"), 720);
     public static final int GUARANTEED_BALANCE_CONFIRMATIONS = isTestnet ? Nxt.getIntProperty("nxt.testnetGuaranteedBalanceConfirmations", 1440) : 1440;
