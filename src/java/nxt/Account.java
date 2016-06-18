@@ -1193,14 +1193,14 @@ public final class Account {
     }
 
     public long getEffectiveBalanceNXT(int height) {
-        if (height < 1440) {
+        if (height <= 1440) {
             Integer amount = Genesis.GENESIS_AMOUNTS.get(id);
             return amount == null ? 0 : amount;
         }
         if (this.publicKey == null) {
             this.publicKey = publicKeyTable.get(accountDbKeyFactory.newKey(this));
         }
-        if (this.publicKey == null || this.publicKey.publicKey == null || this.publicKey.height == 0 || height - this.publicKey.height <= 1440) {
+        if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.height <= 1440) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         Nxt.getBlockchain().readLock();
