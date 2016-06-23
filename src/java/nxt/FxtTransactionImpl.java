@@ -48,7 +48,8 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
         @Override
         public FxtTransactionImpl build(String secretPhrase) throws NxtException.NotValidException {
             preBuild(secretPhrase);
-            return new FxtTransactionImpl(this, secretPhrase);
+            return getAttachment().getTransactionType() == ChildBlockTransactionType.INSTANCE ?
+                    new ChildBlockTransactionImpl(this, secretPhrase) : new FxtTransactionImpl(this, secretPhrase);
         }
 
         @Override
@@ -75,7 +76,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
     private final long feeFQT;
     private final byte[] signature;
 
-    private FxtTransactionImpl(BuilderImpl builder, String secretPhrase) throws NxtException.NotValidException {
+    FxtTransactionImpl(BuilderImpl builder, String secretPhrase) throws NxtException.NotValidException {
         super(builder);
         if (builder.fee <= 0 || (Constants.correctInvalidFees && builder.signature == null)) {
             int effectiveHeight = (getHeight() < Integer.MAX_VALUE ? getHeight() : Nxt.getBlockchain().getHeight());
@@ -176,22 +177,13 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
     }
 
     @Override
-    void setBlock(BlockImpl block) {
-        super.setBlock(block);
-        if (getType() == ChildBlockTransactionType.INSTANCE) {
-            ChildBlockAttachment attachment = (ChildBlockAttachment)getAttachment();
-            attachment.getChildTransactions().forEach(childTransaction -> childTransaction.setBlock(block));
-        }
-    }
-
-    @Override
     void unsetBlock() {
         super.unsetBlock();
         setIndex(-1);
-        if (getType() == ChildBlockTransactionType.INSTANCE) {
-            ChildBlockAttachment attachment = (ChildBlockAttachment)getAttachment();
-            attachment.getChildTransactions().forEach(childTransaction -> childTransaction.unsetBlock());
-        }
+    }
+
+    List<ChildTransactionImpl> getChildTransactions() {
+        return Collections.emptyList();
     }
 
     @Override
@@ -300,20 +292,6 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
             DbUtils.setLongZeroToNull(pstmt, ++i, getECBlockId());
             pstmt.setShort(++i, getIndex());
             pstmt.executeUpdate();
-        }
-        if (getType() == ChildBlockTransactionType.INSTANCE) {
-            ChildBlockAttachment attachment = (ChildBlockAttachment)getAttachment();
-            ChildChain childChain = ChildChain.getChildChain(attachment.getChainId());
-            String childChainSchemaTable = childChain.getSchemaTable("transaction");
-            short index = 0;
-            for (ChildTransactionImpl childTransaction : attachment.getChildTransactions()) {
-                try {
-                    childTransaction.setIndex(index++);
-                    childTransaction.save(con, childChainSchemaTable);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e.toString(), e);
-                }
-            }
         }
     }
 

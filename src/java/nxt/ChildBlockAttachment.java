@@ -113,13 +113,18 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
     }
 
 
-    public synchronized List<ChildTransactionImpl> getChildTransactions() {
+    synchronized List<ChildTransactionImpl> getChildTransactions(FxtTransactionImpl fxtTransaction) {
         if (childTransactions == null) {
             TransactionHome transactionHome = ChildChain.getChildChain(chainId).getTransactionHome();
             childTransactions = new ArrayList<>();
+            short index = 0;
             for (byte[] fullHash : childTransactionFullHashes) {
+                ChildTransactionImpl childTransaction = (ChildTransactionImpl)transactionHome.findChainTransactionByFullHash(fullHash);
+                //TODO: get transactions from unconfirmed pool
                 //TODO: handle missing child transaction
-                childTransactions.add((ChildTransactionImpl)transactionHome.findChainTransactionByFullHash(fullHash));
+                childTransaction.setFxtTransaction(fxtTransaction);
+                childTransaction.setIndex(index++);
+                childTransactions.add(childTransaction);
             }
         }
         return childTransactions;

@@ -240,12 +240,14 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     void setFxtTransaction(FxtTransactionImpl fxtTransaction) {
         this.fxtTransactionId = fxtTransaction.getId();
         this.fxtTransaction = fxtTransaction;
+        setBlock(fxtTransaction.getBlock());
     }
 
     //TODO: unset - when?
     void unsetFxtTransaction() {
         this.fxtTransactionId = 0;
         this.fxtTransaction = null;
+        unsetBlock();
     }
 
     @Override
