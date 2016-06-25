@@ -1720,7 +1720,6 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 if (blockTimestamp > 0 && (unconfirmedTransaction.getTimestamp() > blockTimestamp + Constants.MAX_TIMEDRIFT
                         || unconfirmedTransaction.getExpiration() < blockTimestamp)) {
-                    //TODO: check expiration of child transactions within each fxt transaction
                     continue;
                 }
                 try {

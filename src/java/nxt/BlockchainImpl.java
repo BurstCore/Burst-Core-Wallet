@@ -539,7 +539,6 @@ final class BlockchainImpl implements Blockchain {
         });
     }
 
-    //TODO: handle child transactions
     @Override
     public List<TransactionImpl> getExpectedTransactions(Filter<Transaction> filter) {
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
@@ -567,6 +566,13 @@ final class BlockchainImpl implements Blockchain {
                         if (filter.ok(transaction)) {
                             result.add(transaction);
                         }
+                        transaction.getChildTransactions().forEach(
+                                childTransaction -> {
+                                    if (filter.ok(transaction)) {
+                                        result.add(transaction);
+                                    }
+                                }
+                        );
                     }
             );
         } finally {

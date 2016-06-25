@@ -62,6 +62,10 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
         //TODO: its own validation?
         for (ChildTransactionImpl childTransaction : attachment.getChildTransactions(transaction)) {
             childTransaction.validate();
+            if (transaction.getExpiration() > childTransaction.getExpiration()) {
+                throw new NxtException.NotValidException("ChildBlock transaction " + transaction.getStringId() + " expiration " + transaction.getExpiration()
+                        + " is after child transaction " + childTransaction.getStringId() + " expiration " + childTransaction.getExpiration());
+            }
         }
     }
 

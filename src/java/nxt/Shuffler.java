@@ -35,8 +35,7 @@ public final class Shuffler {
     private static final Map<String, Map<Long, Shuffler>> shufflingsMap = new HashMap<>();
     private static final Map<Integer, Set<String>> expirations = new HashMap<>();
 
-    public static Shuffler addOrGetShuffler(String secretPhrase, byte[] recipientPublicKey, byte[] shufflingFullHash) throws ShufflerException {
-        ChildChain chain = ChildChain.NXT; //TODO
+    public static Shuffler addOrGetShuffler(ChildChain childChain, String secretPhrase, byte[] recipientPublicKey, byte[] shufflingFullHash) throws ShufflerException {
         String hash = Convert.toHexString(shufflingFullHash);
         long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
         BlockchainImpl.getInstance().writeLock();
@@ -54,7 +53,7 @@ public final class Shuffler {
                 throw new ShufflerLimitException("Cannot run more than " + MAX_SHUFFLERS + " shufflers on the same node");
             }
             if (shuffler == null) {
-                ShufflingHome.Shuffling shuffling = chain.getShufflingHome().getShuffling(shufflingFullHash);
+                ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(shufflingFullHash);
                 if (shuffling == null && Account.getAccount(recipientPublicKey) != null) {
                     throw new InvalidRecipientException("Existing account cannot be used as shuffling recipient");
                 }
@@ -68,7 +67,7 @@ public final class Shuffler {
                 if (account != null && account.getControls().contains(Account.ControlType.PHASING_ONLY)) {
                     throw new ControlledAccountException("Cannot run a shuffler for an account under phasing only control");
                 }
-                shuffler = new Shuffler(chain, secretPhrase, recipientPublicKey, shufflingFullHash);
+                shuffler = new Shuffler(childChain, secretPhrase, recipientPublicKey, shufflingFullHash);
                 if (shuffling != null) {
                     shuffler.init(shuffling);
                     clearExpiration(shuffling);
