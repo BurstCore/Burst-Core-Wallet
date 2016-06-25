@@ -20,7 +20,6 @@ import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 //TODO
 public final class ChildBlockTransactionType extends FxtTransactionType {
@@ -71,37 +70,26 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
 
     @Override
     boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
-        ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
-        List<ChildTransactionImpl> childTransactions = attachment.getChildTransactions(transaction);
-        for (int i = 0; i < childTransactions.size(); i++) {
-            //TODO: if a child transaction is already in unconfirmed pool, should not call applyUnconfirmed on it again
-            if (!childTransactions.get(i).applyUnconfirmed()) {
-                for (int j = 0; j < i; j++) {
-                    childTransactions.get(j).undoUnconfirmed();
-                }
-                return false;
-            }
-        }
+        // child transactions applyAttachmentUnconfirmed called when they are accepted in the unconfirmed pool
         return true;
     }
 
     @Override
     void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
-        //TODO: apply fees
+        long totalFee = 0;
         for (ChildTransactionImpl childTransaction : attachment.getChildTransactions(transaction)) {
             childTransaction.apply();
+            totalFee = Math.addExact(totalFee, childTransaction.getFee());
         }
+        //TODO: new account ledger event type
+        senderAccount.addToBalanceAndUnconfirmedBalance(ChildChain.getChildChain(attachment.getChainId()),
+                AccountLedger.LedgerEvent.BLOCK_GENERATED, transaction.getId(), totalFee);
     }
 
     @Override
     void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
-        ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
-        //TODO: undo fees
-        //TODO: do not undo if child transaction is not going to be expunged from unconfirmed pool
-        for (ChildTransactionImpl childTransaction : attachment.getChildTransactions(transaction)) {
-            childTransaction.undoUnconfirmed();
-        }
+        // child transactions undoAttachmentUnconfirmed called when they are removed from the unconfirmed pool
     }
 
     @Override

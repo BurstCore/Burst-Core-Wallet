@@ -1489,6 +1489,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (! transaction.applyUnconfirmed()) {
                     throw new TransactionNotAcceptedException("Double spending", transaction);
                 }
+                for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
+                    if (!childTransaction.applyUnconfirmed()) {
+                        throw new TransactionNotAcceptedException("Double spending in child transaction", childTransaction);
+                    }
+                }
             }
             blockListeners.notify(block, Event.BEFORE_BLOCK_APPLY);
             block.apply();

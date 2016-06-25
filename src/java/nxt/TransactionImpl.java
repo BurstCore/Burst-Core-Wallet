@@ -599,13 +599,13 @@ abstract class TransactionImpl implements Transaction {
         return getType().isUnconfirmedDuplicate(this, duplicates);
     }
 
-        // returns false iff double spending
-    boolean applyUnconfirmed() {
+    // returns false iff double spending
+    final boolean applyUnconfirmed() {
         Account senderAccount = Account.getAccount(getSenderId());
         return senderAccount != null && getType().applyUnconfirmed(this, senderAccount);
     }
 
-    void undoUnconfirmed() {
+    final void undoUnconfirmed() {
         Account senderAccount = Account.getAccount(getSenderId());
         getType().undoUnconfirmed(this, senderAccount);
     }
