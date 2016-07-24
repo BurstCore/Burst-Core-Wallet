@@ -255,7 +255,6 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         return Convert.toHexString(referencedTransactionFullHash);
     }
 
-    @Override
     byte[] referencedTransactionFullHash() {
         return referencedTransactionFullHash;
     }
@@ -344,29 +343,11 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
 
     @Override
     ByteBuffer generateBytes() {
-        ByteBuffer buffer = ByteBuffer.allocate(getSize());
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-        buffer.putInt(childChain.getId());
-        buffer.put(getType().getType());
-        buffer.put(getType().getSubtype());
-        buffer.put(getVersion());
-        buffer.putInt(getTimestamp());
-        buffer.putShort(getDeadline());
-        buffer.put(getSenderPublicKey());
-        buffer.putLong(getType().canHaveRecipient() ? getRecipientId() : Genesis.CREATOR_ID);
-        buffer.putLong(getAmount());
-        buffer.putLong(getFee());
+        ByteBuffer buffer = super.generateBytes();
         if (referencedTransactionFullHash != null) {
             buffer.put(referencedTransactionFullHash);
         } else {
             buffer.put(new byte[32]);
-        }
-        buffer.put(getSignature() != null ? getSignature() : new byte[64]);
-        buffer.putInt(getFlags());
-        buffer.putInt(getECBlockHeight());
-        buffer.putLong(getECBlockId());
-        for (Appendix appendage : appendages()) {
-            appendage.putBytes(buffer);
         }
         return buffer;
     }
@@ -433,11 +414,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     }
 
     @Override
-    int signatureOffset() {
-        return 4 + 1 + 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32;
-    }
-
-    private int getFlags() {
+    int getFlags() {
         int flags = 0;
         int position = 1;
         if (message != null) {
@@ -635,23 +612,18 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             long recipientId = buffer.getLong();
             long amountNQT = buffer.getLong();
             long feeNQT = buffer.getLong();
-            byte[] referencedTransactionFullHash = new byte[32];
-            buffer.get(referencedTransactionFullHash);
-            referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
             byte[] signature = new byte[64];
             buffer.get(signature);
             signature = Convert.emptyToNull(signature);
-            int flags = 0;
-            int ecBlockHeight = 0;
-            long ecBlockId = 0;
-            if (version > 0) {
-                flags = buffer.getInt();
-                ecBlockHeight = buffer.getInt();
-                ecBlockId = buffer.getLong();
-            }
+            int flags = buffer.getInt();
+            int ecBlockHeight = buffer.getInt();
+            long ecBlockId = buffer.getLong();
             TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
             ChildTransactionImpl.BuilderImpl builder = new BuilderImpl(ChildChain.getChildChain(chainId), version, senderPublicKey, amountNQT, feeNQT,
                     deadline, transactionType.parseAttachment(buffer));
+            byte[] referencedTransactionFullHash = new byte[32];
+            buffer.get(referencedTransactionFullHash);
+            referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
             builder.referencedTransactionFullHash(referencedTransactionFullHash)
                     .timestamp(timestamp)
                     .signature(signature)
@@ -737,15 +709,10 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             long feeNQT = Convert.parseLong(transactionData.get("feeNQT"));
             String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
             byte[] signature = Convert.parseHexString((String) transactionData.get("signature"));
-            Long versionValue = (Long) transactionData.get("version");
-            byte version = versionValue == null ? 0 : versionValue.byteValue();
+            byte version = ((Long) transactionData.get("version")).byteValue();
             JSONObject attachmentData = (JSONObject) transactionData.get("attachment");
-            int ecBlockHeight = 0;
-            long ecBlockId = 0;
-            if (version > 0) {
-                ecBlockHeight = ((Long) transactionData.get("ecBlockHeight")).intValue();
-                ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
-            }
+            int ecBlockHeight = ((Long) transactionData.get("ecBlockHeight")).intValue();
+            long ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
 
             TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
             if (transactionType == null) {
@@ -766,7 +733,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             if (attachmentData != null) {
                 builder.appendix(Appendix.Message.parse(attachmentData));
                 builder.appendix(Appendix.EncryptedMessage.parse(attachmentData));
-                builder.appendix((Appendix.PublicKeyAnnouncement.parse(attachmentData)));
+                builder.appendix(Appendix.PublicKeyAnnouncement.parse(attachmentData));
                 builder.appendix(Appendix.EncryptToSelfMessage.parse(attachmentData));
                 builder.appendix(Appendix.Phasing.parse(attachmentData));
                 builder.appendix(Appendix.PrunablePlainMessage.parse(attachmentData));

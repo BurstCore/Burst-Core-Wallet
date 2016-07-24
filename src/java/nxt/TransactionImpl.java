@@ -25,6 +25,7 @@ import org.json.simple.JSONObject;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -37,15 +38,15 @@ abstract class TransactionImpl implements Transaction {
 
     static abstract class BuilderImpl implements Builder {
 
-        private final short deadline;
+        final short deadline;
         final byte[] senderPublicKey;
-        private final long amount;
-        private final TransactionType type;
-        private final byte version;
+        final long amount;
+        final TransactionType type;
+        final byte version;
+        final long fee;
 
         private Attachment.AbstractAttachment attachment;
         private int appendagesSize;
-        long fee;
 
         private long recipientId;
         byte[] signature;
@@ -431,14 +432,32 @@ abstract class TransactionImpl implements Transaction {
         return bytes;
     }
 
-    abstract ByteBuffer generateBytes();
-
-    public byte[] getUnsignedBytes() {
-        return zeroSignature(getBytes());
+    ByteBuffer generateBytes() {
+        ByteBuffer buffer = ByteBuffer.allocate(getSize());
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        buffer.putInt(getChain().getId());
+        buffer.put(getType().getType());
+        buffer.put(getType().getSubtype());
+        buffer.put(getVersion());
+        buffer.putInt(getTimestamp());
+        buffer.putShort(getDeadline());
+        buffer.put(getSenderPublicKey());
+        buffer.putLong(getType().canHaveRecipient() ? getRecipientId() : Genesis.CREATOR_ID);
+        buffer.putLong(getAmount());
+        buffer.putLong(getFee());
+        buffer.put(getSignature() != null ? getSignature() : new byte[64]);
+        buffer.putInt(getFlags());
+        buffer.putInt(getECBlockHeight());
+        buffer.putLong(getECBlockId());
+        for (Appendix appendage : appendages()) {
+            appendage.putBytes(buffer);
+        }
+        return buffer;
     }
 
-    //TODO: really needed?
-    abstract byte[] referencedTransactionFullHash();
+    public final byte[] getUnsignedBytes() {
+        return zeroSignature(getBytes());
+    }
 
     @Override
     public JSONObject getJSONObject() {
@@ -507,12 +526,14 @@ abstract class TransactionImpl implements Transaction {
         return hasValidSignature;
     }
 
-    int getSize() {
-        return signatureOffset() + 64 + 4 + 4 + 8 + appendagesSize;
+    private static final int SIGNATURE_OFFSET = 4 + 1 + 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8;
+
+    private int getSize() {
+        return SIGNATURE_OFFSET + 64 + 4 + 4 + 8 + appendagesSize;
     }
 
     @Override
-    public int getFullSize() {
+    public final int getFullSize() {
         int fullSize = getSize() - appendagesSize;
         for (Appendix.AbstractAppendix appendage : getAppendages()) {
             fullSize += appendage.getFullSize();
@@ -520,15 +541,14 @@ abstract class TransactionImpl implements Transaction {
         return fullSize;
     }
 
-    abstract int signatureOffset();
-
     private byte[] zeroSignature(byte[] data) {
-        int start = signatureOffset();
-        for (int i = start; i < start + 64; i++) {
+        for (int i = SIGNATURE_OFFSET; i < SIGNATURE_OFFSET + 64; i++) {
             data[i] = 0;
         }
         return data;
     }
+
+    abstract int getFlags();
 
     @Override
     public void validate() throws NxtException.ValidationException {

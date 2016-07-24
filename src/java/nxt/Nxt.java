@@ -355,7 +355,6 @@ public final class Nxt {
                 AccountRestrictions.init();
                 AccountLedger.init();
                 Asset.init();
-                OrderHome.init();
                 AssetTransfer.init();
                 AssetDelete.init();
                 Currency.init();

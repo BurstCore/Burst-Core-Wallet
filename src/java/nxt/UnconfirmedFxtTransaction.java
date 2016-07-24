@@ -40,4 +40,9 @@ class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTra
         return (FxtTransactionImpl)super.getTransaction();
     }
 
+    @Override
+    byte[] referencedTransactionFullHash() {
+        return null;
+    }
+
 }

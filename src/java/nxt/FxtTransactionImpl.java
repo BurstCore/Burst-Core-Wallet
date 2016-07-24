@@ -117,19 +117,8 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
     }
 
     @Override
-    ByteBuffer generateBytes() {
-        //TODO
-        return null;
-    }
-
-    @Override
-    byte[] referencedTransactionFullHash() {
-        return null;
-    }
-
-    @Override
-    int signatureOffset() {
-        return 1 + 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8;
+    int getFlags() {
+        return 0; // reserved for future use
     }
 
     @Override
@@ -313,14 +302,9 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
             byte[] signature = new byte[64];
             buffer.get(signature);
             signature = Convert.emptyToNull(signature);
-            int flags = 0;
-            int ecBlockHeight = 0;
-            long ecBlockId = 0;
-            if (version > 0) {
-                flags = buffer.getInt();
-                ecBlockHeight = buffer.getInt();
-                ecBlockId = buffer.getLong();
-            }
+            int flags = buffer.getInt();
+            int ecBlockHeight = buffer.getInt();
+            long ecBlockId = buffer.getLong();
             TransactionType transactionType = FxtTransactionType.findTransactionType(type, subtype);
             FxtTransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountNQT, feeNQT,
                     deadline, transactionType.parseAttachment(buffer));
@@ -360,15 +344,10 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
             long amountNQT = Convert.parseLong(transactionData.get("amountNQT"));
             long feeNQT = Convert.parseLong(transactionData.get("feeNQT"));
             byte[] signature = Convert.parseHexString((String) transactionData.get("signature"));
-            Long versionValue = (Long) transactionData.get("version");
-            byte version = versionValue == null ? 0 : versionValue.byteValue();
+            byte version = ((Long) transactionData.get("version")).byteValue();
             JSONObject attachmentData = (JSONObject) transactionData.get("attachment");
-            int ecBlockHeight = 0;
-            long ecBlockId = 0;
-            if (version > 0) {
-                ecBlockHeight = ((Long) transactionData.get("ecBlockHeight")).intValue();
-                ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
-            }
+            int ecBlockHeight = ((Long) transactionData.get("ecBlockHeight")).intValue();
+            long ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
 
             TransactionType transactionType = FxtTransactionType.findTransactionType(type, subtype);
             if (transactionType == null) {

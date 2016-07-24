@@ -284,4 +284,7 @@ abstract class UnconfirmedTransaction implements Transaction {
     public short getIndex() {
         return transaction.getIndex();
     }
+
+    abstract byte[] referencedTransactionFullHash();
+
 }

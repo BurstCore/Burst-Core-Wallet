@@ -186,7 +186,7 @@ public abstract class ChildTransactionType extends TransactionType {
         ChildChain childChain = (ChildChain) transaction.getChain();
         long amount = transaction.getAmount();
         long fee = transaction.getFee();
-        if (transaction.referencedTransactionFullHash() != null) {
+        if (((ChildTransactionImpl)transaction).referencedTransactionFullHash() != null) {
             //TODO: deposit must be in FXT
             fee = Math.addExact(fee, Constants.UNCONFIRMED_POOL_DEPOSIT_NQT);
         }
@@ -225,7 +225,7 @@ public abstract class ChildTransactionType extends TransactionType {
         undoAttachmentUnconfirmed(transaction, senderAccount);
         senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(),
                 transaction.getAmount(), transaction.getFee());
-        if (transaction.referencedTransactionFullHash() != null) {
+        if (((ChildTransactionImpl)transaction).referencedTransactionFullHash() != null) {
             senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), 0,
                     Constants.UNCONFIRMED_POOL_DEPOSIT_NQT);
         }

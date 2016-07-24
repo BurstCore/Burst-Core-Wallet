@@ -90,4 +90,9 @@ class UnconfirmedChildTransaction extends UnconfirmedTransaction implements Chil
         return getTransaction().getPrunableEncryptedMessage();
     }
 
+    @Override
+    byte[] referencedTransactionFullHash() {
+        return getTransaction().referencedTransactionFullHash();
+    }
+
 }
