@@ -44,8 +44,10 @@ abstract class TransactionImpl implements Transaction {
         final TransactionType type;
         final byte version;
         final long fee;
+        final int chainId;
 
         private Attachment.AbstractAttachment attachment;
+        private List<Appendix.AbstractAppendix> appendages;
         private int appendagesSize;
 
         private long recipientId;
@@ -62,7 +64,7 @@ abstract class TransactionImpl implements Transaction {
         private long ecBlockId;
         private short index = -1;
 
-        BuilderImpl(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+        BuilderImpl(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
                     Attachment.AbstractAttachment attachment) {
             this.version = version;
             this.deadline = deadline;
@@ -71,10 +73,8 @@ abstract class TransactionImpl implements Transaction {
             this.fee = fee;
             this.attachment = attachment;
             this.type = attachment.getTransactionType();
+            this.chainId = chainId;
         }
-
-        @Override
-        public abstract TransactionImpl build() throws NxtException.NotValidException;
 
         void preBuild(String secretPhrase) throws NxtException.NotValidException {
             if (timestamp == Integer.MAX_VALUE) {
@@ -86,7 +86,7 @@ abstract class TransactionImpl implements Transaction {
                 this.ecBlockId = ecBlock.getId();
             }
             int appendagesSize = 0;
-            for (Appendix appendage : getAppendages()) {
+            for (Appendix appendage : appendages) {
                 if (secretPhrase != null && appendage instanceof Appendix.Encryptable) {
                     ((Appendix.Encryptable) appendage).encrypt(secretPhrase);
                 }
@@ -95,81 +95,87 @@ abstract class TransactionImpl implements Transaction {
             this.appendagesSize = appendagesSize;
         }
 
-        public BuilderImpl recipientId(long recipientId) {
+        @Override
+        public final BuilderImpl recipientId(long recipientId) {
             this.recipientId = recipientId;
             return this;
         }
 
-        BuilderImpl appendix(Attachment.AbstractAttachment attachment) {
+        final BuilderImpl appendix(Attachment.AbstractAttachment attachment) {
             this.attachment = attachment;
             return this;
         }
 
         @Override
-        public BuilderImpl timestamp(int timestamp) {
+        public final BuilderImpl timestamp(int timestamp) {
             this.timestamp = timestamp;
             return this;
         }
 
         @Override
-        public BuilderImpl ecBlockHeight(int height) {
+        public final BuilderImpl ecBlockHeight(int height) {
             this.ecBlockHeight = height;
             this.ecBlockSet = true;
             return this;
         }
 
         @Override
-        public BuilderImpl ecBlockId(long blockId) {
+        public final BuilderImpl ecBlockId(long blockId) {
             this.ecBlockId = blockId;
             this.ecBlockSet = true;
             return this;
         }
 
-        BuilderImpl id(long id) {
+        final BuilderImpl id(long id) {
             this.id = id;
             return this;
         }
 
-        BuilderImpl signature(byte[] signature) {
+        final BuilderImpl signature(byte[] signature) {
             this.signature = signature;
             return this;
         }
 
-        BuilderImpl blockId(long blockId) {
+        final BuilderImpl blockId(long blockId) {
             this.blockId = blockId;
             return this;
         }
 
-        BuilderImpl height(int height) {
+        final BuilderImpl height(int height) {
             this.height = height;
             return this;
         }
 
-        BuilderImpl senderId(long senderId) {
+        final BuilderImpl senderId(long senderId) {
             this.senderId = senderId;
             return this;
         }
 
-        BuilderImpl fullHash(byte[] fullHash) {
+        final BuilderImpl fullHash(byte[] fullHash) {
             this.fullHash = fullHash;
             return this;
         }
 
-        BuilderImpl blockTimestamp(int blockTimestamp) {
+        final BuilderImpl blockTimestamp(int blockTimestamp) {
             this.blockTimestamp = blockTimestamp;
             return this;
         }
 
-        BuilderImpl index(short index) {
+        final BuilderImpl index(short index) {
             this.index = index;
             return this;
         }
 
-        abstract List<Appendix.AbstractAppendix> getAppendages();
+        final BuilderImpl appendages(List<Appendix.AbstractAppendix> appendages) {
+            this.appendages = appendages;
+            return this;
+        }
 
-        Attachment.AbstractAttachment getAttachment() {
+        final Attachment.AbstractAttachment getAttachment() {
             return attachment;
         }
+
+        abstract BuilderImpl prunableAttachments(JSONObject prunableAttachments) throws NxtException.NotValidException;
 
     }
 
@@ -207,7 +213,7 @@ abstract class TransactionImpl implements Transaction {
         this.amount = builder.amount;
         this.type = builder.type;
         this.attachment = builder.attachment;
-        this.appendages = builder.getAppendages();
+        this.appendages = builder.appendages;
         this.appendagesSize = builder.appendagesSize;
         this.version = builder.version;
         this.blockId = builder.blockId;
@@ -640,13 +646,56 @@ abstract class TransactionImpl implements Transaction {
     }
 
     static TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws NxtException.NotValidException {
-        //TODO
-        return null;
+        try {
+            ByteBuffer buffer = ByteBuffer.wrap(bytes);
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
+            int chainId = buffer.getInt();
+            byte type = buffer.get();
+            byte subtype = buffer.get();
+            byte version = buffer.get();
+            int timestamp = buffer.getInt();
+            short deadline = buffer.getShort();
+            byte[] senderPublicKey = new byte[32];
+            buffer.get(senderPublicKey);
+            long recipientId = buffer.getLong();
+            long amountNQT = buffer.getLong();
+            long feeNQT = buffer.getLong();
+            byte[] signature = new byte[64];
+            buffer.get(signature);
+            signature = Convert.emptyToNull(signature);
+            int flags = buffer.getInt();
+            int ecBlockHeight = buffer.getInt();
+            long ecBlockId = buffer.getLong();
+            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            TransactionImpl.BuilderImpl builder;
+            if (chainId == FxtChain.FXT.getId()) {
+                builder = FxtTransactionImpl.newTransactionBuilder(version, senderPublicKey, amountNQT, feeNQT, deadline,
+                        transactionType.parseAttachment(buffer), buffer);
+            } else {
+                builder = ChildTransactionImpl.newTransactionBuilder(chainId, version, senderPublicKey, amountNQT, feeNQT, deadline,
+                        transactionType.parseAttachment(buffer), flags, buffer);
+            }
+            builder.timestamp(timestamp)
+                    .signature(signature)
+                    .ecBlockHeight(ecBlockHeight)
+                    .ecBlockId(ecBlockId);
+            if (transactionType.canHaveRecipient()) {
+                builder.recipientId(recipientId);
+            }
+            if (buffer.hasRemaining()) {
+                throw new NxtException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
+            }
+            return builder;
+        } catch (NxtException.NotValidException|RuntimeException e) {
+            Logger.logDebugMessage("Failed to parse transaction bytes: " + Convert.toHexString(bytes));
+            throw e;
+        }
     }
 
     static TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
-        //TODO
-        return null;
+        TransactionImpl.BuilderImpl builder = newTransactionBuilder(bytes);
+        builder.prunableAttachments(prunableAttachments);
+        return builder;
     }
 
     static TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws NxtException.NotValidException {

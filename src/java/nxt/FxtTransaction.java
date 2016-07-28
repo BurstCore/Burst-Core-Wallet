@@ -17,4 +17,13 @@
 package nxt;
 
 public interface FxtTransaction extends Transaction {
+
+    interface Builder extends Transaction.Builder {
+
+        FxtTransaction build() throws NxtException.NotValidException;
+
+        FxtTransaction build(String secretPhrase) throws NxtException.NotValidException;
+
+    }
+
 }

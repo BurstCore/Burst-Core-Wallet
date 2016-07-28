@@ -27,6 +27,14 @@ import java.util.Map;
 
 public abstract class TransactionType {
 
+    public static TransactionType findTransactionType(byte type, byte subtype) {
+        if (type < 0) {
+            return FxtTransactionType.findTransactionType(type, subtype);
+        } else {
+            return ChildTransactionType.findTransactionType(type, subtype);
+        }
+    }
+
     TransactionType() {}
 
     public abstract byte getType();

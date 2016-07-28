@@ -36,6 +36,10 @@ public interface ChildTransaction extends Transaction {
 
         Builder appendix(Appendix.Phasing phasing);
 
+        ChildTransaction build() throws NxtException.NotValidException;
+
+        ChildTransaction build(String secretPhrase) throws NxtException.NotValidException;
+
     }
 
     ChildChain getChain();

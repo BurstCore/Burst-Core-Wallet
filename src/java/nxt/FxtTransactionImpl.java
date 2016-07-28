@@ -36,17 +36,20 @@ import java.util.List;
 
 class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
 
-    static final class BuilderImpl extends TransactionImpl.BuilderImpl {
+    static final class BuilderImpl extends TransactionImpl.BuilderImpl implements FxtTransaction.Builder {
 
-        private List<Appendix.AbstractAppendix> appendages;
-
-        BuilderImpl(byte version, byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline,
+        private BuilderImpl(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
                     Attachment.AbstractAttachment attachment) {
-            super(version, senderPublicKey, amountNQT, feeNQT, deadline, attachment);
+            super(FxtChain.FXT.getId(), version, senderPublicKey, amount, fee, deadline, attachment);
         }
 
         @Override
         public FxtTransactionImpl build(String secretPhrase) throws NxtException.NotValidException {
+            List<Appendix.AbstractAppendix> list = new ArrayList<>();
+            if (getAttachment() != null) {
+                list.add(getAttachment());
+            }
+            appendages(Collections.unmodifiableList(list));
             preBuild(secretPhrase);
             return getAttachment().getTransactionType() == ChildBlockTransactionType.INSTANCE ?
                     new ChildBlockTransactionImpl(this, secretPhrase) : new FxtTransactionImpl(this, secretPhrase);
@@ -57,19 +60,11 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
             return build(null);
         }
 
-        void preBuild(String secretPhrase) throws NxtException.NotValidException {
-            List<Appendix.AbstractAppendix> list = new ArrayList<>();
-            if (getAttachment() != null) {
-                list.add(getAttachment());
-            }
-            this.appendages = Collections.unmodifiableList(list);
-            super.preBuild(secretPhrase);
+        @Override
+        BuilderImpl prunableAttachments(JSONObject prunableAttachments) throws NxtException.NotValidException {
+            return this;
         }
 
-        @Override
-        List<Appendix.AbstractAppendix> getAppendages() {
-            return appendages;
-        }
     }
 
 
@@ -284,49 +279,19 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
         }
     }
 
-    //TODO: factor out common code with ChildTransactionImpl
-    static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws NxtException.NotValidException {
+    static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+                                                                Attachment.AbstractAttachment attachment, ByteBuffer buffer) throws NxtException.NotValidException {
         try {
-            ByteBuffer buffer = ByteBuffer.wrap(bytes);
-            buffer.order(ByteOrder.LITTLE_ENDIAN);
-            byte type = buffer.get();
-            byte subtype = buffer.get();
-            byte version = buffer.get();
-            int timestamp = buffer.getInt();
-            short deadline = buffer.getShort();
-            byte[] senderPublicKey = new byte[32];
-            buffer.get(senderPublicKey);
-            long recipientId = buffer.getLong();
-            long amountNQT = buffer.getLong();
-            long feeNQT = buffer.getLong();
-            byte[] signature = new byte[64];
-            buffer.get(signature);
-            signature = Convert.emptyToNull(signature);
-            int flags = buffer.getInt();
-            int ecBlockHeight = buffer.getInt();
-            long ecBlockId = buffer.getLong();
-            TransactionType transactionType = FxtTransactionType.findTransactionType(type, subtype);
-            FxtTransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountNQT, feeNQT,
-                    deadline, transactionType.parseAttachment(buffer));
-            builder.timestamp(timestamp)
-                    .signature(signature)
-                    .ecBlockHeight(ecBlockHeight)
-                    .ecBlockId(ecBlockId);
-            if (transactionType.canHaveRecipient()) {
-                builder.recipientId(recipientId);
-            }
-            if (buffer.hasRemaining()) {
-                throw new NxtException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
-            }
-            return builder;
-        } catch (NxtException.NotValidException|RuntimeException e) {
-            Logger.logDebugMessage("Failed to parse transaction bytes: " + Convert.toHexString(bytes));
+            return new BuilderImpl(version, senderPublicKey, amount, fee, deadline, attachment);
+        } catch (RuntimeException e) {
+            Logger.logDebugMessage("Failed to parse transaction bytes: " + Convert.toHexString(buffer.array()));
             throw e;
         }
     }
 
-    static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
-        BuilderImpl builder = newTransactionBuilder(bytes);
+    static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+                                                                Attachment.AbstractAttachment attachment, ByteBuffer buffer, JSONObject prunableAttachments) throws NxtException.NotValidException {
+        BuilderImpl builder = newTransactionBuilder(version, senderPublicKey, amount, fee, deadline, attachment, buffer);
         if (prunableAttachments != null) {
             //TODO: childchainBlock transactions would have prunable attachments to be handled here
         }
@@ -353,9 +318,8 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
             if (transactionType == null) {
                 throw new NxtException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
             }
-            FxtTransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey,
-                    amountNQT, feeNQT, deadline,
-                    transactionType.parseAttachment(attachmentData));
+            TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(FxtChain.FXT.getId(), version, senderPublicKey,
+                    amountNQT, feeNQT, deadline, transactionType.parseAttachment(attachmentData));
             builder.timestamp(timestamp)
                     .signature(signature)
                     .ecBlockHeight(ecBlockHeight)
@@ -364,7 +328,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
                 long recipientId = Convert.parseUnsignedLong((String) transactionData.get("recipient"));
                 builder.recipientId(recipientId);
             }
-            return builder;
+            return new BuilderImpl(builder);
         } catch (NxtException.NotValidException|RuntimeException e) {
             Logger.logDebugMessage("Failed to parse transaction: " + transactionData.toJSONString());
             throw e;

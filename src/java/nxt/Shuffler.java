@@ -451,9 +451,9 @@ public final class Shuffler {
             }
         }
         try {
-            Transaction.Builder builder = Nxt.newTransactionBuilder(childChain, Crypto.getPublicKey(secretPhrase), 0, 0,
+            ChildTransaction.Builder builder = Nxt.newTransactionBuilder(childChain, Crypto.getPublicKey(secretPhrase), 0, 0,
                     (short) 1440, attachment);
-            builder.timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
+            builder.getBuilder().timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(secretPhrase);
             failedTransaction = null;
             failureCause = null;
