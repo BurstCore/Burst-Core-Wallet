@@ -96,6 +96,12 @@ abstract class TransactionImpl implements Transaction {
         }
 
         @Override
+        public abstract TransactionImpl build() throws NxtException.NotValidException;
+
+        @Override
+        public abstract TransactionImpl build(String secretPhrase) throws NxtException.NotValidException;
+
+        @Override
         public final BuilderImpl recipientId(long recipientId) {
             this.recipientId = recipientId;
             return this;
@@ -468,6 +474,7 @@ abstract class TransactionImpl implements Transaction {
     @Override
     public JSONObject getJSONObject() {
         JSONObject json = new JSONObject();
+        json.put("chain", getChain().getId());
         json.put("type", type.getType());
         json.put("subtype", type.getSubtype());
         json.put("timestamp", timestamp);
@@ -641,8 +648,11 @@ abstract class TransactionImpl implements Transaction {
     abstract void save(Connection con, String schemaTable) throws SQLException;
 
     static TransactionImpl parseTransaction(JSONObject transactionData) throws NxtException.NotValidException {
-        //TODO
-        return null;
+        TransactionImpl transaction = newTransactionBuilder(transactionData).build();
+        if (transaction.getSignature() != null && !transaction.checkSignature()) {
+            throw new NxtException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
+        }
+        return transaction;
     }
 
     static TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws NxtException.NotValidException {
@@ -667,10 +677,13 @@ abstract class TransactionImpl implements Transaction {
             int ecBlockHeight = buffer.getInt();
             long ecBlockId = buffer.getLong();
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            if (transactionType == null) {
+                throw new NxtException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
+            }
             TransactionImpl.BuilderImpl builder;
             if (chainId == FxtChain.FXT.getId()) {
                 builder = FxtTransactionImpl.newTransactionBuilder(version, senderPublicKey, amountNQT, feeNQT, deadline,
-                        transactionType.parseAttachment(buffer), buffer);
+                        transactionType.parseAttachment(buffer), flags, buffer);
             } else {
                 builder = ChildTransactionImpl.newTransactionBuilder(chainId, version, senderPublicKey, amountNQT, feeNQT, deadline,
                         transactionType.parseAttachment(buffer), flags, buffer);
@@ -699,9 +712,46 @@ abstract class TransactionImpl implements Transaction {
     }
 
     static TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws NxtException.NotValidException {
-        //TODO
-        return null;
-    }
+        try {
+            int chainId = ((Long) transactionData.get("chain")).intValue();
+            byte type = ((Long) transactionData.get("type")).byteValue();
+            byte subtype = ((Long) transactionData.get("subtype")).byteValue();
+            int timestamp = ((Long) transactionData.get("timestamp")).intValue();
+            short deadline = ((Long) transactionData.get("deadline")).shortValue();
+            byte[] senderPublicKey = Convert.parseHexString((String) transactionData.get("senderPublicKey"));
+            long amountNQT = Convert.parseLong(transactionData.get("amountNQT"));
+            long feeNQT = Convert.parseLong(transactionData.get("feeNQT"));
+            byte[] signature = Convert.parseHexString((String) transactionData.get("signature"));
+            byte version = ((Long) transactionData.get("version")).byteValue();
+            JSONObject attachmentData = (JSONObject) transactionData.get("attachment");
+            int ecBlockHeight = ((Long) transactionData.get("ecBlockHeight")).intValue();
+            long ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
 
+            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            if (transactionType == null) {
+                throw new NxtException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
+            }
+            TransactionImpl.BuilderImpl builder;
+            if (chainId == FxtChain.FXT.getId()) {
+                builder = FxtTransactionImpl.newTransactionBuilder(version, senderPublicKey, amountNQT, feeNQT, deadline,
+                        transactionType.parseAttachment(attachmentData), transactionData);
+            } else {
+                builder = ChildTransactionImpl.newTransactionBuilder(chainId, version, senderPublicKey, amountNQT, feeNQT, deadline,
+                        transactionType.parseAttachment(attachmentData), attachmentData, transactionData);
+            }
+            builder.timestamp(timestamp)
+                    .signature(signature)
+                    .ecBlockHeight(ecBlockHeight)
+                    .ecBlockId(ecBlockId);
+            if (transactionType.canHaveRecipient()) {
+                long recipientId = Convert.parseUnsignedLong((String) transactionData.get("recipient"));
+                builder.recipientId(recipientId);
+            }
+            return builder;
+        } catch (NxtException.NotValidException|RuntimeException e) {
+            Logger.logDebugMessage("Failed to parse transaction: " + transactionData.toJSONString());
+            throw e;
+        }
+    }
 
 }

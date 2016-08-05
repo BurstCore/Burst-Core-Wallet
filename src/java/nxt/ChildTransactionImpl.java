@@ -48,7 +48,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         private Appendix.PrunablePlainMessage prunablePlainMessage;
         private Appendix.PrunableEncryptedMessage prunableEncryptedMessage;
 
-        private BuilderImpl(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+        BuilderImpl(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
                     Attachment.AbstractAttachment attachment) {
             super(chainId, version, senderPublicKey, amount, fee, deadline, attachment);
         }
@@ -346,7 +346,6 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     @Override
     public JSONObject getJSONObject() {
         JSONObject json = super.getJSONObject();
-        json.put("chain", childChain.getId());
         if (referencedTransactionFullHash != null) {
             json.put("referencedTransactionFullHash", Convert.toHexString(referencedTransactionFullHash));
         }
@@ -610,14 +609,6 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         }
     }
 
-    static ChildTransactionImpl parseTransaction(JSONObject transactionData) throws NxtException.NotValidException {
-        ChildTransactionImpl transaction = newTransactionBuilder(transactionData).build();
-        if (transaction.getSignature() != null && !transaction.checkSignature()) {
-            throw new NxtException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
-        }
-        return transaction;
-    }
-
     static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
                                                                   Attachment.AbstractAttachment attachment, int flags, ByteBuffer buffer) throws NxtException.NotValidException {
         try {
@@ -668,38 +659,11 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         return builder;
     }
 
-    static ChildTransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws NxtException.NotValidException {
+    static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+                                                                  Attachment.AbstractAttachment attachment, JSONObject attachmentData, JSONObject transactionData) throws NxtException.NotValidException {
         try {
-            int chainId = ((Long) transactionData.get("chain")).intValue();
-            byte type = ((Long) transactionData.get("type")).byteValue();
-            byte subtype = ((Long) transactionData.get("subtype")).byteValue();
-            int timestamp = ((Long) transactionData.get("timestamp")).intValue();
-            short deadline = ((Long) transactionData.get("deadline")).shortValue();
-            byte[] senderPublicKey = Convert.parseHexString((String) transactionData.get("senderPublicKey"));
-            long amountNQT = Convert.parseLong(transactionData.get("amountNQT"));
-            long feeNQT = Convert.parseLong(transactionData.get("feeNQT"));
+            ChildTransactionImpl.BuilderImpl childBuilder = new BuilderImpl(chainId, version, senderPublicKey, amount, fee, deadline, attachment);
             String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
-            byte[] signature = Convert.parseHexString((String) transactionData.get("signature"));
-            byte version = ((Long) transactionData.get("version")).byteValue();
-            JSONObject attachmentData = (JSONObject) transactionData.get("attachment");
-            int ecBlockHeight = ((Long) transactionData.get("ecBlockHeight")).intValue();
-            long ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
-
-            TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
-            if (transactionType == null) {
-                throw new NxtException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
-            }
-            TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(chainId, version, senderPublicKey, amountNQT, feeNQT, deadline,
-                    transactionType.parseAttachment(attachmentData));
-            builder.timestamp(timestamp)
-                    .signature(signature)
-                    .ecBlockHeight(ecBlockHeight)
-                    .ecBlockId(ecBlockId);
-            if (transactionType.canHaveRecipient()) {
-                long recipientId = Convert.parseUnsignedLong((String) transactionData.get("recipient"));
-                builder.recipientId(recipientId);
-            }
-            ChildTransactionImpl.BuilderImpl childBuilder = new BuilderImpl(builder);
             childBuilder.referencedTransactionFullHash(referencedTransactionFullHash);
             if (attachmentData != null) {
                 childBuilder.appendix(Appendix.Message.parse(attachmentData));
@@ -711,7 +675,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
                 childBuilder.appendix(Appendix.PrunableEncryptedMessage.parse(attachmentData));
             }
             return childBuilder;
-        } catch (NxtException.NotValidException|RuntimeException e) {
+        } catch (RuntimeException e) {
             Logger.logDebugMessage("Failed to parse transaction: " + transactionData.toJSONString());
             throw e;
         }

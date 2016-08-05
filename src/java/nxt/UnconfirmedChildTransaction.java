@@ -31,7 +31,7 @@ class UnconfirmedChildTransaction extends UnconfirmedTransaction implements Chil
     UnconfirmedChildTransaction(ResultSet rs) throws SQLException, NxtException.NotValidException {
         super(ChildTransactionImpl.newTransactionBuilder(
                 rs.getBytes("transaction_bytes"),
-                (JSONObject) (rs.getString("prunable_json") != null ? JSONValue.parse(rs.getString("prunable_json")) : null)),
+                rs.getString("prunable_json") != null ? (JSONObject) JSONValue.parse(rs.getString("prunable_json")) : null),
                 rs);
     }
 

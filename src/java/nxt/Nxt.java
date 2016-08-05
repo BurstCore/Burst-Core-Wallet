@@ -263,13 +263,11 @@ public final class Nxt {
     }
 
     public static ChildTransaction.Builder newTransactionBuilder(ChildChain childChain, byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline, Attachment attachment) {
-        TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(childChain.getId(), (byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
-        return new ChildTransactionImpl.BuilderImpl(builder);
+        return new ChildTransactionImpl.BuilderImpl(childChain.getId(), (byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
     }
 
     public static FxtTransaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline, Attachment attachment) {
-        TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(FxtChain.FXT.getId(), (byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
-        return new FxtTransactionImpl.BuilderImpl(builder);
+        return new FxtTransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
     }
 
     public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws NxtException.NotValidException {
