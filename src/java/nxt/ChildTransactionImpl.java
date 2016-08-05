@@ -532,56 +532,19 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     }
 
     static ChildTransactionImpl loadTransaction(ChildChain childChain, Connection con, ResultSet rs) throws NxtException.NotValidException {
+        BuilderImpl builder = (BuilderImpl)TransactionImpl.newTransactionBuilder(childChain, con, rs);
+        return builder.build();
+    }
+
+    static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, long amount, long fee, short deadline,
+                                                                  Attachment.AbstractAttachment attachment, ByteBuffer buffer, Connection con, ResultSet rs) throws NxtException.NotValidException {
         try {
-            byte type = rs.getByte("type");
-            byte subtype = rs.getByte("subtype");
-            int timestamp = rs.getInt("timestamp");
-            short deadline = rs.getShort("deadline");
-            long amountNQT = rs.getLong("amount");
-            long feeNQT = rs.getLong("fee");
             byte[] referencedTransactionFullHash = rs.getBytes("referenced_transaction_full_hash");
-            int ecBlockHeight = rs.getInt("ec_block_height");
-            long ecBlockId = rs.getLong("ec_block_id");
-            byte[] signature = rs.getBytes("signature");
-            long blockId = rs.getLong("block_id");
-            int height = rs.getInt("height");
-            long id = rs.getLong("id");
-            long senderId = rs.getLong("sender_id");
-            byte[] attachmentBytes = rs.getBytes("attachment_bytes");
-            int blockTimestamp = rs.getInt("block_timestamp");
-            byte[] fullHash = rs.getBytes("full_hash");
-            byte version = rs.getByte("version");
-            short transactionIndex = rs.getShort("transaction_index");
             long fxtTransactionId = rs.getLong("fxt_transaction_id");
-
-            ByteBuffer buffer = null;
-            if (attachmentBytes != null) {
-                buffer = ByteBuffer.wrap(attachmentBytes);
-                buffer.order(ByteOrder.LITTLE_ENDIAN);
-            }
-
-            TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
-            ChildTransactionImpl.BuilderImpl builder = new ChildTransactionImpl.BuilderImpl(childChain.getId(), version, null,
-                    amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer));
+            ChildTransactionImpl.BuilderImpl builder = new ChildTransactionImpl.BuilderImpl(chainId, version, null,
+                    amount, fee, deadline, attachment);
             builder.referencedTransactionFullHash(referencedTransactionFullHash)
-                    .fxtTransactionId(fxtTransactionId)
-                    .timestamp(timestamp)
-                    .signature(signature)
-                    .blockId(blockId)
-                    .height(height)
-                    .id(id)
-                    .senderId(senderId)
-                    .blockTimestamp(blockTimestamp)
-                    .fullHash(fullHash)
-                    .ecBlockHeight(ecBlockHeight)
-                    .ecBlockId(ecBlockId)
-                    .index(transactionIndex);
-            if (transactionType.canHaveRecipient()) {
-                long recipientId = rs.getLong("recipient_id");
-                if (! rs.wasNull()) {
-                    builder.recipientId(recipientId);
-                }
-            }
+                    .fxtTransactionId(fxtTransactionId);
             if (rs.getBoolean("has_message")) {
                 builder.appendix(new Appendix.Message(buffer));
             }
@@ -603,7 +566,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             if (rs.getBoolean("has_prunable_encrypted_message")) {
                 builder.appendix(new Appendix.PrunableEncryptedMessage(buffer));
             }
-            return builder.build();
+            return builder;
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

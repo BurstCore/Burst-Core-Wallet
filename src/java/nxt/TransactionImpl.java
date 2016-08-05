@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -653,6 +654,65 @@ abstract class TransactionImpl implements Transaction {
             throw new NxtException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
         }
         return transaction;
+    }
+
+    static TransactionImpl.BuilderImpl newTransactionBuilder(Chain chain, Connection con, ResultSet rs) throws NxtException.NotValidException {
+        try {
+            byte type = rs.getByte("type");
+            byte subtype = rs.getByte("subtype");
+            int timestamp = rs.getInt("timestamp");
+            short deadline = rs.getShort("deadline");
+            long amountNQT = rs.getLong("amount");
+            long feeNQT = rs.getLong("fee");
+            int ecBlockHeight = rs.getInt("ec_block_height");
+            long ecBlockId = rs.getLong("ec_block_id");
+            byte[] signature = rs.getBytes("signature");
+            long blockId = rs.getLong("block_id");
+            int height = rs.getInt("height");
+            long id = rs.getLong("id");
+            long senderId = rs.getLong("sender_id");
+            byte[] attachmentBytes = rs.getBytes("attachment_bytes");
+            int blockTimestamp = rs.getInt("block_timestamp");
+            byte[] fullHash = rs.getBytes("full_hash");
+            byte version = rs.getByte("version");
+            short transactionIndex = rs.getShort("transaction_index");
+
+            ByteBuffer buffer = null;
+            if (attachmentBytes != null) {
+                buffer = ByteBuffer.wrap(attachmentBytes);
+                buffer.order(ByteOrder.LITTLE_ENDIAN);
+            }
+
+            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            TransactionImpl.BuilderImpl builder;
+            if (chain.getId() == FxtChain.FXT.getId()) {
+                builder = FxtTransactionImpl.newTransactionBuilder(version, amountNQT, feeNQT, deadline,
+                        transactionType.parseAttachment(buffer), buffer, con, rs);
+            } else {
+                builder = ChildTransactionImpl.newTransactionBuilder(chain.getId(), version, amountNQT, feeNQT, deadline,
+                        transactionType.parseAttachment(buffer), buffer, con, rs);
+            }
+            builder.timestamp(timestamp)
+                    .signature(signature)
+                    .blockId(blockId)
+                    .height(height)
+                    .id(id)
+                    .senderId(senderId)
+                    .blockTimestamp(blockTimestamp)
+                    .fullHash(fullHash)
+                    .ecBlockHeight(ecBlockHeight)
+                    .ecBlockId(ecBlockId)
+                    .index(transactionIndex);
+            if (transactionType.canHaveRecipient()) {
+                long recipientId = rs.getLong("recipient_id");
+                if (! rs.wasNull()) {
+                    builder.recipientId(recipientId);
+                }
+            }
+            return builder;
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     static TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws NxtException.NotValidException {

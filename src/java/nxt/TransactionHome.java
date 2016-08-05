@@ -72,7 +72,7 @@ final class TransactionHome {
                 pstmt.setLong(1, transactionId);
                 try (ResultSet rs = pstmt.executeQuery()) {
                     if (rs.next() && rs.getInt("height") <= height) {
-                        return loadTransaction(transactionHome.chain, con, rs);
+                        return TransactionImpl.newTransactionBuilder(transactionHome.chain, con, rs).build();
                     }
                 }
             } catch (SQLException e) {
@@ -102,7 +102,7 @@ final class TransactionHome {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next() && rs.getInt("height") <= height) {
-                    return loadTransaction(chain, con, rs);
+                    return TransactionImpl.newTransactionBuilder(chain, con, rs).build();
                 }
                 return null;
             }
@@ -136,7 +136,7 @@ final class TransactionHome {
                 pstmt.setLong(1, transactionId);
                 try (ResultSet rs = pstmt.executeQuery()) {
                     if (rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
-                        return loadTransaction(transactionHome.chain, con, rs);
+                        return TransactionImpl.newTransactionBuilder(transactionHome.chain, con, rs).build();
                     }
                 }
             } catch (SQLException e) {
@@ -169,7 +169,7 @@ final class TransactionHome {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
-                    return loadTransaction(chain, con, rs);
+                    return TransactionImpl.newTransactionBuilder(chain, con, rs).build();
                 }
                 return null;
             }
@@ -338,14 +338,6 @@ final class TransactionHome {
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    static TransactionImpl loadTransaction(Chain chain, Connection con, ResultSet rs) throws NxtException.NotValidException {
-        if (chain == FxtChain.FXT) {
-            return FxtTransactionImpl.loadTransaction(con, rs);
-        } else {
-            return ChildTransactionImpl.loadTransaction((ChildChain)chain, con, rs);
         }
     }
 

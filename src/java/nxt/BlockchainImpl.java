@@ -525,7 +525,7 @@ final class BlockchainImpl implements Blockchain {
         return new DbIterator<>(con, pstmt, new DbIterator.ResultSetReader<TransactionImpl>() {
             @Override
             public TransactionImpl get(Connection con, ResultSet rs) throws Exception {
-                return TransactionHome.loadTransaction(chain, con, rs);
+                return TransactionImpl.newTransactionBuilder(chain, con, rs).build();
             }
         });
     }
