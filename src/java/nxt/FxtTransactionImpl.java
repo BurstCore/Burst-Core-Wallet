@@ -263,7 +263,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
     }
 
     static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
-                                                                Attachment.AbstractAttachment attachment, JSONObject transactionData) throws NxtException.NotValidException {
+                                                                Attachment.AbstractAttachment attachment, JSONObject attachmentData, JSONObject transactionData) throws NxtException.NotValidException {
         try {
             //TODO: support message and prunable message attachments?
             return new BuilderImpl(version, senderPublicKey, amount, fee, deadline, attachment);

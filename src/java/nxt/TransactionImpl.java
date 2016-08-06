@@ -662,8 +662,8 @@ abstract class TransactionImpl implements Transaction {
             byte subtype = rs.getByte("subtype");
             int timestamp = rs.getInt("timestamp");
             short deadline = rs.getShort("deadline");
-            long amountNQT = rs.getLong("amount");
-            long feeNQT = rs.getLong("fee");
+            long amount = rs.getLong("amount");
+            long fee = rs.getLong("fee");
             int ecBlockHeight = rs.getInt("ec_block_height");
             long ecBlockId = rs.getLong("ec_block_id");
             byte[] signature = rs.getBytes("signature");
@@ -684,14 +684,8 @@ abstract class TransactionImpl implements Transaction {
             }
 
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
-            TransactionImpl.BuilderImpl builder;
-            if (chain.getId() == FxtChain.FXT.getId()) {
-                builder = FxtTransactionImpl.newTransactionBuilder(version, amountNQT, feeNQT, deadline,
+            TransactionImpl.BuilderImpl builder = chain.newTransactionBuilder(version, amount, fee, deadline,
                         transactionType.parseAttachment(buffer), buffer, con, rs);
-            } else {
-                builder = ChildTransactionImpl.newTransactionBuilder(chain.getId(), version, amountNQT, feeNQT, deadline,
-                        transactionType.parseAttachment(buffer), buffer, con, rs);
-            }
             builder.timestamp(timestamp)
                     .signature(signature)
                     .blockId(blockId)
@@ -728,8 +722,8 @@ abstract class TransactionImpl implements Transaction {
             byte[] senderPublicKey = new byte[32];
             buffer.get(senderPublicKey);
             long recipientId = buffer.getLong();
-            long amountNQT = buffer.getLong();
-            long feeNQT = buffer.getLong();
+            long amount = buffer.getLong();
+            long fee = buffer.getLong();
             byte[] signature = new byte[64];
             buffer.get(signature);
             signature = Convert.emptyToNull(signature);
@@ -740,14 +734,8 @@ abstract class TransactionImpl implements Transaction {
             if (transactionType == null) {
                 throw new NxtException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
             }
-            TransactionImpl.BuilderImpl builder;
-            if (chainId == FxtChain.FXT.getId()) {
-                builder = FxtTransactionImpl.newTransactionBuilder(version, senderPublicKey, amountNQT, feeNQT, deadline,
+            TransactionImpl.BuilderImpl builder = Chain.getChain(chainId).newTransactionBuilder(version, senderPublicKey, amount, fee, deadline,
                         transactionType.parseAttachment(buffer), flags, buffer);
-            } else {
-                builder = ChildTransactionImpl.newTransactionBuilder(chainId, version, senderPublicKey, amountNQT, feeNQT, deadline,
-                        transactionType.parseAttachment(buffer), flags, buffer);
-            }
             builder.timestamp(timestamp)
                     .signature(signature)
                     .ecBlockHeight(ecBlockHeight)
@@ -779,8 +767,8 @@ abstract class TransactionImpl implements Transaction {
             int timestamp = ((Long) transactionData.get("timestamp")).intValue();
             short deadline = ((Long) transactionData.get("deadline")).shortValue();
             byte[] senderPublicKey = Convert.parseHexString((String) transactionData.get("senderPublicKey"));
-            long amountNQT = Convert.parseLong(transactionData.get("amountNQT"));
-            long feeNQT = Convert.parseLong(transactionData.get("feeNQT"));
+            long amount = Convert.parseLong(transactionData.get("amountNQT"));
+            long fee = Convert.parseLong(transactionData.get("feeNQT"));
             byte[] signature = Convert.parseHexString((String) transactionData.get("signature"));
             byte version = ((Long) transactionData.get("version")).byteValue();
             JSONObject attachmentData = (JSONObject) transactionData.get("attachment");
@@ -791,14 +779,8 @@ abstract class TransactionImpl implements Transaction {
             if (transactionType == null) {
                 throw new NxtException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
             }
-            TransactionImpl.BuilderImpl builder;
-            if (chainId == FxtChain.FXT.getId()) {
-                builder = FxtTransactionImpl.newTransactionBuilder(version, senderPublicKey, amountNQT, feeNQT, deadline,
-                        transactionType.parseAttachment(attachmentData), transactionData);
-            } else {
-                builder = ChildTransactionImpl.newTransactionBuilder(chainId, version, senderPublicKey, amountNQT, feeNQT, deadline,
+            TransactionImpl.BuilderImpl builder = Chain.getChain(chainId).newTransactionBuilder(version, senderPublicKey, amount, fee, deadline,
                         transactionType.parseAttachment(attachmentData), attachmentData, transactionData);
-            }
             builder.timestamp(timestamp)
                     .signature(signature)
                     .ecBlockHeight(ecBlockHeight)

@@ -82,7 +82,7 @@ class FxtDbVersion extends DbVersion {
             case 17:
                 apply("CREATE TABLE IF NOT EXISTS unconfirmed_transaction (db_id IDENTITY, id BIGINT NOT NULL, expiration INT NOT NULL, "
                         + "transaction_height INT NOT NULL, fee_per_byte BIGINT NOT NULL, arrival_timestamp BIGINT NOT NULL, "
-                        + "transaction_bytes VARBINARY NOT NULL, prunable_json VARCHAR, height INT NOT NULL)");
+                        + "transaction_bytes VARBINARY NOT NULL, prunable_json VARCHAR, chain_id INT NOT NULL, height INT NOT NULL)");
             case 18:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS unconfirmed_transaction_id_idx ON unconfirmed_transaction (id)");
             case 19:

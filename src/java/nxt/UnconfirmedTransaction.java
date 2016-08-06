@@ -38,13 +38,9 @@ abstract class UnconfirmedTransaction implements Transaction {
     }
 
     static UnconfirmedTransaction load(ResultSet rs) throws SQLException {
-        Chain chain = Chain.getChain(rs.getString("chain"));
+        Chain chain = Chain.getChain(rs.getInt("chain_id"));
         try {
-            if (chain == FxtChain.FXT) {
-                return new UnconfirmedFxtTransaction(rs);
-            } else {
-                return new UnconfirmedChildTransaction(rs);
-            }
+            return chain.newUnconfirmedTransaction(rs);
         } catch (NxtException.NotValidException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -73,7 +69,7 @@ abstract class UnconfirmedTransaction implements Transaction {
 
     void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO unconfirmed_transaction (id, transaction_height, "
-                + "fee_per_byte, expiration, transaction_bytes, prunable_json, arrival_timestamp, chain, height) "
+                + "fee_per_byte, expiration, transaction_bytes, prunable_json, arrival_timestamp, chain_id, height) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, transaction.getId());
@@ -88,7 +84,7 @@ abstract class UnconfirmedTransaction implements Transaction {
                 pstmt.setNull(++i, Types.VARCHAR);
             }
             pstmt.setLong(++i, arrivalTimestamp);
-            pstmt.setString(++i, transaction.getChain().getName());
+            pstmt.setInt(++i, transaction.getChain().getId());
             pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
             pstmt.executeUpdate();
         }

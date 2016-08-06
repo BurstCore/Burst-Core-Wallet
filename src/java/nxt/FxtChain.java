@@ -16,7 +16,16 @@
 
 package nxt;
 
+import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 public final class FxtChain extends Chain {
+
+    public static final String FXT_NAME = "ARDR";
 
     public static final FxtChain FXT = new FxtChain();
 
@@ -25,7 +34,7 @@ public final class FxtChain extends Chain {
     private final TransactionHome transactionHome;
 
     private FxtChain() {
-        super(1, "FXT");
+        super(1, FXT_NAME);
         this.transactionHome = TransactionHome.forChain(this);
     }
 
@@ -39,4 +48,28 @@ public final class FxtChain extends Chain {
         return transactionHome;
     }
 
+    @Override
+    FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+                                                         Attachment.AbstractAttachment attachment, JSONObject attachmentData, JSONObject transactionData) throws NxtException.NotValidException {
+        return FxtTransactionImpl.newTransactionBuilder(version, senderPublicKey, amount, fee, deadline,
+                attachment, attachmentData, transactionData);
+    }
+
+    @Override
+    FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+                                                         Attachment.AbstractAttachment attachment, int flags, ByteBuffer buffer) throws NxtException.NotValidException {
+        return FxtTransactionImpl.newTransactionBuilder(version, senderPublicKey, amount, fee, deadline,
+                attachment, flags, buffer);
+    }
+
+    @Override
+    FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, long amount, long fee, short deadline,
+                                                         Attachment.AbstractAttachment attachment, ByteBuffer buffer, Connection con, ResultSet rs) throws NxtException.NotValidException {
+        return FxtTransactionImpl.newTransactionBuilder(version, amount, fee, deadline, attachment, buffer, con, rs);
+    }
+
+    @Override
+    UnconfirmedTransaction newUnconfirmedTransaction(ResultSet rs) throws SQLException, NxtException.NotValidException {
+        return new UnconfirmedFxtTransaction(rs);
+    }
 }
