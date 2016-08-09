@@ -148,9 +148,6 @@ public final class PhasingParams {
 
         voteWeighting.validate();
 
-    }
-
-    void checkApprovable() throws NxtException.NotCurrentlyValidException {
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY) {
             Currency currency = Currency.getCurrency(voteWeighting.getHoldingId());
             if (currency == null) {
@@ -192,8 +189,20 @@ public final class PhasingParams {
                 }
             }
         }
+
     }
-    
+
+    void checkApprovable() throws NxtException.NotCurrentlyValidException {
+        if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY
+                && Currency.getCurrency(voteWeighting.getHoldingId()) == null) {
+            throw new NxtException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
+        }
+        if (voteWeighting.getMinBalance() > 0 && voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY
+                && Currency.getCurrency(voteWeighting.getHoldingId()) == null) {
+            throw new NxtException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
+        }
+    }
+
     public long getQuorum() {
         return quorum;
     }

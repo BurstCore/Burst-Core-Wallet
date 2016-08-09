@@ -1988,8 +1988,7 @@ public abstract class TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment)transaction.getAttachment();
-                senderAccount.payDividends(transaction.getId(), attachment.getAssetId(), attachment.getHeight(),
-                        attachment.getAmountNQTPerQNT());
+                senderAccount.payDividends(transaction.getId(), attachment);
             }
 
             @Override
@@ -2025,6 +2024,18 @@ public abstract class TransactionType {
                 if (asset.getAccountId() != transaction.getSenderId() || attachment.getAmountNQTPerQNT() <= 0) {
                     throw new NxtException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
                 }
+                AssetDividend lastDividend = AssetDividend.getLastDividend(attachment.getAssetId());
+                if (lastDividend != null && lastDividend.getHeight() > Nxt.getBlockchain().getHeight() - 60) {
+                    throw new NxtException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId())
+                            + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + Nxt.getBlockchain().getHeight()
+                            + ", limit is one dividend per 60 blocks");
+                }
+            }
+
+            @Override
+            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+                Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment) transaction.getAttachment();
+                return isDuplicate(ColoredCoins.DIVIDEND_PAYMENT, Long.toUnsignedString(attachment.getAssetId()), duplicates, true);
             }
 
             @Override
@@ -2034,7 +2045,7 @@ public abstract class TransactionType {
 
             @Override
             public boolean isPhasingSafe() {
-                return true;
+                return false;
             }
 
         };
@@ -2811,7 +2822,6 @@ public abstract class TransactionType {
                 Attachment.SetPhasingOnly attachment = (Attachment.SetPhasingOnly)transaction.getAttachment();
                 VotingModel votingModel = attachment.getPhasingParams().getVoteWeighting().getVotingModel();
                 attachment.getPhasingParams().validate();
-                attachment.getPhasingParams().checkApprovable();
                 if (votingModel == VotingModel.NONE) {
                     Account senderAccount = Account.getAccount(transaction.getSenderId());
                     if (senderAccount == null || !senderAccount.getControls().contains(ControlType.PHASING_ONLY)) {

@@ -235,7 +235,7 @@ public interface Appendix {
             this(isText ? Convert.toBytes(string) : Convert.parseHexString(string), isText);
         }
 
-        private Message(byte[] message, boolean isText) {
+        public Message(byte[] message, boolean isText) {
             this.message = message;
             this.isText = isText;
         }
@@ -350,7 +350,7 @@ public interface Appendix {
             this(Convert.toBytes(string, isText), isText);
         }
 
-        private PrunablePlainMessage(byte[] message, boolean isText) {
+        public PrunablePlainMessage(byte[] message, boolean isText) {
             this.message = message;
             this.isText = isText;
             this.hash = null;
@@ -1318,7 +1318,6 @@ public interface Appendix {
         @Override
         void validate(Transaction transaction) throws NxtException.ValidationException {
             params.validate();
-            params.checkApprovable();
             int currentHeight = Nxt.getBlockchain().getHeight();
             if (params.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
                 if (linkedFullHashes.length == 0 || linkedFullHashes.length > Constants.MAX_PHASING_LINKED_TRANSACTIONS) {

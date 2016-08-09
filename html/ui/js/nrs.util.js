@@ -523,6 +523,22 @@ var NRS = (function (NRS, $, undefined) {
 		}
 	};
 
+    NRS.getBlockHeightMoment = function(height) {
+        if (!height || !NRS.lastBlockHeight || !NRS.averageBlockGenerationTime) {
+            return "-";
+        }
+        var heightDiff = height - NRS.lastBlockHeight;
+        return moment().add(heightDiff * NRS.averageBlockGenerationTime, 'seconds');
+    };
+    
+    NRS.getBlockHeightTimeEstimate = function(height) {
+        var heightMoment = NRS.getBlockHeightMoment(height);
+        if (heightMoment == "-") {
+            return "-";
+        }
+        return heightMoment.format("YYYY/MM/DD hh:mm a");
+   	};
+
     NRS.baseTargetPercent = function(block) {
         if (block) {
             return Math.round(block.baseTarget / 153722867 * 100)
@@ -1408,6 +1424,22 @@ var NRS = (function (NRS, $, undefined) {
             statusIcon = "<i class='fa fa-circle' title='" + $.t("confirmed") + "'></i>";
         }
         return statusIcon;
+    };
+    
+    NRS.getAccountForDecryption = function(transaction, recipient, sender) {
+        if (!recipient && transaction.recipient == NRS.account) {
+            return transaction.sender;
+        }
+        if (transaction[recipient] == NRS.account) {
+            return transaction.sender;
+        }
+        if (!sender && transaction.sender == NRS.account) {
+            return transaction.recipient;
+        }
+        if (transaction[sender] == NRS.account) {
+            return transaction.recipient;
+        }
+        return null;
     };
 
     NRS.phasingControlObjectToPhasingParams = function(controlObj) {
