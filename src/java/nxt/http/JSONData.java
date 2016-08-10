@@ -24,6 +24,7 @@ import nxt.Alias;
 import nxt.Appendix;
 import nxt.Asset;
 import nxt.AssetDelete;
+import nxt.AssetDividend;
 import nxt.AssetTransfer;
 import nxt.Attachment;
 import nxt.Block;
@@ -836,6 +837,19 @@ public final class JSONData {
         return json;
     }
 
+    static JSONObject assetDividend(AssetDividend assetDividend) {
+        JSONObject json = new JSONObject();
+        json.put("assetDividend", Long.toUnsignedString(assetDividend.getId()));
+        json.put("asset", Long.toUnsignedString(assetDividend.getAssetId()));
+        json.put("amountNQTPerQNT", String.valueOf(assetDividend.getAmountNQTPerQNT()));
+        json.put("totalDividend", String.valueOf(assetDividend.getTotalDividend()));
+        json.put("dividendHeight", assetDividend.getDividendHeight());
+        json.put("numberOfAccounts", assetDividend.getNumAccounts());
+        json.put("height", assetDividend.getHeight());
+        json.put("timestamp", assetDividend.getTimestamp());
+        return json;
+    }
+
     static JSONObject currencyTransfer(CurrencyTransfer transfer, boolean includeCurrencyInfo) {
         JSONObject json = new JSONObject();
         json.put("transfer", Long.toUnsignedString(transfer.getId()));
@@ -1032,7 +1046,7 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject prunableMessage(PrunableMessage prunableMessage, long readerAccountId, String secretPhrase) {
+    static JSONObject prunableMessage(PrunableMessage prunableMessage, String secretPhrase, byte[] sharedKey) {
         JSONObject json = new JSONObject();
         json.put("transaction", Long.toUnsignedString(prunableMessage.getId()));
         if (prunableMessage.getMessage() == null || prunableMessage.getEncryptedData() == null) {
@@ -1048,17 +1062,18 @@ public final class JSONData {
         if (encryptedData != null) {
             json.put("encryptedMessage", encryptedData(prunableMessage.getEncryptedData()));
             json.put("encryptedMessageIsText", prunableMessage.encryptedMessageIsText());
-            if (secretPhrase != null) {
-                byte[] publicKey = prunableMessage.getSenderId() == readerAccountId
-                        ? Account.getPublicKey(prunableMessage.getRecipientId()) : Account.getPublicKey(prunableMessage.getSenderId());
-                if (publicKey != null) {
-                    try {
-                        byte[] decrypted = Account.decryptFrom(publicKey, encryptedData, secretPhrase, prunableMessage.isCompressed());
-                        json.put("decryptedMessage", Convert.toString(decrypted, prunableMessage.encryptedMessageIsText()));
-                    } catch (RuntimeException e) {
-                        putException(json, e, "Decryption failed");
-                    }
+            byte[] decrypted = null;
+            try {
+                if (secretPhrase != null) {
+                    decrypted = prunableMessage.decrypt(secretPhrase);
+                } else if (sharedKey != null && sharedKey.length > 0) {
+                    decrypted = prunableMessage.decrypt(sharedKey);
                 }
+                if (decrypted != null) {
+                    json.put("decryptedMessage", Convert.toString(decrypted, prunableMessage.encryptedMessageIsText()));
+                }
+            } catch (RuntimeException e) {
+                putException(json, e, "Decryption failed");
             }
             json.put("isCompressed", prunableMessage.isCompressed());
         }
@@ -1107,6 +1122,7 @@ public final class JSONData {
         json.put("requireBlockchain", handler.requireBlockchain());
         json.put("requirePost", handler.requirePost());
         json.put("requirePassword", handler.requirePassword());
+        json.put("requireFullClient", handler.requireFullClient());
         return json;
     }
 
