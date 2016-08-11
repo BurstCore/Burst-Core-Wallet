@@ -5,7 +5,7 @@ then
 	echo VERSION not defined
 	exit 1
 fi
-PACKAGE=nxt-client-${VERSION}
+PACKAGE=nxt-eval-client-${VERSION}
 echo PACKAGE="${PACKAGE}"
 CHANGELOG=nxt-client-${VERSION}.changelog.txt
 OBFUSCATE=$2
@@ -68,20 +68,20 @@ cd -
 zip -q -X -r ${PACKAGE}.zip nxt -x \*/.idea/\* \*/.gitignore \*/.git/\* \*/\*.log \*.iml nxt/conf/nxt.properties nxt/conf/logging.properties
 rm -rf nxt
 
-echo creating full changelog
-echo "${PACKAGE}:" > changelog-full.txt
-echo >> changelog-full.txt
-cat changelogs/${CHANGELOG} >> changelog-full.txt
-echo >> changelog-full.txt
-echo "--------------------------------------------------------------------------------" >> changelog-full.txt
-cat changelogs/changelog.txt >> changelog-full.txt
-unix2dos changelog-full.txt
+#echo creating full changelog
+#echo "${PACKAGE}:" > changelog-full.txt
+#echo >> changelog-full.txt
+#cat changelogs/${CHANGELOG} >> changelog-full.txt
+#echo >> changelog-full.txt
+#echo "--------------------------------------------------------------------------------" >> changelog-full.txt
+#cat changelogs/changelog.txt >> changelog-full.txt
+#unix2dos changelog-full.txt
 
 #echo signing zip package
 #../jarsigner.sh ${PACKAGE}.zip
 
-echo signing jar package
-../jarsigner.sh ${PACKAGE}.jar
+#echo signing jar package
+#../jarsigner.sh ${PACKAGE}.jar
 
 echo creating sh package
 echo "#!/bin/sh\nexec java -jar \"\${0}\"\n\n" > ${PACKAGE}.sh
@@ -92,35 +92,18 @@ rm -f ${PACKAGE}.jar
 echo creating change log ${CHANGELOG}
 echo "Release $1" > ${CHANGELOG}
 echo >> ${CHANGELOG}
-echo "https://bitbucket.org/JeanLucPicard/nxt/downloads/${PACKAGE}.zip" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
 echo "sha256:" >> ${CHANGELOG}
 echo >> ${CHANGELOG}
 sha256sum ${PACKAGE}.zip >> ${CHANGELOG}
 
 echo >> ${CHANGELOG}
-echo "https://bitbucket.org/JeanLucPicard/nxt/downloads/${PACKAGE}.sh" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
-echo "sha256:" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
 sha256sum ${PACKAGE}.sh >> ${CHANGELOG}
 
 echo >> ${CHANGELOG}
-echo "https://bitbucket.org/JeanLucPicard/nxt/downloads/${PACKAGE}.exe" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
-#echo "sha256:" >> ${CHANGELOG}
-#sha256sum ${PACKAGE}.exe >> ${CHANGELOG}
-echo "https://bitbucket.org/JeanLucPicard/nxt/downloads/nxt-installer-${VERSION}.dmg" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
 
-echo "The exe, dmg, and sh packages must have a digital signature by \"Stichting NXT\"." >> ${CHANGELOG}
-
-if [ "${OBFUSCATE}" = "obfuscate" ];
-then
 echo >> ${CHANGELOG}
 echo >> ${CHANGELOG}
-echo "This is an experimental release for testing only. Source code is not provided." >> ${CHANGELOG}
-fi
+echo "This is an evaluation version for testing only." >> ${CHANGELOG}
 echo >> ${CHANGELOG}
 echo >> ${CHANGELOG}
 echo "Change log:" >> ${CHANGELOG}
@@ -129,18 +112,18 @@ echo >> ${CHANGELOG}
 cat changelogs/${CHANGELOG} >> ${CHANGELOG}
 echo >> ${CHANGELOG}
 
-gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.zip
-gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.sh
-#gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.exe
+#gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.zip
+#gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.sh
+##gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.exe
 
-gpg --clearsign --sign-with 0x811D6940E1E4240C ${CHANGELOG}
-rm -f ${CHANGELOG}
-gpgv ${PACKAGE}.zip.asc ${PACKAGE}.zip
-gpgv ${PACKAGE}.sh.asc ${PACKAGE}.sh
-#gpgv ${PACKAGE}.exe.asc ${PACKAGE}.exe
-gpgv ${CHANGELOG}.asc
-sha256sum -c ${CHANGELOG}.asc
-#jarsigner -verify ${PACKAGE}.zip
-jarsigner -verify ${PACKAGE}.sh
+#gpg --clearsign --sign-with 0x811D6940E1E4240C ${CHANGELOG}
+#rm -f ${CHANGELOG}
+#gpgv ${PACKAGE}.zip.asc ${PACKAGE}.zip
+#gpgv ${PACKAGE}.sh.asc ${PACKAGE}.sh
+##gpgv ${PACKAGE}.exe.asc ${PACKAGE}.exe
+#gpgv ${CHANGELOG}.asc
+sha256sum -c ${CHANGELOG}
+##jarsigner -verify ${PACKAGE}.zip
+#jarsigner -verify ${PACKAGE}.sh
 
 
