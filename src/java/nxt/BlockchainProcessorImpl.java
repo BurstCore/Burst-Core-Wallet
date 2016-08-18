@@ -1221,8 +1221,12 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             for (TransactionImpl transaction : transactions) {
                 digest.update(transaction.bytes());
             }
+            byte[] generationSignature = new byte[32];
+            if (Constants.isTestnet) {
+                Arrays.fill(generationSignature, (byte)1);
+            }
             BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
-                    Genesis.CREATOR_PUBLIC_KEY, new byte[32], new byte[32], transactions, Genesis.CREATOR_SECRET_PHRASE);
+                    Genesis.CREATOR_PUBLIC_KEY, generationSignature, new byte[32], transactions, Genesis.CREATOR_SECRET_PHRASE);
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
