@@ -1020,6 +1020,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     @Override
+    public long getGenesisBlockId() {
+        return genesisBlockId;
+    }
+
+    @Override
     public void processPeerBlock(JSONObject request) throws NxtException {
         BlockImpl block = BlockImpl.parseBlock(request);
         BlockImpl lastBlock = blockchain.getLastBlock();
