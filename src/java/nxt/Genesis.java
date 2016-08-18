@@ -48,7 +48,8 @@ public final class Genesis {
     public static final byte[] CREATOR_PUBLIC_KEY = CREATOR_SECRET_PHRASE != null ? Crypto.getPublicKey(CREATOR_SECRET_PHRASE)
             : Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
     public static final long CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
-    public static final byte[] GENESIS_BLOCK_SIGNATURE = Convert.parseHexString((String)genesisParameters.get("genesisBlockSignature"));
+    public static final byte[] GENESIS_BLOCK_SIGNATURE = Convert.parseHexString((String)genesisParameters.get(Constants.isTestnet
+            ? "genesisTestnetBlockSignature" : "genesisBlockSignature"));
 
     public static final long[] GENESIS_RECIPIENTS;
     public static final byte[][] GENESIS_PUBLIC_KEYS;
