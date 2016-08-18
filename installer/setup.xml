@@ -115,7 +115,7 @@
             <file src="NXT_Wallet.url" targetdir="${INSTALL_PATH}" override="true"/>
             <file src="3RD-PARTY-LICENSES.txt" targetdir="${INSTALL_PATH}" override="true"/>
             <file src="AUTHORS.txt" targetdir="${INSTALL_PATH}" override="true"/>
-            <file src="COPYING.txt" targetdir="${INSTALL_PATH}" override="true"/>
+            <file src="EVALUATION-LICENSE.txt" targetdir="${INSTALL_PATH}" override="true"/>
             <file src="DEVELOPER-AGREEMENT.txt" targetdir="${INSTALL_PATH}" override="true"/>
             <file src="LICENSE.txt" targetdir="${INSTALL_PATH}" override="true"/>
             <file src="DEVELOPERS-GUIDE.md" targetdir="${INSTALL_PATH}" override="true"/>
