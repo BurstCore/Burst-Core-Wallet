@@ -16,16 +16,7 @@
 
 package nxt.http;
 
-import nxt.Constants;
-import nxt.CurrencyMinting;
-import nxt.CurrencyType;
-import nxt.Genesis;
-import nxt.HoldingType;
-import nxt.PhasingPoll;
-import nxt.Shuffling;
-import nxt.ShufflingParticipant;
-import nxt.TransactionType;
-import nxt.VoteWeighting;
+import nxt.*;
 import nxt.crypto.HashFunction;
 import nxt.peer.Peer;
 import nxt.util.JSON;
@@ -49,6 +40,7 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
         static {
             try {
                 JSONObject response = new JSONObject();
+                response.put("genesisBlockId", Nxt.getBlockchainProcessor().getGenesisBlockId());
                 response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
                 response.put("maxBlockPayloadLength", Constants.MAX_PAYLOAD_LENGTH);
