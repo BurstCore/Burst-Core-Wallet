@@ -7,7 +7,7 @@ then
 fi
 PACKAGE=nxt-eval-client-${VERSION}
 echo PACKAGE="${PACKAGE}"
-CHANGELOG=nxt-client-${VERSION}.changelog.txt
+CHANGELOG=nxt-eval-client-${VERSION}.txt
 OBFUSCATE=$2
 
 FILES="changelogs conf html lib resource contrib"
@@ -105,12 +105,12 @@ echo >> ${CHANGELOG}
 echo >> ${CHANGELOG}
 echo "This is an evaluation version for testing only." >> ${CHANGELOG}
 echo >> ${CHANGELOG}
-echo >> ${CHANGELOG}
-echo "Change log:" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
+#echo "Change log:" >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
 
-cat changelogs/${CHANGELOG} >> ${CHANGELOG}
-echo >> ${CHANGELOG}
+#cat changelogs/${CHANGELOG} >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
 
 #gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.zip
 #gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.sh
