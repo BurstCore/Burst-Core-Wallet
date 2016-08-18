@@ -324,7 +324,7 @@ var NRS = (function (NRS, $, undefined) {
                 data.publicKey = NRS.generatePublicKey(secretPhrase);
                 NRS.accountInfo.publicKey = data.publicKey;
             }
-            var ecBlock = NRS.getECBlock(NRS.isTestNet);
+            var ecBlock = NRS.constants.LAST_KNOWN_BLOCK;
             data.ecBlockId = ecBlock.id;
             data.ecBlockHeight = ecBlock.height;
         } else if (type == "POST" && NRS.rememberPassword) {
@@ -551,7 +551,7 @@ var NRS = (function (NRS, $, undefined) {
             transaction.ecBlockHeight = String(converters.byteArrayToSignedInt32(byteArray, 164));
             transaction.ecBlockId = String(converters.byteArrayToBigInteger(byteArray, 168));
             if (isVerifyECBlock) {
-                var ecBlock = NRS.getECBlock(NRS.isTestNet);
+                var ecBlock = NRS.constants.LAST_KNOWN_BLOCK;
                 if (ecBlock.id != "0") {
                     if (transaction.ecBlockHeight != ecBlock.height) {
                         return false;
