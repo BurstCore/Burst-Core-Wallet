@@ -902,9 +902,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
         ThreadPool.runBeforeStart(() -> {
             alreadyInitialized = true;
-            if (addGenesisBlock()) {
-                scan(0, false);
-            } else if (Nxt.getBooleanProperty("nxt.forceScan")) {
+            addGenesisBlock();
+            if (Nxt.getBooleanProperty("nxt.forceScan")) {
                 scan(0, Nxt.getBooleanProperty("nxt.forceValidate"));
             } else {
                 boolean rescan;
@@ -1072,9 +1071,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 scheduleScan(0, false);
                 //BlockDb.deleteBlock(Genesis.GENESIS_BLOCK_ID); // fails with stack overflow in H2
                 BlockDb.deleteAll();
-                if (addGenesisBlock()) {
-                    scan(0, false);
-                }
+                addGenesisBlock();
             } finally {
                 setGetMoreBlocks(true);
             }
@@ -1201,6 +1198,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             return false;
         }
         Logger.logMessage("Genesis block not in database, starting from scratch");
+        Db.db.beginTransaction();
         try {
             List<TransactionImpl> transactions = new ArrayList<>();
             for (int i = 0; i < Genesis.GENESIS_RECIPIENTS.length; i++) {
@@ -1213,8 +1211,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         .ecBlockHeight(0)
                         .ecBlockId(0)
                         .appendix(new Appendix.PublicKeyAnnouncement(Genesis.GENESIS_PUBLIC_KEYS[i]))
+                        .signature(Genesis.GENESIS_SIGNATURES[i])
                         .build(Genesis.CREATOR_SECRET_PHRASE);
-                transactions.add(transaction);
+                if (transaction.verifySignature() && transactions.add(transaction) && Genesis.CREATOR_SECRET_PHRASE != null) {
+                    Logger.logDebugMessage(Convert.toHexString(transaction.getSignature()));
+                }
             }
             Collections.sort(transactions, Comparator.comparingLong(Transaction::getId));
             MessageDigest digest = Crypto.sha256();
@@ -1225,15 +1226,32 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             if (Constants.isTestnet) {
                 Arrays.fill(generationSignature, (byte)1);
             }
-            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
-                    Genesis.CREATOR_PUBLIC_KEY, generationSignature, new byte[32], transactions, Genesis.CREATOR_SECRET_PHRASE);
+            BlockImpl genesisBlock;
+            if (Genesis.CREATOR_SECRET_PHRASE != null) {
+                genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
+                        Genesis.CREATOR_PUBLIC_KEY, new byte[32], new byte[32], transactions, Genesis.CREATOR_SECRET_PHRASE);
+                Logger.logDebugMessage(Convert.toHexString(genesisBlock.getBlockSignature()));
+            } else {
+                genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
+                        Genesis.CREATOR_PUBLIC_KEY, new byte[32], Genesis.GENESIS_BLOCK_SIGNATURE, new byte[32], transactions);
+            }
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
+            Account.addOrGetAccount(Genesis.CREATOR_ID).apply(Genesis.CREATOR_PUBLIC_KEY);
+            accept(genesisBlock, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
+            if (!genesisBlock.verifyBlockSignature()) {
+                Db.db.rollbackTransaction();
+                return false;
+            }
+            Db.db.commitTransaction();
             return true;
-        } catch (NxtException.ValidationException e) {
+        } catch (NxtException e) {
+            Db.db.rollbackTransaction();
             Logger.logMessage(e.getMessage());
             throw new RuntimeException(e.toString(), e);
+        } finally {
+            Db.db.endTransaction();
         }
     }
 

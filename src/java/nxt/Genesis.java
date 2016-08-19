@@ -18,6 +18,7 @@ package nxt;
 
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
+import nxt.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -44,15 +45,20 @@ public final class Genesis {
     }
 
     public static final String CREATOR_SECRET_PHRASE = (String)genesisParameters.get("genesisSecretPhrase");
-    public static final byte[] CREATOR_PUBLIC_KEY = Crypto.getPublicKey(CREATOR_SECRET_PHRASE);
+    public static final byte[] CREATOR_PUBLIC_KEY = CREATOR_SECRET_PHRASE != null ? Crypto.getPublicKey(CREATOR_SECRET_PHRASE)
+            : Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
     public static final long CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
+    public static final byte[] GENESIS_BLOCK_SIGNATURE = Convert.parseHexString((String)genesisParameters.get("genesisBlockSignature"));
 
     public static final long[] GENESIS_RECIPIENTS;
     public static final byte[][] GENESIS_PUBLIC_KEYS;
+    public static final byte[][] GENESIS_SIGNATURES;
     static {
         JSONArray recipientPublicKeys = (JSONArray)genesisParameters.get("genesisRecipientPublicKeys");
+        JSONArray genesisSignatures = (JSONArray)genesisParameters.get("genesisSignatures");
         GENESIS_RECIPIENTS = new long[recipientPublicKeys.size()];
         GENESIS_PUBLIC_KEYS = new byte[GENESIS_RECIPIENTS.length][];
+        GENESIS_SIGNATURES = new byte[GENESIS_RECIPIENTS.length][];
         for (int i = 0; i < GENESIS_RECIPIENTS.length; i++) {
             GENESIS_PUBLIC_KEYS[i] = Convert.parseHexString((String)recipientPublicKeys.get(i));
             if (!Crypto.isCanonicalPublicKey(GENESIS_PUBLIC_KEYS[i])) {
@@ -62,6 +68,12 @@ public final class Genesis {
             if (GENESIS_RECIPIENTS[i] == 0) {
                 throw new RuntimeException("Invalid genesis recipient account " + GENESIS_RECIPIENTS[i]);
             }
+            if (genesisSignatures != null) {
+                GENESIS_SIGNATURES[i] = Convert.parseHexString((String)genesisSignatures.get(i));
+            }
+        }
+        if (CREATOR_SECRET_PHRASE != null) {
+            Logger.logDebugMessage(Convert.toHexString(CREATOR_PUBLIC_KEY));
         }
     }
 
