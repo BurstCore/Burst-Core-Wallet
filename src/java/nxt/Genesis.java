@@ -18,7 +18,6 @@ package nxt;
 
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
-import nxt.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -44,9 +43,7 @@ public final class Genesis {
         }
     }
 
-    public static final String CREATOR_SECRET_PHRASE = (String)genesisParameters.get("genesisSecretPhrase");
-    public static final byte[] CREATOR_PUBLIC_KEY = CREATOR_SECRET_PHRASE != null ? Crypto.getPublicKey(CREATOR_SECRET_PHRASE)
-            : Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
+    public static final byte[] CREATOR_PUBLIC_KEY = Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
     public static final long CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
     public static final byte[] GENESIS_BLOCK_SIGNATURE = Convert.parseHexString((String)genesisParameters.get(Constants.isTestnet
             ? "genesisTestnetBlockSignature" : "genesisBlockSignature"));
@@ -72,9 +69,6 @@ public final class Genesis {
             if (genesisSignatures != null) {
                 GENESIS_SIGNATURES[i] = Convert.parseHexString((String)genesisSignatures.get(i));
             }
-        }
-        if (CREATOR_SECRET_PHRASE != null) {
-            Logger.logDebugMessage(Convert.toHexString(CREATOR_PUBLIC_KEY));
         }
     }
 

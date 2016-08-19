@@ -1212,10 +1212,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         .ecBlockId(0)
                         .appendix(new Appendix.PublicKeyAnnouncement(Genesis.GENESIS_PUBLIC_KEYS[i]))
                         .signature(Genesis.GENESIS_SIGNATURES[i])
-                        .build(Genesis.CREATOR_SECRET_PHRASE);
-                if (transaction.verifySignature() && transactions.add(transaction) && Genesis.CREATOR_SECRET_PHRASE != null) {
-                    Logger.logDebugMessage(Convert.toHexString(transaction.getSignature()));
+                        .build();
+                if (!transaction.verifySignature()) {
+                    throw new RuntimeException("Invalid transaction signature");
                 }
+                transactions.add(transaction);
             }
             Collections.sort(transactions, Comparator.comparingLong(Transaction::getId));
             MessageDigest digest = Crypto.sha256();
@@ -1226,23 +1227,15 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             if (Constants.isTestnet) {
                 Arrays.fill(generationSignature, (byte)1);
             }
-            BlockImpl genesisBlock;
-            if (Genesis.CREATOR_SECRET_PHRASE != null) {
-                genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
-                        Genesis.CREATOR_PUBLIC_KEY, generationSignature, new byte[32], transactions, Genesis.CREATOR_SECRET_PHRASE);
-                Logger.logDebugMessage(Convert.toHexString(genesisBlock.getBlockSignature()));
-            } else {
-                genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
-                        Genesis.CREATOR_PUBLIC_KEY, generationSignature, Genesis.GENESIS_BLOCK_SIGNATURE, new byte[32], transactions);
-            }
+            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
+                    Genesis.CREATOR_PUBLIC_KEY, generationSignature, Genesis.GENESIS_BLOCK_SIGNATURE, new byte[32], transactions);
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
             Account.addOrGetAccount(Genesis.CREATOR_ID).apply(Genesis.CREATOR_PUBLIC_KEY);
             accept(genesisBlock, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
             if (!genesisBlock.verifyBlockSignature()) {
-                Db.db.rollbackTransaction();
-                return false;
+                throw new RuntimeException("Invalid genesis block signature");
             }
             Db.db.commitTransaction();
             return true;
