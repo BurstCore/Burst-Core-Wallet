@@ -1212,8 +1212,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         .ecBlockId(0)
                         .appendix(new Appendix.PublicKeyAnnouncement(Genesis.GENESIS_PUBLIC_KEYS[i]))
                         .signature(Genesis.GENESIS_SIGNATURES[i])
-                        .build(Genesis.CREATOR_SECRET_PHRASE);
-                if (transaction.verifySignature() && transactions.add(transaction) && Genesis.CREATOR_SECRET_PHRASE != null) {
+                        .build();
+                if (transaction.verifySignature() && !transactions.add(transaction)) {
                     Logger.logDebugMessage(Convert.toHexString(transaction.getSignature()));
                 }
             }
@@ -1226,15 +1226,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             if (Constants.isTestnet) {
                 Arrays.fill(generationSignature, (byte)1);
             }
-            BlockImpl genesisBlock;
-            if (Genesis.CREATOR_SECRET_PHRASE != null) {
-                genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
-                        Genesis.CREATOR_PUBLIC_KEY, generationSignature, new byte[32], transactions, Genesis.CREATOR_SECRET_PHRASE);
-                Logger.logDebugMessage(Convert.toHexString(genesisBlock.getBlockSignature()));
-            } else {
-                genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
-                        Genesis.CREATOR_PUBLIC_KEY, generationSignature, Genesis.GENESIS_BLOCK_SIGNATURE, new byte[32], transactions);
-            }
+            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
+                    Genesis.CREATOR_PUBLIC_KEY, generationSignature, Genesis.GENESIS_BLOCK_SIGNATURE, new byte[32], transactions);
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
