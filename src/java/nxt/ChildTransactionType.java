@@ -1319,8 +1319,16 @@ public abstract class ChildTransactionType extends TransactionType {
                 }
             };
 
-            private final Fee ASSET_ISSUANCE_FEE = (transaction, appendage) -> isSingletonIssuance(transaction) ?
-                    SINGLETON_ASSET_FEE.getFee(transaction, appendage) : 1000 * Constants.ONE_NXT;
+            private final Fee ASSET_ISSUANCE_FEE = new Fee() {
+                @Override
+                public long getFee(TransactionImpl transaction, Appendix appendage) {
+                    return 1000 * Constants.ONE_NXT;
+                }
+                @Override
+                public long[] getBackFees(long fee) {
+                    return new long[] {fee * 3 / 10, fee * 2 / 10, fee / 10};
+                }
+            };
 
             @Override
             public final byte getSubtype() {
@@ -1339,16 +1347,7 @@ public abstract class ChildTransactionType extends TransactionType {
 
             @Override
             Fee getBaselineFee(Transaction transaction) {
-                return ASSET_ISSUANCE_FEE;
-            }
-
-            @Override
-            long[] getBackFees(Transaction transaction) {
-                if (isSingletonIssuance(transaction)) {
-                    return Convert.EMPTY_LONG;
-                }
-                long feeNQT = transaction.getFee();
-                return new long[] {feeNQT * 3 / 10, feeNQT * 2 / 10, feeNQT / 10};
+                return isSingletonIssuance(transaction) ? SINGLETON_ASSET_FEE : ASSET_ISSUANCE_FEE;
             }
 
             @Override

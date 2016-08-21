@@ -132,10 +132,6 @@ public abstract class TransactionType {
         return Integer.MAX_VALUE;
     }
 
-    long[] getBackFees(Transaction transaction) {
-        return Convert.EMPTY_LONG;
-    }
-
     public abstract String getName();
 
     @Override

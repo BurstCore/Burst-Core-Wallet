@@ -257,10 +257,6 @@ abstract class TransactionImpl implements Transaction {
         return amount;
     }
 
-    long[] getBackFees() {
-        return type.getBackFees(this);
-    }
-
     @Override
     public int getHeight() {
         return height;
@@ -599,7 +595,7 @@ abstract class TransactionImpl implements Transaction {
             if (blockchainHeight < appendage.getBaselineFeeHeight()) {
                 return 0; // No need to validate fees before baseline block
             }
-            Fee fee = blockchainHeight >= appendage.getNextFeeHeight() ? appendage.getNextFee(this) : appendage.getBaselineFee(this);
+            Fee fee = appendage.getFee(this, blockchainHeight);
             totalFee = Math.addExact(totalFee, fee.getFee(this, appendage));
         }
         return totalFee;

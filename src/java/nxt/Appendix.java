@@ -43,6 +43,7 @@ public interface Appendix {
     Fee getBaselineFee(Transaction transaction);
     int getNextFeeHeight();
     Fee getNextFee(Transaction transaction);
+    Fee getFee(Transaction transaction, int height);
     boolean isPhased(Transaction transaction);
 
     interface Prunable {
@@ -146,6 +147,11 @@ public interface Appendix {
         @Override
         public Fee getNextFee(Transaction transaction) {
             return getBaselineFee(transaction);
+        }
+
+        @Override
+        public final Fee getFee(Transaction transaction, int height) {
+            return height >= getNextFeeHeight() ? getNextFee(transaction) : getBaselineFee(transaction);
         }
 
         abstract void validate(Transaction transaction) throws NxtException.ValidationException;

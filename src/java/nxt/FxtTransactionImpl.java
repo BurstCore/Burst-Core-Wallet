@@ -178,6 +178,10 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
         return Collections.emptyList();
     }
 
+    long[] getBackFees() {
+        return Convert.EMPTY_LONG;
+    }
+
     @Override
     public boolean equals(Object o) {
         return o instanceof FxtTransactionImpl && this.getId() == ((Transaction)o).getId();

@@ -361,6 +361,14 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         return totalFee;
     }
 
+    long[] getMinimumBackFeesFQT(int blockchainHeight) {
+        long minimumFee = getMinimumFeeFQT(blockchainHeight);
+        if (minimumFee == 0) {
+            return Convert.EMPTY_LONG;
+        }
+        return attachment.getFee(this, blockchainHeight).getBackFees(minimumFee);
+    }
+
     @Override
     ByteBuffer generateBytes() {
         ByteBuffer buffer = super.generateBytes();

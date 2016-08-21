@@ -16,15 +16,21 @@
 
 package nxt;
 
+import nxt.util.Convert;
+
 public interface Fee {
 
     long getFee(TransactionImpl transaction, Appendix appendage);
+
+    default long[] getBackFees(long fee) {
+        return Convert.EMPTY_LONG;
+    }
 
     Fee DEFAULT_FEE = new Fee.ConstantFee(Constants.ONE_NXT);
 
     Fee NONE = new Fee.ConstantFee(0L);
 
-    final class ConstantFee implements Fee {
+    class ConstantFee implements Fee {
 
         private final long fee;
 

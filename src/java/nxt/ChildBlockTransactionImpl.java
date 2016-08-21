@@ -57,4 +57,10 @@ class ChildBlockTransactionImpl extends FxtTransactionImpl {
         }
     }
 
+    @Override
+    long[] getBackFees() {
+        ChildBlockAttachment attachment = (ChildBlockAttachment)getAttachment();
+        return attachment.getBackFees();
+    }
+
 }

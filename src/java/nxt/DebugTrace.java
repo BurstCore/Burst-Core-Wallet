@@ -501,7 +501,7 @@ public final class DebugTrace {
         if (block.getHeight() > 3) {
             long[] backFees = new long[3];
             for (Transaction transaction : block.getTransactions()) {
-                long[] fees = ((TransactionImpl)transaction).getBackFees();
+                long[] fees = ((FxtTransactionImpl)transaction).getBackFees();
                 for (int i = 0; i < fees.length; i++) {
                     backFees[i] += fees[i];
                 }

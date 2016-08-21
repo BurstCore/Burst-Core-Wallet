@@ -16,7 +16,6 @@
 
 package nxt;
 
-import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -25,6 +24,19 @@ import java.nio.ByteBuffer;
 public final class ChildBlockTransactionType extends FxtTransactionType {
 
     public static final ChildBlockTransactionType INSTANCE = new ChildBlockTransactionType();
+
+    private static final Fee CHILD_BLOCK_FEE = new Fee() {
+        @Override
+        public long getFee(TransactionImpl transaction, Appendix appendage) {
+            ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
+            long totalFee = 0;
+            int blockchainHeight = Nxt.getBlockchain().getHeight();
+            for (ChildTransactionImpl childTransaction : attachment.getChildTransactions((FxtTransactionImpl)transaction)) {
+                totalFee += childTransaction.getMinimumFeeFQT(blockchainHeight);
+            }
+            return totalFee;
+        }
+    };
 
     @Override
     public byte getType() {
@@ -59,11 +71,23 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
             throw new NxtException.NotValidException("No such child chain id: " + attachment.getChainId());
         }
         //TODO: its own validation?
+        long[] minBackFees = new long[3];
+        int blockchainHeight = Nxt.getBlockchain().getHeight();
         for (ChildTransactionImpl childTransaction : attachment.getChildTransactions(transaction)) {
             childTransaction.validate();
             if (transaction.getExpiration() > childTransaction.getExpiration()) {
                 throw new NxtException.NotValidException("ChildBlock transaction " + transaction.getStringId() + " expiration " + transaction.getExpiration()
                         + " is after child transaction " + childTransaction.getStringId() + " expiration " + childTransaction.getExpiration());
+            }
+            long[] childMinBackFees = childTransaction.getMinimumBackFeesFQT(blockchainHeight);
+            for (int i = 0; i < childMinBackFees.length; i++) {
+                minBackFees[i] += childMinBackFees[i];
+            }
+        }
+        long[] backFees = attachment.getBackFees();
+        for (int i = 0; i < minBackFees.length; i++) {
+            if (i >= backFees.length || backFees[i] < minBackFees[i]) {
+                throw new NxtException.NotValidException("Insufficient back fees");
             }
         }
     }
@@ -103,9 +127,8 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     }
 
     @Override
-    long[] getBackFees(Transaction transaction) {
-        //TODO
-        return Convert.EMPTY_LONG;
+    Fee getBaselineFee(Transaction transaction) {
+        return CHILD_BLOCK_FEE;
     }
 
 }

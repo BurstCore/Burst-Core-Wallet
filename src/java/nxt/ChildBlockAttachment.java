@@ -39,18 +39,37 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
     private volatile byte[][] childTransactionFullHashes;
     private List<ChildTransactionImpl> childTransactions;
     private final byte[] hash;
+    private final long[] backFees;
 
     ChildBlockAttachment(ByteBuffer buffer) {
         super(buffer);
         this.chainId = buffer.getInt();
         this.hash = new byte[32];
         buffer.get(hash);
+        byte backFeesSize = buffer.get();
+        if (backFeesSize > 0) {
+            backFees = new long[backFeesSize];
+            for (int i = 0; i < backFeesSize; i++) {
+                backFees[i] = buffer.getLong();
+            }
+        } else {
+            backFees = Convert.EMPTY_LONG;
+        }
         this.childTransactionFullHashes = null;
     }
 
     ChildBlockAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
         super(attachmentData);
         this.chainId = ((Long)attachmentData.get("chain")).intValue();
+        JSONArray backFeesJson = (JSONArray)attachmentData.get("backFees");
+        if (backFeesJson != null) {
+            backFees = new long[backFeesJson.size()];
+            for (int i = 0 ; i < backFees.length; i++) {
+                backFees[i] = Convert.parseLong(backFeesJson.get(i));
+            }
+        } else {
+            backFees = Convert.EMPTY_LONG;
+        }
         JSONArray jsonArray = (JSONArray)attachmentData.get("childTransactionFullHashes");
         if (jsonArray != null) {
             this.childTransactionFullHashes = new byte[jsonArray.size()][];
@@ -68,30 +87,35 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         }
     }
 
-    ChildBlockAttachment(ChildChain childChain, byte[][] childTransactionFullHashes) {
+    ChildBlockAttachment(ChildChain childChain, byte[][] childTransactionFullHashes, long[] backFees) {
         this.chainId = childChain.getId();
         this.childTransactionFullHashes = childTransactionFullHashes;
         this.hash = null;
+        this.backFees = backFees;
     }
 
     //TODO: include full size of child transactions???
     @Override
     int getMyFullSize() {
         if (childTransactionFullHashes == null) {
-            return 4;
+            return 4 + 1 + backFees.length * 8;
         }
-        return 4 + 32 * childTransactionFullHashes.length;
+        return 4 + 1 + backFees.length * 8 + 32 * childTransactionFullHashes.length;
     }
 
     @Override
     int getMySize() {
-        return 4 + 32;
+        return 4 + 32 + 1 + backFees.length * 8;
     }
 
     @Override
     void putMyBytes(ByteBuffer buffer) {
         buffer.putInt(chainId);
         buffer.put(getHash());
+        buffer.put((byte)backFees.length);
+        for (long backFee : backFees) {
+            buffer.putLong(backFee);
+        }
     }
 
     @Override
@@ -105,6 +129,13 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
             }
         }
         json.put("hash", Convert.toHexString(getHash()));
+        if (backFees.length > 0) {
+            JSONArray backFeesJson = new JSONArray();
+            for (long backFee : backFees) {
+                backFeesJson.add(backFee);
+            }
+            json.put("backFees", backFeesJson);
+        }
     }
 
     @Override
@@ -132,6 +163,10 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     public int getChainId() {
         return chainId;
+    }
+
+    public long[] getBackFees() {
+        return backFees;
     }
 
     //Prunable:
