@@ -189,7 +189,8 @@ var NRS = (function (NRS, $) {
             requestType == "stopForging" ||
             requestType == "startShuffler" ||
             requestType == "getForging" ||
-            requestType == "markHost";
+            requestType == "markHost" ||
+            requestType == "startFundingMonitor";
     };
 
     NRS.getFileUploadConfig = function (requestType, data) {
