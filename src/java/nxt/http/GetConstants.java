@@ -40,7 +40,7 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
         static {
             try {
                 JSONObject response = new JSONObject();
-                response.put("genesisBlockId", Nxt.getBlockchainProcessor().getGenesisBlockId());
+                response.put("genesisBlockId", Long.toUnsignedString(Nxt.getBlockchainProcessor().getGenesisBlockId()));
                 response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
                 response.put("maxBlockPayloadLength", Constants.MAX_PAYLOAD_LENGTH);
