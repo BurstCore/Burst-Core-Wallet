@@ -1235,9 +1235,9 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             accept(genesisBlock, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
             if (!genesisBlock.verifyBlockSignature()) {
                 Db.db.rollbackTransaction();
-                return false;
+            } else {
+                Db.db.commitTransaction();
             }
-            Db.db.commitTransaction();
         } catch (NxtException e) {
             Db.db.rollbackTransaction();
             Logger.logMessage(e.getMessage());
