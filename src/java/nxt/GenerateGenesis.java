@@ -52,13 +52,21 @@ public final class GenerateGenesis {
                 String creatorSecretPhrase = (String)inputJSON.get("genesisSecretPhrase");
                 byte[] creatorPublicKey = Crypto.getPublicKey(creatorSecretPhrase);
                 JSONArray recipientSecretPhrases = (JSONArray)inputJSON.get("genesisRecipientSecretPhrases");
-                JSONArray recipientPublicKeys = new JSONArray();
-                long[] genesisRecipients = new long[recipientSecretPhrases.size()];
-                byte[][] genesisPublicKeys = new byte[genesisRecipients.length][];
+                JSONArray recipientPublicKeys = (JSONArray)inputJSON.get("genesisRecipientPublicKeys");
+                if (recipientPublicKeys == null) {
+                    recipientPublicKeys = new JSONArray();
+                }
+                int recipientsCount = recipientSecretPhrases != null ? recipientSecretPhrases.size() : recipientPublicKeys.size();
+                long[] genesisRecipients = new long[recipientsCount];
+                byte[][] genesisPublicKeys = new byte[recipientsCount][];
                 for (int i = 0; i < genesisRecipients.length; i++) {
-                    genesisPublicKeys[i] = Crypto.getPublicKey((String)recipientSecretPhrases.get(i));
+                    if (recipientSecretPhrases != null) {
+                        genesisPublicKeys[i] = Crypto.getPublicKey((String) recipientSecretPhrases.get(i));
+                        recipientPublicKeys.add(Convert.toHexString(genesisPublicKeys[i]));
+                    } else {
+                        genesisPublicKeys[i] = Convert.parseHexString((String)recipientPublicKeys.get(i));
+                    }
                     genesisRecipients[i] = Account.getId(genesisPublicKeys[i]);
-                    recipientPublicKeys.add(Convert.toHexString(genesisPublicKeys[i]));
                 }
                 Map<Long, Integer> genesisAmounts = new HashMap<>();
                 JSONArray amounts = (JSONArray)inputJSON.get("genesisAmounts");
