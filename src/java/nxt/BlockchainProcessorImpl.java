@@ -1187,7 +1187,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    private boolean addGenesisBlock() {
+    private void addGenesisBlock() {
         BlockImpl lastBlock = BlockDb.findLastBlock();
         if (lastBlock != null) {
             Logger.logMessage("Genesis block already in database");
@@ -1195,7 +1195,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             popOffTo(lastBlock);
             genesisBlockId = BlockDb.findBlockIdAtHeight(0);
             Logger.logMessage("Last block height: " + lastBlock.getHeight());
-            return false;
+            return;
         }
         Logger.logMessage("Genesis block not in database, starting from scratch");
         Db.db.beginTransaction();
@@ -1238,7 +1238,6 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 return false;
             }
             Db.db.commitTransaction();
-            return true;
         } catch (NxtException e) {
             Db.db.rollbackTransaction();
             Logger.logMessage(e.getMessage());
