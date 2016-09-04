@@ -374,7 +374,8 @@ public final class OrderHome {
 
             askOrder.updateQuantityQNT(Math.subtractExact(askOrder.getQuantityQNT(), trade.getQuantityQNT()));
             Account askAccount = Account.getAccount(askOrder.getAccountId());
-            askAccount.addToBalanceAndUnconfirmedBalance(askOrder.getChildChain(), LedgerEvent.ASSET_TRADE, askOrder.getId(),
+            BalanceHome.Balance askBalance = childChain.getBalanceHome().getBalance(askOrder.getAccountId());
+            askBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.ASSET_TRADE, askOrder.getId(),
                     Math.multiplyExact(trade.getQuantityQNT(), trade.getPriceNQT()));
             askAccount.addToAssetBalanceQNT(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityQNT());
 
@@ -382,9 +383,10 @@ public final class OrderHome {
             Account bidAccount = Account.getAccount(bidOrder.getAccountId());
             bidAccount.addToAssetAndUnconfirmedAssetBalanceQNT(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     assetId, trade.getQuantityQNT());
-            bidAccount.addToBalance(bidOrder.getChildChain(), LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            BalanceHome.Balance bidBalance = childChain.getBalanceHome().getBalance(bidOrder.getAccountId());
+            bidBalance.addToBalance(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     -Math.multiplyExact(trade.getQuantityQNT(), trade.getPriceNQT()));
-            bidAccount.addToUnconfirmedBalance(bidOrder.getChildChain(), LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            bidBalance.addToUnconfirmedBalance(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     Math.multiplyExact(trade.getQuantityQNT(), (bidOrder.getPriceNQT() - trade.getPriceNQT())));
         }
 

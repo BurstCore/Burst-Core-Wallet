@@ -364,7 +364,7 @@ public final class DGSHome {
         private long priceNQT;
         private boolean delisted;
 
-        private Goods(Transaction transaction, Attachment.DigitalGoodsListing attachment) {
+        private Goods(ChildTransactionImpl transaction, Attachment.DigitalGoodsListing attachment) {
             this.id = transaction.getId();
             this.dbKey = goodsDbKeyFactory.newKey(this.id);
             this.sellerId = transaction.getSenderId();
@@ -862,7 +862,7 @@ public final class DGSHome {
 
     }
 
-    void listGoods(Transaction transaction, Attachment.DigitalGoodsListing attachment) {
+    void listGoods(ChildTransactionImpl transaction, Attachment.DigitalGoodsListing attachment) {
         Goods goods = new Goods(transaction, attachment);
         addTags(goods);
         goodsTable.insert(goods);
