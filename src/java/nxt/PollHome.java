@@ -136,8 +136,8 @@ public final class PollHome {
         return pollTable.get(pollDbKeyFactory.newKey(id));
     }
 
-    public DbIterator<Poll> getPollsFinishingAtOrBefore(int height) {
-        return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LTE, height), 0, Integer.MAX_VALUE);
+    public DbIterator<Poll> getPollsFinishingAtOrBefore(int height, int from, int to) {
+        return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LTE, height), from, to);
     }
 
     public DbIterator<Poll> getAllPolls(int from, int to) {
@@ -148,9 +148,11 @@ public final class PollHome {
         return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.GT, Nxt.getBlockchain().getHeight()), from, to);
     }
 
-    public DbIterator<Poll> getPollsByAccount(long accountId, boolean includeFinished, int from, int to) {
+    public DbIterator<Poll> getPollsByAccount(long accountId, boolean includeFinished, boolean finishedOnly, int from, int to) {
         DbClause dbClause = new DbClause.LongClause("account_id", accountId);
-        if (!includeFinished) {
+        if (finishedOnly) {
+            dbClause = dbClause.and(new DbClause.IntClause("finish_height", DbClause.Op.LTE, Nxt.getBlockchain().getHeight()));
+        } else if (!includeFinished) {
             dbClause = dbClause.and(new DbClause.IntClause("finish_height", DbClause.Op.GT, Nxt.getBlockchain().getHeight()));
         }
         return pollTable.getManyBy(dbClause, from, to);

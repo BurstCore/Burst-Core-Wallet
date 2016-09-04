@@ -135,7 +135,7 @@ var ATS = (function(ATS, $, undefined) {
     };
 
     ATS.submitForm = function(form, fileParameter) {
-        var url = '/nxt';
+        var url = $('#formAction').val();
         var params = {};
         for (var i = 0; i < form.elements.length; i++) {
             if (form.elements[i].type != 'button' && form.elements[i].value && form.elements[i].value != 'submit') {
@@ -156,13 +156,13 @@ var ATS = (function(ATS, $, undefined) {
         if (form.encoding == "multipart/form-data") {
             uploadField = $('#' + fileParameter + params["requestType"]);
         }
-        if (params["requestType"] == "downloadTaggedData") {
+        if (params["requestType"] == "downloadTaggedData" || params["requestType"] == "downloadPrunableMessage") {
             url += "?";
             for (key in params) {
                 if (!params.hasOwnProperty(key)) {
                     continue;
                 }
-                url += key + "=" + params[key] + "&";
+                url += encodeURIComponent(key) + "=" + encodeURIComponent(params[key]) + "&";
             }
             window.location = url;
             return false;
@@ -182,15 +182,19 @@ var ATS = (function(ATS, $, undefined) {
                 formData.append(key, params[key]);
             }
             var file = uploadField[0].files[0];
-            formData.append(fileParameter, file);
-            if (file && !formData["filename"]) {
-                formData.append("filename", file.name);
+            if (file) {
+                formData.append(fileParameter, file);
+                if (!formData["filename"]) {
+                    formData.append("filename", file.name);
+                }
             }
         } else {
             // JQuery defaults
             contentType = "application/x-www-form-urlencoded; charset=UTF-8";
             processData = true;
         }
+        url += "?requestType=" + params["requestType"];
+        
         $.ajax({
             url: url,
             type: 'POST',

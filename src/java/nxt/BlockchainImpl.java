@@ -26,12 +26,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 final class BlockchainImpl implements Blockchain {
@@ -335,6 +330,15 @@ final class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    public BlockImpl getECBlock(int timestamp) {
+        Block block = getLastBlock(timestamp);
+        if (block == null) {
+            return getBlockAtHeight(0);
+        }
+        return BlockDb.findBlockAtHeight(Math.max(block.getHeight() - 720, 0));
+    }
+
+    @Override
     public TransactionImpl getTransaction(long transactionId) {
         return TransactionHome.findTransaction(transactionId);
     }
@@ -406,7 +410,7 @@ final class BlockchainImpl implements Blockchain {
                 }
             }
             if (height < Integer.MAX_VALUE) {
-                buf.append("AND height <= ? ");
+                buf.append("AND transaction.height <= ? ");
             }
             if (withMessage) {
                 buf.append("AND (has_message = TRUE OR has_encrypted_message = TRUE ");
@@ -435,7 +439,7 @@ final class BlockchainImpl implements Blockchain {
                 }
             }
             if (height < Integer.MAX_VALUE) {
-                buf.append("AND height <= ? ");
+                buf.append("AND transaction.height <= ? ");
             }
             if (withMessage) {
                 buf.append("AND (has_message = TRUE OR has_encrypted_message = TRUE OR has_encrypttoself_message = TRUE ");

@@ -46,9 +46,9 @@
                     <th data-i18n="code">Code</th>
                     <th data-i18n="name">Name</th>
                     <th data-i18n="type">Type</th>
-                    <th data-i18n="units">Units</th>
-                    <th data-i18n="supply">Current Supply</th>
-                    <th data-i18n="max_supply">Max Supply</th>
+                    <th data-i18n="units" class="numeric">Units</th>
+                    <th data-i18n="supply" class="numeric">Current Supply</th>
+                    <th data-i18n="max_supply" class="numeric">Max Supply</th>
                     <th data-i18n="actions">Actions</th>
                 </tr>
                 </thead>
@@ -56,7 +56,7 @@
 
                 </tbody>
             </table>
-            <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
+            <div class="data-loading-container"><img src="/img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
             <div class="data-empty-container"><p data-i18n="no_currencies">No currencies available.</p></div>
         </div>
         <div class="data-pagination"></div>
@@ -105,7 +105,7 @@
                         </div>
                     </div>
                     <div class="box-body no-padding" style="display:none">
-                        <div style="background-color:#DFF0D9;color: #666;padding-left:10px;padding-right: 10px;padding-top: 0px;padding-bottom:3px;"><strong data-i18n="balance">Balance</strong>:
+                        <div style="background-color:#DFF0D9;color: #666;padding-left:10px;padding-right: 10px;padding-top: 0;padding-bottom:3px;"><strong data-i18n="balance">Balance</strong>:
                             <span id="ms_your_nxt_balance"></span> NXT
                         </div>
                 
@@ -166,16 +166,16 @@
                                 <tr>
                                     <th></th>
                                     <th data-i18n="account">Account</th>
-                                    <th data-i18n="units">Units</th>
-                                    <th data-i18n="limit">Limit</th>
-                                    <th data-i18n="rate">Rate</th>
+                                    <th data-i18n="units" class='numeric'>Units</th>
+                                    <th data-i18n="limit" class='numeric'>Limit</th>
+                                    <th data-i18n="rate" class='numeric'>Rate</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 
                                 </tbody>
                             </table>
-                            <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
+                            <div class="data-loading-container"><img src="/img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
                             <div class="data-empty-container"><p data-i18n="no_open_sell_offers">No open sell offers. You cannot sell this currency now, but you could publish an exchange offer instead, and wait for others to fill it.</p></div>
                         </div>
                     </div>
@@ -190,7 +190,7 @@
                         </div>
                     </div>
                     <div class="box-body no-padding" style="display:none">
-                        <div style="background-color:#F2DEDE;color: #666;padding-left:10px;padding-right: 10px;padding-top: 0px;padding-bottom:3px;"><strong data-i18n="balance">Balance</strong>:
+                        <div style="background-color:#F2DEDE;color: #666;padding-left:10px;padding-right: 10px;padding-top: 0;padding-bottom:3px;"><strong data-i18n="balance">Balance</strong>:
                             <span id="your_currency_balance"></span> <span class="currency_code"></span>
                         </div>
                 
@@ -251,16 +251,16 @@
                                 <tr>
                                     <th></th>
                                     <th data-i18n="account">Account</th>
-                                    <th data-i18n="units">Units</th>
-                                    <th data-i18n="limit">Limit</th>
-                                    <th data-i18n="rate">Rate</th>
+                                    <th data-i18n="units" class='numeric'>Units</th>
+                                    <th data-i18n="limit" class='numeric'>Limit</th>
+                                    <th data-i18n="rate" class='numeric'>Rate</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 
                                 </tbody>
                             </table>
-                            <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
+                            <div class="data-loading-container"><img src="/img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
                             <div class="data-empty-container"><p data-i18n="no_open_buy_offers">No open buy offers. You cannot sell this currency now, but you could publish an exchange offer instead, and wait for others to fill it.</p></div>
                         </div>
                     </div>
@@ -282,16 +282,16 @@
                                     <th></th>
                                     <th data-i18n="height">Height</th>
                                     <th data-i18n="type">Type</th>
-                                    <th data-i18n="units">Units</th>
-                                    <th data-i18n="rate">Rate</th>
-                                    <th data-i18n="total">Total</th>
+                                    <th data-i18n="units" class='numeric'>Units</th>
+                                    <th data-i18n="rate" class='numeric'>Rate</th>
+                                    <th data-i18n="total" class='numeric'>Total</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 
                                 </tbody>
                             </table>
-                            <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
+                            <div class="data-loading-container"><img src="/img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
                             <div class="data-empty-container"><p data-i18n="no_exchanges">No exchange requests.</p></div>
                         </div>
                     </div>
@@ -320,16 +320,16 @@
                                     <th data-i18n="date">Date</th>
                                     <th data-i18n="seller">Seller</th>
                                     <th data-i18n="buyer">Buyer</th>
-                                    <th data-i18n="units">Units</th>
-                                    <th data-i18n="rate">Rate</th>
-                                    <th data-i18n="total">Total</th>
+                                    <th data-i18n="units" class='numeric'>Units</th>
+                                    <th data-i18n="rate" class='numeric'>Rate</th>
+                                    <th data-i18n="total" class='numeric'>Total</th>
                                 </tr>
                                 </thead>
                                 <tbody>
 
                                 </tbody>
                             </table>
-                            <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
+                            <div class="data-loading-container"><img src="/img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
                             <div class="data-empty-container"><p data-i18n="no_exchanges">No exchanges.</p></div>
                         </div>
                     </div>
@@ -352,16 +352,16 @@
                     <th data-i18n="code">Code</th>
                     <th data-i18n="seller">Seller</th>
                     <th data-i18n="buyer">Buyer</th>
-                    <th data-i18n="units">Units</th>
-                    <th data-i18n="rate">Rate</th>
-                    <th data-i18n="amount">Amount [NXT]</th>
+                    <th data-i18n="units" class='numeric'>Units</th>
+                    <th data-i18n="rate" class='numeric'>Rate</th>
+                    <th data-i18n="amount" class='numeric'>Amount [NXT]</th>
                 </tr>
                 </thead>
                 <tbody>
 
                 </tbody>
             </table>
-            <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
+            <div class="data-loading-container"><img src="/img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
             <div class="data-empty-container"><p data-i18n="no_exchange_history">No Exchanges available.</p></div>
         </div>
         <div class="data-pagination"></div>
@@ -374,7 +374,7 @@
     </section>
 
     <section class="content">
-        <div style="margin-bottom:4px;" id="approve_curreny_navi">
+        <div style="margin-bottom:4px;" id="approve_currency_navi">
             <select id="approve_currency_select" class="form-control" style="max-width:250px;"></select>
         </div>
         <div class="panel panel-default">
@@ -382,21 +382,22 @@
             <table class="table table-striped" id="approval_requests_currency_table">
                 <thead>
                 <tr>
-                    <th data-i18n="transaction">Transaction</th>
+                    <th data-i18n="date">Date</th>
                     <th style="width:60px;text-align:center;"><i class="fa fa-envelope-o"></i></th>
                     <th data-i18n="type">Type</th>
-                    <th data-i18n="amount" colspan="2">Amount</th>
-                    <th style="text-align:center;" data-i18n="fee">Fee</th>
+                    <th class="numeric" data-i18n="amount">Amount</th>
+                    <th class="numeric" data-i18n="fee">Fee</th>
                     <th data-i18n="account">Account</th>
                     <th style="text-align:center;"><i class="fa fa-gavel"></i></th>
-                    <th style="text-align:center;" data-i18n="conf_abbrev">Conf.</th>
+                    <th style="text-align:center;" data-i18n="height">Height</th>
+                    <th style="text-align:center;" data-i18n="confirmations">Confirmations</th>
                     <th data-i18n="actions" style="text-align:right;">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 </tbody>
             </table>
-            <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
+            <div class="data-loading-container"><img src="/img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
             <div class="data-empty-container" style="text-align:center;">
                 <p style="padding-top:80px;padding-bottom:100px;"><span id="ar_currency_no_entries"></span>.</p>
             </div>
@@ -416,7 +417,7 @@
                     <th data-i18n="transaction">Transaction</th>
                     <th data-i18n="currency">Currency</th>
                     <th data-i18n="date">Date</th>
-                    <th data-i18n="units">Units</th>
+                    <th data-i18n="units" class='numeric'>Units</th>
                     <th data-i18n="recipient">Recipient</th>
                     <th data-i18n="sender">Sender</th>
                 </tr>
@@ -425,7 +426,7 @@
 
                 </tbody>
             </table>
-            <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
+            <div class="data-loading-container"><img src="/img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
             <div class="data-empty-container"><p data-i18n="no_currency_transfer_history">No currency transfer history available.</p></div>
         </div>
         <div class="data-pagination"></div>

@@ -1910,8 +1910,7 @@ public abstract class ChildTransactionType extends TransactionType {
             @Override
             void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment)transaction.getAttachment();
-                senderAccount.payDividends(transaction.getChain(), transaction.getId(), attachment.getAssetId(), attachment.getHeight(),
-                        attachment.getAmountNQTPerQNT());
+                senderAccount.payDividends(transaction.getChain(), transaction.getId(), attachment);
             }
 
             @Override
@@ -1947,6 +1946,18 @@ public abstract class ChildTransactionType extends TransactionType {
                 if (asset.getAccountId() != transaction.getSenderId() || attachment.getAmountNQTPerQNT() <= 0) {
                     throw new NxtException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
                 }
+                AssetDividend lastDividend = AssetDividend.getLastDividend(attachment.getAssetId());
+                if (lastDividend != null && lastDividend.getHeight() > Nxt.getBlockchain().getHeight() - 60) {
+                    throw new NxtException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId())
+                            + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + Nxt.getBlockchain().getHeight()
+                            + ", limit is one dividend per 60 blocks");
+                }
+            }
+
+            @Override
+            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+                Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment) transaction.getAttachment();
+                return isDuplicate(ColoredCoins.DIVIDEND_PAYMENT, Long.toUnsignedString(attachment.getAssetId()), duplicates, true);
             }
 
             @Override
@@ -1956,7 +1967,7 @@ public abstract class ChildTransactionType extends TransactionType {
 
             @Override
             public boolean isPhasingSafe() {
-                return true;
+                return false;
             }
 
         };
@@ -2049,6 +2060,18 @@ public abstract class ChildTransactionType extends TransactionType {
                         || attachment.getQuantity() < 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
                         || attachment.getPriceNQT() <= 0 || attachment.getPriceNQT() > Constants.MAX_BALANCE_NQT) {
                     throw new NxtException.NotValidException("Invalid digital goods listing: " + attachment.getJSONObject());
+                }
+                Appendix.PrunablePlainMessage prunablePlainMessage = transaction.getPrunablePlainMessage();
+                if (prunablePlainMessage != null) {
+                    byte[] image = prunablePlainMessage.getMessage();
+                    if (image != null) {
+                        Tika tika = new Tika();
+                        String mediaTypeName = tika.detect(image);
+                        MediaType mediaType = MediaType.parse(mediaTypeName);
+                        if (mediaType == null || !"image".equals(mediaType.getType())) {
+                            throw new NxtException.NotValidException("Only image attachments allowed for DGS listing, media type is " + mediaType);
+                        }
+                    }
                 }
             }
 
@@ -2655,7 +2678,6 @@ public abstract class ChildTransactionType extends TransactionType {
                 Attachment.SetPhasingOnly attachment = (Attachment.SetPhasingOnly)transaction.getAttachment();
                 VoteWeighting.VotingModel votingModel = attachment.getPhasingParams().getVoteWeighting().getVotingModel();
                 attachment.getPhasingParams().validate();
-                attachment.getPhasingParams().checkApprovable();
                 if (votingModel == VoteWeighting.VotingModel.NONE) {
                     Account senderAccount = Account.getAccount(transaction.getSenderId());
                     if (senderAccount == null || !senderAccount.getControls().contains(Account.ControlType.PHASING_ONLY)) {

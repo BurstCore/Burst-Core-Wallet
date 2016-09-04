@@ -16,14 +16,7 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Appendix;
-import nxt.Attachment;
-import nxt.Constants;
-import nxt.Nxt;
-import nxt.NxtException;
-import nxt.PhasingParams;
-import nxt.Transaction;
+import nxt.*;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
@@ -32,13 +25,7 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import static nxt.http.JSONResponses.FEATURE_NOT_AVAILABLE;
-import static nxt.http.JSONResponses.INCORRECT_DEADLINE;
-import static nxt.http.JSONResponses.INCORRECT_LINKED_FULL_HASH;
-import static nxt.http.JSONResponses.INCORRECT_WHITELIST;
-import static nxt.http.JSONResponses.MISSING_DEADLINE;
-import static nxt.http.JSONResponses.MISSING_SECRET_PHRASE;
-import static nxt.http.JSONResponses.NOT_ENOUGH_FUNDS;
+import static nxt.http.JSONResponses.*;
 
 abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
@@ -51,7 +38,8 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             "phasingWhitelisted", "phasingWhitelisted", "phasingWhitelisted",
             "phasingLinkedFullHash", "phasingLinkedFullHash", "phasingLinkedFullHash",
             "phasingHashedSecret", "phasingHashedSecretAlgorithm",
-            "recipientPublicKey"};
+            "recipientPublicKey",
+            "ecBlockId", "ecBlockHeight"};
 
     private static String[] addCommonParameters(String[] parameters) {
         String[] result = Arrays.copyOf(parameters, parameters.length + commonParameters.length);
@@ -133,7 +121,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
                                             long amountNQT, Attachment attachment) throws NxtException {
         String deadlineValue = req.getParameter("deadline");
         String referencedTransactionFullHash = Convert.emptyToNull(req.getParameter("referencedTransactionFullHash"));
-        String secretPhrase = Convert.emptyToNull(req.getParameter("secretPhrase"));
+        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         String publicKeyValue = Convert.emptyToNull(req.getParameter("publicKey"));
         boolean broadcast = !"false".equalsIgnoreCase(req.getParameter("broadcast")) && secretPhrase != null;
         Appendix.EncryptedMessage encryptedMessage = null;
@@ -183,6 +171,14 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         }
 
         long feeNQT = ParameterParser.getFeeNQT(req);
+        int ecBlockHeight = ParameterParser.getInt(req, "ecBlockHeight", 0, Integer.MAX_VALUE, false);
+        long ecBlockId = Convert.parseUnsignedLong(req.getParameter("ecBlockId"));
+        if (ecBlockId != 0 && ecBlockId != Nxt.getBlockchain().getBlockIdAtHeight(ecBlockHeight)) {
+            return INCORRECT_EC_BLOCK;
+        }
+        if (ecBlockId == 0 && ecBlockHeight > 0) {
+            ecBlockId = Nxt.getBlockchain().getBlockIdAtHeight(ecBlockHeight);
+        }
 
         JSONObject response = new JSONObject();
 
@@ -202,6 +198,10 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             builder.appendix(phasing);
             builder.appendix(prunablePlainMessage);
             builder.appendix(prunableEncryptedMessage);
+            if (ecBlockId != 0) {
+                builder.ecBlockId(ecBlockId);
+                builder.ecBlockHeight(ecBlockHeight);
+            }
             Transaction transaction = builder.build(secretPhrase);
             try {
                 if (Math.addExact(amountNQT, transaction.getFee()) > senderAccount.getUnconfirmedBalanceNQT()) {
@@ -244,12 +244,12 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    final boolean requirePost() {
+    protected final boolean requirePost() {
         return true;
     }
 
     @Override
-    final boolean allowRequiredBlockParameters() {
+    protected final boolean allowRequiredBlockParameters() {
         return false;
     }
 

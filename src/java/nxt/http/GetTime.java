@@ -31,7 +31,7 @@ public final class GetTime extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    JSONStreamAware processRequest(HttpServletRequest req) {
+    protected JSONStreamAware processRequest(HttpServletRequest req) {
 
         JSONObject response = new JSONObject();
         response.put("time", Nxt.getEpochTime());
@@ -40,7 +40,12 @@ public final class GetTime extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    boolean allowRequiredBlockParameters() {
+    protected boolean allowRequiredBlockParameters() {
+        return false;
+    }
+
+    @Override
+    protected boolean requireBlockchain() {
         return false;
     }
 

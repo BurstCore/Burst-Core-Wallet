@@ -109,9 +109,8 @@ var NRS = (function(NRS, $, undefined) {
 		var $inputFields = $(this).find("input[name=recipient], input[name=account_id], input[name=phasingWhitelisted]").not("[type=hidden]");
 		$.each($inputFields, function() {
 			if ($(this).hasClass("noMask")) {
-				$(this).mask("NXT-****-****-****-*****", {
-					"noMask": true
-				}).removeClass("noMask");
+				$(this).unmask();
+				$(this).removeClass("noMask");
 			} else {
 				$(this).mask("NXT-****-****-****-*****");
 			}
@@ -214,7 +213,7 @@ var NRS = (function(NRS, $, undefined) {
 	NRS.showModalError = function(errorMessage, $modal) {
 		var $btn = $modal.find("button.btn-primary:not([data-dismiss=modal], .ignore)");
 		$modal.find("button").prop("disabled", false);
-		$modal.find(".error_message").html(String(errorMessage).escapeHTML()).show();
+		$modal.find(".error_message").html(NRS.escapeRespStr(errorMessage)).show();
 		$btn.button("reset");
 		$modal.modal("unlock");
 	};

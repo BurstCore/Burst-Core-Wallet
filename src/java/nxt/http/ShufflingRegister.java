@@ -33,7 +33,7 @@ public final class ShufflingRegister extends CreateTransaction {
     }
 
     @Override
-    JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
 
         Attachment attachment = new Attachment.ShufflingRegistration(shufflingFullHash);
@@ -52,4 +52,5 @@ public final class ShufflingRegister extends CreateTransaction {
             return JSONResponses.notEnoughHolding(shuffling.getHoldingType());
         }
     }
+
 }

@@ -37,7 +37,7 @@ public final class GetExpectedOrderCancellations extends APIServlet.APIRequestHa
     }
 
     @Override
-    JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         Filter<Transaction> filter = transaction -> transaction.getType() == ChildTransactionType.ColoredCoins.ASK_ORDER_CANCELLATION
                 || transaction.getType() == ChildTransactionType.ColoredCoins.BID_ORDER_CANCELLATION;
 

@@ -147,6 +147,7 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
             throw new NxtException.NotCurrentlyValidException(String.format("Transaction fee %f FXT less than minimum fee %f FXT at height %d",
                     ((double) feeFQT) / Constants.ONE_NXT, ((double) minimumFeeFQT) / Constants.ONE_NXT, Nxt.getBlockchain().getHeight()));
         }
+        validateEcBlock();
         //TODO: account control for FXT?
         AccountRestrictions.checkTransaction(this, false);
     }

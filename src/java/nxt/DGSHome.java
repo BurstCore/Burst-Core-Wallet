@@ -148,9 +148,8 @@ public final class DGSHome {
                         + "height, latest) VALUES (?, ?, ?, ?, TRUE)")) {
                     int i = 0;
                     pstmt.setLong(++i, purchase.getId());
-                    setEncryptedData(pstmt, encryptedData, ++i);
-                    ++i;
-                    pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
+                    i = setEncryptedData(pstmt, encryptedData, ++i);
+                    pstmt.setInt(i, Nxt.getBlockchain().getHeight());
                     pstmt.executeUpdate();
                 }
             }
@@ -360,6 +359,7 @@ public final class DGSHome {
         private final String tags;
         private final String[] parsedTags;
         private final int timestamp;
+        private final boolean hasImage;
         private int quantity;
         private long priceNQT;
         private boolean delisted;
@@ -376,6 +376,7 @@ public final class DGSHome {
             this.priceNQT = attachment.getPriceNQT();
             this.delisted = false;
             this.timestamp = Nxt.getBlockchain().getLastBlockTimestamp();
+            this.hasImage = transaction.getPrunablePlainMessage() != null;
         }
 
         private Goods(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -390,12 +391,13 @@ public final class DGSHome {
             this.priceNQT = rs.getLong("price");
             this.delisted = rs.getBoolean("delisted");
             this.timestamp = rs.getInt("timestamp");
+            this.hasImage = rs.getBoolean("has_image");
         }
 
         private void save(Connection con) throws SQLException {
             try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO goods (id, seller_id, name, "
-                    + "description, tags, parsed_tags, timestamp, quantity, price, delisted, height, latest) KEY (id, height) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                    + "description, tags, parsed_tags, timestamp, quantity, price, delisted, has_image, height, latest) KEY (id, height) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
                 pstmt.setLong(++i, this.sellerId);
@@ -407,6 +409,7 @@ public final class DGSHome {
                 pstmt.setInt(++i, this.quantity);
                 pstmt.setLong(++i, this.priceNQT);
                 pstmt.setBoolean(++i, this.delisted);
+                pstmt.setBoolean(++i, this.hasImage);
                 pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
                 pstmt.executeUpdate();
             }
@@ -481,6 +484,10 @@ public final class DGSHome {
             return parsedTags;
         }
 
+        public boolean hasImage() {
+            return hasImage;
+        }
+
     }
 
     private static class PurchasesClause extends DbClause {
@@ -494,7 +501,7 @@ public final class DGSHome {
         protected int set(PreparedStatement pstmt, int index) throws SQLException {
             return index;
         }
-
+        
     }
 
     private static final class LongPurchasesClause extends PurchasesClause {
@@ -673,13 +680,14 @@ public final class DGSHome {
             this.hasPublicFeedbacks = rs.getBoolean("has_public_feedbacks");
             this.discountNQT = rs.getLong("discount");
             this.refundNQT = rs.getLong("refund");
+            this.goodsIsText = rs.getBoolean("goods_is_text");
         }
 
         private void save(Connection con) throws SQLException {
             try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO purchase (id, buyer_id, goods_id, seller_id, "
-                    + "quantity, price, deadline, note, nonce, timestamp, pending, goods, goods_nonce, refund_note, "
+                    + "quantity, price, deadline, note, nonce, timestamp, pending, goods, goods_nonce, goods_is_text, refund_note, "
                     + "refund_nonce, has_feedback_notes, has_public_feedbacks, discount, refund, height, latest) KEY (id, height) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
                 pstmt.setLong(++i, this.buyerId);
@@ -688,15 +696,13 @@ public final class DGSHome {
                 pstmt.setInt(++i, this.quantity);
                 pstmt.setLong(++i, this.priceNQT);
                 pstmt.setInt(++i, this.deadline);
-                setEncryptedData(pstmt, this.note, ++i);
-                ++i;
-                pstmt.setInt(++i, this.timestamp);
+                i = setEncryptedData(pstmt, this.note, ++i);
+                pstmt.setInt(i, this.timestamp);
                 pstmt.setBoolean(++i, this.isPending);
-                setEncryptedData(pstmt, this.encryptedGoods, ++i);
-                ++i;
-                setEncryptedData(pstmt, this.refundNote, ++i);
-                ++i;
-                pstmt.setBoolean(++i, this.hasFeedbackNotes);
+                i = setEncryptedData(pstmt, this.encryptedGoods, ++i);
+                pstmt.setBoolean(i, this.goodsIsText);
+                i = setEncryptedData(pstmt, this.refundNote, ++i);
+                pstmt.setBoolean(i, this.hasFeedbackNotes);
                 pstmt.setBoolean(++i, this.hasPublicFeedbacks);
                 pstmt.setLong(++i, this.discountNQT);
                 pstmt.setLong(++i, this.refundNQT);
@@ -746,10 +752,6 @@ public final class DGSHome {
 
         public int getTimestamp() {
             return timestamp;
-        }
-
-        public String getName() {
-            return getGoods(goodsId).getName();
         }
 
         public EncryptedData getEncryptedGoods() {
@@ -964,14 +966,15 @@ public final class DGSHome {
         return new EncryptedData(data, rs.getBytes(nonceColumn));
     }
 
-    private static void setEncryptedData(PreparedStatement pstmt, EncryptedData encryptedData, int i) throws SQLException {
+    private static int setEncryptedData(PreparedStatement pstmt, EncryptedData encryptedData, int i) throws SQLException {
         if (encryptedData == null) {
-            pstmt.setNull(i, Types.VARBINARY);
-            pstmt.setNull(i + 1, Types.VARBINARY);
+            pstmt.setNull(i++, Types.VARBINARY);
+            pstmt.setNull(i++, Types.VARBINARY);
         } else {
-            pstmt.setBytes(i, encryptedData.getData());
-            pstmt.setBytes(i + 1, encryptedData.getNonce());
+            pstmt.setBytes(i++, encryptedData.getData());
+            pstmt.setBytes(i++, encryptedData.getNonce());
         }
+        return i;
     }
 
 }

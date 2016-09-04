@@ -39,6 +39,7 @@ public class BasicDb {
         private int maxConnections;
         private int loginTimeout;
         private int defaultLockTimeout;
+        private int maxMemoryRows;
 
         public DbProperties maxCacheSize(int maxCacheSize) {
             this.maxCacheSize = maxCacheSize;
@@ -90,6 +91,11 @@ public class BasicDb {
             return this;
         }
 
+        public DbProperties maxMemoryRows(int maxMemoryRows) {
+            this.maxMemoryRows = maxMemoryRows;
+            return this;
+        }
+
     }
 
     private JdbcConnectionPool cp;
@@ -100,6 +106,7 @@ public class BasicDb {
     private final int maxConnections;
     private final int loginTimeout;
     private final int defaultLockTimeout;
+    private final int maxMemoryRows;
     private volatile boolean initialized = false;
 
     public BasicDb(DbProperties dbProperties) {
@@ -124,6 +131,7 @@ public class BasicDb {
         this.maxConnections = dbProperties.maxConnections;
         this.loginTimeout = dbProperties.loginTimeout;
         this.defaultLockTimeout = dbProperties.defaultLockTimeout;
+        this.maxMemoryRows = dbProperties.maxMemoryRows;
     }
 
     public final void init(List<DbVersion> dbVersions) {
@@ -135,6 +143,7 @@ public class BasicDb {
         try (Connection con = cp.getConnection();
              Statement stmt = con.createStatement()) {
             stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
+            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

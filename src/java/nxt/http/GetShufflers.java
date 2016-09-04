@@ -37,7 +37,7 @@ public final class GetShufflers extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", false);
@@ -76,8 +76,13 @@ public final class GetShufflers extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    boolean allowRequiredBlockParameters() {
+    protected boolean allowRequiredBlockParameters() {
         return false;
+    }
+
+    @Override
+    protected boolean requireFullClient() {
+        return true;
     }
 
 }

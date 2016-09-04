@@ -20,6 +20,7 @@ public final class Constants {
 
     public static final boolean isTestnet = Nxt.getBooleanProperty("nxt.isTestnet");
     public static final boolean isOffline = Nxt.getBooleanProperty("nxt.isOffline");
+    public static final boolean isLightClient = Nxt.getBooleanProperty("nxt.isLightClient");
 
     public static final int MAX_NUMBER_OF_TRANSACTIONS = 255;
     public static final int MIN_TRANSACTION_SIZE = 176;
@@ -125,6 +126,7 @@ public final class Constants {
     public static final int LAST_KNOWN_BLOCK = isTestnet ? 0 : 0;
 
     public static final int[] MIN_VERSION = new int[] {1, 0};
+    public static final int[] MIN_PROXY_VERSION = new int[] {1, 0};
 
     static final long UNCONFIRMED_POOL_DEPOSIT_NQT = (isTestnet ? 50 : 100) * ONE_NXT;
     public static final long SHUFFLING_DEPOSIT_NQT = (isTestnet ? 7 : 1000) * ONE_NXT;
@@ -133,12 +135,6 @@ public final class Constants {
 
     public static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
     public static final String ALLOWED_CURRENCY_CODE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-    public static final int EC_RULE_TERMINATOR = 600; /* cfb: This constant defines a straight edge when "longest chain"
-                                                        rule is outweighed by "economic majority" rule; the terminator
-                                                        is set as number of seconds before the current time. */
-
-    public static final int EC_BLOCK_DISTANCE_LIMIT = 60;
 
     private Constants() {} // never
 

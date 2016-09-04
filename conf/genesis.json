@@ -1,19 +1,25 @@
 {
-  "genesisSecretPhrase": "qwerty",
-  "genesisRecipientPublicKeys": [
+  "_genesisSecretPhrase": "qwerty",
+  "genesisRecipientPublicKeys":[
     "34a7ca8bbded4e3f24c60ecb655f9235ac1b12d97aea698c554df8bf1d950f2d",
     "b49f0c127818d83f1f712db6a7ffef49bff936211f49522a0f4fea01bd38d018",
     "302126c9a930a4aa6e4a9bcec221d978ba07d274e6cf7b0ee3073f1f5b7b9250",
     "30f36073f08c9cfeb826ef13f6ff24812eceb0b2f154c6c152f32ee916702e0c"
   ],
-  "genesisAmounts": [
+  "genesisAmounts":[
     400000000,
     300000000,
     200000000,
     100000000
   ],
-  "epochBeginning": "2016-03-01 12:00:00 +0000"
+  "genesisPublicKey":"b27d71185817d0b57ab50b9ac8fe8bb9ce16b3c9b52c80307002125d5d443674",
+  "genesisSignatures":[
+    "89f7b971d5bbac6d172fa381291ef351c4ea538b5559804cf7849b9cd8bf72084ab22d3e9bc1cbd05fa59c599068da9b3c5d957c374b31a08ff15427d478cba5",
+    "914606dfb4ec11e7affa4c1db566ae93bdfb5010fa3b6c723f2ccd2c91ce7f0270c2a9fba90d24323d76828f81e91b4a0c196b1f04d9af2f944d09f598c5ef32",
+    "2c5fda4a2e995087724cc9c9796900c74c4a051c51d9c07cce0e391511467e026f377f129fe6c375fe2272db2be68c60ee2b02e50d6d2ed4548a3bcca2fc71a5",
+    "7a5053bc94936881fb42967da3c43dc83323887278141bcadb054beb9b4dbd0988bd4855e2e4293a0ea28a89ff16abe941c3e16aaa8c9fb24112e95b52ab62f3"
+  ],
+  "genesisBlockSignature":"89e2bca4613e89dac3bfa436c3cf632f910a2fdb33ab97c6731923d0447eb207126094f2d2a87c78bb2870d957b6b1ebc68d7ee932d1fab6d0305d58d7475fed",
+  "genesisTestnetBlockSignature":"85e2934d5400bbda6dcfdec16ee49ad7038e65a4ea3b219ac077be2394103503023cfb10a3a15eba7ddccc47344d6fb136c4d6d7629559080f7045e55dcaebad",
+  "epochBeginning":"2016-08-18 12:00:00 +0000"
 }
-
-
-

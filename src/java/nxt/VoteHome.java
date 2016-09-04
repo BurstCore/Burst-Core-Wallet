@@ -62,7 +62,7 @@ public final class VoteHome {
             public void trim(int height) {
                 super.trim(height);
                 try (Connection con = voteTable.getConnection();
-                     DbIterator<PollHome.Poll> polls = pollHome.getPollsFinishingAtOrBefore(height);
+                     DbIterator<PollHome.Poll> polls = pollHome.getPollsFinishingAtOrBefore(height, 0, Integer.MAX_VALUE);
                      PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
                     for (PollHome.Poll poll : polls) {
                         pstmt.setLong(1, poll.getId());

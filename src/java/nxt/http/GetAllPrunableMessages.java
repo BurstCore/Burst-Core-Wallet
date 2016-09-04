@@ -34,7 +34,7 @@ public final class GetAllPrunableMessages extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         final int timestamp = ParameterParser.getTimestamp(req);
@@ -49,7 +49,7 @@ public final class GetAllPrunableMessages extends APIServlet.APIRequestHandler {
                 if (prunableMessage.getBlockTimestamp() < timestamp) {
                     break;
                 }
-                jsonArray.add(JSONData.prunableMessage(prunableMessage, 0, null));
+                jsonArray.add(JSONData.prunableMessage(prunableMessage, null, null));
             }
         }
         return response;

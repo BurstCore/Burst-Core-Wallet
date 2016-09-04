@@ -32,6 +32,7 @@ var NRS = (function(NRS, $) {
 		"24_hour_format": "1",
 		"remember_passphrase": "0",
 		"language": "en",
+		"regional_format": "default",
 		"enable_plugins": "0",
 		"items_page": "15",
 		"themeChoice": "default",
@@ -40,7 +41,8 @@ var NRS = (function(NRS, $) {
         "exchange_api_key": "773ecd081abd54e760a45b3551bbd4d725cf788590619e3f4bdeb81d01994d1dcad8a1d35771f669cfa47742af38e2207e297bc0eeeaea733853c2235548fba3",
         "exchange_coin0": "BTC",
         "exchange_coin1": "LTC",
-        "exchange_coin2": "ETH"
+        "exchange_coin2": "ETH",
+		"max_nxt_decimals": "2"
 	};
 
 	NRS.defaultColors = {
@@ -263,7 +265,7 @@ var NRS = (function(NRS, $) {
         if (NRS.settings["exchange"] != -1) {
             $("#settings_exchange_initial").remove();
         }
-		if ((NRS.database && NRS.database["name"] == "NRS_USER_DB") || (!NRS.databaseSupport)) {
+		if (NRS.database && NRS.database["name"] == "NRS_USER_DB") {
 			$("#settings_db_warning").show();
 		}
 		NRS.pageLoaded();
@@ -452,68 +454,84 @@ var NRS = (function(NRS, $) {
 		$langSelBoxes.val(NRS.settings['language']);
 	};
 
-	NRS.getSettings = function() {
+	NRS.createRegionalFormatSelect = function() {
+		// Build language select box for settings page, login
+		var $regionalFormatSelBoxes = $('select[name="regional_format"]');
+		$regionalFormatSelBoxes.empty();
+		$regionalFormatSelBoxes.append("<option value='default'>" + $.t("use_browser_default") + "</option>");
+		var localeKeys = NRS.getLocaleList();
+        for (var i=0; i < localeKeys.length; i++) {
+			$regionalFormatSelBoxes.append("<option value='" + localeKeys[i] + "'>" + NRS.getLocaleName(localeKeys[i]) + "</option>");
+		}
+		$regionalFormatSelBoxes.val(NRS.settings["regional_format"]);
+	};
+
+	NRS.getSettings = function(isAccountSpecific) {
 		if (!NRS.account) {
 			NRS.settings = NRS.defaultSettings;
-			if (NRS.getCookie("language")) {
-				NRS.settings["language"] = NRS.getCookie("language");
+			if (NRS.getStrItem("language")) {
+				NRS.settings["language"] = NRS.getStrItem("language");
 			}
-			if (NRS.getCookie("themeChoice")) {
-				NRS.settings["themeChoice"] = NRS.getCookie("themeChoice");
+			if (NRS.getStrItem("themeChoice")) {
+				NRS.settings["themeChoice"] = NRS.getStrItem("themeChoice");
 			}
 			NRS.createLangSelect();
+			NRS.createRegionalFormatSelect();
 			NRS.applySettings();
 		} else {
             async.waterfall([
-                function (callback) {
-                    if (NRS.databaseSupport) {
-                        NRS.database.select("data", [{
-                            "id": "settings"
-                        }], function (error, result) {
-                            if (result && result.length) {
-                                NRS.settings = $.extend({}, NRS.defaultSettings, JSON.parse(result[0].contents));
-                            } else {
-                                NRS.database.insert("data", {
-                                    id: "settings",
-                                    contents: "{}"
-                                });
-                                NRS.settings = NRS.defaultSettings;
-                            }
-                            NRS.logConsole("User settings for account " + NRS.convertNumericToRSAccountFormat(NRS.account));
-                            for (var setting in NRS.defaultSettings) {
-                                if (!NRS.defaultSettings.hasOwnProperty(setting)) {
-                                    continue;
-                                }
-                                var value = NRS.settings[setting];
-                                var status = (NRS.defaultSettings[setting] !== value ? "modified" : "default");
-                                if (setting.search("password") >= 0) {
-                                    value = new Array(value.length + 1).join('*');
-                                }
-                                NRS.logConsole(setting + " = " + value + " [" + status + "]");
-                            }
-                            NRS.applySettings();
-                            callback(null);
-                        });
-                    } else {
-                        if (NRS.hasLocalStorage) {
-                            NRS.settings = $.extend({}, NRS.defaultSettings, JSON.parse(localStorage.getItem("settings")));
-                            NRS.logConsole("Loading settings from local storage");
-                        } else {
-                            NRS.settings = NRS.defaultSettings;
-                        }
-                        NRS.applySettings();
-                        callback(null);
-                    }
+                function(callback) {
+					NRS.storageSelect("data", [{
+						"id": "settings"
+					}], function (error, result) {
+						if (result && result.length) {
+							NRS.settings = $.extend({}, NRS.defaultSettings, JSON.parse(result[0].contents));
+						} else {
+							NRS.storageInsert("data", "id", {
+								id: "settings",
+								contents: "{}"
+							});
+							NRS.settings = NRS.defaultSettings;
+						}
+						NRS.logConsole("User settings for account " + NRS.convertNumericToRSAccountFormat(NRS.account));
+						for (var setting in NRS.defaultSettings) {
+							if (!NRS.defaultSettings.hasOwnProperty(setting)) {
+								continue;
+							}
+							var value = NRS.settings[setting];
+							var status = (NRS.defaultSettings[setting] !== value ? "modified" : "default");
+							if (setting.search("password") >= 0) {
+								value = new Array(value.length + 1).join('*');
+							}
+							NRS.logConsole(setting + " = " + value + " [" + status + "]");
+						}
+						NRS.applySettings();
+						callback(null);
+					});
                 },
-                function (callback) {
+                function(callback) {
                     for (var schema in NRS.defaultColors) {
+						if (!NRS.defaultColors.hasOwnProperty(schema)) {
+							continue;
+						}
                         var color = NRS.settings[schema + "_color"];
                         if (color) {
                             NRS.updateStyle(schema, color);
                         }
                     }
+                    callback(null);
+                },
+                function(callback) {
+                    if (isAccountSpecific) {
+                        NRS.loadPlugins();
+						if(!NRS.getUrlParameter("page") || NRS.getUrlParameter("page") == "dashboard") {
+							NRS.getAccountInfo();
+							NRS.getInitialTransactions();
+						}
+                    }
+                    callback(null);
                 }
-            ], function (err, result) {});
+            ], function(err, result) {});
 
 		}
 	};
@@ -549,8 +567,8 @@ var NRS = (function(NRS, $) {
 				$.i18n.setLng(NRS.settings["language"], null, function() {
 					$("[data-i18n]").i18n();
 				});
-				if (key && window.localstorage) {
-					window.localStorage.setItem('i18next_lng', NRS.settings["language"]);
+				if (key) {
+					NRS.setStrItem('i18next_lng', NRS.settings["language"]);
 				}
 			}
 		}
@@ -606,9 +624,9 @@ var NRS = (function(NRS, $) {
 
 		if (!key || key == "remember_passphrase") {
 			if (NRS.settings["remember_passphrase"] == "1") {
-				NRS.setCookie("remember_passphrase", 1, 1000);
+				NRS.setStrItem("remember_passphrase", 1);
 			} else {
-				NRS.deleteCookie("remember_passphrase");
+				NRS.removeItem("remember_passphrase");
 			}
 		}
 		if (!key || key == "admin_password") {
@@ -623,23 +641,26 @@ var NRS = (function(NRS, $) {
 			NRS.settings[key] = value;
 
 			if (key == "themeChoice") {
-				NRS.setCookie("themeChoice", value, 1000);
+				NRS.setStrItem("themeChoice", value);
 			}
 			if (key == "language") {
-				NRS.setCookie("language", value, 1000);
+				NRS.setStrItem("language", value);
 			}
 		}
 
-		if (NRS.databaseSupport) {
-			NRS.database.update("data", {
-				contents: JSON.stringify(NRS.settings)
-			}, [{
-				id: "settings"
-			}]);
-		} else if (NRS.hasLocalStorage) {
-			localStorage.setItem("settings", JSON.stringify(NRS.settings));
-		}
+		NRS.storageUpdate("data", {
+			contents: JSON.stringify(NRS.settings)
+		}, [{
+			id: "settings"
+		}]);
 		NRS.applySettings(key);
+	};
+
+	NRS.getAdminPassword = function() {
+		if (window.java) {
+			return window.java.getAdminPassword();
+		}
+		return NRS.settings.admin_password;
 	};
 
 	$("#settings_box select, #welcome_panel select[name='language'], #settings_admin_password").on("change", function(e) {

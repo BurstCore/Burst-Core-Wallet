@@ -38,7 +38,7 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
 	NRS.showLoginOrWelcomeScreen = function() {
-		if (NRS.hasLocalStorage && localStorage.getItem("logged_in")) {
+		if (localStorage.getItem("logged_in")) {
 			NRS.showLoginScreen();
 		} else {
 			NRS.showWelcomeScreen();
@@ -47,8 +47,8 @@ var NRS = (function(NRS, $, undefined) {
 
 	NRS.showLoginScreen = function() {
 		$("#account_phrase_custom_panel, #account_phrase_generator_panel, #welcome_panel, #custom_passphrase_link").hide();
-		$("#account_phrase_custom_panel :input:not(:button):not([type=submit])").val("");
-		$("#account_phrase_generator_panel :input:not(:button):not([type=submit])").val("");
+		$("#account_phrase_custom_panel").find(":input:not(:button):not([type=submit])").val("");
+		$("#account_phrase_generator_panel").find(":input:not(:button):not([type=submit])").val("");
         $("#login_account_other").mask("NXT-****-****-****-*****");
         
 		$("#login_panel").show();
@@ -64,20 +64,23 @@ var NRS = (function(NRS, $, undefined) {
 
 	NRS.registerUserDefinedAccount = function() {
 		$("#account_phrase_generator_panel, #login_panel, #welcome_panel, #custom_passphrase_link").hide();
-		$("#account_phrase_custom_panel :input:not(:button):not([type=submit])").val("");
-		$("#account_phrase_generator_panel :input:not(:button):not([type=submit])").val("");
-		$("#account_phrase_custom_panel").show();
+		$("#account_phrase_generator_panel").find(":input:not(:button):not([type=submit])").val("");
+		var accountPhraseCustomPanel = $("#account_phrase_custom_panel");
+        accountPhraseCustomPanel.find(":input:not(:button):not([type=submit])").val("");
+		accountPhraseCustomPanel.show();
 		$("#registration_password").focus();
 	};
 
 	NRS.registerAccount = function() {
 		$("#login_panel, #welcome_panel").hide();
-		$("#account_phrase_generator_panel").show();
-		$("#account_phrase_generator_panel .step_3 .callout").hide();
+		var accountPhraseGeneratorPanel = $("#account_phrase_generator_panel");
+        accountPhraseGeneratorPanel.show();
+		accountPhraseGeneratorPanel.find(".step_3 .callout").hide();
 
 		var $loading = $("#account_phrase_generator_loading");
 		var $loaded = $("#account_phrase_generator_loaded");
 
+		//noinspection JSUnresolvedVariable
 		if (window.crypto || window.msCrypto) {
 			$loading.find("span.loading_text").html($.t("generating_passphrase_wait"));
 		}
@@ -87,14 +90,13 @@ var NRS = (function(NRS, $, undefined) {
 
 		if (typeof PassPhraseGenerator == "undefined") {
 			$.when(
-				$.getScript("js/crypto/3rdparty/seedrandom.js"),
 				$.getScript("js/crypto/passphrasegenerator.js")
 			).done(function() {
 				$loading.hide();
 				$loaded.show();
 
 				PassPhraseGenerator.generatePassPhrase("#account_phrase_generator_panel");
-			}).fail(function(jqxhr, settings, exception) {
+			}).fail(function() {
 				alert($.t("error_word_list"));
 			});
 		} else {
@@ -106,20 +108,21 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
 	NRS.verifyGeneratedPassphrase = function() {
-		var password = $.trim($("#account_phrase_generator_panel .step_3 textarea").val());
+		var accountPhraseGeneratorPanel = $("#account_phrase_generator_panel");
+        var password = $.trim(accountPhraseGeneratorPanel.find(".step_3 textarea").val());
 
 		if (password != PassPhraseGenerator.passPhrase) {
-			$("#account_phrase_generator_panel .step_3 .callout").show();
+			accountPhraseGeneratorPanel.find(".step_3 .callout").show();
 		} else {
 			NRS.newlyCreatedAccount = true;
 			NRS.login(true,password);
 			PassPhraseGenerator.reset();
-			$("#account_phrase_generator_panel textarea").val("");
-			$("#account_phrase_generator_panel .step_3 .callout").hide();
+			accountPhraseGeneratorPanel.find("textarea").val("");
+			accountPhraseGeneratorPanel.find(".step_3 .callout").hide();
 		}
 	};
 
-	$("#account_phrase_custom_panel form").submit(function(event) {
+	$("#account_phrase_custom_panel").find("form").submit(function(event) {
 		event.preventDefault();
 
 		var password = $("#registration_password").val();
@@ -136,7 +139,7 @@ var NRS = (function(NRS, $, undefined) {
 		}
 
 		if (error) {
-			$("#account_phrase_custom_panel .callout").first().removeClass("callout-info").addClass("callout-danger").html(error);
+			$("#account_phrase_custom_panel").find(".callout").first().removeClass("callout-info").addClass("callout-danger").html(error);
 		} else {
 			$("#registration_password, #registration_password_repeat").val("");
 			NRS.login(true,password);
@@ -144,11 +147,12 @@ var NRS = (function(NRS, $, undefined) {
 	});
 	
 	NRS.listAccounts = function() {
-		$('#login_account').empty();
-		if (NRS.getCookie("savedNxtAccounts") && NRS.getCookie("savedNxtAccounts")!=""){
+		var loginAccount = $('#login_account');
+        loginAccount.empty();
+		if (NRS.getStrItem("savedNxtAccounts") && NRS.getStrItem("savedNxtAccounts") != ""){
 			$('#login_account_container').show();
 			$('#login_account_container_other').hide();
-			var accounts = NRS.getCookie("savedNxtAccounts").split(";");
+			var accounts = NRS.getStrItem("savedNxtAccounts").split(";");
 			$.each(accounts, function(index, account) {
 				if (account != ''){
 					$('#login_account')
@@ -167,11 +171,11 @@ var NRS = (function(NRS, $, undefined) {
 			var otherHTML = "<li><a href='#' style='display: inline-block;width: 380px;' ";
 			otherHTML += "data-i18n='other'>Other</a></li>";
 			var $otherHTML = $(otherHTML);
-			$otherHTML.click(function(e) {
+			$otherHTML.click(function() {
 				$('#login_account_container').hide();
 				$('#login_account_container_other').show();
 			});
-			$otherHTML.appendTo($('#login_account'));
+			$otherHTML.appendTo(loginAccount);
 		}
 		else{
 			$('#login_account_container').hide();
@@ -180,11 +184,38 @@ var NRS = (function(NRS, $, undefined) {
 	};
 	
 	NRS.switchAccount = function(account) {
-		NRS.setDecryptionPassword("");
-		NRS.setPassword("");
-		var url = window.location.pathname;    
-		url += '?account='+account;
-		window.location.href = url;
+		// Reset security related state
+		NRS.resetEncryptionState();
+		NRS.setServerPassword(null);
+		NRS.rememberPassword = false;
+		NRS.account = "";
+		NRS.accountRS = "";
+		NRS.publicKey = "";
+		NRS.accountInfo = {};
+		$("#remember_password").prop("checked", false);
+
+		// Reset other functional state
+		$("#account_balance, #account_balance_sidebar, #account_nr_assets, #account_assets_balance, #account_currencies_balance, #account_nr_currencies, #account_purchase_count, #account_pending_sale_count, #account_completed_sale_count, #account_message_count, #account_alias_count").html("0");
+		$("#id_search").find("input[name=q]").val("");
+		NRS.resetAssetExchangeState();
+		NRS.resetPollsState();
+		NRS.resetMessagesState();
+		NRS.forgingStatus = NRS.constants.UNKNOWN;
+		NRS.isAccountForging = false;
+		NRS.selectedContext = null;
+
+		// Reset plugins state
+		NRS.activePlugins = false;
+		NRS.numRunningPlugins = 0;
+		$.each(NRS.plugins, function(pluginId) {
+			NRS.determinePluginLaunchStatus(pluginId);
+		});
+		
+		// Return to the dashboard and notify the user
+		NRS.goToPage("dashboard");
+        NRS.login(false, account, function() {
+            $.growl($.t("switched_to_account", { account: account }))
+        }, true);
 	};
 	
 	$("#loginButtons").on('click',function(e) {
@@ -207,31 +238,35 @@ var NRS = (function(NRS, $, undefined) {
 	});
 	
 	NRS.removeAccount = function(account) {
-		var accounts = NRS.getCookie("savedNxtAccounts").replace(account+';','');
-		if (accounts == '')
-			NRS.deleteCookie('savedNxtAccounts');
-		else 
-			NRS.setCookie("savedNxtAccounts",accounts,30);
+		var accounts = NRS.getStrItem("savedNxtAccounts").replace(account+';','');
+		if (accounts == '') {
+			NRS.removeItem('savedNxtAccounts');
+		} else {
+			NRS.setStrItem("savedNxtAccounts", accounts);
+		}
 		NRS.listAccounts();
 	};
 
-	NRS.login = function(passLogin, password, callback) {
-		if (passLogin){
-			if (!password.length) {
+	// id can be either account id or passphrase
+	NRS.login = function(isPassphraseLogin, id, callback, isAccountSwitch) {
+		if (isPassphraseLogin){
+			var loginCheckPasswordLength = $("#login_check_password_length");
+			if (!id.length) {
 				$.growl($.t("error_passphrase_required_login"), {
 					"type": "danger",
 					"offset": 10
 				});
 				return;
-			} else if (!NRS.isTestNet && password.length < 12 && $("#login_check_password_length").val() == 1) {
-				$("#login_check_password_length").val(0);
-				$("#login_error .callout").html($.t("error_passphrase_login_length"));
-				$("#login_error").show();
+			} else if (!NRS.isTestNet && id.length < 12 && loginCheckPasswordLength.val() == 1) {
+				loginCheckPasswordLength.val(0);
+				var loginError = $("#login_error");
+				loginError.find(".callout").html($.t("error_passphrase_login_length"));
+				loginError.show();
 				return;
 			}
 
 			$("#login_password, #registration_password, #registration_password_repeat").val("");
-			$("#login_check_password_length").val(1);
+			loginCheckPasswordLength.val(1);
 		}
 
 		NRS.sendRequest("getBlockchainStatus", {}, function(response) {
@@ -245,32 +280,33 @@ var NRS = (function(NRS, $, undefined) {
 			}
 			
 			NRS.state = response;
-			if (passLogin) {
-				var accountRequest = "getAccountId";
-				var requestVariable = {secretPhrase: password};
-			}
-			else {
-				var accountRequest = "getAccount";
-				var requestVariable = {account: password};
+			var accountRequest;
+			var requestVariable;
+			if (isPassphraseLogin) {
+				accountRequest = "getAccountId";
+				requestVariable = {secretPhrase: id};
+			} else {
+				accountRequest = "getAccount";
+				requestVariable = {account: id};
 			}
 
 			//this is done locally..
-			NRS.sendRequest(accountRequest, requestVariable, function(response) {
+			NRS.sendRequest(accountRequest, requestVariable, function(response, data) {
 				if (!response.errorCode) {
-					NRS.account = String(response.account).escapeHTML();
-					NRS.accountRS = String(response.accountRS).escapeHTML();
-					if (passLogin) {
-                        NRS.publicKey = NRS.getPublicKey(converters.stringToHexString(password));
+					NRS.account = NRS.escapeRespStr(response.account);
+					NRS.accountRS = NRS.escapeRespStr(response.accountRS);
+					if (isPassphraseLogin) {
+                        NRS.publicKey = NRS.getPublicKey(converters.stringToHexString(id));
                     } else {
-                        NRS.publicKey = String(response.publicKey).escapeHTML();
+                        NRS.publicKey = NRS.escapeRespStr(response.publicKey);
                     }
 				}
-				if (!passLogin && response.errorCode == 5) {
-					NRS.account = String(response.account).escapeHTML();
-					NRS.accountRS = String(response.accountRS).escapeHTML();
+				if (!isPassphraseLogin && response.errorCode == 5) {
+					NRS.account = NRS.escapeRespStr(response.account);
+					NRS.accountRS = NRS.escapeRespStr(response.accountRS);
 				}
 				if (!NRS.account) {
-					$.growl($.t("error_find_account_id"), {
+					$.growl($.t("error_find_account_id", { accountRS: (data && data.account ? String(data.account).escapeHTML() : "") }), {
 						"type": "danger",
 						"offset": 10
 					});
@@ -286,7 +322,7 @@ var NRS = (function(NRS, $, undefined) {
 				NRS.sendRequest("getAccountPublicKey", {
 					"account": NRS.account
 				}, function(response) {
-					if (response && response.publicKey && response.publicKey != NRS.generatePublicKey(password) && passLogin) {
+					if (response && response.publicKey && response.publicKey != NRS.generatePublicKey(id) && isPassphraseLogin) {
 						$.growl($.t("error_account_taken"), {
 							"type": "danger",
 							"offset": 10
@@ -294,31 +330,30 @@ var NRS = (function(NRS, $, undefined) {
 						return;
 					}
 
-					if ($("#remember_password").is(":checked") && passLogin) {
+					var rememberPassword = $("#remember_password");
+					if (rememberPassword.is(":checked") && isPassphraseLogin) {
 						NRS.rememberPassword = true;
-						$("#remember_password").prop("checked", false);
-						NRS.setPassword(password);
+						rememberPassword.prop("checked", false);
+						NRS.setPassword(id);
 						$(".secret_phrase, .show_secret_phrase").hide();
 						$(".hide_secret_phrase").show();
 					}
-					if ($("#disable_all_plugins").length == 1 && !($("#disable_all_plugins").is(":checked"))) {
-                        NRS.disablePluginsDuringSession = false;
-                    } else {
-                        NRS.disablePluginsDuringSession = true;
-                    }
-
-                    $("#sidebar_account_id").html(String(NRS.accountRS).escapeHTML());
-                    $("#sidebar_account_link").html(NRS.getAccountLink(NRS, "account", NRS.accountRS, "details", false, "btn btn-default btn-xs"));
+					NRS.disablePluginsDuringSession = $("#disable_all_plugins").is(":checked");
+					$("#sidebar_account_id").html(String(NRS.accountRS).escapeHTML());
+					$("#sidebar_account_link").html(NRS.getAccountLink(NRS, "account", NRS.accountRS, "details", false, "btn btn-default btn-xs"));
 					if (NRS.lastBlockHeight == 0 && NRS.state.numberOfBlocks) {
-						NRS.lastBlockHeight = NRS.state.numberOfBlocks - 1;
+						NRS.checkBlockHeight(NRS.state.numberOfBlocks - 1);
+					}
+					if (NRS.lastBlockHeight == 0 && NRS.lastProxyBlockHeight) {
+						NRS.checkBlockHeight(NRS.lastProxyBlockHeight);
 					}
                     $("#sidebar_block_link").html(NRS.getBlockLink(NRS.lastBlockHeight));
 
 					var passwordNotice = "";
 
-					if (password.length < 35 && passLogin) {
+					if (id.length < 35 && isPassphraseLogin) {
 						passwordNotice = $.t("error_passphrase_length_secure");
-					} else if (passLogin && password.length < 50 && (!password.match(/[A-Z]/) || !password.match(/[0-9]/))) {
+					} else if (isPassphraseLogin && id.length < 50 && (!id.match(/[A-Z]/) || !id.match(/[0-9]/))) {
 						passwordNotice = $.t("error_passphrase_strength_secure");
 					}
 
@@ -334,11 +369,11 @@ var NRS = (function(NRS, $, undefined) {
 							NRS.isLeased = false;
 						}
 						NRS.updateForgingTooltip($.t("forging_unknown_tooltip"));
-						NRS.updateForgingStatus(passLogin ? password : null);
-						if (NRS.isLocalHost && passLogin) {
+						NRS.updateForgingStatus(isPassphraseLogin ? id : null);
+						if (NRS.isLocalHost && isPassphraseLogin) {
 							var forgingIndicator = $("#forging_indicator");
 							NRS.sendRequest("startForging", {
-								"secretPhrase": password
+								"secretPhrase": id
 							}, function (response) {
 								if ("deadline" in response) {
 									forgingIndicator.addClass("forging");
@@ -354,10 +389,8 @@ var NRS = (function(NRS, $, undefined) {
 								forgingIndicator.show();
 							});
 						}
-					});
-
-					//NRS.getAccountAliases();
-
+					}, isAccountSwitch);
+					NRS.initSidebarMenu();
 					NRS.unlock();
 
 					if (NRS.isOutdated) {
@@ -369,7 +402,10 @@ var NRS = (function(NRS, $, undefined) {
 					if (!NRS.downloadingBlockchain) {
 						NRS.checkIfOnAFork();
 					}
-					if(navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
+					NRS.logConsole("User Agent: " + String(navigator.userAgent));
+					if (navigator.userAgent.indexOf('Safari') != -1 &&
+						navigator.userAgent.indexOf('Chrome') == -1 &&
+						navigator.userAgent.indexOf('JavaFX') == -1) {
 						// Don't use account based DB in Safari due to a buggy indexedDB implementation (2015-02-24)
 						NRS.createDatabase("NRS_USER_DB");
 						$.growl($.t("nrs_safari_no_account_based_db"), {
@@ -378,57 +414,51 @@ var NRS = (function(NRS, $, undefined) {
 					} else {
 						NRS.createDatabase("NRS_USER_DB_" + String(NRS.account));
 					}
-
 					if (callback) {
 						callback();
 					}
 					
-					if (passLogin) {
-						NRS.checkLocationHash(password);
-						$(window).on("hashchange", NRS.checkLocationHash);
-					}
-
-					$.each(NRS.pages, function(key, value) {
+					$.each(NRS.pages, function(key) {
 						if(key in NRS.setup) {
 							NRS.setup[key]();
 						}
 					});
 					
-					setTimeout(function () { NRS.loadPlugins(); }, 1500);
-					
 					$(".sidebar .treeview").tree();
-					$('#dashboard_link a').addClass("ignore").click();
+					$('#dashboard_link').find('a').addClass("ignore").click();
 
+					var accounts;
 					if ($("#remember_account").is(":checked") || NRS.newlyCreatedAccount) {
 						var accountExists = 0;
-						if (NRS.getCookie("savedNxtAccounts")) {
-							var accounts = NRS.getCookie("savedNxtAccounts").split(";");
+						if (NRS.getStrItem("savedNxtAccounts")) {
+							accounts = NRS.getStrItem("savedNxtAccounts").split(";");
 							$.each(accounts, function(index, account) {
 								if (account == NRS.accountRS) {
-                                    accountExists = 1;
-                                }
+									accountExists = 1;
+								}
 							});
 						}
 						if (!accountExists){
-							if (NRS.getCookie("savedNxtAccounts") && NRS.getCookie("savedNxtAccounts") != ""){
-								var accounts = NRS.getCookie("savedNxtAccounts") + NRS.accountRS + ";";
-								NRS.setCookie("savedNxtAccounts",accounts,30);
+							if (NRS.getStrItem("savedNxtAccounts") && NRS.getStrItem("savedNxtAccounts") != ""){
+								accounts = NRS.getStrItem("savedNxtAccounts") + NRS.accountRS + ";";
+								NRS.setStrItem("savedNxtAccounts", accounts);
 							} else {
-                                NRS.setCookie("savedNxtAccounts", NRS.accountRS + ";", 30);
-                            }
+								NRS.setStrItem("savedNxtAccounts", NRS.accountRS + ";");
+							}
 						}
 					}
 
 					$("[data-i18n]").i18n();
 					
 					/* Add accounts to dropdown for quick switching */
-					$("#account_id_dropdown .dropdown-menu .switchAccount").remove();
-					if (NRS.getCookie("savedNxtAccounts") && NRS.getCookie("savedNxtAccounts")!=""){
-                        $("#account_id_dropdown").show();
-						var accounts = NRS.getCookie("savedNxtAccounts").split(";");
+					var accountIdDropdown = $("#account_id_dropdown");
+					accountIdDropdown.find(".dropdown-menu .switchAccount").remove();
+					if (NRS.getStrItem("savedNxtAccounts") && NRS.getStrItem("savedNxtAccounts")!=""){
+						accountIdDropdown.show();
+						accounts = NRS.getStrItem("savedNxtAccounts").split(";");
 						$.each(accounts, function(index, account) {
 							if (account != ''){
-								$('#account_id_dropdown .dropdown-menu')
+								$('#account_id_dropdown').find('.dropdown-menu')
 								.append($("<li class='switchAccount'></li>")
 									.append($("<a></a>")
 										.attr("href","#")
@@ -439,20 +469,17 @@ var NRS = (function(NRS, $, undefined) {
 							}
 						});
 					} else {
-                        $("#account_id_dropdown").hide();
-                    }
-
-					NRS.getInitialTransactions();
+						accountIdDropdown.hide();
+					}
+					
 					NRS.updateApprovalRequests();
 				});
 			});
 		});
 	};
 
-	$("#logout_button_container").on("show.bs.dropdown", function(e) {
-		
+	$("#logout_button_container").on("show.bs.dropdown", function() {
 		if (NRS.forgingStatus != NRS.constants.FORGING) {
-			//e.preventDefault();
 			$(this).find("[data-i18n='logout_stop_forging']").hide();
 		}
 	});
@@ -506,29 +533,33 @@ var NRS = (function(NRS, $, undefined) {
 
 	NRS.showLockscreen = function() {
 		NRS.listAccounts();
-		if (NRS.hasLocalStorage && localStorage.getItem("logged_in")) {
+		if (localStorage.getItem("logged_in")) {
 			NRS.showLoginScreen();
 		} else {
 			NRS.showWelcomeScreen();
 		}
 
 		$("#center").show();
+		if (!NRS.isShowDummyCheckbox) {
+			$("#dummyCheckbox").hide();
+		}
 	};
 
 	NRS.unlock = function() {
-		if (NRS.hasLocalStorage && !localStorage.getItem("logged_in")) {
+		if (!localStorage.getItem("logged_in")) {
 			localStorage.setItem("logged_in", true);
 		}
 		$("#lockscreen").hide();
 		$("body, html").removeClass("lockscreen");
 		$("#login_error").html("").hide();
-		$(document.documentElement).scrollTop(0);
+		$(document.documentElement).scrollTop = 0;
 	};
 
 	NRS.logout = function(stopForging) {
 		if (stopForging && NRS.forgingStatus == NRS.constants.FORGING) {
-			$("#stop_forging_modal .show_logout").show();
-			$("#stop_forging_modal").modal("show");
+			var stopForgingModal = $("#stop_forging_modal");
+            stopForgingModal.find(".show_logout").show();
+			stopForgingModal.modal("show");
 		} else {
 			NRS.setDecryptionPassword("");
 			NRS.setPassword("");
@@ -540,20 +571,22 @@ var NRS = (function(NRS, $, undefined) {
 	$("#logout_clear_user_data_confirm_btn").click(function(e) {
 		e.preventDefault();
 		if (NRS.database) {
+			//noinspection JSUnresolvedFunction
 			indexedDB.deleteDatabase(NRS.database.name);
 		}
 		if (NRS.legacyDatabase) {
+			//noinspection JSUnresolvedFunction
 			indexedDB.deleteDatabase(NRS.legacyDatabase.name);
 		}
-		if (NRS.hasLocalStorage) {
-			localStorage.removeItem("logged_in");
-			localStorage.removeItem("settings")
-		}
-		var cookies = document.cookie.split(";");
-		for (var i = 0; i < cookies.length; i++) {
-			NRS.deleteCookie(cookies[i].split("=")[0]);
-		}
-
+		NRS.removeItem("logged_in");
+		NRS.removeItem("savedNxtAccounts");
+		NRS.removeItem("language");
+		NRS.removeItem("themeChoice");
+		NRS.removeItem("remember_passphrase");
+		NRS.localStorageDrop("data");
+		NRS.localStorageDrop("polls");
+		NRS.localStorageDrop("contacts");
+		NRS.localStorageDrop("assets");
 		NRS.logout();
 	});
 

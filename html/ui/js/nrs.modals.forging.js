@@ -61,7 +61,11 @@ var NRS = (function(NRS, $) {
 	forgingIndicator.click(function(e) {
 		e.preventDefault();
 
-		if (NRS.downloadingBlockchain) {
+        if (NRS.state.isLightClient) {
+            $.growl($.t("error_forging_light_client"), {
+                "type": "danger"
+            });
+        } else if (NRS.downloadingBlockchain) {
 			$.growl($.t("error_forging_blockchain_downloading"), {
 				"type": "danger"
 			});
@@ -120,7 +124,10 @@ var NRS = (function(NRS, $) {
     NRS.updateForgingStatus = function(secretPhrase) {
         var status = NRS.forgingStatus;
         var tooltip = $("#forging_indicator").attr('title');
-        if (!NRS.accountInfo.publicKey) {
+        if (NRS.state.isLightClient) {
+            status = NRS.constants.NOT_FORGING;
+            tooltip = $.t("error_forging_light_client");
+        } else if (!NRS.accountInfo.publicKey) {
             status = NRS.constants.NOT_FORGING;
             tooltip = $.t("error_forging_no_public_key");
         } else if (NRS.isLeased) {
@@ -135,14 +142,14 @@ var NRS = (function(NRS, $) {
         } else if (NRS.state.isScanning) {
             status = NRS.constants.NOT_FORGING;
             tooltip = $.t("error_forging_blockchain_rescanning");
-        } else if (NRS.needsAdminPassword && NRS.settings.admin_password == "" && (!secretPhrase || !NRS.isLocalHost)) {
+        } else if (NRS.needsAdminPassword && NRS.getAdminPassword() == "" && (!secretPhrase || !NRS.isLocalHost)) {
             // do not change forging status
         } else {
             var params = {};
-            if (NRS.needsAdminPassword && NRS.settings.admin_password != "") {
-                params["adminPassword"] = NRS.settings.admin_password;
+            if (NRS.needsAdminPassword && NRS.getAdminPassword() != "") {
+                params["adminPassword"] = NRS.getAdminPassword();
             }
-            if (secretPhrase && NRS.needsAdminPassword && NRS.settings.admin_password == "") {
+            if (secretPhrase && NRS.needsAdminPassword && NRS.getAdminPassword() == "") {
                 params["secretPhrase"] = secretPhrase;
             }
             NRS.sendRequest("getForging", params, function (response) {
@@ -175,7 +182,7 @@ var NRS = (function(NRS, $) {
                     }
                 } else {
                     status = NRS.constants.UNKNOWN;
-                    tooltip = response.errorDescription;
+                    tooltip = NRS.escapeRespStr(response.errorDescription);
                 }
             }, false);
         }

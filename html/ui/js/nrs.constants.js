@@ -62,12 +62,14 @@ var NRS = (function (NRS, $) {
 
         'SERVER': {},
         'MAX_TAGGED_DATA_DATA_LENGTH': 0,
+        'MAX_PRUNABLE_MESSAGE_LENGTH': 0,
         'GENESIS': '',
         'GENESIS_RS': '',
         'EPOCH_BEGINNING': 0,
         'FORGING': 'forging',
         'NOT_FORGING': 'not_forging',
-        'UNKNOWN': 'unknown'
+        'UNKNOWN': 'unknown',
+        'LAST_KNOWN_BLOCK': { id: "0", height: "0" }
     };
 
     NRS.loadAlgorithmList = function (algorithmSelect, isPhasingHash) {
@@ -94,6 +96,7 @@ var NRS = (function (NRS, $) {
                 NRS.constants.PHASING_HASH_ALGORITHMS = response.phasingHashAlgorithms;
                 NRS.constants.MINTING_HASH_ALGORITHMS = response.mintingHashAlgorithms;
                 NRS.constants.MAX_TAGGED_DATA_DATA_LENGTH = response.maxTaggedDataDataLength;
+                NRS.constants.MAX_PRUNABLE_MESSAGE_LENGTH = response.maxPrunableMessageLength;
                 NRS.constants.GENESIS = response.genesisAccountId;
                 NRS.constants.GENESIS_RS = NRS.convertNumericToRSAccountFormat(response.genesisAccountId);
                 NRS.constants.EPOCH_BEGINNING = response.epochBeginning;
@@ -103,6 +106,8 @@ var NRS = (function (NRS, $) {
                 NRS.constants.SHUFFLING_PARTICIPANTS_STATES = response.shufflingParticipantStates;
                 NRS.constants.DISABLED_APIS = response.disabledAPIs;
                 NRS.constants.DISABLED_API_TAGS = response.disabledAPITags;
+                NRS.constants.PEER_STATES = response.peerStates;
+                NRS.constants.LAST_KNOWN_BLOCK.id = response.genesisBlockId;
                 NRS.loadTransactionTypeConstants(response);
             }
         }, false);
@@ -147,6 +152,10 @@ var NRS = (function (NRS, $) {
         return getKeyByValue(NRS.constants.SHUFFLING_PARTICIPANTS_STATES, code);
     };
 
+    NRS.getPeerState = function (code) {
+        return getKeyByValue(NRS.constants.PEER_STATES, code);
+    };
+
     NRS.isRequireBlockchain = function(requestType) {
         if (!NRS.constants.REQUEST_TYPES[requestType]) {
             // For requests invoked before the getConstants request returns,
@@ -180,7 +189,36 @@ var NRS = (function (NRS, $) {
             requestType == "stopForging" ||
             requestType == "startShuffler" ||
             requestType == "getForging" ||
-            requestType == "markHost";
+            requestType == "markHost" ||
+            requestType == "startFundingMonitor";
+    };
+
+    NRS.getFileUploadConfig = function (requestType, data) {
+        var config = {};
+        if (requestType == "uploadTaggedData") {
+            config.selector = "#upload_file";
+            config.requestParam = "file";
+            config.errorDescription = "error_file_too_big";
+            config.maxSize = NRS.constants.MAX_TAGGED_DATA_DATA_LENGTH;
+            return config;
+        } else if (requestType == "dgsListing") {
+            config.selector = "#dgs_listing_image";
+            config.requestParam = "messageFile";
+            config.errorDescription = "error_image_too_big";
+            config.maxSize = NRS.constants.MAX_PRUNABLE_MESSAGE_LENGTH;
+            return config;
+        } else if (requestType == "sendMessage") {
+            config.selector = "#upload_file_message";
+            if (data.encrypt_message) {
+                config.requestParam = "encryptedMessageFile";    
+            } else {
+                config.requestParam = "messageFile";
+            }
+            config.errorDescription = "error_message_too_big";
+            config.maxSize = NRS.constants.MAX_PRUNABLE_MESSAGE_LENGTH;
+            return config;
+        }
+        return null;
     };
 
     NRS.isApiEnabled = function(depends) {

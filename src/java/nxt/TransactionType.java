@@ -18,6 +18,8 @@ package nxt;
 
 import nxt.AccountLedger.LedgerEvent;
 import nxt.util.Convert;
+import org.apache.tika.Tika;
+import org.apache.tika.mime.MediaType;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;

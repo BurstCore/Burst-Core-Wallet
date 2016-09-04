@@ -209,6 +209,10 @@ public final class ShufflingHome {
         return shufflingTable.getManyBy(new DbClause.NotNullClause("blocks_remaining"), from, to, " ORDER BY blocks_remaining, height DESC ");
     }
 
+    public DbIterator<Shuffling> getFinishedShufflings(int from, int to) {
+        return shufflingTable.getManyBy(new DbClause.NullClause("blocks_remaining"), from, to, " ORDER BY height DESC ");
+    }
+
     public Shuffling getShuffling(long shufflingId) {
         return shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
     }

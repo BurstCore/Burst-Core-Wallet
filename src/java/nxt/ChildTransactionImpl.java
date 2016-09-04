@@ -412,6 +412,9 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         if (getFullSize() > Constants.MAX_PAYLOAD_LENGTH) {
             throw new NxtException.NotValidException("Transaction size " + getFullSize() + " exceeds maximum payload size");
         }
+        if (!validatingAtFinish) {
+            validateEcBlock();
+        }
         AccountRestrictions.checkTransaction(this, validatingAtFinish);
     }
 

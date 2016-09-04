@@ -17,12 +17,14 @@
 package nxt.http;
 
 import nxt.Account;
+import nxt.AccountLedger;
 import nxt.AccountLedger.LedgerEntry;
 import nxt.AccountRestrictions;
 import nxt.Alias;
 import nxt.Appendix;
 import nxt.Asset;
 import nxt.AssetDelete;
+import nxt.AssetDividend;
 import nxt.AssetTransfer;
 import nxt.Attachment;
 import nxt.Block;
@@ -35,6 +37,7 @@ import nxt.CurrencyType;
 import nxt.DigitalGoodsStore;
 import nxt.Exchange;
 import nxt.ExchangeRequest;
+import nxt.FundingMonitor;
 import nxt.Generator;
 import nxt.HoldingType;
 import nxt.MonetarySystem;
@@ -67,7 +70,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-final class JSONData {
+public final class JSONData {
 
     static JSONObject alias(Alias alias) {
         JSONObject json = new JSONObject();
@@ -87,6 +90,10 @@ final class JSONData {
     }
 
     static JSONObject accountBalance(Account account, boolean includeEffectiveBalance) {
+        return accountBalance(account, includeEffectiveBalance, Nxt.getBlockchain().getHeight());
+    }
+
+    static JSONObject accountBalance(Account account, boolean includeEffectiveBalance, int height) {
         JSONObject json = new JSONObject();
         if (account == null) {
             json.put("balanceNQT", "0");
@@ -101,8 +108,8 @@ final class JSONData {
             json.put("unconfirmedBalanceNQT", String.valueOf(account.getUnconfirmedBalanceNQT()));
             json.put("forgedBalanceNQT", String.valueOf(account.getForgedBalanceNQT()));
             if (includeEffectiveBalance) {
-                json.put("effectiveBalanceNXT", account.getEffectiveBalanceFXT());
-                json.put("guaranteedBalanceNQT", String.valueOf(account.getGuaranteedBalanceFQT()));
+                json.put("effectiveBalanceNXT", account.getEffectiveBalanceFXT(height));
+                json.put("guaranteedBalanceNQT", String.valueOf(account.getGuaranteedBalanceFQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height)));
             }
         }
         return json;
@@ -467,6 +474,7 @@ final class JSONData {
         json.put("parsedTags", tagsJSON);
         json.put("delisted", goods.isDelisted());
         json.put("timestamp", goods.getTimestamp());
+        json.put("hasImage", goods.hasImage());
         if (includeCounts) {
             json.put("numberOfPurchases", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goods.getId(), false, true));
             json.put("numberOfPublicFeedbacks", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goods.getId(), true, true));
@@ -707,7 +715,9 @@ final class JSONData {
         JSONObject json = new JSONObject();
         json.put("purchase", Long.toUnsignedString(purchase.getId()));
         json.put("goods", Long.toUnsignedString(purchase.getGoodsId()));
-        json.put("name", purchase.getName());
+        DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(purchase.getGoodsId());
+        json.put("name", goods.getName());
+        json.put("hasImage", goods.hasImage());
         putAccount(json, "seller", purchase.getSellerId());
         json.put("priceNQT", String.valueOf(purchase.getPriceNQT()));
         json.put("quantity", purchase.getQuantity());
@@ -824,6 +834,19 @@ final class JSONData {
             putAssetInfo(json, attachment.getAssetId());
         }
         putExpectedTransaction(json, transaction);
+        return json;
+    }
+
+    static JSONObject assetDividend(AssetDividend assetDividend) {
+        JSONObject json = new JSONObject();
+        json.put("assetDividend", Long.toUnsignedString(assetDividend.getId()));
+        json.put("asset", Long.toUnsignedString(assetDividend.getAssetId()));
+        json.put("amountNQTPerQNT", String.valueOf(assetDividend.getAmountNQTPerQNT()));
+        json.put("totalDividend", String.valueOf(assetDividend.getTotalDividend()));
+        json.put("dividendHeight", assetDividend.getDividendHeight());
+        json.put("numberOfAccounts", assetDividend.getNumAccounts());
+        json.put("height", assetDividend.getHeight());
+        json.put("timestamp", assetDividend.getTimestamp());
         return json;
     }
 
@@ -994,7 +1017,36 @@ final class JSONData {
         return response;
     }
 
-    static JSONObject prunableMessage(PrunableMessage prunableMessage, long readerAccountId, String secretPhrase) {
+    static JSONObject accountMonitor(FundingMonitor monitor, boolean includeMonitoredAccounts) {
+        JSONObject json = new JSONObject();
+        json.put("holdingType", monitor.getHoldingType().getCode());
+        json.put("account", Long.toUnsignedString(monitor.getAccountId()));
+        json.put("accountRS", monitor.getAccountName());
+        json.put("holding", Long.toUnsignedString(monitor.getHoldingId()));
+        json.put("property", monitor.getProperty());
+        json.put("amount", String.valueOf(monitor.getAmount()));
+        json.put("threshold", String.valueOf(monitor.getThreshold()));
+        json.put("interval", monitor.getInterval());
+        if (includeMonitoredAccounts) {
+            JSONArray jsonAccounts = new JSONArray();
+            List<FundingMonitor.MonitoredAccount> accountList = FundingMonitor.getMonitoredAccounts(monitor);
+            accountList.forEach(account -> jsonAccounts.add(JSONData.monitoredAccount(account)));
+            json.put("monitoredAccounts", jsonAccounts);
+        }
+        return json;
+    }
+
+    static JSONObject monitoredAccount(FundingMonitor.MonitoredAccount account) {
+        JSONObject json = new JSONObject();
+        json.put("account", Long.toUnsignedString(account.getAccountId()));
+        json.put("accountRS", account.getAccountName());
+        json.put("amount", String.valueOf(account.getAmount()));
+        json.put("threshold", String.valueOf(account.getThreshold()));
+        json.put("interval", account.getInterval());
+        return json;
+    }
+
+    static JSONObject prunableMessage(PrunableMessage prunableMessage, String secretPhrase, byte[] sharedKey) {
         JSONObject json = new JSONObject();
         json.put("transaction", Long.toUnsignedString(prunableMessage.getId()));
         if (prunableMessage.getMessage() == null || prunableMessage.getEncryptedData() == null) {
@@ -1010,17 +1062,18 @@ final class JSONData {
         if (encryptedData != null) {
             json.put("encryptedMessage", encryptedData(prunableMessage.getEncryptedData()));
             json.put("encryptedMessageIsText", prunableMessage.encryptedMessageIsText());
-            if (secretPhrase != null) {
-                byte[] publicKey = prunableMessage.getSenderId() == readerAccountId
-                        ? Account.getPublicKey(prunableMessage.getRecipientId()) : Account.getPublicKey(prunableMessage.getSenderId());
-                if (publicKey != null) {
-                    try {
-                        byte[] decrypted = Account.decryptFrom(publicKey, encryptedData, secretPhrase, prunableMessage.isCompressed());
-                        json.put("decryptedMessage", Convert.toString(decrypted, prunableMessage.encryptedMessageIsText()));
-                    } catch (RuntimeException e) {
-                        putException(json, e, "Decryption failed");
-                    }
+            byte[] decrypted = null;
+            try {
+                if (secretPhrase != null) {
+                    decrypted = prunableMessage.decrypt(secretPhrase);
+                } else if (sharedKey != null && sharedKey.length > 0) {
+                    decrypted = prunableMessage.decrypt(sharedKey);
                 }
+                if (decrypted != null) {
+                    json.put("decryptedMessage", Convert.toString(decrypted, prunableMessage.encryptedMessageIsText()));
+                }
+            } catch (RuntimeException e) {
+                putException(json, e, "Decryption failed");
             }
             json.put("isCompressed", prunableMessage.isCompressed());
         }
@@ -1069,6 +1122,7 @@ final class JSONData {
         json.put("requireBlockchain", handler.requireBlockchain());
         json.put("requirePost", handler.requirePost());
         json.put("requirePassword", handler.requirePassword());
+        json.put("requireFullClient", handler.requireFullClient());
         return json;
     }
 
@@ -1125,7 +1179,7 @@ final class JSONData {
         }
     }
 
-    static void ledgerEntry(JSONObject json, LedgerEntry entry, boolean includeTransactions) {
+    static void ledgerEntry(JSONObject json, LedgerEntry entry, boolean includeTransactions, boolean includeHoldingInfo) {
         putAccount(json, "account", entry.getAccountId());
         json.put("ledgerId", Long.toUnsignedString(entry.getLedgerId()));
         json.put("block", Long.toUnsignedString(entry.getBlockId()));
@@ -1136,10 +1190,26 @@ final class JSONData {
         json.put("isTransactionEvent", entry.getEvent().isTransaction());
         json.put("change", String.valueOf(entry.getChange()));
         json.put("balance", String.valueOf(entry.getBalance()));
-        if (entry.getHolding() != null) {
-            json.put("holdingType", entry.getHolding().name());
+        AccountLedger.LedgerHolding ledgerHolding = entry.getHolding();
+        if (ledgerHolding != null) {
+            json.put("holdingType", ledgerHolding.name());
             if (entry.getHoldingId() != null) {
                 json.put("holding", Long.toUnsignedString(entry.getHoldingId()));
+            }
+            if (includeHoldingInfo) {
+                JSONObject holdingJson = null;
+                if (ledgerHolding == AccountLedger.LedgerHolding.ASSET_BALANCE
+                        || ledgerHolding == AccountLedger.LedgerHolding.UNCONFIRMED_ASSET_BALANCE) {
+                    holdingJson = new JSONObject();
+                    putAssetInfo(holdingJson, entry.getHoldingId());
+                } else if (ledgerHolding == AccountLedger.LedgerHolding.CURRENCY_BALANCE
+                        || ledgerHolding == AccountLedger.LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE) {
+                    holdingJson = new JSONObject();
+                    putCurrencyInfo(holdingJson, entry.getHoldingId());
+                }
+                if (holdingJson != null) {
+                    json.put("holdingInfo", holdingJson);
+                }
             }
         }
         if (includeTransactions && entry.getEvent().isTransaction()) {

@@ -26,6 +26,7 @@ import nxt.Currency;
 import nxt.CurrencyBuyOffer;
 import nxt.CurrencySellOffer;
 import nxt.DigitalGoodsStore;
+import nxt.HoldingType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.Poll;
@@ -47,14 +48,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
 
 import static nxt.http.JSONResponses.*;
 
-final class ParameterParser {
+public final class ParameterParser {
 
-    static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory) throws ParameterException {
+    public static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
         if (paramValue == null) {
             if (isMandatory) {
@@ -73,7 +75,7 @@ final class ParameterParser {
         }
     }
 
-    static int getInt(HttpServletRequest req, String name, int min, int max, boolean isMandatory) throws ParameterException {
+    public static int getInt(HttpServletRequest req, String name, int min, int max, boolean isMandatory) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
         if (paramValue == null) {
             if (isMandatory) {
@@ -92,7 +94,7 @@ final class ParameterParser {
         }
     }
 
-    static long getLong(HttpServletRequest req, String name, long min, long max,
+    public static long getLong(HttpServletRequest req, String name, long min, long max,
                         boolean isMandatory) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
         if (paramValue == null) {
@@ -112,7 +114,7 @@ final class ParameterParser {
         }
     }
 
-    static long getUnsignedLong(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
+    public static long getUnsignedLong(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
         if (paramValue == null) {
             if (isMandatory) {
@@ -131,7 +133,7 @@ final class ParameterParser {
         }
     }
 
-    static long[] getUnsignedLongs(HttpServletRequest req, String name) throws ParameterException {
+    public static long[] getUnsignedLongs(HttpServletRequest req, String name) throws ParameterException {
         String[] paramValues = req.getParameterValues(name);
         if (paramValues == null || paramValues.length == 0) {
             throw new ParameterException(missing(name));
@@ -153,7 +155,7 @@ final class ParameterParser {
         return values;
     }
 
-    static byte[] getBytes(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
+    public static byte[] getBytes(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
         if (paramValue == null) {
             if (isMandatory) {
@@ -164,11 +166,11 @@ final class ParameterParser {
         return Convert.parseHexString(paramValue);
     }
 
-    static long getAccountId(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+    public static long getAccountId(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         return getAccountId(req, "account", isMandatory);
     }
 
-    static long getAccountId(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
+    public static long getAccountId(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
         if (paramValue == null) {
             if (isMandatory) {
@@ -187,7 +189,7 @@ final class ParameterParser {
         }
     }
 
-    static long[] getAccountIds(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+    public static long[] getAccountIds(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         String[] paramValues = req.getParameterValues("account");
         if (paramValues == null || paramValues.length == 0) {
             if (isMandatory) {
@@ -213,7 +215,7 @@ final class ParameterParser {
         return values;
     }
 
-    static Alias getAlias(HttpServletRequest req) throws ParameterException {
+    public static Alias getAlias(HttpServletRequest req) throws ParameterException {
         long aliasId;
         try {
             aliasId = Convert.parseUnsignedLong(Convert.emptyToNull(req.getParameter("alias")));
@@ -235,19 +237,19 @@ final class ParameterParser {
         return alias;
     }
 
-    static long getAmountNQT(HttpServletRequest req) throws ParameterException {
+    public static long getAmountNQT(HttpServletRequest req) throws ParameterException {
         return getLong(req, "amountNQT", 1L, Constants.MAX_BALANCE_NQT, true);
     }
 
-    static long getFeeNQT(HttpServletRequest req) throws ParameterException {
+    public static long getFeeNQT(HttpServletRequest req) throws ParameterException {
         return getLong(req, "feeNQT", 0L, Constants.MAX_BALANCE_NQT, true);
     }
 
-    static long getPriceNQT(HttpServletRequest req) throws ParameterException {
+    public static long getPriceNQT(HttpServletRequest req) throws ParameterException {
         return getLong(req, "priceNQT", 1L, Constants.MAX_BALANCE_NQT, true);
     }
 
-    static Poll getPoll(HttpServletRequest req) throws ParameterException {
+    public static Poll getPoll(HttpServletRequest req) throws ParameterException {
         Poll poll = Poll.getPoll(getUnsignedLong(req, "poll", true));
         if (poll == null) {
             throw new ParameterException(UNKNOWN_POLL);
@@ -255,7 +257,7 @@ final class ParameterParser {
         return poll;
     }
 
-    static Asset getAsset(HttpServletRequest req) throws ParameterException {
+    public static Asset getAsset(HttpServletRequest req) throws ParameterException {
         Asset asset = Asset.getAsset(getUnsignedLong(req, "asset", true));
         if (asset == null) {
             throw new ParameterException(UNKNOWN_ASSET);
@@ -263,11 +265,11 @@ final class ParameterParser {
         return asset;
     }
 
-    static Currency getCurrency(HttpServletRequest req) throws ParameterException {
+    public static Currency getCurrency(HttpServletRequest req) throws ParameterException {
         return getCurrency(req, true);
     }
 
-    static Currency getCurrency(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+    public static Currency getCurrency(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         Currency currency = Currency.getCurrency(getUnsignedLong(req, "currency", isMandatory));
         if (isMandatory && currency == null) {
             throw new ParameterException(UNKNOWN_CURRENCY);
@@ -275,7 +277,7 @@ final class ParameterParser {
         return currency;
     }
 
-    static CurrencyBuyOffer getBuyOffer(HttpServletRequest req) throws ParameterException {
+    public static CurrencyBuyOffer getBuyOffer(HttpServletRequest req) throws ParameterException {
         CurrencyBuyOffer offer = CurrencyBuyOffer.getOffer(getUnsignedLong(req, "offer", true));
         if (offer == null) {
             throw new ParameterException(UNKNOWN_OFFER);
@@ -283,7 +285,7 @@ final class ParameterParser {
         return offer;
     }
 
-    static CurrencySellOffer getSellOffer(HttpServletRequest req) throws ParameterException {
+    public static CurrencySellOffer getSellOffer(HttpServletRequest req) throws ParameterException {
         CurrencySellOffer offer = CurrencySellOffer.getOffer(getUnsignedLong(req, "offer", true));
         if (offer == null) {
             throw new ParameterException(UNKNOWN_OFFER);
@@ -291,7 +293,7 @@ final class ParameterParser {
         return offer;
     }
 
-    static Shuffling getShuffling(HttpServletRequest req) throws ParameterException {
+    public static Shuffling getShuffling(HttpServletRequest req) throws ParameterException {
         Shuffling shuffling = Shuffling.getShuffling(getUnsignedLong(req, "shuffling", true));
         if (shuffling == null) {
             throw new ParameterException(UNKNOWN_SHUFFLING);
@@ -299,15 +301,15 @@ final class ParameterParser {
         return shuffling;
     }
 
-    static long getQuantityQNT(HttpServletRequest req) throws ParameterException {
+    public static long getQuantityQNT(HttpServletRequest req) throws ParameterException {
         return getLong(req, "quantityQNT", 1L, Constants.MAX_ASSET_QUANTITY_QNT, true);
     }
 
-    static long getAmountNQTPerQNT(HttpServletRequest req) throws ParameterException {
+    public static long getAmountNQTPerQNT(HttpServletRequest req) throws ParameterException {
         return getLong(req, "amountNQTPerQNT", 1L, Constants.MAX_BALANCE_NQT, true);
     }
 
-    static DigitalGoodsStore.Goods getGoods(HttpServletRequest req) throws ParameterException {
+    public static DigitalGoodsStore.Goods getGoods(HttpServletRequest req) throws ParameterException {
         DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(getUnsignedLong(req, "goods", true));
         if (goods == null) {
             throw new ParameterException(UNKNOWN_GOODS);
@@ -315,32 +317,49 @@ final class ParameterParser {
         return goods;
     }
 
-    static int getGoodsQuantity(HttpServletRequest req) throws ParameterException {
+    public static int getGoodsQuantity(HttpServletRequest req) throws ParameterException {
         return getInt(req, "quantity", 0, Constants.MAX_DGS_LISTING_QUANTITY, true);
     }
 
-    static EncryptedData getEncryptedData(HttpServletRequest req, String messageType) throws ParameterException {
+    public static EncryptedData getEncryptedData(HttpServletRequest req, String messageType) throws ParameterException {
         String dataString = Convert.emptyToNull(req.getParameter(messageType + "Data"));
         String nonceString = Convert.emptyToNull(req.getParameter(messageType + "Nonce"));
-        if (dataString == null || nonceString == null) {
+        if (nonceString == null) {
             return null;
         }
         byte[] data;
         byte[] nonce;
         try {
-            data = Convert.parseHexString(dataString);
-        } catch (RuntimeException e) {
-            throw new ParameterException(JSONResponses.incorrect(messageType + "Data"));
-        }
-        try {
             nonce = Convert.parseHexString(nonceString);
         } catch (RuntimeException e) {
             throw new ParameterException(JSONResponses.incorrect(messageType + "Nonce"));
         }
+        if (dataString != null) {
+            try {
+                data = Convert.parseHexString(dataString);
+            } catch (RuntimeException e) {
+                throw new ParameterException(JSONResponses.incorrect(messageType + "Data"));
+            }
+        } else {
+            if (req.getContentType() == null || !req.getContentType().startsWith("multipart/form-data")) {
+                return null;
+            }
+            try {
+                Part part = req.getPart(messageType + "File");
+                if (part == null) {
+                    return null;
+                }
+                FileData fileData = new FileData(part).invoke();
+                data = fileData.getData();
+            } catch (IOException | ServletException e) {
+                Logger.logDebugMessage("error in reading file data", e);
+                throw new ParameterException(JSONResponses.incorrect(messageType + "File"));
+            }
+        }
         return new EncryptedData(data, nonce);
     }
 
-    static Appendix.EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req) throws ParameterException {
+    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptToSelfIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncryptToSelf"));
         byte[] plainMessageBytes = null;
@@ -368,7 +387,7 @@ final class ParameterParser {
         }
     }
 
-    static DigitalGoodsStore.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
+    public static DigitalGoodsStore.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
         DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(getUnsignedLong(req, "purchase", true));
         if (purchase == null) {
             throw new ParameterException(INCORRECT_PURCHASE);
@@ -376,7 +395,7 @@ final class ParameterParser {
         return purchase;
     }
 
-    static String getSecretPhrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+    public static String getSecretPhrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         String secretPhrase = Convert.emptyToNull(req.getParameter("secretPhrase"));
         if (secretPhrase == null && isMandatory) {
             throw new ParameterException(MISSING_SECRET_PHRASE);
@@ -384,11 +403,11 @@ final class ParameterParser {
         return secretPhrase;
     }
 
-    static byte[] getPublicKey(HttpServletRequest req) throws ParameterException {
+    public static byte[] getPublicKey(HttpServletRequest req) throws ParameterException {
         return getPublicKey(req, null);
     }
 
-    static byte[] getPublicKey(HttpServletRequest req, String prefix) throws ParameterException {
+    public static byte[] getPublicKey(HttpServletRequest req, String prefix) throws ParameterException {
         String secretPhraseParam = prefix == null ? "secretPhrase" : (prefix + "SecretPhrase");
         String publicKeyParam = prefix == null ? "publicKey" : (prefix + "PublicKey");
         String secretPhrase = Convert.emptyToNull(req.getParameter(secretPhraseParam));
@@ -410,7 +429,7 @@ final class ParameterParser {
         }
     }
 
-    static Account getSenderAccount(HttpServletRequest req) throws ParameterException {
+    public static Account getSenderAccount(HttpServletRequest req) throws ParameterException {
         byte[] publicKey = getPublicKey(req);
         Account account = Account.getAccount(publicKey);
         if (account == null) {
@@ -419,11 +438,11 @@ final class ParameterParser {
         return account;
     }
 
-    static Account getAccount(HttpServletRequest req) throws ParameterException {
+    public static Account getAccount(HttpServletRequest req) throws ParameterException {
         return getAccount(req, true);
     }
 
-    static Account getAccount(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+    public static Account getAccount(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         long accountId = getAccountId(req, "account", isMandatory);
         if (accountId == 0 && !isMandatory) {
             return null;
@@ -435,7 +454,7 @@ final class ParameterParser {
         return account;
     }
 
-    static List<Account> getAccounts(HttpServletRequest req) throws ParameterException {
+    public static List<Account> getAccounts(HttpServletRequest req) throws ParameterException {
         String[] accountValues = req.getParameterValues("account");
         if (accountValues == null || accountValues.length == 0) {
             throw new ParameterException(MISSING_ACCOUNT);
@@ -458,11 +477,11 @@ final class ParameterParser {
         return result;
     }
 
-    static int getTimestamp(HttpServletRequest req) throws ParameterException {
+    public static int getTimestamp(HttpServletRequest req) throws ParameterException {
         return getInt(req, "timestamp", 0, Integer.MAX_VALUE, false);
     }
 
-    static int getFirstIndex(HttpServletRequest req) {
+    public static int getFirstIndex(HttpServletRequest req) {
         try {
             int firstIndex = Integer.parseInt(req.getParameter("firstIndex"));
             if (firstIndex < 0) {
@@ -474,7 +493,7 @@ final class ParameterParser {
         }
     }
 
-    static int getLastIndex(HttpServletRequest req) {
+    public static int getLastIndex(HttpServletRequest req) {
         int lastIndex = Integer.MAX_VALUE;
         try {
             lastIndex = Integer.parseInt(req.getParameter("lastIndex"));
@@ -489,11 +508,11 @@ final class ParameterParser {
         return lastIndex;
     }
 
-    static int getNumberOfConfirmations(HttpServletRequest req) throws ParameterException {
+    public static int getNumberOfConfirmations(HttpServletRequest req) throws ParameterException {
         return getInt(req, "numberOfConfirmations", 0, Nxt.getBlockchain().getHeight(), false);
     }
 
-    static int getHeight(HttpServletRequest req) throws ParameterException {
+    public static int getHeight(HttpServletRequest req) throws ParameterException {
         String heightValue = Convert.emptyToNull(req.getParameter("height"));
         if (heightValue != null) {
             try {
@@ -509,7 +528,27 @@ final class ParameterParser {
         return -1;
     }
 
-    static String getSearchQuery(HttpServletRequest req) throws ParameterException {
+    public static HoldingType getHoldingType(HttpServletRequest req) throws ParameterException {
+        return HoldingType.get(ParameterParser.getByte(req, "holdingType", (byte) 0, (byte) 2, false));
+    }
+
+    public static long getHoldingId(HttpServletRequest req, HoldingType holdingType) throws ParameterException {
+        long holdingId = ParameterParser.getUnsignedLong(req, "holding", holdingType != HoldingType.NXT);
+        if (holdingType == HoldingType.NXT && holdingId != 0) {
+            throw new ParameterException(JSONResponses.incorrect("holding", "holding id should not be specified if holdingType is NXT"));
+        }
+        return holdingId;
+    }
+
+    public static String getAccountProperty(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+        String property = Convert.emptyToNull(req.getParameter("property"));
+        if (property == null && isMandatory) {
+            throw new ParameterException(MISSING_PROPERTY);
+        }
+        return property;
+    }
+
+    public static String getSearchQuery(HttpServletRequest req) throws ParameterException {
         String query = Convert.nullToEmpty(req.getParameter("query")).trim();
         String tags = Convert.nullToEmpty(req.getParameter("tag")).trim();
         if (query.isEmpty() && tags.isEmpty()) {
@@ -525,7 +564,7 @@ final class ParameterParser {
         return query;
     }
 
-    static Transaction.Builder parseTransaction(String transactionJSON, String transactionBytes, String prunableAttachmentJSON) throws ParameterException {
+    public static Transaction.Builder parseTransaction(String transactionJSON, String transactionBytes, String prunableAttachmentJSON) throws ParameterException {
         if (transactionBytes == null && transactionJSON == null) {
             throw new ParameterException(MISSING_TRANSACTION_BYTES_OR_JSON);
         }
@@ -559,10 +598,10 @@ final class ParameterParser {
         }
     }
 
-    static Appendix getPlainMessage(HttpServletRequest req, boolean prunable) throws ParameterException {
+    public static Appendix getPlainMessage(HttpServletRequest req, boolean prunable) throws ParameterException {
         String messageValue = Convert.emptyToNull(req.getParameter("message"));
+        boolean messageIsText = !"false".equalsIgnoreCase(req.getParameter("messageIsText"));
         if (messageValue != null) {
-            boolean messageIsText = !"false".equalsIgnoreCase(req.getParameter("messageIsText"));
             try {
                 if (prunable) {
                     return new Appendix.PrunablePlainMessage(messageValue, messageIsText);
@@ -573,10 +612,35 @@ final class ParameterParser {
                 throw new ParameterException(INCORRECT_ARBITRARY_MESSAGE);
             }
         }
-        return null;
+        if (req.getContentType() == null || !req.getContentType().startsWith("multipart/form-data")) {
+            return null;
+        }
+        try {
+            Part part = req.getPart("messageFile");
+            if (part == null) {
+                return null;
+            }
+            FileData fileData = new FileData(part).invoke();
+            byte[] message = fileData.getData();
+            String detectedMimeType = Search.detectMimeType(message);
+            if (detectedMimeType != null) {
+                messageIsText = detectedMimeType.equals("text/plain");
+            }
+            if (messageIsText && !Arrays.equals(message, Convert.toBytes(Convert.toString(message)))) {
+                messageIsText = false;
+            }
+            if (prunable) {
+                return new Appendix.PrunablePlainMessage(message, messageIsText);
+            } else {
+                return new Appendix.Message(message, messageIsText);
+            }
+        } catch (IOException | ServletException e) {
+            Logger.logDebugMessage("error in reading file data", e);
+            throw new ParameterException(INCORRECT_ARBITRARY_MESSAGE);
+        }
     }
 
-    static Appendix getEncryptedMessage(HttpServletRequest req, Account recipient, boolean prunable) throws ParameterException {
+    public static Appendix getEncryptedMessage(HttpServletRequest req, Account recipient, boolean prunable) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncrypt"));
         byte[] plainMessageBytes = null;
@@ -585,7 +649,33 @@ final class ParameterParser {
         if (encryptedData == null) {
             String plainMessage = Convert.emptyToNull(req.getParameter("messageToEncrypt"));
             if (plainMessage == null) {
-                return null;
+                if (req.getContentType() == null || !req.getContentType().startsWith("multipart/form-data")) {
+                    return null;
+                }
+                try {
+                    Part part = req.getPart("messageToEncryptFile");
+                    if (part == null) {
+                        return null;
+                    }
+                    FileData fileData = new FileData(part).invoke();
+                    plainMessageBytes = fileData.getData();
+                    String detectedMimeType = Search.detectMimeType(plainMessageBytes);
+                    if (detectedMimeType != null) {
+                        isText = detectedMimeType.equals("text/plain");
+                    }
+                    if (isText && !Arrays.equals(plainMessageBytes, Convert.toBytes(Convert.toString(plainMessageBytes)))) {
+                        isText = false;
+                    }
+                } catch (IOException | ServletException e) {
+                    Logger.logDebugMessage("error in reading file data", e);
+                    throw new ParameterException(INCORRECT_MESSAGE_TO_ENCRYPT);
+                }
+            } else {
+                try {
+                    plainMessageBytes = isText ? Convert.toBytes(plainMessage) : Convert.parseHexString(plainMessage);
+                } catch (RuntimeException e) {
+                    throw new ParameterException(INCORRECT_MESSAGE_TO_ENCRYPT);
+                }
             }
             if (recipient != null) {
                 recipientPublicKey = Account.getPublicKey(recipient.getId());
@@ -595,11 +685,6 @@ final class ParameterParser {
             }
             if (recipientPublicKey == null) {
                 throw new ParameterException(MISSING_RECIPIENT_PUBLIC_KEY);
-            }
-            try {
-                plainMessageBytes = isText ? Convert.toBytes(plainMessage) : Convert.parseHexString(plainMessage);
-            } catch (RuntimeException e) {
-                throw new ParameterException(INCORRECT_MESSAGE_TO_ENCRYPT);
             }
             String secretPhrase = getSecretPhrase(req, false);
             if (secretPhrase != null) {
@@ -621,7 +706,7 @@ final class ParameterParser {
         }
     }
 
-    static Attachment.TaggedDataUpload getTaggedData(HttpServletRequest req) throws ParameterException, NxtException.NotValidException {
+    public static Attachment.TaggedDataUpload getTaggedData(HttpServletRequest req) throws ParameterException, NxtException.NotValidException {
         String name = Convert.emptyToNull(req.getParameter("name"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
         String tags = Convert.nullToEmpty(req.getParameter("tags"));
@@ -701,7 +786,7 @@ final class ParameterParser {
 
     private ParameterParser() {} // never
 
-    static class FileData {
+    public static class FileData {
         private final Part part;
         private String filename;
         private byte[] data;

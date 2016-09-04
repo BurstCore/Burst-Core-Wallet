@@ -30,10 +30,7 @@ import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 abstract class TransactionImpl implements Transaction {
 
@@ -82,7 +79,7 @@ abstract class TransactionImpl implements Transaction {
                 timestamp = Nxt.getEpochTime();
             }
             if (!ecBlockSet) {
-                Block ecBlock = EconomicClustering.getECBlock(timestamp);
+                Block ecBlock = BlockchainImpl.getInstance().getECBlock(timestamp);
                 this.ecBlockHeight = ecBlock.getHeight();
                 this.ecBlockId = ecBlock.getId();
             }
@@ -586,6 +583,20 @@ abstract class TransactionImpl implements Transaction {
             }
         }
 
+    }
+
+    void validateEcBlock() throws NxtException.NotCurrentlyValidException {
+        if (ecBlockId != 0) {
+            if (Nxt.getBlockchain().getHeight() < ecBlockHeight) {
+                throw new NxtException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
+                        + " exceeds blockchain height " + Nxt.getBlockchain().getHeight());
+            }
+            if (BlockDb.findBlockIdAtHeight(ecBlockHeight) != ecBlockId) {
+                throw new NxtException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
+                        + " does not match ecBlockId " + Long.toUnsignedString(ecBlockId)
+                        + ", transaction was generated on a fork");
+            }
+        }
     }
 
     long getMinimumFeeFQT(int blockchainHeight) {

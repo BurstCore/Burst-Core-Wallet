@@ -18,8 +18,6 @@
  * @depends {nrs.js}
  */
 var NRS = (function(NRS, $) {
-	NRS.confirmedFormWarning = false;
-
 	NRS.forms = {};
 
 	$(".modal form input").keydown(function(e) {
@@ -34,7 +32,14 @@ var NRS = (function(NRS, $) {
 	});
 
 	$(".modal button.btn-primary:not([data-dismiss=modal]):not([data-ignore=true]),button.btn-calculate-fee").click(function() {
-		NRS.submitForm($(this).closest(".modal"), $(this));
+		var $btn = $(this);
+		var $modal = $(this).closest(".modal");
+		try {
+			NRS.submitForm($modal, $btn);
+		} catch(e) {
+			$modal.find(".error_message").html("Form submission error '" + e.message + "' - please report to developers").show();
+			NRS.unlockForm($modal, $btn);
+		}
 	});
 
 	$(".modal input,select,textarea").change(function() {
@@ -105,7 +110,6 @@ var NRS = (function(NRS, $) {
 			delete data.encrypt_message;
 			delete data.add_message;
 			delete data.add_note_to_self;
-
 			return data;
 		} else if (!data.add_message) {
 			delete data.message;
@@ -120,42 +124,55 @@ var NRS = (function(NRS, $) {
 			"message": data.message,
 			"note_to_self": data.note_to_self
 		};
-        var encrypted;
-		if (data.add_message && data.message) {
+		var encrypted;
+		var uploadConfig = NRS.getFileUploadConfig("sendMessage", data);
+		if ($(uploadConfig.selector)[0].files[0]) {
+			data.messageFile = $(uploadConfig.selector)[0].files[0];
+		}
+		if (data.add_message && (data.message || data.messageFile)) {
 			if (data.encrypt_message) {
 				try {
 					var options = {};
-
 					if (data.recipient) {
 						options.account = data.recipient;
 					} else if (data.encryptedMessageRecipient) {
 						options.account = data.encryptedMessageRecipient;
 						delete data.encryptedMessageRecipient;
 					}
-
 					if (data.recipientPublicKey) {
 						options.publicKey = data.recipientPublicKey;
 					}
-
-                    if (data.doNotSign) {
-                        data.messageToEncrypt = data.message;
-                    } else {
-                        encrypted = NRS.encryptNote(data.message, options, data.secretPhrase);
-                        data.encryptedMessageData = encrypted.message;
-                        data.encryptedMessageNonce = encrypted.nonce;
-                    }
-					data.messageToEncryptIsText = "true";
-					if (!data.permanent_message) {
+					if (data.messageFile) {
+						// We read the file data and encrypt it later
+						data.messageToEncryptIsText = "false";
 						data.encryptedMessageIsPrunable = "true";
+						data.encryptionKeys = NRS.getEncryptionKeys(options, data.secretPhrase);
+					} else {
+						if (data.doNotSign) {
+							data.messageToEncrypt = data.message;
+						} else {
+							encrypted = NRS.encryptNote(data.message, options, data.secretPhrase);
+							data.encryptedMessageData = encrypted.message;
+							data.encryptedMessageNonce = encrypted.nonce;
+						}
+						data.messageToEncryptIsText = "true";
+						if (!data.permanent_message) {
+							data.encryptedMessageIsPrunable = "true";
+						}
 					}
 					delete data.message;
 				} catch (err) {
 					throw err;
 				}
 			} else {
-				data.messageIsText = "true";
-				if (!data.permanent_message && converters.stringToByteArray(data.message).length >= NRS.constants.MIN_PRUNABLE_MESSAGE_LENGTH) {
+				if (data.messageFile) {
+					data.messageIsText = "false";
 					data.messageIsPrunable = "true";
+				} else {
+					data.messageIsText = "true";
+					if (!data.permanent_message && converters.stringToByteArray(data.message).length >= NRS.constants.MIN_PRUNABLE_MESSAGE_LENGTH) {
+						data.messageIsPrunable = "true";
+					}
 				}
 			}
 		} else {
@@ -182,11 +199,8 @@ var NRS = (function(NRS, $) {
 		} else {
 			delete data.note_to_self;
 		}
-
 		delete data.add_message;
-		delete data.encrypt_message;
 		delete data.add_note_to_self;
-
 		return data;
 	};
 
@@ -211,7 +225,12 @@ var NRS = (function(NRS, $) {
 			$form = $modal.find("form:first");
 		}
 
-		var requestType = $form.find("input[name=request_type]").val();
+		var requestType;
+		if ($btn.data("request")) {
+			requestType = $btn.data("request");
+		} else {
+			requestType = $form.find("input[name=request_type]").val();
+		}
 		var requestTypeKey = requestType.replace(/([A-Z])/g, function($1) {
 			return "_" + $1.toLowerCase();
 		});
@@ -230,7 +249,7 @@ var NRS = (function(NRS, $) {
 
 		var originalRequestType = requestType;
         if (NRS.isRequireBlockchain(requestType)) {
-			if (NRS.downloadingBlockchain) {
+			if (NRS.downloadingBlockchain && !NRS.state.apiProxy) {
 				$form.find(".error_message").html($.t("error_blockchain_downloading")).show();
 				if (formErrorFunction) {
 					formErrorFunction();
@@ -612,97 +631,120 @@ var NRS = (function(NRS, $) {
                 delete data.doNotBroadcast;
             }
 		}
+		if (data.messageFile && data.encrypt_message) {
+			try {
+				NRS.encryptFile(data.messageFile, data.encryptionKeys, function(encrypted) {
+					data.messageFile = encrypted.file;
+					data.encryptedMessageNonce = converters.byteArrayToHexString(encrypted.nonce);
+					delete data.encryptionKeys;
 
-		NRS.sendRequest(requestType, data, function(response) {
-			//todo check again.. response.error
-            var formCompleteFunction;
-			if (response.fullHash) {
-                NRS.unlockForm($modal, $btn);
-                if (data.calculateFee) {
-                    updateFee($modal, response.transactionJSON.feeNQT);
-                    return;
-                }
-
-				if (!$modal.hasClass("modal-no-hide")) {
-					$modal.modal("hide");
+					NRS.sendRequest(requestType, data, function (response) {
+						formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
+							originalRequestType, formErrorFunction, errorMessage);
+					})
+				});
+			} catch (err) {
+				$form.find(".error_message").html(String(err).escapeHTML()).show();
+				if (formErrorFunction) {
+					formErrorFunction(false, data);
 				}
+				NRS.unlockForm($modal, $btn);
+			}
+		} else {
+			NRS.sendRequest(requestType, data, function (response) {
+				formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
+					originalRequestType, formErrorFunction, errorMessage);
+			});
+		}
+	};
 
-				if (successMessage) {
-					$.growl(successMessage.escapeHTML(), {
-						type: "success"
-					});
-				}
+	function formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
+						  originalRequestType, formErrorFunction, errorMessage) {
+		//todo check again.. response.error
+		var formCompleteFunction;
+		if (response.fullHash) {
+			NRS.unlockForm($modal, $btn);
+			if (data.calculateFee) {
+				updateFee($modal, response.transactionJSON.feeNQT);
+				return;
+			}
 
-				formCompleteFunction = NRS["forms"][originalRequestType + "Complete"];
+			if (!$modal.hasClass("modal-no-hide")) {
+				$modal.modal("hide");
+			}
 
-				if (requestType != "parseTransaction" && requestType != "calculateFullHash") {
-					if (typeof formCompleteFunction == "function") {
-						data.requestType = requestType;
+			if (successMessage) {
+				$.growl(successMessage.escapeHTML(), {
+					type: "success"
+				});
+			}
 
-						if (response.transaction) {
-							NRS.addUnconfirmedTransaction(response.transaction, function(alreadyProcessed) {
-								response.alreadyProcessed = alreadyProcessed;
-								formCompleteFunction(response, data);
-							});
-						} else {
-							response.alreadyProcessed = false;
+			formCompleteFunction = NRS["forms"][originalRequestType + "Complete"];
+
+			if (requestType != "parseTransaction" && requestType != "calculateFullHash") {
+				if (typeof formCompleteFunction == "function") {
+					data.requestType = requestType;
+
+					if (response.transaction) {
+						NRS.addUnconfirmedTransaction(response.transaction, function(alreadyProcessed) {
+							response.alreadyProcessed = alreadyProcessed;
 							formCompleteFunction(response, data);
-						}
+						});
 					} else {
-						NRS.addUnconfirmedTransaction(response.transaction);
+						response.alreadyProcessed = false;
+						formCompleteFunction(response, data);
 					}
 				} else {
-					if (typeof formCompleteFunction == "function") {
-						data.requestType = requestType;
-						formCompleteFunction(response, data);
-					}
+					NRS.addUnconfirmedTransaction(response.transaction);
 				}
-
-				if (NRS.accountInfo && !NRS.accountInfo.publicKey) {
-					$("#dashboard_message").hide();
-				}
-			} else if (response.errorCode) {
-				$form.find(".error_message").html(response.errorDescription.escapeHTML()).show();
-
-				if (formErrorFunction) {
-					formErrorFunction(response, data);
-				}
-
-				NRS.unlockForm($modal, $btn);
 			} else {
-                if (data.calculateFee) {
-                    NRS.unlockForm($modal, $btn, false);
-                    updateFee($modal, response.transactionJSON.feeNQT);
-                    return;
-                }
-				var sentToFunction = false;
-				if (!errorMessage) {
-					formCompleteFunction = NRS["forms"][originalRequestType + "Complete"];
-
-					if (typeof formCompleteFunction == 'function') {
-						sentToFunction = true;
-						data.requestType = requestType;
-
-						NRS.unlockForm($modal, $btn);
-
-						if (!$modal.hasClass("modal-no-hide")) {
-							$modal.modal("hide");
-						}
-						formCompleteFunction(response, data);
-					} else {
-						errorMessage = $.t("error_unknown");
-					}
-				}
-				if (!sentToFunction) {
-					NRS.unlockForm($modal, $btn, true);
-
-					$.growl(errorMessage.escapeHTML(), {
-						type: 'danger'
-					});
+				if (typeof formCompleteFunction == "function") {
+					data.requestType = requestType;
+					formCompleteFunction(response, data);
 				}
 			}
-		});
-	};
+
+		} else if (response.errorCode) {
+			$form.find(".error_message").html(NRS.escapeRespStr(response.errorDescription)).show();
+
+			if (formErrorFunction) {
+				formErrorFunction(response, data);
+			}
+
+			NRS.unlockForm($modal, $btn);
+		} else {
+			if (data.calculateFee) {
+				NRS.unlockForm($modal, $btn, false);
+				updateFee($modal, response.transactionJSON.feeNQT);
+				return;
+			}
+			var sentToFunction = false;
+			if (!errorMessage) {
+				formCompleteFunction = NRS["forms"][originalRequestType + "Complete"];
+
+				if (typeof formCompleteFunction == 'function') {
+					sentToFunction = true;
+					data.requestType = requestType;
+
+					NRS.unlockForm($modal, $btn);
+
+					if (!$modal.hasClass("modal-no-hide")) {
+						$modal.modal("hide");
+					}
+					formCompleteFunction(response, data);
+				} else {
+					errorMessage = $.t("error_unknown");
+				}
+			}
+			if (!sentToFunction) {
+				NRS.unlockForm($modal, $btn, true);
+
+				$.growl(errorMessage.escapeHTML(), {
+					type: 'danger'
+				});
+			}
+		}
+	}
 
 	NRS.unlockForm = function($modal, $btn, hide) {
 		$modal.find("button").prop("disabled", false);

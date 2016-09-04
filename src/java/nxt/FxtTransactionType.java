@@ -270,7 +270,7 @@ public abstract class FxtTransactionType extends TransactionType {
                 }
                 byte[] recipientPublicKey = Account.getPublicKey(transaction.getRecipientId());
                 if (recipientPublicKey == null) {
-                    throw new NxtException.NotValidException("Invalid effective balance leasing: "
+                    throw new NxtException.NotCurrentlyValidException("Invalid effective balance leasing: "
                             + " recipient account " + Long.toUnsignedString(transaction.getRecipientId()) + " not found or no public key published");
                 }
                 if (transaction.getRecipientId() == Genesis.CREATOR_ID) {

@@ -17,224 +17,8 @@
 /**
  * @depends {nrs.js}
  */
+
 var NRS = (function (NRS, $, undefined) {
-
-    var LOCALE_DATE_FORMATS = {
-        "ar-SA": "dd/MM/yy",
-        "bg-BG": "dd.M.yyyy",
-        "ca-ES": "dd/MM/yyyy",
-        "zh-TW": "yyyy/M/d",
-        "cs-CZ": "d.M.yyyy",
-        "da-DK": "dd-MM-yyyy",
-        "de-DE": "dd.MM.yyyy",
-        "el-GR": "d/M/yyyy",
-        "en-US": "M/d/yyyy",
-        "fi-FI": "d.M.yyyy",
-        "fr-FR": "dd/MM/yyyy",
-        "he-IL": "dd/MM/yyyy",
-        "hu-HU": "yyyy. MM. dd.",
-        "is-IS": "d.M.yyyy",
-        "it-IT": "dd/MM/yyyy",
-        "ja-JP": "yyyy/MM/dd",
-        "ko-KR": "yyyy-MM-dd",
-        "nl-NL": "d-M-yyyy",
-        "nb-NO": "dd.MM.yyyy",
-        "pl-PL": "yyyy-MM-dd",
-        "pt-BR": "d/M/yyyy",
-        "ro-RO": "dd.MM.yyyy",
-        "ru-RU": "dd.MM.yyyy",
-        "hr-HR": "d.M.yyyy",
-        "sk-SK": "d. M. yyyy",
-        "sq-AL": "yyyy-MM-dd",
-        "sv-SE": "yyyy-MM-dd",
-        "th-TH": "d/M/yyyy",
-        "tr-TR": "dd.MM.yyyy",
-        "ur-PK": "dd/MM/yyyy",
-        "id-ID": "dd/MM/yyyy",
-        "uk-UA": "dd.MM.yyyy",
-        "be-BY": "dd.MM.yyyy",
-        "sl-SI": "d.M.yyyy",
-        "et-EE": "d.MM.yyyy",
-        "lv-LV": "yyyy.MM.dd.",
-        "lt-LT": "yyyy.MM.dd",
-        "fa-IR": "MM/dd/yyyy",
-        "vi-VN": "dd/MM/yyyy",
-        "hy-AM": "dd.MM.yyyy",
-        "az-Latn-AZ": "dd.MM.yyyy",
-        "eu-ES": "yyyy/MM/dd",
-        "mk-MK": "dd.MM.yyyy",
-        "af-ZA": "yyyy/MM/dd",
-        "ka-GE": "dd.MM.yyyy",
-        "fo-FO": "dd-MM-yyyy",
-        "hi-IN": "dd-MM-yyyy",
-        "ms-MY": "dd/MM/yyyy",
-        "kk-KZ": "dd.MM.yyyy",
-        "ky-KG": "dd.MM.yy",
-        "sw-KE": "M/d/yyyy",
-        "uz-Latn-UZ": "dd/MM yyyy",
-        "tt-RU": "dd.MM.yyyy",
-        "pa-IN": "dd-MM-yy",
-        "gu-IN": "dd-MM-yy",
-        "ta-IN": "dd-MM-yyyy",
-        "te-IN": "dd-MM-yy",
-        "kn-IN": "dd-MM-yy",
-        "mr-IN": "dd-MM-yyyy",
-        "sa-IN": "dd-MM-yyyy",
-        "mn-MN": "yy.MM.dd",
-        "gl-ES": "dd/MM/yy",
-        "kok-IN": "dd-MM-yyyy",
-        "syr-SY": "dd/MM/yyyy",
-        "dv-MV": "dd/MM/yy",
-        "ar-IQ": "dd/MM/yyyy",
-        "zh-CN": "yyyy/M/d",
-        "de-CH": "dd.MM.yyyy",
-        "en-GB": "dd/MM/yyyy",
-        "es-MX": "dd/MM/yyyy",
-        "fr-BE": "d/MM/yyyy",
-        "it-CH": "dd.MM.yyyy",
-        "nl-BE": "d/MM/yyyy",
-        "nn-NO": "dd.MM.yyyy",
-        "pt-PT": "dd-MM-yyyy",
-        "sr-Latn-CS": "d.M.yyyy",
-        "sv-FI": "d.M.yyyy",
-        "az-Cyrl-AZ": "dd.MM.yyyy",
-        "ms-BN": "dd/MM/yyyy",
-        "uz-Cyrl-UZ": "dd.MM.yyyy",
-        "ar-EG": "dd/MM/yyyy",
-        "zh-HK": "d/M/yyyy",
-        "de-AT": "dd.MM.yyyy",
-        "en-AU": "d/MM/yyyy",
-        "es-ES": "dd/MM/yyyy",
-        "fr-CA": "yyyy-MM-dd",
-        "sr-Cyrl-CS": "d.M.yyyy",
-        "ar-LY": "dd/MM/yyyy",
-        "zh-SG": "d/M/yyyy",
-        "de-LU": "dd.MM.yyyy",
-        "en-CA": "dd/MM/yyyy",
-        "es-GT": "dd/MM/yyyy",
-        "fr-CH": "dd.MM.yyyy",
-        "ar-DZ": "dd-MM-yyyy",
-        "zh-MO": "d/M/yyyy",
-        "de-LI": "dd.MM.yyyy",
-        "en-NZ": "d/MM/yyyy",
-        "es-CR": "dd/MM/yyyy",
-        "fr-LU": "dd/MM/yyyy",
-        "ar-MA": "dd-MM-yyyy",
-        "en-IE": "dd/MM/yyyy",
-        "es-PA": "MM/dd/yyyy",
-        "fr-MC": "dd/MM/yyyy",
-        "ar-TN": "dd-MM-yyyy",
-        "en-ZA": "yyyy/MM/dd",
-        "es-DO": "dd/MM/yyyy",
-        "ar-OM": "dd/MM/yyyy",
-        "en-JM": "dd/MM/yyyy",
-        "es-VE": "dd/MM/yyyy",
-        "ar-YE": "dd/MM/yyyy",
-        "en-029": "MM/dd/yyyy",
-        "es-CO": "dd/MM/yyyy",
-        "ar-SY": "dd/MM/yyyy",
-        "en-BZ": "dd/MM/yyyy",
-        "es-PE": "dd/MM/yyyy",
-        "ar-JO": "dd/MM/yyyy",
-        "en-TT": "dd/MM/yyyy",
-        "es-AR": "dd/MM/yyyy",
-        "ar-LB": "dd/MM/yyyy",
-        "en-ZW": "M/d/yyyy",
-        "es-EC": "dd/MM/yyyy",
-        "ar-KW": "dd/MM/yyyy",
-        "en-PH": "M/d/yyyy",
-        "es-CL": "dd-MM-yyyy",
-        "ar-AE": "dd/MM/yyyy",
-        "es-UY": "dd/MM/yyyy",
-        "ar-BH": "dd/MM/yyyy",
-        "es-PY": "dd/MM/yyyy",
-        "ar-QA": "dd/MM/yyyy",
-        "es-BO": "dd/MM/yyyy",
-        "es-SV": "dd/MM/yyyy",
-        "es-HN": "dd/MM/yyyy",
-        "es-NI": "dd/MM/yyyy",
-        "es-PR": "dd/MM/yyyy",
-        "am-ET": "d/M/yyyy",
-        "tzm-Latn-DZ": "dd-MM-yyyy",
-        "iu-Latn-CA": "d/MM/yyyy",
-        "sma-NO": "dd.MM.yyyy",
-        "mn-Mong-CN": "yyyy/M/d",
-        "gd-GB": "dd/MM/yyyy",
-        "en-MY": "d/M/yyyy",
-        "prs-AF": "dd/MM/yy",
-        "bn-BD": "dd-MM-yy",
-        "wo-SN": "dd/MM/yyyy",
-        "rw-RW": "M/d/yyyy",
-        "qut-GT": "dd/MM/yyyy",
-        "sah-RU": "MM.dd.yyyy",
-        "gsw-FR": "dd/MM/yyyy",
-        "co-FR": "dd/MM/yyyy",
-        "oc-FR": "dd/MM/yyyy",
-        "mi-NZ": "dd/MM/yyyy",
-        "ga-IE": "dd/MM/yyyy",
-        "se-SE": "yyyy-MM-dd",
-        "br-FR": "dd/MM/yyyy",
-        "smn-FI": "d.M.yyyy",
-        "moh-CA": "M/d/yyyy",
-        "arn-CL": "dd-MM-yyyy",
-        "ii-CN": "yyyy/M/d",
-        "dsb-DE": "d. M. yyyy",
-        "ig-NG": "d/M/yyyy",
-        "kl-GL": "dd-MM-yyyy",
-        "lb-LU": "dd/MM/yyyy",
-        "ba-RU": "dd.MM.yy",
-        "nso-ZA": "yyyy/MM/dd",
-        "quz-BO": "dd/MM/yyyy",
-        "yo-NG": "d/M/yyyy",
-        "ha-Latn-NG": "d/M/yyyy",
-        "fil-PH": "M/d/yyyy",
-        "ps-AF": "dd/MM/yy",
-        "fy-NL": "d-M-yyyy",
-        "ne-NP": "M/d/yyyy",
-        "se-NO": "dd.MM.yyyy",
-        "iu-Cans-CA": "d/M/yyyy",
-        "sr-Latn-RS": "d.M.yyyy",
-        "si-LK": "yyyy-MM-dd",
-        "sr-Cyrl-RS": "d.M.yyyy",
-        "lo-LA": "dd/MM/yyyy",
-        "km-KH": "yyyy-MM-dd",
-        "cy-GB": "dd/MM/yyyy",
-        "bo-CN": "yyyy/M/d",
-        "sms-FI": "d.M.yyyy",
-        "as-IN": "dd-MM-yyyy",
-        "ml-IN": "dd-MM-yy",
-        "en-IN": "dd-MM-yyyy",
-        "or-IN": "dd-MM-yy",
-        "bn-IN": "dd-MM-yy",
-        "tk-TM": "dd.MM.yy",
-        "bs-Latn-BA": "d.M.yyyy",
-        "mt-MT": "dd/MM/yyyy",
-        "sr-Cyrl-ME": "d.M.yyyy",
-        "se-FI": "d.M.yyyy",
-        "zu-ZA": "yyyy/MM/dd",
-        "xh-ZA": "yyyy/MM/dd",
-        "tn-ZA": "yyyy/MM/dd",
-        "hsb-DE": "d. M. yyyy",
-        "bs-Cyrl-BA": "d.M.yyyy",
-        "tg-Cyrl-TJ": "dd.MM.yy",
-        "sr-Latn-BA": "d.M.yyyy",
-        "smj-NO": "dd.MM.yyyy",
-        "rm-CH": "dd/MM/yyyy",
-        "smj-SE": "yyyy-MM-dd",
-        "quz-EC": "dd/MM/yyyy",
-        "quz-PE": "dd/MM/yyyy",
-        "hr-BA": "d.M.yyyy.",
-        "sr-Latn-ME": "d.M.yyyy",
-        "sma-SE": "yyyy-MM-dd",
-        "en-SG": "d/M/yyyy",
-        "ug-CN": "yyyy-M-d",
-        "sr-Cyrl-BA": "d.M.yyyy",
-        "es-US": "M/d/yyyy"
-    };
-
-    var LANG = window.navigator.userLanguage || window.navigator.language;
-    var LOCALE_DATE_FORMAT = LOCALE_DATE_FORMATS[LANG] || 'dd/MM/yyyy';
-
     NRS.formatVolume = function (volume) {
 		var sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
 		if (volume == 0) return '0 B';
@@ -274,10 +58,9 @@ var NRS = (function (NRS, $, undefined) {
 		return formattedWeight.escapeHTML();
 	};
 
-    NRS.formatOrderPricePerWholeQNT = function (price, decimals) {
+    NRS.formatOrderPricePerWholeQNT = function (price, decimals, zeroPad) {
 		price = NRS.calculateOrderPricePerWholeQNT(price, decimals, true);
-
-		return NRS.format(price);
+		return NRS.format(price, false, zeroPad);
 	};
 
     NRS.calculateOrderPricePerWholeQNT = function (price, decimals, returnAsObject) {
@@ -335,8 +118,7 @@ var NRS = (function (NRS, $, undefined) {
 
 		var result = a.div(b).times(new Big("100")).toFixed(2);
 		Big.RM = 1;
-
-		return result.toString();
+		return NRS.format(result.toString());
 	};
 
     NRS.convertToNXT = function (amount, returnAsObject) {
@@ -524,10 +306,18 @@ var NRS = (function (NRS, $, undefined) {
 		return qnt.replace(/^0+/, "");
 	};
 
-    NRS.format = function (params, no_escaping) {
+    var zeros = "00000000";
+    NRS.format = function (params, no_escaping, zeroPad) {
         var amount;
+        var mantissa;
 		if (typeof params != "object") {
             amount = String(params);
+            if (amount.indexOf(".") !== -1) {
+                mantissa = amount.substr(amount.indexOf("."));
+                amount = amount.replace(mantissa, "");
+            } else {
+                mantissa = "";
+            }
             var negative = amount.charAt(0) == "-" ? "-" : "";
             if (negative) {
                 amount = amount.substring(1);
@@ -535,36 +325,46 @@ var NRS = (function (NRS, $, undefined) {
             params = {
                 "amount": amount,
                 "negative": negative,
-                "mantissa": ""
+                "mantissa": mantissa
             };
         }
 
         amount = String(params.amount);
-
 		var digits = amount.split("").reverse();
 		var formattedAmount = "";
-
+        var locale = NRS.getLocale();
+        var formattedMantissa = params.mantissa.replace(".", locale.decimal);
+        if (zeroPad) {
+            var mantissaLen = formattedMantissa.length;
+            if (mantissaLen > 0) {
+                formattedMantissa += zeros.substr(0, zeroPad - mantissaLen + 1);
+            } else {
+                formattedMantissa += zeros.substr(0, zeroPad);
+                if (zeroPad != 0) {
+                    formattedMantissa = locale.decimal + formattedMantissa;
+                }
+            }
+        }
 		for (var i = 0; i < digits.length; i++) {
-			if (i > 0 && i % 3 == 0) {
-				formattedAmount = "'" + formattedAmount;
-			}
+		    if (i > 0 && i % 3 == 0) {
+                formattedAmount = locale.section + formattedAmount;
+            }
 			formattedAmount = digits[i] + formattedAmount;
         }
 
-        var output = (params.negative ? params.negative : "") + formattedAmount + params.mantissa;
+        var output = (params.negative ? params.negative : "") + formattedAmount + formattedMantissa;
 
 		if (!no_escaping) {
 			output = output.escapeHTML();
 		}
-
-		return output;
+        return output;
 	};
 
-    NRS.formatQuantity = function (quantity, decimals, no_escaping) {
-		return NRS.format(NRS.convertToQNTf(quantity, decimals, true), no_escaping);
+    NRS.formatQuantity = function (quantity, decimals, no_escaping, zeroPad) {
+		return NRS.format(NRS.convertToQNTf(quantity, decimals, true), no_escaping, zeroPad);
 	};
 
-    NRS.formatAmount = function (amount, round, no_escaping) {
+    NRS.formatAmount = function (amount, round, no_escaping, zeroPad) {
         if (typeof amount == "undefined") {
             return "0";
         } else if (typeof amount == "string") {
@@ -599,12 +399,53 @@ var NRS = (function (NRS, $, undefined) {
                 mantissa = "";
             }
         }
+        if (NRS.settings) {
+            var offset = 0;
+            if (mantissa != "" && mantissa.substring(0, 1) == ".") {
+                offset ++;
+            }
+            var maxLength = parseInt(NRS.settings.max_nxt_decimals) + offset;
+            if (mantissa.length > maxLength) {
+                mantissa = mantissa.substring(0, maxLength);
+                if (mantissa.length == 1 && mantissa.substring(0, 1) == ".") {
+                    mantissa = "";
+                }
+            }
+        }
 
         return NRS.format({
             "negative": negative,
             "amount": amount,
             "mantissa": mantissa
-        }, no_escaping);
+        }, no_escaping, zeroPad);
+    };
+    
+    NRS.getTransactionsAmountDecimals = function(transactions) {
+        var decimals = {};
+   		decimals.amount = NRS.getNumberOfDecimals(transactions, "amountNQT", function (transaction) {
+   			return NRS.formatAmount(transaction.amountNQT);
+   		});
+   		decimals.fee = NRS.getNumberOfDecimals(transactions, "feeNQT", function (transaction) {
+   			return NRS.formatAmount(transaction.feeNQT);
+   		});
+        return decimals;
+   	};
+    
+    NRS.getNumberOfDecimals = function(rows, key, callback) {
+        var locale = NRS.getLocale();
+        var decimals = 0;
+        for (var i=0; i<rows.length; i++) {
+            var val = rows[i][key];
+            if (callback) {
+                val = callback(rows[i]);
+            }
+            var tokens = val.split(locale.decimal);
+            if (tokens.length != 2) {
+                continue;
+            }
+            decimals = Math.max(decimals, tokens[1].length);
+        }
+        return decimals;
     };
 
     NRS.fromEpochTime = function (epochTime) {
@@ -625,6 +466,7 @@ var NRS = (function (NRS, $, undefined) {
     };
 
     NRS.formatTimestamp = function (timestamp, date_only, isAbsoluteTime) {
+        var locale = NRS.getLocale();
         var date;
 		if (typeof timestamp == "object") {
             date = timestamp;
@@ -642,7 +484,7 @@ var NRS = (function (NRS, $, undefined) {
 			var yyyy = date.getFullYear();
             var yy = String(yyyy).substring(2);
 
-            var res = LOCALE_DATE_FORMAT
+            var res = locale.dateFormat
                 .replace(/dd/g, dd)
                 .replace(/d/g, d)
                 .replace(/MM/g, MM)
@@ -675,19 +517,42 @@ var NRS = (function (NRS, $, undefined) {
                     res += " " + (originalHours >= 12 ? "PM" : "AM");
 				}
 			}
-
 			return res;
 		} else {
 			return date.toLocaleString();
 		}
 	};
 
+    NRS.getBlockHeightMoment = function(height) {
+        if (!height || !NRS.lastBlockHeight || !NRS.averageBlockGenerationTime) {
+            return "-";
+        }
+        var heightDiff = height - NRS.lastBlockHeight;
+        return moment().add(heightDiff * NRS.averageBlockGenerationTime, 'seconds');
+    };
+    
+    NRS.getBlockHeightTimeEstimate = function(height) {
+        var heightMoment = NRS.getBlockHeightMoment(height);
+        if (heightMoment == "-") {
+            return "-";
+        }
+        return heightMoment.format("YYYY/MM/DD hh:mm a");
+   	};
+
+    NRS.baseTargetPercent = function(block) {
+        if (block) {
+            return Math.round(block.baseTarget / 153722867 * 100)
+        } else {
+            return 0;
+        }
+    };
+
     NRS.isPrivateIP = function (ip) {
 		if (!/^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
 			return false;
 		}
 		var parts = ip.split('.');
-      return parts[0] === '10' || parts[0] == '127' || parts[0] === '172' && (parseInt(parts[1], 10) >= 16 && parseInt(parts[1], 10) <= 31) || parts[0] === '192' && parts[1] === '168';
+        return parts[0] === '10' || parts[0] == '127' || parts[0] === '172' && (parseInt(parts[1], 10) >= 16 && parseInt(parts[1], 10) <= 31) || parts[0] === '192' && parts[1] === '168';
 	};
 
     NRS.convertToHex16 = function (str) {
@@ -730,7 +595,7 @@ var NRS = (function (NRS, $, undefined) {
 	};
 
     NRS.getFormData = function ($form, unmodified) {
-		var serialized = $form.serializeArray();
+		var serialized = $form.serializeArray(); // Warning: converts \n to \r\n
 		var data = {};
         var multiValuedFields = ["phasingWhitelisted", "controlWhitelisted"];
 		for (var s in serialized) {
@@ -830,11 +695,19 @@ var NRS = (function (NRS, $, undefined) {
             + (isEscapedText ? text : String(text).escapeHTML()) + "</a>";
     };
 
+    NRS.getPeerLink = function(address) {
+        if (!address ) {
+            return "(" + $.t("temporarily_disconnected") + ")";
+        }
+        return "<a href='#' class='show_peer_modal_action' data-address='" + String(address).escapeHTML() + "'>"
+            + String(address).escapeHTML() + "</a>";
+    };
+
     NRS.setBackLink = function() {
         var backLink = $(".back-link");
         if (NRS.modalStack.length > 0) {
             var backModalInfo = NRS.modalStack[NRS.modalStack.length - 1];
-            backLink.removeClass("show_transaction_modal_action show_account_modal_action show_block_modal_action show_ledger_modal_action");
+            backLink.removeClass("show_transaction_modal_action show_account_modal_action show_block_modal_action show_ledger_modal_action dgs_show_modal_action_purchase dgs_show_modal_action_product");
             backLink.addClass(backModalInfo.class);
             backLink.data(backModalInfo.key, backModalInfo.value);
             backLink.data("back", "true");
@@ -980,7 +853,7 @@ var NRS = (function (NRS, $, undefined) {
                 value = String(value);
             } else if (/_formatted$/i.test(key)) {
                 key = key.replace("_formatted", "");
-                value = String(value).escapeHTML();
+                value = NRS.escapeRespStr(value);
             } else if ((key == "quantity" || key == "units" || key == "initial_buy_supply" || key == "initial_sell_supply" ||
                 key == "total_buy_limit" || key == "total_sell_limit" || key == "units_exchanged" || key == "total_exchanged" ||
                 key == "initial_units" || key == "reserve_units" || key == "max_units" || key == "quantity_traded" || key == "initial_quantity") && $.isArray(value)) {
@@ -992,11 +865,11 @@ var NRS = (function (NRS, $, undefined) {
             } else if (key == "price" || key == "total" || key == "amount" || key == "fee" || key == "refund" || key == "discount") {
                 value = NRS.formatAmount(new BigInteger(String(value))) + " NXT";
             } else if (key == "sender" || key == "recipient" || key == "account" || key == "seller" || key == "buyer" || key == "lessee") {
-                value = "<a href='#' data-user='" + String(value).escapeHTML() + "' class='show_account_modal_action'>" + NRS.getAccountTitle(value) + "</a>";
+                value = "<a href='#' data-user='" + NRS.escapeRespStr(value) + "' class='show_account_modal_action'>" + NRS.getAccountTitle(value) + "</a>";
             } else if (key == "request_processing_time") { /* Skip from displaying request processing time */
                 continue;
             } else {
-                value = String(value).escapeHTML().nl2br();
+                value = NRS.escapeRespStr(value).nl2br();
             }
 
             rows += "<tr><td style='font-weight:bold" + (fixed ? ";width:150px" : "") + "'>" + $.t(key).escapeHTML() + (type ? " " + type.escapeHTML() : "") + ":</td><td style='width:90%;word-break:break-all'>" + value + "</td></tr>";
@@ -1018,9 +891,10 @@ var NRS = (function (NRS, $, undefined) {
 	};
 
     NRS.formatStyledAmount = function (strAmount, round) {
-        var amount = NRS.formatAmount(strAmount, round).split(".");
+        var locale = NRS.getLocale();
+        var amount = NRS.formatAmount(strAmount, round).split(locale.decimal);
 		if (amount.length == 2) {
-            return amount[0] + "<span style='font-size:12px'>." + amount[1] + "</span>";
+            return amount[0] + "<span style='font-size:12px'>" + locale.decimal + amount[1] + "</span>";
 		} else {
             return amount[0];
 		}
@@ -1212,40 +1086,6 @@ var NRS = (function (NRS, $, undefined) {
 				}
 			});
 		});
-	};
-
-    NRS.setCookie = function (name, value, days) {
-		var expires;
-		if (days) {
-			var date = new Date();
-			date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            expires = "; expires=" + date.toUTCString();
-		} else {
-			expires = "";
-		}
-        //noinspection JSDeprecatedSymbols
-		document.cookie = escape(name) + "=" + escape(value) + expires + "; path=/";
-	};
-
-    NRS.getCookie = function (name) {
-        //noinspection JSDeprecatedSymbols
-		var nameEQ = escape(name) + "=";
-		var ca = document.cookie.split(';');
-		for (var i = 0; i < ca.length; i++) {
-			var c = ca[i];
-            while (c.charAt(0) === ' ') {
-                c = c.substring(1, c.length);
-		}
-            if (c.indexOf(nameEQ) === 0) {
-                //noinspection JSDeprecatedSymbols
-                return unescape(c.substring(nameEQ.length, c.length));
-            }
-        }
-		return null;
-	};
-
-    NRS.deleteCookie = function (name) {
-		NRS.setCookie(name, "", -1);
 	};
 
     NRS.translateServerError = function (response) {
@@ -1569,18 +1409,6 @@ var NRS = (function (NRS, $, undefined) {
         }
     };
 
-    NRS.getUrlParameter = function (sParam) {
-		var sPageURL = window.location.search.substring(1);
-		var sURLVariables = sPageURL.split('&');
-        for (var i = 0; i < sURLVariables.length; i++) {
-			var sParameterName = sURLVariables[i].split('=');
-            if (sParameterName[0] == sParam) {
-				return sParameterName[1];
-			}
-		}
-		return false;
-    };
-
 	// http://stackoverflow.com/questions/12518830/java-string-getbytesutf8-javascript-analog
     NRS.getUtf8Bytes = function (str) {
         //noinspection JSDeprecatedSymbols
@@ -1605,9 +1433,25 @@ var NRS = (function (NRS, $, undefined) {
         }
         return statusIcon;
     };
+    
+    NRS.getAccountForDecryption = function(transaction, recipient, sender) {
+        if (!recipient && transaction.recipient == NRS.account) {
+            return transaction.sender;
+        }
+        if (transaction[recipient] == NRS.account) {
+            return transaction.sender;
+        }
+        if (!sender && transaction.sender == NRS.account) {
+            return transaction.recipient;
+        }
+        if (transaction[sender] == NRS.account) {
+            return transaction.recipient;
+        }
+        return null;
+    };
 
     NRS.phasingControlObjectToPhasingParams = function(controlObj) {
-        var phasingParams = {}
+        var phasingParams = {};
 
         phasingParams.phasingVotingModel = controlObj.votingModel;
         phasingParams.phasingQuorum = controlObj.quorum;
@@ -1729,5 +1573,100 @@ var NRS = (function (NRS, $, undefined) {
         return buf;
     };
 
+    NRS.versionCompare = function (v1, v2) {
+        if (v2 == undefined) {
+            return -1;
+        } else if (v1 == undefined) {
+            return -1;
+        }
+
+        //https://gist.github.com/TheDistantSea/8021359 (based on)
+        var v1last = v1.slice(-1);
+        var v2last = v2.slice(-1);
+
+        if (v1last == 'e') {
+            v1 = v1.substring(0, v1.length - 1);
+        } else {
+            v1last = '';
+        }
+
+        if (v2last == 'e') {
+            v2 = v2.substring(0, v2.length - 1);
+        } else {
+            v2last = '';
+        }
+
+        var v1parts = v1.split('.');
+        var v2parts = v2.split('.');
+
+        function isValidPart(x) {
+            return /^\d+$/.test(x);
+        }
+
+        if (!v1parts.every(isValidPart) || !v2parts.every(isValidPart)) {
+            return NaN;
+        }
+
+        v1parts = v1parts.map(Number);
+        v2parts = v2parts.map(Number);
+
+        for (var i = 0; i < v1parts.length; ++i) {
+            if (v2parts.length == i) {
+                return 1;
+            }
+            if (v1parts[i] != v2parts[i]) {
+                if (v1parts[i] > v2parts[i]) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }
+        }
+
+        if (v1parts.length != v2parts.length) {
+            return -1;
+        }
+
+        if (v1last && v2last) {
+            return 0;
+        } else if (v1last) {
+            return 1;
+        } else if (v2last) {
+            return -1;
+        } else {
+            return 0;
+        }
+    };
+
+    /**
+     * Escapes all strings in a response object
+     * @param obj
+     */
+    NRS.escapeResponseObjStrings = function (obj) {
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                var val = obj[key];
+                if (typeof val === 'string') {
+                    obj[key] = String(val).escapeHTML();
+                } else if (typeof val === 'object') {
+                    NRS.escapeResponseObjStrings(obj[key]);
+                }
+            }
+        }
+    };
+
+    /**
+     * Escapes a string that was returned in response from the server.
+     * This is used to avoid the double escaping of strings since the response strings started to be escaped in a global
+     * level because of the proxy feature
+     * @param val
+     */
+    NRS.escapeRespStr = function (val) {
+        return String(val).unescapeHTML().escapeHTML();
+    };
+
+    NRS.unescapeRespStr = function (val) {
+        return String(val).unescapeHTML();
+    };
     return NRS;
 }(NRS || {}, jQuery));
