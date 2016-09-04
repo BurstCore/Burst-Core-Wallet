@@ -1828,7 +1828,7 @@ public final class Account {
             }
         }
         balanceHome.getBalance(this.id).addToBalance(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
-        AssetDividend.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
+        childChain.getAssetDividendHome().addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
     }
 
     @Override

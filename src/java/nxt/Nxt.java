@@ -353,7 +353,6 @@ public final class Nxt {
                 Asset.init();
                 AssetTransfer.init();
                 AssetDelete.init();
-                AssetDividend.init();
                 Currency.init();
                 CurrencyMint.init();
                 CurrencyTransfer.init();

@@ -51,6 +51,7 @@ public final class ChildChain extends Chain {
     static void init() {}
 
     private final AliasHome aliasHome;
+    private final AssetDividendHome assetDividendHome;
     private final BalanceHome balanceHome;
     private final CurrencyFounderHome currencyFounderHome;
     private final DGSHome dgsHome;
@@ -72,6 +73,7 @@ public final class ChildChain extends Chain {
     private ChildChain(int id, String name) {
         super(id, name);
         this.aliasHome = AliasHome.forChain(this);
+        this.assetDividendHome = AssetDividendHome.forChain(this);
         this.balanceHome = BalanceHome.forChain(this);
         this.currencyFounderHome = CurrencyFounderHome.forChain(this);
         this.dgsHome = DGSHome.forChain(this);
@@ -95,6 +97,10 @@ public final class ChildChain extends Chain {
 
     public AliasHome getAliasHome() {
         return aliasHome;
+    }
+
+    public AssetDividendHome getAssetDividendHome() {
+        return assetDividendHome;
     }
 
     public BalanceHome getBalanceHome() {
