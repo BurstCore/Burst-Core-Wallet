@@ -23,9 +23,19 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.security.MessageDigest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class GenerateGenesis {
 
@@ -82,18 +92,17 @@ public final class GenerateGenesis {
                 outputJSON.put("genesisRecipientPublicKeys", recipientPublicKeys);
 
                 JSONArray genesisSignatures = new JSONArray();
-                List<TransactionImpl> transactions = new ArrayList<>();
+                List<FxtTransactionImpl> transactions = new ArrayList<>();
                 for (int i = 0; i < genesisRecipients.length; i++) {
-                    TransactionImpl transaction = new TransactionImpl.BuilderImpl((byte) 0, creatorPublicKey,
+                    FxtTransactionImpl.BuilderImpl builder = new FxtTransactionImpl.BuilderImpl((byte) 0, creatorPublicKey,
                             genesisAmounts.get(genesisRecipients[i]) * Constants.ONE_NXT, 0, (short) 0,
-                            Attachment.ORDINARY_PAYMENT)
-                            .timestamp(0)
+                            Attachment.ORDINARY_PAYMENT);
+                    builder.timestamp(0)
                             .recipientId(genesisRecipients[i])
                             .height(0)
                             .ecBlockHeight(0)
-                            .ecBlockId(0)
-                            .appendix(new Appendix.PublicKeyAnnouncement(genesisPublicKeys[i]))
-                            .build(creatorSecretPhrase);
+                            .ecBlockId(0);
+                    FxtTransactionImpl transaction = builder.build(creatorSecretPhrase);
                     transactions.add(transaction);
                     genesisSignatures.add(Convert.toHexString(transaction.getSignature()));
                 }

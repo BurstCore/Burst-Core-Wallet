@@ -455,7 +455,7 @@ public final class Generator implements Comparable<Generator> {
                 hitTime = Long.MAX_VALUE;
                 return;
             }
-            effectiveBalanceNXT = Math.max(account.getEffectiveBalanceNXT(height), 0);
+            effectiveBalanceNXT = Math.max(account.getEffectiveBalanceFXT(height), 0);
             if (effectiveBalanceNXT == 0) {
                 hitTime = Long.MAX_VALUE;
                 return;

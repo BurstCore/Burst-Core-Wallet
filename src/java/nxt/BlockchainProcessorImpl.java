@@ -23,7 +23,12 @@ import nxt.db.FilteringIterator;
 import nxt.db.FullTextTrigger;
 import nxt.peer.Peer;
 import nxt.peer.Peers;
-import nxt.util.*;
+import nxt.util.Convert;
+import nxt.util.JSON;
+import nxt.util.Listener;
+import nxt.util.Listeners;
+import nxt.util.Logger;
+import nxt.util.ThreadPool;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -31,9 +36,30 @@ import org.json.simple.JSONValue;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 
 final class BlockchainProcessorImpl implements BlockchainProcessor {
 
@@ -1211,9 +1237,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         .height(0)
                         .ecBlockHeight(0)
                         .ecBlockId(0)
-                        .appendix(new Appendix.PublicKeyAnnouncement(Genesis.GENESIS_PUBLIC_KEYS[i]))
-                        .signature(Genesis.GENESIS_SIGNATURES[i])
-                        .build();
+                        .signature(Genesis.GENESIS_SIGNATURES[i]);
+                FxtTransactionImpl transaction = builder.build();
                 if (!transaction.verifySignature()) {
                     throw new RuntimeException("Invalid transaction signature");
                 }
@@ -1234,6 +1259,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
             Account.addOrGetAccount(Genesis.CREATOR_ID).apply(Genesis.CREATOR_PUBLIC_KEY);
+            for (int i = 0; i < Genesis.GENESIS_RECIPIENTS.length; i++) {
+                Account recipient = Account.addOrGetAccount(Genesis.GENESIS_RECIPIENTS[i]);
+                recipient.apply(Genesis.GENESIS_PUBLIC_KEYS[i]);
+            }
             accept(genesisBlock, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
             if (!genesisBlock.verifyBlockSignature()) {
                 throw new RuntimeException("Invalid genesis block signature");
