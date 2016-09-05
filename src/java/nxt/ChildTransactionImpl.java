@@ -370,6 +370,17 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     }
 
     @Override
+    boolean hasAllReferencedTransactions(int timestamp, int count) {
+        if (referencedTransactionFullHash == null) {
+            return timestamp - getTimestamp() < Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN && count < 10;
+        }
+        TransactionImpl referencedTransaction = TransactionHome.findTransactionByFullHash(referencedTransactionFullHash);
+        return referencedTransaction != null
+                && referencedTransaction.getHeight() < getHeight()
+                && referencedTransaction.hasAllReferencedTransactions(timestamp, count + 1);
+    }
+
+    @Override
     ByteBuffer generateBytes() {
         ByteBuffer buffer = super.generateBytes();
         if (referencedTransactionFullHash != null) {

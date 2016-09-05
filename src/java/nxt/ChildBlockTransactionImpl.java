@@ -63,4 +63,14 @@ class ChildBlockTransactionImpl extends FxtTransactionImpl {
         return attachment.getBackFees();
     }
 
+    @Override
+    boolean hasAllReferencedTransactions(int timestamp, int count) {
+        for (ChildTransactionImpl childTransaction : getChildTransactions()) {
+            if (!childTransaction.hasAllReferencedTransactions(timestamp, count)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

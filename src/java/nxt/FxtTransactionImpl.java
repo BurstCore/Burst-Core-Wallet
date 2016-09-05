@@ -130,6 +130,11 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
     }
 
     @Override
+    boolean hasAllReferencedTransactions(int timestamp, int count) {
+        return true;
+    }
+
+    @Override
     public void validate() throws NxtException.ValidationException {
         super.validate();
         for (Appendix.AbstractAppendix appendage : appendages()) {

@@ -1499,7 +1499,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         if (TransactionHome.hasTransaction(transaction.getId(), previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
         }
-        if (transaction.referencedTransactionFullHash() != null && !hasAllReferencedTransactions(transaction, transaction.getTimestamp(), 0)) {
+        if (transaction.referencedTransactionFullHash() != null && !transaction.hasAllReferencedTransactions(transaction.getTimestamp(), 0)) {
             throw new TransactionNotAcceptedException("Missing or invalid referenced transaction "
                     + transaction.getReferencedTransactionFullHash(), transaction);
         }
@@ -1737,7 +1737,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         try (FilteringIterator<UnconfirmedTransaction> unconfirmedTransactions = new FilteringIterator<>(
                 TransactionProcessorImpl.getInstance().getAllUnconfirmedTransactions(),
                 transaction -> transaction.getTransaction() instanceof FxtTransaction
-                        && hasAllReferencedTransactions(transaction.getTransaction(), transaction.getTimestamp(), 0))) {
+                        && transaction.getTransaction().hasAllReferencedTransactions(transaction.getTimestamp(), 0))) {
             for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
                 orderedUnconfirmedTransactions.add((UnconfirmedFxtTransaction)unconfirmedTransaction);
             }
@@ -1838,21 +1838,6 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             Logger.logDebugMessage("Generate block failed: " + e.getMessage());
             throw e;
         }
-    }
-
-    boolean hasAllReferencedTransactions(TransactionImpl transaction, int timestamp, int count) {
-        if (! (transaction instanceof ChildTransaction)) {
-            //TODO: check hasAllReferencedTransactions for each ChildTransaction within an FxtTransaction
-            return true;
-        }
-        ChildTransactionImpl childTransaction = (ChildTransactionImpl)transaction;
-        if (childTransaction.referencedTransactionFullHash() == null) {
-            return timestamp - childTransaction.getTimestamp() < Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN && count < 10;
-        }
-        TransactionImpl referencedTransaction = TransactionHome.findTransactionByFullHash(childTransaction.referencedTransactionFullHash());
-        return referencedTransaction != null
-                && referencedTransaction.getHeight() < childTransaction.getHeight()
-                && hasAllReferencedTransactions(referencedTransaction, timestamp, count + 1);
     }
 
     void scheduleScan(int height, boolean validate) {

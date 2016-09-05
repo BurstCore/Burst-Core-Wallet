@@ -612,6 +612,8 @@ abstract class TransactionImpl implements Transaction {
         return totalFee;
     }
 
+    abstract boolean hasAllReferencedTransactions(int timestamp, int count);
+
     abstract boolean attachmentIsPhased();
 
     final boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
