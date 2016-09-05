@@ -188,18 +188,24 @@ public abstract class ChildTransactionType extends TransactionType {
         ChildChain childChain = (ChildChain) transaction.getChain();
         long amount = transaction.getAmount();
         long fee = transaction.getFee();
+        long deposit = 0;
         if (((ChildTransactionImpl)transaction).referencedTransactionFullHash() != null) {
-            //TODO: deposit must be in FXT
-            fee = Math.addExact(fee, Constants.UNCONFIRMED_POOL_DEPOSIT_NQT);
+            if (senderAccount.getUnconfirmedBalanceFQT() < Constants.UNCONFIRMED_POOL_DEPOSIT_FQT) {
+                return false;
+            }
+            deposit = Constants.UNCONFIRMED_POOL_DEPOSIT_FQT;
+            senderAccount.addToUnconfirmedBalanceFQT(getLedgerEvent(), transaction.getId(), 0, -deposit);
         }
         long totalAmount = Math.addExact(amount, fee);
         if (senderAccount.getUnconfirmedBalance(childChain) < totalAmount
                 && !(transaction.getTimestamp() == 0 && Arrays.equals(transaction.getSenderPublicKey(), Genesis.CREATOR_PUBLIC_KEY))) {
+            senderAccount.addToUnconfirmedBalanceFQT(getLedgerEvent(), transaction.getId(), 0, deposit);
             return false;
         }
         senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), -amount, -fee);
         if (!applyAttachmentUnconfirmed(transaction, senderAccount)) {
             senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), amount, fee);
+            senderAccount.addToUnconfirmedBalanceFQT(getLedgerEvent(), transaction.getId(), 0, deposit);
             return false;
         }
         return true;
@@ -228,8 +234,8 @@ public abstract class ChildTransactionType extends TransactionType {
         senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(),
                 transaction.getAmount(), transaction.getFee());
         if (((ChildTransactionImpl)transaction).referencedTransactionFullHash() != null) {
-            senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), 0,
-                    Constants.UNCONFIRMED_POOL_DEPOSIT_NQT);
+            senderAccount.addToUnconfirmedBalanceFQT(getLedgerEvent(), transaction.getId(), 0,
+                    Constants.UNCONFIRMED_POOL_DEPOSIT_FQT);
         }
     }
 
