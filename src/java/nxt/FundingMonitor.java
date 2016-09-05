@@ -120,7 +120,7 @@ public final class FundingMonitor {
                                     long amount, long threshold, int interval,
                                     long accountId, String secretPhrase) {
         this.holdingType = holdingType;
-        this.holdingId = (holdingType != HoldingType.NXT ? holdingId : 0);
+        this.holdingId = (holdingType != HoldingType.COIN ? holdingId : 0);
         this.property = property;
         this.amount = amount;
         this.threshold = threshold;
@@ -370,7 +370,7 @@ public final class FundingMonitor {
             while (monitorIt.hasNext()) {
                 monitor = monitorIt.next();
                 if (monitor.holdingType == holdingType && monitor.property.equals(property) &&
-                        (holdingType == HoldingType.NXT || monitor.holdingId == holdingId) &&
+                        (holdingType == HoldingType.COIN || monitor.holdingId == holdingId) &&
                         monitor.accountId == accountId) {
                     monitorIt.remove();
                     wasStopped = true;
@@ -566,7 +566,7 @@ public final class FundingMonitor {
                                         monitoredAccount.monitor.accountName));
                             } else {
                                 switch (monitoredAccount.monitor.holdingType) {
-                                    case NXT:
+                                    case COIN:
                                         processNxtEvent(monitoredAccount, targetAccount, fundingAccount);
                                         break;
                                     case ASSET:
@@ -822,7 +822,7 @@ public final class FundingMonitor {
                 List<MonitoredAccount> accountList = accounts.get(account.getId());
                 if (accountList != null) {
                     accountList.forEach((maccount) -> {
-                       if (maccount.monitor.holdingType == HoldingType.NXT && balance < maccount.threshold &&
+                       if (maccount.monitor.holdingType == HoldingType.COIN && balance < maccount.threshold &&
                                !pendingEvents.contains(maccount)) {
                            pendingEvents.add(maccount);
                        }

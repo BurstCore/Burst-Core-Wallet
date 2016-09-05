@@ -692,7 +692,7 @@ public final class ShufflingHome {
                 for (ShufflingParticipantHome.ShufflingParticipant participant : participants) {
                     Account participantAccount = Account.getAccount(participant.getAccountId());
                     holdingType.addToBalance(childChain, participantAccount, event, this.id, this.holdingId, -amount);
-                    if (holdingType != HoldingType.NXT) {
+                    if (holdingType != HoldingType.COIN) {
                         participantAccount.addToBalance(childChain, event, this.id, -Constants.SHUFFLING_DEPOSIT_NQT);
                     }
                 }
@@ -702,7 +702,7 @@ public final class ShufflingHome {
                 Account recipientAccount = Account.addOrGetAccount(recipientId);
                 recipientAccount.apply(recipientPublicKey);
                 holdingType.addToBalanceAndUnconfirmedBalance(childChain, recipientAccount, event, this.id, this.holdingId, amount);
-                if (holdingType != HoldingType.NXT) {
+                if (holdingType != HoldingType.COIN) {
                     recipientAccount.addToBalanceAndUnconfirmedBalance(childChain, event, this.id, Constants.SHUFFLING_DEPOSIT_NQT);
                 }
             }
@@ -723,18 +723,17 @@ public final class ShufflingHome {
                     Account participantAccount = Account.getAccount(participant.getAccountId());
                     holdingType.addToUnconfirmedBalance(childChain, participantAccount, event, this.id, this.holdingId, this.amount);
                     if (participantAccount.getId() != blamedAccountId) {
-                        if (holdingType != HoldingType.NXT) {
+                        if (holdingType != HoldingType.COIN) {
                             participantAccount.addToUnconfirmedBalance(childChain, event, this.id, Constants.SHUFFLING_DEPOSIT_NQT);
                         }
                     } else {
-                        if (holdingType == HoldingType.NXT) {
+                        if (holdingType == HoldingType.COIN) {
                             participantAccount.addToUnconfirmedBalance(childChain, event, this.id, -Constants.SHUFFLING_DEPOSIT_NQT);
                         }
                         participantAccount.addToBalance(childChain, event, this.id, -Constants.SHUFFLING_DEPOSIT_NQT);
                     }
                 }
             }
-            //TODO: penalty is paid in childChain NQT because this is how the deposit was collected, but this must be changed to have both in FQT
             if (blamedAccountId != 0) {
                 // as a penalty the deposit goes to the generators of the finish block and previous 3 blocks
                 long fee = Constants.SHUFFLING_DEPOSIT_NQT / 4;

@@ -485,7 +485,7 @@ public final class JSONResponses {
 
     static JSONStreamAware notEnoughHolding(HoldingType holdingType) {
         switch (holdingType) {
-            case NXT:
+            case COIN:
                 return JSONResponses.NOT_ENOUGH_FUNDS;
             case ASSET:
                 return JSONResponses.NOT_ENOUGH_ASSETS;

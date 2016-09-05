@@ -365,7 +365,7 @@ public final class JSONData {
         if (recipientPublicKeys.size() > 0) {
             json.put("recipientPublicKeys", recipientPublicKeys);
         }
-        if (includeHoldingInfo && shuffling.getHoldingType() != HoldingType.NXT) {
+        if (includeHoldingInfo && shuffling.getHoldingType() != HoldingType.COIN) {
             JSONObject holdingJson = new JSONObject();
             if (shuffling.getHoldingType() == HoldingType.ASSET) {
                 putAssetInfo(holdingJson, shuffling.getHoldingId());

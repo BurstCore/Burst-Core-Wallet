@@ -445,7 +445,7 @@ public final class DebugTrace {
         map.put("shuffling", Long.toUnsignedString(shuffling.getId()));
         String amount = String.valueOf(isRecipient ? shuffling.getAmount() : -shuffling.getAmount());
         String deposit = String.valueOf(isRecipient ? Constants.SHUFFLING_DEPOSIT_NQT : -Constants.SHUFFLING_DEPOSIT_NQT);
-        if (shuffling.getHoldingType() == HoldingType.NXT) {
+        if (shuffling.getHoldingType() == HoldingType.COIN) {
             map.put("transaction amount", amount);
         } else if (shuffling.getHoldingType() == HoldingType.ASSET) {
             map.put("asset quantity", amount);

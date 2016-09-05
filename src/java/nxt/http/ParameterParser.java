@@ -533,8 +533,8 @@ public final class ParameterParser {
     }
 
     public static long getHoldingId(HttpServletRequest req, HoldingType holdingType) throws ParameterException {
-        long holdingId = ParameterParser.getUnsignedLong(req, "holding", holdingType != HoldingType.NXT);
-        if (holdingType == HoldingType.NXT && holdingId != 0) {
+        long holdingId = ParameterParser.getUnsignedLong(req, "holding", holdingType != HoldingType.COIN);
+        if (holdingType == HoldingType.COIN && holdingId != 0) {
             throw new ParameterException(JSONResponses.incorrect("holding", "holding id should not be specified if holdingType is NXT"));
         }
         return holdingId;

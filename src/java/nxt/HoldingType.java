@@ -18,7 +18,7 @@ package nxt;
 
 public enum HoldingType {
 
-    NXT((byte)0) {
+    COIN((byte)0) {
 
         @Override
         public long getBalance(ChildChain childChain, Account account, long holdingId) {
