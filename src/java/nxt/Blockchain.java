@@ -79,19 +79,19 @@ public interface Blockchain {
 
     int getTransactionCount();
 
-    DbIterator<? extends Transaction> getTransactions(Chain chain, long accountId, byte type, byte subtype, int blockTimestamp,
+    DbIterator<? extends ChildTransaction> getTransactions(ChildChain chain, long accountId, byte type, byte subtype, int blockTimestamp,
                                                       boolean includeExpiredPrunable);
 
-    DbIterator<? extends Transaction> getTransactions(Chain chain, long accountId, int numberOfConfirmations, byte type, byte subtype,
+    DbIterator<? extends ChildTransaction> getTransactions(ChildChain chain, long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly);
 
-    DbIterator<? extends Transaction> getTransactions(Chain chain, Connection con, PreparedStatement pstmt);
+    DbIterator<? extends FxtTransaction> getTransactions(FxtChain chain, Connection con, PreparedStatement pstmt);
 
     DbIterator<? extends ChildTransaction> getTransactions(ChildChain childChain, Connection con, PreparedStatement pstmt);
 
     List<? extends Transaction> getExpectedTransactions(Filter<Transaction> filter);
 
-    DbIterator<? extends Transaction> getReferencingTransactions(Chain chain, long transactionId, int from, int to);
+    DbIterator<? extends ChildTransaction> getReferencingTransactions(ChildChain chain, long transactionId, int from, int to);
 
 }

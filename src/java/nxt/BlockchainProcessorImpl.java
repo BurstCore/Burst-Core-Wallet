@@ -1335,29 +1335,24 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private void validatePhasedTransactions(int height, List<ChildTransactionImpl> validPhasedTransactions, List<ChildTransactionImpl> invalidPhasedTransactions,
                                             Map<TransactionType, Map<String, Integer>> duplicates) {
-        //TODO: use a global finishing phased transaction table, sort result before processing
-        ChildChain.getAll().forEach(childChain -> {
-            try (DbIterator<ChildTransactionImpl> phasedTransactions = childChain.getPhasingPollHome().getFinishingTransactions(height + 1)) {
-                for (ChildTransactionImpl phasedTransaction : phasedTransactions) {
-                    if (childChain.getPhasingPollHome().getResult(phasedTransaction.getId()) != null) {
-                        continue;
-                    }
-                    try {
-                        phasedTransaction.validate();
-                        if (!phasedTransaction.attachmentIsDuplicate(duplicates, false)) {
-                            validPhasedTransactions.add(phasedTransaction);
-                        } else {
-                            Logger.logDebugMessage("At height " + height + " phased transaction " + phasedTransaction.getStringId() + " is duplicate, will not apply");
-                            invalidPhasedTransactions.add(phasedTransaction);
-                        }
-                    } catch (NxtException.ValidationException e) {
-                        Logger.logDebugMessage("At height " + height + " phased transaction " + phasedTransaction.getStringId() + " no longer passes validation: "
-                                + e.getMessage() + ", will not apply");
-                        invalidPhasedTransactions.add(phasedTransaction);
-                    }
-                }
+        for (ChildTransactionImpl phasedTransaction : PhasingPollHome.getFinishingTransactions(height + 1)) {
+            if (phasedTransaction.getChain().getPhasingPollHome().getResult(phasedTransaction.getId()) != null) {
+                continue;
             }
-        });
+            try {
+                phasedTransaction.validate();
+                if (!phasedTransaction.attachmentIsDuplicate(duplicates, false)) {
+                    validPhasedTransactions.add(phasedTransaction);
+                } else {
+                    Logger.logDebugMessage("At height " + height + " phased transaction " + phasedTransaction.getStringId() + " is duplicate, will not apply");
+                    invalidPhasedTransactions.add(phasedTransaction);
+                }
+            } catch (NxtException.ValidationException e) {
+                Logger.logDebugMessage("At height " + height + " phased transaction " + phasedTransaction.getStringId() + " no longer passes validation: "
+                        + e.getMessage() + ", will not apply");
+                invalidPhasedTransactions.add(phasedTransaction);
+            }
+        }
     }
 
     private void validate(BlockImpl block, BlockImpl previousLastBlock, int curTime) throws BlockNotAcceptedException {
@@ -1716,7 +1711,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                      "SELECT * FROM transaction_fxt WHERE height > ? AND height <= ? ORDER BY id ASC, timestamp ASC")) {
             pstmt.setInt(1, fromHeight);
             pstmt.setInt(2, toHeight);
-            try (DbIterator<TransactionImpl> iterator = blockchain.getTransactions(FxtChain.FXT, con, pstmt)) {
+            try (DbIterator<FxtTransactionImpl> iterator = blockchain.getTransactions(FxtChain.FXT, con, pstmt)) {
                 while (iterator.hasNext()) {
                     digest.update(iterator.next().bytes());
                 }
@@ -1790,18 +1785,13 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     void generateBlock(String secretPhrase, int blockTimestamp) throws BlockNotAcceptedException {
 
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
-        //TODO: use global table, sort results before processing
-        ChildChain.getAll().forEach(childChain -> {
-            try (DbIterator<ChildTransactionImpl> phasedTransactions = childChain.getPhasingPollHome().getFinishingTransactions(blockchain.getHeight() + 1)) {
-                for (TransactionImpl phasedTransaction : phasedTransactions) {
-                    try {
-                        phasedTransaction.validate();
-                        phasedTransaction.attachmentIsDuplicate(duplicates, false); // pre-populate duplicates map
-                    } catch (NxtException.ValidationException ignore) {
-                    }
-                }
+        for (TransactionImpl phasedTransaction : PhasingPollHome.getFinishingTransactions(blockchain.getHeight() + 1)) {
+            try {
+                phasedTransaction.validate();
+                phasedTransaction.attachmentIsDuplicate(duplicates, false); // pre-populate duplicates map
+            } catch (NxtException.ValidationException ignore) {
             }
-        });
+        }
         BlockImpl previousBlock = blockchain.getLastBlock();
         TransactionProcessorImpl.getInstance().processWaitingTransactions();
         SortedSet<UnconfirmedFxtTransaction> sortedTransactions = selectUnconfirmedFxtTransactions(duplicates, previousBlock, blockTimestamp);

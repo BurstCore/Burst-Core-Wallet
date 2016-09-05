@@ -21,6 +21,7 @@ import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;
 import nxt.db.DbUtils;
+import nxt.db.DerivedDbTable;
 import nxt.db.EntityDbTable;
 import nxt.db.ValuesDbTable;
 import nxt.util.Convert;
@@ -32,6 +33,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -58,6 +60,31 @@ public final class PhasingPollHome {
         }
         return new PhasingPollHome(childChain);
     }
+
+    private static final DerivedDbTable phasingPollFinishTable = new DerivedDbTable("public.phasing_poll_finish") {};
+
+    private static final Comparator<ChildTransactionImpl> finishingTransactionsComparator =
+            Comparator.comparingInt(ChildTransactionImpl::getHeight).thenComparing(Comparator.comparingInt(ChildTransactionImpl::getIndex));
+
+    static List<ChildTransactionImpl> getFinishingTransactions(int height) {
+        List<ChildTransactionImpl> childTransactions = new ArrayList<>();
+        try (Connection con = phasingPollFinishTable.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id, chain_id FROM phasing_poll_finish "
+             + "WHERE finish_height = ?")) {
+            pstmt.setInt(1, height);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    TransactionImpl childTransaction = TransactionHome.forChain(Chain.getChain(rs.getInt("chain_id"))).findChainTransaction(rs.getLong("transaction_id"));
+                    childTransactions.add((ChildTransactionImpl)childTransaction);
+                }
+                Collections.sort(childTransactions, finishingTransactionsComparator);
+                return childTransactions;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
 
     private final ChildChain childChain;
     private final PhasingVoteHome phasingVoteHome;
@@ -96,7 +123,9 @@ public final class PhasingPollHome {
                      PreparedStatement pstmt1 = con.prepareStatement("DELETE FROM phasing_poll WHERE id = ?");
                      PreparedStatement pstmt2 = con.prepareStatement("DELETE FROM phasing_poll_voter WHERE transaction_id = ?");
                      PreparedStatement pstmt3 = con.prepareStatement("DELETE FROM phasing_vote WHERE transaction_id = ?");
-                     PreparedStatement pstmt4 = con.prepareStatement("DELETE FROM phasing_poll_linked_transaction WHERE transaction_id = ?")) {
+                     PreparedStatement pstmt4 = con.prepareStatement("DELETE FROM phasing_poll_linked_transaction WHERE transaction_id = ?");
+                     //TODO: if transaction_ids not unique, add chain_id to pstmt5
+                     PreparedStatement pstmt5 = con.prepareStatement("DELETE FROM phasing_poll_finish WHERE transaction_id = ?")) {
                     while (pollsToTrim.hasNext()) {
                         long id = pollsToTrim.next().getId();
                         pstmt1.setLong(1, id);
@@ -107,6 +136,8 @@ public final class PhasingPollHome {
                         pstmt3.executeUpdate();
                         pstmt4.setLong(1, id);
                         pstmt4.executeUpdate();
+                        pstmt5.setLong(1, id);
+                        pstmt5.executeUpdate();
                     }
                 } catch (SQLException e) {
                     throw new RuntimeException(e.toString(), e);
@@ -246,8 +277,7 @@ public final class PhasingPollHome {
         return phasingPollTable.get(phasingPollDbKeyFactory.newKey(id));
     }
 
-    //TODO: use a global table for phasing transaction finish height to id and chain mapping
-    DbIterator<ChildTransactionImpl> getFinishingTransactions(int height) {
+    DbIterator<ChildTransactionImpl> getChainFinishingTransactions(int height) {
         Connection con = null;
         try {
             con = phasingPollTable.getConnection();
@@ -523,6 +553,15 @@ public final class PhasingPollHome {
                 pstmt.setByte(++i, voteWeighting.getMinBalanceModel().getCode());
                 DbUtils.setBytes(pstmt, ++i, hashedSecret);
                 pstmt.setByte(++i, algorithm);
+                pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
+                pstmt.executeUpdate();
+            }
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_finish (transaction_id, chain_id, finish_height, height) "
+                    + "VALUES (?, ?, ?, ?)")) {
+                int i = 0;
+                pstmt.setLong(++i, id);
+                pstmt.setInt(++i, childChain.getId());
+                pstmt.setInt(++i, finishHeight);
                 pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
                 pstmt.executeUpdate();
             }
