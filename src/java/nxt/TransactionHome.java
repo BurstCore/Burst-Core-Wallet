@@ -454,4 +454,15 @@ final class TransactionHome {
         }
     }
 
+    int getTransactionCount() {
+        try (Connection con = transactionTable.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + transactionTable.getSchemaTable());
+             ResultSet rs = pstmt.executeQuery()) {
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
 }

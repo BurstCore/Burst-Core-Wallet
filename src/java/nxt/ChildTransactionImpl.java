@@ -214,15 +214,6 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             throw new NxtException.NotValidException("Minimum fee calculation not yet implemented");
         }
         this.fee = builder.fee;
-        /*
-        if (builder.fee <= 0 || (Constants.correctInvalidFees && builder.signature == null)) {
-            int effectiveHeight = (getHeight() < Integer.MAX_VALUE ? getHeight() : Nxt.getBlockchain().getHeight());
-            long minFee = getMinimumFeeFQT(effectiveHeight);
-            this.feeNQT = Math.max(minFee, builder.fee);
-        } else {
-            this.feeNQT = builder.fee;
-        }
-        */
         if (builder.signature != null && secretPhrase != null) {
             throw new NxtException.NotValidException("Transaction is already signed");
         } else if (builder.signature != null) {

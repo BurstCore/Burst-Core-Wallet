@@ -364,19 +364,8 @@ final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public int getTransactionCount() {
-        return 0;
-        //TODO
-        /*
-        try (Connection con = Db.db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM transaction");
-             ResultSet rs = pstmt.executeQuery()) {
-            rs.next();
-            return rs.getInt(1);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-        */
+    public int getTransactionCount(Chain chain) {
+        return chain.getTransactionHome().getTransactionCount();
     }
 
     @Override

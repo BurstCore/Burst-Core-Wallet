@@ -77,7 +77,7 @@ public interface Blockchain {
 
     boolean hasTransactionByFullHash(String fullHash);
 
-    int getTransactionCount();
+    int getTransactionCount(Chain chain);
 
     DbIterator<? extends ChildTransaction> getTransactions(ChildChain chain, long accountId, byte type, byte subtype, int blockTimestamp,
                                                       boolean includeExpiredPrunable);
