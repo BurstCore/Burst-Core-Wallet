@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//TODO: return most recent transaction in case of multiple matches
 //TODO: enforce uniqueness of derived object id's
 final class TransactionHome {
 
@@ -66,11 +65,13 @@ final class TransactionHome {
         }
         // Search the database
         try (Connection con = transactionTable.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable() + " WHERE id = ? ORDER BY height DESC")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next() && rs.getInt("height") <= height) {
-                    return TransactionImpl.newTransactionBuilder(chain, con, rs).build();
+                while (rs.next()) {
+                    if (rs.getInt("height") <= height) {
+                        return TransactionImpl.newTransactionBuilder(chain, con, rs).build();
+                    }
                 }
                 return null;
             }
@@ -100,8 +101,10 @@ final class TransactionHome {
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
-                    return TransactionImpl.newTransactionBuilder(chain, con, rs).build();
+                while (rs.next()) {
+                    if (Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
+                        return TransactionImpl.newTransactionBuilder(chain, con, rs).build();
+                    }
                 }
                 return null;
             }
@@ -127,10 +130,15 @@ final class TransactionHome {
         }
         // Search the database
         try (Connection con = transactionTable.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT height FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT height FROM " + transactionTable.getSchemaTable() + " WHERE id = ? ORDER BY height DESC")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() && rs.getInt("height") <= height;
+                while (rs.next()) {
+                    if (rs.getInt("height") <= height) {
+                        return true;
+                    }
+                }
+                return false;
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -156,7 +164,12 @@ final class TransactionHome {
              PreparedStatement pstmt = con.prepareStatement("SELECT full_hash, height FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height;
+                while (rs.next()) {
+                    if (Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
+                        return true;
+                    }
+                }
+                return false;
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -173,7 +186,7 @@ final class TransactionHome {
         }
         // Search the database
         try (Connection con = transactionTable.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT full_hash FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT full_hash FROM " + transactionTable.getSchemaTable() + " WHERE id = ? ORDER BY height DESC LIMIT 1")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() ? rs.getBytes("full_hash") : null;
