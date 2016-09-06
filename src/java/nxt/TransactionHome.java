@@ -29,7 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//TODO: all queries over multiple tables should be replaced with a single id lookup table
+//TODO: return most recent transaction in case of multiple matches
+//TODO: enforce uniqueness of derived object id's
 final class TransactionHome {
 
     private static final Map<Chain, TransactionHome> transactionHomeMap = new HashMap<>();
@@ -49,39 +50,6 @@ final class TransactionHome {
     private TransactionHome(Chain chain) {
         this.chain = chain;
         transactionTable = new Table(chain.getSchemaTable(chain instanceof FxtChain ? "transaction_fxt" : "transaction"));
-    }
-
-    static TransactionImpl findTransaction(long transactionId) {
-        return TransactionHome.findTransaction(transactionId, Integer.MAX_VALUE);
-    }
-
-    static TransactionImpl findTransaction(long transactionId, int height) {
-        // Check the block cache
-        synchronized (BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
-            if (transaction != null) {
-                return transaction.getHeight() <= height ? transaction : null;
-            }
-        }
-        //TODO: use global id map table
-        for (TransactionHome transactionHome : transactionHomeMap.values()) {
-            Table transactionTable = transactionHome.transactionTable;
-            // Search the database
-            try (Connection con = transactionTable.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
-                pstmt.setLong(1, transactionId);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next() && rs.getInt("height") <= height) {
-                        return TransactionImpl.newTransactionBuilder(transactionHome.chain, con, rs).build();
-                    }
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            } catch (NxtException.ValidationException e) {
-                throw new RuntimeException("Transaction already in database, id = " + transactionId + ", does not pass validation!", e);
-            }
-        }
-        return null;
     }
 
     TransactionImpl findChainTransaction(long transactionId) {
@@ -111,42 +79,6 @@ final class TransactionHome {
         } catch (NxtException.ValidationException e) {
             throw new RuntimeException("Transaction already in database, id = " + transactionId + ", does not pass validation!", e);
         }
-    }
-
-    static TransactionImpl findTransactionByFullHash(byte[] fullHash) {
-        return TransactionHome.findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
-    }
-
-    static TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
-        long transactionId = Convert.fullHashToId(fullHash);
-        // Check the cache
-        synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
-            if (transaction != null) {
-                return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.fullHash(), fullHash) ? transaction : null);
-            }
-        }
-        //TODO: use global id map table
-        for (TransactionHome transactionHome : transactionHomeMap.values()) {
-            Table transactionTable = transactionHome.transactionTable;
-            // Search the database
-            try (Connection con = transactionTable.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
-                pstmt.setLong(1, transactionId);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
-                        return TransactionImpl.newTransactionBuilder(transactionHome.chain, con, rs).build();
-                    }
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            } catch (NxtException.ValidationException e) {
-                throw new RuntimeException("Transaction already in database, full_hash = " + Convert.toHexString(fullHash)
-                        + ", does not pass validation!", e);
-            }
-        }
-        return null;
     }
 
     TransactionImpl findChainTransactionByFullHash(byte[] fullHash) {
@@ -181,37 +113,6 @@ final class TransactionHome {
         }
     }
 
-    static boolean hasTransaction(long transactionId) {
-        return TransactionHome.hasTransaction(transactionId, Integer.MAX_VALUE);
-    }
-
-    static boolean hasTransaction(long transactionId, int height) {
-        // Check the block cache
-        synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
-            if (transaction != null) {
-                return (transaction.getHeight() <= height);
-            }
-        }
-        //TODO: use global id map table
-        for (TransactionHome transactionHome : transactionHomeMap.values()) {
-            Table transactionTable = transactionHome.transactionTable;
-            // Search the database
-            try (Connection con = transactionTable.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("SELECT height FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
-                pstmt.setLong(1, transactionId);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next() && rs.getInt("height") <= height) {
-                        return true;
-                    }
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
-        }
-        return false;
-    }
-
     boolean hasChainTransaction(long transactionId) {
         return hasChainTransaction(transactionId, Integer.MAX_VALUE);
     }
@@ -234,39 +135,6 @@ final class TransactionHome {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-    }
-
-    static boolean hasTransactionByFullHash(byte[] fullHash) {
-        return hasTransactionByFullHash(fullHash, Integer.MAX_VALUE);
-    }
-
-    static boolean hasTransactionByFullHash(byte[] fullHash, int height) {
-        long transactionId = Convert.fullHashToId(fullHash);
-        // Check the block cache
-        synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
-            if (transaction != null) {
-                return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.fullHash(), fullHash));
-            }
-        }
-        //TODO: use global id map table
-        for (TransactionHome transactionHome : transactionHomeMap.values()) {
-            Table transactionTable = transactionHome.transactionTable;
-            // Search the database
-            try (Connection con = transactionTable.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("SELECT full_hash, height FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
-                pstmt.setLong(1, transactionId);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
-                        return true;
-                    }
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
-        }
-        return false;
     }
 
     boolean hasChainTransactionByFullHash(byte[] fullHash) {
@@ -293,32 +161,6 @@ final class TransactionHome {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-    }
-
-    static byte[] getTransactionFullHash(long transactionId) {
-        // Check the block cache
-        synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
-            if (transaction != null) {
-                return transaction.fullHash();
-            }
-        }
-        for (TransactionHome transactionHome : transactionHomeMap.values()) {
-            Table transactionTable = transactionHome.transactionTable;
-            // Search the database
-            try (Connection con = transactionTable.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("SELECT full_hash FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
-                pstmt.setLong(1, transactionId);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        return rs.getBytes("full_hash");
-                    }
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
-        }
-        return null;
     }
 
     byte[] getChainTransactionFullHash(long transactionId) {

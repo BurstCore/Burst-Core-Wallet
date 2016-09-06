@@ -1122,7 +1122,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     chain.getTransactionHome().findPrunableTransactions(con, minTimestamp, maxTimestamp);
             transactionList.forEach(prunableTransaction -> {
                 long id = prunableTransaction.getId();
-                if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(id)) ||
+                if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(chain, id)) ||
                         (chain instanceof ChildChain &&
                         ((ChildChain) chain).getPrunableMessageHome().isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage()))) {
                     synchronized (prunableTransactions) {
@@ -1144,8 +1144,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     @Override
-    public Transaction restorePrunedTransaction(long transactionId) {
-        TransactionImpl transaction = TransactionHome.findTransaction(transactionId);
+    public Transaction restorePrunedTransaction(Chain chain, long transactionId) {
+        TransactionImpl transaction = chain.getTransactionHome().findChainTransaction(transactionId);
         if (transaction == null) {
             throw new IllegalArgumentException("Transaction not found");
         }
@@ -1471,7 +1471,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new TransactionNotAcceptedException("Invalid transaction timestamp " + transaction.getTimestamp()
                     + ", current time is " + curTime + ", block timestamp is " + block.getTimestamp(), transaction);
         }
-        if (TransactionHome.hasTransaction(transaction.getId(), previousLastBlock.getHeight())) {
+        if (FxtChain.FXT.getTransactionHome().hasChainTransaction(transaction.getId(), previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
         }
         if (transaction.getVersion() != getTransactionVersion(previousLastBlock.getHeight())) {
@@ -1496,7 +1496,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new TransactionNotAcceptedException("Invalid transaction timestamp " + transaction.getTimestamp()
                     + ", current time is " + curTime + ", block timestamp is " + block.getTimestamp(), transaction);
         }
-        if (TransactionHome.hasTransaction(transaction.getId(), previousLastBlock.getHeight())) {
+        if (transaction.getChain().getTransactionHome().hasChainTransaction(transaction.getId(), previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
         }
         if (transaction.referencedTransactionFullHash() != null && !transaction.hasAllReferencedTransactions(transaction.getTimestamp(), 0)) {
@@ -1546,7 +1546,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             SortedSet<ChildTransactionImpl> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
             block.getTransactions().forEach(fxtTransaction -> {
                 for (ChildTransactionImpl childTransaction : fxtTransaction.getChildTransactions()) {
-                    childTransaction.getChain().getPhasingPollHome().getLinkedPhasedTransactions(childTransaction.fullHash()).forEach(phasedTransaction -> {
+                    ChildChain childChain = childTransaction.getChain();
+                    childChain.getPhasingPollHome().getLinkedPhasedTransactions(childTransaction.fullHash()).forEach(phasedTransaction -> {
                         if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
                             possiblyApprovedTransactions.add(phasedTransaction);
                         }
@@ -1554,9 +1555,9 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     if (childTransaction.getType() == ChildTransactionType.Messaging.PHASING_VOTE_CASTING && !childTransaction.attachmentIsPhased()) {
                         Attachment.MessagingPhasingVoteCasting voteCasting = (Attachment.MessagingPhasingVoteCasting) childTransaction.getAttachment();
                         voteCasting.getTransactionFullHashes().forEach(hash -> {
-                            PhasingPollHome.PhasingPoll phasingPoll = childTransaction.getChain().getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
+                            PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
                             if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                                possiblyApprovedTransactions.add((ChildTransactionImpl) TransactionHome.findTransaction(phasingPoll.getId()));
+                                possiblyApprovedTransactions.add((ChildTransactionImpl) childChain.getTransactionHome().findChainTransaction(phasingPoll.getId()));
                             }
                         });
                     }
@@ -1564,13 +1565,14 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             });
             validPhasedTransactions.forEach(phasedTransaction -> {
                 if (phasedTransaction.getType() == ChildTransactionType.Messaging.PHASING_VOTE_CASTING) {
-                    PhasingPollHome.PhasingPollResult result = phasedTransaction.getChain().getPhasingPollHome().getResult(phasedTransaction.getId());
+                    ChildChain childChain = phasedTransaction.getChain();
+                    PhasingPollHome.PhasingPollResult result = childChain.getPhasingPollHome().getResult(phasedTransaction.getId());
                     if (result != null && result.isApproved()) {
                         Attachment.MessagingPhasingVoteCasting phasingVoteCasting = (Attachment.MessagingPhasingVoteCasting) phasedTransaction.getAttachment();
                         phasingVoteCasting.getTransactionFullHashes().forEach(hash -> {
-                            PhasingPollHome.PhasingPoll phasingPoll = phasedTransaction.getChain().getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
+                            PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
                             if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                                possiblyApprovedTransactions.add((ChildTransactionImpl)TransactionHome.findTransaction(phasingPoll.getId()));
+                                possiblyApprovedTransactions.add((ChildTransactionImpl)childChain.getTransactionHome().findChainTransaction(phasingPoll.getId()));
                             }
                         });
                     }

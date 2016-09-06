@@ -1223,6 +1223,7 @@ public interface Appendix {
 
         private final int finishHeight;
         private final PhasingParams params;
+        //TODO: allow linkedFullHashes to be from different chain
         private final byte[][] linkedFullHashes;
         private final byte[] hashedSecret;
         private final byte algorithm;
@@ -1339,7 +1340,8 @@ public interface Appendix {
                     if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
                         throw new NxtException.NotValidException("Duplicate linked transaction ids");
                     }
-                    TransactionImpl linkedTransaction = TransactionHome.findTransactionByFullHash(hash, currentHeight);
+                    //TODO: allow linked transactions from other chains
+                    TransactionImpl linkedTransaction = transaction.getChain().getTransactionHome().findChainTransactionByFullHash(hash, currentHeight);
                     if (linkedTransaction != null) {
                         if (transaction.getTimestamp() - linkedTransaction.getTimestamp() > Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN) {
                             throw new NxtException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");

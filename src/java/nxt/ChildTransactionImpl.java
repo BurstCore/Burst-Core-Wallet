@@ -365,7 +365,8 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
         if (referencedTransactionFullHash == null) {
             return timestamp - getTimestamp() < Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN && count < 10;
         }
-        TransactionImpl referencedTransaction = TransactionHome.findTransactionByFullHash(referencedTransactionFullHash);
+        //TODO: allow referencing transactions from other chains
+        TransactionImpl referencedTransaction = childChain.getTransactionHome().findChainTransactionByFullHash(referencedTransactionFullHash);
         return referencedTransaction != null
                 && referencedTransaction.getHeight() < getHeight()
                 && referencedTransaction.hasAllReferencedTransactions(timestamp, count + 1);

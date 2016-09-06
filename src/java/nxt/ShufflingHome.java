@@ -449,7 +449,7 @@ public final class ShufflingHome {
         }
 
         public byte[] getFullHash() {
-            return TransactionHome.getTransactionFullHash(id);
+            return childChain.getTransactionHome().getChainTransactionFullHash(id);
         }
 
         public Attachment.ShufflingAttachment process(final long accountId, final String secretPhrase, final byte[] recipientPublicKey) {

@@ -394,6 +394,7 @@ public final class PhasingPollHome {
         }
     }
 
+    //TODO: allow linked transactions to be from different chains
     public List<? extends ChildTransactionImpl> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
         try (Connection con = linkedTransactionTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id FROM phasing_poll_linked_transaction " +
@@ -404,7 +405,7 @@ public final class PhasingPollHome {
             List<ChildTransactionImpl> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    transactions.add((ChildTransactionImpl)TransactionHome.findTransaction(rs.getLong("transaction_id")));
+                    transactions.add((ChildTransactionImpl)childChain.getTransactionHome().findChainTransaction(rs.getLong("transaction_id")));
                 }
             }
             return transactions;
@@ -515,8 +516,9 @@ public final class PhasingPollHome {
             int height = Math.min(this.finishHeight, Nxt.getBlockchain().getHeight());
             if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
                 int count = 0;
+                //TODO: allow linking transactions from other chains
                 for (byte[] hash : getLinkedFullHashes()) {
-                    if (TransactionHome.hasTransactionByFullHash(hash, height)) {
+                    if (childChain.getTransactionHome().hasChainTransactionByFullHash(hash, height)) {
                         count += 1;
                     }
                 }

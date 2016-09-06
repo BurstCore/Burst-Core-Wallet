@@ -270,7 +270,7 @@ public abstract class MonetarySystem extends ChildTransactionType {
             if (currency != null) {
                 reserveSupply = currency.getReserveSupply();
             } else { // currency must have been deleted, get reserve supply from the original issuance transaction
-                Transaction currencyIssuance = Nxt.getBlockchain().getTransaction(attachment.getCurrencyId());
+                Transaction currencyIssuance = Nxt.getBlockchain().getTransaction(transaction.getChain(), attachment.getCurrencyId());
                 Attachment.MonetarySystemCurrencyIssuance currencyIssuanceAttachment = (Attachment.MonetarySystemCurrencyIssuance) currencyIssuance.getAttachment();
                 reserveSupply = currencyIssuanceAttachment.getReserveSupply();
             }

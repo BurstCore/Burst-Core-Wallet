@@ -420,10 +420,10 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
         }
 
         @Override
-        boolean isPruned(long transactionId) {
-            Transaction transaction = TransactionHome.findTransaction(transactionId);
+        boolean isPruned(Chain chain, long transactionId) {
+            Transaction transaction = chain.getTransactionHome().findChainTransaction(transactionId);
             Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
-            return ((ChildChain) transaction.getChain()).getShufflingParticipantHome().getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
+            return ((ChildChain) chain).getShufflingParticipantHome().getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
         }
 
     };
@@ -685,7 +685,7 @@ public abstract class ShufflingTransaction extends ChildTransactionType {
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
-            Transaction dataProcessingTransaction = TransactionHome.findTransactionByFullHash(participant.getDataTransactionFullHash(), Nxt.getBlockchain().getHeight());
+            Transaction dataProcessingTransaction = transaction.getChain().getTransactionHome().findChainTransactionByFullHash(participant.getDataTransactionFullHash(), Nxt.getBlockchain().getHeight());
             if (dataProcessingTransaction == null) {
                 throw new NxtException.NotCurrentlyValidException("Invalid data transaction full hash");
             }

@@ -3455,7 +3455,8 @@ public interface Attachment extends Appendix {
                 hash = super.getHash();
             }
             if (hash == null) {
-                TaggedDataUpload taggedDataUpload = (TaggedDataUpload)TransactionHome.findTransaction(taggedDataId).getAttachment();
+                //TODO: store data hash, or the child chain id for the TaggedDataUpload chain
+                TaggedDataUpload taggedDataUpload = (TaggedDataUpload)ChildChain.NXT.getTransactionHome().findChainTransaction(taggedDataId).getAttachment();
                 hash = taggedDataUpload.getHash();
             }
             return hash;

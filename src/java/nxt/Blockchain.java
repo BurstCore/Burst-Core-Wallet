@@ -69,13 +69,13 @@ public interface Blockchain {
 
     Block getECBlock(int timestamp);
 
-    Transaction getTransaction(long transactionId);
+    Transaction getTransaction(Chain chain, long transactionId);
 
-    Transaction getTransactionByFullHash(String fullHash);
+    Transaction getTransactionByFullHash(Chain chain, String fullHash);
 
-    boolean hasTransaction(long transactionId);
+    boolean hasTransaction(Chain chain, long transactionId);
 
-    boolean hasTransactionByFullHash(String fullHash);
+    boolean hasTransactionByFullHash(Chain chain, String fullHash);
 
     int getTransactionCount(Chain chain);
 

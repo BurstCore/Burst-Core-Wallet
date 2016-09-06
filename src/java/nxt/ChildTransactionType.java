@@ -2854,9 +2854,8 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            boolean isPruned(long transactionId) {
-                Transaction transaction = TransactionHome.findTransaction(transactionId);
-                return ((ChildChain) transaction.getChain()).getTaggedDataHome().isPruned(transactionId);
+            boolean isPruned(Chain chain, long transactionId) {
+                return ((ChildChain) chain).getTaggedDataHome().isPruned(transactionId);
             }
 
         };
@@ -2923,7 +2922,7 @@ public abstract class ChildTransactionType extends TransactionType {
             }
 
             @Override
-            boolean isPruned(long transactionId) {
+            boolean isPruned(Chain chain, long transactionId) {
                 return false;
             }
 
