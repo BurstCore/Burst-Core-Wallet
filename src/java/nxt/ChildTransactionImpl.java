@@ -238,7 +238,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     @Override
     public FxtTransactionImpl getFxtTransaction() {
         if (fxtTransaction == null && fxtTransactionId != 0) {
-            fxtTransaction = (FxtTransactionImpl)FxtChain.FXT.getTransactionHome().findChainTransaction(fxtTransactionId);
+            fxtTransaction = (FxtTransactionImpl)FxtChain.FXT.getTransactionHome().findTransaction(fxtTransactionId);
         }
         return fxtTransaction;
     }
@@ -366,7 +366,7 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
             return timestamp - getTimestamp() < Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN && count < 10;
         }
         //TODO: allow referencing transactions from other chains
-        TransactionImpl referencedTransaction = childChain.getTransactionHome().findChainTransactionByFullHash(referencedTransactionFullHash);
+        TransactionImpl referencedTransaction = childChain.getTransactionHome().findTransactionByFullHash(referencedTransactionFullHash);
         return referencedTransaction != null
                 && referencedTransaction.getHeight() < getHeight()
                 && referencedTransaction.hasAllReferencedTransactions(timestamp, count + 1);

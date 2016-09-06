@@ -76,7 +76,7 @@ public final class PhasingPollHome {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    TransactionImpl childTransaction = TransactionHome.forChain(Chain.getChain(rs.getInt("chain_id"))).findChainTransaction(rs.getLong("transaction_id"));
+                    TransactionImpl childTransaction = TransactionHome.forChain(Chain.getChain(rs.getInt("chain_id"))).findTransaction(rs.getLong("transaction_id"));
                     childTransactions.add((ChildTransactionImpl)childTransaction);
                 }
                 Collections.sort(childTransactions, finishingTransactionsComparator);
@@ -405,7 +405,7 @@ public final class PhasingPollHome {
             List<ChildTransactionImpl> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    transactions.add((ChildTransactionImpl)childChain.getTransactionHome().findChainTransaction(rs.getLong("transaction_id")));
+                    transactions.add((ChildTransactionImpl)childChain.getTransactionHome().findTransaction(rs.getLong("transaction_id")));
                 }
             }
             return transactions;
@@ -489,7 +489,7 @@ public final class PhasingPollHome {
         }
 
         public byte[] getFullHash() {
-            return childChain.getTransactionHome().getChainTransactionFullHash(this.id);
+            return childChain.getTransactionHome().getTransactionFullHash(this.id);
         }
 
         public List<byte[]> getLinkedFullHashes() {
@@ -518,7 +518,7 @@ public final class PhasingPollHome {
                 int count = 0;
                 //TODO: allow linking transactions from other chains
                 for (byte[] hash : getLinkedFullHashes()) {
-                    if (childChain.getTransactionHome().hasChainTransactionByFullHash(hash, height)) {
+                    if (childChain.getTransactionHome().hasTransactionByFullHash(hash, height)) {
                         count += 1;
                     }
                 }

@@ -2889,7 +2889,7 @@ public abstract class ChildTransactionType extends TransactionType {
                     throw new NxtException.NotCurrentlyValidException("Data has been pruned prematurely");
                 }
                 ChildChain childChain = transaction.getChain();
-                TransactionImpl uploadTransaction = childChain.getTransactionHome().findChainTransaction(attachment.getTaggedDataId(), Nxt.getBlockchain().getHeight());
+                TransactionImpl uploadTransaction = childChain.getTransactionHome().findTransaction(attachment.getTaggedDataId(), Nxt.getBlockchain().getHeight());
                 if (uploadTransaction == null) {
                     throw new NxtException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
                 }

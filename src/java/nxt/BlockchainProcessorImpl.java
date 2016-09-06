@@ -1145,7 +1145,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public Transaction restorePrunedTransaction(Chain chain, long transactionId) {
-        TransactionImpl transaction = chain.getTransactionHome().findChainTransaction(transactionId);
+        TransactionImpl transaction = chain.getTransactionHome().findTransaction(transactionId);
         if (transaction == null) {
             throw new IllegalArgumentException("Transaction not found");
         }
@@ -1471,7 +1471,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new TransactionNotAcceptedException("Invalid transaction timestamp " + transaction.getTimestamp()
                     + ", current time is " + curTime + ", block timestamp is " + block.getTimestamp(), transaction);
         }
-        if (FxtChain.FXT.getTransactionHome().hasChainTransaction(transaction.getId(), previousLastBlock.getHeight())) {
+        if (FxtChain.FXT.getTransactionHome().hasTransaction(transaction.getId(), previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
         }
         if (transaction.getVersion() != getTransactionVersion(previousLastBlock.getHeight())) {
@@ -1496,7 +1496,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new TransactionNotAcceptedException("Invalid transaction timestamp " + transaction.getTimestamp()
                     + ", current time is " + curTime + ", block timestamp is " + block.getTimestamp(), transaction);
         }
-        if (transaction.getChain().getTransactionHome().hasChainTransaction(transaction.getId(), previousLastBlock.getHeight())) {
+        if (transaction.getChain().getTransactionHome().hasTransaction(transaction.getId(), previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
         }
         if (transaction.referencedTransactionFullHash() != null && !transaction.hasAllReferencedTransactions(transaction.getTimestamp(), 0)) {
@@ -1557,7 +1557,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         voteCasting.getTransactionFullHashes().forEach(hash -> {
                             PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
                             if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                                possiblyApprovedTransactions.add((ChildTransactionImpl) childChain.getTransactionHome().findChainTransaction(phasingPoll.getId()));
+                                possiblyApprovedTransactions.add((ChildTransactionImpl) childChain.getTransactionHome().findTransaction(phasingPoll.getId()));
                             }
                         });
                     }
@@ -1572,7 +1572,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         phasingVoteCasting.getTransactionFullHashes().forEach(hash -> {
                             PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
                             if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                                possiblyApprovedTransactions.add((ChildTransactionImpl)childChain.getTransactionHome().findChainTransaction(phasingPoll.getId()));
+                                possiblyApprovedTransactions.add((ChildTransactionImpl)childChain.getTransactionHome().findTransaction(phasingPoll.getId()));
                             }
                         });
                     }

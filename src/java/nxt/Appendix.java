@@ -1341,7 +1341,7 @@ public interface Appendix {
                         throw new NxtException.NotValidException("Duplicate linked transaction ids");
                     }
                     //TODO: allow linked transactions from other chains
-                    TransactionImpl linkedTransaction = transaction.getChain().getTransactionHome().findChainTransactionByFullHash(hash, currentHeight);
+                    TransactionImpl linkedTransaction = transaction.getChain().getTransactionHome().findTransactionByFullHash(hash, currentHeight);
                     if (linkedTransaction != null) {
                         if (transaction.getTimestamp() - linkedTransaction.getTimestamp() > Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN) {
                             throw new NxtException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");

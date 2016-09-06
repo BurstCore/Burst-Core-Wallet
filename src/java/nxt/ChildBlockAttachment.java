@@ -150,7 +150,7 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
             childTransactions = new ArrayList<>();
             short index = 0;
             for (byte[] fullHash : childTransactionFullHashes) {
-                ChildTransactionImpl childTransaction = (ChildTransactionImpl)transactionHome.findChainTransactionByFullHash(fullHash);
+                ChildTransactionImpl childTransaction = (ChildTransactionImpl)transactionHome.findTransactionByFullHash(fullHash);
                 //TODO: get transactions from unconfirmed pool
                 //TODO: handle missing child transaction
                 childTransaction.setFxtTransaction(fxtTransaction);

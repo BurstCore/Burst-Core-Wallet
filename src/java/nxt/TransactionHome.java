@@ -52,11 +52,11 @@ final class TransactionHome {
         transactionTable = new Table(chain.getSchemaTable(chain instanceof FxtChain ? "transaction_fxt" : "transaction"));
     }
 
-    TransactionImpl findChainTransaction(long transactionId) {
-        return findChainTransaction(transactionId, Integer.MAX_VALUE);
+    TransactionImpl findTransaction(long transactionId) {
+        return findTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    TransactionImpl findChainTransaction(long transactionId, int height) {
+    TransactionImpl findTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized (BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
@@ -81,11 +81,11 @@ final class TransactionHome {
         }
     }
 
-    TransactionImpl findChainTransactionByFullHash(byte[] fullHash) {
-        return findChainTransactionByFullHash(fullHash, Integer.MAX_VALUE);
+    TransactionImpl findTransactionByFullHash(byte[] fullHash) {
+        return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
-    TransactionImpl findChainTransactionByFullHash(byte[] fullHash, int height) {
+    TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
         synchronized(BlockDb.blockCache) {
@@ -113,11 +113,11 @@ final class TransactionHome {
         }
     }
 
-    boolean hasChainTransaction(long transactionId) {
-        return hasChainTransaction(transactionId, Integer.MAX_VALUE);
+    boolean hasTransaction(long transactionId) {
+        return hasTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    boolean hasChainTransaction(long transactionId, int height) {
+    boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
@@ -137,11 +137,11 @@ final class TransactionHome {
         }
     }
 
-    boolean hasChainTransactionByFullHash(byte[] fullHash) {
-        return hasChainTransactionByFullHash(fullHash, Integer.MAX_VALUE);
+    boolean hasTransactionByFullHash(byte[] fullHash) {
+        return hasTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
-    boolean hasChainTransactionByFullHash(byte[] fullHash, int height) {
+    boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
         synchronized(BlockDb.blockCache) {
@@ -163,7 +163,7 @@ final class TransactionHome {
         }
     }
 
-    byte[] getChainTransactionFullHash(long transactionId) {
+    byte[] getTransactionFullHash(long transactionId) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
