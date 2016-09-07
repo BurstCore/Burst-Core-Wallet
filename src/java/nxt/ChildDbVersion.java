@@ -41,7 +41,7 @@ class ChildDbVersion extends DbVersion {
                         + "has_prunable_message BOOLEAN NOT NULL DEFAULT FALSE, has_prunable_encrypted_message BOOLEAN NOT NULL DEFAULT FALSE, "
                         + "has_prunable_attachment BOOLEAN NOT NULL DEFAULT FALSE)");
             case 2:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_id_idx ON transaction (id)");
+                apply("CREATE INDEX IF NOT EXISTS transaction_id_idx ON transaction (id)");
             case 3:
                 apply("CREATE INDEX IF NOT EXISTS transaction_sender_id_idx ON transaction (sender_id)");
             case 4:
@@ -440,6 +440,7 @@ class ChildDbVersion extends DbVersion {
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS phasing_poll_linked_transaction_link_id_idx "
                         + "ON phasing_poll_linked_transaction (linked_transaction_id, transaction_id)");
             case 158:
+                //TODO: use full hash instead of id, add referenced chain_id
                 apply("CREATE TABLE IF NOT EXISTS referenced_transaction (db_id IDENTITY, transaction_id BIGINT NOT NULL, "
                         + "FOREIGN KEY (transaction_id) REFERENCES transaction (id) ON DELETE CASCADE, "
                         + "referenced_transaction_id BIGINT NOT NULL)");

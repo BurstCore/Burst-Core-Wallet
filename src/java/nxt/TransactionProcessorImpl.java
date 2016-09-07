@@ -220,7 +220,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 List<Transaction> transactionList = new ArrayList<>();
                 int curTime = Nxt.getEpochTime();
                 for (TransactionImpl transaction : broadcastedTransactions) {
-                    if (transaction.getExpiration() < curTime || transaction.getChain().getTransactionHome().hasTransaction(transaction.getId())) {
+                    if (transaction.getExpiration() < curTime || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.fullHash())) {
                         broadcastedTransactions.remove(transaction);
                     } else if (transaction.getTimestamp() < curTime - 30) {
                         transactionList.add(transaction);
@@ -408,7 +408,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
     public void broadcast(Transaction transaction) throws NxtException.ValidationException {
         BlockchainImpl.getInstance().writeLock();
         try {
-            if (transaction.getChain().getTransactionHome().hasTransaction(transaction.getId())) {
+            if (transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.fullHash())) {
                 Logger.logMessage("Transaction " + transaction.getStringId() + " already in blockchain, will not broadcast again");
                 return;
             }
@@ -629,7 +629,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
             try {
                 TransactionImpl transaction = TransactionImpl.parseTransaction((JSONObject) transactionData);
                 receivedTransactions.add(transaction);
-                if (getUnconfirmedTransaction(transaction.getDbKey()) != null || transaction.getChain().getTransactionHome().hasTransaction(transaction.getId())) {
+                if (getUnconfirmedTransaction(transaction.getDbKey()) != null || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.fullHash())) {
                     continue;
                 }
                 transaction.validate();
@@ -682,7 +682,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                     throw new NxtException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
                 }
 
-                if (getUnconfirmedTransaction(transaction.getDbKey()) != null || transaction.getChain().getTransactionHome().hasTransaction(transaction.getId())) {
+                if (getUnconfirmedTransaction(transaction.getDbKey()) != null || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.fullHash())) {
                     throw new NxtException.ExistingTransactionException("Transaction already processed");
                 }
 

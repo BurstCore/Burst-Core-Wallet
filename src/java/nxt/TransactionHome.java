@@ -116,10 +116,6 @@ final class TransactionHome {
         }
     }
 
-    boolean hasTransaction(long transactionId) {
-        return hasTransaction(transactionId, Integer.MAX_VALUE);
-    }
-
     boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {

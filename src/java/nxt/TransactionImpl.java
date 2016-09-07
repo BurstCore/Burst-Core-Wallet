@@ -398,7 +398,8 @@ abstract class TransactionImpl implements Transaction {
         return Convert.toHexString(fullHash());
     }
 
-    byte[] fullHash() {
+    @Override
+    public byte[] fullHash() {
         if (fullHash == null) {
             getId();
         }

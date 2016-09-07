@@ -1496,7 +1496,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new TransactionNotAcceptedException("Invalid transaction timestamp " + transaction.getTimestamp()
                     + ", current time is " + curTime + ", block timestamp is " + block.getTimestamp(), transaction);
         }
-        if (transaction.getChain().getTransactionHome().hasTransaction(transaction.getId(), previousLastBlock.getHeight())) {
+        if (transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.fullHash(), previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
         }
         if (transaction.referencedTransactionFullHash() != null && !transaction.hasAllReferencedTransactions(transaction.getTimestamp(), 0)) {

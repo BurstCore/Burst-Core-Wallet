@@ -75,6 +75,8 @@ public interface Transaction {
 
     String getFullHash();
 
+    byte[] fullHash();
+
     TransactionType getType();
 
     Attachment getAttachment();
