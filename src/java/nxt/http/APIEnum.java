@@ -16,7 +16,11 @@
 
 package nxt.http;
 
-import java.util.*;
+import java.util.Base64;
+import java.util.BitSet;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public enum APIEnum {
     //To preserve compatibility, please add new APIs to the end of the enum.
