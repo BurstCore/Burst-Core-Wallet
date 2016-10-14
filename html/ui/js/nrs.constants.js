@@ -70,6 +70,7 @@ var NRS = (function (NRS, $) {
         'NOT_FORGING': 'not_forging',
         'UNKNOWN': 'unknown',
         'LAST_KNOWN_BLOCK': { id: "0", height: "0" }
+        'LAST_KNOWN_TESTNET_BLOCK': { id: "0", height: "0" }
     };
 
     NRS.loadAlgorithmList = function (algorithmSelect, isPhasingHash) {
