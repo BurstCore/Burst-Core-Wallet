@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.Alias;
+import nxt.AliasHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,7 +31,7 @@ public final class GetAlias extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        Alias alias = ParameterParser.getAlias(req);
+        AliasHome.Alias alias = ParameterParser.getAlias(req);
         return JSONData.alias(alias);
     }
 

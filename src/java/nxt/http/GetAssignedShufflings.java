@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.Shuffling;
+import nxt.ChildChain;
+import nxt.ShufflingHome;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -39,12 +40,13 @@ public final class GetAssignedShufflings extends APIServlet.APIRequestHandler {
         boolean includeHoldingInfo = "true".equalsIgnoreCase(req.getParameter("includeHoldingInfo"));
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("shufflings", jsonArray);
-        try (DbIterator<Shuffling> shufflings = Shuffling.getAssignedShufflings(accountId, firstIndex, lastIndex)) {
-            for (Shuffling shuffling : shufflings) {
+        try (DbIterator<ShufflingHome.Shuffling> shufflings = childChain.getShufflingHome().getAssignedShufflings(accountId, firstIndex, lastIndex)) {
+            for (ShufflingHome.Shuffling shuffling : shufflings) {
                 jsonArray.add(JSONData.shuffling(shuffling, includeHoldingInfo));
             }
         }

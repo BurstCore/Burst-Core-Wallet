@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.Poll;
+import nxt.ChildChain;
+import nxt.PollHome;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
@@ -42,10 +43,11 @@ public final class SearchPolls extends APIServlet.APIRequestHandler {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         boolean includeFinished = "true".equalsIgnoreCase(req.getParameter("includeFinished"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
-        try (DbIterator<Poll> polls = Poll.searchPolls(query, includeFinished, firstIndex, lastIndex)) {
+        try (DbIterator<PollHome.Poll> polls = childChain.getPollHome().searchPolls(query, includeFinished, firstIndex, lastIndex)) {
             while (polls.hasNext()) {
                 jsonArray.add(JSONData.poll(polls.next()));
             }

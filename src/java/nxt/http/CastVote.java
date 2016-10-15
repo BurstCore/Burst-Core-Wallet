@@ -20,7 +20,7 @@ import nxt.Account;
 import nxt.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
-import nxt.Poll;
+import nxt.PollHome;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -40,7 +40,7 @@ public final class CastVote extends CreateTransaction {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        Poll poll = ParameterParser.getPoll(req);
+        PollHome.Poll poll = ParameterParser.getPoll(req);
         if (poll.isFinished()) {
             return POLL_FINISHED;
         }

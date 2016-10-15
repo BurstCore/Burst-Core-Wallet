@@ -16,8 +16,9 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.Order;
+import nxt.OrderHome;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -40,12 +41,12 @@ public final class GetAccountCurrentAskOrderIds extends APIServlet.APIRequestHan
         long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
-
-        DbIterator<Order.Ask> askOrders;
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        DbIterator<OrderHome.Ask> askOrders;
         if (assetId == 0) {
-            askOrders = Order.Ask.getAskOrdersByAccount(accountId, firstIndex, lastIndex);
+            askOrders = childChain.getOrderHome().getAskOrdersByAccount(accountId, firstIndex, lastIndex);
         } else {
-            askOrders = Order.Ask.getAskOrdersByAccountAsset(accountId, assetId, firstIndex, lastIndex);
+            askOrders = childChain.getOrderHome().getAskOrdersByAccountAsset(accountId, assetId, firstIndex, lastIndex);
         }
         JSONArray orderIds = new JSONArray();
         try {

@@ -18,7 +18,7 @@ package nxt.http;
 
 import nxt.Account;
 import nxt.Attachment;
-import nxt.DigitalGoodsStore;
+import nxt.DGSHome;
 import nxt.NxtException;
 import org.json.simple.JSONStreamAware;
 
@@ -38,7 +38,7 @@ public final class DGSPriceChange extends CreateTransaction {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         Account account = ParameterParser.getSenderAccount(req);
-        DigitalGoodsStore.Goods goods = ParameterParser.getGoods(req);
+        DGSHome.Goods goods = ParameterParser.getGoods(req);
         long priceNQT = ParameterParser.getPriceNQT(req);
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;

@@ -16,8 +16,9 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.Trade;
+import nxt.TradeHome;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -39,12 +40,13 @@ public final class GetAllTrades extends APIServlet.APIRequestHandler {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray trades = new JSONArray();
-        try (DbIterator<Trade> tradeIterator = Trade.getAllTrades(firstIndex, lastIndex)) {
+        try (DbIterator<TradeHome.Trade> tradeIterator = childChain.getTradeHome().getAllTrades(firstIndex, lastIndex)) {
             while (tradeIterator.hasNext()) {
-                Trade trade = tradeIterator.next();
+                TradeHome.Trade trade = tradeIterator.next();
                 if (trade.getTimestamp() < timestamp) {
                     break;
                 }

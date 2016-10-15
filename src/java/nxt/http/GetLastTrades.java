@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.Trade;
+import nxt.ChildChain;
+import nxt.TradeHome;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -35,8 +36,9 @@ public final class GetLastTrades extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long[] assetIds = ParameterParser.getUnsignedLongs(req, "assets");
+        ChildChain childChain = ParameterParser.getChildChain(req);
         JSONArray tradesJSON = new JSONArray();
-        List<Trade> trades = Trade.getLastTrades(assetIds);
+        List<TradeHome.Trade> trades = childChain.getTradeHome().getLastTrades(assetIds);
         trades.forEach(trade -> tradesJSON.add(JSONData.trade(trade, false)));
         JSONObject response = new JSONObject();
         response.put("trades", tradesJSON);

@@ -18,7 +18,7 @@ package nxt.http;
 
 import nxt.Account;
 import nxt.Attachment;
-import nxt.DigitalGoodsStore;
+import nxt.DGSHome;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.util.Convert;
@@ -44,7 +44,7 @@ public final class DGSPurchase extends CreateTransaction {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
-        DigitalGoodsStore.Goods goods = ParameterParser.getGoods(req);
+        DGSHome.Goods goods = ParameterParser.getGoods(req);
         if (goods.isDelisted()) {
             return UNKNOWN_GOODS;
         }

@@ -281,6 +281,21 @@ abstract class UnconfirmedTransaction implements Transaction {
         return transaction.getIndex();
     }
 
+    @Override
+    public boolean isPhased() {
+        return transaction.isPhased();
+    }
+
+    @Override
+    public byte[] fullHash() {
+        return transaction.fullHash();
+    }
+
+    @Override
+    public String getReferencedTransactionFullHash() {
+        return transaction.getReferencedTransactionFullHash();
+    }
+
     abstract byte[] referencedTransactionFullHash();
 
 }

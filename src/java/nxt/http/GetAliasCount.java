@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.Alias;
+import nxt.ChildChain;
 import nxt.NxtException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -34,8 +34,9 @@ public final class GetAliasCount extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         final long accountId = ParameterParser.getAccountId(req, true);
+        ChildChain childChain = ParameterParser.getChildChain(req);
         JSONObject response = new JSONObject();
-        response.put("numberOfAliases", Alias.getAccountAliasCount(accountId));
+        response.put("numberOfAliases", childChain.getAliasHome().getAccountAliasCount(accountId));
         return response;
     }
 

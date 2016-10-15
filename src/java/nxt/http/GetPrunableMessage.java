@@ -16,9 +16,10 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.PrunableMessage;
+import nxt.PrunableMessageHome;
 import nxt.util.JSON;
 import org.json.simple.JSONStreamAware;
 
@@ -43,12 +44,13 @@ public final class GetPrunableMessage extends APIServlet.APIRequestHandler {
             return JSONResponses.either("secretPhrase", "sharedKey");
         }
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
-        PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        PrunableMessageHome.PrunableMessage prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
         if (prunableMessage == null && retrieve) {
-            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
-            prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
+            prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
         }
         if (prunableMessage != null) {
             return JSONData.prunableMessage(prunableMessage, secretPhrase, sharedKey);

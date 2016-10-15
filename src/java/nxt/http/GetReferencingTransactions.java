@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.Transaction;
@@ -40,9 +41,10 @@ public final class GetReferencingTransactions extends APIServlet.APIRequestHandl
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = Nxt.getBlockchain().getReferencingTransactions(transactionId, firstIndex, lastIndex)) {
+        try (DbIterator<? extends Transaction> iterator = Nxt.getBlockchain().getReferencingTransactions(childChain, transactionId, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
                 transactions.add(JSONData.transaction(transaction));

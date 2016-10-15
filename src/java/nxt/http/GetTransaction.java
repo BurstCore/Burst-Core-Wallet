@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.Chain;
 import nxt.Nxt;
 import nxt.Transaction;
 import nxt.util.Convert;
@@ -36,7 +37,7 @@ public final class GetTransaction extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         String transactionIdString = Convert.emptyToNull(req.getParameter("transaction"));
         String transactionFullHash = Convert.emptyToNull(req.getParameter("fullHash"));
@@ -44,15 +45,16 @@ public final class GetTransaction extends APIServlet.APIRequestHandler {
             return MISSING_TRANSACTION;
         }
         boolean includePhasingResult = "true".equalsIgnoreCase(req.getParameter("includePhasingResult"));
+        Chain chain = ParameterParser.getChain(req);
 
         long transactionId = 0;
         Transaction transaction;
         try {
             if (transactionIdString != null) {
                 transactionId = Convert.parseUnsignedLong(transactionIdString);
-                transaction = Nxt.getBlockchain().getTransaction(transactionId);
+                transaction = Nxt.getBlockchain().getTransaction(chain, transactionId);
             } else {
-                transaction = Nxt.getBlockchain().getTransactionByFullHash(transactionFullHash);
+                transaction = Nxt.getBlockchain().getTransactionByFullHash(chain, transactionFullHash);
                 if (transaction == null) {
                     return UNKNOWN_TRANSACTION;
                 }

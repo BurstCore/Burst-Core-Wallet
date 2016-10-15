@@ -72,6 +72,8 @@ public final class APIServlet extends HttpServlet {
                 parameters.add("requireBlock");
                 parameters.add("requireLastBlock");
             }
+            //TODO: only add chain parameter if APIRequestHandler supports child chains
+            parameters.add("chain");
             this.parameters = Collections.unmodifiableList(parameters);
             this.apiTags = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(apiTags)));
             this.fileParameter = fileParameter;

@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.DigitalGoodsStore;
+import nxt.ChildChain;
+import nxt.DGSHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
@@ -46,11 +47,12 @@ public final class GetDGSTagsLike extends APIServlet.APIRequestHandler {
         if (prefix.length() < 2) {
             return JSONResponses.incorrect("tagPrefix", "tagPrefix must be at least 2 characters long");
         }
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray tagsJSON = new JSONArray();
         response.put("tags", tagsJSON);
-        try (DbIterator<DigitalGoodsStore.Tag> tags = DigitalGoodsStore.Tag.getTagsLike(prefix, inStockOnly, firstIndex, lastIndex)) {
+        try (DbIterator<DGSHome.Tag> tags = childChain.getDGSHome().getTagsLike(prefix, inStockOnly, firstIndex, lastIndex)) {
             while (tags.hasNext()) {
                 tagsJSON.add(JSONData.tag(tags.next()));
             }

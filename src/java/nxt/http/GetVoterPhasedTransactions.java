@@ -16,8 +16,8 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.PhasingPoll;
 import nxt.Transaction;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
@@ -40,9 +40,11 @@ public class GetVoterPhasedTransactions extends APIServlet.APIRequestHandler {
         long accountId = ParameterParser.getAccountId(req, true);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
+
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = PhasingPoll.getVoterPhasedTransactions(accountId, firstIndex, lastIndex)) {
+        try (DbIterator<? extends Transaction> iterator = childChain.getPhasingPollHome().getVoterPhasedTransactions(accountId, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
                 transactions.add(JSONData.transaction(transaction));

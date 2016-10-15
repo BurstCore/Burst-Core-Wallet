@@ -17,20 +17,21 @@
 package nxt.http;
 
 import nxt.Account;
-import nxt.Alias;
+import nxt.AliasHome;
 import nxt.Appendix;
 import nxt.Asset;
 import nxt.Attachment;
+import nxt.Chain;
+import nxt.ChildChain;
 import nxt.Constants;
 import nxt.Currency;
-import nxt.CurrencyBuyOffer;
-import nxt.CurrencySellOffer;
-import nxt.DigitalGoodsStore;
+import nxt.DGSHome;
+import nxt.ExchangeOfferHome;
 import nxt.HoldingType;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.Poll;
-import nxt.Shuffling;
+import nxt.PollHome;
+import nxt.ShufflingHome;
 import nxt.Transaction;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
@@ -215,7 +216,7 @@ public final class ParameterParser {
         return values;
     }
 
-    public static Alias getAlias(HttpServletRequest req) throws ParameterException {
+    public static AliasHome.Alias getAlias(HttpServletRequest req) throws ParameterException {
         long aliasId;
         try {
             aliasId = Convert.parseUnsignedLong(Convert.emptyToNull(req.getParameter("alias")));
@@ -223,11 +224,12 @@ public final class ParameterParser {
             throw new ParameterException(INCORRECT_ALIAS);
         }
         String aliasName = Convert.emptyToNull(req.getParameter("aliasName"));
-        Alias alias;
+        ChildChain childChain = getChildChain(req);
+        AliasHome.Alias alias;
         if (aliasId != 0) {
-            alias = Alias.getAlias(aliasId);
+            alias = childChain.getAliasHome().getAlias(aliasId);
         } else if (aliasName != null) {
-            alias = Alias.getAlias(aliasName);
+            alias = childChain.getAliasHome().getAlias(aliasName);
         } else {
             throw new ParameterException(MISSING_ALIAS_OR_ALIAS_NAME);
         }
@@ -249,8 +251,9 @@ public final class ParameterParser {
         return getLong(req, "priceNQT", 1L, Constants.MAX_BALANCE_NQT, true);
     }
 
-    public static Poll getPoll(HttpServletRequest req) throws ParameterException {
-        Poll poll = Poll.getPoll(getUnsignedLong(req, "poll", true));
+    public static PollHome.Poll getPoll(HttpServletRequest req) throws ParameterException {
+        ChildChain childChain = getChildChain(req);
+        PollHome.Poll poll = childChain.getPollHome().getPoll(getUnsignedLong(req, "poll", true));
         if (poll == null) {
             throw new ParameterException(UNKNOWN_POLL);
         }
@@ -277,24 +280,27 @@ public final class ParameterParser {
         return currency;
     }
 
-    public static CurrencyBuyOffer getBuyOffer(HttpServletRequest req) throws ParameterException {
-        CurrencyBuyOffer offer = CurrencyBuyOffer.getOffer(getUnsignedLong(req, "offer", true));
+    public static ExchangeOfferHome.BuyOffer getBuyOffer(HttpServletRequest req) throws ParameterException {
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        ExchangeOfferHome.BuyOffer offer = childChain.getExchangeOfferHome().getBuyOffer(getUnsignedLong(req, "offer", true));
         if (offer == null) {
             throw new ParameterException(UNKNOWN_OFFER);
         }
         return offer;
     }
 
-    public static CurrencySellOffer getSellOffer(HttpServletRequest req) throws ParameterException {
-        CurrencySellOffer offer = CurrencySellOffer.getOffer(getUnsignedLong(req, "offer", true));
+    public static ExchangeOfferHome.SellOffer getSellOffer(HttpServletRequest req) throws ParameterException {
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        ExchangeOfferHome.SellOffer offer = childChain.getExchangeOfferHome().getSellOffer(getUnsignedLong(req, "offer", true));
         if (offer == null) {
             throw new ParameterException(UNKNOWN_OFFER);
         }
         return offer;
     }
 
-    public static Shuffling getShuffling(HttpServletRequest req) throws ParameterException {
-        Shuffling shuffling = Shuffling.getShuffling(getUnsignedLong(req, "shuffling", true));
+    public static ShufflingHome.Shuffling getShuffling(HttpServletRequest req) throws ParameterException {
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(getUnsignedLong(req, "shuffling", true));
         if (shuffling == null) {
             throw new ParameterException(UNKNOWN_SHUFFLING);
         }
@@ -309,8 +315,9 @@ public final class ParameterParser {
         return getLong(req, "amountNQTPerQNT", 1L, Constants.MAX_BALANCE_NQT, true);
     }
 
-    public static DigitalGoodsStore.Goods getGoods(HttpServletRequest req) throws ParameterException {
-        DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(getUnsignedLong(req, "goods", true));
+    public static DGSHome.Goods getGoods(HttpServletRequest req) throws ParameterException {
+        ChildChain childChain = getChildChain(req);
+        DGSHome.Goods goods = childChain.getDGSHome().getGoods(getUnsignedLong(req, "goods", true));
         if (goods == null) {
             throw new ParameterException(UNKNOWN_GOODS);
         }
@@ -387,8 +394,9 @@ public final class ParameterParser {
         }
     }
 
-    public static DigitalGoodsStore.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
-        DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(getUnsignedLong(req, "purchase", true));
+    public static DGSHome.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
+        ChildChain childChain = getChildChain(req);
+        DGSHome.Purchase purchase = childChain.getDGSHome().getPurchase(getUnsignedLong(req, "purchase", true));
         if (purchase == null) {
             throw new ParameterException(INCORRECT_PURCHASE);
         }
@@ -782,6 +790,30 @@ public final class ParameterParser {
             throw new ParameterException(INCORRECT_TAGGED_DATA_FILENAME);
         }
         return new Attachment.TaggedDataUpload(name, description, tags, type, channel, isText, filename, data);
+    }
+
+    public static Chain getChain(HttpServletRequest request) throws ParameterException {
+        String chainName = Convert.emptyToNull(request.getParameter("chain"));
+        if (chainName != null) {
+            Chain chain = Chain.getChain(chainName);
+            if (chain == null) {
+                throw new ParameterException(UNKNOWN_CHAIN);
+            }
+            return chain;
+        }
+        return ChildChain.NXT;
+    }
+
+    public static ChildChain getChildChain(HttpServletRequest request) throws ParameterException {
+        String chainName = Convert.emptyToNull(request.getParameter("chain"));
+        if (chainName != null) {
+            ChildChain chain = ChildChain.getChildChain(chainName);
+            if (chain == null) {
+                throw new ParameterException(UNKNOWN_CHAIN);
+            }
+            return chain;
+        }
+        return ChildChain.NXT;
     }
 
     private ParameterParser() {} // never

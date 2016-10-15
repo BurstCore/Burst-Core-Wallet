@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.Account;
-import nxt.Alias;
+import nxt.AliasHome;
 import nxt.Attachment;
 import nxt.NxtException;
 import org.json.simple.JSONStreamAware;
@@ -37,7 +37,7 @@ public final class DeleteAlias extends CreateTransaction {
 
     @Override
     protected JSONStreamAware processRequest(final HttpServletRequest req) throws NxtException {
-        final Alias alias = ParameterParser.getAlias(req);
+        final AliasHome.Alias alias = ParameterParser.getAlias(req);
         final Account owner = ParameterParser.getSenderAccount(req);
 
         if (alias.getAccountId() != owner.getId()) {

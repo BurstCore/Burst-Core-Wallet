@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.NxtException;
-import nxt.Poll;
+import nxt.PollHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -33,7 +33,7 @@ public final class GetPoll extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        Poll poll = ParameterParser.getPoll(req);
+        PollHome.Poll poll = ParameterParser.getPoll(req);
         return JSONData.poll(poll);
     }
 }

@@ -19,7 +19,7 @@ package nxt.http;
 import nxt.Account;
 import nxt.Attachment;
 import nxt.Constants;
-import nxt.DigitalGoodsStore;
+import nxt.DGSHome;
 import nxt.NxtException;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
@@ -43,7 +43,7 @@ public final class DGSQuantityChange extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
         Account account = ParameterParser.getSenderAccount(req);
-        DigitalGoodsStore.Goods goods = ParameterParser.getGoods(req);
+        DGSHome.Goods goods = ParameterParser.getGoods(req);
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;
         }

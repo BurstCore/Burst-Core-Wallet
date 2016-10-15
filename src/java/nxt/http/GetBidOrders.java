@@ -17,10 +17,11 @@
 package nxt.http;
 
 import nxt.Attachment;
+import nxt.ChildChain;
 import nxt.ChildTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.Order;
+import nxt.OrderHome;
 import nxt.Transaction;
 import nxt.db.DbIterator;
 import nxt.util.Filter;
@@ -47,6 +48,7 @@ public final class GetBidOrders extends APIServlet.APIRequestHandler {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         boolean showExpectedCancellations = "true".equalsIgnoreCase(req.getParameter("showExpectedCancellations"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         long[] cancellations = null;
         if (showExpectedCancellations) {
@@ -61,9 +63,9 @@ public final class GetBidOrders extends APIServlet.APIRequestHandler {
         }
 
         JSONArray orders = new JSONArray();
-        try (DbIterator<Order.Bid> bidOrders = Order.Bid.getSortedOrders(assetId, firstIndex, lastIndex)) {
+        try (DbIterator<OrderHome.Bid> bidOrders = childChain.getOrderHome().getSortedBidOrders(assetId, firstIndex, lastIndex)) {
             while (bidOrders.hasNext()) {
-                Order.Bid order = bidOrders.next();
+                OrderHome.Bid order = bidOrders.next();
                 JSONObject orderJSON = JSONData.bidOrder(order);
                 if (showExpectedCancellations && Arrays.binarySearch(cancellations, order.getId()) >= 0) {
                     orderJSON.put("expectedCancellation", Boolean.TRUE);

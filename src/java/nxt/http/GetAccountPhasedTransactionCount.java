@@ -16,8 +16,8 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.PhasingPoll;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -33,8 +33,9 @@ public class GetAccountPhasedTransactionCount extends APIServlet.APIRequestHandl
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         long accountId = ParameterParser.getAccountId(req, true);
+        ChildChain childChain = ParameterParser.getChildChain(req);
         JSONObject response = new JSONObject();
-        response.put("numberOfPhasedTransactions", PhasingPoll.getAccountPhasedTransactionCount(accountId));
+        response.put("numberOfPhasedTransactions", childChain.getPhasingPollHome().getAccountPhasedTransactionCount(accountId));
         return response;
     }
 }

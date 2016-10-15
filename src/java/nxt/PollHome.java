@@ -313,6 +313,10 @@ public final class PollHome {
             return finishHeight <= Nxt.getBlockchain().getHeight();
         }
 
+        public ChildChain getChildChain() {
+            return PollHome.this.childChain;
+        }
+
         private List<OptionResult> countResults(VoteWeighting voteWeighting) {
             int countHeight = Math.min(finishHeight, Nxt.getBlockchain().getHeight());
             if (countHeight < Nxt.getBlockchainProcessor().getMinRollbackHeight()) {

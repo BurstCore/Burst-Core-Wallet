@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.Exchange;
+import nxt.ChildChain;
+import nxt.ExchangeHome;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
@@ -50,11 +51,12 @@ public final class GetExchangesByOffer extends APIServlet.APIRequestHandler {
             throw new ParameterException(INCORRECT_OFFER);
         }
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         JSONObject response = new JSONObject();
         JSONArray exchangesData = new JSONArray();
-        try (DbIterator<Exchange> exchanges = Exchange.getOfferExchanges(offerId, firstIndex, lastIndex)) {
+        try (DbIterator<ExchangeHome.Exchange> exchanges = childChain.getExchangeHome().getOfferExchanges(offerId, firstIndex, lastIndex)) {
             while (exchanges.hasNext()) {
                 exchangesData.add(JSONData.exchange(exchanges.next(), includeCurrencyInfo));
             }

@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.Exchange;
+import nxt.ChildChain;
+import nxt.ExchangeHome;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -35,8 +36,9 @@ public final class GetLastExchanges extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long[] currencyIds = ParameterParser.getUnsignedLongs(req, "currencies");
+        ChildChain childChain = ParameterParser.getChildChain(req);
         JSONArray exchangesJSON = new JSONArray();
-        List<Exchange> exchanges = Exchange.getLastExchanges(currencyIds);
+        List<ExchangeHome.Exchange> exchanges = childChain.getExchangeHome().getLastExchanges(currencyIds);
         exchanges.forEach(exchange -> exchangesJSON.add(JSONData.exchange(exchange, false)));
         JSONObject response = new JSONObject();
         response.put("exchanges", exchangesJSON);

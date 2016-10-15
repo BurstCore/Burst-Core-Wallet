@@ -16,10 +16,11 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.Poll;
-import nxt.Vote;
+import nxt.PollHome;
+import nxt.VoteHome;
 import nxt.VoteWeighting;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
@@ -41,18 +42,19 @@ public class GetPollVotes extends APIServlet.APIRequestHandler  {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         boolean includeWeights = "true".equalsIgnoreCase(req.getParameter("includeWeights"));
-        Poll poll = ParameterParser.getPoll(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        PollHome.Poll poll = ParameterParser.getPoll(req);
         int countHeight;
         JSONData.VoteWeighter weighter = null;
         if (includeWeights && (countHeight = Math.min(poll.getFinishHeight(), Nxt.getBlockchain().getHeight()))
                 >= Nxt.getBlockchainProcessor().getMinRollbackHeight()) {
             VoteWeighting voteWeighting = poll.getVoteWeighting();
             VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
-            weighter = voterId -> votingModel.calcWeight(voteWeighting, voterId, countHeight);
+            weighter = voterId -> votingModel.calcWeight(childChain, voteWeighting, voterId, countHeight);
         }
         JSONArray votesJson = new JSONArray();
-        try (DbIterator<Vote> votes = Vote.getVotes(poll.getId(), firstIndex, lastIndex)) {
-            for (Vote vote : votes) {
+        try (DbIterator<VoteHome.Vote> votes = childChain.getVoteHome().getVotes(poll.getId(), firstIndex, lastIndex)) {
+            for (VoteHome.Vote vote : votes) {
                 votesJson.add(JSONData.vote(vote, weighter));
             }
         }

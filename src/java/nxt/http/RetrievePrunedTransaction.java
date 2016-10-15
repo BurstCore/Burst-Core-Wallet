@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.Nxt;
 import nxt.Transaction;
 import org.json.simple.JSONStreamAware;
@@ -36,11 +37,12 @@ public class RetrievePrunedTransaction extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
-        Transaction transaction = Nxt.getBlockchain().getTransaction(transactionId);
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        Transaction transaction = Nxt.getBlockchain().getTransaction(childChain, transactionId);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
-        transaction = Nxt.getBlockchainProcessor().restorePrunedTransaction(transactionId);
+        transaction = Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId);
         if (transaction == null) {
             return PRUNED_TRANSACTION;
         }

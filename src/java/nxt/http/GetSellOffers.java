@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.CurrencySellOffer;
+import nxt.ChildChain;
+import nxt.ExchangeOfferHome;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
 import org.json.simple.JSONArray;
@@ -42,6 +43,7 @@ public final class GetSellOffers extends APIServlet.APIRequestHandler {
             return JSONResponses.MISSING_CURRENCY_ACCOUNT;
         }
         boolean availableOnly = "true".equalsIgnoreCase(req.getParameter("availableOnly"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
@@ -50,14 +52,14 @@ public final class GetSellOffers extends APIServlet.APIRequestHandler {
         JSONArray offerData = new JSONArray();
         response.put("offers", offerData);
 
-        DbIterator<CurrencySellOffer> offers= null;
+        DbIterator<ExchangeOfferHome.SellOffer> offers= null;
         try {
             if (accountId == 0) {
-                offers = CurrencySellOffer.getCurrencyOffers(currencyId, availableOnly, firstIndex, lastIndex);
+                offers = childChain.getExchangeOfferHome().getCurrencySellOffers(currencyId, availableOnly, firstIndex, lastIndex);
             } else if (currencyId == 0) {
-                offers = CurrencySellOffer.getAccountOffers(accountId, availableOnly, firstIndex, lastIndex);
+                offers = childChain.getExchangeOfferHome().getAccountSellOffers(accountId, availableOnly, firstIndex, lastIndex);
             } else {
-                CurrencySellOffer offer = CurrencySellOffer.getOffer(currencyId, accountId);
+                ExchangeOfferHome.SellOffer offer = childChain.getExchangeOfferHome().getSellOffer(currencyId, accountId);
                 if (offer != null) {
                     offerData.add(JSONData.offer(offer));
                 }

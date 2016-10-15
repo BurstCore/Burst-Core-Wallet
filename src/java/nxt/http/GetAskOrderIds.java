@@ -16,8 +16,9 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.Order;
+import nxt.OrderHome;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -39,9 +40,10 @@ public final class GetAskOrderIds extends APIServlet.APIRequestHandler {
         long assetId = ParameterParser.getUnsignedLong(req, "asset", true);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONArray orderIds = new JSONArray();
-        try (DbIterator<Order.Ask> askOrders = Order.Ask.getSortedOrders(assetId, firstIndex, lastIndex)) {
+        try (DbIterator<OrderHome.Ask> askOrders = childChain.getOrderHome().getSortedAskOrders(assetId, firstIndex, lastIndex)) {
             while (askOrders.hasNext()) {
                 orderIds.add(Long.toUnsignedString(askOrders.next().getId()));
             }

@@ -16,9 +16,10 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.PhasingPoll;
-import nxt.PhasingVote;
+import nxt.PhasingPollHome;
+import nxt.PhasingVoteHome;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -38,13 +39,14 @@ public class GetPhasingPollVotes extends APIServlet.APIRequestHandler  {
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
-        PhasingPoll phasingPoll = PhasingPoll.getPoll(transactionId);
+        PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(transactionId);
         if (phasingPoll != null) {
             JSONObject response = new JSONObject();
             JSONArray votesJSON = new JSONArray();
-            try (DbIterator<PhasingVote> votes = PhasingVote.getVotes(transactionId, firstIndex, lastIndex)) {
-                for (PhasingVote vote : votes) {
+            try (DbIterator<PhasingVoteHome.PhasingVote> votes = childChain.getPhasingVoteHome().getVotes(transactionId, firstIndex, lastIndex)) {
+                for (PhasingVoteHome.PhasingVote vote : votes) {
                     votesJSON.add(JSONData.phasingPollVote(vote));
                 }
             }

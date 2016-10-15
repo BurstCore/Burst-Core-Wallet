@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.Account;
-import nxt.Alias;
+import nxt.AliasHome;
 import nxt.Attachment;
 import nxt.NxtException;
 import org.json.simple.JSONStreamAware;
@@ -38,9 +38,9 @@ public final class BuyAlias extends CreateTransaction {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         Account buyer = ParameterParser.getSenderAccount(req);
-        Alias alias = ParameterParser.getAlias(req);
+        AliasHome.Alias alias = ParameterParser.getAlias(req);
         long amountNQT = ParameterParser.getAmountNQT(req);
-        if (Alias.getOffer(alias) == null) {
+        if (alias.getOffer() == null) {
             return INCORRECT_ALIAS_NOTFORSALE;
         }
         long sellerId = alias.getAccountId();

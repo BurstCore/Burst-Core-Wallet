@@ -29,7 +29,7 @@ public abstract class Chain {
         if (FxtChain.FXT_NAME.equals(name)) {
             return FxtChain.FXT;
         } else {
-            return ChildChain.getChain(name);
+            return ChildChain.getChildChain(name);
         }
     }
 
@@ -37,7 +37,7 @@ public abstract class Chain {
         if (FxtChain.FXT.getId() == id) {
             return FxtChain.FXT;
         } else {
-            return ChildChain.getChain(id);
+            return ChildChain.getChildChain(id);
         }
     }
 
@@ -46,7 +46,7 @@ public abstract class Chain {
 
     Chain(int id, String name) {
         this.id = id;
-        this.name = name.toUpperCase();
+        this.name = name;
     }
 
     public final String getName() {

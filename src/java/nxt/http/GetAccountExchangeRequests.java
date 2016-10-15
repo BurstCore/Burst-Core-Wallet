@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.ExchangeRequest;
+import nxt.ChildChain;
+import nxt.ExchangeRequestHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
@@ -41,9 +42,10 @@ public final class GetAccountExchangeRequests extends APIServlet.APIRequestHandl
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONArray jsonArray = new JSONArray();
-        try (DbIterator<ExchangeRequest> exchangeRequests = ExchangeRequest.getAccountCurrencyExchangeRequests(accountId, currencyId,
+        try (DbIterator<ExchangeRequestHome.ExchangeRequest> exchangeRequests = childChain.getExchangeRequestHome().getAccountCurrencyExchangeRequests(accountId, currencyId,
                 firstIndex, lastIndex)) {
             while (exchangeRequests.hasNext()) {
                 jsonArray.add(JSONData.exchangeRequest(exchangeRequests.next(), includeCurrencyInfo));

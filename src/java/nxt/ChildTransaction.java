@@ -48,8 +48,6 @@ public interface ChildTransaction extends Transaction {
 
     long getFxtTransactionId();
 
-    String getReferencedTransactionFullHash();
-
     Appendix.Message getMessage();
 
     Appendix.EncryptedMessage getEncryptedMessage();

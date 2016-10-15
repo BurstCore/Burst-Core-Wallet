@@ -19,7 +19,7 @@ package nxt.http;
 import nxt.Account;
 import nxt.Attachment;
 import nxt.NxtException;
-import nxt.Shuffling;
+import nxt.ShufflingHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,7 +35,7 @@ public final class ShufflingVerify extends CreateTransaction {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        Shuffling shuffling = ParameterParser.getShuffling(req);
+        ShufflingHome.Shuffling shuffling = ParameterParser.getShuffling(req);
         byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", true);
         if (!Arrays.equals(shufflingStateHash, shuffling.getStateHash())) {
             return JSONResponses.incorrect("shufflingStateHash", "Shuffling is in a different state now");

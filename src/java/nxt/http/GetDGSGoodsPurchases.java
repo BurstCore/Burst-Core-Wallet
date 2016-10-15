@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.DigitalGoodsStore;
+import nxt.ChildChain;
+import nxt.DGSHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
@@ -42,13 +43,13 @@ public final class GetDGSGoodsPurchases extends APIServlet.APIRequestHandler {
         int lastIndex = ParameterParser.getLastIndex(req);
         final boolean withPublicFeedbacksOnly = "true".equalsIgnoreCase(req.getParameter("withPublicFeedbacksOnly"));
         final boolean completed = "true".equalsIgnoreCase(req.getParameter("completed"));
-
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray purchasesJSON = new JSONArray();
         response.put("purchases", purchasesJSON);
 
-        try (DbIterator<DigitalGoodsStore.Purchase> iterator = DigitalGoodsStore.Purchase.getGoodsPurchases(goodsId,
+        try (DbIterator<DGSHome.Purchase> iterator = childChain.getDGSHome().getGoodsPurchases(goodsId,
                 buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex)) {
             while(iterator.hasNext()) {
                 purchasesJSON.add(JSONData.purchase(iterator.next()));

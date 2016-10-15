@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.CurrencyBuyOffer;
+import nxt.ChildChain;
+import nxt.ExchangeOfferHome;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
 import org.json.simple.JSONArray;
@@ -45,19 +46,20 @@ public final class GetBuyOffers extends APIServlet.APIRequestHandler {
 
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray offerData = new JSONArray();
         response.put("offers", offerData);
 
-        DbIterator<CurrencyBuyOffer> offers= null;
+        DbIterator<ExchangeOfferHome.BuyOffer> offers= null;
         try {
             if (accountId == 0) {
-                offers = CurrencyBuyOffer.getCurrencyOffers(currencyId, availableOnly, firstIndex, lastIndex);
+                offers = childChain.getExchangeOfferHome().getCurrencyBuyOffers(currencyId, availableOnly, firstIndex, lastIndex);
             } else if (currencyId == 0) {
-                offers = CurrencyBuyOffer.getAccountOffers(accountId, availableOnly, firstIndex, lastIndex);
+                offers = childChain.getExchangeOfferHome().getAccountBuyOffers(accountId, availableOnly, firstIndex, lastIndex);
             } else {
-                CurrencyBuyOffer offer = CurrencyBuyOffer.getOffer(currencyId, accountId);
+                ExchangeOfferHome.BuyOffer offer = childChain.getExchangeOfferHome().getBuyOffer(currencyId, accountId);
                 if (offer != null) {
                     offerData.add(JSONData.offer(offer));
                 }

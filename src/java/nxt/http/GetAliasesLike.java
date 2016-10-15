@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.Alias;
+import nxt.AliasHome;
+import nxt.ChildChain;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
@@ -45,11 +46,12 @@ public final class GetAliasesLike extends APIServlet.APIRequestHandler {
         if (prefix.length() < 2) {
             return JSONResponses.incorrect("aliasPrefix", "aliasPrefix must be at least 2 characters long");
         }
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray aliasJSON = new JSONArray();
         response.put("aliases", aliasJSON);
-        try (DbIterator<Alias> aliases = Alias.getAliasesLike(prefix, firstIndex, lastIndex)) {
+        try (DbIterator<AliasHome.Alias> aliases = childChain.getAliasHome().getAliasesLike(prefix, firstIndex, lastIndex)) {
             while (aliases.hasNext()) {
                 aliasJSON.add(JSONData.alias(aliases.next()));
             }

@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.PhasingPoll;
+import nxt.ChildChain;
+import nxt.PhasingPollHome;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -35,15 +36,16 @@ public final class GetPhasingPolls extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long[] transactionIds = ParameterParser.getUnsignedLongs(req, "transaction");
         boolean countVotes = "true".equalsIgnoreCase(req.getParameter("countVotes"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("polls", jsonArray);
         for (long transactionId : transactionIds) {
-            PhasingPoll poll = PhasingPoll.getPoll(transactionId);
+            PhasingPollHome.PhasingPoll poll = childChain.getPhasingPollHome().getPoll(transactionId);
             if (poll != null) {
                 jsonArray.add(JSONData.phasingPoll(poll, countVotes));
             } else {
-                PhasingPoll.PhasingPollResult pollResult = PhasingPoll.getResult(transactionId);
+                PhasingPollHome.PhasingPollResult pollResult = childChain.getPhasingPollHome().getResult(transactionId);
                 if (pollResult != null) {
                     jsonArray.add(JSONData.phasingPollResult(pollResult));
                 }

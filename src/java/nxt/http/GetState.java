@@ -18,25 +18,14 @@ package nxt.http;
 
 import nxt.Account;
 import nxt.AccountRestrictions;
-import nxt.Alias;
 import nxt.Asset;
 import nxt.AssetTransfer;
+import nxt.ChildChain;
 import nxt.Constants;
 import nxt.Currency;
-import nxt.CurrencyBuyOffer;
 import nxt.CurrencyTransfer;
-import nxt.DigitalGoodsStore;
-import nxt.Exchange;
-import nxt.ExchangeRequest;
 import nxt.Generator;
 import nxt.Nxt;
-import nxt.Order;
-import nxt.Poll;
-import nxt.PrunableMessage;
-import nxt.Shuffling;
-import nxt.TaggedData;
-import nxt.Trade;
-import nxt.Vote;
 import nxt.peer.Peers;
 import nxt.util.UPnP;
 import org.json.simple.JSONObject;
@@ -54,39 +43,41 @@ public final class GetState extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         JSONObject response = GetBlockchainStatus.instance.processRequest(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && API.checkPassword(req)) {
-            response.put("numberOfTransactions", Nxt.getBlockchain().getTransactionCount());
+            response.put("numberOfTransactions", Nxt.getBlockchain().getTransactionCount(childChain));
             response.put("numberOfAccounts", Account.getCount());
             response.put("numberOfAssets", Asset.getCount());
-            int askCount = Order.Ask.getCount();
-            int bidCount = Order.Bid.getCount();
+            int askCount = childChain.getOrderHome().getAskCount();
+            int bidCount = childChain.getOrderHome().getBidCount();
             response.put("numberOfOrders", askCount + bidCount);
             response.put("numberOfAskOrders", askCount);
             response.put("numberOfBidOrders", bidCount);
-            response.put("numberOfTrades", Trade.getCount());
+            response.put("numberOfTrades", childChain.getTradeHome().getCount());
             response.put("numberOfTransfers", AssetTransfer.getCount());
 	        response.put("numberOfCurrencies", Currency.getCount());
-    	    response.put("numberOfOffers", CurrencyBuyOffer.getCount());
-            response.put("numberOfExchangeRequests", ExchangeRequest.getCount());
-        	response.put("numberOfExchanges", Exchange.getCount());
+    	    response.put("numberOfBuyOffers", childChain.getExchangeOfferHome().getBuyOfferCount());
+            response.put("numberOfSellOffers", childChain.getExchangeOfferHome().getSellOfferCount());
+            response.put("numberOfExchangeRequests", childChain.getExchangeRequestHome().getCount());
+        	response.put("numberOfExchanges", childChain.getExchangeHome().getCount());
         	response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
-            response.put("numberOfAliases", Alias.getCount());
-            response.put("numberOfGoods", DigitalGoodsStore.Goods.getCount());
-            response.put("numberOfPurchases", DigitalGoodsStore.Purchase.getCount());
-            response.put("numberOfTags", DigitalGoodsStore.Tag.getCount());
-            response.put("numberOfPolls", Poll.getCount());
-            response.put("numberOfVotes", Vote.getCount());
-            response.put("numberOfPrunableMessages", PrunableMessage.getCount());
-            response.put("numberOfTaggedData", TaggedData.getCount());
-            response.put("numberOfDataTags", TaggedData.Tag.getTagCount());
+            response.put("numberOfAliases", childChain.getAliasHome().getCount());
+            response.put("numberOfGoods", childChain.getDGSHome().getGoodsCount());
+            response.put("numberOfPurchases", childChain.getDGSHome().getPurchaseCount());
+            response.put("numberOfTags", childChain.getDGSHome().getTagCount());
+            response.put("numberOfPolls", childChain.getPollHome().getCount());
+            response.put("numberOfVotes", childChain.getVoteHome().getCount());
+            response.put("numberOfPrunableMessages", childChain.getPrunableMessageHome().getCount());
+            response.put("numberOfTaggedData", childChain.getTaggedDataHome().getCount());
+            response.put("numberOfDataTags", childChain.getTaggedDataHome().getTagCount());
             response.put("numberOfAccountLeases", Account.getAccountLeaseCount());
             response.put("numberOfActiveAccountLeases", Account.getActiveLeaseCount());
-            response.put("numberOfShufflings", Shuffling.getCount());
-            response.put("numberOfActiveShufflings", Shuffling.getActiveCount());
+            response.put("numberOfShufflings", childChain.getShufflingHome().getCount());
+            response.put("numberOfActiveShufflings", childChain.getShufflingHome().getActiveCount());
             response.put("numberOfPhasingOnlyAccounts", AccountRestrictions.PhasingOnly.getCount());
         }
         response.put("numberOfPeers", Peers.getAllPeers().size());

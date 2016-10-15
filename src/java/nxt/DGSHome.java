@@ -488,6 +488,10 @@ public final class DGSHome {
             return hasImage;
         }
 
+        public DGSHome getDGSHome() {
+            return DGSHome.this;
+        }
+
     }
 
     private static class PurchasesClause extends DbClause {
@@ -841,6 +845,10 @@ public final class DGSHome {
         private void setRefundNQT(long refundNQT) {
             this.refundNQT = refundNQT;
             purchaseTable.insert(this);
+        }
+
+        public DGSHome getDGSHome() {
+            return DGSHome.this;
         }
 
     }

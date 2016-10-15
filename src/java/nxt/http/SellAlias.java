@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.Account;
-import nxt.Alias;
+import nxt.AliasHome;
 import nxt.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
@@ -40,7 +40,7 @@ public final class SellAlias extends CreateTransaction {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        Alias alias = ParameterParser.getAlias(req);
+        AliasHome.Alias alias = ParameterParser.getAlias(req);
         Account owner = ParameterParser.getSenderAccount(req);
 
         long priceNQT = ParameterParser.getLong(req, "priceNQT", 0L, Constants.MAX_BALANCE_NQT, true);

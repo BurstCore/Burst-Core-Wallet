@@ -330,6 +330,10 @@ public final class Shuffler {
         return failureCause;
     }
 
+    public ChildChain getChildChain() {
+        return childChain;
+    }
+
     private void init(ShufflingHome.Shuffling shuffling) throws ShufflerException {
         ShufflingParticipantHome.ShufflingParticipant shufflingParticipant = shuffling.getParticipant(accountId);
         switch (shuffling.getStage()) {

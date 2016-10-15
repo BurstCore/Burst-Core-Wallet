@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.DigitalGoodsStore;
+import nxt.ChildChain;
 import nxt.NxtException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -37,9 +37,10 @@ public final class GetDGSGoodsPurchaseCount extends APIServlet.APIRequestHandler
         long goodsId = ParameterParser.getUnsignedLong(req, "goods", true);
         final boolean withPublicFeedbacksOnly = "true".equalsIgnoreCase(req.getParameter("withPublicFeedbacksOnly"));
         final boolean completed = "true".equalsIgnoreCase(req.getParameter("completed"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
-        response.put("numberOfPurchases", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goodsId, withPublicFeedbacksOnly, completed));
+        response.put("numberOfPurchases", childChain.getDGSHome().getGoodsPurchaseCount(goodsId, withPublicFeedbacksOnly, completed));
         return response;
 
     }

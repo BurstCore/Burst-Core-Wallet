@@ -16,9 +16,10 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
 import nxt.Shuffler;
-import nxt.Shuffling;
+import nxt.ShufflingHome;
 import nxt.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -38,8 +39,9 @@ public final class StartShuffler extends APIServlet.APIRequestHandler {
         byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
         String secretPhrase = ParameterParser.getSecretPhrase(req, true);
         byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient");
+        ChildChain childChain = ParameterParser.getChildChain(req);
         try {
-            Shuffler shuffler = Shuffler.addOrGetShuffler(secretPhrase, recipientPublicKey, shufflingFullHash);
+            Shuffler shuffler = Shuffler.addOrGetShuffler(childChain, secretPhrase, recipientPublicKey, shufflingFullHash);
             return shuffler != null ? JSONData.shuffler(shuffler, false) : JSON.emptyJSON;
         } catch (Shuffler.ShufflerLimitException e) {
             JSONObject response = new JSONObject();
@@ -60,7 +62,7 @@ public final class StartShuffler extends APIServlet.APIRequestHandler {
             return JSON.prepare(response);
         } catch (Shuffler.ShufflerException e) {
             if (e.getCause() instanceof NxtException.InsufficientBalanceException) {
-                Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
+                ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(shufflingFullHash);
                 if (shuffling == null) {
                     return JSONResponses.NOT_ENOUGH_FUNDS;
                 }

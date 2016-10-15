@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.Transaction;
@@ -48,6 +49,8 @@ public final class GetBlockchainTransactions extends APIServlet.APIRequestHandle
         boolean includeExpiredPrunable = "true".equalsIgnoreCase(req.getParameter("includeExpiredPrunable"));
         boolean includePhasingResult = "true".equalsIgnoreCase(req.getParameter("includePhasingResult"));
         boolean executedOnly = "true".equalsIgnoreCase(req.getParameter("executedOnly"));
+        //TODO: support FXT chain transactions
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         byte type;
         byte subtype;
@@ -66,7 +69,7 @@ public final class GetBlockchainTransactions extends APIServlet.APIRequestHandle
         int lastIndex = ParameterParser.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = Nxt.getBlockchain().getTransactions(accountId, numberOfConfirmations,
+        try (DbIterator<? extends Transaction> iterator = Nxt.getBlockchain().getTransactions(childChain, accountId, numberOfConfirmations,
                 type, subtype, timestamp, withMessage, phasedOnly, nonPhasedOnly, firstIndex, lastIndex,
                 includeExpiredPrunable, executedOnly)) {
             while (iterator.hasNext()) {

@@ -28,7 +28,14 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import netscape.javascript.JSObject;
-import nxt.*;
+import nxt.Block;
+import nxt.BlockchainProcessor;
+import nxt.ChildChain;
+import nxt.Nxt;
+import nxt.PrunableMessageHome;
+import nxt.TaggedDataHome;
+import nxt.Transaction;
+import nxt.TransactionProcessor;
 import nxt.http.API;
 import nxt.util.Convert;
 import nxt.util.Logger;
@@ -44,8 +51,13 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DesktopApplication extends Application {
@@ -247,16 +259,18 @@ public class DesktopApplication extends Application {
     }
 
     private void download(String requestType, Map<String, String> params) {
+        String chainName = params.get("chain");
+        ChildChain childChain = ChildChain.getChildChain(chainName);
         long transactionId = Convert.parseUnsignedLong(params.get("transaction"));
-        TaggedData taggedData = TaggedData.getData(transactionId);
+        TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionId);
         boolean retrieve = "true".equals(params.get("retrieve"));
         if (requestType.equals("downloadTaggedData")) {
             if (taggedData == null && retrieve) {
-                if (Nxt.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+                if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
                     growl("Pruned transaction data not currently available from any peer");
                     return;
                 }
-                taggedData = TaggedData.getData(transactionId);
+                taggedData = childChain.getTaggedDataHome().getData(transactionId);
             }
             if (taggedData == null) {
                 growl("Tagged data not found");
@@ -269,13 +283,13 @@ public class DesktopApplication extends Application {
             }
             downloadFile(data, filename);
         } else if (requestType.equals("downloadPrunableMessage")) {
-            PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
+            PrunableMessageHome.PrunableMessage prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
             if (prunableMessage == null && retrieve) {
-                if (Nxt.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+                if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
                     growl("Pruned message not currently available from any peer");
                     return;
                 }
-                prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
+                prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
             }
             String secretPhrase = params.get("secretPhrase");
             byte[] sharedKey = Convert.parseHexString(params.get("sharedKey"));

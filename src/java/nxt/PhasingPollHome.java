@@ -504,6 +504,10 @@ public final class PhasingPollHome {
             return algorithm;
         }
 
+        public PhasingPollHome getPhasingPollHome() {
+            return PhasingPollHome.this;
+        }
+
         public boolean verifySecret(byte[] revealedSecret) {
             HashFunction hashFunction = getHashFunction(algorithm);
             return hashFunction != null && Arrays.equals(hashedSecret, hashFunction.hash(revealedSecret));

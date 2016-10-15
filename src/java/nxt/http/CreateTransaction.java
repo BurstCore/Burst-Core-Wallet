@@ -16,7 +16,16 @@
 
 package nxt.http;
 
-import nxt.*;
+import nxt.Account;
+import nxt.Appendix;
+import nxt.Attachment;
+import nxt.ChildChain;
+import nxt.ChildTransaction;
+import nxt.Constants;
+import nxt.Nxt;
+import nxt.NxtException;
+import nxt.PhasingParams;
+import nxt.Transaction;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
@@ -25,7 +34,14 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import static nxt.http.JSONResponses.*;
+import static nxt.http.JSONResponses.FEATURE_NOT_AVAILABLE;
+import static nxt.http.JSONResponses.INCORRECT_DEADLINE;
+import static nxt.http.JSONResponses.INCORRECT_EC_BLOCK;
+import static nxt.http.JSONResponses.INCORRECT_LINKED_FULL_HASH;
+import static nxt.http.JSONResponses.INCORRECT_WHITELIST;
+import static nxt.http.JSONResponses.MISSING_DEADLINE;
+import static nxt.http.JSONResponses.MISSING_SECRET_PHRASE;
+import static nxt.http.JSONResponses.NOT_ENOUGH_FUNDS;
 
 abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
@@ -185,8 +201,11 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
         byte[] publicKey = secretPhrase != null ? Crypto.getPublicKey(secretPhrase) : Convert.parseHexString(publicKeyValue);
 
+        //TODO: add support for FXT transactions
+        ChildChain chain = ParameterParser.getChildChain(req);
+
         try {
-            Transaction.Builder builder = Nxt.newTransactionBuilder(publicKey, amountNQT, feeNQT,
+            ChildTransaction.Builder builder = Nxt.newTransactionBuilder(chain, publicKey, amountNQT, feeNQT,
                     deadline, attachment).referencedTransactionFullHash(referencedTransactionFullHash);
             if (attachment.getTransactionType().canHaveRecipient()) {
                 builder.recipientId(recipientId);
@@ -204,7 +223,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             }
             Transaction transaction = builder.build(secretPhrase);
             try {
-                if (Math.addExact(amountNQT, transaction.getFee()) > senderAccount.getUnconfirmedBalanceNQT()) {
+                if (Math.addExact(amountNQT, transaction.getFee()) > senderAccount.getUnconfirmedBalance(chain)) {
                     return NOT_ENOUGH_FUNDS;
                 }
             } catch (ArithmeticException e) {

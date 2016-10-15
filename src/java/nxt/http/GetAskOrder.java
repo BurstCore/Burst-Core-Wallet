@@ -16,8 +16,9 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.Order;
+import nxt.OrderHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -34,8 +35,9 @@ public final class GetAskOrder extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
+        ChildChain childChain = ParameterParser.getChildChain(req);
         long orderId = ParameterParser.getUnsignedLong(req, "order", true);
-        Order.Ask askOrder = Order.Ask.getAskOrder(orderId);
+        OrderHome.Ask askOrder = childChain.getOrderHome().getAskOrder(orderId);
         if (askOrder == null) {
             return UNKNOWN_ORDER;
         }

@@ -16,8 +16,9 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.TaggedData;
+import nxt.TaggedDataHome;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -37,12 +38,13 @@ public final class GetDataTags extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray tagsJSON = new JSONArray();
         response.put("tags", tagsJSON);
 
-        try (DbIterator<TaggedData.Tag> tags = TaggedData.Tag.getAllTags(firstIndex, lastIndex)) {
+        try (DbIterator<TaggedDataHome.Tag> tags = childChain.getTaggedDataHome().getAllTags(firstIndex, lastIndex)) {
             while (tags.hasNext()) {
                 tagsJSON.add(JSONData.dataTag(tags.next()));
             }

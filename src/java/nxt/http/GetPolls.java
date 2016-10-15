@@ -17,9 +17,10 @@
 package nxt.http;
 
 
+import nxt.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.Poll;
+import nxt.PollHome;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
 import org.json.simple.JSONArray;
@@ -44,23 +45,24 @@ public class GetPolls extends APIServlet.APIRequestHandler {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         final int timestamp = ParameterParser.getTimestamp(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONArray pollsJson = new JSONArray();
-        DbIterator<Poll> polls = null;
+        DbIterator<PollHome.Poll> polls = null;
         try {
             if (accountId == 0) {
                 if (finishedOnly) {
-                    polls = Poll.getPollsFinishingAtOrBefore(Nxt.getBlockchain().getHeight(), firstIndex, lastIndex);
+                    polls = childChain.getPollHome().getPollsFinishingAtOrBefore(Nxt.getBlockchain().getHeight(), firstIndex, lastIndex);
                 } else if (includeFinished) {
-                    polls = Poll.getAllPolls(firstIndex, lastIndex);
+                    polls = childChain.getPollHome().getAllPolls(firstIndex, lastIndex);
                 } else {
-                    polls = Poll.getActivePolls(firstIndex, lastIndex);
+                    polls = childChain.getPollHome().getActivePolls(firstIndex, lastIndex);
                 }
             } else {
-                polls = Poll.getPollsByAccount(accountId, includeFinished, finishedOnly, firstIndex, lastIndex);
+                polls = childChain.getPollHome().getPollsByAccount(accountId, includeFinished, finishedOnly, firstIndex, lastIndex);
             }
             while (polls.hasNext()) {
-                Poll poll = polls.next();
+                PollHome.Poll poll = polls.next();
                 if (poll.getTimestamp() < timestamp) {
                     break;
                 }

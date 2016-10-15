@@ -16,10 +16,11 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.Poll;
-import nxt.Vote;
+import nxt.PollHome;
+import nxt.VoteHome;
 import nxt.VoteWeighting;
 import nxt.util.JSON;
 import org.json.simple.JSONStreamAware;
@@ -35,10 +36,11 @@ public class GetPollVote extends APIServlet.APIRequestHandler  {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        Poll poll = ParameterParser.getPoll(req);
+        PollHome.Poll poll = ParameterParser.getPoll(req);
         long accountId = ParameterParser.getAccountId(req, true);
         boolean includeWeights = "true".equalsIgnoreCase(req.getParameter("includeWeights"));
-        Vote vote = Vote.getVote(poll.getId(), accountId);
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        VoteHome.Vote vote = childChain.getVoteHome().getVote(poll.getId(), accountId);
         if (vote != null) {
             int countHeight;
             JSONData.VoteWeighter weighter = null;
@@ -46,7 +48,7 @@ public class GetPollVote extends APIServlet.APIRequestHandler  {
                     >= Nxt.getBlockchainProcessor().getMinRollbackHeight()) {
                 VoteWeighting voteWeighting = poll.getVoteWeighting();
                 VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
-                weighter = voterId -> votingModel.calcWeight(voteWeighting, voterId, countHeight);
+                weighter = voterId -> votingModel.calcWeight(childChain, voteWeighting, voterId, countHeight);
             }
             return JSONData.vote(vote, weighter);
         }

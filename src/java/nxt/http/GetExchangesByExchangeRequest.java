@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.Exchange;
+import nxt.ChildChain;
+import nxt.ExchangeHome;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
@@ -36,16 +37,17 @@ public final class GetExchangesByExchangeRequest extends APIServlet.APIRequestHa
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         String transactionIdString = Convert.emptyToNull(req.getParameter("transaction"));
         if (transactionIdString == null) {
             return MISSING_TRANSACTION;
         }
         long transactionId = Convert.parseUnsignedLong(transactionIdString);
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
         JSONObject response = new JSONObject();
         JSONArray exchangesData = new JSONArray();
-        try (DbIterator<Exchange> exchanges = Exchange.getExchanges(transactionId)) {
+        try (DbIterator<ExchangeHome.Exchange> exchanges = childChain.getExchangeHome().getExchanges(transactionId)) {
             while (exchanges.hasNext()) {
                 exchangesData.add(JSONData.exchange(exchanges.next(), includeCurrencyInfo));
             }

@@ -106,4 +106,9 @@ public interface Transaction {
     int getECBlockHeight();
 
     long getECBlockId();
+
+    boolean isPhased();
+
+    String getReferencedTransactionFullHash();
+
 }

@@ -16,8 +16,9 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.Trade;
+import nxt.TradeHome;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
 import org.json.simple.JSONArray;
@@ -42,6 +43,7 @@ public final class GetOrderTrades extends APIServlet.APIRequestHandler {
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         if (askOrderId == 0 && bidOrderId == 0) {
             return JSONResponses.missing("askOrder", "bidOrder");
@@ -50,20 +52,20 @@ public final class GetOrderTrades extends APIServlet.APIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray tradesData = new JSONArray();
         if (askOrderId != 0 && bidOrderId != 0) {
-            Trade trade = Trade.getTrade(askOrderId, bidOrderId);
+            TradeHome.Trade trade = childChain.getTradeHome().getTrade(askOrderId, bidOrderId);
             if (trade != null) {
                 tradesData.add(JSONData.trade(trade, includeAssetInfo));
             }
         } else {
-            DbIterator<Trade> trades = null;
+            DbIterator<TradeHome.Trade> trades = null;
             try {
                 if (askOrderId != 0) {
-                    trades = Trade.getAskOrderTrades(askOrderId, firstIndex, lastIndex);
+                    trades = childChain.getTradeHome().getAskOrderTrades(askOrderId, firstIndex, lastIndex);
                 } else {
-                    trades = Trade.getBidOrderTrades(bidOrderId, firstIndex, lastIndex);
+                    trades = childChain.getTradeHome().getBidOrderTrades(bidOrderId, firstIndex, lastIndex);
                 }
                 while (trades.hasNext()) {
-                    Trade trade = trades.next();
+                    TradeHome.Trade trade = trades.next();
                     tradesData.add(JSONData.trade(trade, includeAssetInfo));
                 }
             } finally {

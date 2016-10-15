@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.Order;
+import nxt.ChildChain;
+import nxt.OrderHome;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -33,15 +34,16 @@ public final class GetAllOpenAskOrders extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         JSONObject response = new JSONObject();
         JSONArray ordersData = new JSONArray();
 
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
-        try (DbIterator<Order.Ask> askOrders = Order.Ask.getAll(firstIndex, lastIndex)) {
+        try (DbIterator<OrderHome.Ask> askOrders = childChain.getOrderHome().getAllAskOrders(firstIndex, lastIndex)) {
             while (askOrders.hasNext()) {
                 ordersData.add(JSONData.askOrder(askOrders.next()));
             }

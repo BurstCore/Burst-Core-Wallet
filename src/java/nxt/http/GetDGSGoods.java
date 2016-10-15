@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.DigitalGoodsStore;
+import nxt.ChildChain;
+import nxt.DGSHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
@@ -44,28 +45,29 @@ public final class GetDGSGoods extends APIServlet.APIRequestHandler {
         boolean inStockOnly = !"false".equalsIgnoreCase(req.getParameter("inStockOnly"));
         boolean hideDelisted = "true".equalsIgnoreCase(req.getParameter("hideDelisted"));
         boolean includeCounts = "true".equalsIgnoreCase(req.getParameter("includeCounts"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray goodsJSON = new JSONArray();
         response.put("goods", goodsJSON);
 
-        Filter<DigitalGoodsStore.Goods> filter = hideDelisted ? goods -> ! goods.isDelisted() : goods -> true;
+        Filter<DGSHome.Goods> filter = hideDelisted ? goods -> ! goods.isDelisted() : goods -> true;
 
-        FilteringIterator<DigitalGoodsStore.Goods> iterator = null;
+        FilteringIterator<DGSHome.Goods> iterator = null;
         try {
-            DbIterator<DigitalGoodsStore.Goods> goods;
+            DbIterator<DGSHome.Goods> goods;
             if (sellerId == 0) {
                 if (inStockOnly) {
-                    goods = DigitalGoodsStore.Goods.getGoodsInStock(0, -1);
+                    goods = childChain.getDGSHome().getGoodsInStock(0, -1);
                 } else {
-                    goods = DigitalGoodsStore.Goods.getAllGoods(0, -1);
+                    goods = childChain.getDGSHome().getAllGoods(0, -1);
                 }
             } else {
-                goods = DigitalGoodsStore.Goods.getSellerGoods(sellerId, inStockOnly, 0, -1);
+                goods = childChain.getDGSHome().getSellerGoods(sellerId, inStockOnly, 0, -1);
             }
             iterator = new FilteringIterator<>(goods, filter, firstIndex, lastIndex);
             while (iterator.hasNext()) {
-                DigitalGoodsStore.Goods good = iterator.next();
+                DGSHome.Goods good = iterator.next();
                 goodsJSON.add(JSONData.goods(good, includeCounts));
             }
         } finally {

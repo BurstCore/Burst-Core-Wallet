@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.Shuffling;
+import nxt.ChildChain;
+import nxt.ShufflingHome;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
@@ -48,10 +49,10 @@ public final class GetHoldingShufflings extends APIServlet.APIRequestHandler {
             }
         }
         String stageValue = Convert.emptyToNull(req.getParameter("stage"));
-        Shuffling.Stage stage = null;
+        ShufflingHome.Stage stage = null;
         if (stageValue != null) {
             try {
-                stage = Shuffling.Stage.get(Byte.parseByte(stageValue));
+                stage = ShufflingHome.Stage.get(Byte.parseByte(stageValue));
             } catch (RuntimeException e) {
                 return incorrect("stage");
             }
@@ -59,12 +60,13 @@ public final class GetHoldingShufflings extends APIServlet.APIRequestHandler {
         boolean includeFinished = "true".equalsIgnoreCase(req.getParameter("includeFinished"));
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("shufflings", jsonArray);
-        try (DbIterator<Shuffling> shufflings = Shuffling.getHoldingShufflings(holdingId, stage, includeFinished, firstIndex, lastIndex)) {
-            for (Shuffling shuffling : shufflings) {
+        try (DbIterator<ShufflingHome.Shuffling> shufflings = childChain.getShufflingHome().getHoldingShufflings(holdingId, stage, includeFinished, firstIndex, lastIndex)) {
+            for (ShufflingHome.Shuffling shuffling : shufflings) {
                 jsonArray.add(JSONData.shuffling(shuffling, false));
             }
         }

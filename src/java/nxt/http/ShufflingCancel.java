@@ -19,7 +19,7 @@ package nxt.http;
 import nxt.Account;
 import nxt.Attachment;
 import nxt.NxtException;
-import nxt.Shuffling;
+import nxt.ShufflingHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -34,7 +34,7 @@ public final class ShufflingCancel extends CreateTransaction {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        Shuffling shuffling = ParameterParser.getShuffling(req);
+        ShufflingHome.Shuffling shuffling = ParameterParser.getShuffling(req);
         long cancellingAccountId = ParameterParser.getAccountId(req, "cancellingAccount", false);
         byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", true);
         String secretPhrase = ParameterParser.getSecretPhrase(req, true);

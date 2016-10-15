@@ -16,8 +16,9 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.TaggedData;
+import nxt.TaggedDataHome;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
@@ -42,11 +43,12 @@ public final class SearchTaggedData extends APIServlet.APIRequestHandler {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         boolean includeData = "true".equalsIgnoreCase(req.getParameter("includeData"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("data", jsonArray);
-        try (DbIterator<TaggedData> data = TaggedData.searchData(query, channel, accountId, firstIndex, lastIndex)) {
+        try (DbIterator<TaggedDataHome.TaggedData> data = childChain.getTaggedDataHome().searchData(query, channel, accountId, firstIndex, lastIndex)) {
             while (data.hasNext()) {
                 jsonArray.add(JSONData.taggedData(data.next(), includeData));
             }

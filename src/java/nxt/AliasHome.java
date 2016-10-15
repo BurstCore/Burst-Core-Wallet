@@ -270,6 +270,10 @@ public final class AliasHome {
             return accountId;
         }
 
+        public Offer getOffer() {
+            return AliasHome.this.getOffer(this);
+        }
+
     }
 
 }

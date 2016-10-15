@@ -19,8 +19,8 @@ package nxt.http;
 import nxt.Account;
 import nxt.Attachment;
 import nxt.NxtException;
-import nxt.Shuffling;
-import nxt.ShufflingParticipant;
+import nxt.ShufflingHome;
+import nxt.ShufflingParticipantHome;
 import nxt.util.Convert;
 import nxt.util.JSON;
 import org.json.simple.JSONObject;
@@ -41,8 +41,8 @@ public final class ShufflingProcess extends CreateTransaction {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        Shuffling shuffling = ParameterParser.getShuffling(req);
-        if (shuffling.getStage() != Shuffling.Stage.PROCESSING) {
+        ShufflingHome.Shuffling shuffling = ParameterParser.getShuffling(req);
+        if (shuffling.getStage() != ShufflingHome.Stage.PROCESSING) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 11);
             response.put("errorDescription", "Shuffling is not in processing, stage " + shuffling.getStage());
@@ -57,7 +57,7 @@ public final class ShufflingProcess extends CreateTransaction {
                     Convert.rsAccount(senderId), Convert.rsAccount(shuffling.getAssigneeAccountId())));
             return JSON.prepare(response);
         }
-        ShufflingParticipant participant = shuffling.getParticipant(senderId);
+        ShufflingParticipantHome.ShufflingParticipant participant = shuffling.getParticipant(senderId);
         if (participant == null) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 13);

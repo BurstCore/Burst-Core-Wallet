@@ -17,6 +17,7 @@
 package nxt.http;
 
 import nxt.Attachment;
+import nxt.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.Transaction;
@@ -43,7 +44,8 @@ public final class VerifyTaggedData extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
-        Transaction transaction = Nxt.getBlockchain().getTransaction(transactionId);
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        Transaction transaction = Nxt.getBlockchain().getTransaction(childChain, transactionId);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }

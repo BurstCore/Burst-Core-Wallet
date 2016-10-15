@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.Shuffling;
+import nxt.ChildChain;
+import nxt.ShufflingHome;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
 import org.json.simple.JSONArray;
@@ -34,27 +35,28 @@ public final class GetAllShufflings extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         boolean includeFinished = "true".equalsIgnoreCase(req.getParameter("includeFinished"));
         boolean finishedOnly = "true".equalsIgnoreCase(req.getParameter("finishedOnly"));
         boolean includeHoldingInfo = "true".equalsIgnoreCase(req.getParameter("includeHoldingInfo"));
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("shufflings", jsonArray);
-        DbIterator<Shuffling> shufflings = null;
+        DbIterator<ShufflingHome.Shuffling> shufflings = null;
         try {
             if (finishedOnly) {
-                shufflings = Shuffling.getFinishedShufflings(firstIndex, lastIndex);
+                shufflings = childChain.getShufflingHome().getFinishedShufflings(firstIndex, lastIndex);
             } else if (includeFinished) {
-                shufflings = Shuffling.getAll(firstIndex, lastIndex);
+                shufflings = childChain.getShufflingHome().getAll(firstIndex, lastIndex);
             } else {
-                shufflings = Shuffling.getActiveShufflings(firstIndex, lastIndex);
+                shufflings = childChain.getShufflingHome().getActiveShufflings(firstIndex, lastIndex);
             }
-            for (Shuffling shuffling : shufflings) {
+            for (ShufflingHome.Shuffling shuffling : shufflings) {
                 jsonArray.add(JSONData.shuffling(shuffling, includeHoldingInfo));
             }
         } finally {

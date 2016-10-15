@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.Exchange;
+import nxt.ChildChain;
+import nxt.ExchangeHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
@@ -44,23 +45,24 @@ public final class GetExchanges extends APIServlet.APIRequestHandler {
             return JSONResponses.MISSING_CURRENCY_ACCOUNT;
         }
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
 
         JSONObject response = new JSONObject();
         JSONArray exchangesData = new JSONArray();
-        DbIterator<Exchange> exchanges = null;
+        DbIterator<ExchangeHome.Exchange> exchanges = null;
         try {
             if (accountId == 0) {
-                exchanges = Exchange.getCurrencyExchanges(currencyId, firstIndex, lastIndex);
+                exchanges = childChain.getExchangeHome().getCurrencyExchanges(currencyId, firstIndex, lastIndex);
             } else if (currencyId == 0) {
-                exchanges = Exchange.getAccountExchanges(accountId, firstIndex, lastIndex);
+                exchanges = childChain.getExchangeHome().getAccountExchanges(accountId, firstIndex, lastIndex);
             } else {
-                exchanges = Exchange.getAccountCurrencyExchanges(accountId, currencyId, firstIndex, lastIndex);
+                exchanges = childChain.getExchangeHome().getAccountCurrencyExchanges(accountId, currencyId, firstIndex, lastIndex);
             }
             while (exchanges.hasNext()) {
-                Exchange exchange = exchanges.next();
+                ExchangeHome.Exchange exchange = exchanges.next();
                 if (exchange.getTimestamp() < timestamp) {
                     break;
                 }

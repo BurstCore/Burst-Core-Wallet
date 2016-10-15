@@ -18,7 +18,7 @@ package nxt.http;
 
 import nxt.Account;
 import nxt.Attachment;
-import nxt.DigitalGoodsStore;
+import nxt.DGSHome;
 import nxt.NxtException;
 import org.json.simple.JSONStreamAware;
 
@@ -39,7 +39,7 @@ public final class DGSFeedback extends CreateTransaction {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
-        DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
+        DGSHome.Purchase purchase = ParameterParser.getPurchase(req);
 
         Account buyerAccount = ParameterParser.getSenderAccount(req);
         if (buyerAccount.getId() != purchase.getBuyerId()) {

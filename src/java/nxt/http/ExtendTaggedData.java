@@ -18,10 +18,11 @@ package nxt.http;
 
 import nxt.Account;
 import nxt.Attachment;
+import nxt.ChildChain;
 import nxt.ChildTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.TaggedData;
+import nxt.TaggedDataHome;
 import nxt.Transaction;
 import org.json.simple.JSONStreamAware;
 
@@ -43,14 +44,15 @@ public final class ExtendTaggedData extends CreateTransaction {
 
         Account account = ParameterParser.getSenderAccount(req);
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
-        TaggedData taggedData = TaggedData.getData(transactionId);
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionId);
         if (taggedData == null) {
-            Transaction transaction = Nxt.getBlockchain().getTransaction(transactionId);
+            Transaction transaction = Nxt.getBlockchain().getTransaction(childChain, transactionId);
             if (transaction == null || transaction.getType() != ChildTransactionType.Data.TAGGED_DATA_UPLOAD) {
                 return UNKNOWN_TRANSACTION;
             }
             Attachment.TaggedDataUpload taggedDataUpload = ParameterParser.getTaggedData(req);
-            taggedData = new TaggedData(transaction, taggedDataUpload);
+            taggedData = childChain.getTaggedDataHome().new TaggedData(transaction, taggedDataUpload);
         }
         Attachment.TaggedDataExtend taggedDataExtend = new Attachment.TaggedDataExtend(taggedData);
         return createTransaction(req, account, taggedDataExtend);

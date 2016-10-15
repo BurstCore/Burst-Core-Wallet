@@ -16,8 +16,9 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.PhasingVote;
+import nxt.PhasingVoteHome;
 import nxt.util.JSON;
 import org.json.simple.JSONStreamAware;
 
@@ -34,8 +35,9 @@ public class GetPhasingPollVote extends APIServlet.APIRequestHandler  {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
         long accountId = ParameterParser.getAccountId(req, true);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
-        PhasingVote phasingVote = PhasingVote.getVote(transactionId, accountId);
+        PhasingVoteHome.PhasingVote phasingVote = childChain.getPhasingVoteHome().getVote(transactionId, accountId);
         if (phasingVote != null) {
             return JSONData.phasingPollVote(phasingVote);
         }

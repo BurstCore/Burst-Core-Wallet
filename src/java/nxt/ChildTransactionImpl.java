@@ -292,6 +292,11 @@ final class ChildTransactionImpl extends TransactionImpl implements ChildTransac
     }
 
     @Override
+    public boolean isPhased() {
+        return phasing != null;
+    }
+
+    @Override
     boolean attachmentIsPhased() {
         return attachment.isPhased(this);
     }

@@ -16,8 +16,9 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.TaggedData;
+import nxt.TaggedDataHome;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
@@ -45,11 +46,12 @@ public final class GetDataTagsLike extends APIServlet.APIRequestHandler {
         if (prefix.length() < 2) {
             return JSONResponses.incorrect("tagPrefix", "tagPrefix must be at least 2 characters long");
         }
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray tagsJSON = new JSONArray();
         response.put("tags", tagsJSON);
-        try (DbIterator<TaggedData.Tag> tags = TaggedData.Tag.getTagsLike(prefix, firstIndex, lastIndex)) {
+        try (DbIterator<TaggedDataHome.Tag> tags = childChain.getTaggedDataHome().getTagsLike(prefix, firstIndex, lastIndex)) {
             while (tags.hasNext()) {
                 tagsJSON.add(JSONData.dataTag(tags.next()));
             }

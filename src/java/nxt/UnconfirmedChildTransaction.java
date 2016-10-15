@@ -56,11 +56,6 @@ class UnconfirmedChildTransaction extends UnconfirmedTransaction implements Chil
     }
 
     @Override
-    public String getReferencedTransactionFullHash() {
-        return getTransaction().getReferencedTransactionFullHash();
-    }
-
-    @Override
     public Appendix.Message getMessage() {
         return getTransaction().getMessage();
     }

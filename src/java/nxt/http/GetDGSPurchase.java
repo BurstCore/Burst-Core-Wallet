@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.Account;
-import nxt.DigitalGoodsStore;
+import nxt.DGSHome;
 import nxt.NxtException;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
@@ -41,7 +41,7 @@ public final class GetDGSPurchase extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
-        DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
+        DGSHome.Purchase purchase = ParameterParser.getPurchase(req);
         JSONObject response = JSONData.purchase(purchase);
 
         byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", false);

@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.DigitalGoodsStore;
+import nxt.ChildChain;
+import nxt.DGSHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
@@ -38,13 +39,14 @@ public final class GetDGSTags extends APIServlet.APIRequestHandler {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         final boolean inStockOnly = !"false".equalsIgnoreCase(req.getParameter("inStockOnly"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray tagsJSON = new JSONArray();
         response.put("tags", tagsJSON);
 
-        try (DbIterator<DigitalGoodsStore.Tag> tags = inStockOnly
-                ? DigitalGoodsStore.Tag.getInStockTags(firstIndex, lastIndex) : DigitalGoodsStore.Tag.getAllTags(firstIndex, lastIndex)) {
+        try (DbIterator<DGSHome.Tag> tags = inStockOnly
+                ? childChain.getDGSHome().getInStockTags(firstIndex, lastIndex) : childChain.getDGSHome().getAllTags(firstIndex, lastIndex)) {
             while (tags.hasNext()) {
                 tagsJSON.add(JSONData.tag(tags.next()));
             }

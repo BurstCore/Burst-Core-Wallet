@@ -16,8 +16,9 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.PrunableMessage;
+import nxt.PrunableMessageHome;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -41,15 +42,17 @@ public final class GetPrunableMessages extends APIServlet.APIRequestHandler {
         int lastIndex = ParameterParser.getLastIndex(req);
         final int timestamp = ParameterParser.getTimestamp(req);
         long otherAccountId = ParameterParser.getAccountId(req, "otherAccount", false);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("prunableMessages", jsonArray);
 
-        try (DbIterator<PrunableMessage> messages = otherAccountId == 0 ? PrunableMessage.getPrunableMessages(accountId, firstIndex, lastIndex)
-                : PrunableMessage.getPrunableMessages(accountId, otherAccountId, firstIndex, lastIndex)) {
+        try (DbIterator<PrunableMessageHome.PrunableMessage> messages = otherAccountId == 0 ?
+                childChain.getPrunableMessageHome().getPrunableMessages(accountId, firstIndex, lastIndex)
+                : childChain.getPrunableMessageHome().getPrunableMessages(accountId, otherAccountId, firstIndex, lastIndex)) {
             while (messages.hasNext()) {
-                PrunableMessage prunableMessage = messages.next();
+                PrunableMessageHome.PrunableMessage prunableMessage = messages.next();
                 if (prunableMessage.getBlockTimestamp() < timestamp) {
                     break;
                 }

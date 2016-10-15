@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.CurrencyExchangeOffer;
+import nxt.ChildChain;
+import nxt.ExchangeOfferHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -34,7 +35,9 @@ public final class GetAvailableToSell extends APIServlet.APIRequestHandler {
 
         long currencyId = ParameterParser.getUnsignedLong(req, "currency", true);
         long units = ParameterParser.getLong(req, "units", 1L, Long.MAX_VALUE, true);
-        CurrencyExchangeOffer.AvailableOffers availableOffers = CurrencyExchangeOffer.getAvailableToSell(currencyId, units);
+        ChildChain childChain = ParameterParser.getChildChain(req);
+
+        ExchangeOfferHome.AvailableOffers availableOffers = childChain.getExchangeOfferHome().getAvailableToSell(currencyId, units);
         return JSONData.availableOffers(availableOffers);
     }
 

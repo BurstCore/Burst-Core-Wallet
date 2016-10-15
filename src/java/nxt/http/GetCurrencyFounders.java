@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.CurrencyFounder;
+import nxt.ChildChain;
+import nxt.CurrencyFounderHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
@@ -43,27 +44,28 @@ public final class GetCurrencyFounders extends APIServlet.APIRequestHandler {
         }
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray foundersJSONArray = new JSONArray();
         response.put("founders", foundersJSONArray);
 
         if (currencyId != 0 && accountId != 0) {
-            CurrencyFounder currencyFounder = CurrencyFounder.getFounder(currencyId, accountId);
+            CurrencyFounderHome.CurrencyFounder currencyFounder = childChain.getCurrencyFounderHome().getFounder(currencyId, accountId);
             if (currencyFounder != null) {
                 foundersJSONArray.add(JSONData.currencyFounder(currencyFounder));
             }
             return response;
         }
 
-        DbIterator<CurrencyFounder> founders = null;
+        DbIterator<CurrencyFounderHome.CurrencyFounder> founders = null;
         try {
             if (accountId == 0) {
-                founders = CurrencyFounder.getCurrencyFounders(currencyId, firstIndex, lastIndex);
+                founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currencyId, firstIndex, lastIndex);
             } else if (currencyId == 0) {
-                founders = CurrencyFounder.getFounderCurrencies(accountId, firstIndex, lastIndex);
+                founders = childChain.getCurrencyFounderHome().getFounderCurrencies(accountId, firstIndex, lastIndex);
             }
-            for (CurrencyFounder founder : founders) {
+            for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                 foundersJSONArray.add(JSONData.currencyFounder(founder));
             }
         } finally {

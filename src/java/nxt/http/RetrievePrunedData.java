@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.Nxt;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -38,10 +39,11 @@ public class RetrievePrunedData extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
+        ChildChain childChain = ParameterParser.getChildChain(req);
         JSONObject response = new JSONObject();
         try {
-            int count = Nxt.getBlockchainProcessor().restorePrunedData();
+            int count = Nxt.getBlockchainProcessor().restorePrunedData(childChain);
             response.put("done", true);
             response.put("numberOfPrunedData", count);
         } catch (RuntimeException e) {

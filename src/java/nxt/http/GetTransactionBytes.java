@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.Chain;
 import nxt.Nxt;
 import nxt.Transaction;
 import nxt.util.Convert;
@@ -37,7 +38,7 @@ public final class GetTransactionBytes extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         String transactionValue = req.getParameter("transaction");
         if (transactionValue == null) {
@@ -51,8 +52,9 @@ public final class GetTransactionBytes extends APIServlet.APIRequestHandler {
         } catch (RuntimeException e) {
             return INCORRECT_TRANSACTION;
         }
+        Chain chain = ParameterParser.getChain(req);
 
-        transaction = Nxt.getBlockchain().getTransaction(transactionId);
+        transaction = Nxt.getBlockchain().getTransaction(chain, transactionId);
         JSONObject response = new JSONObject();
         if (transaction == null) {
             transaction = Nxt.getTransactionProcessor().getUnconfirmedTransaction(transactionId);

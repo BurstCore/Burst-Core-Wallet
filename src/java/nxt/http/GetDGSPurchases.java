@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.DigitalGoodsStore;
+import nxt.ChildChain;
+import nxt.DGSHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
@@ -43,21 +44,21 @@ public final class GetDGSPurchases extends APIServlet.APIRequestHandler {
         int lastIndex = ParameterParser.getLastIndex(req);
         final boolean completed = "true".equalsIgnoreCase(req.getParameter("completed"));
         final boolean withPublicFeedbacksOnly = "true".equalsIgnoreCase(req.getParameter("withPublicFeedbacksOnly"));
-
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray purchasesJSON = new JSONArray();
         response.put("purchases", purchasesJSON);
 
-        DbIterator<DigitalGoodsStore.Purchase> purchases;
+        DbIterator<DGSHome.Purchase> purchases;
         if (sellerId == 0 && buyerId == 0) {
-            purchases = DigitalGoodsStore.Purchase.getPurchases(withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
+            purchases = childChain.getDGSHome().getPurchases(withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
         } else if (sellerId != 0 && buyerId == 0) {
-            purchases = DigitalGoodsStore.Purchase.getSellerPurchases(sellerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
+            purchases = childChain.getDGSHome().getSellerPurchases(sellerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
         } else if (sellerId == 0) {
-            purchases = DigitalGoodsStore.Purchase.getBuyerPurchases(buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
+            purchases = childChain.getDGSHome().getBuyerPurchases(buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
         } else {
-            purchases = DigitalGoodsStore.Purchase.getSellerBuyerPurchases(sellerId, buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
+            purchases = childChain.getDGSHome().getSellerBuyerPurchases(sellerId, buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
         }
         try {
             while (purchases.hasNext()) {

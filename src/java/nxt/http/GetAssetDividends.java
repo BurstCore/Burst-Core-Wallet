@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.AssetDividend;
+import nxt.AssetDividendHome;
+import nxt.ChildChain;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
@@ -40,12 +41,13 @@ public final class GetAssetDividends extends APIServlet.APIRequestHandler {
         int timestamp = ParameterParser.getTimestamp(req);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray dividendsData = new JSONArray();
-        try (DbIterator<AssetDividend> dividends = AssetDividend.getAssetDividends(assetId, firstIndex, lastIndex)) {
+        try (DbIterator<AssetDividendHome.AssetDividend> dividends = childChain.getAssetDividendHome().getAssetDividends(assetId, firstIndex, lastIndex)) {
             while (dividends.hasNext()) {
-                AssetDividend assetDividend = dividends.next();
+                AssetDividendHome.AssetDividend assetDividend = dividends.next();
                 if (assetDividend.getTimestamp() < timestamp) {
                     break;
                 }

@@ -18,8 +18,9 @@ package nxt.http;
 
 import nxt.Account;
 import nxt.Attachment;
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.Order;
+import nxt.OrderHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -38,7 +39,8 @@ public final class CancelAskOrder extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         long orderId = ParameterParser.getUnsignedLong(req, "order", true);
         Account account = ParameterParser.getSenderAccount(req);
-        Order.Ask orderData = Order.Ask.getAskOrder(orderId);
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        OrderHome.Ask orderData = childChain.getOrderHome().getAskOrder(orderId);
         if (orderData == null || orderData.getAccountId() != account.getId()) {
             return UNKNOWN_ORDER;
         }

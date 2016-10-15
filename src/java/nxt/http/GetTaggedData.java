@@ -16,9 +16,10 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.TaggedData;
+import nxt.TaggedDataHome;
 import nxt.util.JSON;
 import org.json.simple.JSONStreamAware;
 
@@ -39,13 +40,14 @@ public final class GetTaggedData extends APIServlet.APIRequestHandler {
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
         boolean includeData = !"false".equalsIgnoreCase(req.getParameter("includeData"));
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
-        TaggedData taggedData = TaggedData.getData(transactionId);
+        TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionId);
         if (taggedData == null && retrieve) {
-            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
-            taggedData = TaggedData.getData(transactionId);
+            taggedData = childChain.getTaggedDataHome().getData(transactionId);
         }
         if (taggedData != null) {
             return JSONData.taggedData(taggedData, includeData);

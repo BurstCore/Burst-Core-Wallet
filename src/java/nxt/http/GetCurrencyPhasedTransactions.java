@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.PhasingPoll;
+import nxt.ChildChain;
 import nxt.Transaction;
 import nxt.VoteWeighting;
 import nxt.db.DbIterator;
@@ -40,9 +40,10 @@ public class GetCurrencyPhasedTransactions extends APIServlet.APIRequestHandler 
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         boolean withoutWhitelist = "true".equalsIgnoreCase(req.getParameter("withoutWhitelist"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = PhasingPoll.getHoldingPhasedTransactions(currencyId, VoteWeighting.VotingModel.CURRENCY,
+        try (DbIterator<? extends Transaction> iterator = childChain.getPhasingPollHome().getHoldingPhasedTransactions(currencyId, VoteWeighting.VotingModel.CURRENCY,
                 accountId, withoutWhitelist, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();

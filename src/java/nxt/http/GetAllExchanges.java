@@ -16,7 +16,8 @@
 
 package nxt.http;
 
-import nxt.Exchange;
+import nxt.ChildChain;
+import nxt.ExchangeHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
@@ -39,12 +40,13 @@ public final class GetAllExchanges extends APIServlet.APIRequestHandler {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray exchanges = new JSONArray();
-        try (DbIterator<Exchange> exchangeIterator = Exchange.getAllExchanges(firstIndex, lastIndex)) {
+        try (DbIterator<ExchangeHome.Exchange> exchangeIterator = childChain.getExchangeHome().getAllExchanges(firstIndex, lastIndex)) {
             while (exchangeIterator.hasNext()) {
-                Exchange exchange = exchangeIterator.next();
+                ExchangeHome.Exchange exchange = exchangeIterator.next();
                 if (exchange.getTimestamp() < timestamp) {
                     break;
                 }

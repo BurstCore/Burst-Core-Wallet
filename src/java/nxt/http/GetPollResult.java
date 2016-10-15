@@ -18,7 +18,7 @@ package nxt.http;
 
 
 import nxt.NxtException;
-import nxt.Poll;
+import nxt.PollHome;
 import nxt.VoteWeighting;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
@@ -38,8 +38,8 @@ public class GetPollResult extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        Poll poll = ParameterParser.getPoll(req);
-        List<Poll.OptionResult> pollResults;
+        PollHome.Poll poll = ParameterParser.getPoll(req);
+        List<PollHome.OptionResult> pollResults;
         VoteWeighting voteWeighting;
         if (Convert.emptyToNull(req.getParameter("votingModel")) == null) {
             pollResults = poll.getResults();

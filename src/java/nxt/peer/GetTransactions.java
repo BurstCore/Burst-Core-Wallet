@@ -17,6 +17,7 @@
 package nxt.peer;
 
 import nxt.Blockchain;
+import nxt.Chain;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.Transaction;
@@ -41,6 +42,9 @@ public class GetTransactions extends PeerServlet.PeerRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray transactionArray = new JSONArray();
         JSONArray transactionIds = (JSONArray)request.get("transactionIds");
+        String chainName = (String)request.get("chain");
+        //TODO: add chain to getTransactions parameters, return error if invalid
+        Chain chain = Chain.getChain(chainName);
         Blockchain blockchain = Nxt.getBlockchain();
         //
         // Return the transactions to the caller
@@ -48,7 +52,7 @@ public class GetTransactions extends PeerServlet.PeerRequestHandler {
         if (transactionIds != null) {
             transactionIds.forEach(transactionId -> {
                 long id = Long.parseUnsignedLong((String)transactionId);
-                Transaction transaction = blockchain.getTransaction(id);
+                Transaction transaction = blockchain.getTransaction(chain, id);
                 if (transaction != null) {
                     transaction.getAppendages(true);
                     JSONObject transactionJSON = transaction.getJSONObject();

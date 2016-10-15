@@ -120,6 +120,16 @@ class FxtTransactionImpl extends TransactionImpl implements FxtTransaction {
     }
 
     @Override
+    public boolean isPhased() {
+        return false;
+    }
+
+    @Override
+    public String getReferencedTransactionFullHash() {
+        return null;
+    }
+
+    @Override
     int getFlags() {
         return 0; // reserved for future use
     }

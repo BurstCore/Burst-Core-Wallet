@@ -19,9 +19,9 @@ package nxt.http;
 import nxt.Appendix;
 import nxt.Attachment;
 import nxt.Blockchain;
+import nxt.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.TaggedData;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -41,12 +41,13 @@ public final class GetTaggedDataExtendTransactions extends APIServlet.APIRequest
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         long taggedDataId = ParameterParser.getUnsignedLong(req, "transaction", true);
-        List<Long> extendTransactions = TaggedData.getExtendTransactionIds(taggedDataId);
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        List<Long> extendTransactions = childChain.getTaggedDataHome().getExtendTransactionIds(taggedDataId);
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         Blockchain blockchain = Nxt.getBlockchain();
         Filter<Appendix> filter = (appendix) -> ! (appendix instanceof Attachment.TaggedDataExtend);
-        extendTransactions.forEach(transactionId -> jsonArray.add(JSONData.transaction(blockchain.getTransaction(transactionId), filter)));
+        extendTransactions.forEach(transactionId -> jsonArray.add(JSONData.transaction(blockchain.getTransaction(childChain, transactionId), filter)));
         response.put("extendTransactions", jsonArray);
         return response;
     }

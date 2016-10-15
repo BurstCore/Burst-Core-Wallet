@@ -16,7 +16,18 @@
 
 package nxt.http;
 
-import nxt.*;
+import nxt.ChildTransactionType;
+import nxt.Constants;
+import nxt.CurrencyMinting;
+import nxt.CurrencyType;
+import nxt.Genesis;
+import nxt.HoldingType;
+import nxt.Nxt;
+import nxt.PhasingPollHome;
+import nxt.ShufflingHome;
+import nxt.ShufflingParticipantHome;
+import nxt.TransactionType;
+import nxt.VoteWeighting;
 import nxt.crypto.HashFunction;
 import nxt.peer.Peer;
 import nxt.util.JSON;
@@ -109,7 +120,7 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 response.put("hashAlgorithms", hashFunctions);
 
                 JSONObject phasingHashFunctions = new JSONObject();
-                for (HashFunction hashFunction : PhasingPoll.acceptedHashFunctions) {
+                for (HashFunction hashFunction : PhasingPollHome.acceptedHashFunctions) {
                     phasingHashFunctions.put(hashFunction.toString(), hashFunction.getId());
                 }
                 response.put("phasingHashAlgorithms", phasingHashFunctions);
@@ -149,13 +160,13 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 response.put("holdingTypes", holdingTypes);
 
                 JSONObject shufflingStages = new JSONObject();
-                for (Shuffling.Stage stage : Shuffling.Stage.values()) {
+                for (ShufflingHome.Stage stage : ShufflingHome.Stage.values()) {
                     shufflingStages.put(stage.toString(), stage.getCode());
                 }
                 response.put("shufflingStages", shufflingStages);
 
                 JSONObject shufflingParticipantStates = new JSONObject();
-                for (ShufflingParticipant.State state : ShufflingParticipant.State.values()) {
+                for (ShufflingParticipantHome.State state : ShufflingParticipantHome.State.values()) {
                     shufflingParticipantStates.put(state.toString(), state.getCode());
                 }
                 response.put("shufflingParticipantStates", shufflingParticipantStates);

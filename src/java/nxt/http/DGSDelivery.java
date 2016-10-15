@@ -19,7 +19,7 @@ package nxt.http;
 import nxt.Account;
 import nxt.Attachment;
 import nxt.Constants;
-import nxt.DigitalGoodsStore;
+import nxt.DGSHome;
 import nxt.NxtException;
 import nxt.crypto.EncryptedData;
 import nxt.util.Convert;
@@ -45,7 +45,7 @@ public final class DGSDelivery extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
         Account sellerAccount = ParameterParser.getSenderAccount(req);
-        DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
+        DGSHome.Purchase purchase = ParameterParser.getPurchase(req);
         if (sellerAccount.getId() != purchase.getSellerId()) {
             return INCORRECT_PURCHASE;
         }

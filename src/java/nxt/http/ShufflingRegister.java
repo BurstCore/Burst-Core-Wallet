@@ -18,8 +18,9 @@ package nxt.http;
 
 import nxt.Account;
 import nxt.Attachment;
+import nxt.ChildChain;
 import nxt.NxtException;
-import nxt.Shuffling;
+import nxt.ShufflingHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -45,7 +46,8 @@ public final class ShufflingRegister extends CreateTransaction {
         try {
             return createTransaction(req, account, attachment);
         } catch (NxtException.InsufficientBalanceException e) {
-            Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
+            ChildChain childChain = ParameterParser.getChildChain(req);
+            ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(shufflingFullHash);
             if (shuffling == null) {
                 return JSONResponses.NOT_ENOUGH_FUNDS;
             }

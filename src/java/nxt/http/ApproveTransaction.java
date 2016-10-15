@@ -19,9 +19,10 @@ package nxt.http;
 
 import nxt.Account;
 import nxt.Attachment;
+import nxt.ChildChain;
 import nxt.Constants;
 import nxt.NxtException;
-import nxt.PhasingPoll;
+import nxt.PhasingPollHome;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -36,6 +37,7 @@ import static nxt.http.JSONResponses.UNKNOWN_TRANSACTION_FULL_HASH;
 public class ApproveTransaction extends CreateTransaction {
     static final ApproveTransaction instance = new ApproveTransaction();
 
+    //TODO: support transactions from different chains
     private ApproveTransaction() {
         super(new APITag[]{APITag.CREATE_TRANSACTION, APITag.PHASING}, "transactionFullHash", "transactionFullHash", "transactionFullHash",
                 "revealedSecret", "revealedSecretIsText");
@@ -43,6 +45,7 @@ public class ApproveTransaction extends CreateTransaction {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
+        ChildChain chain = ParameterParser.getChildChain(req);
         String[] phasedTransactionValues = req.getParameterValues("transactionFullHash");
 
         if (phasedTransactionValues == null || phasedTransactionValues.length == 0) {
@@ -56,7 +59,7 @@ public class ApproveTransaction extends CreateTransaction {
         List<byte[]> phasedTransactionFullHashes = new ArrayList<>(phasedTransactionValues.length);
         for (String phasedTransactionValue : phasedTransactionValues) {
             byte[] hash = Convert.parseHexString(phasedTransactionValue);
-            PhasingPoll phasingPoll = PhasingPoll.getPoll(Convert.fullHashToId(hash));
+            PhasingPollHome.PhasingPoll phasingPoll = chain.getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
             if (phasingPoll == null) {
                 return UNKNOWN_TRANSACTION_FULL_HASH;
             }

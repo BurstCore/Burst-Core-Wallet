@@ -18,9 +18,10 @@ package nxt.http;
 
 import nxt.Account;
 import nxt.Appendix;
+import nxt.ChildChain;
+import nxt.ChildTransaction;
 import nxt.Nxt;
-import nxt.PrunableMessage;
-import nxt.Transaction;
+import nxt.PrunableMessageHome;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
 import nxt.util.Convert;
@@ -48,16 +49,18 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
 
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
-        Transaction transaction = Nxt.getBlockchain().getTransaction(transactionId);
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        //TODO: prunable messages on FXT chain?
+        ChildTransaction transaction = (ChildTransaction)Nxt.getBlockchain().getTransaction(childChain, transactionId);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
-        PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
+        PrunableMessageHome.PrunableMessage prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
         if (prunableMessage == null && (transaction.getPrunablePlainMessage() != null || transaction.getPrunableEncryptedMessage() != null) && retrieve) {
-            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
-            prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
+            prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
         }
 
         JSONObject response = new JSONObject();

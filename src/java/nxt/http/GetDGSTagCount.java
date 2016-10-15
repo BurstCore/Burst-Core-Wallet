@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.DigitalGoodsStore;
+import nxt.ChildChain;
 import nxt.NxtException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -34,9 +34,10 @@ public final class GetDGSTagCount extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         final boolean inStockOnly = !"false".equalsIgnoreCase(req.getParameter("inStockOnly"));
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
-        response.put("numberOfTags", inStockOnly ? DigitalGoodsStore.Tag.getCountInStock() : DigitalGoodsStore.Tag.getCount());
+        response.put("numberOfTags", inStockOnly ? childChain.getDGSHome().getTagCountInStock() : childChain.getDGSHome().getTagCount());
         return response;
     }
 

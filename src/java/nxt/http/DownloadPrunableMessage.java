@@ -16,9 +16,10 @@
 
 package nxt.http;
 
+import nxt.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.PrunableMessage;
+import nxt.PrunableMessageHome;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import org.json.simple.JSONStreamAware;
@@ -42,12 +43,13 @@ public final class DownloadPrunableMessage extends APIServlet.APIRequestHandler 
     protected JSONStreamAware processRequest(HttpServletRequest request, HttpServletResponse response) throws NxtException {
         long transactionId = ParameterParser.getUnsignedLong(request, "transaction", true);
         boolean retrieve = "true".equalsIgnoreCase(request.getParameter("retrieve"));
-        PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
+        ChildChain childChain = ParameterParser.getChildChain(request);
+        PrunableMessageHome.PrunableMessage prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
         if (prunableMessage == null && retrieve) {
-            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
-            prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
+            prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
         }
         String secretPhrase = ParameterParser.getSecretPhrase(request, false);
         byte[] sharedKey = ParameterParser.getBytes(request, "sharedKey", false);
