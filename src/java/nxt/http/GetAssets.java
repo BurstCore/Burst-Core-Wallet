@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.Asset;
+import nxt.ae.Asset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

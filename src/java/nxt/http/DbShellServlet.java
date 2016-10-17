@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.Db;
+import nxt.dbschema.Db;
 import nxt.util.Convert;
 import nxt.util.JSON;
 import org.h2.tools.Shell;

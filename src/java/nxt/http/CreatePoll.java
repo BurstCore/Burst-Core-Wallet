@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Attachment;
-import nxt.Attachment.MessagingPollCreation.PollBuilder;
+import nxt.account.Account;
+import nxt.blockchain.Attachment;
+import nxt.blockchain.Attachment.MessagingPollCreation.PollBuilder;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;

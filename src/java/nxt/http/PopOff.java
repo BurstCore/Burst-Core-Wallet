@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.Block;
+import nxt.blockchain.Block;
 import nxt.Nxt;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

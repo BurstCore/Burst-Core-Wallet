@@ -16,7 +16,7 @@
 
 package nxt.peer;
 
-import nxt.BlockchainProcessor;
+import nxt.blockchain.BlockchainProcessor;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.util.CountingInputReader;

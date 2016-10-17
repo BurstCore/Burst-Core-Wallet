@@ -16,7 +16,7 @@
 
 package nxt.db;
 
-import nxt.Db;
+import nxt.dbschema.Db;
 
 import java.sql.Connection;
 import java.sql.SQLException;

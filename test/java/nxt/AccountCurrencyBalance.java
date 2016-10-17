@@ -16,6 +16,7 @@
 
 package nxt;
 
+import nxt.account.Account;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 

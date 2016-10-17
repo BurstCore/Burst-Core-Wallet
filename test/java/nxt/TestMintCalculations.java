@@ -17,6 +17,7 @@
 package nxt;
 
 import nxt.crypto.HashFunction;
+import nxt.ms.CurrencyMinting;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import org.junit.Assert;

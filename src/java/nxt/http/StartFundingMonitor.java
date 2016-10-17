@@ -16,11 +16,11 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Asset;
-import nxt.Currency;
-import nxt.FundingMonitor;
-import nxt.HoldingType;
+import nxt.account.Account;
+import nxt.ae.Asset;
+import nxt.ms.Currency;
+import nxt.account.FundingMonitor;
+import nxt.account.HoldingType;
 import nxt.NxtException;
 import nxt.crypto.Crypto;
 import org.json.simple.JSONObject;

@@ -16,10 +16,11 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Attachment;
-import nxt.Currency;
+import nxt.account.Account;
+import nxt.blockchain.Attachment;
+import nxt.ms.Currency;
 import nxt.NxtException;
+import nxt.ms.CurrencyType;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,7 +36,7 @@ import javax.servlet.http.HttpServletRequest;
  * </ul>
  * <p>
  * Constraints
- * <p>This transaction is allowed only when the currency is {@link nxt.CurrencyType#CLAIMABLE} and is already active.<br>
+ * <p>This transaction is allowed only when the currency is {@link CurrencyType#CLAIMABLE} and is already active.<br>
  */
 public final class CurrencyReserveClaim extends CreateTransaction {
 

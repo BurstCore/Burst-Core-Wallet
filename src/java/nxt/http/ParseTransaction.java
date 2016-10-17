@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.NxtException;
-import nxt.Transaction;
+import nxt.blockchain.Transaction;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;

@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.Currency;
+import nxt.ms.Currency;
 import nxt.NxtException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

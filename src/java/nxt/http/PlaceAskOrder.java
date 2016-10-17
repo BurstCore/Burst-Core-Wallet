@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Asset;
-import nxt.Attachment;
+import nxt.account.Account;
+import nxt.ae.Asset;
+import nxt.blockchain.Attachment;
 import nxt.NxtException;
 import org.json.simple.JSONStreamAware;
 

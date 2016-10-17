@@ -16,15 +16,15 @@
 
 package nxt.http.shuffling;
 
-import nxt.Block;
+import nxt.blockchain.Block;
 import nxt.BlockchainTest;
 import nxt.Constants;
 import nxt.Nxt;
-import nxt.Shuffler;
+import nxt.shuffling.Shuffler;
 import nxt.Shuffling;
-import nxt.ShufflingTransaction;
+import nxt.shuffling.ShufflingTransaction;
 import nxt.Tester;
-import nxt.Transaction;
+import nxt.blockchain.Transaction;
 import nxt.crypto.AnonymouslyEncryptedData;
 import nxt.util.Convert;
 import nxt.util.Logger;

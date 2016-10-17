@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Attachment;
+import nxt.account.Account;
+import nxt.blockchain.Attachment;
 import nxt.Constants;
-import nxt.CurrencyType;
+import nxt.ms.CurrencyType;
 import nxt.NxtException;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
@@ -44,31 +44,31 @@ import javax.servlet.http.HttpServletRequest;
  * <li>initialSupply - the number of currency units created when the currency is issued (pre-mine)
  * <li>decimals - currency units are divisible to this number of decimals
  * <li>issuanceHeight - the blockchain height at which the currency would become active
- * For {@link nxt.CurrencyType#RESERVABLE} currency
+ * For {@link CurrencyType#RESERVABLE} currency
  * <li>minReservePerUnitNQT - the minimum NXT value per unit to allow the currency to become active
- * For {@link nxt.CurrencyType#RESERVABLE} currency
+ * For {@link CurrencyType#RESERVABLE} currency
  * <li>reserveSupply - the number of units that will be distributed to founders when currency becomes active (less initialSupply)
- * For {@link nxt.CurrencyType#RESERVABLE} currency
+ * For {@link CurrencyType#RESERVABLE} currency
  * <li>minDifficulty - for mint-able currency, the exponent of the initial difficulty.
- * For {@link nxt.CurrencyType#MINTABLE} currency
+ * For {@link CurrencyType#MINTABLE} currency
  * <li>maxDifficulty - for mint-able currency, the exponent of the final difficulty.
- * For {@link nxt.CurrencyType#MINTABLE} currency
+ * For {@link CurrencyType#MINTABLE} currency
  * <li>algorithm - the hashing {@link nxt.crypto.HashFunction algorithm} used for minting.
- * For {@link nxt.CurrencyType#MINTABLE} currency
+ * For {@link CurrencyType#MINTABLE} currency
  * </ul>
  * <p>
  * Constraints
  * <ul>
- * <li>A given currency can not be neither {@link nxt.CurrencyType#EXCHANGEABLE} nor {@link nxt.CurrencyType#CLAIMABLE}.<br>
- * <li>A {@link nxt.CurrencyType#RESERVABLE} currency becomes active once the blockchain height reaches the currency issuance height.<br>
+ * <li>A given currency can not be neither {@link CurrencyType#EXCHANGEABLE} nor {@link CurrencyType#CLAIMABLE}.<br>
+ * <li>A {@link CurrencyType#RESERVABLE} currency becomes active once the blockchain height reaches the currency issuance height.<br>
  * At this time, if the minReservePerUnitNQT has not been reached the currency issuance is cancelled and
  * funds are returned to the founders.<br>
  * Otherwise the currency becomes active and remains active until deleted, provided deletion is possible.
- * When a {@link nxt.CurrencyType#RESERVABLE} becomes active, in case it is {@link nxt.CurrencyType#CLAIMABLE} the NXT used for
+ * When a {@link CurrencyType#RESERVABLE} becomes active, in case it is {@link CurrencyType#CLAIMABLE} the NXT used for
  * reserving the currency are locked until they are claimed back.
- * When a {@link nxt.CurrencyType#RESERVABLE} becomes active, in case it is non {@link nxt.CurrencyType#CLAIMABLE} the NXT used for
+ * When a {@link CurrencyType#RESERVABLE} becomes active, in case it is non {@link CurrencyType#CLAIMABLE} the NXT used for
  * reserving the currency are sent to the issuer account as crowd funding.
- * <li>When issuing a {@link nxt.CurrencyType#MINTABLE} currency, the number of units per {@link nxt.http.CurrencyMint} cannot exceed 0.01% of the
+ * <li>When issuing a {@link CurrencyType#MINTABLE} currency, the number of units per {@link nxt.http.CurrencyMint} cannot exceed 0.01% of the
  * total supply. Therefore make sure totalSupply &gt; 10000 or otherwise the currency cannot be minted
  * <li>difficulty is calculated as follows<br>
  * difficulty of minting the first unit is based on 2^minDifficulty<br>
@@ -77,7 +77,7 @@ import javax.servlet.http.HttpServletRequest;
  * difficulty increases linearly with the number units minted per {@link nxt.http.CurrencyMint}<br>
  * </ul>
  *
- * @see nxt.CurrencyType
+ * @see CurrencyType
  * @see nxt.crypto.HashFunction
  */
 public final class IssueCurrency extends CreateTransaction {

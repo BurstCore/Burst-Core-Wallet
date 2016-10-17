@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.Nxt;
-import nxt.Transaction;
+import nxt.blockchain.Transaction;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Attachment;
-import nxt.DGSHome;
+import nxt.account.Account;
+import nxt.blockchain.Attachment;
+import nxt.dgs.DGSHome;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.util.Convert;

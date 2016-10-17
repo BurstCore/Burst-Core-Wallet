@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.ChildChain;
-import nxt.DGSHome;
+import nxt.blockchain.ChildChain;
+import nxt.dgs.DGSHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;

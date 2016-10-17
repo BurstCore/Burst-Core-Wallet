@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.ChildChain;
+import nxt.blockchain.ChildChain;
 import nxt.NxtException;
-import nxt.PhasingPollHome;
+import nxt.voting.PhasingPollHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

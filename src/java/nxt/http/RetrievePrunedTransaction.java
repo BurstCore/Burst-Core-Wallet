@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.ChildChain;
+import nxt.blockchain.ChildChain;
 import nxt.Nxt;
-import nxt.Transaction;
+import nxt.blockchain.Transaction;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

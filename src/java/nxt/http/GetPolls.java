@@ -17,10 +17,10 @@
 package nxt.http;
 
 
-import nxt.ChildChain;
+import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.PollHome;
+import nxt.voting.PollHome;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
 import org.json.simple.JSONArray;

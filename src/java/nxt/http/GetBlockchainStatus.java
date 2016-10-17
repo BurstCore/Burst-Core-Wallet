@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.AccountLedger;
-import nxt.Block;
-import nxt.BlockchainProcessor;
+import nxt.account.AccountLedger;
+import nxt.blockchain.Block;
+import nxt.blockchain.BlockchainProcessor;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.peer.Peer;

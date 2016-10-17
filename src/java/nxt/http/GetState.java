@@ -16,15 +16,15 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.AccountRestrictions;
-import nxt.Asset;
-import nxt.AssetTransfer;
-import nxt.ChildChain;
+import nxt.account.Account;
+import nxt.account.AccountRestrictions;
+import nxt.ae.Asset;
+import nxt.ae.AssetTransfer;
+import nxt.blockchain.ChildChain;
 import nxt.Constants;
-import nxt.Currency;
-import nxt.CurrencyTransfer;
-import nxt.Generator;
+import nxt.ms.Currency;
+import nxt.ms.CurrencyTransfer;
+import nxt.blockchain.Generator;
 import nxt.Nxt;
 import nxt.peer.Peers;
 import nxt.util.UPnP;

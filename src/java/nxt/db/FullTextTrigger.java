@@ -16,7 +16,7 @@
 
 package nxt.db;
 
-import nxt.Db;
+import nxt.dbschema.Db;
 import nxt.util.Logger;
 import nxt.util.ReadWriteUpdateLock;
 import org.apache.lucene.analysis.Analyzer;

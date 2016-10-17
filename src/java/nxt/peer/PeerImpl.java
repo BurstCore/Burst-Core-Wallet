@@ -16,8 +16,8 @@
 
 package nxt.peer;
 
-import nxt.Account;
-import nxt.BlockchainProcessor;
+import nxt.account.Account;
+import nxt.blockchain.BlockchainProcessor;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;

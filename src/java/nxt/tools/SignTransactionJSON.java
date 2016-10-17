@@ -17,7 +17,7 @@
 package nxt.tools;
 
 import nxt.Nxt;
-import nxt.Transaction;
+import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import nxt.util.Logger;

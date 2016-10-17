@@ -16,7 +16,7 @@
 
 package nxt.tools;
 
-import nxt.Genesis;
+import nxt.blockchain.Genesis;
 import nxt.util.Convert;
 
 import java.io.BufferedReader;

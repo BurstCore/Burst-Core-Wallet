@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Generator;
+import nxt.account.Account;
+import nxt.blockchain.Generator;
 import nxt.Nxt;
 import nxt.crypto.Crypto;
 import org.json.simple.JSONArray;

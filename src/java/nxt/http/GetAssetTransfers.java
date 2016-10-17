@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.AssetTransfer;
+import nxt.ae.AssetTransfer;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;

@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.NxtException;
-import nxt.PollHome;
+import nxt.voting.PollHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

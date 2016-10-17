@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.ChildChain;
+import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.TaggedDataHome;
+import nxt.messages.TaggedDataHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.AccountLedger;
-import nxt.AccountLedger.LedgerEntry;
-import nxt.AccountLedger.LedgerEvent;
-import nxt.AccountLedger.LedgerHolding;
+import nxt.account.AccountLedger;
+import nxt.account.AccountLedger.LedgerEntry;
+import nxt.account.AccountLedger.LedgerEvent;
+import nxt.account.AccountLedger.LedgerHolding;
 import nxt.NxtException;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;

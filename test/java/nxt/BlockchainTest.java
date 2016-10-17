@@ -16,6 +16,8 @@
 
 package nxt;
 
+import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.TransactionProcessorImpl;
 import nxt.util.Logger;
 import nxt.util.Time;
 import org.junit.After;

@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.AccountRestrictions.PhasingOnly;
+import nxt.account.AccountRestrictions.PhasingOnly;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

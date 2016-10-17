@@ -16,13 +16,13 @@
 
 package nxt.http;
 
-import nxt.Attachment;
-import nxt.ChildChain;
-import nxt.ChildTransactionType;
+import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildChain;
+import nxt.blockchain.ChildTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.OrderHome;
-import nxt.Transaction;
+import nxt.ae.OrderHome;
+import nxt.blockchain.Transaction;
 import nxt.db.DbIterator;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;

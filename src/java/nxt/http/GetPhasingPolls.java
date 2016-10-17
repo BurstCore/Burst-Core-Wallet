@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.ChildChain;
-import nxt.PhasingPollHome;
+import nxt.blockchain.ChildChain;
+import nxt.voting.PhasingPollHome;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

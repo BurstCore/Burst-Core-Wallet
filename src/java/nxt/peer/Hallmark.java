@@ -16,7 +16,7 @@
 
 package nxt.peer;
 
-import nxt.Account;
+import nxt.account.Account;
 import nxt.Constants;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;

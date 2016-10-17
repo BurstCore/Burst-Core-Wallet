@@ -16,12 +16,12 @@
 
 package nxt.peer;
 
-import nxt.Account;
-import nxt.Block;
+import nxt.account.Account;
+import nxt.blockchain.Block;
 import nxt.Constants;
-import nxt.Db;
+import nxt.dbschema.Db;
 import nxt.Nxt;
-import nxt.Transaction;
+import nxt.blockchain.Transaction;
 import nxt.http.API;
 import nxt.http.APIEnum;
 import nxt.util.Convert;

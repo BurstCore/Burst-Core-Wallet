@@ -16,12 +16,12 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Appendix;
-import nxt.ChildChain;
-import nxt.ChildTransaction;
+import nxt.account.Account;
+import nxt.blockchain.Appendix;
+import nxt.blockchain.ChildChain;
+import nxt.blockchain.ChildTransaction;
 import nxt.Nxt;
-import nxt.PrunableMessageHome;
+import nxt.messages.PrunableMessageHome;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
 import nxt.util.Convert;

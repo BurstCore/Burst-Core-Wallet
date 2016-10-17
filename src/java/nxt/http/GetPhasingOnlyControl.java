@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.AccountRestrictions.PhasingOnly;
+import nxt.account.AccountRestrictions.PhasingOnly;
 import nxt.util.JSON;
 import org.json.simple.JSONStreamAware;
 

@@ -19,7 +19,7 @@ package nxt.http.votingsystem;
 import nxt.BlockchainTest;
 import nxt.Constants;
 import nxt.Nxt;
-import nxt.VoteWeighting;
+import nxt.voting.VoteWeighting;
 import nxt.http.APICall;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;

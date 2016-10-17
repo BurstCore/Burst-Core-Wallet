@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.FundingMonitor;
-import nxt.HoldingType;
+import nxt.account.Account;
+import nxt.account.FundingMonitor;
+import nxt.account.HoldingType;
 import nxt.crypto.Crypto;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

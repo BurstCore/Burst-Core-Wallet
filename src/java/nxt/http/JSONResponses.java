@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.Constants;
-import nxt.HoldingType;
+import nxt.account.HoldingType;
 import nxt.util.Convert;
 import nxt.util.JSON;
 import org.json.simple.JSONObject;

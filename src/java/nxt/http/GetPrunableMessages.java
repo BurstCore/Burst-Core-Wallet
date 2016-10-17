@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.ChildChain;
+import nxt.blockchain.ChildChain;
 import nxt.NxtException;
-import nxt.PrunableMessageHome;
+import nxt.messages.PrunableMessageHome;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

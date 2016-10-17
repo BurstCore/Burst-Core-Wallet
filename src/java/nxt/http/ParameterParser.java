@@ -16,23 +16,23 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.AliasHome;
-import nxt.Appendix;
-import nxt.Asset;
-import nxt.Attachment;
-import nxt.Chain;
-import nxt.ChildChain;
+import nxt.account.Account;
+import nxt.messages.AliasHome;
+import nxt.blockchain.Appendix;
+import nxt.ae.Asset;
+import nxt.blockchain.Attachment;
+import nxt.blockchain.Chain;
+import nxt.blockchain.ChildChain;
 import nxt.Constants;
-import nxt.Currency;
-import nxt.DGSHome;
-import nxt.ExchangeOfferHome;
-import nxt.HoldingType;
+import nxt.ms.Currency;
+import nxt.dgs.DGSHome;
+import nxt.ms.ExchangeOfferHome;
+import nxt.account.HoldingType;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.PollHome;
-import nxt.ShufflingHome;
-import nxt.Transaction;
+import nxt.voting.PollHome;
+import nxt.shuffling.ShufflingHome;
+import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
 import nxt.util.Convert;

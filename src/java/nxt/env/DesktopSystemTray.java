@@ -16,10 +16,10 @@
 
 package nxt.env;
 
-import nxt.Block;
+import nxt.blockchain.Block;
 import nxt.Constants;
-import nxt.Db;
-import nxt.Generator;
+import nxt.dbschema.Db;
+import nxt.blockchain.Generator;
 import nxt.Nxt;
 import nxt.http.API;
 import nxt.peer.Peers;

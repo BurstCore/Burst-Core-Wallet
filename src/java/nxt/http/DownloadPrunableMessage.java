@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.ChildChain;
+import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.PrunableMessageHome;
+import nxt.messages.PrunableMessageHome;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import org.json.simple.JSONStreamAware;

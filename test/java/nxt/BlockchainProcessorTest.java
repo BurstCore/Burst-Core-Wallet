@@ -16,6 +16,11 @@
 
 package nxt;
 
+import nxt.account.Account;
+import nxt.addons.DebugTrace;
+import nxt.ae.Asset;
+import nxt.blockchain.BlockImpl;
+import nxt.blockchain.TransactionProcessorImpl;
 import nxt.db.DbIterator;
 import nxt.util.Logger;
 import org.junit.AfterClass;

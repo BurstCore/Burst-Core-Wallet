@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.ChildChain;
+import nxt.blockchain.ChildChain;
 import nxt.NxtException;
-import nxt.PhasingVoteHome;
+import nxt.voting.PhasingVoteHome;
 import nxt.util.JSON;
 import org.json.simple.JSONStreamAware;
 

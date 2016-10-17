@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.Constants;
-import nxt.Db;
+import nxt.dbschema.Db;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.addons.AddOns;

@@ -16,6 +16,7 @@
 
 package nxt;
 
+import nxt.blockchain.BlockchainProcessor;
 import nxt.crypto.Crypto;
 import nxt.util.Time;
 import org.junit.Assert;

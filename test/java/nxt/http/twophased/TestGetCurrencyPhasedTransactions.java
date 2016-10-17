@@ -18,7 +18,7 @@ package nxt.http.twophased;
 
 import nxt.BlockchainTest;
 import nxt.Constants;
-import nxt.VoteWeighting;
+import nxt.voting.VoteWeighting;
 import nxt.http.APICall;
 import nxt.util.Convert;
 import nxt.util.Logger;

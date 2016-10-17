@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.Currency;
-import nxt.CurrencyMinting;
+import nxt.ms.*;
+import nxt.ms.CurrencyMinting;
 import nxt.NxtException;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
@@ -53,7 +53,7 @@ public final class GetMintingTarget extends APIServlet.APIRequestHandler {
         BigInteger numericTarget = CurrencyMinting.getNumericTarget(currency, units);
         json.put("difficulty", String.valueOf(BigInteger.ZERO.equals(numericTarget) ? -1 : BigInteger.valueOf(2).pow(256).subtract(BigInteger.ONE).divide(numericTarget)));
         json.put("targetBytes", Convert.toHexString(CurrencyMinting.getTarget(numericTarget)));
-        json.put("counter", nxt.CurrencyMint.getCounter(currency.getId(), ParameterParser.getAccountId(req, true)));
+        json.put("counter", nxt.ms.CurrencyMint.getCounter(currency.getId(), ParameterParser.getAccountId(req, true)));
         return json;
     }
 

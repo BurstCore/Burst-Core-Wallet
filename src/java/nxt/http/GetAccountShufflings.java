@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.ChildChain;
-import nxt.ShufflingHome;
+import nxt.blockchain.ChildChain;
+import nxt.shuffling.ShufflingHome;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

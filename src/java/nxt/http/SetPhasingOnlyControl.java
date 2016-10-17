@@ -16,11 +16,11 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Attachment;
+import nxt.account.Account;
+import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
-import nxt.PhasingParams;
+import nxt.voting.PhasingParams;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

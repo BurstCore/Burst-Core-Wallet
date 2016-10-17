@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.ChildChain;
-import nxt.CurrencyFounderHome;
+import nxt.blockchain.ChildChain;
+import nxt.ms.CurrencyFounderHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;

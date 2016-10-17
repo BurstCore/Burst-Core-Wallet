@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.FundingMonitor;
-import nxt.HoldingType;
+import nxt.account.Account;
+import nxt.account.FundingMonitor;
+import nxt.account.HoldingType;
 import nxt.crypto.Crypto;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;

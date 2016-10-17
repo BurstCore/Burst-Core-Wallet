@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.Currency;
+import nxt.ms.Currency;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;

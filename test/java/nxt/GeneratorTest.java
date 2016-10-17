@@ -16,6 +16,10 @@
 
 package nxt;
 
+import nxt.account.Account;
+import nxt.blockchain.BlockImpl;
+import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.Generator;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;

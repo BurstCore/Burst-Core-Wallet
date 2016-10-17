@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Attachment;
-import nxt.Currency;
+import nxt.account.Account;
+import nxt.blockchain.Attachment;
+import nxt.ms.Currency;
 import nxt.NxtException;
 import org.json.simple.JSONStreamAware;
 
@@ -41,7 +41,7 @@ import javax.servlet.http.HttpServletRequest;
  * If the hash code is smaller than the target the currency units are generated into the sender account.<br>
  * It is recommended to calculate the hash value offline before submitting the transaction.<br>
  * Use the {@link GetMintingTarget} transaction to retrieve the current hash target and then calculate the hash offline
- * by following the procedure used in {@link nxt.CurrencyMint#mintCurrency}<br>
+ * by following the procedure used in {@link nxt.ms.CurrencyMint#mintCurrency}<br>
  */
 public final class CurrencyMint extends CreateTransaction {
 

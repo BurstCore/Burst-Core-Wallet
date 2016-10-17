@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.Appendix;
-import nxt.Attachment;
-import nxt.Blockchain;
-import nxt.ChildChain;
+import nxt.blockchain.Appendix;
+import nxt.blockchain.Attachment;
+import nxt.blockchain.Blockchain;
+import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.util.Filter;

@@ -17,7 +17,7 @@
 package nxt.util;
 
 import nxt.Constants;
-import nxt.Genesis;
+import nxt.blockchain.Genesis;
 import nxt.NxtException;
 import nxt.crypto.Crypto;
 

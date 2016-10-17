@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.Block;
-import nxt.Blockchain;
-import nxt.Generator;
+import nxt.blockchain.Block;
+import nxt.blockchain.Blockchain;
+import nxt.blockchain.Generator;
 import nxt.Nxt;
 import nxt.NxtException;
 import org.json.simple.JSONArray;

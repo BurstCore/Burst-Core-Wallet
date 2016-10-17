@@ -16,7 +16,7 @@
 
 package nxt.http.twophased;
 
-import nxt.Account;
+import nxt.account.Account;
 import nxt.BlockchainTest;
 import nxt.Constants;
 import nxt.http.APICall;

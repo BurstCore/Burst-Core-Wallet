@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.ChildChain;
+import nxt.blockchain.ChildChain;
 import nxt.NxtException;
-import nxt.Shuffler;
-import nxt.ShufflingHome;
+import nxt.shuffling.Shuffler;
+import nxt.shuffling.ShufflingHome;
 import nxt.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

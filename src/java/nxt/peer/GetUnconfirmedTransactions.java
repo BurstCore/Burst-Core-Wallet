@@ -17,7 +17,7 @@
 package nxt.peer;
 
 import nxt.Nxt;
-import nxt.Transaction;
+import nxt.blockchain.Transaction;
 import nxt.util.JSON;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

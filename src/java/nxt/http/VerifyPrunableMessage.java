@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.Appendix;
-import nxt.ChildChain;
-import nxt.ChildTransaction;
+import nxt.blockchain.Appendix;
+import nxt.blockchain.ChildChain;
+import nxt.blockchain.ChildTransaction;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.util.JSON;

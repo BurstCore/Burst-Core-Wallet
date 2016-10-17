@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Appendix;
-import nxt.Attachment;
+import nxt.account.Account;
+import nxt.blockchain.Appendix;
+import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.util.Convert;

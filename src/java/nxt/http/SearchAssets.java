@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.Asset;
+import nxt.ae.Asset;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;

@@ -19,7 +19,7 @@ package nxt.http.monetarysystem;
 import nxt.AccountCurrencyBalance;
 import nxt.BlockchainTest;
 import nxt.Constants;
-import nxt.CurrencyType;
+import nxt.ms.CurrencyType;
 import nxt.http.APICall;
 import nxt.util.Convert;
 import nxt.util.Logger;

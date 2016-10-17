@@ -16,11 +16,12 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Attachment;
+import nxt.account.Account;
+import nxt.blockchain.Attachment;
 import nxt.Constants;
-import nxt.Currency;
+import nxt.ms.Currency;
 import nxt.NxtException;
+import nxt.ms.CurrencyType;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,7 +38,7 @@ import javax.servlet.http.HttpServletRequest;
  * <p>
  * Constraints
  * <p>
- * This API is allowed only when the currency is {@link nxt.CurrencyType#RESERVABLE} and is not yet active.
+ * This API is allowed only when the currency is {@link CurrencyType#RESERVABLE} and is not yet active.
  * <p>
  * The sender account is registered as a founder. Once the currency becomes active
  * the total supply is distributed between the founders based on their proportional investment<br>

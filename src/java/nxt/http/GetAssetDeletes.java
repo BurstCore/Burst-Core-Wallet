@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.AssetDelete;
+import nxt.ae.AssetDelete;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;

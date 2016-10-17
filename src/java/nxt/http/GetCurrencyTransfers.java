@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.CurrencyTransfer;
+import nxt.ms.CurrencyTransfer;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;

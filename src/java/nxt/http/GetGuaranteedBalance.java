@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.Account;
+import nxt.account.Account;
 import nxt.Nxt;
 import nxt.NxtException;
 import org.json.simple.JSONObject;

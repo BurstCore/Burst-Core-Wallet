@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.Nxt;
-import nxt.Transaction;
+import nxt.blockchain.Transaction;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
 import nxt.util.Filter;

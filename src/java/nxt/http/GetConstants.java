@@ -16,18 +16,18 @@
 
 package nxt.http;
 
-import nxt.ChildTransactionType;
+import nxt.blockchain.ChildTransactionType;
 import nxt.Constants;
-import nxt.CurrencyMinting;
-import nxt.CurrencyType;
-import nxt.Genesis;
-import nxt.HoldingType;
+import nxt.ms.CurrencyMinting;
+import nxt.ms.CurrencyType;
+import nxt.blockchain.Genesis;
+import nxt.account.HoldingType;
 import nxt.Nxt;
-import nxt.PhasingPollHome;
-import nxt.ShufflingHome;
-import nxt.ShufflingParticipantHome;
-import nxt.TransactionType;
-import nxt.VoteWeighting;
+import nxt.voting.PhasingPollHome;
+import nxt.shuffling.ShufflingHome;
+import nxt.shuffling.ShufflingParticipantHome;
+import nxt.blockchain.TransactionType;
+import nxt.voting.VoteWeighting;
 import nxt.crypto.HashFunction;
 import nxt.peer.Peer;
 import nxt.util.JSON;

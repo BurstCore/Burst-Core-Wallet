@@ -16,7 +16,7 @@
 
 package nxt.addons;
 
-import nxt.BlockchainProcessor;
+import nxt.blockchain.BlockchainProcessor;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.http.APIServlet;

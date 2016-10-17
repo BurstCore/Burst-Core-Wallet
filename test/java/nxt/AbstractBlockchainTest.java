@@ -16,6 +16,12 @@
 
 package nxt;
 
+import nxt.blockchain.Block;
+import nxt.blockchain.BlockchainImpl;
+import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.BlockchainProcessorImpl;
+import nxt.blockchain.Generator;
+import nxt.blockchain.TransactionProcessorImpl;
 import nxt.crypto.Crypto;
 import nxt.util.Listener;
 import nxt.util.Logger;

@@ -16,7 +16,7 @@
 
 package nxt.peer;
 
-import nxt.Block;
+import nxt.blockchain.Block;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.util.Convert;

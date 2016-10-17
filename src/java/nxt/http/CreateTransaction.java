@@ -16,16 +16,16 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Appendix;
-import nxt.Attachment;
-import nxt.ChildChain;
-import nxt.ChildTransaction;
+import nxt.account.Account;
+import nxt.blockchain.Appendix;
+import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildChain;
+import nxt.blockchain.ChildTransaction;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.PhasingParams;
-import nxt.Transaction;
+import nxt.voting.PhasingParams;
+import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;

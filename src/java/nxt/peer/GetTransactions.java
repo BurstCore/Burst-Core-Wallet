@@ -16,11 +16,11 @@
 
 package nxt.peer;
 
-import nxt.Blockchain;
-import nxt.Chain;
+import nxt.blockchain.Blockchain;
+import nxt.blockchain.Chain;
 import nxt.Constants;
 import nxt.Nxt;
-import nxt.Transaction;
+import nxt.blockchain.Transaction;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

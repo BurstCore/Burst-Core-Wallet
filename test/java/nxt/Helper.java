@@ -17,6 +17,8 @@
 package nxt;
 
 
+import nxt.blockchain.Block;
+import nxt.dbschema.Db;
 import nxt.util.Listener;
 import nxt.util.Logger;
 import org.h2.tools.Shell;

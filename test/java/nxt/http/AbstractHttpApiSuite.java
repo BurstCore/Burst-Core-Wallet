@@ -17,7 +17,7 @@
 package nxt.http;
 
 
-import nxt.BlockchainProcessor;
+import nxt.blockchain.BlockchainProcessor;
 import nxt.BlockchainTest;
 import nxt.Helper;
 import nxt.Nxt;

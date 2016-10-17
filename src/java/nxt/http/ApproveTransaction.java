@@ -17,12 +17,12 @@
 package nxt.http;
 
 
-import nxt.Account;
-import nxt.Attachment;
-import nxt.ChildChain;
+import nxt.account.Account;
+import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildChain;
 import nxt.Constants;
 import nxt.NxtException;
-import nxt.PhasingPollHome;
+import nxt.voting.PhasingPollHome;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 

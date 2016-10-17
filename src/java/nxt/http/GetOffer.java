@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.ExchangeOfferHome;
+import nxt.ms.ExchangeOfferHome;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

@@ -16,11 +16,11 @@
 
 package nxt.http;
 
-import nxt.Account;
-import nxt.Attachment;
+import nxt.account.Account;
+import nxt.blockchain.Attachment;
 import nxt.NxtException;
-import nxt.ShufflingHome;
-import nxt.ShufflingParticipantHome;
+import nxt.shuffling.ShufflingHome;
+import nxt.shuffling.ShufflingParticipantHome;
 import nxt.util.Convert;
 import nxt.util.JSON;
 import org.json.simple.JSONObject;
