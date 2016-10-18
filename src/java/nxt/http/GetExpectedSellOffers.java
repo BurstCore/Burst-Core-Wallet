@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.blockchain.Attachment;
-import nxt.ms.MonetarySystem;
+import nxt.ms.PublishExchangeOfferAttachment;
+import nxt.ms.MonetarySystemTransactionType;
 import nxt.Nxt;
 import nxt.blockchain.Transaction;
 import nxt.util.Filter;
@@ -39,8 +39,8 @@ public final class GetExpectedSellOffers extends APIServlet.APIRequestHandler {
     }
 
     private final Comparator<Transaction> rateComparator = (o1, o2) -> {
-        Attachment.MonetarySystemPublishExchangeOffer a1 = (Attachment.MonetarySystemPublishExchangeOffer)o1.getAttachment();
-        Attachment.MonetarySystemPublishExchangeOffer a2 = (Attachment.MonetarySystemPublishExchangeOffer)o2.getAttachment();
+        PublishExchangeOfferAttachment a1 = (PublishExchangeOfferAttachment)o1.getAttachment();
+        PublishExchangeOfferAttachment a2 = (PublishExchangeOfferAttachment)o2.getAttachment();
         return Long.compare(a1.getSellRateNQT(), a2.getSellRateNQT());
     };
 
@@ -52,13 +52,13 @@ public final class GetExpectedSellOffers extends APIServlet.APIRequestHandler {
         boolean sortByRate = "true".equalsIgnoreCase(req.getParameter("sortByRate"));
 
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != MonetarySystem.PUBLISH_EXCHANGE_OFFER) {
+            if (transaction.getType() != MonetarySystemTransactionType.PUBLISH_EXCHANGE_OFFER) {
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId) {
                 return false;
             }
-            Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
+            PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment)transaction.getAttachment();
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 

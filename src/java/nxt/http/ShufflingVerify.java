@@ -20,6 +20,7 @@ import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.NxtException;
 import nxt.shuffling.ShufflingHome;
+import nxt.shuffling.ShufflingVerificationAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -40,7 +41,7 @@ public final class ShufflingVerify extends CreateTransaction {
         if (!Arrays.equals(shufflingStateHash, shuffling.getStateHash())) {
             return JSONResponses.incorrect("shufflingStateHash", "Shuffling is in a different state now");
         }
-        Attachment attachment = new Attachment.ShufflingVerification(shuffling.getId(), shufflingStateHash);
+        Attachment attachment = new ShufflingVerificationAttachment(shuffling.getId(), shufflingStateHash);
 
         Account account = ParameterParser.getSenderAccount(req);
         return createTransaction(req, account, attachment);

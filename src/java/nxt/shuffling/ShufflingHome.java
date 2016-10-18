@@ -21,7 +21,6 @@ import nxt.Nxt;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.account.HoldingType;
-import nxt.blockchain.Attachment;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;
@@ -282,7 +281,7 @@ public final class ShufflingHome {
                 " ORDER BY blocks_remaining NULLS LAST, height DESC ");
     }
 
-    void addShuffling(Transaction transaction, Attachment.ShufflingCreation attachment) {
+    void addShuffling(Transaction transaction, ShufflingCreationAttachment attachment) {
         Shuffling shuffling = new Shuffling(transaction, attachment);
         shufflingTable.insert(shuffling);
         childChain.getShufflingParticipantHome().addParticipant(shuffling.getId(), transaction.getSenderId(), 0);
@@ -311,7 +310,7 @@ public final class ShufflingHome {
         private long assigneeAccountId;
         private byte[][] recipientPublicKeys;
 
-        private Shuffling(Transaction transaction, Attachment.ShufflingCreation attachment) {
+        private Shuffling(Transaction transaction, ShufflingCreationAttachment attachment) {
             this.id = transaction.getId();
             this.dbKey = shufflingDbKeyFactory.newKey(this.id);
             this.holdingId = attachment.getHoldingId();
@@ -462,7 +461,7 @@ public final class ShufflingHome {
             return childChain.getTransactionHome().getTransactionFullHash(id);
         }
 
-        public Attachment.ShufflingAttachment process(final long accountId, final String secretPhrase, final byte[] recipientPublicKey) {
+        public ShufflingAttachment process(final long accountId, final String secretPhrase, final byte[] recipientPublicKey) {
             byte[][] data = Convert.EMPTY_BYTES;
             byte[] shufflingStateHash = null;
             int participantIndex = 0;
@@ -494,8 +493,8 @@ public final class ShufflingHome {
                     outputDataList.add(decrypted);
                 } catch (Exception e) {
                     Logger.logMessage("Decryption failed", e);
-                    return isLast ? new Attachment.ShufflingRecipients(this.id, Convert.EMPTY_BYTES, shufflingStateHash)
-                            : new Attachment.ShufflingProcessing(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
+                    return isLast ? new ShufflingRecipientsAttachment(this.id, Convert.EMPTY_BYTES, shufflingStateHash)
+                            : new ShufflingProcessingAttachment(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
                 }
             }
             // Calculate the token for the current sender by iteratively encrypting it using the public key of all the participants
@@ -517,31 +516,31 @@ public final class ShufflingHome {
                     if (!Crypto.isCanonicalPublicKey(publicKey) || !recipientAccounts.add(Account.getId(publicKey))) {
                         // duplicate or invalid recipient public key
                         Logger.logDebugMessage("Invalid recipient public key " + Convert.toHexString(publicKey));
-                        return new Attachment.ShufflingRecipients(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
+                        return new ShufflingRecipientsAttachment(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
                     }
                 }
                 // last participant prepares ShufflingRecipients transaction instead of ShufflingProcessing
-                return new Attachment.ShufflingRecipients(this.id, outputDataList.toArray(new byte[outputDataList.size()][]),
+                return new ShufflingRecipientsAttachment(this.id, outputDataList.toArray(new byte[outputDataList.size()][]),
                         shufflingStateHash);
             } else {
                 byte[] previous = null;
                 for (byte[] decrypted : outputDataList) {
                     if (previous != null && Arrays.equals(decrypted, previous)) {
                         Logger.logDebugMessage("Duplicate decrypted data");
-                        return new Attachment.ShufflingProcessing(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
+                        return new ShufflingProcessingAttachment(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
                     }
                     if (decrypted.length != 32 + 64 * (participantCount - participantIndex - 1)) {
                         Logger.logDebugMessage("Invalid encrypted data length in process " + decrypted.length);
-                        return new Attachment.ShufflingProcessing(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
+                        return new ShufflingProcessingAttachment(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
                     }
                     previous = decrypted;
                 }
-                return new Attachment.ShufflingProcessing(this.id, outputDataList.toArray(new byte[outputDataList.size()][]),
+                return new ShufflingProcessingAttachment(this.id, outputDataList.toArray(new byte[outputDataList.size()][]),
                         shufflingStateHash);
             }
         }
 
-        public Attachment.ShufflingCancellation revealKeySeeds(final String secretPhrase, long cancellingAccountId, byte[] shufflingStateHash) {
+        public ShufflingCancellationAttachment revealKeySeeds(final String secretPhrase, long cancellingAccountId, byte[] shufflingStateHash) {
             Nxt.getBlockchain().readLock();
             try (DbIterator<ShufflingParticipantHome.ShufflingParticipant> participants = shufflingParticipantHome.getParticipants(id)) {
                 if (cancellingAccountId != this.assigneeAccountId) {
@@ -595,7 +594,7 @@ public final class ShufflingHome {
                     AnonymouslyEncryptedData encryptedData = AnonymouslyEncryptedData.readEncryptedData(decryptedBytes);
                     decryptedBytes = encryptedData.decrypt(keySeed, nextParticipantPublicKey);
                 }
-                return new Attachment.ShufflingCancellation(this.id, data, keySeeds.toArray(new byte[keySeeds.size()][]),
+                return new ShufflingCancellationAttachment(this.id, data, keySeeds.toArray(new byte[keySeeds.size()][]),
                         shufflingStateHash, cancellingAccountId);
             } finally {
                 Nxt.getBlockchain().readUnlock();
@@ -621,7 +620,7 @@ public final class ShufflingHome {
             }
         }
 
-        void updateParticipantData(Transaction transaction, Attachment.ShufflingProcessing attachment) {
+        void updateParticipantData(Transaction transaction, ShufflingProcessingAttachment attachment) {
             long participantId = transaction.getSenderId();
             byte[][] data = attachment.getData();
             ShufflingParticipantHome.ShufflingParticipant participant = shufflingParticipantHome.getParticipant(this.id, participantId);
@@ -638,7 +637,7 @@ public final class ShufflingHome {
             listeners.notify(this, Event.SHUFFLING_PROCESSING_ASSIGNED);
         }
 
-        void updateRecipients(Transaction transaction, Attachment.ShufflingRecipients attachment) {
+        void updateRecipients(Transaction transaction, ShufflingRecipientsAttachment attachment) {
             long participantId = transaction.getSenderId();
             this.recipientPublicKeys = attachment.getRecipientPublicKeys();
             ShufflingParticipantHome.ShufflingParticipant participant = shufflingParticipantHome.getParticipant(this.id, participantId);

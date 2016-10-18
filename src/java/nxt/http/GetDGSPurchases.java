@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.blockchain.ChildChain;
-import nxt.dgs.DGSHome;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
@@ -50,15 +50,15 @@ public final class GetDGSPurchases extends APIServlet.APIRequestHandler {
         JSONArray purchasesJSON = new JSONArray();
         response.put("purchases", purchasesJSON);
 
-        DbIterator<DGSHome.Purchase> purchases;
+        DbIterator<DigitalGoodsHome.Purchase> purchases;
         if (sellerId == 0 && buyerId == 0) {
-            purchases = childChain.getDGSHome().getPurchases(withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
+            purchases = childChain.getDigitalGoodsHome().getPurchases(withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
         } else if (sellerId != 0 && buyerId == 0) {
-            purchases = childChain.getDGSHome().getSellerPurchases(sellerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
+            purchases = childChain.getDigitalGoodsHome().getSellerPurchases(sellerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
         } else if (sellerId == 0) {
-            purchases = childChain.getDGSHome().getBuyerPurchases(buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
+            purchases = childChain.getDigitalGoodsHome().getBuyerPurchases(buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
         } else {
-            purchases = childChain.getDGSHome().getSellerBuyerPurchases(sellerId, buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
+            purchases = childChain.getDigitalGoodsHome().getSellerBuyerPurchases(sellerId, buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
         }
         try {
             while (purchases.hasNext()) {

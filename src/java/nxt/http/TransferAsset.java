@@ -18,6 +18,7 @@ package nxt.http;
 
 import nxt.account.Account;
 import nxt.ae.Asset;
+import nxt.ae.AssetTransferAttachment;
 import nxt.blockchain.Attachment;
 import nxt.NxtException;
 import org.json.simple.JSONStreamAware;
@@ -43,7 +44,7 @@ public final class TransferAsset extends CreateTransaction {
         long quantityQNT = ParameterParser.getQuantityQNT(req);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new Attachment.ColoredCoinsAssetTransfer(asset.getId(), quantityQNT);
+        Attachment attachment = new AssetTransferAttachment(asset.getId(), quantityQNT);
         try {
             return createTransaction(req, account, recipient, 0, attachment);
         } catch (NxtException.InsufficientBalanceException e) {

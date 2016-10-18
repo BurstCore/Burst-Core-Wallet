@@ -17,7 +17,6 @@
 package nxt.voting;
 
 import nxt.Nxt;
-import nxt.blockchain.Appendix;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
@@ -439,7 +438,7 @@ public final class PhasingPollHome {
     }
 
 
-    public void addPoll(Transaction transaction, Appendix.Phasing appendix) {
+    public void addPoll(Transaction transaction, PhasingAppendix appendix) {
         PhasingPoll poll = new PhasingPoll(transaction, appendix);
         phasingPollTable.insert(poll);
         long[] voters = poll.whitelist;
@@ -462,7 +461,7 @@ public final class PhasingPollHome {
         private final byte[] hashedSecret;
         private final byte algorithm;
 
-        private PhasingPoll(Transaction transaction, Appendix.Phasing appendix) {
+        private PhasingPoll(Transaction transaction, PhasingAppendix appendix) {
             super(transaction.getId(), transaction.getSenderId(), appendix.getFinishHeight(), appendix.getVoteWeighting());
             this.dbKey = phasingPollDbKeyFactory.newKey(this.id);
             this.quorum = appendix.getQuorum();

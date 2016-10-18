@@ -20,9 +20,6 @@ import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.blockchain.internal.ChildTransactionImpl;
-import nxt.blockchain.internal.FxtTransactionImpl;
-import nxt.blockchain.internal.TransactionImpl;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -72,7 +69,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     }
 
     @Override
-    void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException {
+    protected void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
         if (ChildChain.getChildChain(attachment.getChainId()) == null) {
             throw new NxtException.NotValidException("No such child chain id: " + attachment.getChainId());
@@ -100,13 +97,13 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     }
 
     @Override
-    boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
+    protected boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
         // child transactions applyAttachmentUnconfirmed called when they are accepted in the unconfirmed pool
         return true;
     }
 
     @Override
-    void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
+    protected void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
         long totalFee = 0;
         for (ChildTransactionImpl childTransaction : attachment.getChildTransactions(transaction)) {
@@ -119,7 +116,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     }
 
     @Override
-    void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
+    protected void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
         // child transactions undoAttachmentUnconfirmed called when they are removed from the unconfirmed pool
     }
 

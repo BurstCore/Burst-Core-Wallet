@@ -21,6 +21,7 @@ import nxt.blockchain.Attachment;
 import nxt.ms.Currency;
 import nxt.NxtException;
 import nxt.ms.CurrencyType;
+import nxt.ms.ReserveClaimAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -51,7 +52,7 @@ public final class CurrencyReserveClaim extends CreateTransaction {
         Currency currency = ParameterParser.getCurrency(req);
         long units = ParameterParser.getLong(req, "units", 0, currency.getReserveSupply(), false);
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.MonetarySystemReserveClaim(currency.getId(), units);
+        Attachment attachment = new ReserveClaimAttachment(currency.getId(), units);
         return createTransaction(req, account, attachment);
 
     }

@@ -17,11 +17,13 @@
 package nxt.http;
 
 import nxt.account.Account;
-import nxt.blockchain.Appendix;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.Nxt;
-import nxt.messages.PrunableMessageHome;
+import nxt.messaging.EncryptToSelfMessageAppendix;
+import nxt.messaging.EncryptedMessageAppendix;
+import nxt.messaging.MessageAppendix;
+import nxt.messaging.PrunableMessageHome;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
 import nxt.util.Convert;
@@ -64,9 +66,9 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
         }
 
         JSONObject response = new JSONObject();
-        Appendix.Message message = transaction.getMessage();
-        Appendix.EncryptedMessage encryptedMessage = transaction.getEncryptedMessage();
-        Appendix.EncryptToSelfMessage encryptToSelfMessage = transaction.getEncryptToSelfMessage();
+        MessageAppendix message = transaction.getMessage();
+        EncryptedMessageAppendix encryptedMessage = transaction.getEncryptedMessage();
+        EncryptToSelfMessageAppendix encryptToSelfMessage = transaction.getEncryptToSelfMessage();
         if (message == null && encryptedMessage == null && encryptToSelfMessage == null && prunableMessage == null) {
             return NO_MESSAGE;
         }

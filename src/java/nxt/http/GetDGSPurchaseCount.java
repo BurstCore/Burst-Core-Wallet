@@ -43,13 +43,13 @@ public final class GetDGSPurchaseCount extends APIServlet.APIRequestHandler {
         JSONObject response = new JSONObject();
         int count;
         if (sellerId != 0 && buyerId == 0) {
-            count = childChain.getDGSHome().getSellerPurchaseCount(sellerId, withPublicFeedbacksOnly, completed);
+            count = childChain.getDigitalGoodsHome().getSellerPurchaseCount(sellerId, withPublicFeedbacksOnly, completed);
         } else if (sellerId == 0 && buyerId != 0) {
-            count = childChain.getDGSHome().getBuyerPurchaseCount(buyerId, withPublicFeedbacksOnly, completed);
+            count = childChain.getDigitalGoodsHome().getBuyerPurchaseCount(buyerId, withPublicFeedbacksOnly, completed);
         } else if (sellerId == 0 && buyerId == 0) {
-            count = childChain.getDGSHome().getPurchaseCount(withPublicFeedbacksOnly, completed);
+            count = childChain.getDigitalGoodsHome().getPurchaseCount(withPublicFeedbacksOnly, completed);
         } else {
-            count = childChain.getDGSHome().getSellerBuyerPurchaseCount(sellerId, buyerId, withPublicFeedbacksOnly, completed);
+            count = childChain.getDigitalGoodsHome().getSellerBuyerPurchaseCount(sellerId, buyerId, withPublicFeedbacksOnly, completed);
         }
         response.put("numberOfPurchases", count);
         return response;

@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.blockchain.Attachment;
-import nxt.blockchain.ChildTransactionType;
+import nxt.ae.AssetDeleteAttachment;
+import nxt.ae.AssetExchangeTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Transaction;
@@ -45,13 +45,13 @@ public final class GetExpectedAssetDeletes extends APIServlet.APIRequestHandler 
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
 
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != ChildTransactionType.ColoredCoins.ASSET_DELETE) {
+            if (transaction.getType() != AssetExchangeTransactionType.ASSET_DELETE) {
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId) {
                 return false;
             }
-            Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
+            AssetDeleteAttachment attachment = (AssetDeleteAttachment)transaction.getAttachment();
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 

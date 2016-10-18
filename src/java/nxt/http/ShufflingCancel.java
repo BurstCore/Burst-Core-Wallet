@@ -17,8 +17,8 @@
 package nxt.http;
 
 import nxt.account.Account;
-import nxt.blockchain.Attachment;
 import nxt.NxtException;
+import nxt.shuffling.ShufflingCancellationAttachment;
 import nxt.shuffling.ShufflingHome;
 import org.json.simple.JSONStreamAware;
 
@@ -38,7 +38,7 @@ public final class ShufflingCancel extends CreateTransaction {
         long cancellingAccountId = ParameterParser.getAccountId(req, "cancellingAccount", false);
         byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", true);
         String secretPhrase = ParameterParser.getSecretPhrase(req, true);
-        Attachment.ShufflingCancellation attachment = shuffling.revealKeySeeds(secretPhrase, cancellingAccountId, shufflingStateHash);
+        ShufflingCancellationAttachment attachment = shuffling.revealKeySeeds(secretPhrase, cancellingAccountId, shufflingStateHash);
         Account account = ParameterParser.getSenderAccount(req);
         return createTransaction(req, account, attachment);
     }

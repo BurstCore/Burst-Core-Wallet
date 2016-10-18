@@ -19,8 +19,9 @@ package nxt.http;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.Constants;
-import nxt.dgs.DGSHome;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.NxtException;
+import nxt.dgs.QuantityChangeAttachment;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -43,7 +44,7 @@ public final class DGSQuantityChange extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
         Account account = ParameterParser.getSenderAccount(req);
-        DGSHome.Goods goods = ParameterParser.getGoods(req);
+        DigitalGoodsHome.Goods goods = ParameterParser.getGoods(req);
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;
         }
@@ -62,7 +63,7 @@ public final class DGSQuantityChange extends CreateTransaction {
             return INCORRECT_DELTA_QUANTITY;
         }
 
-        Attachment attachment = new Attachment.DigitalGoodsQuantityChange(goods.getId(), deltaQuantity);
+        Attachment attachment = new QuantityChangeAttachment(goods.getId(), deltaQuantity);
         return createTransaction(req, account, attachment);
 
     }

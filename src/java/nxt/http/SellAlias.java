@@ -17,10 +17,11 @@
 package nxt.http;
 
 import nxt.account.Account;
-import nxt.messages.AliasHome;
+import nxt.messaging.AliasHome;
 import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.messaging.AliasSellAttachment;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -62,7 +63,7 @@ public final class SellAlias extends CreateTransaction {
             return INCORRECT_ALIAS_OWNER;
         }
 
-        Attachment attachment = new Attachment.MessagingAliasSell(alias.getAliasName(), priceNQT);
+        Attachment attachment = new AliasSellAttachment(alias.getAliasName(), priceNQT);
         return createTransaction(req, owner, recipientId, 0, attachment);
     }
 }

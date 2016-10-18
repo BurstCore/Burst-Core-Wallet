@@ -17,15 +17,23 @@
 package nxt.http;
 
 import nxt.account.Account;
-import nxt.messages.AliasHome;
+import nxt.messaging.AliasHome;
 import nxt.blockchain.Appendix;
 import nxt.ae.Asset;
-import nxt.blockchain.Attachment;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.Constants;
+import nxt.messaging.EncryptToSelfMessageAppendix;
+import nxt.messaging.EncryptedMessageAppendix;
+import nxt.messaging.MessageAppendix;
+import nxt.messaging.PrunableEncryptedMessageAppendix;
+import nxt.messaging.PrunablePlainMessageAppendix;
+import nxt.messaging.TaggedDataUploadAttachment;
+import nxt.messaging.UnencryptedEncryptToSelfMessageAppendix;
+import nxt.messaging.UnencryptedEncryptedMessageAppendix;
+import nxt.messaging.UnencryptedPrunableEncryptedMessageAppendix;
 import nxt.ms.Currency;
-import nxt.dgs.DGSHome;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.ms.ExchangeOfferHome;
 import nxt.account.HoldingType;
 import nxt.Nxt;
@@ -315,9 +323,9 @@ public final class ParameterParser {
         return getLong(req, "amountNQTPerQNT", 1L, Constants.MAX_BALANCE_NQT, true);
     }
 
-    public static DGSHome.Goods getGoods(HttpServletRequest req) throws ParameterException {
+    public static DigitalGoodsHome.Goods getGoods(HttpServletRequest req) throws ParameterException {
         ChildChain childChain = getChildChain(req);
-        DGSHome.Goods goods = childChain.getDGSHome().getGoods(getUnsignedLong(req, "goods", true));
+        DigitalGoodsHome.Goods goods = childChain.getDigitalGoodsHome().getGoods(getUnsignedLong(req, "goods", true));
         if (goods == null) {
             throw new ParameterException(UNKNOWN_GOODS);
         }
@@ -366,7 +374,7 @@ public final class ParameterParser {
         return new EncryptedData(data, nonce);
     }
 
-    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req) throws ParameterException {
+    public static EncryptToSelfMessageAppendix getEncryptToSelfMessage(HttpServletRequest req) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptToSelfIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncryptToSelf"));
         byte[] plainMessageBytes = null;
@@ -388,15 +396,15 @@ public final class ParameterParser {
             }
         }
         if (encryptedData != null) {
-            return new Appendix.EncryptToSelfMessage(encryptedData, isText, compress);
+            return new EncryptToSelfMessageAppendix(encryptedData, isText, compress);
         } else {
-            return new Appendix.UnencryptedEncryptToSelfMessage(plainMessageBytes, isText, compress);
+            return new UnencryptedEncryptToSelfMessageAppendix(plainMessageBytes, isText, compress);
         }
     }
 
-    public static DGSHome.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
+    public static DigitalGoodsHome.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
         ChildChain childChain = getChildChain(req);
-        DGSHome.Purchase purchase = childChain.getDGSHome().getPurchase(getUnsignedLong(req, "purchase", true));
+        DigitalGoodsHome.Purchase purchase = childChain.getDigitalGoodsHome().getPurchase(getUnsignedLong(req, "purchase", true));
         if (purchase == null) {
             throw new ParameterException(INCORRECT_PURCHASE);
         }
@@ -612,9 +620,9 @@ public final class ParameterParser {
         if (messageValue != null) {
             try {
                 if (prunable) {
-                    return new Appendix.PrunablePlainMessage(messageValue, messageIsText);
+                    return new PrunablePlainMessageAppendix(messageValue, messageIsText);
                 } else {
-                    return new Appendix.Message(messageValue, messageIsText);
+                    return new MessageAppendix(messageValue, messageIsText);
                 }
             } catch (RuntimeException e) {
                 throw new ParameterException(INCORRECT_ARBITRARY_MESSAGE);
@@ -638,9 +646,9 @@ public final class ParameterParser {
                 messageIsText = false;
             }
             if (prunable) {
-                return new Appendix.PrunablePlainMessage(message, messageIsText);
+                return new PrunablePlainMessageAppendix(message, messageIsText);
             } else {
-                return new Appendix.Message(message, messageIsText);
+                return new MessageAppendix(message, messageIsText);
             }
         } catch (IOException | ServletException e) {
             Logger.logDebugMessage("error in reading file data", e);
@@ -701,20 +709,20 @@ public final class ParameterParser {
         }
         if (encryptedData != null) {
             if (prunable) {
-                return new Appendix.PrunableEncryptedMessage(encryptedData, isText, compress);
+                return new PrunableEncryptedMessageAppendix(encryptedData, isText, compress);
             } else {
-                return new Appendix.EncryptedMessage(encryptedData, isText, compress);
+                return new EncryptedMessageAppendix(encryptedData, isText, compress);
             }
         } else {
             if (prunable) {
-                return new Appendix.UnencryptedPrunableEncryptedMessage(plainMessageBytes, isText, compress, recipientPublicKey);
+                return new UnencryptedPrunableEncryptedMessageAppendix(plainMessageBytes, isText, compress, recipientPublicKey);
             } else {
-                return new Appendix.UnencryptedEncryptedMessage(plainMessageBytes, isText, compress, recipientPublicKey);
+                return new UnencryptedEncryptedMessageAppendix(plainMessageBytes, isText, compress, recipientPublicKey);
             }
         }
     }
 
-    public static Attachment.TaggedDataUpload getTaggedData(HttpServletRequest req) throws ParameterException, NxtException.NotValidException {
+    public static TaggedDataUploadAttachment getTaggedData(HttpServletRequest req) throws ParameterException, NxtException.NotValidException {
         String name = Convert.emptyToNull(req.getParameter("name"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
         String tags = Convert.nullToEmpty(req.getParameter("tags"));
@@ -789,7 +797,7 @@ public final class ParameterParser {
         if (filename.length() > Constants.MAX_TAGGED_DATA_FILENAME_LENGTH) {
             throw new ParameterException(INCORRECT_TAGGED_DATA_FILENAME);
         }
-        return new Attachment.TaggedDataUpload(name, description, tags, type, channel, isText, filename, data);
+        return new TaggedDataUploadAttachment(name, description, tags, type, channel, isText, filename, data);
     }
 
     public static Chain getChain(HttpServletRequest request) throws ParameterException {

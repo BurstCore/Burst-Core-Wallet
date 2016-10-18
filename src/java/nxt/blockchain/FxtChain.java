@@ -17,10 +17,6 @@
 package nxt.blockchain;
 
 import nxt.NxtException;
-import nxt.blockchain.internal.FxtTransactionImpl;
-import nxt.blockchain.internal.TransactionHome;
-import nxt.blockchain.internal.UnconfirmedFxtTransaction;
-import nxt.blockchain.internal.UnconfirmedTransaction;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;

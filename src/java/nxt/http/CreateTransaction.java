@@ -17,13 +17,19 @@
 package nxt.http;
 
 import nxt.account.Account;
-import nxt.blockchain.Appendix;
+import nxt.account.PublicKeyAnnouncementAppendix;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.messaging.EncryptToSelfMessageAppendix;
+import nxt.messaging.EncryptedMessageAppendix;
+import nxt.messaging.MessageAppendix;
+import nxt.messaging.PrunableEncryptedMessageAppendix;
+import nxt.messaging.PrunablePlainMessageAppendix;
+import nxt.voting.PhasingAppendix;
 import nxt.voting.PhasingParams;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
@@ -87,7 +93,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         return createTransaction(req, senderAccount, recipientId, amountNQT, Attachment.ORDINARY_PAYMENT);
     }
 
-    private Appendix.Phasing parsePhasing(HttpServletRequest req) throws ParameterException {
+    private PhasingAppendix parsePhasing(HttpServletRequest req) throws ParameterException {
         int finishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
                 Nxt.getBlockchain().getHeight() + 1,
                 Nxt.getBlockchain().getHeight() + Constants.MAX_PHASING_DURATION + 1,
@@ -110,7 +116,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         byte[] hashedSecret = Convert.parseHexString(Convert.emptyToNull(req.getParameter("phasingHashedSecret")));
         byte algorithm = ParameterParser.getByte(req, "phasingHashedSecretAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
 
-        return new Appendix.Phasing(finishHeight, phasingParams, linkedFullHashes, hashedSecret, algorithm);
+        return new PhasingAppendix(finishHeight, phasingParams, linkedFullHashes, hashedSecret, algorithm);
     }
 
     final PhasingParams parsePhasingParams(HttpServletRequest req, String parameterPrefix) throws ParameterException {
@@ -140,31 +146,31 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         String publicKeyValue = Convert.emptyToNull(req.getParameter("publicKey"));
         boolean broadcast = !"false".equalsIgnoreCase(req.getParameter("broadcast")) && secretPhrase != null;
-        Appendix.EncryptedMessage encryptedMessage = null;
-        Appendix.PrunableEncryptedMessage prunableEncryptedMessage = null;
+        EncryptedMessageAppendix encryptedMessage = null;
+        PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
         if (attachment.getTransactionType().canHaveRecipient() && recipientId != 0) {
             Account recipient = Account.getAccount(recipientId);
             if ("true".equalsIgnoreCase(req.getParameter("encryptedMessageIsPrunable"))) {
-                prunableEncryptedMessage = (Appendix.PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient, true);
+                prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) ParameterParser.getEncryptedMessage(req, recipient, true);
             } else {
-                encryptedMessage = (Appendix.EncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient, false);
+                encryptedMessage = (EncryptedMessageAppendix) ParameterParser.getEncryptedMessage(req, recipient, false);
             }
         }
-        Appendix.EncryptToSelfMessage encryptToSelfMessage = ParameterParser.getEncryptToSelfMessage(req);
-        Appendix.Message message = null;
-        Appendix.PrunablePlainMessage prunablePlainMessage = null;
+        EncryptToSelfMessageAppendix encryptToSelfMessage = ParameterParser.getEncryptToSelfMessage(req);
+        MessageAppendix message = null;
+        PrunablePlainMessageAppendix prunablePlainMessage = null;
         if ("true".equalsIgnoreCase(req.getParameter("messageIsPrunable"))) {
-            prunablePlainMessage = (Appendix.PrunablePlainMessage) ParameterParser.getPlainMessage(req, true);
+            prunablePlainMessage = (PrunablePlainMessageAppendix) ParameterParser.getPlainMessage(req, true);
         } else {
-            message = (Appendix.Message) ParameterParser.getPlainMessage(req, false);
+            message = (MessageAppendix) ParameterParser.getPlainMessage(req, false);
         }
-        Appendix.PublicKeyAnnouncement publicKeyAnnouncement = null;
+        PublicKeyAnnouncementAppendix publicKeyAnnouncement = null;
         String recipientPublicKey = Convert.emptyToNull(req.getParameter("recipientPublicKey"));
         if (recipientPublicKey != null) {
-            publicKeyAnnouncement = new Appendix.PublicKeyAnnouncement(Convert.parseHexString(recipientPublicKey));
+            publicKeyAnnouncement = new PublicKeyAnnouncementAppendix(Convert.parseHexString(recipientPublicKey));
         }
 
-        Appendix.Phasing phasing = null;
+        PhasingAppendix phasing = null;
         boolean phased = "true".equalsIgnoreCase(req.getParameter("phased"));
         if (phased) {
             phasing = parsePhasing(req);

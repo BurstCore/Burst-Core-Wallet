@@ -20,6 +20,7 @@ import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.messaging.AccountPropertyAttachment;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -55,7 +56,7 @@ public final class SetAccountProperty extends CreateTransaction {
             return INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH;
         }
 
-        Attachment attachment = new Attachment.MessagingAccountProperty(property, value);
+        Attachment attachment = new AccountPropertyAttachment(property, value);
         return createTransaction(req, senderAccount, recipientId, 0, attachment);
 
     }

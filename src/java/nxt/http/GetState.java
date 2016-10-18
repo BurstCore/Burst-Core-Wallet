@@ -66,9 +66,9 @@ public final class GetState extends APIServlet.APIRequestHandler {
         	response.put("numberOfExchanges", childChain.getExchangeHome().getCount());
         	response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
             response.put("numberOfAliases", childChain.getAliasHome().getCount());
-            response.put("numberOfGoods", childChain.getDGSHome().getGoodsCount());
-            response.put("numberOfPurchases", childChain.getDGSHome().getPurchaseCount());
-            response.put("numberOfTags", childChain.getDGSHome().getTagCount());
+            response.put("numberOfGoods", childChain.getDigitalGoodsHome().getGoodsCount());
+            response.put("numberOfPurchases", childChain.getDigitalGoodsHome().getPurchaseCount());
+            response.put("numberOfTags", childChain.getDigitalGoodsHome().getTagCount());
             response.put("numberOfPolls", childChain.getPollHome().getCount());
             response.put("numberOfVotes", childChain.getVoteHome().getCount());
             response.put("numberOfPrunableMessages", childChain.getPrunableMessageHome().getCount());

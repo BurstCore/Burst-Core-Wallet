@@ -22,6 +22,7 @@ import nxt.Constants;
 import nxt.ms.Currency;
 import nxt.NxtException;
 import nxt.ms.CurrencyType;
+import nxt.ms.ReserveIncreaseAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -58,7 +59,7 @@ public final class CurrencyReserveIncrease extends CreateTransaction {
         Currency currency = ParameterParser.getCurrency(req);
         long amountPerUnitNQT = ParameterParser.getLong(req, "amountPerUnitNQT", 1L, Constants.MAX_BALANCE_NQT, true);
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.MonetarySystemReserveIncrease(currency.getId(), amountPerUnitNQT);
+        Attachment attachment = new ReserveIncreaseAttachment(currency.getId(), amountPerUnitNQT);
         return createTransaction(req, account, attachment);
 
     }

@@ -16,7 +16,6 @@
 
 package nxt.ms;
 
-import nxt.blockchain.Attachment;
 import nxt.blockchain.Block;
 import nxt.blockchain.ChildChain;
 import nxt.Nxt;
@@ -88,12 +87,12 @@ public final class ExchangeRequestHome {
         return exchangeRequestTable.getManyBy(new DbClause.LongClause("account_id", accountId).and(new DbClause.LongClause("currency_id", currencyId)), from, to);
     }
 
-    void addExchangeRequest(Transaction transaction, Attachment.MonetarySystemExchangeBuy attachment) {
+    void addExchangeRequest(Transaction transaction, ExchangeBuyAttachment attachment) {
         ExchangeRequest exchangeRequest = new ExchangeRequest(transaction, attachment);
         exchangeRequestTable.insert(exchangeRequest);
     }
 
-    void addExchangeRequest(Transaction transaction, Attachment.MonetarySystemExchangeSell attachment) {
+    void addExchangeRequest(Transaction transaction, ExchangeSellAttachment attachment) {
         ExchangeRequest exchangeRequest = new ExchangeRequest(transaction, attachment);
         exchangeRequestTable.insert(exchangeRequest);
     }
@@ -110,15 +109,15 @@ public final class ExchangeRequestHome {
         private final long rate;
         private final boolean isBuy;
 
-        private ExchangeRequest(Transaction transaction, Attachment.MonetarySystemExchangeBuy attachment) {
+        private ExchangeRequest(Transaction transaction, ExchangeBuyAttachment attachment) {
             this(transaction, attachment, true);
         }
 
-        private ExchangeRequest(Transaction transaction, Attachment.MonetarySystemExchangeSell attachment) {
+        private ExchangeRequest(Transaction transaction, ExchangeSellAttachment attachment) {
             this(transaction, attachment, false);
         }
 
-        private ExchangeRequest(Transaction transaction, Attachment.MonetarySystemExchange attachment, boolean isBuy) {
+        private ExchangeRequest(Transaction transaction, ExchangeAttachment attachment, boolean isBuy) {
             this.id = transaction.getId();
             this.dbKey = exchangeRequestDbKeyFactory.newKey(this.id);
             this.accountId = transaction.getSenderId();

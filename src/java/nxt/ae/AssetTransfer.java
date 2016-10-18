@@ -16,7 +16,6 @@
 
 package nxt.ae;
 
-import nxt.blockchain.Attachment;
 import nxt.Nxt;
 import nxt.blockchain.Transaction;
 import nxt.db.DbClause;
@@ -127,7 +126,7 @@ public final class AssetTransfer {
         return assetTransferTable.getCount(new DbClause.LongClause("asset_id", assetId));
     }
 
-    public static AssetTransfer addAssetTransfer(Transaction transaction, Attachment.ColoredCoinsAssetTransfer attachment) {
+    public static AssetTransfer addAssetTransfer(Transaction transaction, AssetTransferAttachment attachment) {
         AssetTransfer assetTransfer = new AssetTransfer(transaction, attachment);
         assetTransferTable.insert(assetTransfer);
         listeners.notify(assetTransfer, Event.ASSET_TRANSFER);
@@ -146,7 +145,7 @@ public final class AssetTransfer {
     private final long quantityQNT;
     private final int timestamp;
 
-    private AssetTransfer(Transaction transaction, Attachment.ColoredCoinsAssetTransfer attachment) {
+    private AssetTransfer(Transaction transaction, AssetTransferAttachment attachment) {
         this.id = transaction.getId();
         this.dbKey = transferDbKeyFactory.newKey(this.id);
         this.height = Nxt.getBlockchain().getHeight();

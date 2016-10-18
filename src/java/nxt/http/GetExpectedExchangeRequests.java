@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.blockchain.Attachment;
-import nxt.ms.MonetarySystem;
+import nxt.ms.ExchangeAttachment;
+import nxt.ms.MonetarySystemTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Transaction;
@@ -45,13 +45,13 @@ public final class GetExpectedExchangeRequests extends APIServlet.APIRequestHand
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
 
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != MonetarySystem.EXCHANGE_BUY && transaction.getType() != MonetarySystem.EXCHANGE_SELL) {
+            if (transaction.getType() != MonetarySystemTransactionType.EXCHANGE_BUY && transaction.getType() != MonetarySystemTransactionType.EXCHANGE_SELL) {
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId) {
                 return false;
             }
-            Attachment.MonetarySystemExchange attachment = (Attachment.MonetarySystemExchange)transaction.getAttachment();
+            ExchangeAttachment attachment = (ExchangeAttachment)transaction.getAttachment();
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 

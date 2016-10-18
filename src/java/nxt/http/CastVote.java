@@ -20,6 +20,7 @@ import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.voting.VoteCastingAttachment;
 import nxt.voting.PollHome;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
@@ -64,7 +65,7 @@ public final class CastVote extends CreateTransaction {
         }
 
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.MessagingVoteCasting(poll.getId(), vote);
+        Attachment attachment = new VoteCastingAttachment(poll.getId(), vote);
         return createTransaction(req, account, attachment);
     }
 }

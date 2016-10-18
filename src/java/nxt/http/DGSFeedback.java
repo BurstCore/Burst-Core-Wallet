@@ -18,7 +18,8 @@ package nxt.http;
 
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
-import nxt.dgs.DGSHome;
+import nxt.dgs.FeedbackAttachment;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.NxtException;
 import org.json.simple.JSONStreamAware;
 
@@ -39,7 +40,7 @@ public final class DGSFeedback extends CreateTransaction {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
-        DGSHome.Purchase purchase = ParameterParser.getPurchase(req);
+        DigitalGoodsHome.Purchase purchase = ParameterParser.getPurchase(req);
 
         Account buyerAccount = ParameterParser.getSenderAccount(req);
         if (buyerAccount.getId() != purchase.getBuyerId()) {
@@ -50,7 +51,7 @@ public final class DGSFeedback extends CreateTransaction {
         }
 
         Account sellerAccount = Account.getAccount(purchase.getSellerId());
-        Attachment attachment = new Attachment.DigitalGoodsFeedback(purchase.getId());
+        Attachment attachment = new FeedbackAttachment(purchase.getId());
         return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);
     }
 

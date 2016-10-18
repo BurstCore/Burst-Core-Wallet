@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.blockchain.ChildChain;
-import nxt.dgs.DGSHome;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
@@ -49,7 +49,7 @@ public final class GetDGSGoodsPurchases extends APIServlet.APIRequestHandler {
         JSONArray purchasesJSON = new JSONArray();
         response.put("purchases", purchasesJSON);
 
-        try (DbIterator<DGSHome.Purchase> iterator = childChain.getDGSHome().getGoodsPurchases(goodsId,
+        try (DbIterator<DigitalGoodsHome.Purchase> iterator = childChain.getDigitalGoodsHome().getGoodsPurchases(goodsId,
                 buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex)) {
             while(iterator.hasNext()) {
                 purchasesJSON.add(JSONData.purchase(iterator.next()));

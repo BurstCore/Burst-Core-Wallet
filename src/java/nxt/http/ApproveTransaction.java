@@ -22,6 +22,7 @@ import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.voting.PhasingVoteCastingAttachment;
 import nxt.voting.PhasingPollHome;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
@@ -80,7 +81,7 @@ public class ApproveTransaction extends CreateTransaction {
             }
         }
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.MessagingPhasingVoteCasting(phasedTransactionFullHashes, secret);
+        Attachment attachment = new PhasingVoteCastingAttachment(phasedTransactionFullHashes, secret);
         return createTransaction(req, account, attachment);
     }
 }

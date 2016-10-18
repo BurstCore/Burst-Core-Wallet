@@ -20,13 +20,16 @@ import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEntry;
 import nxt.account.AccountRestrictions;
-import nxt.messages.AliasHome;
+import nxt.ae.AssetDeleteAttachment;
+import nxt.ae.AssetTransferAttachment;
+import nxt.ae.OrderCancellationAttachment;
+import nxt.ae.OrderPlacementAttachment;
+import nxt.messaging.AliasHome;
 import nxt.blockchain.Appendix;
 import nxt.ae.Asset;
 import nxt.ae.AssetDelete;
 import nxt.ae.AssetDividendHome;
 import nxt.ae.AssetTransfer;
-import nxt.blockchain.Attachment;
 import nxt.blockchain.Block;
 import nxt.blockchain.ChildChain;
 import nxt.Constants;
@@ -34,24 +37,28 @@ import nxt.ms.Currency;
 import nxt.ms.CurrencyFounderHome;
 import nxt.ms.CurrencyTransfer;
 import nxt.ms.CurrencyType;
-import nxt.dgs.DGSHome;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.ms.ExchangeHome;
 import nxt.ms.ExchangeOfferHome;
 import nxt.ms.ExchangeRequestHome;
 import nxt.account.FundingMonitor;
 import nxt.blockchain.Generator;
 import nxt.account.HoldingType;
-import nxt.ms.MonetarySystem;
+import nxt.ms.CurrencyIssuanceAttachment;
+import nxt.ms.CurrencyTransferAttachment;
+import nxt.ms.ExchangeAttachment;
+import nxt.ms.PublishExchangeOfferAttachment;
+import nxt.ms.MonetarySystemTransactionType;
 import nxt.Nxt;
 import nxt.ae.OrderHome;
 import nxt.voting.PhasingPollHome;
 import nxt.voting.PhasingVoteHome;
 import nxt.voting.PollHome;
-import nxt.messages.PrunableMessageHome;
+import nxt.messaging.PrunableMessageHome;
 import nxt.shuffling.Shuffler;
 import nxt.shuffling.ShufflingHome;
 import nxt.shuffling.ShufflingParticipantHome;
-import nxt.messages.TaggedDataHome;
+import nxt.messaging.TaggedDataHome;
 import nxt.account.Token;
 import nxt.ae.TradeHome;
 import nxt.blockchain.Transaction;
@@ -272,7 +279,7 @@ public final class JSONData {
 
     private static JSONObject expectedOrder(Transaction transaction) {
         JSONObject json = new JSONObject();
-        Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement)transaction.getAttachment();
+        OrderPlacementAttachment attachment = (OrderPlacementAttachment)transaction.getAttachment();
         json.put("order", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "account", transaction.getSenderId());
@@ -284,7 +291,7 @@ public final class JSONData {
 
     static JSONObject expectedOrderCancellation(Transaction transaction) {
         JSONObject json = new JSONObject();
-        Attachment.ColoredCoinsOrderCancellation attachment = (Attachment.ColoredCoinsOrderCancellation)transaction.getAttachment();
+        OrderCancellationAttachment attachment = (OrderCancellationAttachment)transaction.getAttachment();
         json.put("order", Long.toUnsignedString(attachment.getOrderId()));
         putAccount(json, "account", transaction.getSenderId());
         putExpectedTransaction(json, transaction);
@@ -306,7 +313,7 @@ public final class JSONData {
 
     static JSONObject expectedBuyOffer(Transaction transaction) {
         JSONObject json = expectedOffer(transaction);
-        Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
+        PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment)transaction.getAttachment();
         json.put("rateNQT", String.valueOf(attachment.getBuyRateNQT()));
         json.put("limit", String.valueOf(attachment.getTotalBuyLimit()));
         json.put("supply", String.valueOf(attachment.getInitialBuySupply()));
@@ -315,7 +322,7 @@ public final class JSONData {
 
     static JSONObject expectedSellOffer(Transaction transaction) {
         JSONObject json = expectedOffer(transaction);
-        Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
+        PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment)transaction.getAttachment();
         json.put("rateNQT", String.valueOf(attachment.getSellRateNQT()));
         json.put("limit", String.valueOf(attachment.getTotalSellLimit()));
         json.put("supply", String.valueOf(attachment.getInitialSellSupply()));
@@ -323,7 +330,7 @@ public final class JSONData {
     }
 
     private static JSONObject expectedOffer(Transaction transaction) {
-        Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
+        PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment)transaction.getAttachment();
         JSONObject json = new JSONObject();
         json.put("offer", transaction.getStringId());
         putAccount(json, "account", transaction.getSenderId());
@@ -463,7 +470,7 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject goods(DGSHome.Goods goods, boolean includeCounts) {
+    static JSONObject goods(DigitalGoodsHome.Goods goods, boolean includeCounts) {
         JSONObject json = new JSONObject();
         json.put("goods", Long.toUnsignedString(goods.getId()));
         json.put("name", goods.getName());
@@ -485,7 +492,7 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject tag(DGSHome.Tag tag) {
+    static JSONObject tag(DigitalGoodsHome.Tag tag) {
         JSONObject json = new JSONObject();
         json.put("tag", tag.getTag());
         json.put("inStockCount", tag.getInStockCount());
@@ -585,7 +592,7 @@ public final class JSONData {
                 json.put("decimals", currency.getDecimals());
             } else {
                 Transaction currencyIssuance = Nxt.getBlockchain().getTransaction(poll.getChildChain(), voteWeighting.getHoldingId());
-                Attachment.MonetarySystemCurrencyIssuance currencyIssuanceAttachment = (Attachment.MonetarySystemCurrencyIssuance) currencyIssuance.getAttachment();
+                CurrencyIssuanceAttachment currencyIssuanceAttachment = (CurrencyIssuanceAttachment) currencyIssuance.getAttachment();
                 json.put("decimals", currencyIssuanceAttachment.getDecimals());
             }
         }
@@ -714,11 +721,11 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject purchase(DGSHome.Purchase purchase) {
+    static JSONObject purchase(DigitalGoodsHome.Purchase purchase) {
         JSONObject json = new JSONObject();
         json.put("purchase", Long.toUnsignedString(purchase.getId()));
         json.put("goods", Long.toUnsignedString(purchase.getGoodsId()));
-        DGSHome.Goods goods = purchase.getDGSHome().getGoods(purchase.getGoodsId());
+        DigitalGoodsHome.Goods goods = purchase.getDGSHome().getGoods(purchase.getGoodsId());
         json.put("name", goods.getName());
         json.put("hasImage", goods.hasImage());
         putAccount(json, "seller", purchase.getSellerId());
@@ -799,7 +806,7 @@ public final class JSONData {
 
     static JSONObject expectedAssetTransfer(Transaction transaction, boolean includeAssetInfo) {
         JSONObject json = new JSONObject();
-        Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer)transaction.getAttachment();
+        AssetTransferAttachment attachment = (AssetTransferAttachment)transaction.getAttachment();
         json.put("assetTransfer", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "sender", transaction.getSenderId());
@@ -828,7 +835,7 @@ public final class JSONData {
 
     static JSONObject expectedAssetDelete(Transaction transaction, boolean includeAssetInfo) {
         JSONObject json = new JSONObject();
-        Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
+        AssetDeleteAttachment attachment = (AssetDeleteAttachment)transaction.getAttachment();
         json.put("assetDelete", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "account", transaction.getSenderId());
@@ -870,7 +877,7 @@ public final class JSONData {
 
     static JSONObject expectedCurrencyTransfer(Transaction transaction, boolean includeCurrencyInfo) {
         JSONObject json = new JSONObject();
-        Attachment.MonetarySystemCurrencyTransfer attachment = (Attachment.MonetarySystemCurrencyTransfer)transaction.getAttachment();
+        CurrencyTransferAttachment attachment = (CurrencyTransferAttachment)transaction.getAttachment();
         json.put("transfer", transaction.getStringId());
         json.put("currency", Long.toUnsignedString(attachment.getCurrencyId()));
         putAccount(json, "sender", transaction.getSenderId());
@@ -904,7 +911,7 @@ public final class JSONData {
     static JSONObject exchangeRequest(ExchangeRequestHome.ExchangeRequest exchangeRequest, boolean includeCurrencyInfo) {
         JSONObject json = new JSONObject();
         json.put("transaction", Long.toUnsignedString(exchangeRequest.getId()));
-        json.put("subtype", exchangeRequest.isBuy() ? MonetarySystem.EXCHANGE_BUY.getSubtype() : MonetarySystem.EXCHANGE_SELL.getSubtype());
+        json.put("subtype", exchangeRequest.isBuy() ? MonetarySystemTransactionType.EXCHANGE_BUY.getSubtype() : MonetarySystemTransactionType.EXCHANGE_SELL.getSubtype());
         json.put("timestamp", exchangeRequest.getTimestamp());
         json.put("units", String.valueOf(exchangeRequest.getUnits()));
         json.put("rateNQT", String.valueOf(exchangeRequest.getRate()));
@@ -919,7 +926,7 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("transaction", transaction.getStringId());
         json.put("subtype", transaction.getType().getSubtype());
-        Attachment.MonetarySystemExchange attachment = (Attachment.MonetarySystemExchange)transaction.getAttachment();
+        ExchangeAttachment attachment = (ExchangeAttachment)transaction.getAttachment();
         json.put("units", String.valueOf(attachment.getUnits()));
         json.put("rateNQT", String.valueOf(attachment.getRateNQT()));
         if (includeCurrencyInfo) {

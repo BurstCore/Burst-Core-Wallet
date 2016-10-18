@@ -18,7 +18,6 @@ package nxt.ms;
 
 import nxt.account.Account;
 import nxt.account.AccountLedger.LedgerEvent;
-import nxt.blockchain.Attachment;
 import nxt.Nxt;
 import nxt.db.DbClause;
 import nxt.db.DbIterator;
@@ -138,7 +137,7 @@ public final class CurrencyMint {
     }
 
     static void mintCurrency(LedgerEvent event, long eventId, final Account account,
-                             final Attachment.MonetarySystemCurrencyMinting attachment) {
+                             final CurrencyMintingAttachment attachment) {
         CurrencyMint currencyMint = currencyMintTable.get(currencyMintDbKeyFactory.newKey(attachment.getCurrencyId(), account.getId()));
         if (currencyMint != null && attachment.getCounter() <= currencyMint.getCounter()) {
             return;

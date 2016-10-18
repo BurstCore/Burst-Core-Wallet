@@ -18,7 +18,6 @@ package nxt.ms;
 
 import nxt.account.Account;
 import nxt.account.AccountLedger.LedgerEvent;
-import nxt.blockchain.Attachment;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;
 import nxt.Nxt;
@@ -123,7 +122,7 @@ public final class ExchangeOfferHome {
         }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
     }
 
-    void publishOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
+    void publishOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
         BuyOffer previousOffer = getBuyOffer(attachment.getCurrencyId(), transaction.getSenderId());
         if (previousOffer != null) {
             removeOffer(LedgerEvent.CURRENCY_OFFER_REPLACED, previousOffer);
@@ -421,7 +420,7 @@ public final class ExchangeOfferHome {
         return buyOfferTable.getManyBy(dbClause, from, to, sort);
     }
 
-    void addBuyOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
+    void addBuyOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
         buyOfferTable.insert(new BuyOffer(transaction, attachment));
     }
 
@@ -434,7 +433,7 @@ public final class ExchangeOfferHome {
 
         private final DbKey dbKey;
 
-        private BuyOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
+        private BuyOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
             super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getBuyRateNQT(),
                     attachment.getTotalBuyLimit(), attachment.getInitialBuySupply(), attachment.getExpirationHeight(), transaction.getHeight(),
                     transaction.getIndex());
@@ -512,7 +511,7 @@ public final class ExchangeOfferHome {
         return sellOfferTable.getManyBy(dbClause, from, to, sort);
     }
 
-    void addSellOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
+    void addSellOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
         sellOfferTable.insert(new SellOffer(transaction, attachment));
     }
 
@@ -525,7 +524,7 @@ public final class ExchangeOfferHome {
 
         private final DbKey dbKey;
 
-        private SellOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
+        private SellOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
             super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateNQT(),
                     attachment.getTotalSellLimit(), attachment.getInitialSellSupply(), attachment.getExpirationHeight(), transaction.getHeight(),
                     transaction.getIndex());

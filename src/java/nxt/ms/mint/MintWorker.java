@@ -25,6 +25,7 @@ import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.crypto.HashFunction;
 import nxt.http.API;
+import nxt.ms.CurrencyMintingAttachment;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import nxt.util.TrustAllSSLProvider;
@@ -177,7 +178,7 @@ public class MintWorker {
 
     private JSONObject currencyMint(String secretPhrase, long currencyId, long nonce, long units, long counter) {
         JSONObject ecBlock = getECBlock();
-        Attachment attachment = new Attachment.MonetarySystemCurrencyMinting(nonce, currencyId, units, counter);
+        Attachment attachment = new CurrencyMintingAttachment(nonce, currencyId, units, counter);
         Transaction.Builder builder = Nxt.newTransactionBuilder(Crypto.getPublicKey(secretPhrase), 0, Constants.ONE_NXT,
                 (short) 120, attachment)
                 .timestamp(((Long) ecBlock.get("timestamp")).intValue())

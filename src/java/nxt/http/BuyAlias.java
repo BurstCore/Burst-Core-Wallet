@@ -17,9 +17,10 @@
 package nxt.http;
 
 import nxt.account.Account;
-import nxt.messages.AliasHome;
+import nxt.messaging.AliasHome;
 import nxt.blockchain.Attachment;
 import nxt.NxtException;
+import nxt.messaging.AliasBuyAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -44,7 +45,7 @@ public final class BuyAlias extends CreateTransaction {
             return INCORRECT_ALIAS_NOTFORSALE;
         }
         long sellerId = alias.getAccountId();
-        Attachment attachment = new Attachment.MessagingAliasBuy(alias.getAliasName());
+        Attachment attachment = new AliasBuyAttachment(alias.getAliasName());
         return createTransaction(req, buyer, sellerId, amountNQT, attachment);
     }
 }

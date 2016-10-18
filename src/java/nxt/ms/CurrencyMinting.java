@@ -16,7 +16,6 @@
 
 package nxt.ms;
 
-import nxt.blockchain.Attachment;
 import nxt.crypto.HashFunction;
 
 import java.math.BigInteger;
@@ -32,7 +31,7 @@ public final class CurrencyMinting {
     public static final Set<HashFunction> acceptedHashFunctions =
             Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.SHA3, HashFunction.SCRYPT, HashFunction.Keccak25));
 
-    public static boolean meetsTarget(long accountId, Currency currency, Attachment.MonetarySystemCurrencyMinting attachment) {
+    public static boolean meetsTarget(long accountId, Currency currency, CurrencyMintingAttachment attachment) {
         byte[] hash = getHash(currency.getAlgorithm(), attachment.getNonce(), attachment.getCurrencyId(), attachment.getUnits(),
                 attachment.getCounter(), accountId);
         byte[] target = getTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(),

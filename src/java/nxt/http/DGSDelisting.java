@@ -18,7 +18,8 @@ package nxt.http;
 
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
-import nxt.dgs.DGSHome;
+import nxt.dgs.DelistingAttachment;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.NxtException;
 import org.json.simple.JSONStreamAware;
 
@@ -37,11 +38,11 @@ public final class DGSDelisting extends CreateTransaction {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         Account account = ParameterParser.getSenderAccount(req);
-        DGSHome.Goods goods = ParameterParser.getGoods(req);
+        DigitalGoodsHome.Goods goods = ParameterParser.getGoods(req);
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;
         }
-        Attachment attachment = new Attachment.DigitalGoodsDelisting(goods.getId());
+        Attachment attachment = new DelistingAttachment(goods.getId());
         return createTransaction(req, account, attachment);
     }
 

@@ -20,6 +20,7 @@ import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.messaging.AccountInfoAttachment;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -51,7 +52,7 @@ public final class SetAccountInfo extends CreateTransaction {
         }
 
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.MessagingAccountInfo(name, description);
+        Attachment attachment = new AccountInfoAttachment(name, description);
         return createTransaction(req, account, attachment);
 
     }

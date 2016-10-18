@@ -40,7 +40,7 @@ public final class GetDGSGoodsPurchaseCount extends APIServlet.APIRequestHandler
         ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
-        response.put("numberOfPurchases", childChain.getDGSHome().getGoodsPurchaseCount(goodsId, withPublicFeedbacksOnly, completed));
+        response.put("numberOfPurchases", childChain.getDigitalGoodsHome().getGoodsPurchaseCount(goodsId, withPublicFeedbacksOnly, completed));
         return response;
 
     }

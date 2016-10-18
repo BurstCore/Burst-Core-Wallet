@@ -20,6 +20,7 @@ import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.ms.Currency;
 import nxt.NxtException;
+import nxt.ms.CurrencyMintingAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -59,7 +60,7 @@ public final class CurrencyMint extends CreateTransaction {
         long counter = ParameterParser.getLong(req, "counter", 0, Integer.MAX_VALUE, true);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new Attachment.MonetarySystemCurrencyMinting(nonce, currency.getId(), units, counter);
+        Attachment attachment = new CurrencyMintingAttachment(nonce, currency.getId(), units, counter);
         return createTransaction(req, account, attachment);
     }
 

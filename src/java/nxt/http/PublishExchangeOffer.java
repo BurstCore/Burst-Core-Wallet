@@ -21,6 +21,7 @@ import nxt.blockchain.Attachment;
 import nxt.ms.Currency;
 import nxt.NxtException;
 import nxt.ms.CurrencyType;
+import nxt.ms.PublishExchangeOfferAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -76,7 +77,7 @@ public final class PublishExchangeOffer extends CreateTransaction {
         int expirationHeight = ParameterParser.getInt(req, "expirationHeight", 0, Integer.MAX_VALUE, true);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new Attachment.MonetarySystemPublishExchangeOffer(currency.getId(), buyRateNQT, sellRateNQT,
+        Attachment attachment = new PublishExchangeOfferAttachment(currency.getId(), buyRateNQT, sellRateNQT,
                 totalBuyLimit, totalSellLimit, initialBuySupply, initialSellSupply, expirationHeight);
         return createTransaction(req, account, attachment);
     }

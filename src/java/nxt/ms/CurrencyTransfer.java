@@ -16,7 +16,6 @@
 
 package nxt.ms;
 
-import nxt.blockchain.Attachment;
 import nxt.Nxt;
 import nxt.blockchain.Transaction;
 import nxt.db.DbClause;
@@ -127,7 +126,7 @@ public final class CurrencyTransfer {
         return currencyTransferTable.getCount(new DbClause.LongClause("currency_id", currencyId));
     }
 
-    static CurrencyTransfer addTransfer(Transaction transaction, Attachment.MonetarySystemCurrencyTransfer attachment) {
+    static CurrencyTransfer addTransfer(Transaction transaction, CurrencyTransferAttachment attachment) {
         CurrencyTransfer transfer = new CurrencyTransfer(transaction, attachment);
         currencyTransferTable.insert(transfer);
         listeners.notify(transfer, Event.TRANSFER);
@@ -146,7 +145,7 @@ public final class CurrencyTransfer {
     private final long units;
     private final int timestamp;
 
-    private CurrencyTransfer(Transaction transaction, Attachment.MonetarySystemCurrencyTransfer attachment) {
+    private CurrencyTransfer(Transaction transaction, CurrencyTransferAttachment attachment) {
         this.id = transaction.getId();
         this.dbKey = currencyTransferDbKeyFactory.newKey(this.id);
         this.height = Nxt.getBlockchain().getHeight();

@@ -18,6 +18,7 @@ package nxt.http;
 
 import nxt.account.Account;
 import nxt.ae.Asset;
+import nxt.ae.DividendPaymentAttachment;
 import nxt.blockchain.Attachment;
 import nxt.NxtException;
 import org.json.simple.JSONStreamAware;
@@ -43,7 +44,7 @@ public class DividendPayment extends CreateTransaction {
         if (Asset.getAsset(asset.getId(), height) == null) {
             return JSONResponses.ASSET_NOT_ISSUED_YET;
         }
-        final Attachment attachment = new Attachment.ColoredCoinsDividendPayment(asset.getId(), height, amountNQTPerQNT);
+        final Attachment attachment = new DividendPaymentAttachment(asset.getId(), height, amountNQTPerQNT);
         try {
             return this.createTransaction(request, account, attachment);
         } catch (NxtException.InsufficientBalanceException e) {

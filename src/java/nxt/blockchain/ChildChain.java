@@ -21,14 +21,10 @@ import nxt.account.BalanceHome;
 import nxt.ae.AssetDividendHome;
 import nxt.ae.OrderHome;
 import nxt.ae.TradeHome;
-import nxt.blockchain.internal.ChildTransactionImpl;
-import nxt.blockchain.internal.TransactionHome;
-import nxt.blockchain.internal.UnconfirmedChildTransaction;
-import nxt.blockchain.internal.UnconfirmedTransaction;
-import nxt.dgs.DGSHome;
-import nxt.messages.AliasHome;
-import nxt.messages.PrunableMessageHome;
-import nxt.messages.TaggedDataHome;
+import nxt.dgs.DigitalGoodsHome;
+import nxt.messaging.AliasHome;
+import nxt.messaging.PrunableMessageHome;
+import nxt.messaging.TaggedDataHome;
 import nxt.ms.CurrencyFounderHome;
 import nxt.ms.ExchangeHome;
 import nxt.ms.ExchangeOfferHome;
@@ -77,7 +73,7 @@ public final class ChildChain extends Chain {
     private final AssetDividendHome assetDividendHome;
     private final BalanceHome balanceHome;
     private final CurrencyFounderHome currencyFounderHome;
-    private final DGSHome dgsHome;
+    private final DigitalGoodsHome digitalGoodsHome;
     private final ExchangeHome exchangeHome;
     private final ExchangeOfferHome exchangeOfferHome;
     private final ExchangeRequestHome exchangeRequestHome;
@@ -99,7 +95,7 @@ public final class ChildChain extends Chain {
         this.assetDividendHome = AssetDividendHome.forChain(this);
         this.balanceHome = BalanceHome.forChain(this);
         this.currencyFounderHome = CurrencyFounderHome.forChain(this);
-        this.dgsHome = DGSHome.forChain(this);
+        this.digitalGoodsHome = DigitalGoodsHome.forChain(this);
         this.exchangeHome = ExchangeHome.forChain(this);
         this.exchangeOfferHome = ExchangeOfferHome.forChain(this);
         this.exchangeRequestHome = ExchangeRequestHome.forChain(this);
@@ -134,8 +130,8 @@ public final class ChildChain extends Chain {
         return currencyFounderHome;
     }
 
-    public DGSHome getDGSHome() {
-        return dgsHome;
+    public DigitalGoodsHome getDigitalGoodsHome() {
+        return digitalGoodsHome;
     }
 
     public ExchangeHome getExchangeHome() {

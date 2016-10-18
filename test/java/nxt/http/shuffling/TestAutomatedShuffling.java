@@ -22,7 +22,7 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.shuffling.Shuffler;
 import nxt.Shuffling;
-import nxt.shuffling.ShufflingTransaction;
+import nxt.shuffling.ShufflingTransactionType;
 import nxt.Tester;
 import nxt.blockchain.Transaction;
 import nxt.crypto.AnonymouslyEncryptedData;
@@ -1678,7 +1678,7 @@ public class TestAutomatedShuffling extends BlockchainTest {
                 maxBlockPayload = block.getPayloadLength();
             }
             for (Transaction transaction : block.getTransactions()) {
-                if (transaction.getType() == ShufflingTransaction.SHUFFLING_PROCESSING) {
+                if (transaction.getType() == ShufflingTransactionType.SHUFFLING_PROCESSING) {
                     if (transaction.getFullSize() > maxProcessTransactionFullSize) {
                         maxProcessTransactionFullSize = transaction.getFullSize();
                     }
@@ -1686,7 +1686,7 @@ public class TestAutomatedShuffling extends BlockchainTest {
                         maxProcessTransactionJsonSize = transaction.getJSONObject().toString().length();
                     }
                 }
-                if (transaction.getType() == ShufflingTransaction.SHUFFLING_CANCELLATION) {
+                if (transaction.getType() == ShufflingTransactionType.SHUFFLING_CANCELLATION) {
                     if (transaction.getFullSize() > maxProcessTransactionFullSize) {
                         maxCancelTransactionFullSize = transaction.getFullSize();
                     }
@@ -1725,7 +1725,7 @@ public class TestAutomatedShuffling extends BlockchainTest {
                 maxBlockPayload = block.getPayloadLength();
             }
             for (Transaction transaction : block.getTransactions()) {
-                if (transaction.getType() == ShufflingTransaction.SHUFFLING_PROCESSING) {
+                if (transaction.getType() == ShufflingTransactionType.SHUFFLING_PROCESSING) {
                     if (transaction.getFullSize() > maxProcessTransactionFullSize) {
                         maxProcessTransactionFullSize = transaction.getFullSize();
                     }
@@ -1733,7 +1733,7 @@ public class TestAutomatedShuffling extends BlockchainTest {
                         maxProcessTransactionJsonSize = transaction.getJSONObject().toString().length();
                     }
                 }
-                if (transaction.getType() == ShufflingTransaction.SHUFFLING_CANCELLATION) {
+                if (transaction.getType() == ShufflingTransactionType.SHUFFLING_CANCELLATION) {
                     if (transaction.getFullSize() > maxProcessTransactionFullSize) {
                         maxCancelTransactionFullSize = transaction.getFullSize();
                     }

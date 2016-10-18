@@ -16,10 +16,9 @@
 
 package nxt.ms;
 
-import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
-import nxt.shuffling.ShufflingTransaction;
+import nxt.shuffling.ShufflingTransactionType;
 import nxt.blockchain.Transaction;
 import nxt.crypto.HashFunction;
 
@@ -42,12 +41,12 @@ public enum CurrencyType {
 
         @Override
         void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws NxtException.NotValidException {
-            if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_ISSUANCE) {
                 if (!validators.contains(CLAIMABLE)) {
                     throw new NxtException.NotValidException("Currency is not exchangeable and not claimable");
                 }
             }
-            if (transaction.getType() instanceof MonetarySystem.MonetarySystemExchange || transaction.getType() == MonetarySystem.PUBLISH_EXCHANGE_OFFER) {
+            if (transaction.getType() instanceof MonetarySystemTransactionType.MonetarySystemExchange || transaction.getType() == MonetarySystemTransactionType.PUBLISH_EXCHANGE_OFFER) {
                 throw new NxtException.NotValidException("Currency is not exchangeable");
             }
         }
@@ -60,12 +59,12 @@ public enum CurrencyType {
 
         @Override
         void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws NxtException.NotValidException {
-            if (transaction.getType() == MonetarySystem.CURRENCY_TRANSFER) {
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_TRANSFER) {
                 if (currency == null ||  (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
                     throw new NxtException.NotValidException("Controllable currency can only be transferred to/from issuer account");
                 }
             }
-            if (transaction.getType() == MonetarySystem.PUBLISH_EXCHANGE_OFFER) {
+            if (transaction.getType() == MonetarySystemTransactionType.PUBLISH_EXCHANGE_OFFER) {
                 if (currency == null || currency.getAccountId() != transaction.getSenderId()) {
                     throw new NxtException.NotValidException("Only currency issuer can publish an exchange offer for controllable currency");
                 }
@@ -83,8 +82,8 @@ public enum CurrencyType {
 
         @Override
         void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws NxtException.ValidationException {
-            if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                Attachment.MonetarySystemCurrencyIssuance attachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_ISSUANCE) {
+                CurrencyIssuanceAttachment attachment = (CurrencyIssuanceAttachment) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
                 int finishHeight = attachment.getFinishValidationHeight(transaction);
                 if  (issuanceHeight <= finishHeight) {
@@ -105,8 +104,8 @@ public enum CurrencyType {
                     throw new NxtException.NotValidException("Max supply must not exceed reserve supply for reservable and non-mintable currency");
                 }
             }
-            if (transaction.getType() == MonetarySystem.RESERVE_INCREASE) {
-                Attachment.MonetarySystemReserveIncrease attachment = (Attachment.MonetarySystemReserveIncrease) transaction.getAttachment();
+            if (transaction.getType() == MonetarySystemTransactionType.RESERVE_INCREASE) {
+                ReserveIncreaseAttachment attachment = (ReserveIncreaseAttachment) transaction.getAttachment();
                 if (currency != null && currency.getIssuanceHeight() <= attachment.getFinishValidationHeight(transaction)) {
                     throw new NxtException.NotCurrentlyValidException("Cannot increase reserve for active currency");
                 }
@@ -115,11 +114,11 @@ public enum CurrencyType {
 
         @Override
         void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws NxtException.NotValidException {
-            if (transaction.getType() == MonetarySystem.RESERVE_INCREASE) {
+            if (transaction.getType() == MonetarySystemTransactionType.RESERVE_INCREASE) {
                 throw new NxtException.NotValidException("Cannot increase reserve since currency is not reservable");
             }
-            if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                Attachment.MonetarySystemCurrencyIssuance attachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_ISSUANCE) {
+                CurrencyIssuanceAttachment attachment = (CurrencyIssuanceAttachment) transaction.getAttachment();
                 if (attachment.getIssuanceHeight() != 0) {
                     throw new NxtException.NotValidException("Issuance height for non-reservable currency must be 0");
                 }
@@ -143,8 +142,8 @@ public enum CurrencyType {
 
         @Override
         void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws NxtException.ValidationException {
-            if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                Attachment.MonetarySystemCurrencyIssuance attachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_ISSUANCE) {
+                CurrencyIssuanceAttachment attachment = (CurrencyIssuanceAttachment) transaction.getAttachment();
                 if (!validators.contains(RESERVABLE)) {
                     throw new NxtException.NotValidException("Claimable currency must be reservable");
                 }
@@ -155,7 +154,7 @@ public enum CurrencyType {
                     throw new NxtException.NotValidException("Claimable currency must have initial supply 0");
                 }
             }
-            if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
+            if (transaction.getType() == MonetarySystemTransactionType.RESERVE_CLAIM) {
                 if (currency == null || !currency.isActive()) {
                     throw new NxtException.NotCurrentlyValidException("Cannot claim reserve since currency is not yet active");
                 }
@@ -164,7 +163,7 @@ public enum CurrencyType {
 
         @Override
         void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws NxtException.NotValidException {
-            if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
+            if (transaction.getType() == MonetarySystemTransactionType.RESERVE_CLAIM) {
                 throw new NxtException.NotValidException("Cannot claim reserve since currency is not claimable");
             }
         }
@@ -175,8 +174,8 @@ public enum CurrencyType {
     MINTABLE(0x10) {
         @Override
         void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws NxtException.NotValidException {
-            if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                Attachment.MonetarySystemCurrencyIssuance issuanceAttachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_ISSUANCE) {
+                CurrencyIssuanceAttachment issuanceAttachment = (CurrencyIssuanceAttachment) transaction.getAttachment();
                 try {
                     HashFunction hashFunction = HashFunction.getHashFunction(issuanceAttachment.getAlgorithm());
                     if (!CurrencyMinting.acceptedHashFunctions.contains(hashFunction)) {
@@ -199,15 +198,15 @@ public enum CurrencyType {
 
         @Override
         void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws NxtException.NotValidException {
-            if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                Attachment.MonetarySystemCurrencyIssuance issuanceAttachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_ISSUANCE) {
+                CurrencyIssuanceAttachment issuanceAttachment = (CurrencyIssuanceAttachment) transaction.getAttachment();
                 if (issuanceAttachment.getMinDifficulty() != 0 ||
                         issuanceAttachment.getMaxDifficulty() != 0 ||
                         issuanceAttachment.getAlgorithm() != 0) {
                     throw new NxtException.NotValidException("Non mintable currency should not specify algorithm or difficulty");
                 }
             }
-            if (transaction.getType() == MonetarySystem.CURRENCY_MINTING) {
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_MINTING) {
                 throw new NxtException.NotValidException("Currency is not mintable");
             }
         }
@@ -219,7 +218,7 @@ public enum CurrencyType {
     NON_SHUFFLEABLE(0x20) {
         @Override
         void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws NxtException.ValidationException {
-            if (transaction.getType() == ShufflingTransaction.SHUFFLING_CREATION) {
+            if (transaction.getType() == ShufflingTransactionType.SHUFFLING_CREATION) {
                 throw new NxtException.NotValidException("Shuffling is not allowed for this currency");
             }
         }
@@ -286,7 +285,7 @@ public enum CurrencyType {
         }
     }
 
-    static void validateCurrencyNaming(long issuerAccountId, Attachment.MonetarySystemCurrencyIssuance attachment) throws NxtException.ValidationException {
+    static void validateCurrencyNaming(long issuerAccountId, CurrencyIssuanceAttachment attachment) throws NxtException.ValidationException {
         String name = attachment.getName();
         String code = attachment.getCode();
         String description = attachment.getDescription();

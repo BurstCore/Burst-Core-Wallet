@@ -18,11 +18,12 @@ package nxt.http;
 
 
 import nxt.account.Account;
-import nxt.messages.AliasHome;
+import nxt.messaging.AliasHome;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.messaging.AliasAssignmentAttachment;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -79,7 +80,7 @@ public final class SetAlias extends CreateTransaction {
             return response;
         }
 
-        Attachment attachment = new Attachment.MessagingAliasAssignment(aliasName, aliasURI);
+        Attachment attachment = new AliasAssignmentAttachment(aliasName, aliasURI);
         return createTransaction(req, account, attachment);
 
     }

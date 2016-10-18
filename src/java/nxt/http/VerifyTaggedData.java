@@ -21,6 +21,7 @@ import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Transaction;
+import nxt.messaging.TaggedDataUploadAttachment;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -50,14 +51,14 @@ public final class VerifyTaggedData extends APIServlet.APIRequestHandler {
             return UNKNOWN_TRANSACTION;
         }
 
-        Attachment.TaggedDataUpload taggedData = ParameterParser.getTaggedData(req);
+        TaggedDataUploadAttachment taggedData = ParameterParser.getTaggedData(req);
         Attachment attachment = transaction.getAttachment();
 
-        if (! (attachment instanceof Attachment.TaggedDataUpload)) {
+        if (! (attachment instanceof TaggedDataUploadAttachment)) {
             return INCORRECT_TRANSACTION;
         }
 
-        Attachment.TaggedDataUpload myTaggedData = (Attachment.TaggedDataUpload)attachment;
+        TaggedDataUploadAttachment myTaggedData = (TaggedDataUploadAttachment)attachment;
         if (!Arrays.equals(myTaggedData.getHash(), taggedData.getHash())) {
             return HASHES_MISMATCH;
         }

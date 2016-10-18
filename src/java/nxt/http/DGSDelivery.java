@@ -19,9 +19,11 @@ package nxt.http;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.Constants;
-import nxt.dgs.DGSHome;
+import nxt.dgs.DeliveryAttachment;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.NxtException;
 import nxt.crypto.EncryptedData;
+import nxt.dgs.UnencryptedDeliveryAttachment;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -45,7 +47,7 @@ public final class DGSDelivery extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
         Account sellerAccount = ParameterParser.getSenderAccount(req);
-        DGSHome.Purchase purchase = ParameterParser.getPurchase(req);
+        DigitalGoodsHome.Purchase purchase = ParameterParser.getPurchase(req);
         if (sellerAccount.getId() != purchase.getSellerId()) {
             return INCORRECT_PURCHASE;
         }
@@ -91,9 +93,9 @@ public final class DGSDelivery extends CreateTransaction {
         }
 
         Attachment attachment = encryptedGoods == null ?
-                new Attachment.UnencryptedDigitalGoodsDelivery(purchase.getId(), goodsBytes,
+                new UnencryptedDeliveryAttachment(purchase.getId(), goodsBytes,
                         goodsIsText, discountNQT, Account.getPublicKey(buyerAccount.getId())) :
-                new Attachment.DigitalGoodsDelivery(purchase.getId(), encryptedGoods,
+                new DeliveryAttachment(purchase.getId(), encryptedGoods,
                         goodsIsText, discountNQT);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
 

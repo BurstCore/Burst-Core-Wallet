@@ -17,8 +17,8 @@
 package nxt.http;
 
 import nxt.account.Account;
-import nxt.blockchain.Attachment;
 import nxt.NxtException;
+import nxt.shuffling.ShufflingAttachment;
 import nxt.shuffling.ShufflingHome;
 import nxt.shuffling.ShufflingParticipantHome;
 import nxt.util.Convert;
@@ -72,7 +72,7 @@ public final class ShufflingProcess extends CreateTransaction {
             return INCORRECT_PUBLIC_KEY; // do not allow existing account to be used as recipient
         }
 
-        Attachment.ShufflingAttachment attachment = shuffling.process(senderId, secretPhrase, recipientPublicKey);
+        ShufflingAttachment attachment = shuffling.process(senderId, secretPhrase, recipientPublicKey);
         return createTransaction(req, senderAccount, attachment);
     }
 

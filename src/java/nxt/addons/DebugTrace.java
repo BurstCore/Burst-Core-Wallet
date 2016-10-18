@@ -20,6 +20,13 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.account.Account;
 import nxt.account.HoldingType;
+import nxt.ae.AskOrderPlacementAttachment;
+import nxt.ae.AssetDeleteAttachment;
+import nxt.ae.AssetIssuanceAttachment;
+import nxt.ae.AssetTransferAttachment;
+import nxt.ae.DividendPaymentAttachment;
+import nxt.ae.OrderCancellationAttachment;
+import nxt.ae.OrderPlacementAttachment;
 import nxt.ae.OrderHome;
 import nxt.ae.TradeHome;
 import nxt.blockchain.Attachment;
@@ -29,16 +36,24 @@ import nxt.blockchain.ChildChain;
 import nxt.blockchain.Genesis;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionProcessor;
-import nxt.blockchain.internal.BlockDb;
-import nxt.blockchain.internal.FxtTransactionImpl;
-import nxt.blockchain.internal.TransactionImpl;
+import nxt.blockchain.BlockDb;
+import nxt.blockchain.FxtTransactionImpl;
+import nxt.blockchain.TransactionImpl;
 import nxt.db.DbIterator;
-import nxt.dgs.DGSHome;
+import nxt.dgs.DeliveryAttachment;
+import nxt.dgs.DigitalGoodsHome;
+import nxt.dgs.PurchaseAttachment;
+import nxt.dgs.RefundAttachment;
 import nxt.ms.Currency;
 import nxt.ms.CurrencyFounderHome;
 import nxt.ms.CurrencyMint;
 import nxt.ms.CurrencyType;
 import nxt.ms.ExchangeHome;
+import nxt.ms.CurrencyIssuanceAttachment;
+import nxt.ms.CurrencyTransferAttachment;
+import nxt.ms.PublishExchangeOfferAttachment;
+import nxt.ms.ReserveClaimAttachment;
+import nxt.ms.ReserveIncreaseAttachment;
 import nxt.shuffling.ShufflingHome;
 import nxt.util.Convert;
 import nxt.util.Logger;
@@ -600,12 +615,12 @@ public final class DebugTrace {
 
     private Map<String,String> getValues(long accountId, Transaction transaction, Attachment attachment, boolean isRecipient) {
         Map<String,String> map = getValues(accountId, false);
-        if (attachment instanceof Attachment.ColoredCoinsOrderPlacement) {
+        if (attachment instanceof OrderPlacementAttachment) {
             if (isRecipient) {
                 return Collections.emptyMap();
             }
-            Attachment.ColoredCoinsOrderPlacement orderPlacement = (Attachment.ColoredCoinsOrderPlacement)attachment;
-            boolean isAsk = orderPlacement instanceof Attachment.ColoredCoinsAskOrderPlacement;
+            OrderPlacementAttachment orderPlacement = (OrderPlacementAttachment)attachment;
+            boolean isAsk = orderPlacement instanceof AskOrderPlacementAttachment;
             map.put("asset", Long.toUnsignedString(orderPlacement.getAssetId()));
             map.put("order", transaction.getStringId());
             map.put("order price", String.valueOf(orderPlacement.getPriceNQT()));
@@ -621,16 +636,16 @@ public final class DebugTrace {
             map.put("order cost", orderCost.toString());
             String event = (isAsk ? "ask" : "bid") + " order";
             map.put("event", event);
-        } else if (attachment instanceof Attachment.ColoredCoinsAssetIssuance) {
+        } else if (attachment instanceof AssetIssuanceAttachment) {
             if (isRecipient) {
                 return Collections.emptyMap();
             }
-            Attachment.ColoredCoinsAssetIssuance assetIssuance = (Attachment.ColoredCoinsAssetIssuance)attachment;
+            AssetIssuanceAttachment assetIssuance = (AssetIssuanceAttachment)attachment;
             map.put("asset", transaction.getStringId());
             map.put("asset quantity", String.valueOf(assetIssuance.getQuantityQNT()));
             map.put("event", "asset issuance");
-        } else if (attachment instanceof Attachment.ColoredCoinsAssetTransfer) {
-            Attachment.ColoredCoinsAssetTransfer assetTransfer = (Attachment.ColoredCoinsAssetTransfer)attachment;
+        } else if (attachment instanceof AssetTransferAttachment) {
+            AssetTransferAttachment assetTransfer = (AssetTransferAttachment)attachment;
             map.put("asset", Long.toUnsignedString(assetTransfer.getAssetId()));
             long quantity = assetTransfer.getQuantityQNT();
             if (! isRecipient) {
@@ -638,29 +653,29 @@ public final class DebugTrace {
             }
             map.put("asset quantity", String.valueOf(quantity));
             map.put("event", "asset transfer");
-        } else if (attachment instanceof Attachment.ColoredCoinsAssetDelete) {
+        } else if (attachment instanceof AssetDeleteAttachment) {
             if (isRecipient) {
                 return Collections.emptyMap();
             }
-            Attachment.ColoredCoinsAssetDelete assetDelete = (Attachment.ColoredCoinsAssetDelete)attachment;
+            AssetDeleteAttachment assetDelete = (AssetDeleteAttachment)attachment;
             map.put("asset", Long.toUnsignedString(assetDelete.getAssetId()));
             long quantity = assetDelete.getQuantityQNT();
             map.put("asset quantity", String.valueOf(-quantity));
             map.put("event", "asset delete");
-        } else if (attachment instanceof Attachment.ColoredCoinsOrderCancellation) {
-            Attachment.ColoredCoinsOrderCancellation orderCancellation = (Attachment.ColoredCoinsOrderCancellation)attachment;
+        } else if (attachment instanceof OrderCancellationAttachment) {
+            OrderCancellationAttachment orderCancellation = (OrderCancellationAttachment)attachment;
             map.put("order", Long.toUnsignedString(orderCancellation.getOrderId()));
             map.put("event", "order cancel");
-        } else if (attachment instanceof Attachment.DigitalGoodsPurchase) {
-            Attachment.DigitalGoodsPurchase purchase = (Attachment.DigitalGoodsPurchase)transaction.getAttachment();
+        } else if (attachment instanceof PurchaseAttachment) {
+            PurchaseAttachment purchase = (PurchaseAttachment)transaction.getAttachment();
             if (isRecipient) {
-                map = getValues(((ChildChain) transaction.getChain()).getDGSHome().getGoods(purchase.getGoodsId()).getSellerId(), false);
+                map = getValues(((ChildChain) transaction.getChain()).getDigitalGoodsHome().getGoods(purchase.getGoodsId()).getSellerId(), false);
             }
             map.put("event", "purchase");
             map.put("purchase", transaction.getStringId());
-        } else if (attachment instanceof Attachment.DigitalGoodsDelivery) {
-            Attachment.DigitalGoodsDelivery delivery = (Attachment.DigitalGoodsDelivery)transaction.getAttachment();
-            DGSHome.Purchase purchase = ((ChildChain) transaction.getChain()).getDGSHome().getPurchase(delivery.getPurchaseId());
+        } else if (attachment instanceof DeliveryAttachment) {
+            DeliveryAttachment delivery = (DeliveryAttachment)transaction.getAttachment();
+            DigitalGoodsHome.Purchase purchase = ((ChildChain) transaction.getChain()).getDigitalGoodsHome().getPurchase(delivery.getPurchaseId());
             if (isRecipient) {
                 map = getValues(purchase.getBuyerId(), false);
             }
@@ -678,10 +693,10 @@ public final class DebugTrace {
                 discount = - discount;
             }
             map.put("discount", String.valueOf(discount));
-        } else if (attachment instanceof Attachment.DigitalGoodsRefund) {
-            Attachment.DigitalGoodsRefund refund = (Attachment.DigitalGoodsRefund)transaction.getAttachment();
+        } else if (attachment instanceof RefundAttachment) {
+            RefundAttachment refund = (RefundAttachment)transaction.getAttachment();
             if (isRecipient) {
-                map = getValues(((ChildChain) transaction.getChain()).getDGSHome().getPurchase(refund.getPurchaseId()).getBuyerId(), false);
+                map = getValues(((ChildChain) transaction.getChain()).getDigitalGoodsHome().getPurchase(refund.getPurchaseId()).getBuyerId(), false);
             }
             map.put("event", "refund");
             map.put("purchase", Long.toUnsignedString(refund.getPurchaseId()));
@@ -701,8 +716,8 @@ public final class DebugTrace {
             } else {
                 map.put("recipient", Long.toUnsignedString(transaction.getRecipientId()));
             }
-        } else if (attachment instanceof Attachment.MonetarySystemPublishExchangeOffer) {
-            Attachment.MonetarySystemPublishExchangeOffer publishOffer = (Attachment.MonetarySystemPublishExchangeOffer)attachment;
+        } else if (attachment instanceof PublishExchangeOfferAttachment) {
+            PublishExchangeOfferAttachment publishOffer = (PublishExchangeOfferAttachment)attachment;
             map.put("currency", Long.toUnsignedString(publishOffer.getCurrencyId()));
             map.put("offer", transaction.getStringId());
             map.put("buy rate", String.valueOf(publishOffer.getBuyRateNQT()));
@@ -716,13 +731,13 @@ public final class DebugTrace {
             BigInteger sellCost = BigInteger.valueOf(publishOffer.getSellRateNQT()).multiply(BigInteger.valueOf(sellUnits));
             map.put("sell cost", sellCost.toString());
             map.put("event", "offer");
-        } else if (attachment instanceof Attachment.MonetarySystemCurrencyIssuance) {
-            Attachment.MonetarySystemCurrencyIssuance currencyIssuance = (Attachment.MonetarySystemCurrencyIssuance) attachment;
+        } else if (attachment instanceof CurrencyIssuanceAttachment) {
+            CurrencyIssuanceAttachment currencyIssuance = (CurrencyIssuanceAttachment) attachment;
             map.put("currency", transaction.getStringId());
             map.put("currency units", String.valueOf(currencyIssuance.getInitialSupply()));
             map.put("event", "currency issuance");
-        } else if (attachment instanceof Attachment.MonetarySystemCurrencyTransfer) {
-            Attachment.MonetarySystemCurrencyTransfer currencyTransfer = (Attachment.MonetarySystemCurrencyTransfer) attachment;
+        } else if (attachment instanceof CurrencyTransferAttachment) {
+            CurrencyTransferAttachment currencyTransfer = (CurrencyTransferAttachment) attachment;
             map.put("currency", Long.toUnsignedString(currencyTransfer.getCurrencyId()));
             long units = currencyTransfer.getUnits();
             if (!isRecipient) {
@@ -730,21 +745,21 @@ public final class DebugTrace {
             }
             map.put("currency units", String.valueOf(units));
             map.put("event", "currency transfer");
-        } else if (attachment instanceof Attachment.MonetarySystemReserveClaim) {
-            Attachment.MonetarySystemReserveClaim claim = (Attachment.MonetarySystemReserveClaim) attachment;
+        } else if (attachment instanceof ReserveClaimAttachment) {
+            ReserveClaimAttachment claim = (ReserveClaimAttachment) attachment;
             map.put("currency", Long.toUnsignedString(claim.getCurrencyId()));
             Currency currency = Currency.getCurrency(claim.getCurrencyId());
             map.put("currency units", String.valueOf(-claim.getUnits()));
             map.put("currency cost", String.valueOf(Math.multiplyExact(claim.getUnits(), currency.getCurrentReservePerUnitNQT())));
             map.put("event", "currency claim");
-        } else if (attachment instanceof Attachment.MonetarySystemReserveIncrease) {
-            Attachment.MonetarySystemReserveIncrease reserveIncrease = (Attachment.MonetarySystemReserveIncrease) attachment;
+        } else if (attachment instanceof ReserveIncreaseAttachment) {
+            ReserveIncreaseAttachment reserveIncrease = (ReserveIncreaseAttachment) attachment;
             map.put("currency", Long.toUnsignedString(reserveIncrease.getCurrencyId()));
             Currency currency = Currency.getCurrency(reserveIncrease.getCurrencyId());
             map.put("currency cost", String.valueOf(-Math.multiplyExact(reserveIncrease.getAmountPerUnitNQT(), currency.getReserveSupply())));
             map.put("event", "currency reserve");
-        } else if (attachment instanceof Attachment.ColoredCoinsDividendPayment) {
-            Attachment.ColoredCoinsDividendPayment dividendPayment = (Attachment.ColoredCoinsDividendPayment)attachment;
+        } else if (attachment instanceof DividendPaymentAttachment) {
+            DividendPaymentAttachment dividendPayment = (DividendPaymentAttachment)attachment;
             long totalDividend = 0;
             String assetId = Long.toUnsignedString(dividendPayment.getAssetId());
             try (DbIterator<Account.AccountAsset> iterator = Account.getAssetAccounts(dividendPayment.getAssetId(), dividendPayment.getHeight(), 0, -1)) {

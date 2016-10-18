@@ -21,6 +21,7 @@ import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.account.HoldingType;
 import nxt.NxtException;
+import nxt.shuffling.ShufflingCreationAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -45,7 +46,7 @@ public final class ShufflingCreate extends CreateTransaction {
         byte participantCount = ParameterParser.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
                 Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, true);
         short registrationPeriod = (short)ParameterParser.getInt(req, "registrationPeriod", 0, Constants.MAX_SHUFFLING_REGISTRATION_PERIOD, true);
-        Attachment attachment = new Attachment.ShufflingCreation(holdingId, holdingType, amount, participantCount, registrationPeriod);
+        Attachment attachment = new ShufflingCreationAttachment(holdingId, holdingType, amount, participantCount, registrationPeriod);
         Account account = ParameterParser.getSenderAccount(req);
         if (account.getControls().contains(Account.ControlType.PHASING_ONLY)) {
             return JSONResponses.error("Accounts under phasing only control cannot start a shuffling");

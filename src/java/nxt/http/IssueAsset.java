@@ -17,6 +17,7 @@
 package nxt.http;
 
 import nxt.account.Account;
+import nxt.ae.AssetIssuanceAttachment;
 import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
@@ -79,7 +80,7 @@ public final class IssueAsset extends CreateTransaction {
 
         long quantityQNT = ParameterParser.getQuantityQNT(req);
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.ColoredCoinsAssetIssuance(name, description, quantityQNT, decimals);
+        Attachment attachment = new AssetIssuanceAttachment(name, description, quantityQNT, decimals);
         return createTransaction(req, account, attachment);
 
     }

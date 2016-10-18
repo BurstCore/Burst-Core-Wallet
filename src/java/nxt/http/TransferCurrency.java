@@ -20,6 +20,7 @@ import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.ms.Currency;
 import nxt.NxtException;
+import nxt.ms.CurrencyTransferAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,7 +44,7 @@ public final class TransferCurrency extends CreateTransaction {
         long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new Attachment.MonetarySystemCurrencyTransfer(currency.getId(), units);
+        Attachment attachment = new CurrencyTransferAttachment(currency.getId(), units);
         try {
             return createTransaction(req, account, recipient, 0, attachment);
         } catch (NxtException.InsufficientBalanceException e) {

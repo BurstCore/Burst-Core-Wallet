@@ -21,6 +21,7 @@ import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
 import nxt.NxtException;
 import nxt.shuffling.ShufflingHome;
+import nxt.shuffling.ShufflingRegistrationAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,7 +38,7 @@ public final class ShufflingRegister extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
 
-        Attachment attachment = new Attachment.ShufflingRegistration(shufflingFullHash);
+        Attachment attachment = new ShufflingRegistrationAttachment(shufflingFullHash);
 
         Account account = ParameterParser.getSenderAccount(req);
         if (account.getControls().contains(Account.ControlType.PHASING_ONLY)) {

@@ -22,8 +22,6 @@ import nxt.blockchain.ChildChain;
 import nxt.db.BasicDb;
 import nxt.db.DbVersion;
 import nxt.db.TransactionalDb;
-import nxt.dbschema.internal.ChildDbVersion;
-import nxt.dbschema.internal.FxtDbVersion;
 
 import java.sql.Connection;
 import java.sql.SQLException;

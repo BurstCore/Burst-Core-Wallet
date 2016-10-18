@@ -16,8 +16,7 @@
 
 package nxt.account;
 
-import nxt.blockchain.Appendix;
-import nxt.blockchain.Attachment;
+import nxt.ae.DividendPaymentAttachment;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.ae.AssetTransfer;
@@ -37,7 +36,8 @@ import nxt.db.VersionedEntityDbTable;
 import nxt.db.VersionedPersistentDbTable;
 import nxt.ms.CurrencyTransfer;
 import nxt.ms.ExchangeHome;
-import nxt.shuffling.ShufflingTransaction;
+import nxt.shuffling.ShufflingRecipientsAttachment;
+import nxt.shuffling.ShufflingTransactionType;
 import nxt.util.Convert;
 import nxt.util.Listener;
 import nxt.util.Listeners;
@@ -1052,11 +1052,11 @@ public final class Account {
                 publicKeyCache.remove(accountDbKeyFactory.newKey(block.getGeneratorId()));
                 block.getTransactions().forEach(transaction -> {
                     publicKeyCache.remove(accountDbKeyFactory.newKey(transaction.getSenderId()));
-                    if (!transaction.getAppendages(appendix -> (appendix instanceof Appendix.PublicKeyAnnouncement), false).isEmpty()) {
+                    if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
                         publicKeyCache.remove(accountDbKeyFactory.newKey(transaction.getRecipientId()));
                     }
-                    if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
-                        Attachment.ShufflingRecipients shufflingRecipients = (Attachment.ShufflingRecipients) transaction.getAttachment();
+                    if (transaction.getType() == ShufflingTransactionType.SHUFFLING_RECIPIENTS) {
+                        ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
                         for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
                             publicKeyCache.remove(accountDbKeyFactory.newKey(Account.getId(publicKey)));
                         }
@@ -1817,7 +1817,7 @@ public final class Account {
         }
     }
 
-    public void payDividends(ChildChain childChain, final long transactionId, Attachment.ColoredCoinsDividendPayment attachment) {
+    public void payDividends(ChildChain childChain, final long transactionId, DividendPaymentAttachment attachment) {
         long totalDividend = 0;
         List<AccountAsset> accountAssets = new ArrayList<>();
         try (DbIterator<AccountAsset> iterator = getAssetAccounts(attachment.getAssetId(), attachment.getHeight(), 0, -1)) {

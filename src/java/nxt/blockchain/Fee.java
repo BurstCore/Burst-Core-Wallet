@@ -17,7 +17,6 @@
 package nxt.blockchain;
 
 import nxt.Constants;
-import nxt.blockchain.internal.TransactionImpl;
 import nxt.util.Convert;
 
 public interface Fee {

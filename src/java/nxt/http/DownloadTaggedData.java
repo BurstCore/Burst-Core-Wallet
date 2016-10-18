@@ -19,7 +19,7 @@ package nxt.http;
 import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.messages.TaggedDataHome;
+import nxt.messaging.TaggedDataHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

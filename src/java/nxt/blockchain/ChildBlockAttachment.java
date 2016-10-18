@@ -17,9 +17,6 @@
 package nxt.blockchain;
 
 import nxt.NxtException;
-import nxt.blockchain.internal.ChildTransactionImpl;
-import nxt.blockchain.internal.FxtTransactionImpl;
-import nxt.blockchain.internal.TransactionHome;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
@@ -100,7 +97,7 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     //TODO: include full size of child transactions???
     @Override
-    int getMyFullSize() {
+    protected int getMyFullSize() {
         if (childTransactionFullHashes == null) {
             return 4 + 1 + backFees.length * 8;
         }
@@ -108,12 +105,12 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
     }
 
     @Override
-    int getMySize() {
+    protected int getMySize() {
         return 4 + 32 + 1 + backFees.length * 8;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    protected void putMyBytes(ByteBuffer buffer) {
         buffer.putInt(chainId);
         buffer.put(getHash());
         buffer.put((byte)backFees.length);
@@ -123,7 +120,7 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    protected void putMyJSON(JSONObject json) {
         json.put("chain", chainId);
         if (childTransactionFullHashes != null) {
             JSONArray jsonArray = new JSONArray();

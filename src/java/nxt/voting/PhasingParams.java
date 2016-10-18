@@ -17,7 +17,6 @@
 package nxt.voting;
 
 import nxt.account.AccountRestrictions;
-import nxt.blockchain.Appendix;
 import nxt.ae.Asset;
 import nxt.Constants;
 import nxt.ms.Currency;
@@ -31,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
- * Class for handling phasing parameters shared between {@link Appendix.Phasing} and {@link AccountRestrictions.PhasingOnly}
+ * Class for handling phasing parameters shared between {@link PhasingAppendix} and {@link AccountRestrictions.PhasingOnly}
  */
 public final class PhasingParams {
 

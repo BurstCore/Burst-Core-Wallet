@@ -16,7 +16,6 @@
 
 package nxt.voting;
 
-import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.blockchain.Transaction;
@@ -96,7 +95,7 @@ public final class VoteHome {
         return voteTable.getBy(clause);
     }
 
-    public Vote addVote(Transaction transaction, Attachment.MessagingVoteCasting attachment) {
+    public Vote addVote(Transaction transaction, VoteCastingAttachment attachment) {
         Vote vote = new Vote(transaction, attachment);
         voteTable.insert(vote);
         return vote;
@@ -111,7 +110,7 @@ public final class VoteHome {
         private final long voterId;
         private final byte[] voteBytes;
 
-        private Vote(Transaction transaction, Attachment.MessagingVoteCasting attachment) {
+        private Vote(Transaction transaction, VoteCastingAttachment attachment) {
             this.id = transaction.getId();
             this.dbKey = voteDbKeyFactory.newKey(this.id);
             this.pollId = attachment.getPollId();

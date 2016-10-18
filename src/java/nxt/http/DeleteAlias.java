@@ -17,9 +17,10 @@
 package nxt.http;
 
 import nxt.account.Account;
-import nxt.messages.AliasHome;
+import nxt.messaging.AliasHome;
 import nxt.blockchain.Attachment;
 import nxt.NxtException;
+import nxt.messaging.AliasDeleteAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -44,7 +45,7 @@ public final class DeleteAlias extends CreateTransaction {
             return INCORRECT_ALIAS_OWNER;
         }
 
-        final Attachment attachment = new Attachment.MessagingAliasDelete(alias.getAliasName());
+        final Attachment attachment = new AliasDeleteAttachment(alias.getAliasName());
         return createTransaction(req, owner, attachment);
     }
 }

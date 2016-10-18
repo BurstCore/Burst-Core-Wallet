@@ -16,11 +16,12 @@
 
 package nxt.http;
 
-import nxt.blockchain.Appendix;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.messaging.PrunableEncryptedMessageAppendix;
+import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -68,8 +69,8 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
             return UNKNOWN_TRANSACTION;
         }
 
-        Appendix.PrunablePlainMessage plainMessage = (Appendix.PrunablePlainMessage) ParameterParser.getPlainMessage(req, true);
-        Appendix.PrunableEncryptedMessage encryptedMessage = (Appendix.PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, null, true);
+        PrunablePlainMessageAppendix plainMessage = (PrunablePlainMessageAppendix) ParameterParser.getPlainMessage(req, true);
+        PrunableEncryptedMessageAppendix encryptedMessage = (PrunableEncryptedMessageAppendix) ParameterParser.getEncryptedMessage(req, null, true);
 
         if (plainMessage == null && encryptedMessage == null) {
             return MISSING_MESSAGE_ENCRYPTED_MESSAGE;
@@ -79,7 +80,7 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
         }
 
         if (plainMessage != null) {
-            Appendix.PrunablePlainMessage myPlainMessage = transaction.getPrunablePlainMessage();
+            PrunablePlainMessageAppendix myPlainMessage = transaction.getPrunablePlainMessage();
             if (myPlainMessage == null) {
                 return NO_SUCH_PLAIN_MESSAGE;
             }
@@ -90,7 +91,7 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
             response.put("verify", true);
             return response;
         } else if (encryptedMessage != null) {
-            Appendix.PrunableEncryptedMessage myEncryptedMessage = transaction.getPrunableEncryptedMessage();
+            PrunableEncryptedMessageAppendix myEncryptedMessage = transaction.getPrunableEncryptedMessage();
             if (myEncryptedMessage == null) {
                 return NO_SUCH_ENCRYPTED_MESSAGE;
             }

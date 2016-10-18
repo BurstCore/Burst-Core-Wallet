@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.blockchain.ChildChain;
-import nxt.dgs.DGSHome;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
@@ -52,7 +52,7 @@ public final class GetDGSTagsLike extends APIServlet.APIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray tagsJSON = new JSONArray();
         response.put("tags", tagsJSON);
-        try (DbIterator<DGSHome.Tag> tags = childChain.getDGSHome().getTagsLike(prefix, inStockOnly, firstIndex, lastIndex)) {
+        try (DbIterator<DigitalGoodsHome.Tag> tags = childChain.getDigitalGoodsHome().getTagsLike(prefix, inStockOnly, firstIndex, lastIndex)) {
             while (tags.hasNext()) {
                 tagsJSON.add(JSONData.tag(tags.next()));
             }

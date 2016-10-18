@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.blockchain.Attachment;
-import nxt.blockchain.ChildTransactionType;
+import nxt.ae.OrderPlacementAttachment;
+import nxt.ae.AssetExchangeTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Transaction;
@@ -40,8 +40,8 @@ public final class GetExpectedBidOrders extends APIServlet.APIRequestHandler {
     }
 
     private final Comparator<Transaction> priceComparator = (o1, o2) -> {
-        Attachment.ColoredCoinsOrderPlacement a1 = (Attachment.ColoredCoinsOrderPlacement)o1.getAttachment();
-        Attachment.ColoredCoinsOrderPlacement a2 = (Attachment.ColoredCoinsOrderPlacement)o2.getAttachment();
+        OrderPlacementAttachment a1 = (OrderPlacementAttachment)o1.getAttachment();
+        OrderPlacementAttachment a2 = (OrderPlacementAttachment)o2.getAttachment();
         return Long.compare(a2.getPriceNQT(), a1.getPriceNQT());
     };
 
@@ -51,10 +51,10 @@ public final class GetExpectedBidOrders extends APIServlet.APIRequestHandler {
         long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
         boolean sortByPrice = "true".equalsIgnoreCase(req.getParameter("sortByPrice"));
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != ChildTransactionType.ColoredCoins.BID_ORDER_PLACEMENT) {
+            if (transaction.getType() != AssetExchangeTransactionType.BID_ORDER_PLACEMENT) {
                 return false;
             }
-            Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement)transaction.getAttachment();
+            OrderPlacementAttachment attachment = (OrderPlacementAttachment)transaction.getAttachment();
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 

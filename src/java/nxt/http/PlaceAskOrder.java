@@ -18,6 +18,7 @@ package nxt.http;
 
 import nxt.account.Account;
 import nxt.ae.Asset;
+import nxt.ae.AskOrderPlacementAttachment;
 import nxt.blockchain.Attachment;
 import nxt.NxtException;
 import org.json.simple.JSONStreamAware;
@@ -42,7 +43,7 @@ public final class PlaceAskOrder extends CreateTransaction {
         long quantityQNT = ParameterParser.getQuantityQNT(req);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new Attachment.ColoredCoinsAskOrderPlacement(asset.getId(), quantityQNT, priceNQT);
+        Attachment attachment = new AskOrderPlacementAttachment(asset.getId(), quantityQNT, priceNQT);
         try {
             return createTransaction(req, account, attachment);
         } catch (NxtException.InsufficientBalanceException e) {

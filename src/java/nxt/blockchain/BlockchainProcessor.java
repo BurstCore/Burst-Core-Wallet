@@ -17,8 +17,6 @@
 package nxt.blockchain;
 
 import nxt.NxtException;
-import nxt.blockchain.internal.BlockImpl;
-import nxt.blockchain.internal.TransactionImpl;
 import nxt.db.DerivedDbTable;
 import nxt.peer.Peer;
 import nxt.util.Observable;

@@ -16,7 +16,6 @@
 
 package nxt.voting;
 
-import nxt.blockchain.Attachment;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;
 import nxt.Constants;
@@ -177,7 +176,7 @@ public final class PollHome {
         return pollTable.getCount();
     }
 
-    public void addPoll(Transaction transaction, Attachment.MessagingPollCreation attachment) {
+    public void addPoll(Transaction transaction, PollCreationAttachment attachment) {
         Poll poll = new Poll(transaction, attachment);
         pollTable.insert(poll);
     }
@@ -209,7 +208,7 @@ public final class PollHome {
         private final byte maxRangeValue;
         private final int timestamp;
 
-        private Poll(Transaction transaction, Attachment.MessagingPollCreation attachment) {
+        private Poll(Transaction transaction, PollCreationAttachment attachment) {
             super(transaction.getId(), transaction.getSenderId(), attachment.getFinishHeight(), attachment.getVoteWeighting());
             this.dbKey = pollDbKeyFactory.newKey(this.id);
             this.name = attachment.getPollName();

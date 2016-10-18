@@ -19,6 +19,7 @@ package nxt.http;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.NxtException;
+import nxt.messaging.AccountPropertyDeleteAttachment;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -55,7 +56,7 @@ public final class DeleteAccountProperty extends CreateTransaction {
         if (accountProperty.getRecipientId() != senderAccount.getId() && accountProperty.getSetterId() != senderAccount.getId()) {
             return JSONResponses.INCORRECT_PROPERTY;
         }
-        Attachment attachment = new Attachment.MessagingAccountPropertyDelete(accountProperty.getId());
+        Attachment attachment = new AccountPropertyDeleteAttachment(accountProperty.getId());
         return createTransaction(req, senderAccount, recipientId, 0, attachment);
 
     }

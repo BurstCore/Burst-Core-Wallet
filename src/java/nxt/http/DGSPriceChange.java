@@ -18,8 +18,9 @@ package nxt.http;
 
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
-import nxt.dgs.DGSHome;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.NxtException;
+import nxt.dgs.PriceChangeAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -38,12 +39,12 @@ public final class DGSPriceChange extends CreateTransaction {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         Account account = ParameterParser.getSenderAccount(req);
-        DGSHome.Goods goods = ParameterParser.getGoods(req);
+        DigitalGoodsHome.Goods goods = ParameterParser.getGoods(req);
         long priceNQT = ParameterParser.getPriceNQT(req);
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;
         }
-        Attachment attachment = new Attachment.DigitalGoodsPriceChange(goods.getId(), priceNQT);
+        Attachment attachment = new PriceChangeAttachment(goods.getId(), priceNQT);
         return createTransaction(req, account, attachment);
     }
 

@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.blockchain.Attachment;
-import nxt.blockchain.ChildTransactionType;
+import nxt.ae.AssetTransferAttachment;
+import nxt.ae.AssetExchangeTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Transaction;
@@ -45,13 +45,13 @@ public final class GetExpectedAssetTransfers extends APIServlet.APIRequestHandle
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
 
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != ChildTransactionType.ColoredCoins.ASSET_TRANSFER) {
+            if (transaction.getType() != AssetExchangeTransactionType.ASSET_TRANSFER) {
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId) {
                 return false;
             }
-            Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer)transaction.getAttachment();
+            AssetTransferAttachment attachment = (AssetTransferAttachment)transaction.getAttachment();
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 

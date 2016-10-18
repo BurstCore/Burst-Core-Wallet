@@ -19,8 +19,9 @@ package nxt.http;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.Constants;
-import nxt.dgs.DGSHome;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.NxtException;
+import nxt.dgs.RefundAttachment;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -44,7 +45,7 @@ public final class DGSRefund extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
         Account sellerAccount = ParameterParser.getSenderAccount(req);
-        DGSHome.Purchase purchase = ParameterParser.getPurchase(req);
+        DigitalGoodsHome.Purchase purchase = ParameterParser.getPurchase(req);
         if (sellerAccount.getId() != purchase.getSellerId()) {
             return INCORRECT_PURCHASE;
         }
@@ -70,7 +71,7 @@ public final class DGSRefund extends CreateTransaction {
 
         Account buyerAccount = Account.getAccount(purchase.getBuyerId());
 
-        Attachment attachment = new Attachment.DigitalGoodsRefund(purchase.getId(), refundNQT);
+        Attachment attachment = new RefundAttachment(purchase.getId(), refundNQT);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
 
     }

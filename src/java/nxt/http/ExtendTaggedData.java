@@ -17,13 +17,14 @@
 package nxt.http;
 
 import nxt.account.Account;
-import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
-import nxt.blockchain.ChildTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.messages.TaggedDataHome;
+import nxt.messaging.TaggedDataExtendAttachment;
+import nxt.messaging.TaggedDataHome;
 import nxt.blockchain.Transaction;
+import nxt.messaging.TaggedDataTransactionType;
+import nxt.messaging.TaggedDataUploadAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -48,13 +49,13 @@ public final class ExtendTaggedData extends CreateTransaction {
         TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionId);
         if (taggedData == null) {
             Transaction transaction = Nxt.getBlockchain().getTransaction(childChain, transactionId);
-            if (transaction == null || transaction.getType() != ChildTransactionType.Data.TAGGED_DATA_UPLOAD) {
+            if (transaction == null || transaction.getType() != TaggedDataTransactionType.TAGGED_DATA_UPLOAD) {
                 return UNKNOWN_TRANSACTION;
             }
-            Attachment.TaggedDataUpload taggedDataUpload = ParameterParser.getTaggedData(req);
+            TaggedDataUploadAttachment taggedDataUpload = ParameterParser.getTaggedData(req);
             taggedData = childChain.getTaggedDataHome().new TaggedData(transaction, taggedDataUpload);
         }
-        Attachment.TaggedDataExtend taggedDataExtend = new Attachment.TaggedDataExtend(taggedData);
+        TaggedDataExtendAttachment taggedDataExtend = new TaggedDataExtendAttachment(taggedData);
         return createTransaction(req, account, taggedDataExtend);
 
     }

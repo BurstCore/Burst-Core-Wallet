@@ -17,6 +17,13 @@
 package nxt.blockchain;
 
 import nxt.NxtException;
+import nxt.account.PublicKeyAnnouncementAppendix;
+import nxt.messaging.EncryptToSelfMessageAppendix;
+import nxt.messaging.EncryptedMessageAppendix;
+import nxt.messaging.MessageAppendix;
+import nxt.messaging.PrunableEncryptedMessageAppendix;
+import nxt.messaging.PrunablePlainMessageAppendix;
+import nxt.voting.PhasingAppendix;
 
 public interface ChildTransaction extends Transaction {
 
@@ -24,19 +31,19 @@ public interface ChildTransaction extends Transaction {
 
         Builder referencedTransactionFullHash(String referencedTransactionFullHash);
 
-        Builder appendix(Appendix.Message message);
+        Builder appendix(MessageAppendix message);
 
-        Builder appendix(Appendix.EncryptedMessage encryptedMessage);
+        Builder appendix(EncryptedMessageAppendix encryptedMessage);
 
-        Builder appendix(Appendix.EncryptToSelfMessage encryptToSelfMessage);
+        Builder appendix(EncryptToSelfMessageAppendix encryptToSelfMessage);
 
-        Builder appendix(Appendix.PublicKeyAnnouncement publicKeyAnnouncement);
+        Builder appendix(PublicKeyAnnouncementAppendix publicKeyAnnouncement);
 
-        Builder appendix(Appendix.PrunablePlainMessage prunablePlainMessage);
+        Builder appendix(PrunablePlainMessageAppendix prunablePlainMessage);
 
-        Builder appendix(Appendix.PrunableEncryptedMessage prunableEncryptedMessage);
+        Builder appendix(PrunableEncryptedMessageAppendix prunableEncryptedMessage);
 
-        Builder appendix(Appendix.Phasing phasing);
+        Builder appendix(PhasingAppendix phasing);
 
         ChildTransaction build() throws NxtException.NotValidException;
 
@@ -50,16 +57,16 @@ public interface ChildTransaction extends Transaction {
 
     long getFxtTransactionId();
 
-    Appendix.Message getMessage();
+    MessageAppendix getMessage();
 
-    Appendix.EncryptedMessage getEncryptedMessage();
+    EncryptedMessageAppendix getEncryptedMessage();
 
-    Appendix.EncryptToSelfMessage getEncryptToSelfMessage();
+    EncryptToSelfMessageAppendix getEncryptToSelfMessage();
 
-    Appendix.Phasing getPhasing();
+    PhasingAppendix getPhasing();
 
-    Appendix.PrunablePlainMessage getPrunablePlainMessage();
+    PrunablePlainMessageAppendix getPrunablePlainMessage();
 
-    Appendix.PrunableEncryptedMessage getPrunableEncryptedMessage();
+    PrunableEncryptedMessageAppendix getPrunableEncryptedMessage();
 
 }

@@ -18,7 +18,7 @@ package nxt.http;
 
 import nxt.blockchain.ChildChain;
 import nxt.NxtException;
-import nxt.messages.TaggedDataHome;
+import nxt.messaging.TaggedDataHome;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

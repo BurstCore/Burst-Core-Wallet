@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.blockchain.ChildChain;
-import nxt.dgs.DGSHome;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
@@ -51,23 +51,23 @@ public final class GetDGSGoods extends APIServlet.APIRequestHandler {
         JSONArray goodsJSON = new JSONArray();
         response.put("goods", goodsJSON);
 
-        Filter<DGSHome.Goods> filter = hideDelisted ? goods -> ! goods.isDelisted() : goods -> true;
+        Filter<DigitalGoodsHome.Goods> filter = hideDelisted ? goods -> ! goods.isDelisted() : goods -> true;
 
-        FilteringIterator<DGSHome.Goods> iterator = null;
+        FilteringIterator<DigitalGoodsHome.Goods> iterator = null;
         try {
-            DbIterator<DGSHome.Goods> goods;
+            DbIterator<DigitalGoodsHome.Goods> goods;
             if (sellerId == 0) {
                 if (inStockOnly) {
-                    goods = childChain.getDGSHome().getGoodsInStock(0, -1);
+                    goods = childChain.getDigitalGoodsHome().getGoodsInStock(0, -1);
                 } else {
-                    goods = childChain.getDGSHome().getAllGoods(0, -1);
+                    goods = childChain.getDigitalGoodsHome().getAllGoods(0, -1);
                 }
             } else {
-                goods = childChain.getDGSHome().getSellerGoods(sellerId, inStockOnly, 0, -1);
+                goods = childChain.getDigitalGoodsHome().getSellerGoods(sellerId, inStockOnly, 0, -1);
             }
             iterator = new FilteringIterator<>(goods, filter, firstIndex, lastIndex);
             while (iterator.hasNext()) {
-                DGSHome.Goods good = iterator.next();
+                DigitalGoodsHome.Goods good = iterator.next();
                 goodsJSON.add(JSONData.goods(good, includeCounts));
             }
         } finally {

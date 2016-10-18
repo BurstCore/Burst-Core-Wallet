@@ -17,10 +17,10 @@
 package nxt.http;
 
 import nxt.account.Account;
-import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.voting.PhasingParams;
+import nxt.voting.SetPhasingOnlyAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -75,7 +75,7 @@ public final class SetPhasingOnlyControl extends CreateTransaction {
         long maxFees = ParameterParser.getLong(request, "controlMaxFees", 0, Constants.MAX_BALANCE_NQT, false);
         short minDuration = (short)ParameterParser.getInt(request, "controlMinDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
         short maxDuration = (short) ParameterParser.getInt(request, "controlMaxDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
-        return createTransaction(request, account, new Attachment.SetPhasingOnly(phasingParams, maxFees, minDuration, maxDuration));
+        return createTransaction(request, account, new SetPhasingOnlyAttachment(phasingParams, maxFees, minDuration, maxDuration));
     }
 
 }

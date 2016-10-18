@@ -16,8 +16,6 @@
 
 package nxt.account;
 
-import nxt.blockchain.Appendix;
-import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
@@ -25,9 +23,12 @@ import nxt.NxtException.AccountControlException;
 import nxt.blockchain.TransactionType;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
-import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Transaction;
+import nxt.messaging.MessagingTransactionType;
+import nxt.voting.AccountControlTransactionType;
+import nxt.voting.PhasingAppendix;
 import nxt.voting.PhasingParams;
+import nxt.voting.SetPhasingOnlyAttachment;
 import nxt.voting.VoteWeighting.VotingModel;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;
@@ -58,7 +59,7 @@ public final class AccountRestrictions {
             return phasingControlTable.getAll(from, to);
         }
 
-        public static void set(Account senderAccount, Attachment.SetPhasingOnly attachment) {
+        public static void set(Account senderAccount, SetPhasingOnlyAttachment attachment) {
             PhasingParams phasingParams = attachment.getPhasingParams();
             if (phasingParams.getVoteWeighting().getVotingModel() == VotingModel.NONE) {
                 //no voting - remove the control
@@ -138,7 +139,7 @@ public final class AccountRestrictions {
                     ((ChildChain) transaction.getChain()).getPhasingPollHome().getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
                 throw new AccountControlException(String.format("Maximum total fees limit of %f NXT exceeded", ((double)maxFees)/ Constants.ONE_NXT));
             }
-            if (transaction.getType() == ChildTransactionType.Messaging.PHASING_VOTE_CASTING) {
+            if (transaction.getType() == MessagingTransactionType.PHASING_VOTE_CASTING) {
                 return;
             }
             try {
@@ -147,7 +148,7 @@ public final class AccountRestrictions {
                 Logger.logDebugMessage("Account control no longer valid: " + e.getMessage());
                 return;
             }
-            Appendix.Phasing phasingAppendix = ((ChildTransaction)transaction).getPhasing();
+            PhasingAppendix phasingAppendix = ((ChildTransaction)transaction).getPhasing();
             if (phasingAppendix == null) {
                 throw new AccountControlException("Non-phased transaction when phasing account control is enabled");
             }
@@ -228,8 +229,8 @@ public final class AccountRestrictions {
         if (PhasingOnly.get(transaction.getSenderId()).getMaxFees() == 0) {
             return false;
         }
-        return transaction.getType() != ChildTransactionType.AccountControl.SET_PHASING_ONLY &&
-                TransactionType.isDuplicate(ChildTransactionType.AccountControl.SET_PHASING_ONLY, Long.toUnsignedString(senderAccount.getId()),
+        return transaction.getType() != AccountControlTransactionType.SET_PHASING_ONLY &&
+                TransactionType.isDuplicate(AccountControlTransactionType.SET_PHASING_ONLY, Long.toUnsignedString(senderAccount.getId()),
                         duplicates, true);
     }
 

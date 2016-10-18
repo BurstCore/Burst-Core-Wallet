@@ -17,11 +17,11 @@
 package nxt.http;
 
 import nxt.blockchain.Appendix;
-import nxt.blockchain.Attachment;
 import nxt.blockchain.Blockchain;
 import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.messaging.TaggedDataExtendAttachment;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -46,7 +46,7 @@ public final class GetTaggedDataExtendTransactions extends APIServlet.APIRequest
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         Blockchain blockchain = Nxt.getBlockchain();
-        Filter<Appendix> filter = (appendix) -> ! (appendix instanceof Attachment.TaggedDataExtend);
+        Filter<Appendix> filter = (appendix) -> ! (appendix instanceof TaggedDataExtendAttachment);
         extendTransactions.forEach(transactionId -> jsonArray.add(JSONData.transaction(blockchain.getTransaction(childChain, transactionId), filter)));
         response.put("extendTransactions", jsonArray);
         return response;

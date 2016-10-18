@@ -19,7 +19,6 @@ package nxt.ms;
 import nxt.Nxt;
 import nxt.account.Account;
 import nxt.account.AccountLedger.LedgerEvent;
-import nxt.blockchain.Attachment;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;
@@ -168,7 +167,7 @@ public final class Currency {
     }
 
     static void addCurrency(LedgerEvent event, long eventId, Transaction transaction, Account senderAccount,
-                            Attachment.MonetarySystemCurrencyIssuance attachment) {
+                            CurrencyIssuanceAttachment attachment) {
         Currency oldCurrency;
         if ((oldCurrency = Currency.getCurrencyByCode(attachment.getCode())) != null) {
             oldCurrency.delete(event, eventId, senderAccount);
@@ -219,7 +218,7 @@ public final class Currency {
     private final long initialSupply;
     private CurrencySupply currencySupply;
 
-    private Currency(Transaction transaction, Attachment.MonetarySystemCurrencyIssuance attachment) {
+    private Currency(Transaction transaction, CurrencyIssuanceAttachment attachment) {
         this.currencyId = transaction.getId();
         this.dbKey = currencyDbKeyFactory.newKey(this.currencyId);
         this.accountId = transaction.getSenderId();

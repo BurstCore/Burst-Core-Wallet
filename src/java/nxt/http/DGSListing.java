@@ -17,10 +17,11 @@
 package nxt.http;
 
 import nxt.account.Account;
-import nxt.blockchain.Appendix;
 import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.dgs.ListingAttachment;
+import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.util.Convert;
 import nxt.util.JSON;
 import org.apache.tika.Tika;
@@ -69,7 +70,7 @@ public final class DGSListing extends CreateTransaction {
             return INCORRECT_DGS_LISTING_TAGS;
         }
 
-        Appendix.PrunablePlainMessage prunablePlainMessage = (Appendix.PrunablePlainMessage)ParameterParser.getPlainMessage(req, true);
+        PrunablePlainMessageAppendix prunablePlainMessage = (PrunablePlainMessageAppendix)ParameterParser.getPlainMessage(req, true);
         if (prunablePlainMessage != null) {
             if (prunablePlainMessage.isText()) {
                 return MESSAGE_NOT_BINARY;
@@ -84,7 +85,7 @@ public final class DGSListing extends CreateTransaction {
         }
 
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.DigitalGoodsListing(name, description, tags, quantity, priceNQT);
+        Attachment attachment = new ListingAttachment(name, description, tags, quantity, priceNQT);
         return createTransaction(req, account, attachment);
 
     }

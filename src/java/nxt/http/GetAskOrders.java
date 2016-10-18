@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.blockchain.Attachment;
+import nxt.ae.OrderCancellationAttachment;
+import nxt.ae.AssetExchangeTransactionType;
 import nxt.blockchain.ChildChain;
-import nxt.blockchain.ChildTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.ae.OrderHome;
@@ -52,11 +52,11 @@ public final class GetAskOrders extends APIServlet.APIRequestHandler {
 
         long[] cancellations = null;
         if (showExpectedCancellations) {
-            Filter<Transaction> filter = transaction -> transaction.getType() == ChildTransactionType.ColoredCoins.ASK_ORDER_CANCELLATION;
+            Filter<Transaction> filter = transaction -> transaction.getType() == AssetExchangeTransactionType.ASK_ORDER_CANCELLATION;
             List<? extends Transaction> transactions = Nxt.getBlockchain().getExpectedTransactions(filter);
             cancellations = new long[transactions.size()];
             for (int i = 0; i < transactions.size(); i++) {
-                Attachment.ColoredCoinsOrderCancellation attachment = (Attachment.ColoredCoinsOrderCancellation) transactions.get(i).getAttachment();
+                OrderCancellationAttachment attachment = (OrderCancellationAttachment) transactions.get(i).getAttachment();
                 cancellations[i] = attachment.getOrderId();
             }
             Arrays.sort(cancellations);

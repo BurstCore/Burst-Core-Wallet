@@ -17,7 +17,6 @@
 package nxt.ae;
 
 import nxt.Nxt;
-import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
 import nxt.db.DbClause;
 import nxt.db.DbIterator;
@@ -92,7 +91,7 @@ public final class AssetDividendHome {
         return null;
     }
 
-    public AssetDividend addAssetDividend(long transactionId, Attachment.ColoredCoinsDividendPayment attachment,
+    public AssetDividend addAssetDividend(long transactionId, DividendPaymentAttachment attachment,
                                           long totalDividend, long numAccounts) {
         AssetDividend assetDividend = new AssetDividend(transactionId, attachment, totalDividend, numAccounts);
         assetDividendTable.insert(assetDividend);
@@ -112,7 +111,7 @@ public final class AssetDividendHome {
         private final int timestamp;
         private final int height;
 
-        private AssetDividend(long transactionId, Attachment.ColoredCoinsDividendPayment attachment,
+        private AssetDividend(long transactionId, DividendPaymentAttachment attachment,
                               long totalDividend, long numAccounts) {
             this.id = transactionId;
             this.dbKey = dividendDbKeyFactory.newKey(this.id);

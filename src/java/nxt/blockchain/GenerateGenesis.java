@@ -18,9 +18,6 @@ package nxt.blockchain;
 
 import nxt.Constants;
 import nxt.account.Account;
-import nxt.blockchain.internal.BlockImpl;
-import nxt.blockchain.internal.FxtTransactionImpl;
-import nxt.blockchain.internal.TransactionImpl;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import nxt.util.Logger;

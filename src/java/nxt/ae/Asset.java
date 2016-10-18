@@ -17,7 +17,6 @@
 package nxt.ae;
 
 import nxt.account.Account;
-import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
 import nxt.Constants;
 import nxt.Nxt;
@@ -96,7 +95,7 @@ public final class Asset {
         return assetTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC ");
     }
 
-    public static void addAsset(Transaction transaction, Attachment.ColoredCoinsAssetIssuance attachment) {
+    public static void addAsset(Transaction transaction, AssetIssuanceAttachment attachment) {
         assetTable.insert(new Asset(transaction, attachment));
     }
 
@@ -119,7 +118,7 @@ public final class Asset {
     private long quantityQNT;
     private final byte decimals;
 
-    private Asset(Transaction transaction, Attachment.ColoredCoinsAssetIssuance attachment) {
+    private Asset(Transaction transaction, AssetIssuanceAttachment attachment) {
         this.assetId = transaction.getId();
         this.dbKey = assetDbKeyFactory.newKey(this.assetId);
         this.accountId = transaction.getSenderId();

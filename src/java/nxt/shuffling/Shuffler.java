@@ -18,17 +18,17 @@ package nxt.shuffling;
 
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
-import nxt.blockchain.internal.BlockchainImpl;
+import nxt.blockchain.BlockchainImpl;
 import nxt.blockchain.BlockchainProcessor;
-import nxt.blockchain.internal.BlockchainProcessorImpl;
+import nxt.blockchain.BlockchainProcessorImpl;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Transaction;
-import nxt.blockchain.internal.TransactionProcessorImpl;
-import nxt.blockchain.internal.UnconfirmedTransaction;
+import nxt.blockchain.TransactionProcessorImpl;
+import nxt.blockchain.UnconfirmedTransaction;
 import nxt.crypto.Crypto;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
@@ -431,29 +431,29 @@ public final class Shuffler {
 
     private void submitRegister(ShufflingHome.Shuffling shuffling) {
         Logger.logDebugMessage("Account %s registering for shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        Attachment.ShufflingRegistration attachment = new Attachment.ShufflingRegistration(shufflingFullHash);
+        ShufflingRegistrationAttachment attachment = new ShufflingRegistrationAttachment(shufflingFullHash);
         submitTransaction(attachment);
     }
 
     private void submitProcess(ShufflingHome.Shuffling shuffling) {
         Logger.logDebugMessage("Account %s processing shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        Attachment.ShufflingAttachment attachment = shuffling.process(accountId, secretPhrase, recipientPublicKey);
+        ShufflingAttachment attachment = shuffling.process(accountId, secretPhrase, recipientPublicKey);
         submitTransaction(attachment);
     }
 
     private void submitVerify(ShufflingHome.Shuffling shuffling) {
         Logger.logDebugMessage("Account %s verifying shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        Attachment.ShufflingVerification attachment = new Attachment.ShufflingVerification(shuffling.getId(), shuffling.getStateHash());
+        ShufflingVerificationAttachment attachment = new ShufflingVerificationAttachment(shuffling.getId(), shuffling.getStateHash());
         submitTransaction(attachment);
     }
 
     private void submitCancel(ShufflingHome.Shuffling shuffling) {
         Logger.logDebugMessage("Account %s cancelling shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        Attachment.ShufflingCancellation attachment = shuffling.revealKeySeeds(secretPhrase, shuffling.getAssigneeAccountId(), shuffling.getStateHash());
+        ShufflingCancellationAttachment attachment = shuffling.revealKeySeeds(secretPhrase, shuffling.getAssigneeAccountId(), shuffling.getStateHash());
         submitTransaction(attachment);
     }
 
-    private void submitTransaction(Attachment.ShufflingAttachment attachment) {
+    private void submitTransaction(ShufflingAttachment attachment) {
         if (BlockchainProcessorImpl.getInstance().isProcessingBlock()) {
             if (hasUnconfirmedTransaction(attachment, TransactionProcessorImpl.getInstance().getWaitingTransactions())) {
                 Logger.logDebugMessage("Transaction already submitted");
@@ -492,7 +492,7 @@ public final class Shuffler {
         }
     }
 
-    private boolean hasUnconfirmedTransaction(Attachment.ShufflingAttachment shufflingAttachment, Iterable<UnconfirmedTransaction> unconfirmedTransactions) {
+    private boolean hasUnconfirmedTransaction(ShufflingAttachment shufflingAttachment, Iterable<UnconfirmedTransaction> unconfirmedTransactions) {
         for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
             if (unconfirmedTransaction.getSenderId() != accountId) {
                 continue;
@@ -501,7 +501,7 @@ public final class Shuffler {
             if (!attachment.getClass().equals(shufflingAttachment.getClass())) {
                 continue;
             }
-            if (Arrays.equals(shufflingAttachment.getShufflingStateHash(), ((Attachment.ShufflingAttachment)attachment).getShufflingStateHash())) {
+            if (Arrays.equals(shufflingAttachment.getShufflingStateHash(), ((ShufflingAttachment)attachment).getShufflingStateHash())) {
                 return true;
             }
         }

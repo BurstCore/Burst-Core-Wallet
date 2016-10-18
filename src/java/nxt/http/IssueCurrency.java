@@ -21,6 +21,7 @@ import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.ms.CurrencyType;
 import nxt.NxtException;
+import nxt.ms.CurrencyIssuanceAttachment;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -139,7 +140,7 @@ public final class IssueCurrency extends CreateTransaction {
         byte algorithm = ParameterParser.getByte(req, "algorithm", (byte)0, Byte.MAX_VALUE, false);
         byte decimals = ParameterParser.getByte(req, "decimals", (byte)0, Byte.MAX_VALUE, false);
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.MonetarySystemCurrencyIssuance(name, code, description, (byte)type, initialSupply,
+        Attachment attachment = new CurrencyIssuanceAttachment(name, code, description, (byte)type, initialSupply,
                 reserveSupply, maxSupply, issuanceHeight, minReservePerUnit, minDifficulty, maxDifficulty, ruleset, algorithm, decimals);
 
         return createTransaction(req, account, attachment);

@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.blockchain.ChildTransactionType;
+import nxt.ae.AssetExchangeTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Transaction;
@@ -38,8 +38,8 @@ public final class GetExpectedOrderCancellations extends APIServlet.APIRequestHa
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        Filter<Transaction> filter = transaction -> transaction.getType() == ChildTransactionType.ColoredCoins.ASK_ORDER_CANCELLATION
-                || transaction.getType() == ChildTransactionType.ColoredCoins.BID_ORDER_CANCELLATION;
+        Filter<Transaction> filter = transaction -> transaction.getType() == AssetExchangeTransactionType.ASK_ORDER_CANCELLATION
+                || transaction.getType() == AssetExchangeTransactionType.BID_ORDER_CANCELLATION;
 
         List<? extends Transaction> transactions = Nxt.getBlockchain().getExpectedTransactions(filter);
         JSONArray cancellations = new JSONArray();

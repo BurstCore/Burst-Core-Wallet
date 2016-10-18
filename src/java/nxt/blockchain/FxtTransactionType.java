@@ -17,27 +17,23 @@
 package nxt.blockchain;
 
 import nxt.account.Account;
-import nxt.account.AccountLedger;
-import nxt.Constants;
+import nxt.account.AccountControlFxtTransactionType;
 import nxt.NxtException;
-import nxt.blockchain.internal.FxtTransactionImpl;
-import nxt.blockchain.internal.TransactionImpl;
-import org.json.simple.JSONObject;
+import nxt.account.PaymentFxtTransactionType;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public abstract class FxtTransactionType extends TransactionType {
 
-    static final byte TYPE_CHILDCHAIN_BLOCK = -1;
-    private static final byte TYPE_PAYMENT = -2;
-    private static final byte TYPE_ACCOUNT_CONTROL = -3;
+    protected static final byte TYPE_CHILDCHAIN_BLOCK = -1;
+    protected static final byte TYPE_PAYMENT = -2;
+    protected static final byte TYPE_ACCOUNT_CONTROL = -3;
 
-    static final byte SUBTYPE_CHILDCHAIN_BLOCK = 0;
+    protected static final byte SUBTYPE_CHILDCHAIN_BLOCK = 0;
 
-    private static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
+    protected static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
 
-    private static final byte SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING = 0;
+    protected static final byte SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING = 0;
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {
@@ -51,14 +47,14 @@ public abstract class FxtTransactionType extends TransactionType {
             case TYPE_PAYMENT:
                 switch (subtype) {
                     case SUBTYPE_PAYMENT_ORDINARY_PAYMENT:
-                        return FxtTransactionType.Payment.ORDINARY;
+                        return PaymentFxtTransactionType.ORDINARY;
                     default:
                         return null;
                 }
             case TYPE_ACCOUNT_CONTROL:
                 switch (subtype) {
                     case SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING:
-                        return AccountControl.EFFECTIVE_BALANCE_LEASING;
+                        return AccountControlFxtTransactionType.EFFECTIVE_BALANCE_LEASING;
                     default:
                         return null;
                 }
@@ -113,28 +109,28 @@ public abstract class FxtTransactionType extends TransactionType {
         validateAttachment((FxtTransactionImpl)transaction);
     }
 
-    abstract void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException;
+    protected abstract void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException;
 
     @Override
     public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         return applyAttachmentUnconfirmed((FxtTransactionImpl)transaction, senderAccount);
     }
 
-    abstract boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount);
+    protected abstract boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount);
 
     @Override
     public final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         applyAttachment((FxtTransactionImpl)transaction, senderAccount, recipientAccount);
     }
 
-    abstract void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount);
+    protected abstract void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount);
 
     @Override
     public final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         undoAttachmentUnconfirmed((FxtTransactionImpl)transaction, senderAccount);
     }
 
-    abstract void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount);
+    protected abstract void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount);
 
     //TODO: remove?
     @Override
@@ -142,154 +138,5 @@ public abstract class FxtTransactionType extends TransactionType {
         return true;
     }
 
-
-    public static abstract class Payment extends FxtTransactionType {
-
-        private Payment() {
-        }
-
-        @Override
-        public final byte getType() {
-            return FxtTransactionType.TYPE_PAYMENT;
-        }
-
-        @Override
-        final boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
-            return true;
-        }
-
-        @Override
-        final void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
-        }
-
-        @Override
-        final void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
-        }
-
-        @Override
-        public final boolean canHaveRecipient() {
-            return true;
-        }
-
-        public static final TransactionType ORDINARY = new Payment() {
-
-            @Override
-            public final byte getSubtype() {
-                return FxtTransactionType.SUBTYPE_PAYMENT_ORDINARY_PAYMENT;
-            }
-
-            @Override
-            public final AccountLedger.LedgerEvent getLedgerEvent() {
-                //TODO
-                return null;
-            }
-
-            @Override
-            public String getName() {
-                return "FxtPayment";
-            }
-
-            @Override
-            public Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
-                return Attachment.FXT_PAYMENT;
-            }
-
-            @Override
-            public Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
-                return Attachment.FXT_PAYMENT;
-            }
-
-            @Override
-            void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException {
-                if (transaction.getAmount() <= 0 || transaction.getAmount() >= Constants.MAX_BALANCE_NQT) {
-                    throw new NxtException.NotValidException("Invalid ordinary payment");
-                }
-            }
-
-        };
-
-    }
-
-    public static abstract class AccountControl extends FxtTransactionType {
-
-        private AccountControl() {
-        }
-
-        @Override
-        public final byte getType() {
-            return FxtTransactionType.TYPE_ACCOUNT_CONTROL;
-        }
-
-        @Override
-        final boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
-            return true;
-        }
-
-        @Override
-        final void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
-        }
-
-        public static final TransactionType EFFECTIVE_BALANCE_LEASING = new AccountControl() {
-
-            @Override
-            public final byte getSubtype() {
-                return FxtTransactionType.SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING;
-            }
-
-            @Override
-            public AccountLedger.LedgerEvent getLedgerEvent() {
-                return AccountLedger.LedgerEvent.ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING;
-            }
-
-            @Override
-            public String getName() {
-                return "EffectiveBalanceLeasing";
-            }
-
-            @Override
-            public Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
-                return new Attachment.AccountControlEffectiveBalanceLeasing(buffer);
-            }
-
-            @Override
-            public Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
-                return new Attachment.AccountControlEffectiveBalanceLeasing(attachmentData);
-            }
-
-            @Override
-            void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
-                Attachment.AccountControlEffectiveBalanceLeasing attachment = (Attachment.AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
-                Account.getAccount(transaction.getSenderId()).leaseEffectiveBalance(transaction.getRecipientId(), attachment.getPeriod());
-            }
-
-            @Override
-            void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException {
-                Attachment.AccountControlEffectiveBalanceLeasing attachment = (Attachment.AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
-                if (transaction.getSenderId() == transaction.getRecipientId()) {
-                    throw new NxtException.NotValidException("Account cannot lease balance to itself");
-                }
-                if (transaction.getAmount() != 0) {
-                    throw new NxtException.NotValidException("Transaction amount must be 0 for effective balance leasing");
-                }
-                if (attachment.getPeriod() < Constants.LEASING_DELAY || attachment.getPeriod() > 65535) {
-                    throw new NxtException.NotValidException("Invalid effective balance leasing period: " + attachment.getPeriod());
-                }
-                byte[] recipientPublicKey = Account.getPublicKey(transaction.getRecipientId());
-                if (recipientPublicKey == null) {
-                    throw new NxtException.NotCurrentlyValidException("Invalid effective balance leasing: "
-                            + " recipient account " + Long.toUnsignedString(transaction.getRecipientId()) + " not found or no public key published");
-                }
-                if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
-                    throw new NxtException.NotValidException("Leasing to Genesis account not allowed");
-                }
-            }
-
-            @Override
-            public boolean canHaveRecipient() {
-                return true;
-            }
-
-        };
-    }
 
 }

@@ -19,7 +19,6 @@ package nxt.blockchain;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger.LedgerEvent;
-import nxt.blockchain.internal.TransactionImpl;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -37,7 +36,7 @@ public abstract class TransactionType {
         }
     }
 
-    TransactionType() {}
+    protected TransactionType() {}
 
     public abstract byte getType();
 

@@ -17,6 +17,7 @@
 package nxt.http;
 
 import nxt.account.Account;
+import nxt.ae.AskOrderCancellationAttachment;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
 import nxt.NxtException;
@@ -44,7 +45,7 @@ public final class CancelAskOrder extends CreateTransaction {
         if (orderData == null || orderData.getAccountId() != account.getId()) {
             return UNKNOWN_ORDER;
         }
-        Attachment attachment = new Attachment.ColoredCoinsAskOrderCancellation(orderId);
+        Attachment attachment = new AskOrderCancellationAttachment(orderId);
         return createTransaction(req, account, attachment);
     }
 

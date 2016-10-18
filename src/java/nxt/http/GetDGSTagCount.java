@@ -37,7 +37,7 @@ public final class GetDGSTagCount extends APIServlet.APIRequestHandler {
         ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONObject response = new JSONObject();
-        response.put("numberOfTags", inStockOnly ? childChain.getDGSHome().getTagCountInStock() : childChain.getDGSHome().getTagCount());
+        response.put("numberOfTags", inStockOnly ? childChain.getDigitalGoodsHome().getTagCountInStock() : childChain.getDigitalGoodsHome().getTagCount());
         return response;
     }
 

@@ -16,6 +16,7 @@
 
 package nxt.account;
 
+import nxt.ae.AssetTransferAttachment;
 import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.Nxt;
@@ -26,6 +27,7 @@ import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.db.DbIterator;
+import nxt.ms.CurrencyTransferAttachment;
 import nxt.util.Convert;
 import nxt.util.Filter;
 import nxt.util.Listener;
@@ -653,7 +655,7 @@ public final class FundingMonitor {
                     String.format("Funding account %s has insufficient quantity for asset %s; funding transaction discarded",
                             monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetAsset == null || targetAsset.getQuantityQNT() < monitoredAccount.threshold) {
-            Attachment attachment = new Attachment.ColoredCoinsAssetTransfer(monitor.holdingId, monitoredAccount.amount);
+            Attachment attachment = new AssetTransferAttachment(monitor.holdingId, monitoredAccount.amount);
             Transaction.Builder builder = Nxt.newTransactionBuilder(monitor.publicKey,
                     0, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
@@ -690,7 +692,7 @@ public final class FundingMonitor {
                     String.format("Funding account %s has insufficient quantity for currency %s; funding transaction discarded",
                             monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.threshold) {
-            Attachment attachment = new Attachment.MonetarySystemCurrencyTransfer(monitor.holdingId, monitoredAccount.amount);
+            Attachment attachment = new CurrencyTransferAttachment(monitor.holdingId, monitoredAccount.amount);
             Transaction.Builder builder = Nxt.newTransactionBuilder(monitor.publicKey,
                     0, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)

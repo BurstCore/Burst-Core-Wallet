@@ -20,6 +20,7 @@ import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.ms.Currency;
 import nxt.NxtException;
+import nxt.ms.CurrencyDeletionAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -39,7 +40,7 @@ public final class DeleteCurrency extends CreateTransaction {
         if (!currency.canBeDeletedBy(account.getId())) {
             return JSONResponses.CANNOT_DELETE_CURRENCY;
         }
-        Attachment attachment = new Attachment.MonetarySystemCurrencyDeletion(currency.getId());
+        Attachment attachment = new CurrencyDeletionAttachment(currency.getId());
         return createTransaction(req, account, attachment);
     }
 }
