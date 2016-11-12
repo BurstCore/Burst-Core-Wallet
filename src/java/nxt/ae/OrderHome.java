@@ -237,13 +237,13 @@ public final class OrderHome {
         }
     }
 
-    public void addAskOrder(Transaction transaction, AskOrderPlacementAttachment attachment) {
+    void addAskOrder(Transaction transaction, AskOrderPlacementAttachment attachment) {
         Ask order = new Ask(transaction, attachment);
         askOrderTable.insert(order);
         matchOrders(attachment.getAssetId());
     }
 
-    public void removeAskOrder(long orderId) {
+    void removeAskOrder(long orderId) {
         askOrderTable.delete(getAskOrder(orderId));
     }
 
@@ -322,13 +322,13 @@ public final class OrderHome {
         }
     }
 
-    public void addBidOrder(Transaction transaction, BidOrderPlacementAttachment attachment) {
+    void addBidOrder(Transaction transaction, BidOrderPlacementAttachment attachment) {
         Bid order = new Bid(transaction, attachment);
         bidOrderTable.insert(order);
         matchOrders(attachment.getAssetId());
     }
 
-    public void removeBidOrder(long orderId) {
+    void removeBidOrder(long orderId) {
         bidOrderTable.delete(getBidOrder(orderId));
     }
 

@@ -147,12 +147,8 @@ public class BasicDb {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        for (DbVersion dbVersion : dbVersions) {
-            dbVersion.createSchema();
-        }
-        for (DbVersion dbVersion : dbVersions) {
-            dbVersion.init();
-        }
+        dbVersions.forEach(DbVersion::createSchema);
+        dbVersions.forEach(DbVersion::init);
         initialized = true;
     }
 

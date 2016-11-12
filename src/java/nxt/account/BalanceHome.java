@@ -176,7 +176,7 @@ public final class BalanceHome {
             addToBalanceAndUnconfirmedBalance(event, eventId, amount, 0);
         }
 
-        void addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
+        private void addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
             if (amount == 0 && fee == 0) {
                 return;
             }

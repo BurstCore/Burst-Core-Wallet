@@ -16,7 +16,7 @@
 
 package nxt.ms;
 
-public interface MonetarySystemAttachment {
+interface MonetarySystemAttachment {
 
     long getCurrencyId();
 

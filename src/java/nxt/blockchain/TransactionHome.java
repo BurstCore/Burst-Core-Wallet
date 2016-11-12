@@ -27,22 +27,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 //TODO: enforce uniqueness of derived object id's
 public final class TransactionHome {
-
-    private static final Map<Chain, TransactionHome> transactionHomeMap = new HashMap<>();
 
     public static TransactionHome forChain(Chain chain) {
         if (chain.getTransactionHome() != null) {
             throw new IllegalStateException("already set");
         }
-        TransactionHome transactionHome = new TransactionHome(chain);
-        transactionHomeMap.put(chain, transactionHome);
-        return transactionHome;
+        return new TransactionHome(chain);
     }
 
     private final Chain chain;
@@ -277,8 +271,8 @@ public final class TransactionHome {
         private final boolean prunablePlainMessage;
         private final boolean prunableEncryptedMessage;
 
-        public PrunableTransaction(long id, TransactionType transactionType, boolean prunableAttachment,
-                                   boolean prunablePlainMessage, boolean prunableEncryptedMessage) {
+        private PrunableTransaction(long id, TransactionType transactionType, boolean prunableAttachment,
+                                    boolean prunablePlainMessage, boolean prunableEncryptedMessage) {
             this.id = id;
             this.transactionType = transactionType;
             this.prunableAttachment = prunableAttachment;

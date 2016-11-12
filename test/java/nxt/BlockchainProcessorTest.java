@@ -52,7 +52,7 @@ public class BlockchainProcessorTest extends AbstractBlockchainTest {
     @BeforeClass
     public static void init() {
         AbstractBlockchainTest.init(newTestProperties());
-        debugTrace = DebugTrace.addDebugTrace(Collections.<Long>emptySet(), BlockchainProcessorTest.testTraceFile);
+        debugTrace = DebugTrace.addDebugTrace(Collections.emptySet(), BlockchainProcessorTest.testTraceFile);
     }
 
     @AfterClass

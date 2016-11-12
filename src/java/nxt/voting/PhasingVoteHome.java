@@ -75,7 +75,7 @@ public final class PhasingVoteHome {
         return phasingVoteTable.getCount(new DbClause.LongClause("transaction_id", phasedTransactionId));
     }
 
-    public void addVote(Transaction transaction, Account voter, long phasedTransactionId) {
+    void addVote(Transaction transaction, Account voter, long phasedTransactionId) {
         PhasingVote phasingVote = phasingVoteTable.get(phasingVoteDbKeyFactory.newKey(phasedTransactionId, voter.getId()));
         if (phasingVote == null) {
             phasingVote = new PhasingVote(transaction, voter, phasedTransactionId);

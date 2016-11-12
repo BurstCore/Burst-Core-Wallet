@@ -681,7 +681,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         @Override
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             DividendPaymentAttachment attachment = (DividendPaymentAttachment)transaction.getAttachment();
-            senderAccount.payDividends(transaction.getChain(), transaction.getId(), attachment);
+            transaction.getChain().getAssetDividendHome().payDividends(transaction.getSenderId(), transaction.getId(), attachment);
         }
 
         @Override

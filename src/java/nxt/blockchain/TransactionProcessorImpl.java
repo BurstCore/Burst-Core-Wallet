@@ -355,7 +355,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         return getUnconfirmedTransaction(dbKey);
     }
 
-    Transaction getUnconfirmedTransaction(DbKey dbKey) {
+    private Transaction getUnconfirmedTransaction(DbKey dbKey) {
         Nxt.getBlockchain().readLock();
         try {
             Transaction transaction = transactionCache.get(dbKey);

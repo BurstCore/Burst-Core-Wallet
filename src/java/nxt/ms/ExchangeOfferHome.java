@@ -148,7 +148,7 @@ public final class ExchangeOfferHome {
         return new AvailableOffers(rateNQT, Math.subtractExact(units, remainingUnits), totalAmountNQT);
     }
 
-    static final DbClause availableOnlyDbClause = new DbClause.LongClause("unit_limit", DbClause.Op.NE, 0)
+    private static final DbClause availableOnlyDbClause = new DbClause.LongClause("unit_limit", DbClause.Op.NE, 0)
             .and(new DbClause.LongClause("supply", DbClause.Op.NE, 0));
 
     public AvailableOffers getAvailableToSell(final long currencyId, final long units) {
@@ -420,11 +420,11 @@ public final class ExchangeOfferHome {
         return buyOfferTable.getManyBy(dbClause, from, to, sort);
     }
 
-    void addBuyOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
+    private void addBuyOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
         buyOfferTable.insert(new BuyOffer(transaction, attachment));
     }
 
-    void removeBuyOffer(BuyOffer buyOffer) {
+    private void removeBuyOffer(BuyOffer buyOffer) {
         buyOfferTable.delete(buyOffer);
     }
 
@@ -511,11 +511,11 @@ public final class ExchangeOfferHome {
         return sellOfferTable.getManyBy(dbClause, from, to, sort);
     }
 
-    void addSellOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
+    private void addSellOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
         sellOfferTable.insert(new SellOffer(transaction, attachment));
     }
 
-    void removeSellOffer(SellOffer sellOffer) {
+    private void removeSellOffer(SellOffer sellOffer) {
         sellOfferTable.delete(sellOffer);
     }
 

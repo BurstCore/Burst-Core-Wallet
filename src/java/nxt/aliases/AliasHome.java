@@ -113,7 +113,7 @@ public final class AliasHome {
         return offerTable.get(offerDbKeyFactory.newKey(alias.getId()));
     }
 
-    public void deleteAlias(final String aliasName) {
+    void deleteAlias(final String aliasName) {
         final Alias alias = getAlias(aliasName);
         final Offer offer = getOffer(alias);
         if (offer != null) {
@@ -122,7 +122,7 @@ public final class AliasHome {
         aliasTable.delete(alias);
     }
 
-    public void addOrUpdateAlias(Transaction transaction, AliasAssignmentAttachment attachment) {
+    void addOrUpdateAlias(Transaction transaction, AliasAssignmentAttachment attachment) {
         Alias alias = getAlias(attachment.getAliasName());
         if (alias == null) {
             alias = new Alias(transaction, attachment);
@@ -134,7 +134,7 @@ public final class AliasHome {
         aliasTable.insert(alias);
     }
 
-    public void sellAlias(Transaction transaction, AliasSellAttachment attachment) {
+    void sellAlias(Transaction transaction, AliasSellAttachment attachment) {
         final String aliasName = attachment.getAliasName();
         final long priceNQT = attachment.getPriceNQT();
         final long buyerId = transaction.getRecipientId();
@@ -154,7 +154,7 @@ public final class AliasHome {
 
     }
 
-    public void changeOwner(long newOwnerId, String aliasName) {
+    void changeOwner(long newOwnerId, String aliasName) {
         Alias alias = getAlias(aliasName);
         alias.accountId = newOwnerId;
         alias.timestamp = Nxt.getBlockchain().getLastBlockTimestamp();

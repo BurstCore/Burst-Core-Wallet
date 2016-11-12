@@ -71,7 +71,7 @@ public class AccountLedger {
     /** Pending ledger entries */
     private static final List<LedgerEntry> pendingEntries = new ArrayList<>();
 
-    /**
+    /*
      * Process nxt.ledgerAccounts
      */
     static {

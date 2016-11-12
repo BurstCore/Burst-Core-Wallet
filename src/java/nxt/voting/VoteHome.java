@@ -95,7 +95,7 @@ public final class VoteHome {
         return voteTable.getBy(clause);
     }
 
-    public Vote addVote(Transaction transaction, VoteCastingAttachment attachment) {
+    Vote addVote(Transaction transaction, VoteCastingAttachment attachment) {
         Vote vote = new Vote(transaction, attachment);
         voteTable.insert(vote);
         return vote;

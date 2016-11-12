@@ -438,7 +438,7 @@ public final class PhasingPollHome {
     }
 
 
-    public void addPoll(Transaction transaction, PhasingAppendix appendix) {
+    void addPoll(Transaction transaction, PhasingAppendix appendix) {
         PhasingPoll poll = new PhasingPoll(transaction, appendix);
         phasingPollTable.insert(poll);
         long[] voters = poll.whitelist;

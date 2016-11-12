@@ -17,6 +17,9 @@
 package nxt.ae;
 
 import nxt.Nxt;
+import nxt.account.Account;
+import nxt.account.AccountLedger;
+import nxt.account.BalanceHome;
 import nxt.blockchain.ChildChain;
 import nxt.db.DbClause;
 import nxt.db.DbIterator;
@@ -29,6 +32,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class AssetDividendHome {
 
@@ -91,12 +96,30 @@ public final class AssetDividendHome {
         return null;
     }
 
-    public AssetDividend addAssetDividend(long transactionId, DividendPaymentAttachment attachment,
-                                          long totalDividend, long numAccounts) {
+    void payDividends(long issuerId, final long transactionId, DividendPaymentAttachment attachment) {
+        long totalDividend = 0;
+        List<Account.AccountAsset> accountAssets = new ArrayList<>();
+        try (DbIterator<Account.AccountAsset> iterator = Account.getAssetAccounts(attachment.getAssetId(), attachment.getHeight(), 0, -1)) {
+            while (iterator.hasNext()) {
+                accountAssets.add(iterator.next());
+            }
+        }
+        BalanceHome balanceHome = childChain.getBalanceHome();
+        final long amountNQTPerQNT = attachment.getAmountNQTPerQNT();
+        long numAccounts = 0;
+        for (final Account.AccountAsset accountAsset : accountAssets) {
+            if (accountAsset.getAccountId() != issuerId && accountAsset.getQuantityQNT() != 0) {
+                long dividend = Math.multiplyExact(accountAsset.getQuantityQNT(), amountNQTPerQNT);
+                balanceHome.getBalance(accountAsset.getAccountId())
+                        .addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, dividend);
+                totalDividend += dividend;
+                numAccounts += 1;
+            }
+        }
+        balanceHome.getBalance(issuerId).addToBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
         AssetDividend assetDividend = new AssetDividend(transactionId, attachment, totalDividend, numAccounts);
         assetDividendTable.insert(assetDividend);
         listeners.notify(assetDividend, Event.ASSET_DIVIDEND);
-        return assetDividend;
     }
 
     public final class AssetDividend {

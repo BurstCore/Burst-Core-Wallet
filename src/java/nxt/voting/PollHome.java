@@ -176,7 +176,7 @@ public final class PollHome {
         return pollTable.getCount();
     }
 
-    public void addPoll(Transaction transaction, PollCreationAttachment attachment) {
+    void addPoll(Transaction transaction, PollCreationAttachment attachment) {
         Poll poll = new Poll(transaction, attachment);
         pollTable.insert(poll);
     }

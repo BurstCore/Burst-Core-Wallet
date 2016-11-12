@@ -19,7 +19,6 @@ package nxt.account;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.ae.AssetTransfer;
-import nxt.ae.DividendPaymentAttachment;
 import nxt.ae.TradeHome;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;
@@ -1815,30 +1814,6 @@ public final class Account {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-    }
-
-    public void payDividends(ChildChain childChain, final long transactionId, DividendPaymentAttachment attachment) {
-        long totalDividend = 0;
-        List<AccountAsset> accountAssets = new ArrayList<>();
-        try (DbIterator<AccountAsset> iterator = getAssetAccounts(attachment.getAssetId(), attachment.getHeight(), 0, -1)) {
-            while (iterator.hasNext()) {
-                accountAssets.add(iterator.next());
-            }
-        }
-        BalanceHome balanceHome = childChain.getBalanceHome();
-        final long amountNQTPerQNT = attachment.getAmountNQTPerQNT();
-        long numAccounts = 0;
-        for (final AccountAsset accountAsset : accountAssets) {
-            if (accountAsset.getAccountId() != this.id && accountAsset.getQuantityQNT() != 0) {
-                long dividend = Math.multiplyExact(accountAsset.getQuantityQNT(), amountNQTPerQNT);
-                balanceHome.getBalance(accountAsset.getAccountId())
-                        .addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, dividend);
-                totalDividend += dividend;
-                numAccounts += 1;
-            }
-        }
-        balanceHome.getBalance(this.id).addToBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
-        childChain.getAssetDividendHome().addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
     }
 
     @Override

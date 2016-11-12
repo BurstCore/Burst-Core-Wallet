@@ -67,7 +67,7 @@ public class MessageAppendix extends Appendix.AbstractAppendix {
         }
     }
 
-    public MessageAppendix(JSONObject attachmentData) {
+    private MessageAppendix(JSONObject attachmentData) {
         super(attachmentData);
         String messageString = (String)attachmentData.get("message");
         this.isText = Boolean.TRUE.equals(attachmentData.get("messageIsText"));

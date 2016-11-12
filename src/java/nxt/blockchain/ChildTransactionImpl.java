@@ -656,7 +656,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     }
 
     public static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
-                                                                         Attachment.AbstractAttachment attachment, JSONObject attachmentData, JSONObject transactionData) throws NxtException.NotValidException {
+                                                                         Attachment.AbstractAttachment attachment, JSONObject attachmentData, JSONObject transactionData) {
         try {
             ChildTransactionImpl.BuilderImpl childBuilder = new BuilderImpl(chainId, version, senderPublicKey, amount, fee, deadline, attachment);
             String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");

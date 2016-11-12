@@ -1853,7 +1853,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    void scheduleScan(int height, boolean validate) {
+    private void scheduleScan(int height, boolean validate) {
         try (Connection con = Db.getConnection();
              PreparedStatement pstmt = con.prepareStatement("UPDATE scan SET rescan = TRUE, height = ?, validate = ?")) {
             pstmt.setInt(1, height);
@@ -1948,9 +1948,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 if (shutdown) {
                     Logger.logMessage("Scan will be performed at next start");
-                    new Thread(() -> {
-                        System.exit(0);
-                    }).start();
+                    new Thread(() -> System.exit(0)).start();
                     return;
                 }
                 int pstmtSelectIndex = 1;
@@ -1987,12 +1985,12 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                     validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
                                     for (TransactionImpl transaction : currentBlock.getTransactions()) {
                                         byte[] transactionBytes = transaction.bytes();
-                                        if (!Arrays.equals(transactionBytes, ((TransactionImpl) TransactionImpl.newTransactionBuilder(transactionBytes).build()).bytes())) {
+                                        if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionBytes).build().bytes())) {
                                             throw new NxtException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
                                                     + transaction.getJSONObject().toJSONString());
                                         }
                                         JSONObject transactionJSON = (JSONObject) JSONValue.parse(transaction.getJSONObject().toJSONString());
-                                        if (!Arrays.equals(transactionBytes, ((TransactionImpl) TransactionImpl.newTransactionBuilder(transactionJSON).build()).bytes())) {
+                                        if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionJSON).build().bytes())) {
                                             throw new NxtException.NotValidException("Transaction JSON cannot be parsed back to the same transaction: "
                                                     + transaction.getJSONObject().toJSONString());
                                         }

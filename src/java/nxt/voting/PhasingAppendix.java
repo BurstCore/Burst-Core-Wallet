@@ -100,7 +100,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         algorithm = buffer.get();
     }
 
-    PhasingAppendix(JSONObject attachmentData) {
+    private PhasingAppendix(JSONObject attachmentData) {
         super(attachmentData);
         finishHeight = ((Long) attachmentData.get("phasingFinishHeight")).intValue();
         params = new PhasingParams(attachmentData);

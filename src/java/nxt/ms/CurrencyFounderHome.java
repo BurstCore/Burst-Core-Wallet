@@ -74,7 +74,7 @@ public final class CurrencyFounderHome {
         };
     }
 
-    void addOrUpdateFounder(long currencyId, long accountId, long amount) {
+    private void addOrUpdateFounder(long currencyId, long accountId, long amount) {
         CurrencyFounder founder = getFounder(currencyId, accountId);
         if (founder == null) {
             founder = new CurrencyFounder(currencyId, accountId, amount);

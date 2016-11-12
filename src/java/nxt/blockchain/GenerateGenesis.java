@@ -96,12 +96,12 @@ public final class GenerateGenesis {
 
                 JSONArray genesisSignatures = new JSONArray();
                 List<FxtTransactionImpl> transactions = new ArrayList<>();
-                for (int i = 0; i < genesisRecipients.length; i++) {
+                for (long genesisRecipient : genesisRecipients) {
                     FxtTransactionImpl.BuilderImpl builder = new FxtTransactionImpl.BuilderImpl((byte) 0, creatorPublicKey,
-                            genesisAmounts.get(genesisRecipients[i]) * Constants.ONE_NXT, 0, (short) 0,
+                            genesisAmounts.get(genesisRecipient) * Constants.ONE_NXT, 0, (short) 0,
                             PaymentAttachment.INSTANCE);
                     builder.timestamp(0)
-                            .recipientId(genesisRecipients[i])
+                            .recipientId(genesisRecipient)
                             .height(0)
                             .ecBlockHeight(0)
                             .ecBlockId(0);

@@ -269,7 +269,7 @@ public final class TaggedDataHome {
         return dbClause;
     }
 
-    public void add(TransactionImpl transaction, TaggedDataUploadAttachment attachment) {
+    void add(TransactionImpl transaction, TaggedDataUploadAttachment attachment) {
         if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME && attachment.getData() != null) {
             TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
             if (taggedData == null) {
@@ -282,7 +282,7 @@ public final class TaggedDataHome {
         timestampTable.insert(timestamp);
     }
 
-    public void extend(Transaction transaction, TaggedDataExtendAttachment attachment) {
+    void extend(Transaction transaction, TaggedDataExtendAttachment attachment) {
         long taggedDataId = attachment.getTaggedDataId();
         DbKey dbKey = taggedDataKeyFactory.newKey(taggedDataId);
         Timestamp timestamp = timestampTable.get(dbKey);
@@ -311,7 +311,7 @@ public final class TaggedDataHome {
         }
     }
 
-    public void restore(Transaction transaction, TaggedDataUploadAttachment attachment, int blockTimestamp, int height) {
+    void restore(Transaction transaction, TaggedDataUploadAttachment attachment, int blockTimestamp, int height) {
         TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
         taggedDataTable.insert(taggedData);
         addTags(taggedData, height);

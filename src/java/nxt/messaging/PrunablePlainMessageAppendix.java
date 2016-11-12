@@ -64,7 +64,7 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
         this.isText = false;
     }
 
-    public PrunablePlainMessageAppendix(JSONObject attachmentData) {
+    private PrunablePlainMessageAppendix(JSONObject attachmentData) {
         super(attachmentData);
         String hashString = Convert.emptyToNull((String) attachmentData.get("messageHash"));
         String messageString = Convert.emptyToNull((String) attachmentData.get("message"));

@@ -45,7 +45,7 @@ public final class PublicKeyAnnouncementAppendix extends Appendix.AbstractAppend
         buffer.get(this.publicKey);
     }
 
-    public PublicKeyAnnouncementAppendix(JSONObject attachmentData) {
+    private PublicKeyAnnouncementAppendix(JSONObject attachmentData) {
         super(attachmentData);
         this.publicKey = Convert.parseHexString((String)attachmentData.get("recipientPublicKey"));
     }

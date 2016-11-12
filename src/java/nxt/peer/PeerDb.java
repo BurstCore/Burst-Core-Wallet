@@ -62,7 +62,7 @@ final class PeerDb {
         }
     }
 
-    private static Table peerTable = new Table("PUBLIC.PEER");
+    private static final Table peerTable = new Table("PUBLIC.PEER");
 
     static List<Entry> loadPeers() {
         List<Entry> peers = new ArrayList<>();

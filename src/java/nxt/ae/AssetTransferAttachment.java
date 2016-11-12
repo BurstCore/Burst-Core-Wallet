@@ -16,7 +16,6 @@
 
 package nxt.ae;
 
-import nxt.NxtException;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.TransactionType;
 import nxt.util.Convert;
@@ -29,7 +28,7 @@ public final class AssetTransferAttachment extends Attachment.AbstractAttachment
     private final long assetId;
     private final long quantityQNT;
 
-    AssetTransferAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+    AssetTransferAttachment(ByteBuffer buffer) {
         super(buffer);
         this.assetId = buffer.getLong();
         this.quantityQNT = buffer.getLong();

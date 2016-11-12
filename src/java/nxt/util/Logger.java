@@ -59,7 +59,7 @@ public final class Logger {
      */
     private Logger() {}
 
-    /**
+    /*
      * Logger initialization
      *
      * The existing Java logging configuration will be used if the Java logger has already

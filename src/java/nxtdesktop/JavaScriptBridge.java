@@ -36,7 +36,7 @@ import java.nio.file.Paths;
 @SuppressWarnings("WeakerAccess")
 public class JavaScriptBridge {
 
-    DesktopApplication application;
+    final DesktopApplication application;
 
     public JavaScriptBridge(DesktopApplication application) {
         this.application = application;

@@ -41,7 +41,7 @@ public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppend
         super(buffer);
     }
 
-    public EncryptToSelfMessageAppendix(JSONObject attachmentData) {
+    EncryptToSelfMessageAppendix(JSONObject attachmentData) {
         super(attachmentData, (JSONObject)attachmentData.get("encryptToSelfMessage"));
     }
 

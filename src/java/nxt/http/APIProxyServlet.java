@@ -290,7 +290,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
 
     private static class PasswordFilteringContentTransformer implements AsyncMiddleManServlet.ContentTransformer {
 
-        ByteArrayOutputStream os;
+        private ByteArrayOutputStream os;
 
         @Override
         public void transform(ByteBuffer input, boolean finished, List<ByteBuffer> output) throws IOException {

@@ -14,7 +14,7 @@
  *
  */
 
-/**
+/*
  * Represents a single shuffling participant
  */
 package nxt.shuffling;
@@ -160,7 +160,7 @@ public final class ShufflingParticipantHome {
                 new DbClause.ByteClause("state", State.VERIFIED.getCode())));
     }
 
-    public void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height) {
+    void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height) {
         if (data != null && getData(shufflingId, accountId) == null) {
             shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, height));
         }

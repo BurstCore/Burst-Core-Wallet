@@ -23,7 +23,7 @@ import org.json.simple.JSONValue;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTransaction {
+class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTransaction {
 
     public UnconfirmedFxtTransaction(FxtTransactionImpl transaction, long arrivalTimestamp) {
         super(transaction, arrivalTimestamp);
@@ -32,7 +32,7 @@ public class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements
     public UnconfirmedFxtTransaction(ResultSet rs) throws SQLException, NxtException.NotValidException {
         super(FxtTransactionImpl.newTransactionBuilder(
                 rs.getBytes("transaction_bytes"),
-                (JSONObject) (rs.getString("prunable_json") != null ? JSONValue.parse(rs.getString("prunable_json")) : null)),
+                rs.getString("prunable_json") != null ? (JSONObject) JSONValue.parse(rs.getString("prunable_json")) : null),
                 rs);
     }
 

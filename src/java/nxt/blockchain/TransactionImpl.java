@@ -82,7 +82,7 @@ public abstract class TransactionImpl implements Transaction {
             this.chainId = chainId;
         }
 
-        void preBuild(String secretPhrase) throws NxtException.NotValidException {
+        void preBuild(String secretPhrase) {
             if (timestamp == Integer.MAX_VALUE) {
                 timestamp = Nxt.getEpochTime();
             }
@@ -217,7 +217,7 @@ public abstract class TransactionImpl implements Transaction {
     volatile byte[] bytes = null;
 
 
-    TransactionImpl(BuilderImpl builder) throws NxtException.NotValidException {
+    TransactionImpl(BuilderImpl builder) {
         this.timestamp = builder.timestamp;
         this.deadline = builder.deadline;
         this.senderPublicKey = builder.senderPublicKey;
@@ -535,7 +535,7 @@ public abstract class TransactionImpl implements Transaction {
 
     private volatile boolean hasValidSignature = false;
 
-    boolean checkSignature() {
+    private boolean checkSignature() {
         if (!hasValidSignature) {
             hasValidSignature = getSignature() != null && Crypto.verify(getSignature(), zeroSignature(getBytes()), getSenderPublicKey());
         }

@@ -137,28 +137,28 @@ public abstract class ChildTransactionType extends TransactionType {
         validateAttachment((ChildTransactionImpl)transaction);
     }
 
-    public abstract void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException;
+    protected abstract void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException;
 
     @Override
     public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         return applyAttachmentUnconfirmed((ChildTransactionImpl)transaction, senderAccount);
     }
 
-    public abstract boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount);
+    protected abstract boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount);
 
     @Override
     public final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         applyAttachment((ChildTransactionImpl)transaction, senderAccount, recipientAccount);
     }
 
-    public abstract void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount);
+    protected abstract void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount);
 
     @Override
     public final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         undoAttachmentUnconfirmed((ChildTransactionImpl)transaction, senderAccount);
     }
 
-    public abstract void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount);
+    protected abstract void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount);
 
 
 }

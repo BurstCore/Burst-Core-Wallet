@@ -94,17 +94,17 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
 
         private final TransactionImpl transaction;
 
-        public TransactionNotAcceptedException(String message, TransactionImpl transaction) {
+        TransactionNotAcceptedException(String message, TransactionImpl transaction) {
             super(message, transaction.getBlock());
             this.transaction = transaction;
         }
 
-        public TransactionNotAcceptedException(Throwable cause, TransactionImpl transaction) {
+        TransactionNotAcceptedException(Throwable cause, TransactionImpl transaction) {
             super(cause, transaction.getBlock());
             this.transaction = transaction;
         }
 
-        public TransactionImpl getTransaction() {
+        TransactionImpl getTransaction() {
             return transaction;
         }
 
@@ -114,7 +114,7 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
         }
     }
 
-    public class BlockOutOfOrderException extends BlockNotAcceptedException {
+    class BlockOutOfOrderException extends BlockNotAcceptedException {
 
         public BlockOutOfOrderException(String message, BlockImpl block) {
             super(message, block);

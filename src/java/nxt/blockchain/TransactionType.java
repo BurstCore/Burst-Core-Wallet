@@ -36,7 +36,7 @@ public abstract class TransactionType {
         }
     }
 
-    protected TransactionType() {}
+    TransactionType() {}
 
     public abstract byte getType();
 
@@ -80,7 +80,7 @@ public abstract class TransactionType {
         return isDuplicate(uniqueType, key, duplicates, exclusive ? 0 : Integer.MAX_VALUE);
     }
 
-    public static boolean isDuplicate(TransactionType uniqueType, String key, Map<TransactionType, Map<String, Integer>> duplicates, int maxCount) {
+    protected static boolean isDuplicate(TransactionType uniqueType, String key, Map<TransactionType, Map<String, Integer>> duplicates, int maxCount) {
         Map<String,Integer> typeDuplicates = duplicates.get(uniqueType);
         if (typeDuplicates == null) {
             typeDuplicates = new HashMap<>();

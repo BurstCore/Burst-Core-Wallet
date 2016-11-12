@@ -123,11 +123,11 @@ public final class PrunableMessageHome {
         }
     }
 
-    public void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix) {
+    void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix) {
         add(transaction, appendix, Nxt.getBlockchain().getLastBlockTimestamp(), Nxt.getBlockchain().getHeight());
     }
 
-    public void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix, int blockTimestamp, int height) {
+    void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix, int blockTimestamp, int height) {
         if (appendix.getMessage() != null) {
             PrunableMessage prunableMessage = prunableMessageTable.get(transaction.getDbKey());
             if (prunableMessage == null) {

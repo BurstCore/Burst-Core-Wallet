@@ -21,7 +21,7 @@ import nxt.util.Logger;
 
 public final class BeforeShutdown implements AddOn {
 
-    final String beforeShutdownScript = Nxt.getStringProperty("nxt.beforeShutdownScript");
+    private final String beforeShutdownScript = Nxt.getStringProperty("nxt.beforeShutdownScript");
 
     @Override
     public void shutdown() {
