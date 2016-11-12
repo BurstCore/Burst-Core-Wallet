@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.account.Account;
-import nxt.blockchain.Attachment;
 import nxt.NxtException;
+import nxt.account.Account;
+import nxt.messaging.MessageAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,7 +35,7 @@ public final class SendMessage extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         long recipientId = ParameterParser.getAccountId(req, "recipient", false);
         Account account = ParameterParser.getSenderAccount(req);
-        return createTransaction(req, account, recipientId, 0, Attachment.ARBITRARY_MESSAGE);
+        return createTransaction(req, account, recipientId, 0, MessageAttachment.INSTANCE);
     }
 
 }

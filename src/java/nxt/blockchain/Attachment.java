@@ -19,9 +19,6 @@ package nxt.blockchain;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
-import nxt.account.PaymentFxtTransactionType;
-import nxt.account.PaymentTransactionType;
-import nxt.messaging.MessagingTransactionType;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -94,7 +91,7 @@ public interface Attachment extends Appendix {
 
     abstract class EmptyAttachment extends AbstractAttachment {
 
-        private EmptyAttachment() {
+        protected EmptyAttachment() {
             super(0);
         }
 
@@ -117,33 +114,5 @@ public interface Attachment extends Appendix {
         }
 
     }
-
-    EmptyAttachment ORDINARY_PAYMENT = new EmptyAttachment() {
-
-        @Override
-        public TransactionType getTransactionType() {
-            return PaymentTransactionType.ORDINARY;
-        }
-
-    };
-
-    EmptyAttachment FXT_PAYMENT = new EmptyAttachment() {
-
-        @Override
-        public TransactionType getTransactionType() {
-            return PaymentFxtTransactionType.ORDINARY;
-        }
-
-    };
-
-    // the message payload is in the Appendix
-    EmptyAttachment ARBITRARY_MESSAGE = new EmptyAttachment() {
-
-        @Override
-        public TransactionType getTransactionType() {
-            return MessagingTransactionType.ARBITRARY_MESSAGE;
-        }
-
-    };
 
 }

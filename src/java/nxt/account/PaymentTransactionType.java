@@ -78,12 +78,12 @@ public abstract class PaymentTransactionType extends ChildTransactionType {
 
         @Override
         public Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
-            return Attachment.ORDINARY_PAYMENT;
+            return PaymentAttachment.INSTANCE;
         }
 
         @Override
         public Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
-            return Attachment.ORDINARY_PAYMENT;
+            return PaymentAttachment.INSTANCE;
         }
 
         @Override

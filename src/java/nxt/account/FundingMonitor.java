@@ -620,7 +620,7 @@ public final class FundingMonitor {
         FundingMonitor monitor = monitoredAccount.monitor;
         if (targetAccount.getBalance(ChildChain.NXT) < monitoredAccount.threshold) {
             Transaction.Builder builder = Nxt.newTransactionBuilder(monitor.publicKey,
-                    monitoredAccount.amount, 0, (short)1440, Attachment.ORDINARY_PAYMENT);
+                    monitoredAccount.amount, 0, (short)1440, PaymentAttachment.INSTANCE);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);

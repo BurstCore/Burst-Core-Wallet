@@ -21,6 +21,7 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
+import nxt.account.PaymentAttachment;
 import nxt.crypto.Crypto;
 import nxt.db.DbIterator;
 import nxt.db.DerivedDbTable;
@@ -1240,7 +1241,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             for (int i = 0; i < Genesis.GENESIS_RECIPIENTS.length; i++) {
                 FxtTransactionImpl.BuilderImpl builder = new FxtTransactionImpl.BuilderImpl((byte) 0, Genesis.CREATOR_PUBLIC_KEY,
                         Genesis.GENESIS_AMOUNTS.get(Genesis.GENESIS_RECIPIENTS[i]) * Constants.ONE_NXT, 0, (short) 0,
-                        Attachment.ORDINARY_PAYMENT);
+                        PaymentAttachment.INSTANCE);
                 builder.timestamp(0)
                         .recipientId(Genesis.GENESIS_RECIPIENTS[i])
                         .height(0)

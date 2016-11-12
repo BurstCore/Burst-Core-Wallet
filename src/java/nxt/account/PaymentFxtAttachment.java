@@ -19,11 +19,13 @@ package nxt.account;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.TransactionType;
 
-public class PaymentAttachment extends Attachment.EmptyAttachment {
+public final class PaymentFxtAttachment extends Attachment.EmptyAttachment {
+
+    public static final PaymentFxtAttachment INSTANCE = new PaymentFxtAttachment();
 
     @Override
     public TransactionType getTransactionType() {
-        return PaymentTransactionType.ORDINARY;
+        return PaymentFxtTransactionType.ORDINARY;
     }
 
 }

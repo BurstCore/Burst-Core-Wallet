@@ -23,19 +23,19 @@ import nxt.account.AccountLedger;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Fee;
 import nxt.blockchain.Genesis;
 import nxt.blockchain.Transaction;
-import nxt.blockchain.TransactionType;
-import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.TransactionImpl;
+import nxt.blockchain.TransactionType;
 import nxt.util.Convert;
+import nxt.voting.PhasingPollHome;
 import nxt.voting.PhasingVoteCastingAttachment;
 import nxt.voting.PollCreationAttachment;
-import nxt.voting.VoteCastingAttachment;
-import nxt.voting.PhasingPollHome;
 import nxt.voting.PollHome;
+import nxt.voting.VoteCastingAttachment;
 import nxt.voting.VoteWeighting;
 import org.json.simple.JSONObject;
 
@@ -82,12 +82,12 @@ public abstract class MessagingTransactionType extends ChildTransactionType {
 
         @Override
         public Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
-            return Attachment.ARBITRARY_MESSAGE;
+            return MessageAttachment.INSTANCE;
         }
 
         @Override
         public Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
-            return Attachment.ARBITRARY_MESSAGE;
+            return MessageAttachment.INSTANCE;
         }
 
         @Override

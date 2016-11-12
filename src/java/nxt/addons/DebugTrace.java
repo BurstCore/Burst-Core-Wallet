@@ -44,6 +44,7 @@ import nxt.dgs.DeliveryAttachment;
 import nxt.dgs.DigitalGoodsHome;
 import nxt.dgs.PurchaseAttachment;
 import nxt.dgs.RefundAttachment;
+import nxt.messaging.MessageAttachment;
 import nxt.ms.Currency;
 import nxt.ms.CurrencyFounderHome;
 import nxt.ms.CurrencyMint;
@@ -705,12 +706,12 @@ public final class DebugTrace {
                 refundNQT = - refundNQT;
             }
             map.put("refund", String.valueOf(refundNQT));
-        } else if (attachment == Attachment.ARBITRARY_MESSAGE) {
+        } else if (attachment == MessageAttachment.INSTANCE) {
             map = new HashMap<>();
             map.put("account", Long.toUnsignedString(accountId));
             map.put("timestamp", String.valueOf(Nxt.getBlockchain().getLastBlock().getTimestamp()));
             map.put("height", String.valueOf(Nxt.getBlockchain().getHeight()));
-            map.put("event", attachment == Attachment.ARBITRARY_MESSAGE ? "message" : "encrypted message");
+            map.put("event", attachment == MessageAttachment.INSTANCE ? "message" : "encrypted message");
             if (isRecipient) {
                 map.put("sender", Long.toUnsignedString(transaction.getSenderId()));
             } else {

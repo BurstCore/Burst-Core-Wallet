@@ -74,12 +74,12 @@ public abstract class PaymentFxtTransactionType extends FxtTransactionType {
 
         @Override
         public Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
-            return Attachment.FXT_PAYMENT;
+            return PaymentFxtAttachment.INSTANCE;
         }
 
         @Override
         public Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
-            return Attachment.FXT_PAYMENT;
+            return PaymentFxtAttachment.INSTANCE;
         }
 
         @Override

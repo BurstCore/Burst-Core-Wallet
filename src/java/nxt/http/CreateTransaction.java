@@ -17,6 +17,7 @@
 package nxt.http;
 
 import nxt.account.Account;
+import nxt.account.PaymentAttachment;
 import nxt.account.PublicKeyAnnouncementAppendix;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
@@ -90,7 +91,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
     final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountNQT)
             throws NxtException {
-        return createTransaction(req, senderAccount, recipientId, amountNQT, Attachment.ORDINARY_PAYMENT);
+        return createTransaction(req, senderAccount, recipientId, amountNQT, PaymentAttachment.INSTANCE);
     }
 
     private PhasingAppendix parsePhasing(HttpServletRequest req) throws ParameterException {
