@@ -20,22 +20,22 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.NxtException.AccountControlException;
-import nxt.blockchain.TransactionType;
-import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
+import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.Transaction;
+import nxt.blockchain.TransactionType;
+import nxt.db.DbIterator;
+import nxt.db.DbKey;
+import nxt.db.DbUtils;
+import nxt.db.VersionedEntityDbTable;
 import nxt.messaging.MessagingTransactionType;
+import nxt.util.Convert;
+import nxt.util.Logger;
 import nxt.voting.AccountControlTransactionType;
 import nxt.voting.PhasingAppendix;
 import nxt.voting.PhasingParams;
 import nxt.voting.SetPhasingOnlyAttachment;
 import nxt.voting.VoteWeighting.VotingModel;
-import nxt.db.DbIterator;
-import nxt.db.DbKey;
-import nxt.db.DbUtils;
-import nxt.db.VersionedEntityDbTable;
-import nxt.util.Convert;
-import nxt.util.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -133,10 +133,10 @@ public final class AccountRestrictions {
             return maxDuration;
         }
 
-        //TODO: must check all chains
-        private void checkTransaction(Transaction transaction, boolean validatingAtFinish) throws AccountControlException {
+        private void checkTransaction(ChildTransaction transaction, boolean validatingAtFinish) throws AccountControlException {
+            //TODO: fix maxFees check
             if (!validatingAtFinish && maxFees > 0 && Math.addExact(transaction.getFee(),
-                    ((ChildChain) transaction.getChain()).getPhasingPollHome().getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
+                    transaction.getChain().getPhasingPollHome().getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
                 throw new AccountControlException(String.format("Maximum total fees limit of %f NXT exceeded", ((double)maxFees)/ Constants.ONE_NXT));
             }
             if (transaction.getType() == MessagingTransactionType.PHASING_VOTE_CASTING) {
@@ -148,10 +148,11 @@ public final class AccountRestrictions {
                 Logger.logDebugMessage("Account control no longer valid: " + e.getMessage());
                 return;
             }
-            PhasingAppendix phasingAppendix = ((ChildTransaction)transaction).getPhasing();
+            PhasingAppendix phasingAppendix = transaction.getPhasing();
             if (phasingAppendix == null) {
                 throw new AccountControlException("Non-phased transaction when phasing account control is enabled");
             }
+            //TODO: store chain_id in phasingParams holdingId, or add to account control table
             if (!phasingParams.equals(phasingAppendix.getParams())) {
                 throw new AccountControlException("Phasing parameters mismatch phasing account control. Expected: " +
                         phasingParams.toString() + " . Actual: " + phasingAppendix.getParams().toString());
@@ -210,7 +211,7 @@ public final class AccountRestrictions {
     public static void init() {
     }
 
-    public static void checkTransaction(Transaction transaction, boolean validatingAtFinish) throws NxtException.NotCurrentlyValidException {
+    public static void checkTransaction(ChildTransaction transaction, boolean validatingAtFinish) throws NxtException.NotCurrentlyValidException {
         Account senderAccount = Account.getAccount(transaction.getSenderId());
         if (senderAccount == null) {
             throw new NxtException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId()) + " does not exist yet");
@@ -218,6 +219,17 @@ public final class AccountRestrictions {
         if (senderAccount.getControls().contains(Account.ControlType.PHASING_ONLY)) {
             PhasingOnly phasingOnly = PhasingOnly.get(transaction.getSenderId());
             phasingOnly.checkTransaction(transaction, validatingAtFinish);
+        }
+    }
+
+    public static void checkTransaction(FxtTransaction transaction) throws NxtException.NotCurrentlyValidException {
+        Account senderAccount = Account.getAccount(transaction.getSenderId());
+        if (senderAccount == null) {
+            throw new NxtException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId()) + " does not exist yet");
+        }
+        if (senderAccount.getControls().contains(Account.ControlType.PHASING_ONLY)) {
+            throw new AccountControlException("Account " + Long.toUnsignedString(transaction.getSenderId())
+                    + " is under account control and cannot submit forging chain transactions");
         }
     }
 

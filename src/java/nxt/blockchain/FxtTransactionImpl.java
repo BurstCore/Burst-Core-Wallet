@@ -168,8 +168,7 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
                     ((double) feeFQT) / Constants.ONE_NXT, ((double) minimumFeeFQT) / Constants.ONE_NXT, Nxt.getBlockchain().getHeight()));
         }
         validateEcBlock();
-        //TODO: account control for FXT?
-        AccountRestrictions.checkTransaction(this, false);
+        AccountRestrictions.checkTransaction(this);
     }
 
     @Override
