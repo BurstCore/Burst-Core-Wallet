@@ -50,7 +50,7 @@ public final class VoteWeighting {
                 return MinBalanceModel.NONE;
             }
         },
-        NQT(1) {
+        COIN(1) {
             @Override
             public final long calcWeight(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
                 long nqtBalance = childChain.getBalanceHome().getBalance(voterId, height).getBalance();
@@ -58,7 +58,7 @@ public final class VoteWeighting {
             }
             @Override
             public final MinBalanceModel getMinBalanceModel() {
-                return MinBalanceModel.NQT;
+                return MinBalanceModel.COIN;
             }
         },
         ASSET(2) {
@@ -143,7 +143,7 @@ public final class VoteWeighting {
                 throw new UnsupportedOperationException();
             }
         },
-        NQT(1) {
+        COIN(1) {
             @Override
             public final long getBalance(ChildChain childChain, VoteWeighting voteWeighting, long voterId, int height) {
                 return childChain.getBalanceHome().getBalance(voterId, height).getBalance();
@@ -185,6 +185,7 @@ public final class VoteWeighting {
     }
 
     private final VotingModel votingModel;
+    //TODO: holdingId must be chain_id in case of VotingModel.COIN
     private final long holdingId; //either asset id or MS coin id
     private final long minBalance;
     private final MinBalanceModel minBalanceModel;
@@ -252,7 +253,7 @@ public final class VoteWeighting {
         if (minBalance == 0 && votingModel == VotingModel.ACCOUNT && holdingId != 0) {
             throw new NxtException.NotValidException("HoldingId cannot be used in by account voting with no min balance");
         }
-        if ((votingModel == VotingModel.NQT || minBalanceModel == MinBalanceModel.NQT) && holdingId != 0) {
+        if ((votingModel == VotingModel.COIN || minBalanceModel == MinBalanceModel.COIN) && holdingId != 0) {
             throw new NxtException.NotValidException("HoldingId cannot be used in by balance voting or with min balance in NQT");
         }
         if ((!votingModel.acceptsVotes() || votingModel == VotingModel.HASH) && (holdingId != 0 || minBalance != 0 || minBalanceModel != MinBalanceModel.NONE)) {

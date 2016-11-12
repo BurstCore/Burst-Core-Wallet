@@ -61,7 +61,7 @@ public class TestCreatePoll extends BlockchainTest {
         issueCreatePoll(apiCall, false);
         generateBlock();
 
-        apiCall = new CreatePollBuilder().votingModel(VoteWeighting.VotingModel.NQT.getCode()).build();
+        apiCall = new CreatePollBuilder().votingModel(VoteWeighting.VotingModel.COIN.getCode()).build();
         issueCreatePoll(apiCall, false);
         generateBlock();
     }
@@ -92,7 +92,7 @@ public class TestCreatePoll extends BlockchainTest {
             param("minRangeValue", 0);
             param("maxRangeValue", 1);
             param("minBalance", 10 * Constants.ONE_NXT);
-            param("minBalanceModel", VoteWeighting.MinBalanceModel.NQT.getCode());
+            param("minBalanceModel", VoteWeighting.MinBalanceModel.COIN.getCode());
             param("option00", "Ringo");
             param("option01", "Paul");
             param("option02", "John");
