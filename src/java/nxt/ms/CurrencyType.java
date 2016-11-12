@@ -18,9 +18,9 @@ package nxt.ms;
 
 import nxt.Constants;
 import nxt.NxtException;
-import nxt.shuffling.ShufflingTransactionType;
 import nxt.blockchain.Transaction;
 import nxt.crypto.HashFunction;
+import nxt.shuffling.ShufflingTransactionType;
 
 import java.util.EnumSet;
 import java.util.Set;

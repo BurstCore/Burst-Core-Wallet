@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.account.Account;
 import nxt.NxtException;
-import nxt.messaging.TaggedDataUploadAttachment;
+import nxt.account.Account;
+import nxt.taggeddata.TaggedDataUploadAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

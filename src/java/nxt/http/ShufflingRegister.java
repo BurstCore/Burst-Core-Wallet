@@ -16,10 +16,10 @@
 
 package nxt.http;
 
+import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
-import nxt.NxtException;
 import nxt.shuffling.ShufflingHome;
 import nxt.shuffling.ShufflingRegistrationAttachment;
 import org.json.simple.JSONStreamAware;

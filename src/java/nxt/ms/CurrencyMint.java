@@ -16,9 +16,9 @@
 
 package nxt.ms;
 
+import nxt.Nxt;
 import nxt.account.Account;
 import nxt.account.AccountLedger.LedgerEvent;
-import nxt.Nxt;
 import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;

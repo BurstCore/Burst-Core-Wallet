@@ -16,11 +16,11 @@
 
 package nxt.account;
 
-import nxt.ae.AssetTransferAttachment;
-import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.ae.AssetTransferAttachment;
+import nxt.blockchain.Attachment;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;

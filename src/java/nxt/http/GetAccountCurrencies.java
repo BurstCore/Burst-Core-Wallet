@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.account.Account;
 import nxt.NxtException;
+import nxt.account.Account;
 import nxt.db.DbIterator;
 import nxt.util.JSON;
 import org.json.simple.JSONArray;

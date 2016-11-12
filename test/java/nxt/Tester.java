@@ -51,8 +51,8 @@ public class Tester {
         this.rsAccount = Convert.rsAccount(id);
         Account account = Account.getAccount(publicKey);
         if (account != null) {
-            this.initialBalance = account.getBalanceNQT();
-            this.initialUnconfirmedBalance = account.getUnconfirmedBalanceNQT();
+            this.initialBalance = account.getBalanceFQT();
+            this.initialUnconfirmedBalance = account.getUnconfirmedBalanceFQT();
             this.initialEffectiveBalance = account.getEffectiveBalanceFXT();
             DbIterator<Account.AccountAsset> assets = account.getAssets(0, -1);
             for (Account.AccountAsset accountAsset : assets) {
@@ -104,11 +104,11 @@ public class Tester {
     }
 
     public long getBalanceDiff() {
-        return Account.getAccount(id).getBalanceNQT() - initialBalance;
+        return Account.getAccount(id).getBalanceFQT() - initialBalance;
     }
 
     public long getUnconfirmedBalanceDiff() {
-        return Account.getAccount(id).getUnconfirmedBalanceNQT() - initialUnconfirmedBalance;
+        return Account.getAccount(id).getUnconfirmedBalanceFQT() - initialUnconfirmedBalance;
     }
 
     public long getInitialBalance() {
@@ -116,7 +116,7 @@ public class Tester {
     }
 
     public long getBalance() {
-        return getAccount().getBalanceNQT();
+        return getAccount().getBalanceFQT();
     }
 
     public long getAssetQuantityDiff(long assetId) {

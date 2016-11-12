@@ -16,9 +16,9 @@
 
 package nxt.ae;
 
+import nxt.Nxt;
 import nxt.blockchain.Block;
 import nxt.blockchain.ChildChain;
-import nxt.Nxt;
 import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;

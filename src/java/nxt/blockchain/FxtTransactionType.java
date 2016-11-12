@@ -16,9 +16,9 @@
 
 package nxt.blockchain;
 
+import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountControlFxtTransactionType;
-import nxt.NxtException;
 import nxt.account.PaymentFxtTransactionType;
 
 import java.util.Arrays;

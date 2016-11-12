@@ -16,11 +16,11 @@
 
 package nxt.http;
 
-import nxt.account.Account;
-import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
-import nxt.messaging.AccountPropertyAttachment;
+import nxt.account.Account;
+import nxt.account.AccountPropertyAttachment;
+import nxt.blockchain.Attachment;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 

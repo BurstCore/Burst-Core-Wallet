@@ -16,6 +16,9 @@
 
 package nxt.shuffling;
 
+import nxt.Constants;
+import nxt.Nxt;
+import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.BlockchainImpl;
@@ -23,9 +26,6 @@ import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.BlockchainProcessorImpl;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
-import nxt.Constants;
-import nxt.Nxt;
-import nxt.NxtException;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionProcessorImpl;
 import nxt.blockchain.UnconfirmedTransaction;

@@ -16,11 +16,11 @@
 
 package nxt.blockchain;
 
-import nxt.account.Account;
-import nxt.account.AccountRestrictions;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.account.Account;
+import nxt.account.AccountRestrictions;
 import nxt.crypto.Crypto;
 import nxt.db.DbUtils;
 import nxt.util.Convert;

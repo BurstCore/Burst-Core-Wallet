@@ -16,8 +16,8 @@
 
 package nxt.voting;
 
-import nxt.blockchain.ChildChain;
 import nxt.Nxt;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.db.DbClause;
 import nxt.db.DbIterator;

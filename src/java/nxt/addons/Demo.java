@@ -16,9 +16,9 @@
 
 package nxt.addons;
 
+import nxt.Nxt;
 import nxt.account.Account;
 import nxt.blockchain.BlockchainProcessor;
-import nxt.Nxt;
 import nxt.util.Convert;
 import nxt.util.Logger;
 

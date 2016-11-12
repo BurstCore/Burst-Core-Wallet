@@ -16,9 +16,9 @@
 
 package nxt.http;
 
+import nxt.NxtException;
 import nxt.ae.AssetDividendHome;
 import nxt.blockchain.ChildChain;
-import nxt.NxtException;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

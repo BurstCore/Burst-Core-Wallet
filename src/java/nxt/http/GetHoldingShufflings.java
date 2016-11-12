@@ -17,8 +17,9 @@
 package nxt.http;
 
 import nxt.blockchain.ChildChain;
-import nxt.shuffling.ShufflingHome;
 import nxt.db.DbIterator;
+import nxt.shuffling.ShufflingHome;
+import nxt.shuffling.ShufflingStage;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -49,10 +50,10 @@ public final class GetHoldingShufflings extends APIServlet.APIRequestHandler {
             }
         }
         String stageValue = Convert.emptyToNull(req.getParameter("stage"));
-        ShufflingHome.Stage stage = null;
+        ShufflingStage stage = null;
         if (stageValue != null) {
             try {
-                stage = ShufflingHome.Stage.get(Byte.parseByte(stageValue));
+                stage = ShufflingStage.get(Byte.parseByte(stageValue));
             } catch (RuntimeException e) {
                 return incorrect("stage");
             }

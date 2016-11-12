@@ -17,8 +17,8 @@
 package nxt.util;
 
 import nxt.Constants;
-import nxt.blockchain.Genesis;
 import nxt.NxtException;
+import nxt.blockchain.Genesis;
 import nxt.crypto.Crypto;
 
 import java.io.ByteArrayInputStream;

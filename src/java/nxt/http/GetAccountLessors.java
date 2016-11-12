@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.account.Account;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.account.Account;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

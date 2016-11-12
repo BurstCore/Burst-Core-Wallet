@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.blockchain.ChildChain;
 import nxt.NxtException;
+import nxt.blockchain.ChildChain;
 import nxt.shuffling.Shuffler;
 import nxt.shuffling.ShufflingHome;
 import nxt.util.JSON;

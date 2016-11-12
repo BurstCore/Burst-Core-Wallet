@@ -28,7 +28,6 @@ import nxt.db.DbIterator;
 import nxt.db.DbKey;
 import nxt.db.DbUtils;
 import nxt.db.VersionedEntityDbTable;
-import nxt.messaging.MessagingTransactionType;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import nxt.voting.AccountControlTransactionType;
@@ -36,6 +35,7 @@ import nxt.voting.PhasingAppendix;
 import nxt.voting.PhasingParams;
 import nxt.voting.SetPhasingOnlyAttachment;
 import nxt.voting.VoteWeighting.VotingModel;
+import nxt.voting.VotingTransactionType;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -139,7 +139,7 @@ public final class AccountRestrictions {
                     transaction.getChain().getPhasingPollHome().getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
                 throw new AccountControlException(String.format("Maximum total fees limit of %f NXT exceeded", ((double)maxFees)/ Constants.ONE_NXT));
             }
-            if (transaction.getType() == MessagingTransactionType.PHASING_VOTE_CASTING) {
+            if (transaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING) {
                 return;
             }
             try {

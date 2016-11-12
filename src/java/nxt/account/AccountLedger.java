@@ -17,13 +17,13 @@
 package nxt.account;
 
 import nxt.Constants;
-import nxt.dbschema.Db;
 import nxt.Nxt;
 import nxt.blockchain.Block;
 import nxt.blockchain.Blockchain;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.db.DbUtils;
 import nxt.db.DerivedDbTable;
+import nxt.dbschema.Db;
 import nxt.util.Convert;
 import nxt.util.Listener;
 import nxt.util.Listeners;
@@ -409,7 +409,7 @@ public class AccountLedger {
             PHASING_VOTE_CASTING(11, true),
             POLL_CREATION(12, true),
             VOTE_CASTING(13, true),
-            ACCOUNT_PROPERTY(56, true),
+            ACCOUNT_PROPERTY_SET(56, true),
             ACCOUNT_PROPERTY_DELETE(57, true),
         // TYPE_COLORED_COINS
             ASSET_ASK_ORDER_CANCELLATION(14, true),

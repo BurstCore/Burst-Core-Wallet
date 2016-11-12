@@ -14,7 +14,7 @@
  *
  */
 
-package nxt.messaging;
+package nxt.taggeddata;
 
 import nxt.Constants;
 import nxt.Nxt;
@@ -24,12 +24,12 @@ import nxt.account.AccountLedger;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
-import nxt.blockchain.TransactionType;
-import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.TransactionImpl;
+import nxt.blockchain.TransactionType;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
@@ -37,6 +37,20 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public abstract class TaggedDataTransactionType extends ChildTransactionType {
+
+    private static final byte SUBTYPE_DATA_TAGGED_DATA_UPLOAD = 0;
+    private static final byte SUBTYPE_DATA_TAGGED_DATA_EXTEND = 1;
+
+    public static TransactionType findTransactionType(byte subtype) {
+        switch (subtype) {
+            case SUBTYPE_DATA_TAGGED_DATA_UPLOAD:
+                return TaggedDataTransactionType.TAGGED_DATA_UPLOAD;
+            case SUBTYPE_DATA_TAGGED_DATA_EXTEND:
+                return TaggedDataTransactionType.TAGGED_DATA_EXTEND;
+            default:
+                return null;
+        }
+    }
 
     private static final Fee TAGGED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT, Constants.ONE_NXT/10) {
         @Override

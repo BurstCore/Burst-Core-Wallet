@@ -16,11 +16,11 @@
 
 package nxt.http;
 
+import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
-import nxt.dgs.FeedbackAttachment;
 import nxt.dgs.DigitalGoodsHome;
-import nxt.NxtException;
+import nxt.dgs.FeedbackAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

@@ -16,8 +16,8 @@
 
 package nxt.peer;
 
-import nxt.blockchain.Block;
 import nxt.Nxt;
+import nxt.blockchain.Block;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

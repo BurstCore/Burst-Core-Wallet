@@ -14,7 +14,7 @@
  *
  */
 
-package nxt.messaging;
+package nxt.aliases;
 
 import nxt.Nxt;
 import nxt.blockchain.ChildChain;

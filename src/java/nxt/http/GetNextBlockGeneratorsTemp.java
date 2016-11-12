@@ -16,14 +16,15 @@
 
 package nxt.http;
 
+import nxt.Nxt;
+import nxt.NxtException;
 import nxt.blockchain.Block;
 import nxt.blockchain.Blockchain;
 import nxt.blockchain.Generator;
-import nxt.Nxt;
-import nxt.NxtException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 

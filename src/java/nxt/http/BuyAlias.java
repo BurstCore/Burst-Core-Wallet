@@ -16,11 +16,11 @@
 
 package nxt.http;
 
-import nxt.account.Account;
-import nxt.messaging.AliasHome;
-import nxt.blockchain.Attachment;
 import nxt.NxtException;
-import nxt.messaging.AliasBuyAttachment;
+import nxt.account.Account;
+import nxt.aliases.AliasBuyAttachment;
+import nxt.aliases.AliasHome;
+import nxt.blockchain.Attachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

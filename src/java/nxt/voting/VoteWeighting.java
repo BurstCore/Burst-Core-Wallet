@@ -16,11 +16,11 @@
 
 package nxt.voting;
 
+import nxt.NxtException;
 import nxt.account.Account;
 import nxt.ae.Asset;
 import nxt.blockchain.ChildChain;
 import nxt.ms.Currency;
-import nxt.NxtException;
 
 public final class VoteWeighting {
 

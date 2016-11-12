@@ -16,21 +16,21 @@
 
 package nxt.shuffling;
 
+import nxt.Constants;
+import nxt.Nxt;
+import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
+import nxt.account.HoldingType;
+import nxt.ae.Asset;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
-import nxt.Constants;
 import nxt.blockchain.Fee;
-import nxt.account.HoldingType;
-import nxt.Nxt;
-import nxt.NxtException;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;
-import nxt.ae.Asset;
 import nxt.crypto.Crypto;
 import nxt.ms.Currency;
 import nxt.ms.CurrencyType;
@@ -257,7 +257,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
-            if (shuffling.getStage() != ShufflingHome.Stage.REGISTRATION) {
+            if (shuffling.getStage() != ShufflingStage.REGISTRATION) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling registration has ended for " + Long.toUnsignedString(attachment.getShufflingId()));
             }
             if (shuffling.getParticipant(transaction.getSenderId()) != null) {
@@ -363,7 +363,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
             if (shuffling == null) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
-            if (shuffling.getStage() != ShufflingHome.Stage.PROCESSING) {
+            if (shuffling.getStage() != ShufflingStage.PROCESSING) {
                 throw new NxtException.NotCurrentlyValidException(String.format("Shuffling %s is not in processing stage",
                         Long.toUnsignedString(attachment.getShufflingId())));
             }
@@ -485,7 +485,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
             if (shuffling == null) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
-            if (shuffling.getStage() != ShufflingHome.Stage.PROCESSING) {
+            if (shuffling.getStage() != ShufflingStage.PROCESSING) {
                 throw new NxtException.NotCurrentlyValidException(String.format("Shuffling %s is not in processing stage",
                         Long.toUnsignedString(attachment.getShufflingId())));
             }
@@ -588,7 +588,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
             if (shuffling == null) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
-            if (shuffling.getStage() != ShufflingHome.Stage.VERIFICATION) {
+            if (shuffling.getStage() != ShufflingStage.VERIFICATION) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling not in verification stage: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
             ShufflingParticipantHome.ShufflingParticipant participant = shuffling.getParticipant(transaction.getSenderId());
@@ -680,7 +680,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
                 throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
             long cancellingAccountId = attachment.getCancellingAccountId();
-            if (cancellingAccountId == 0 && !shuffling.getStage().canBecome(ShufflingHome.Stage.BLAME)) {
+            if (cancellingAccountId == 0 && !shuffling.getStage().canBecome(ShufflingStage.BLAME)) {
                 throw new NxtException.NotCurrentlyValidException(String.format("Shuffling in state %s cannot be cancelled", shuffling.getStage()));
             }
             if (cancellingAccountId != 0 && cancellingAccountId != shuffling.getAssigneeAccountId()) {

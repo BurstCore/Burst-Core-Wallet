@@ -20,7 +20,6 @@ import nxt.Constants;
 import nxt.NxtException;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.TransactionType;
-import nxt.messaging.MessagingTransactionType;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -233,7 +232,7 @@ public final class PollCreationAttachment extends Attachment.AbstractAttachment 
 
     @Override
     public TransactionType getTransactionType() {
-        return MessagingTransactionType.POLL_CREATION;
+        return VotingTransactionType.POLL_CREATION;
     }
 
     public String getPollName() {

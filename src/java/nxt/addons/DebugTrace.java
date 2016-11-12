@@ -26,19 +26,19 @@ import nxt.ae.AssetIssuanceAttachment;
 import nxt.ae.AssetTransferAttachment;
 import nxt.ae.DividendPaymentAttachment;
 import nxt.ae.OrderCancellationAttachment;
-import nxt.ae.OrderPlacementAttachment;
 import nxt.ae.OrderHome;
+import nxt.ae.OrderPlacementAttachment;
 import nxt.ae.TradeHome;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.Block;
+import nxt.blockchain.BlockDb;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.FxtTransactionImpl;
 import nxt.blockchain.Genesis;
 import nxt.blockchain.Transaction;
-import nxt.blockchain.TransactionProcessor;
-import nxt.blockchain.BlockDb;
-import nxt.blockchain.FxtTransactionImpl;
 import nxt.blockchain.TransactionImpl;
+import nxt.blockchain.TransactionProcessor;
 import nxt.db.DbIterator;
 import nxt.dgs.DeliveryAttachment;
 import nxt.dgs.DigitalGoodsHome;
@@ -47,11 +47,11 @@ import nxt.dgs.RefundAttachment;
 import nxt.messaging.MessageAttachment;
 import nxt.ms.Currency;
 import nxt.ms.CurrencyFounderHome;
+import nxt.ms.CurrencyIssuanceAttachment;
 import nxt.ms.CurrencyMint;
+import nxt.ms.CurrencyTransferAttachment;
 import nxt.ms.CurrencyType;
 import nxt.ms.ExchangeHome;
-import nxt.ms.CurrencyIssuanceAttachment;
-import nxt.ms.CurrencyTransferAttachment;
 import nxt.ms.PublishExchangeOfferAttachment;
 import nxt.ms.ReserveClaimAttachment;
 import nxt.ms.ReserveIncreaseAttachment;
@@ -76,9 +76,9 @@ import java.util.Set;
 //TODO: make it an add-on
 public final class DebugTrace {
 
-    static final String QUOTE = Nxt.getStringProperty("nxt.debugTraceQuote", "\"");
-    static final String SEPARATOR = Nxt.getStringProperty("nxt.debugTraceSeparator", "\t");
-    static final boolean LOG_UNCONFIRMED = Nxt.getBooleanProperty("nxt.debugLogUnconfirmed");
+    public static final String QUOTE = Nxt.getStringProperty("nxt.debugTraceQuote", "\"");
+    public static final String SEPARATOR = Nxt.getStringProperty("nxt.debugTraceSeparator", "\t");
+    public static final boolean LOG_UNCONFIRMED = Nxt.getBooleanProperty("nxt.debugLogUnconfirmed");
 
     public static void init() {
         List<String> accountIdStrings = Nxt.getStringListProperty("nxt.debugTraceAccounts");
@@ -163,7 +163,7 @@ public final class DebugTrace {
         resetLog();
     }
 
-    void resetLog() {
+    public void resetLog() {
         if (log != null) {
             log.close();
         }

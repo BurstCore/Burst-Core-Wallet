@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.account.Account;
-import nxt.dgs.DigitalGoodsHome;
 import nxt.NxtException;
+import nxt.account.Account;
 import nxt.crypto.Crypto;
+import nxt.dgs.DigitalGoodsHome;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;

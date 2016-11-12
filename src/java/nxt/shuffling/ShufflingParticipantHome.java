@@ -19,9 +19,9 @@
  */
 package nxt.shuffling;
 
-import nxt.blockchain.ChildChain;
 import nxt.Constants;
 import nxt.Nxt;
+import nxt.blockchain.ChildChain;
 import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;

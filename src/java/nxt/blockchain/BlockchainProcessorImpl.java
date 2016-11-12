@@ -28,7 +28,6 @@ import nxt.db.DerivedDbTable;
 import nxt.db.FilteringIterator;
 import nxt.db.FullTextTrigger;
 import nxt.dbschema.Db;
-import nxt.messaging.MessagingTransactionType;
 import nxt.peer.Peer;
 import nxt.peer.Peers;
 import nxt.util.Convert;
@@ -37,8 +36,9 @@ import nxt.util.Listener;
 import nxt.util.Listeners;
 import nxt.util.Logger;
 import nxt.util.ThreadPool;
-import nxt.voting.PhasingVoteCastingAttachment;
 import nxt.voting.PhasingPollHome;
+import nxt.voting.PhasingVoteCastingAttachment;
+import nxt.voting.VotingTransactionType;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -1563,7 +1563,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                             possiblyApprovedTransactions.add((ChildTransactionImpl)phasedTransaction);
                         }
                     });
-                    if (childTransaction.getType() == MessagingTransactionType.PHASING_VOTE_CASTING && !childTransaction.attachmentIsPhased()) {
+                    if (childTransaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING && !childTransaction.attachmentIsPhased()) {
                         PhasingVoteCastingAttachment voteCasting = (PhasingVoteCastingAttachment) childTransaction.getAttachment();
                         voteCasting.getTransactionFullHashes().forEach(hash -> {
                             PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
@@ -1575,7 +1575,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             });
             validPhasedTransactions.forEach(phasedTransaction -> {
-                if (phasedTransaction.getType() == MessagingTransactionType.PHASING_VOTE_CASTING) {
+                if (phasedTransaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING) {
                     ChildChain childChain = phasedTransaction.getChain();
                     PhasingPollHome.PhasingPollResult result = childChain.getPhasingPollHome().getResult(phasedTransaction.getId());
                     if (result != null && result.isApproved()) {

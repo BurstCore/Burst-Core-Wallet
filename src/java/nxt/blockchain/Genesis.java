@@ -16,8 +16,8 @@
 
 package nxt.blockchain;
 
-import nxt.account.Account;
 import nxt.Constants;
+import nxt.account.Account;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;

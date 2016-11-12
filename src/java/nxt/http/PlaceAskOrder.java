@@ -16,11 +16,11 @@
 
 package nxt.http;
 
-import nxt.account.Account;
-import nxt.ae.Asset;
-import nxt.ae.AskOrderPlacementAttachment;
-import nxt.blockchain.Attachment;
 import nxt.NxtException;
+import nxt.account.Account;
+import nxt.ae.AskOrderPlacementAttachment;
+import nxt.ae.Asset;
+import nxt.blockchain.Attachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

@@ -16,10 +16,10 @@
 
 package nxt.blockchain;
 
-import nxt.account.Account;
-import nxt.account.AccountLedger;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.account.Account;
+import nxt.account.AccountLedger;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;

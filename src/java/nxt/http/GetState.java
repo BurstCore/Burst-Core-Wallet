@@ -16,16 +16,16 @@
 
 package nxt.http;
 
+import nxt.Constants;
+import nxt.Nxt;
 import nxt.account.Account;
 import nxt.account.AccountRestrictions;
 import nxt.ae.Asset;
 import nxt.ae.AssetTransfer;
 import nxt.blockchain.ChildChain;
-import nxt.Constants;
+import nxt.blockchain.Generator;
 import nxt.ms.Currency;
 import nxt.ms.CurrencyTransfer;
-import nxt.blockchain.Generator;
-import nxt.Nxt;
 import nxt.peer.Peers;
 import nxt.util.UPnP;
 import org.json.simple.JSONObject;

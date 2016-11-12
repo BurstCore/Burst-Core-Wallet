@@ -16,9 +16,9 @@
 
 package nxt.peer;
 
-import nxt.blockchain.Block;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.blockchain.Block;
 import nxt.util.Convert;
 import nxt.util.JSON;
 import org.json.simple.JSONObject;

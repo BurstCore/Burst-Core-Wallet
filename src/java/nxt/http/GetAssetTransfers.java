@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.ae.AssetTransfer;
 import nxt.NxtException;
+import nxt.ae.AssetTransfer;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
 import org.json.simple.JSONArray;

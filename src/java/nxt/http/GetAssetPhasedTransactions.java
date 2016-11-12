@@ -18,8 +18,8 @@ package nxt.http;
 
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
-import nxt.voting.VoteWeighting;
 import nxt.db.DbIterator;
+import nxt.voting.VoteWeighting;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

@@ -19,14 +19,25 @@ package nxt.account;
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.TransactionType;
-import nxt.blockchain.ChildTransactionImpl;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 
 public abstract class PaymentTransactionType extends ChildTransactionType {
+
+    private static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
+
+    public static TransactionType findTransactionType(byte subtype) {
+        switch (subtype) {
+            case SUBTYPE_PAYMENT_ORDINARY_PAYMENT:
+                return PaymentTransactionType.ORDINARY;
+            default:
+                return null;
+        }
+    }
 
     private PaymentTransactionType() {
     }
@@ -63,7 +74,7 @@ public abstract class PaymentTransactionType extends ChildTransactionType {
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_PAYMENT_ORDINARY_PAYMENT;
+            return SUBTYPE_PAYMENT_ORDINARY_PAYMENT;
         }
 
         @Override

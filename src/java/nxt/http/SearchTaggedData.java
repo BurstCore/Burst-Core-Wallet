@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.blockchain.ChildChain;
 import nxt.NxtException;
-import nxt.messaging.TaggedDataHome;
+import nxt.blockchain.ChildChain;
 import nxt.db.DbIterator;
+import nxt.taggeddata.TaggedDataHome;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.blockchain.Block;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.blockchain.Block;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

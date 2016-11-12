@@ -16,10 +16,10 @@
 
 package nxt.blockchain;
 
-import nxt.account.Account;
-import nxt.account.AccountRestrictions;
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.account.Account;
+import nxt.account.AccountRestrictions;
 import nxt.account.PublicKeyAnnouncementAppendix;
 import nxt.crypto.Crypto;
 import nxt.db.DbUtils;
@@ -28,9 +28,9 @@ import nxt.messaging.EncryptedMessageAppendix;
 import nxt.messaging.MessageAppendix;
 import nxt.messaging.PrunableEncryptedMessageAppendix;
 import nxt.messaging.PrunablePlainMessageAppendix;
-import nxt.messaging.TaggedDataExtendAttachment;
-import nxt.messaging.TaggedDataUploadAttachment;
 import nxt.shuffling.ShufflingProcessingAttachment;
+import nxt.taggeddata.TaggedDataExtendAttachment;
+import nxt.taggeddata.TaggedDataUploadAttachment;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import nxt.voting.PhasingAppendix;

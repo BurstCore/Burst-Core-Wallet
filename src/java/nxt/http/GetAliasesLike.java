@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.messaging.AliasHome;
-import nxt.blockchain.ChildChain;
 import nxt.NxtException;
+import nxt.aliases.AliasHome;
+import nxt.blockchain.ChildChain;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;

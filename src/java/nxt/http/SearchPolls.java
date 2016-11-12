@@ -17,9 +17,9 @@
 package nxt.http;
 
 import nxt.blockchain.ChildChain;
-import nxt.voting.PollHome;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
+import nxt.voting.PollHome;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

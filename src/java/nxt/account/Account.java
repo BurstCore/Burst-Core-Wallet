@@ -16,10 +16,10 @@
 
 package nxt.account;
 
-import nxt.ae.DividendPaymentAttachment;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.ae.AssetTransfer;
+import nxt.ae.DividendPaymentAttachment;
 import nxt.ae.TradeHome;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;

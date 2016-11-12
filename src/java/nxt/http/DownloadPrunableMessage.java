@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.blockchain.ChildChain;
 import nxt.messaging.PrunableMessageHome;
 import nxt.util.Convert;
 import nxt.util.Logger;

@@ -16,9 +16,9 @@
 
 package nxt.addons;
 
-import nxt.blockchain.BlockchainProcessor;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.blockchain.BlockchainProcessor;
 import nxt.http.APIServlet;
 import nxt.http.APITag;
 import org.json.simple.JSONObject;

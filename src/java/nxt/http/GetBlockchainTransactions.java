@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;

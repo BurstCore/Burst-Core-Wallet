@@ -16,13 +16,13 @@
 
 package nxt.http;
 
-import nxt.account.Account;
-import nxt.blockchain.Attachment;
-import nxt.voting.PollCreationAttachment.PollBuilder;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.account.Account;
+import nxt.blockchain.Attachment;
 import nxt.util.Convert;
+import nxt.voting.PollCreationAttachment.PollBuilder;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

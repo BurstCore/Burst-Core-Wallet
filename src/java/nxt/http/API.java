@@ -68,8 +68,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static nxt.http.JSONResponses.INCORRECT_ADMIN_PASSWORD;
-import static nxt.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
 import static nxt.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
+import static nxt.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
 
 public final class API {
 

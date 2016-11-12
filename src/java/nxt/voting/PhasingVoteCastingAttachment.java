@@ -20,7 +20,6 @@ import nxt.Constants;
 import nxt.NxtException;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.TransactionType;
-import nxt.messaging.MessagingTransactionType;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -94,7 +93,7 @@ public final class PhasingVoteCastingAttachment extends Attachment.AbstractAttac
 
     @Override
     public TransactionType getTransactionType() {
-        return MessagingTransactionType.PHASING_VOTE_CASTING;
+        return VotingTransactionType.PHASING_VOTE_CASTING;
     }
 
     public List<byte[]> getTransactionFullHashes() {

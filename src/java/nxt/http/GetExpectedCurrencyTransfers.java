@@ -16,11 +16,11 @@
 
 package nxt.http;
 
-import nxt.ms.CurrencyTransferAttachment;
-import nxt.ms.MonetarySystemTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Transaction;
+import nxt.ms.CurrencyTransferAttachment;
+import nxt.ms.MonetarySystemTransactionType;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

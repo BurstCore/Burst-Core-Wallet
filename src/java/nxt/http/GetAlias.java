@@ -16,7 +16,7 @@
 
 package nxt.http;
 
-import nxt.messaging.AliasHome;
+import nxt.aliases.AliasHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

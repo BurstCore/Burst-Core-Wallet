@@ -16,12 +16,12 @@
 
 package nxt.voting;
 
-import nxt.account.AccountRestrictions;
-import nxt.ae.Asset;
 import nxt.Constants;
-import nxt.ms.Currency;
 import nxt.NxtException;
 import nxt.NxtException.ValidationException;
+import nxt.account.AccountRestrictions;
+import nxt.ae.Asset;
+import nxt.ms.Currency;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

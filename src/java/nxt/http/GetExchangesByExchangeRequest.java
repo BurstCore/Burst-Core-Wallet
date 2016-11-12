@@ -17,8 +17,8 @@
 package nxt.http;
 
 import nxt.blockchain.ChildChain;
-import nxt.ms.ExchangeHome;
 import nxt.db.DbIterator;
+import nxt.ms.ExchangeHome;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

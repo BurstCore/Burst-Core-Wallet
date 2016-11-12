@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.account.Account;
-import nxt.blockchain.Attachment;
 import nxt.NxtException;
-import nxt.messaging.AccountPropertyDeleteAttachment;
+import nxt.account.Account;
+import nxt.account.AccountPropertyDeleteAttachment;
+import nxt.blockchain.Attachment;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 

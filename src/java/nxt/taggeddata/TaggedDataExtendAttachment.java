@@ -14,7 +14,7 @@
  *
  */
 
-package nxt.messaging;
+package nxt.taggeddata;
 
 import nxt.Nxt;
 import nxt.blockchain.Appendix;

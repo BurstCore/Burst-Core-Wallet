@@ -16,15 +16,15 @@
 
 package nxt.http;
 
-import nxt.account.Account;
-import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.messaging.TaggedDataExtendAttachment;
-import nxt.messaging.TaggedDataHome;
+import nxt.account.Account;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
-import nxt.messaging.TaggedDataTransactionType;
-import nxt.messaging.TaggedDataUploadAttachment;
+import nxt.taggeddata.TaggedDataExtendAttachment;
+import nxt.taggeddata.TaggedDataHome;
+import nxt.taggeddata.TaggedDataTransactionType;
+import nxt.taggeddata.TaggedDataUploadAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

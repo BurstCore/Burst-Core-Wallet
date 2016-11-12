@@ -36,6 +36,38 @@ import java.util.Map;
 
 public abstract class AssetExchangeTransactionType extends ChildTransactionType {
 
+    private static final byte SUBTYPE_ASSET_EXCHANGE_ASSET_ISSUANCE = 0;
+    private static final byte SUBTYPE_ASSET_EXCHANGE_ASSET_TRANSFER = 1;
+    private static final byte SUBTYPE_ASSET_EXCHANGE_ASK_ORDER_PLACEMENT = 2;
+    private static final byte SUBTYPE_ASSET_EXCHANGE_BID_ORDER_PLACEMENT = 3;
+    private static final byte SUBTYPE_ASSET_EXCHANGE_ASK_ORDER_CANCELLATION = 4;
+    private static final byte SUBTYPE_ASSET_EXCHANGE_BID_ORDER_CANCELLATION = 5;
+    private static final byte SUBTYPE_ASSET_EXCHANGE_DIVIDEND_PAYMENT = 6;
+    private static final byte SUBTYPE_ASSET_EXCHANGE_ASSET_DELETE = 7;
+
+    public static TransactionType findTransactionType(byte subtype) {
+        switch (subtype) {
+            case SUBTYPE_ASSET_EXCHANGE_ASSET_ISSUANCE:
+                return AssetExchangeTransactionType.ASSET_ISSUANCE;
+            case SUBTYPE_ASSET_EXCHANGE_ASSET_TRANSFER:
+                return AssetExchangeTransactionType.ASSET_TRANSFER;
+            case SUBTYPE_ASSET_EXCHANGE_ASK_ORDER_PLACEMENT:
+                return AssetExchangeTransactionType.ASK_ORDER_PLACEMENT;
+            case SUBTYPE_ASSET_EXCHANGE_BID_ORDER_PLACEMENT:
+                return AssetExchangeTransactionType.BID_ORDER_PLACEMENT;
+            case SUBTYPE_ASSET_EXCHANGE_ASK_ORDER_CANCELLATION:
+                return AssetExchangeTransactionType.ASK_ORDER_CANCELLATION;
+            case SUBTYPE_ASSET_EXCHANGE_BID_ORDER_CANCELLATION:
+                return AssetExchangeTransactionType.BID_ORDER_CANCELLATION;
+            case SUBTYPE_ASSET_EXCHANGE_DIVIDEND_PAYMENT:
+                return AssetExchangeTransactionType.DIVIDEND_PAYMENT;
+            case SUBTYPE_ASSET_EXCHANGE_ASSET_DELETE:
+                return AssetExchangeTransactionType.ASSET_DELETE;
+            default:
+                return null;
+        }
+    }
+
     private AssetExchangeTransactionType() {}
 
     @Override
@@ -65,7 +97,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_ASSET_EXCHANGE_ASSET_ISSUANCE;
+            return SUBTYPE_ASSET_EXCHANGE_ASSET_ISSUANCE;
         }
 
         @Override
@@ -157,7 +189,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_ASSET_EXCHANGE_ASSET_TRANSFER;
+            return SUBTYPE_ASSET_EXCHANGE_ASSET_TRANSFER;
         }
 
         @Override
@@ -249,7 +281,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_ASSET_EXCHANGE_ASSET_DELETE;
+            return SUBTYPE_ASSET_EXCHANGE_ASSET_DELETE;
         }
 
         @Override
@@ -362,7 +394,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_ASSET_EXCHANGE_ASK_ORDER_PLACEMENT;
+            return SUBTYPE_ASSET_EXCHANGE_ASK_ORDER_PLACEMENT;
         }
 
         @Override
@@ -416,7 +448,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_ASSET_EXCHANGE_BID_ORDER_PLACEMENT;
+            return SUBTYPE_ASSET_EXCHANGE_BID_ORDER_PLACEMENT;
         }
 
         @Override
@@ -498,7 +530,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_ASSET_EXCHANGE_ASK_ORDER_CANCELLATION;
+            return SUBTYPE_ASSET_EXCHANGE_ASK_ORDER_CANCELLATION;
         }
 
         @Override
@@ -552,7 +584,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_ASSET_EXCHANGE_BID_ORDER_CANCELLATION;
+            return SUBTYPE_ASSET_EXCHANGE_BID_ORDER_CANCELLATION;
         }
 
         @Override
@@ -606,7 +638,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_ASSET_EXCHANGE_DIVIDEND_PAYMENT;
+            return SUBTYPE_ASSET_EXCHANGE_DIVIDEND_PAYMENT;
         }
 
         @Override

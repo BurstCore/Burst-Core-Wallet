@@ -16,11 +16,11 @@
 
 package nxt.peer;
 
-import nxt.account.Account;
-import nxt.blockchain.BlockchainProcessor;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.account.Account;
+import nxt.blockchain.BlockchainProcessor;
 import nxt.http.API;
 import nxt.http.APIEnum;
 import nxt.util.Convert;
@@ -53,7 +53,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 final class PeerImpl implements Peer {

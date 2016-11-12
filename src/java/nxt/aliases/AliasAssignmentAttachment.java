@@ -14,7 +14,7 @@
  *
  */
 
-package nxt.messaging;
+package nxt.aliases;
 
 import nxt.Constants;
 import nxt.NxtException;
@@ -70,7 +70,7 @@ public final class AliasAssignmentAttachment extends Attachment.AbstractAttachme
 
     @Override
     public TransactionType getTransactionType() {
-        return MessagingTransactionType.ALIAS_ASSIGNMENT;
+        return AliasTransactionType.ALIAS_ASSIGNMENT;
     }
 
     public String getAliasName() {

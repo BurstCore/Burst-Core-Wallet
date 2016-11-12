@@ -17,8 +17,8 @@
 package nxt.http;
 
 import nxt.account.Account;
-import nxt.shuffling.Shuffler;
 import nxt.crypto.Crypto;
+import nxt.shuffling.Shuffler;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

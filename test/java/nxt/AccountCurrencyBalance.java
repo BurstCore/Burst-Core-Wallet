@@ -40,8 +40,8 @@ public class AccountCurrencyBalance {
         Account account = Account.getAccount(Crypto.getPublicKey(secretPhrase));
         accountId = account.getId();
         this.currencyId = Convert.parseUnsignedLong(currency);
-        this.unconfirmedBalance = account.getUnconfirmedBalanceNQT();
-        this.balance = account.getBalanceNQT();
+        this.unconfirmedBalance = account.getUnconfirmedBalanceFQT();
+        this.balance = account.getBalanceFQT();
         this.unconfirmedCurrencyUnits = account.getUnconfirmedCurrencyUnits(currencyId);
         this.currencyUnits = account.getCurrencyUnits(currencyId);
     }

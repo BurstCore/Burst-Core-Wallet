@@ -16,11 +16,11 @@
 
 package nxt.http;
 
+import nxt.NxtException;
 import nxt.account.Account;
 import nxt.ae.Asset;
 import nxt.ae.AssetDeleteAttachment;
 import nxt.blockchain.Attachment;
-import nxt.NxtException;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

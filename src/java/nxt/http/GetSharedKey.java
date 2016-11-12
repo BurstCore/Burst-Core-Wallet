@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.account.Account;
 import nxt.NxtException;
+import nxt.account.Account;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;

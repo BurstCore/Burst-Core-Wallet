@@ -22,12 +22,12 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
-import nxt.blockchain.TransactionType;
-import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.TransactionImpl;
+import nxt.blockchain.TransactionType;
 import nxt.messaging.PrunablePlainMessageAppendix;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
@@ -37,6 +37,38 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
+
+    private static final byte SUBTYPE_DIGITAL_GOODS_LISTING = 0;
+    private static final byte SUBTYPE_DIGITAL_GOODS_DELISTING = 1;
+    private static final byte SUBTYPE_DIGITAL_GOODS_PRICE_CHANGE = 2;
+    private static final byte SUBTYPE_DIGITAL_GOODS_QUANTITY_CHANGE = 3;
+    private static final byte SUBTYPE_DIGITAL_GOODS_PURCHASE = 4;
+    private static final byte SUBTYPE_DIGITAL_GOODS_DELIVERY = 5;
+    private static final byte SUBTYPE_DIGITAL_GOODS_FEEDBACK = 6;
+    private static final byte SUBTYPE_DIGITAL_GOODS_REFUND = 7;
+
+    public static TransactionType findTransactionType(byte subtype) {
+        switch (subtype) {
+            case SUBTYPE_DIGITAL_GOODS_LISTING:
+                return DigitalGoodsTransactionType.LISTING;
+            case SUBTYPE_DIGITAL_GOODS_DELISTING:
+                return DigitalGoodsTransactionType.DELISTING;
+            case SUBTYPE_DIGITAL_GOODS_PRICE_CHANGE:
+                return DigitalGoodsTransactionType.PRICE_CHANGE;
+            case SUBTYPE_DIGITAL_GOODS_QUANTITY_CHANGE:
+                return DigitalGoodsTransactionType.QUANTITY_CHANGE;
+            case SUBTYPE_DIGITAL_GOODS_PURCHASE:
+                return DigitalGoodsTransactionType.PURCHASE;
+            case SUBTYPE_DIGITAL_GOODS_DELIVERY:
+                return DigitalGoodsTransactionType.DELIVERY;
+            case SUBTYPE_DIGITAL_GOODS_FEEDBACK:
+                return DigitalGoodsTransactionType.FEEDBACK;
+            case SUBTYPE_DIGITAL_GOODS_REFUND:
+                return DigitalGoodsTransactionType.REFUND;
+            default:
+                return null;
+        }
+    }
 
     private DigitalGoodsTransactionType() {
     }
@@ -78,7 +110,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_DIGITAL_GOODS_LISTING;
+            return SUBTYPE_DIGITAL_GOODS_LISTING;
         }
 
         @Override
@@ -158,7 +190,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_DIGITAL_GOODS_DELISTING;
+            return SUBTYPE_DIGITAL_GOODS_DELISTING;
         }
 
         @Override
@@ -222,7 +254,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_DIGITAL_GOODS_PRICE_CHANGE;
+            return SUBTYPE_DIGITAL_GOODS_PRICE_CHANGE;
         }
 
         @Override
@@ -288,7 +320,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_DIGITAL_GOODS_QUANTITY_CHANGE;
+            return SUBTYPE_DIGITAL_GOODS_QUANTITY_CHANGE;
         }
 
         @Override
@@ -355,7 +387,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_DIGITAL_GOODS_PURCHASE;
+            return SUBTYPE_DIGITAL_GOODS_PURCHASE;
         }
 
         @Override
@@ -457,7 +489,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_DIGITAL_GOODS_DELIVERY;
+            return SUBTYPE_DIGITAL_GOODS_DELIVERY;
         }
 
         @Override
@@ -541,7 +573,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_DIGITAL_GOODS_FEEDBACK;
+            return SUBTYPE_DIGITAL_GOODS_FEEDBACK;
         }
 
         @Override
@@ -610,7 +642,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
 
         @Override
         public final byte getSubtype() {
-            return ChildTransactionType.SUBTYPE_DIGITAL_GOODS_REFUND;
+            return SUBTYPE_DIGITAL_GOODS_REFUND;
         }
 
         @Override

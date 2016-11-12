@@ -22,16 +22,27 @@ import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.account.AccountRestrictions;
 import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;
-import nxt.blockchain.ChildTransactionImpl;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 public abstract class AccountControlTransactionType extends ChildTransactionType {
+
+    private static final byte SUBTYPE_ACCOUNT_CONTROL_PHASING_ONLY = 0;
+
+    public static TransactionType findTransactionType(byte subtype) {
+        switch (subtype) {
+            case SUBTYPE_ACCOUNT_CONTROL_PHASING_ONLY:
+                return AccountControlTransactionType.SET_PHASING_ONLY;
+            default:
+                return null;
+        }
+    }
 
     private AccountControlTransactionType() {
     }

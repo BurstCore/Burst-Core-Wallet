@@ -16,12 +16,12 @@
 
 package nxt.http;
 
-import nxt.blockchain.Attachment;
-import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
-import nxt.messaging.TaggedDataUploadAttachment;
+import nxt.taggeddata.TaggedDataUploadAttachment;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

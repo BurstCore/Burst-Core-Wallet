@@ -14,7 +14,7 @@
  *
  */
 
-package nxt.messaging;
+package nxt.aliases;
 
 import nxt.Constants;
 import nxt.NxtException;
@@ -45,7 +45,7 @@ public final class AliasBuyAttachment extends Attachment.AbstractAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return MessagingTransactionType.ALIAS_BUY;
+        return AliasTransactionType.ALIAS_BUY;
     }
 
     @Override

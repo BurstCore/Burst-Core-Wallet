@@ -14,7 +14,7 @@
  *
  */
 
-package nxt.messaging;
+package nxt.account;
 
 import nxt.Constants;
 import nxt.NxtException;
@@ -70,7 +70,7 @@ public final class AccountInfoAttachment extends Attachment.AbstractAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return MessagingTransactionType.ACCOUNT_INFO;
+        return AccountPropertyTransactionType.ACCOUNT_INFO;
     }
 
     public String getName() {

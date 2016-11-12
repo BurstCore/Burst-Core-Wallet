@@ -16,12 +16,12 @@
 
 package nxt.http;
 
+import nxt.NxtException;
 import nxt.account.Account;
 import nxt.ae.BidOrderCancellationAttachment;
+import nxt.ae.OrderHome;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
-import nxt.NxtException;
-import nxt.ae.OrderHome;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

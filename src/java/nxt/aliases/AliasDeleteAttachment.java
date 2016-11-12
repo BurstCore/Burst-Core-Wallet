@@ -14,7 +14,7 @@
  *
  */
 
-package nxt.messaging;
+package nxt.aliases;
 
 import nxt.Constants;
 import nxt.NxtException;
@@ -25,57 +25,47 @@ import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 
-public final class AliasSellAttachment extends Attachment.AbstractAttachment {
+public final class AliasDeleteAttachment extends Attachment.AbstractAttachment {
 
     private final String aliasName;
-    private final long priceNQT;
 
-    AliasSellAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+    AliasDeleteAttachment(final ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
         this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
-        this.priceNQT = buffer.getLong();
     }
 
-    AliasSellAttachment(JSONObject attachmentData) {
+    AliasDeleteAttachment(final JSONObject attachmentData) {
         super(attachmentData);
         this.aliasName = Convert.nullToEmpty((String) attachmentData.get("alias"));
-        this.priceNQT = Convert.parseLong(attachmentData.get("priceNQT"));
     }
 
-    public AliasSellAttachment(String aliasName, long priceNQT) {
+    public AliasDeleteAttachment(final String aliasName) {
         this.aliasName = aliasName;
-        this.priceNQT = priceNQT;
     }
 
     @Override
     public TransactionType getTransactionType() {
-        return MessagingTransactionType.ALIAS_SELL;
+        return AliasTransactionType.ALIAS_DELETE;
     }
 
     @Override
     protected int getMySize() {
-        return 1 + Convert.toBytes(aliasName).length + 8;
+        return 1 + Convert.toBytes(aliasName).length;
     }
 
     @Override
-    protected void putMyBytes(ByteBuffer buffer) {
+    protected void putMyBytes(final ByteBuffer buffer) {
         byte[] aliasBytes = Convert.toBytes(aliasName);
         buffer.put((byte)aliasBytes.length);
         buffer.put(aliasBytes);
-        buffer.putLong(priceNQT);
     }
 
     @Override
-    protected void putMyJSON(JSONObject attachment) {
+    protected void putMyJSON(final JSONObject attachment) {
         attachment.put("alias", aliasName);
-        attachment.put("priceNQT", priceNQT);
     }
 
     public String getAliasName(){
         return aliasName;
-    }
-
-    public long getPriceNQT(){
-        return priceNQT;
     }
 }

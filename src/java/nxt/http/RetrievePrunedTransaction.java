@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.blockchain.ChildChain;
 import nxt.Nxt;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import org.json.simple.JSONStreamAware;
 

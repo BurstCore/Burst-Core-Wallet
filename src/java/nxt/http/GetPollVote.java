@@ -16,13 +16,13 @@
 
 package nxt.http;
 
-import nxt.blockchain.ChildChain;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.blockchain.ChildChain;
+import nxt.util.JSON;
 import nxt.voting.PollHome;
 import nxt.voting.VoteHome;
 import nxt.voting.VoteWeighting;
-import nxt.util.JSON;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

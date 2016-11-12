@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.ms.CurrencyTransfer;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.db.DbUtils;
+import nxt.ms.CurrencyTransfer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

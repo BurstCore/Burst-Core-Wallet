@@ -16,10 +16,10 @@
 
 package nxt.http;
 
+import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.dgs.DigitalGoodsHome;
-import nxt.NxtException;
 import nxt.dgs.PriceChangeAttachment;
 import org.json.simple.JSONStreamAware;
 

@@ -16,10 +16,10 @@
 
 package nxt.voting;
 
-import nxt.blockchain.BlockchainProcessor;
-import nxt.blockchain.ChildChain;
 import nxt.Constants;
 import nxt.Nxt;
+import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.db.DbClause;
 import nxt.db.DbIterator;

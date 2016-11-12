@@ -16,22 +16,22 @@
 
 package nxt.http;
 
-import nxt.blockchain.ChildTransactionType;
 import nxt.Constants;
+import nxt.Nxt;
+import nxt.account.HoldingType;
+import nxt.blockchain.ChildTransactionType;
+import nxt.blockchain.Genesis;
+import nxt.blockchain.TransactionType;
+import nxt.crypto.HashFunction;
 import nxt.ms.CurrencyMinting;
 import nxt.ms.CurrencyType;
-import nxt.blockchain.Genesis;
-import nxt.account.HoldingType;
-import nxt.Nxt;
-import nxt.voting.PhasingPollHome;
-import nxt.shuffling.ShufflingHome;
-import nxt.shuffling.ShufflingParticipantHome;
-import nxt.blockchain.TransactionType;
-import nxt.voting.VoteWeighting;
-import nxt.crypto.HashFunction;
 import nxt.peer.Peer;
+import nxt.shuffling.ShufflingParticipantHome;
+import nxt.shuffling.ShufflingStage;
 import nxt.util.JSON;
 import nxt.util.Logger;
+import nxt.voting.PhasingPollHome;
+import nxt.voting.VoteWeighting;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -160,7 +160,7 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 response.put("holdingTypes", holdingTypes);
 
                 JSONObject shufflingStages = new JSONObject();
-                for (ShufflingHome.Stage stage : ShufflingHome.Stage.values()) {
+                for (ShufflingStage stage : ShufflingStage.values()) {
                     shufflingStages.put(stage.toString(), stage.getCode());
                 }
                 response.put("shufflingStages", shufflingStages);

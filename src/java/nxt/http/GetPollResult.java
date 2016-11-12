@@ -18,9 +18,9 @@ package nxt.http;
 
 
 import nxt.NxtException;
+import nxt.util.Convert;
 import nxt.voting.PollHome;
 import nxt.voting.VoteWeighting;
-import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

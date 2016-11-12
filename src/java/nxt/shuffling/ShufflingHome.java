@@ -55,88 +55,6 @@ public final class ShufflingHome {
         SHUFFLING_CREATED, SHUFFLING_PROCESSING_ASSIGNED, SHUFFLING_PROCESSING_FINISHED, SHUFFLING_BLAME_STARTED, SHUFFLING_CANCELLED, SHUFFLING_DONE
     }
 
-    public enum Stage {
-        REGISTRATION((byte) 0, new byte[]{1, 4}) {
-            @Override
-            byte[] getHash(Shuffling shuffling) {
-                return shuffling.getFullHash();
-            }
-        },
-        PROCESSING((byte) 1, new byte[]{2, 3, 4}) {
-            @Override
-            byte[] getHash(Shuffling shuffling) {
-                if (shuffling.assigneeAccountId == shuffling.issuerId) {
-                    try (DbIterator<ShufflingParticipantHome.ShufflingParticipant> participants =
-                                 shuffling.shufflingParticipantHome.getParticipants(shuffling.id)) {
-                        return getParticipantsHash(participants);
-                    }
-                } else {
-                    ShufflingParticipantHome.ShufflingParticipant participant = shuffling.getParticipant(shuffling.assigneeAccountId);
-                    return participant.getPreviousParticipant().getDataTransactionFullHash();
-                }
-
-            }
-        },
-        VERIFICATION((byte) 2, new byte[]{3, 4, 5}) {
-            @Override
-            byte[] getHash(Shuffling shuffling) {
-                return shuffling.getLastParticipant().getDataTransactionFullHash();
-            }
-        },
-        BLAME((byte) 3, new byte[]{4}) {
-            @Override
-            byte[] getHash(Shuffling shuffling) {
-                return shuffling.getParticipant(shuffling.assigneeAccountId).getDataTransactionFullHash();
-            }
-        },
-        CANCELLED((byte) 4, new byte[]{}) {
-            @Override
-            byte[] getHash(Shuffling shuffling) {
-                byte[] hash = shuffling.getLastParticipant().getDataTransactionFullHash();
-                if (hash != null && hash.length > 0) {
-                    return hash;
-                }
-                try (DbIterator<ShufflingParticipantHome.ShufflingParticipant> participants = shuffling.shufflingParticipantHome.getParticipants(shuffling.id)) {
-                    return getParticipantsHash(participants);
-                }
-            }
-        },
-        DONE((byte) 5, new byte[]{}) {
-            @Override
-            byte[] getHash(Shuffling shuffling) {
-                return shuffling.getLastParticipant().getDataTransactionFullHash();
-            }
-        };
-
-        private final byte code;
-        private final byte[] allowedNext;
-
-        Stage(byte code, byte[] allowedNext) {
-            this.code = code;
-            this.allowedNext = allowedNext;
-        }
-
-        public static Stage get(byte code) {
-            for (Stage stage : Stage.values()) {
-                if (stage.code == code) {
-                    return stage;
-                }
-            }
-            throw new IllegalArgumentException("No matching stage for " + code);
-        }
-
-        public byte getCode() {
-            return code;
-        }
-
-        public boolean canBecome(Stage nextStage) {
-            return Arrays.binarySearch(allowedNext, nextStage.code) >= 0;
-        }
-
-        abstract byte[] getHash(Shuffling shuffling);
-
-    }
-
     private static final boolean deleteFinished = Nxt.getBooleanProperty("nxt.deleteFinishedShufflings");
 
     public static ShufflingHome forChain(ChildChain childChain) {
@@ -245,7 +163,7 @@ public final class ShufflingHome {
         return shufflingTable.getCount(clause);
     }
 
-    public DbIterator<Shuffling> getHoldingShufflings(long holdingId, Stage stage, boolean includeFinished, int from, int to) {
+    public DbIterator<Shuffling> getHoldingShufflings(long holdingId, ShufflingStage stage, boolean includeFinished, int from, int to) {
         DbClause clause = holdingId != 0 ? new DbClause.LongClause("holding_id", holdingId) : new DbClause.NullClause("holding_id");
         if (!includeFinished) {
             clause = clause.and(new DbClause.NotNullClause("blocks_remaining"));
@@ -277,7 +195,7 @@ public final class ShufflingHome {
 
     public DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
         return shufflingTable.getManyBy(new DbClause.LongClause("assignee_account_id", assigneeAccountId)
-                        .and(new DbClause.ByteClause("stage", Stage.PROCESSING.getCode())), from, to,
+                        .and(new DbClause.ByteClause("stage", ShufflingStage.PROCESSING.getCode())), from, to,
                 " ORDER BY blocks_remaining NULLS LAST, height DESC ");
     }
 
@@ -288,7 +206,7 @@ public final class ShufflingHome {
         listeners.notify(shuffling, Event.SHUFFLING_CREATED);
     }
 
-    private static byte[] getParticipantsHash(Iterable<ShufflingParticipantHome.ShufflingParticipant> participants) {
+    static byte[] getParticipantsHash(Iterable<ShufflingParticipantHome.ShufflingParticipant> participants) {
         MessageDigest digest = Crypto.sha256();
         participants.forEach(participant -> digest.update(Convert.toBytes(participant.getAccountId())));
         return digest.digest();
@@ -306,7 +224,7 @@ public final class ShufflingHome {
         private final byte participantCount;
         private short blocksRemaining;
         private byte registrantCount;
-        private Stage stage;
+        private ShufflingStage stage;
         private long assigneeAccountId;
         private byte[][] recipientPublicKeys;
 
@@ -319,7 +237,7 @@ public final class ShufflingHome {
             this.amount = attachment.getAmount();
             this.participantCount = attachment.getParticipantCount();
             this.blocksRemaining = attachment.getRegistrationPeriod();
-            this.stage = Stage.REGISTRATION;
+            this.stage = ShufflingStage.REGISTRATION;
             this.assigneeAccountId = issuerId;
             this.recipientPublicKeys = Convert.EMPTY_BYTES;
             this.registrantCount = 1;
@@ -334,7 +252,7 @@ public final class ShufflingHome {
             this.amount = rs.getLong("amount");
             this.participantCount = rs.getByte("participant_count");
             this.blocksRemaining = rs.getShort("blocks_remaining");
-            this.stage = Stage.get(rs.getByte("stage"));
+            this.stage = ShufflingStage.get(rs.getByte("stage"));
             this.assigneeAccountId = rs.getLong("assignee_account_id");
             this.recipientPublicKeys = DbUtils.getArray(rs, "recipient_public_keys", byte[][].class, Convert.EMPTY_BYTES);
             this.registrantCount = rs.getByte("registrant_count");
@@ -403,22 +321,22 @@ public final class ShufflingHome {
             return blocksRemaining;
         }
 
-        public Stage getStage() {
+        public ShufflingStage getStage() {
             return stage;
         }
 
         // caller must update database
-        private void setStage(Stage stage, long assigneeAccountId, short blocksRemaining) {
+        private void setStage(ShufflingStage stage, long assigneeAccountId, short blocksRemaining) {
             if (!this.stage.canBecome(stage)) {
                 throw new IllegalStateException(String.format("Shuffling in stage %s cannot go to stage %s", this.stage, stage));
             }
-            if ((stage == Stage.VERIFICATION || stage == Stage.DONE) && assigneeAccountId != 0) {
+            if ((stage == ShufflingStage.VERIFICATION || stage == ShufflingStage.DONE) && assigneeAccountId != 0) {
                 throw new IllegalArgumentException(String.format("Invalid assigneeAccountId %s for stage %s", Long.toUnsignedString(assigneeAccountId), stage));
             }
-            if ((stage == Stage.REGISTRATION || stage == Stage.PROCESSING || stage == Stage.BLAME) && assigneeAccountId == 0) {
+            if ((stage == ShufflingStage.REGISTRATION || stage == ShufflingStage.PROCESSING || stage == ShufflingStage.BLAME) && assigneeAccountId == 0) {
                 throw new IllegalArgumentException(String.format("In stage %s assigneeAccountId cannot be 0", stage));
             }
-            if ((stage == Stage.DONE || stage == Stage.CANCELLED) && blocksRemaining != 0) {
+            if ((stage == ShufflingStage.DONE || stage == ShufflingStage.CANCELLED) && blocksRemaining != 0) {
                 throw new IllegalArgumentException(String.format("For stage %s remaining blocks cannot be %s", stage, blocksRemaining));
             }
             this.stage = stage;
@@ -610,12 +528,12 @@ public final class ShufflingHome {
             this.registrantCount += 1;
             // Check if participant registration is complete and if so update the shuffling
             if (this.registrantCount == this.participantCount) {
-                setStage(Stage.PROCESSING, this.issuerId, Constants.SHUFFLING_PROCESSING_DEADLINE);
+                setStage(ShufflingStage.PROCESSING, this.issuerId, Constants.SHUFFLING_PROCESSING_DEADLINE);
             } else {
                 this.assigneeAccountId = participantId;
             }
             shufflingTable.insert(this);
-            if (stage == Stage.PROCESSING) {
+            if (stage == ShufflingStage.PROCESSING) {
                 listeners.notify(this, Event.SHUFFLING_PROCESSING_ASSIGNED);
             }
         }
@@ -655,7 +573,7 @@ public final class ShufflingHome {
                     Account.addOrGetAccount(recipientId).apply(recipientPublicKey);
                 }
             }
-            setStage(Stage.VERIFICATION, 0, (short) (Constants.SHUFFLING_PROCESSING_DEADLINE + participantCount));
+            setStage(ShufflingStage.VERIFICATION, 0, (short) (Constants.SHUFFLING_PROCESSING_DEADLINE + participantCount));
             shufflingTable.insert(this);
             listeners.notify(this, Event.SHUFFLING_PROCESSING_FINISHED);
         }
@@ -669,9 +587,9 @@ public final class ShufflingHome {
 
         void cancelBy(ShufflingParticipantHome.ShufflingParticipant participant, byte[][] blameData, byte[][] keySeeds) {
             participant.cancel(blameData, keySeeds);
-            boolean startingBlame = this.stage != Stage.BLAME;
+            boolean startingBlame = this.stage != ShufflingStage.BLAME;
             if (startingBlame) {
-                setStage(Stage.BLAME, participant.getAccountId(), (short) (Constants.SHUFFLING_PROCESSING_DEADLINE + participantCount));
+                setStage(ShufflingStage.BLAME, participant.getAccountId(), (short) (Constants.SHUFFLING_PROCESSING_DEADLINE + participantCount));
             }
             shufflingTable.insert(this);
             if (startingBlame) {
@@ -715,7 +633,7 @@ public final class ShufflingHome {
                     recipientAccount.addToBalanceAndUnconfirmedBalance(childChain, event, this.id, Constants.SHUFFLING_DEPOSIT_NQT);
                 }
             }
-            setStage(Stage.DONE, 0, (short) 0);
+            setStage(ShufflingStage.DONE, 0, (short) 0);
             shufflingTable.insert(this);
             listeners.notify(this, Event.SHUFFLING_DONE);
             if (deleteFinished) {
@@ -758,7 +676,7 @@ public final class ShufflingHome {
                 //blockGeneratorAccount.addToForgedBalanceNQT(fee);
                 Logger.logDebugMessage("Shuffling penalty %f NXT awarded to forger at height %d", ((double) fee) / Constants.ONE_NXT, block.getHeight());
             }
-            setStage(Stage.CANCELLED, blamedAccountId, (short) 0);
+            setStage(ShufflingStage.CANCELLED, blamedAccountId, (short) 0);
             shufflingTable.insert(this);
             listeners.notify(this, Event.SHUFFLING_CANCELLED);
             if (deleteFinished) {
@@ -769,12 +687,12 @@ public final class ShufflingHome {
 
         private long blame() {
             // if registration never completed, no one is to blame
-            if (stage == Stage.REGISTRATION) {
+            if (stage == ShufflingStage.REGISTRATION) {
                 Logger.logDebugMessage("Registration never completed for shuffling %s", Long.toUnsignedString(id));
                 return 0;
             }
             // if no one submitted cancellation, blame the first one that did not submit processing data
-            if (stage == Stage.PROCESSING) {
+            if (stage == ShufflingStage.PROCESSING) {
                 Logger.logDebugMessage("Participant %s did not submit processing", Long.toUnsignedString(assigneeAccountId));
                 return assigneeAccountId;
             }
@@ -784,7 +702,7 @@ public final class ShufflingHome {
                     participants.add(iterator.next());
                 }
             }
-            if (stage == Stage.VERIFICATION) {
+            if (stage == ShufflingStage.VERIFICATION) {
                 // if verification started, blame the first one who did not submit verification
                 for (ShufflingParticipantHome.ShufflingParticipant participant : participants) {
                     if (participant.getState() != ShufflingParticipantHome.State.VERIFIED) {
@@ -883,7 +801,7 @@ public final class ShufflingHome {
 
         private boolean isFull(Block block) {
             int transactionSize = Constants.MIN_TRANSACTION_SIZE; // min transaction size with no attachment
-            if (stage == Stage.REGISTRATION) {
+            if (stage == ShufflingStage.REGISTRATION) {
                 transactionSize += 1 + 32;
             } else { // must use same for PROCESSING/VERIFICATION/BLAME
                 transactionSize = 16384; // max observed was 15647 for 30 participants

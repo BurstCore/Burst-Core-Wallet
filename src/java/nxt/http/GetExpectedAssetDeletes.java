@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.ae.AssetDeleteAttachment;
-import nxt.ae.AssetExchangeTransactionType;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.ae.AssetDeleteAttachment;
+import nxt.ae.AssetExchangeTransactionType;
 import nxt.blockchain.Transaction;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;

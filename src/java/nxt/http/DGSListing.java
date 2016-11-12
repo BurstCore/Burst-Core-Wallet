@@ -16,10 +16,10 @@
 
 package nxt.http;
 
-import nxt.account.Account;
-import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.account.Account;
+import nxt.blockchain.Attachment;
 import nxt.dgs.ListingAttachment;
 import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.util.Convert;

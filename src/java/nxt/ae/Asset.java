@@ -16,10 +16,10 @@
 
 package nxt.ae;
 
-import nxt.account.Account;
-import nxt.blockchain.ChildChain;
 import nxt.Constants;
 import nxt.Nxt;
+import nxt.account.Account;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.db.DbClause;
 import nxt.db.DbIterator;

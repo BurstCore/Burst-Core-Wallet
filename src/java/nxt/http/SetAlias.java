@@ -17,13 +17,13 @@
 package nxt.http;
 
 
-import nxt.account.Account;
-import nxt.messaging.AliasHome;
-import nxt.blockchain.Attachment;
-import nxt.blockchain.ChildChain;
 import nxt.Constants;
 import nxt.NxtException;
-import nxt.messaging.AliasAssignmentAttachment;
+import nxt.account.Account;
+import nxt.aliases.AliasAssignmentAttachment;
+import nxt.aliases.AliasHome;
+import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildChain;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

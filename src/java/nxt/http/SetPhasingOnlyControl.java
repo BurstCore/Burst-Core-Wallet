@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.account.Account;
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.account.Account;
 import nxt.voting.PhasingParams;
 import nxt.voting.SetPhasingOnlyAttachment;
 import org.json.simple.JSONStreamAware;

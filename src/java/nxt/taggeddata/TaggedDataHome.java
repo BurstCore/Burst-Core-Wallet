@@ -14,7 +14,7 @@
  *
  */
 
-package nxt.messaging;
+package nxt.taggeddata;
 
 import nxt.Constants;
 import nxt.Nxt;

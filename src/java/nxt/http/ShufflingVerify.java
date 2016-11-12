@@ -16,9 +16,9 @@
 
 package nxt.http;
 
+import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
-import nxt.NxtException;
 import nxt.shuffling.ShufflingHome;
 import nxt.shuffling.ShufflingVerificationAttachment;
 import org.json.simple.JSONStreamAware;

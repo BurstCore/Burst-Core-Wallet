@@ -17,10 +17,10 @@
 package nxt.http;
 
 import nxt.Constants;
-import nxt.dbschema.Db;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.addons.AddOns;
+import nxt.dbschema.Db;
 import nxt.util.JSON;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;

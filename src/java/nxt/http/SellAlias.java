@@ -16,12 +16,12 @@
 
 package nxt.http;
 
-import nxt.account.Account;
-import nxt.messaging.AliasHome;
-import nxt.blockchain.Attachment;
 import nxt.Constants;
 import nxt.NxtException;
-import nxt.messaging.AliasSellAttachment;
+import nxt.account.Account;
+import nxt.aliases.AliasHome;
+import nxt.aliases.AliasSellAttachment;
+import nxt.blockchain.Attachment;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 

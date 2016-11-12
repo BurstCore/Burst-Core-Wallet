@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.account.Account;
 import nxt.NxtException;
+import nxt.account.Account;
 import nxt.crypto.EncryptedData;
 import nxt.util.Convert;
 import nxt.util.Logger;

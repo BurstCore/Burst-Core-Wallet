@@ -16,15 +16,15 @@
 
 package nxt.ms.mint;
 
-import nxt.blockchain.Attachment;
 import nxt.Constants;
-import nxt.ms.CurrencyMinting;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.blockchain.Attachment;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.crypto.HashFunction;
 import nxt.http.API;
+import nxt.ms.CurrencyMinting;
 import nxt.ms.CurrencyMintingAttachment;
 import nxt.util.Convert;
 import nxt.util.Logger;

@@ -16,8 +16,8 @@
 
 package nxt.http;
 
-import nxt.dbschema.Db;
 import nxt.db.FullTextTrigger;
+import nxt.dbschema.Db;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

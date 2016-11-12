@@ -16,15 +16,15 @@
 
 package nxt.http;
 
+import nxt.Nxt;
 import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEntry;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
-import nxt.dbschema.Db;
-import nxt.Nxt;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionProcessor;
 import nxt.db.TransactionalDb;
+import nxt.dbschema.Db;
 import nxt.peer.Peer;
 import nxt.peer.Peers;
 import nxt.util.Convert;

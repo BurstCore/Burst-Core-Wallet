@@ -14,7 +14,7 @@
  *
  */
 
-package nxt.messaging;
+package nxt.account;
 
 import nxt.blockchain.Attachment;
 import nxt.blockchain.TransactionType;
@@ -58,7 +58,7 @@ public final class AccountPropertyDeleteAttachment extends Attachment.AbstractAt
 
     @Override
     public TransactionType getTransactionType() {
-        return MessagingTransactionType.ACCOUNT_PROPERTY_DELETE;
+        return AccountPropertyTransactionType.ACCOUNT_PROPERTY_DELETE;
     }
 
     public long getPropertyId() {

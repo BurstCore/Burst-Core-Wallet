@@ -16,9 +16,9 @@
 
 package nxt.blockchain;
 
-import nxt.dbschema.Db;
 import nxt.NxtException;
 import nxt.db.Table;
+import nxt.dbschema.Db;
 import nxt.util.Convert;
 
 import java.sql.Connection;

@@ -17,14 +17,14 @@
 package nxt.http;
 
 
+import nxt.Constants;
+import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
-import nxt.Constants;
-import nxt.NxtException;
-import nxt.voting.PhasingVoteCastingAttachment;
-import nxt.voting.PhasingPollHome;
 import nxt.util.Convert;
+import nxt.voting.PhasingPollHome;
+import nxt.voting.PhasingVoteCastingAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
