@@ -123,7 +123,7 @@ public final class Constants {
     public static final int CHECKSUM_BLOCK_1 = Integer.MAX_VALUE;
 
     public static final int LAST_CHECKSUM_BLOCK = 0;
-    // LAST_KNOWN_BLOCK must also be set in html/ui/js/nrs.constants.js
+    // LAST_KNOWN_BLOCK must also be set in html/www/js/nrs.constants.js
     public static final int LAST_KNOWN_BLOCK = isTestnet ? 0 : 0;
 
     public static final int[] MIN_VERSION = new int[] {1, 0};
