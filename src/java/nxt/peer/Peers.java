@@ -1,18 +1,18 @@
-/******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers.                             *
- *                                                                            *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at      *
- * the top-level directory of this distribution for the individual copyright  *
- * holder information and the developer policies on copyright and licensing.  *
- *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement, no part of the    *
- * Nxt software, including this file, may be copied, modified, propagated,    *
- * or distributed except according to the terms contained in the LICENSE.txt  *
- * file.                                                                      *
- *                                                                            *
- * Removal or modification of this copyright notice is prohibited.            *
- *                                                                            *
- ******************************************************************************/
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
 
 package nxt.peer;
 
@@ -21,11 +21,14 @@ import nxt.Db;
 import nxt.Nxt;
 import nxt.http.API;
 import nxt.util.Filter;
+import nxt.util.JSON;
 import nxt.util.Listener;
 import nxt.util.Listeners;
 import nxt.util.Logger;
 import nxt.util.QueuedThreadPool;
 import nxt.util.ThreadPool;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
 
 import java.net.InetAddress;
 import java.net.URI;
@@ -77,6 +80,11 @@ public final class Peers {
     /** Peer blacklist period (seconds) */
     static final int blacklistingPeriod = Nxt.getIntProperty("nxt.blacklistingPeriod", 600);
 
+    private static JSONObject myPeerInfo;
+    private static volatile Peer.BlockchainState currentBlockchainState;
+    private static volatile JSONStreamAware myPeerInfoRequest;
+    private static volatile JSONStreamAware myPeerInfoResponse;
+
     /** Get more peers */
     private static final boolean getMorePeers = Nxt.getBooleanProperty("nxt.getMorePeers");
 
@@ -102,6 +110,7 @@ public final class Peers {
 
     /** Local peer services */
     static final List<Peer.Service> myServices = new ArrayList<>();
+
     static {
         if (!Constants.ENABLE_PRUNING && Constants.INCLUDE_EXPIRED_PRUNABLE) {
             myServices.add(Peer.Service.PRUNABLE);
@@ -408,6 +417,10 @@ public final class Peers {
         }
         peer = new PeerImpl(inetAddress, announcedAddress);
         return peer;
+    }
+
+    public static Peer getPeer(String host) {
+        return peers.get(host);
     }
 
     /**
@@ -724,7 +737,7 @@ public final class Peers {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
                     Db.db.beginTransaction();
-                    PeerDb.updatePeer((PeerImpl)peer);
+                    PeerDb.updatePeer((PeerImpl) peer);
                     Db.db.commitTransaction();
                 } catch (RuntimeException e) {
                     Logger.logErrorMessage("Unable to update peer database", e);
@@ -734,6 +747,95 @@ public final class Peers {
                 }
             }
         }), Peers.Event.CHANGE_SERVICES);
+    }
+
+    public static boolean isOldVersion(String version, int[] minVersion) {
+        if (version == null) {
+            return true;
+        }
+        if (version.endsWith("e")) {
+            version = version.substring(0, version.length() - 1);
+        }
+        String[] versions = version.split("\\.");
+        for (int i = 0; i < minVersion.length && i < versions.length; i++) {
+            try {
+                int v = Integer.parseInt(versions[i]);
+                if (v > minVersion[i]) {
+                    return false;
+                } else if (v < minVersion[i]) {
+                    return true;
+                }
+            } catch (NumberFormatException e) {
+                return true;
+            }
+        }
+        return versions.length < minVersion.length;
+    }
+
+    private static final int[] MAX_VERSION;
+    static {
+        String version = Nxt.VERSION;
+        if (version.endsWith("e")) {
+            version = version.substring(0, version.length() - 1);
+        }
+        String[] versions = version.split("\\.");
+        MAX_VERSION = new int[versions.length];
+        for (int i = 0; i < versions.length; i++) {
+            MAX_VERSION[i] = Integer.parseInt(versions[i]);
+        }
+    }
+
+    public static boolean isNewVersion(String version) {
+        if (version == null) {
+            return true;
+        }
+        if (version.endsWith("e")) {
+            version = version.substring(0, version.length() - 1);
+        }
+        String[] versions = version.split("\\.");
+        for (int i = 0; i < MAX_VERSION.length && i < versions.length; i++) {
+            try {
+                int v = Integer.parseInt(versions[i]);
+                if (v > MAX_VERSION[i]) {
+                    return true;
+                } else if (v < MAX_VERSION[i]) {
+                    return false;
+                }
+            } catch (NumberFormatException e) {
+                return true;
+            }
+        }
+        return versions.length > MAX_VERSION.length;
+    }
+
+    private static void checkBlockchainState() {
+        Peer.BlockchainState state = Constants.isLightClient ? Peer.BlockchainState.LIGHT_CLIENT :
+                (Nxt.getBlockchainProcessor().isDownloading() || Nxt.getBlockchain().getLastBlockTimestamp() < Nxt.getEpochTime() - 600) ? Peer.BlockchainState.DOWNLOADING :
+                        (Nxt.getBlockchain().getLastBlock().getBaseTarget() / Constants.INITIAL_BASE_TARGET > 10 && !Constants.isTestnet) ? Peer.BlockchainState.FORK :
+                        Peer.BlockchainState.UP_TO_DATE;
+        if (state != currentBlockchainState) {
+            JSONObject json = new JSONObject(myPeerInfo);
+            json.put("blockchainState", state.ordinal());
+            myPeerInfoResponse = JSON.prepare(json);
+            json.put("requestType", "getInfo");
+            myPeerInfoRequest = JSON.prepareRequest(json);
+            currentBlockchainState = state;
+        }
+    }
+
+    public static JSONStreamAware getMyPeerInfoRequest() {
+        checkBlockchainState();
+        return myPeerInfoRequest;
+    }
+
+    public static JSONStreamAware getMyPeerInfoResponse() {
+        checkBlockchainState();
+        return myPeerInfoResponse;
+    }
+
+    public static Peer.BlockchainState getMyBlockchainState() {
+        checkBlockchainState();
+        return currentBlockchainState;
     }
 
     private Peers() {} // never

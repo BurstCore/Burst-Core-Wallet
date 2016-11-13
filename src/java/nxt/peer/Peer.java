@@ -1,22 +1,24 @@
-/******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers.                             *
- *                                                                            *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at      *
- * the top-level directory of this distribution for the individual copyright  *
- * holder information and the developer policies on copyright and licensing.  *
- *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement, no part of the    *
- * Nxt software, including this file, may be copied, modified, propagated,    *
- * or distributed except according to the terms contained in the LICENSE.txt  *
- * file.                                                                      *
- *                                                                            *
- * Removal or modification of this copyright notice is prohibited.            *
- *                                                                            *
- ******************************************************************************/
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
 
 package nxt.peer;
 
-import java.net.InetAddress;
+import nxt.http.APIEnum;
+
+import java.util.Set;
 
 /**
  * Peer network node
@@ -35,7 +37,8 @@ public interface Peer {
         HALLMARK(1),                    // Hallmarked node (no longer used)
         PRUNABLE(2),                    // Stores expired prunable content
         API(4),                         // Provides open API access over http
-        API_SSL(8);                     // Provides open API access over https
+        API_SSL(8),                     // Provides open API access over https
+        CORS(16);                       // API CORS enabled
 
         private final long code;        // Service code - must be a power of 2
 
@@ -46,6 +49,13 @@ public interface Peer {
         public long getCode() {
             return code;
         }
+    }
+
+    enum BlockchainState {
+        UP_TO_DATE,
+        DOWNLOADING,
+        LIGHT_CLIENT,
+        FORK
     }
 
     /**
@@ -139,6 +149,12 @@ public interface Peer {
      */
     boolean shareAddress();
 
+    Set<APIEnum> getDisabledAPIs();
+
+    int getApiServerIdleTimeout();
+
+    BlockchainState getBlockchainState();
+
     /**
      * Check if peer is blacklisted
      *
@@ -210,6 +226,12 @@ public interface Peer {
      * @return                          TRUE if the service is provided
      */
     boolean providesService(Service service);
+
+    boolean isOpenAPI();
+
+    boolean isApiConnectable();
+
+    StringBuilder getPeerApiUri();
 
     /**
      * Check if the peer provides the specifies services

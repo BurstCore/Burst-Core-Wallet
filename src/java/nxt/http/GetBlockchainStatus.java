@@ -1,21 +1,22 @@
-/******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers.                             *
- *                                                                            *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at      *
- * the top-level directory of this distribution for the individual copyright  *
- * holder information and the developer policies on copyright and licensing.  *
- *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement, no part of the    *
- * Nxt software, including this file, may be copied, modified, propagated,    *
- * or distributed except according to the terms contained in the LICENSE.txt  *
- * file.                                                                      *
- *                                                                            *
- * Removal or modification of this copyright notice is prohibited.            *
- *                                                                            *
- ******************************************************************************/
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
 
 package nxt.http;
 
+import nxt.AccountLedger;
 import nxt.Block;
 import nxt.BlockchainProcessor;
 import nxt.Constants;
@@ -36,7 +37,7 @@ public final class GetBlockchainStatus extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    JSONObject processRequest(HttpServletRequest req) {
+    protected JSONObject processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
         response.put("application", Nxt.APPLICATION);
         response.put("version", Nxt.VERSION);
@@ -57,14 +58,25 @@ public final class GetBlockchainStatus extends APIServlet.APIRequestHandler {
         response.put("maxPrunableLifetime", Constants.MAX_PRUNABLE_LIFETIME);
         response.put("includeExpiredPrunable", Constants.INCLUDE_EXPIRED_PRUNABLE);
         response.put("correctInvalidFees", Constants.correctInvalidFees);
+        response.put("ledgerTrimKeep", AccountLedger.trimKeep);
         JSONArray servicesArray = new JSONArray();
         Peers.getServices().forEach(service -> servicesArray.add(service.name()));
         response.put("services", servicesArray);
+        if (APIProxy.isActivated()) {
+            String servingPeer = APIProxy.getInstance().getMainPeerAnnouncedAddress();
+            response.put("apiProxy", true);
+            response.put("apiProxyPeer", servingPeer);
+        } else {
+            response.put("apiProxy", false);
+        }
+        response.put("isLightClient", Constants.isLightClient);
+        response.put("maxAPIRecords", API.maxRecords);
+        response.put("blockchainState", Peers.getMyBlockchainState());
         return response;
     }
 
     @Override
-    boolean allowRequiredBlockParameters() {
+    protected boolean allowRequiredBlockParameters() {
         return false;
     }
 

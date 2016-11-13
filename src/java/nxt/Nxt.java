@@ -1,26 +1,29 @@
-/******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers.                             *
- *                                                                            *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at      *
- * the top-level directory of this distribution for the individual copyright  *
- * holder information and the developer policies on copyright and licensing.  *
- *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement, no part of the    *
- * Nxt software, including this file, may be copied, modified, propagated,    *
- * or distributed except according to the terms contained in the LICENSE.txt  *
- * file.                                                                      *
- *                                                                            *
- * Removal or modification of this copyright notice is prohibited.            *
- *                                                                            *
- ******************************************************************************/
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
 
 package nxt;
 
+import nxt.addons.AddOns;
 import nxt.crypto.Crypto;
 import nxt.env.DirProvider;
 import nxt.env.RuntimeEnvironment;
 import nxt.env.RuntimeMode;
+import nxt.env.ServerStatus;
 import nxt.http.API;
+import nxt.http.APIProxy;
 import nxt.peer.NetworkHandler;
 import nxt.peer.Peers;
 import nxt.util.Convert;
@@ -29,6 +32,7 @@ import nxt.util.ThreadPool;
 import nxt.util.Time;
 import org.json.simple.JSONObject;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,7 +70,9 @@ public final class Nxt {
         System.out.println("Initializing Nxt server version " + Nxt.VERSION);
         printCommandLineArguments();
         runtimeMode = RuntimeEnvironment.getRuntimeMode();
+        System.out.printf("Runtime mode %s\n", runtimeMode.getClass().getName());
         dirProvider = RuntimeEnvironment.getDirProvider();
+        System.out.println("User home folder " + dirProvider.getUserHomeDir());
         loadProperties(defaultProperties, NXT_DEFAULT_PROPERTIES, true);
         if (!VERSION.equals(Nxt.defaultProperties.getProperty("nxt.version"))) {
             throw new RuntimeException("Using an nxt-default.properties file from a version other than " + VERSION + " is not supported!!!");
@@ -155,7 +161,7 @@ public final class Nxt {
                         System.out.printf("Creating dir %s\n", confDir);
                         Files.createDirectory(confDir);
                     }
-                    Path propPath = Paths.get(confDir.toString(), propertiesFile);
+                    Path propPath = Paths.get(confDir.toString()).resolve(Paths.get(propertiesFile));
                     if (Files.isReadable(propPath)) {
                         System.out.printf("Loading %s from dir %s\n", propertiesFile, confDir);
                         properties.load(Files.newInputStream(propPath));
@@ -313,7 +319,9 @@ public final class Nxt {
 
     public static void shutdown() {
         Logger.logShutdownMessage("Shutting down...");
+        AddOns.shutdown();
         API.shutdown();
+        FundingMonitor.shutdown();
         ThreadPool.shutdown();
         Peers.shutdown();
         NetworkHandler.shutdown();
@@ -335,9 +343,9 @@ public final class Nxt {
                 logSystemProperties();
                 runtimeMode.init();
                 Thread secureRandomInitThread = initSecureRandom();
-                setServerStatus("NXT Server - Loading database", null);
+                setServerStatus(ServerStatus.BEFORE_DATABASE, null);
                 Db.init();
-                setServerStatus("NXT Server - Loading resources", null);
+                setServerStatus(ServerStatus.AFTER_DATABASE, null);
                 TransactionProcessorImpl.getInstance();
                 BlockchainProcessorImpl.getInstance();
                 Account.init();
@@ -352,6 +360,7 @@ public final class Nxt {
                 Trade.init();
                 AssetTransfer.init();
                 AssetDelete.init();
+                AssetDividend.init();
                 Vote.init();
                 PhasingVote.init();
                 Currency.init();
@@ -368,7 +377,9 @@ public final class Nxt {
                 TaggedData.init();
                 NetworkHandler.init();
                 Peers.init();
+                APIProxy.init();
                 Generator.init();
+                AddOns.init();
                 API.init();
                 DebugTrace.init();
                 int timeMultiplier = (Constants.isTestnet && Constants.isOffline) ? Math.max(Nxt.getIntProperty("nxt.timeMultiplier"), 1) : 1;
@@ -385,16 +396,22 @@ public final class Nxt {
                 Logger.logMessage("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
                 Logger.logMessage("Nxt server " + VERSION + " started successfully.");
                 Logger.logMessage("Copyright © 2013-2016 The Nxt Core Developers.");
+                Logger.logMessage("Copyright © 2016 Jelurida IP B.V.");
                 Logger.logMessage("Distributed under GPLv2, with ABSOLUTELY NO WARRANTY.");
-                if (API.getBrowserUri() != null) {
-                    Logger.logMessage("Client UI is at " + API.getBrowserUri());
+                if (API.getWelcomePageUri() != null) {
+                    Logger.logMessage("Client UI is at " + API.getWelcomePageUri());
                 }
-                setServerStatus("NXT Server - Online", API.getBrowserUri());
+                setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
+                if (isDesktopApplicationEnabled()) {
+                    launchDesktopApplication();
+                }
                 if (Constants.isTestnet) {
                     Logger.logMessage("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
             } catch (Exception e) {
                 Logger.logErrorMessage(e.getMessage(), e);
+                runtimeMode.alert(e.getMessage() + "\n" +
+                        "See additional information in " + dirProvider.getLogFileDir() + System.getProperty("file.separator") + "nxt.log");
                 System.exit(1);
             }
         }
@@ -412,6 +429,7 @@ public final class Nxt {
 
     private static void setSystemProperties() {
       // Override system settings that the user has define in nxt.properties file.
+        // TODO: no longer supported?
       String[] systemProperties = new String[] {
         "socksProxyHost",
         "socksProxyPort",
@@ -439,7 +457,10 @@ public final class Nxt {
                 "sun.arch.data.model",
                 "os.name",
                 "file.encoding",
-                RuntimeMode.RUNTIME_MODE_ARG
+                "java.security.policy",
+                "java.security.manager",
+                RuntimeEnvironment.RUNTIME_MODE_ARG,
+                RuntimeEnvironment.DIRPROVIDER_ARG
         };
         for (String property : loggedProperties) {
             Logger.logDebugMessage(String.format("%s = %s", property, System.getProperty(property)));
@@ -450,18 +471,14 @@ public final class Nxt {
     }
 
     private static Thread initSecureRandom() {
-        Thread secureRandomInitThread = new Thread(() -> {
-            Crypto.getSecureRandom().nextBytes(new byte[1024]);
-        });
+        Thread secureRandomInitThread = new Thread(() -> Crypto.getSecureRandom().nextBytes(new byte[1024]));
         secureRandomInitThread.setDaemon(true);
         secureRandomInitThread.start();
         return secureRandomInitThread;
     }
 
     private static void testSecureRandom() {
-        Thread thread = new Thread(() -> {
-            Crypto.getSecureRandom().nextBytes(new byte[1024]);
-        });
+        Thread thread = new Thread(() -> Crypto.getSecureRandom().nextBytes(new byte[1024]));
         thread.setDaemon(true);
         thread.start();
         try {
@@ -497,8 +514,20 @@ public final class Nxt {
         return dirProvider.getUserHomeDir();
     }
 
-    public static void setServerStatus(String status, URI wallet) {
+    public static File getConfDir() {
+        return dirProvider.getConfDir();
+    }
+
+    private static void setServerStatus(ServerStatus status, URI wallet) {
         runtimeMode.setServerStatus(status, wallet, dirProvider.getLogFileDir());
+    }
+
+    public static boolean isDesktopApplicationEnabled() {
+        return RuntimeEnvironment.isDesktopApplicationEnabled() && Nxt.getBooleanProperty("nxt.launchDesktopApplication");
+    }
+
+    private static void launchDesktopApplication() {
+        runtimeMode.launchDesktopApplication();
     }
 
     private Nxt() {} // never

@@ -1,18 +1,18 @@
-/******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers.                             *
- *                                                                            *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at      *
- * the top-level directory of this distribution for the individual copyright  *
- * holder information and the developer policies on copyright and licensing.  *
- *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement, no part of the    *
- * Nxt software, including this file, may be copied, modified, propagated,    *
- * or distributed except according to the terms contained in the LICENSE.txt  *
- * file.                                                                      *
- *                                                                            *
- * Removal or modification of this copyright notice is prohibited.            *
- *                                                                            *
- ******************************************************************************/
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
 
 package nxt;
 
@@ -43,16 +43,20 @@ public final class Genesis {
         }
     }
 
-    public static final String CREATOR_SECRET_PHRASE = (String)genesisParameters.get("genesisSecretPhrase");
-    public static final byte[] CREATOR_PUBLIC_KEY = Crypto.getPublicKey(CREATOR_SECRET_PHRASE);
+    public static final byte[] CREATOR_PUBLIC_KEY = Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
     public static final long CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
+    public static final byte[] GENESIS_BLOCK_SIGNATURE = Convert.parseHexString((String)genesisParameters.get(Constants.isTestnet
+            ? "genesisTestnetBlockSignature" : "genesisBlockSignature"));
 
     public static final long[] GENESIS_RECIPIENTS;
     public static final byte[][] GENESIS_PUBLIC_KEYS;
+    public static final byte[][] GENESIS_SIGNATURES;
     static {
         JSONArray recipientPublicKeys = (JSONArray)genesisParameters.get("genesisRecipientPublicKeys");
+        JSONArray genesisSignatures = (JSONArray)genesisParameters.get("genesisSignatures");
         GENESIS_RECIPIENTS = new long[recipientPublicKeys.size()];
         GENESIS_PUBLIC_KEYS = new byte[GENESIS_RECIPIENTS.length][];
+        GENESIS_SIGNATURES = new byte[GENESIS_RECIPIENTS.length][];
         for (int i = 0; i < GENESIS_RECIPIENTS.length; i++) {
             GENESIS_PUBLIC_KEYS[i] = Convert.parseHexString((String)recipientPublicKeys.get(i));
             if (!Crypto.isCanonicalPublicKey(GENESIS_PUBLIC_KEYS[i])) {
@@ -61,6 +65,9 @@ public final class Genesis {
             GENESIS_RECIPIENTS[i] = Account.getId(GENESIS_PUBLIC_KEYS[i]);
             if (GENESIS_RECIPIENTS[i] == 0) {
                 throw new RuntimeException("Invalid genesis recipient account " + GENESIS_RECIPIENTS[i]);
+            }
+            if (genesisSignatures != null) {
+                GENESIS_SIGNATURES[i] = Convert.parseHexString((String)genesisSignatures.get(i));
             }
         }
     }

@@ -1,18 +1,18 @@
-/******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers.                             *
- *                                                                            *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at      *
- * the top-level directory of this distribution for the individual copyright  *
- * holder information and the developer policies on copyright and licensing.  *
- *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement, no part of the    *
- * Nxt software, including this file, may be copied, modified, propagated,    *
- * or distributed except according to the terms contained in the LICENSE.txt  *
- * file.                                                                      *
- *                                                                            *
- * Removal or modification of this copyright notice is prohibited.            *
- *                                                                            *
- ******************************************************************************/
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
 
 package nxt.http;
 
@@ -46,6 +46,10 @@ import javax.servlet.http.HttpServletRequest;
  *     <tr>
  *       <td>includeTransaction</td>
  *       <td>Specify TRUE to include the transaction associated with the ledger entry.  The default is FALSE.</td>
+ *     </tr>
+ *     <tr>
+ *       <td>includeHoldingInfo</td>
+ *       <td>Specify TRUE to include the corresponding asset or currency info (name, decimals) with each ledger entry.  The default is FALSE.</td>
  *     </tr>
  *   </tbody>
  * </table>
@@ -170,7 +174,7 @@ public class GetAccountLedgerEntry extends APIServlet.APIRequestHandler {
      * Create the GetAccountLedgerEntry instance
      */
     private GetAccountLedgerEntry() {
-        super(new APITag[] {APITag.ACCOUNTS}, "ledgerId", "includeTransaction");
+        super(new APITag[] {APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo");
     }
 
     /**
@@ -181,12 +185,14 @@ public class GetAccountLedgerEntry extends APIServlet.APIRequestHandler {
      * @throws  NxtException        Invalid request
      */
     @Override
-    JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         //
         // Process the request parameters
         //
         long ledgerId = ParameterParser.getUnsignedLong(req, "ledgerId", true);
         boolean includeTransaction = "true".equalsIgnoreCase(req.getParameter("includeTransaction"));
+        boolean includeHoldingInfo = "true".equalsIgnoreCase(req.getParameter("includeHoldingInfo"));
+
         //
         // Get the ledger entry
         //
@@ -197,7 +203,7 @@ public class GetAccountLedgerEntry extends APIServlet.APIRequestHandler {
         // Return the response
         //
         JSONObject response = new JSONObject();
-        JSONData.ledgerEntry(response, ledgerEntry, includeTransaction);
+        JSONData.ledgerEntry(response, ledgerEntry, includeTransaction, includeHoldingInfo);
         return response;
     }
 
@@ -207,7 +213,7 @@ public class GetAccountLedgerEntry extends APIServlet.APIRequestHandler {
      * @return                      FALSE to disable the required block parameters
      */
     @Override
-    boolean allowRequiredBlockParameters() {
+    protected boolean allowRequiredBlockParameters() {
         return false;
     }
 }

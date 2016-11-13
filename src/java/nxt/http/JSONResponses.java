@@ -1,18 +1,18 @@
-/******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers.                             *
- *                                                                            *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at      *
- * the top-level directory of this distribution for the individual copyright  *
- * holder information and the developer policies on copyright and licensing.  *
- *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement, no part of the    *
- * Nxt software, including this file, may be copied, modified, propagated,    *
- * or distributed except according to the terms contained in the LICENSE.txt  *
- * file.                                                                      *
- *                                                                            *
- * Removal or modification of this copyright notice is prohibited.            *
- *                                                                            *
- ******************************************************************************/
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
 
 package nxt.http;
 
@@ -121,6 +121,7 @@ public final class JSONResponses {
     public static final JSONStreamAware UNKNOWN_OFFER = unknown("offer");
     public static final JSONStreamAware INCORRECT_OFFER = incorrect("offer");
     public static final JSONStreamAware INCORRECT_ADMIN_PASSWORD = incorrect("adminPassword", "(the specified password does not match nxt.adminPassword)");
+    public static final JSONStreamAware LOCKED_ADMIN_PASSWORD = incorrect("adminPassword", "(locked for 1 hour, too many incorrect password attempts)");
     public static final JSONStreamAware OVERFLOW = error("overflow");
     public static final JSONStreamAware MISSING_SHUFFLING = missing("shuffling");
     public static final JSONStreamAware UNKNOWN_SHUFFLING = unknown("shuffling");
@@ -150,6 +151,7 @@ public final class JSONResponses {
     public static final JSONStreamAware INCORRECT_PROPERTY = incorrect("property", "(cannot be deleted by this account)");
     public static final JSONStreamAware UNKNOWN_PROPERTY = unknown("property");
     public static final JSONStreamAware MISSING_PROPERTY = missing("property");
+    public static final JSONStreamAware INCORRECT_EC_BLOCK = incorrect("ecBlockId", "ecBlockId does not match the block id at ecBlockHeight");
 
     public static final JSONStreamAware NOT_ENOUGH_FUNDS;
     static {
@@ -367,6 +369,54 @@ public final class JSONResponses {
         PRUNED_TRANSACTION = JSON.prepare(response);
     }
 
+    public static final JSONStreamAware PROXY_MISSING_REQUEST_TYPE;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 17);
+        response.put("errorDescription", "Proxy servlet needs requestType parameter in the URL query");
+        PROXY_MISSING_REQUEST_TYPE = JSON.prepare(response);
+    }
+
+    public static final JSONStreamAware PROXY_SECRET_DATA_DETECTED;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 18);
+        response.put("errorDescription", "Proxied requests contains secret parameters");
+        PROXY_SECRET_DATA_DETECTED = JSON.prepare(response);
+    }
+
+    public static final JSONStreamAware API_PROXY_NO_OPEN_API_PEERS;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 19);
+        response.put("errorDescription", "No openAPI peers found");
+        API_PROXY_NO_OPEN_API_PEERS = JSON.prepare(response);
+    }
+
+    public static final JSONStreamAware LIGHT_CLIENT_DISABLED_API;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 20);
+        response.put("errorDescription", "This API is disabled when running as light client");
+        LIGHT_CLIENT_DISABLED_API = JSON.prepare(response);
+    }
+
+    public static final JSONStreamAware PEER_NOT_CONNECTED;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 5);
+        response.put("errorDescription", "Peer not connected");
+        PEER_NOT_CONNECTED = JSON.prepare(response);
+    }
+
+    public static final JSONStreamAware PEER_NOT_OPEN_API;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 5);
+        response.put("errorDescription", "Peer is not providing open API");
+        PEER_NOT_OPEN_API = JSON.prepare(response);
+    }
+
     static JSONStreamAware missing(String... paramNames) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 3);
@@ -444,6 +494,22 @@ public final class JSONResponses {
             default:
                 throw new RuntimeException();
         }
+    }
+
+    public static final JSONStreamAware MONITOR_ALREADY_STARTED;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 5);
+        response.put("errorDescription", "Account monitor already started");
+        MONITOR_ALREADY_STARTED = JSON.prepare(response);
+    }
+
+    public static final JSONStreamAware MONITOR_NOT_STARTED;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 5);
+        response.put("errorDescription", "Account monitor not started");
+        MONITOR_NOT_STARTED = JSON.prepare(response);
     }
 
     private JSONResponses() {} // never

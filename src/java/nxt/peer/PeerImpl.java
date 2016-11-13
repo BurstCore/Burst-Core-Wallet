@@ -1,18 +1,18 @@
-/******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers.                             *
- *                                                                            *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at      *
- * the top-level directory of this distribution for the individual copyright  *
- * holder information and the developer policies on copyright and licensing.  *
- *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement, no part of the    *
- * Nxt software, including this file, may be copied, modified, propagated,    *
- * or distributed except according to the terms contained in the LICENSE.txt  *
- * file.                                                                      *
- *                                                                            *
- * Removal or modification of this copyright notice is prohibited.            *
- *                                                                            *
- ******************************************************************************/
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
 
 package nxt.peer;
 
@@ -20,6 +20,8 @@ import nxt.BlockchainProcessor;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.http.API;
+import nxt.http.APIEnum;
 import nxt.util.Convert;
 import nxt.util.Logger;
 
@@ -30,15 +32,18 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.TimeUnit;
 
 final class PeerImpl implements Peer {
 
@@ -72,6 +77,10 @@ final class PeerImpl implements Peer {
     /** Application version */
     private volatile String version;
 
+    private volatile EnumSet<APIEnum> disabledAPIs;
+
+    private volatile int apiServerIdleTimeout;
+
     /** Old application version */
     private volatile boolean isOldVersion = false;
 
@@ -89,6 +98,8 @@ final class PeerImpl implements Peer {
 
     /** Peer services */
     private volatile long services;
+
+    private volatile BlockchainState blockchainState;
 
     /** Peer state */
     private volatile State state = State.NON_CONNECTED;
@@ -147,8 +158,11 @@ final class PeerImpl implements Peer {
      * @param   announcedAddress        Announced address or null
      */
     PeerImpl(InetAddress hostAddress, String announcedAddress) {
-        host = hostAddress.getHostAddress();
+        this.host = hostAddress.getHostAddress();
         setAnnouncedAddress(announcedAddress != null ? announcedAddress.toLowerCase().trim() : host);
+        this.disabledAPIs = EnumSet.noneOf(APIEnum.class);
+        this.apiServerIdleTimeout = API.apiServerIdleTimeout;
+        this.blockchainState = BlockchainState.UP_TO_DATE;
     }
 
     /**
@@ -307,26 +321,7 @@ final class PeerImpl implements Peer {
         this.version = version;
         isOldVersion = false;
         if (Nxt.APPLICATION.equals(application)) {
-            String[] versions;
-            if (version == null || (versions = version.split("\\.")).length < Constants.MIN_VERSION.length) {
-                isOldVersion = true;
-            } else {
-                for (int i=0; i<Constants.MIN_VERSION.length; i++) {
-                    try {
-                        int v = Integer.parseInt(versions[i]);
-                        if (v > Constants.MIN_VERSION[i]) {
-                            isOldVersion = false;
-                            break;
-                        } else if (v < Constants.MIN_VERSION[i]) {
-                            isOldVersion = true;
-                            break;
-                        }
-                    } catch (NumberFormatException e) {
-                        isOldVersion = true;
-                        break;
-                    }
-                }
-            }
+            isOldVersion = Peers.isOldVersion(version, Constants.MIN_VERSION);
             if (isOldVersion) {
                 if (versionChanged) {
                     Logger.logDebugMessage(String.format("Blacklisting %s version %s", getHost(), version));
@@ -437,6 +432,42 @@ final class PeerImpl implements Peer {
      *
      * @return                          TRUE if address should be shared
      */
+    @Override
+    public Set<APIEnum> getDisabledAPIs() {
+        return Collections.unmodifiableSet(disabledAPIs);
+    }
+
+    void setDisabledAPIs(Object apiSetBase64) {
+        if (apiSetBase64 instanceof String) {
+            disabledAPIs = APIEnum.base64StringToEnumSet((String) apiSetBase64);
+        }
+    }
+
+    @Override
+    public int getApiServerIdleTimeout() {
+        return apiServerIdleTimeout;
+    }
+
+    void setApiServerIdleTimeout(Object apiServerIdleTimeout) {
+        if (apiServerIdleTimeout instanceof Integer) {
+            this.apiServerIdleTimeout = (int) apiServerIdleTimeout;
+        }
+    }
+
+    @Override
+    public BlockchainState getBlockchainState() {
+        return blockchainState;
+    }
+
+    void setBlockchainState(Object blockchainStateObj) {
+        if (blockchainStateObj instanceof Integer) {
+            int blockchainStateInt = (int)blockchainStateObj;
+            if (blockchainStateInt >= 0 && blockchainStateInt < BlockchainState.values().length) {
+                this.blockchainState = BlockchainState.values()[blockchainStateInt];
+            }
+        }
+    }
+
     @Override
     public boolean shareAddress() {
         return shareAddress;
@@ -595,9 +626,11 @@ final class PeerImpl implements Peer {
             Logger.logDebugMessage("Announced address " + newAnnouncedAddress + " does not resolve to " + host);
         } catch (UnknownHostException | URISyntaxException e) {
             Logger.logDebugMessage(e.toString());
+            blacklist(e);
         }
         return false;
     }
+
 
     /**
      * Add a service for this peer
@@ -605,7 +638,7 @@ final class PeerImpl implements Peer {
      * @param   service                 Service
      * @param   doNotify                TRUE to notify listeners
      */
-    void addService(Service service, boolean doNotify) {
+    private void addService(Service service, boolean doNotify) {
         boolean notifyListeners;
         synchronized (this) {
             notifyListeners = ((services & service.getCode()) == 0);
@@ -622,7 +655,7 @@ final class PeerImpl implements Peer {
      * @param   service                 Service
      * @param   doNotify                TRUE to notify listeners
      */
-    void removeService(Service service, boolean doNotify) {
+    private void removeService(Service service, boolean doNotify) {
         boolean notifyListeners;
         synchronized (this) {
             notifyListeners = ((services & service.getCode()) != 0);
@@ -1035,6 +1068,46 @@ final class PeerImpl implements Peer {
             Logger.logErrorMessage("Request not found for '" + message.getMessageName() + "' message");
         }
     }
+    
+    @Override
+    public boolean isOpenAPI() {
+        return providesService(Peer.Service.API) || providesService(Peer.Service.API_SSL);
+    }
+
+    @Override
+    public boolean isApiConnectable() {
+        return isOpenAPI() && state == Peer.State.CONNECTED
+                && !Peers.isOldVersion(version, Constants.MIN_PROXY_VERSION)
+                && !Peers.isNewVersion(version)
+                && blockchainState == Peer.BlockchainState.UP_TO_DATE;
+    }
+
+    public StringBuilder getPeerApiUri() {
+        StringBuilder uri = new StringBuilder();
+        if (providesService(Peer.Service.API_SSL)) {
+            uri.append("https://");
+        } else {
+            uri.append("http://");
+        }
+        uri.append(host).append(":");
+        if (providesService(Peer.Service.API_SSL)) {
+            uri.append(apiSSLPort);
+        } else {
+            uri.append(apiPort);
+        }
+        return uri;
+    }
+
+    @Override
+    public String toString() {
+        return "Peer{" +
+                "state=" + state +
+                ", announcedAddress='" + announcedAddress + '\'' +
+                ", services=" + services +
+                ", host='" + host + '\'' +
+                ", version='" + version + '\'' +
+                '}';
+    }
 
     /**
      * Message response entry
@@ -1079,4 +1152,5 @@ final class PeerImpl implements Peer {
             responseLatch.countDown();
         }
     }
+
 }

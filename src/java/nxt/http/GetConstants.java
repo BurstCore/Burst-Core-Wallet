@@ -1,31 +1,22 @@
-/******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers.                             *
- *                                                                            *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at      *
- * the top-level directory of this distribution for the individual copyright  *
- * holder information and the developer policies on copyright and licensing.  *
- *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement, no part of the    *
- * Nxt software, including this file, may be copied, modified, propagated,    *
- * or distributed except according to the terms contained in the LICENSE.txt  *
- * file.                                                                      *
- *                                                                            *
- * Removal or modification of this copyright notice is prohibited.            *
- *                                                                            *
- ******************************************************************************/
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
 
 package nxt.http;
 
-import nxt.Constants;
-import nxt.CurrencyMinting;
-import nxt.CurrencyType;
-import nxt.Genesis;
-import nxt.HoldingType;
-import nxt.PhasingPoll;
-import nxt.Shuffling;
-import nxt.ShufflingParticipant;
-import nxt.TransactionType;
-import nxt.VoteWeighting;
+import nxt.*;
 import nxt.crypto.HashFunction;
 import nxt.peer.Peer;
 import nxt.util.JSON;
@@ -49,10 +40,12 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
         static {
             try {
                 JSONObject response = new JSONObject();
+                response.put("genesisBlockId", Long.toUnsignedString(Nxt.getBlockchainProcessor().getGenesisBlockId()));
                 response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
                 response.put("maxBlockPayloadLength", Constants.MAX_PAYLOAD_LENGTH);
                 response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
+                response.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);
 
                 JSONObject transactionJSON = new JSONObject();
                 JSONObject transactionSubTypesJSON = new JSONObject();
@@ -184,6 +177,10 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 API.disabledAPITags.forEach(apiTag -> disabledAPITags.add(apiTag.getDisplayName()));
                 response.put("disabledAPITags", disabledAPITags);
 
+                JSONArray notForwardedRequests = new JSONArray();
+                notForwardedRequests.addAll(APIProxy.NOT_FORWARDED_REQUESTS);
+                response.put("proxyNotForwardedRequests", notForwardedRequests);
+
                 CONSTANTS = JSON.prepare(response);
             } catch (Exception e) {
                 Logger.logErrorMessage(e.toString(), e);
@@ -197,18 +194,21 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    JSONStreamAware processRequest(HttpServletRequest req) {
+    protected JSONStreamAware processRequest(HttpServletRequest req) {
         return Holder.CONSTANTS;
     }
 
     @Override
-    boolean allowRequiredBlockParameters() {
+    protected boolean allowRequiredBlockParameters() {
         return false;
     }
 
     @Override
-    boolean requireBlockchain() {
+    protected boolean requireBlockchain() {
         return false;
     }
 
+    public static JSONStreamAware getConstants() {
+        return Holder.CONSTANTS;
+    }
 }

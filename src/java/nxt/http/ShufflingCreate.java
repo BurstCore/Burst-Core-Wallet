@@ -1,18 +1,18 @@
-/******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers.                             *
- *                                                                            *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at      *
- * the top-level directory of this distribution for the individual copyright  *
- * holder information and the developer policies on copyright and licensing.  *
- *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement, no part of the    *
- * Nxt software, including this file, may be copied, modified, propagated,    *
- * or distributed except according to the terms contained in the LICENSE.txt  *
- * file.                                                                      *
- *                                                                            *
- * Removal or modification of this copyright notice is prohibited.            *
- *                                                                            *
- ******************************************************************************/
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
 
 package nxt.http;
 
@@ -35,12 +35,9 @@ public final class ShufflingCreate extends CreateTransaction {
     }
 
     @Override
-    JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        HoldingType holdingType = HoldingType.get(ParameterParser.getByte(req, "holdingType", (byte) 0, (byte) 2, false));
-        long holdingId = ParameterParser.getUnsignedLong(req, "holding", holdingType != HoldingType.NXT);
-        if (holdingType == HoldingType.NXT && holdingId != 0) {
-            return JSONResponses.incorrect("holding", "holding only used for currency or asset shuffling");
-        }
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
+        HoldingType holdingType = ParameterParser.getHoldingType(req);
+        long holdingId = ParameterParser.getHoldingId(req, holdingType);
         long amount = ParameterParser.getLong(req, "amount", 0L, Long.MAX_VALUE, true);
         if (holdingType == HoldingType.NXT && amount < Constants.SHUFFLING_DEPOSIT_NQT) {
             return JSONResponses.incorrect("amount", "Minimum shuffling amount is " + Constants.SHUFFLING_DEPOSIT_NQT / Constants.ONE_NXT + " NXT");
@@ -59,4 +56,5 @@ public final class ShufflingCreate extends CreateTransaction {
             return JSONResponses.notEnoughHolding(holdingType);
         }
     }
+
 }
