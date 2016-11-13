@@ -143,14 +143,10 @@ public class DesktopApplication extends Application {
 
         // Invoked by the webEngine popup handler
         // The invisible webView does not show the link, instead it opens a browser window
-        invisible.getEngine().locationProperty().addListener((observable, oldValue, newValue) -> {
-            popupHandlerURLChange(newValue);
-        });
+        invisible.getEngine().locationProperty().addListener((observable, oldValue, newValue) -> popupHandlerURLChange(newValue));
 
         // Invoked when changing the document.location property, when issuing a download request
-        webEngine.locationProperty().addListener((observable, oldValue, newValue) -> {
-            webViewURLChange(newValue);
-        });
+        webEngine.locationProperty().addListener((observable, oldValue, newValue) -> webViewURLChange(newValue));
 
         // Invoked when clicking a link to external site like Help or API console
         webEngine.setCreatePopupHandler(
@@ -266,8 +262,13 @@ public class DesktopApplication extends Application {
         boolean retrieve = "true".equals(params.get("retrieve"));
         if (requestType.equals("downloadTaggedData")) {
             if (taggedData == null && retrieve) {
-                if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
-                    growl("Pruned transaction data not currently available from any peer");
+                try {
+                    if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
+                        growl("Pruned transaction data not currently available from any peer");
+                        return;
+                    }
+                } catch (IllegalArgumentException e) {
+                    growl("Pruned transaction data cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                     return;
                 }
                 taggedData = childChain.getTaggedDataHome().getData(transactionId);
@@ -285,8 +286,13 @@ public class DesktopApplication extends Application {
         } else if (requestType.equals("downloadPrunableMessage")) {
             PrunableMessageHome.PrunableMessage prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
             if (prunableMessage == null && retrieve) {
-                if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
-                    growl("Pruned message not currently available from any peer");
+                try {
+                    if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
+                        growl("Pruned message not currently available from any peer");
+                        return;
+                    }
+                } catch (IllegalArgumentException e) {
+                    growl("Pruned message cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                     return;
                 }
                 prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);

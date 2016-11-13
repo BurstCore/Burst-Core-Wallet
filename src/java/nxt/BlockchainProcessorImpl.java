@@ -1937,9 +1937,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 if (shutdown) {
                     Logger.logMessage("Scan will be performed at next start");
-                    new Thread(() -> {
-                        System.exit(0);
-                    }).start();
+                    new Thread(() -> System.exit(0)).start();
                     return;
                 }
                 int pstmtSelectIndex = 1;

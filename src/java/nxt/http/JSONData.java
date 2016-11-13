@@ -551,6 +551,7 @@ public final class JSONData {
             }
         }
         json.put("services", servicesArray);
+        json.put("blockchainState", peer.getBlockchainState());
         return json;
     }
 
