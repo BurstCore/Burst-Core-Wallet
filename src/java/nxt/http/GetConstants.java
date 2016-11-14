@@ -177,6 +177,10 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 API.disabledAPITags.forEach(apiTag -> disabledAPITags.add(apiTag.getDisplayName()));
                 response.put("disabledAPITags", disabledAPITags);
 
+                JSONArray notForwardedRequests = new JSONArray();
+                notForwardedRequests.addAll(APIProxy.NOT_FORWARDED_REQUESTS);
+                response.put("proxyNotForwardedRequests", notForwardedRequests);
+
                 CONSTANTS = JSON.prepare(response);
             } catch (Exception e) {
                 Logger.logErrorMessage(e.toString(), e);
@@ -204,4 +208,7 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
         return false;
     }
 
+    public static JSONStreamAware getConstants() {
+        return Holder.CONSTANTS;
+    }
 }
