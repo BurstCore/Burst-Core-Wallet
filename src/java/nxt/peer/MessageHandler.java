@@ -13,6 +13,7 @@
  */
 package nxt.peer;
 
+import nxt.Constants;
 import nxt.Nxt;
 import nxt.util.Logger;
 
@@ -97,8 +98,13 @@ class MessageHandler implements Runnable {
                             peer.completeRequest(message);
                         }
                     } else {
-                        if (Nxt.getBlockchainProcessor().isDownloading() && message.downloadNotAllowed()) {
-                            throw new IllegalStateException(Errors.DOWNLOADING);
+                        if (message.downloadNotAllowed()) {
+                            if (Nxt.getBlockchainProcessor().isDownloading()) {
+                                throw new IllegalStateException(Errors.DOWNLOADING);
+                            }
+                            if (Constants.isLightClient) {
+                                throw new IllegalStateException(Errors.LIGHT_CLIENT);
+                            }
                         }
                         response = message.processMessage(peer);
                         if (message.requiresResponse()) {

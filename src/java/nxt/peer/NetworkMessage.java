@@ -19,9 +19,9 @@ import nxt.Block;
 import nxt.Nxt;
 import nxt.NxtException.NotValidException;
 import nxt.Transaction;
+import nxt.util.Convert;
 import nxt.util.JSON;
 import nxt.util.Logger;
-
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -30,12 +30,12 @@ import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * NetworkMessage represents the messages exchanged between peers.
@@ -331,6 +331,8 @@ public abstract class NetworkMessage {
      * <li>API port (short)
      * <li>SSL port (short)
      * <li>Available services (long)
+     * <li>Disabled APIs (string)
+     * <li>APIServer idle timeout (int)
      * </ul>
      */
     public static class GetInfoMessage extends NetworkMessage {
@@ -358,6 +360,16 @@ public abstract class NetworkMessage {
 
         /** Available services */
         private final long services;
+
+        /** Disabled API (base64 encoded) */
+        private final byte[] disabledAPIsBytes;
+
+        /** APIServer idle timeout */
+        private final int apiServerIdleTimeout;
+
+        /** Blockchain state */
+        //TODO: use a separate NetworkMessage to carry blockchainState
+        //private final int blockchainState;
 
         /**
          * Construct the message from the message bytes
@@ -398,6 +410,8 @@ public abstract class NetworkMessage {
             this.apiPort = 0;
             this.sslPort = 0;
             this.services = 0;
+            this.disabledAPIsBytes = null;
+            this.apiServerIdleTimeout = 0;
         }
 
         /**
@@ -408,23 +422,25 @@ public abstract class NetworkMessage {
          * @param   appPlatform         Application platform
          * @param   shareAddress        TRUE to share the network address with peers
          * @param   announcedAddress    Announced address or null
-         * @param   peerPort            Peer port
          * @param   apiPort             API port
          * @param   sslPort             API SSL port
          * @param   services            Available application services
          */
         public GetInfoMessage(String appName, String appVersion, String appPlatform,
-                                        boolean shareAddress, String announcedAddress,
-                                        int peerPort, int apiPort, int sslPort, long services) {
+                              boolean shareAddress, String announcedAddress,
+                              int apiPort, int sslPort, long services,
+                              String disabledAPIs, int apiServerIdleTimeout) {
             super("GetInfo");
             this.appNameBytes = appName.getBytes(UTF8);
             this.appVersionBytes = appVersion.getBytes(UTF8);
             this.appPlatformBytes = appPlatform.getBytes(UTF8);
             this.shareAddress = shareAddress;
-            this.announcedAddressBytes = (announcedAddress != null ? announcedAddress.getBytes(UTF8) : new byte[0]);
+            this.announcedAddressBytes = (announcedAddress != null ? announcedAddress.getBytes(UTF8) : Convert.EMPTY_BYTE);
             this.apiPort = apiPort;
             this.sslPort = sslPort;
             this.services = services;
+            this.disabledAPIsBytes = (disabledAPIs != null ? disabledAPIs.getBytes(UTF8) : Convert.EMPTY_BYTE);
+            this.apiServerIdleTimeout = apiServerIdleTimeout;
         }
 
         /**
@@ -444,6 +460,8 @@ public abstract class NetworkMessage {
             this.apiPort = (int)bytes.getShort() & 0xffff;
             this.sslPort = (int)bytes.getShort() & 0xffff;
             this.services = bytes.getLong();
+            this.disabledAPIsBytes = decodeArray(bytes);
+            this.apiServerIdleTimeout = bytes.getInt();
         }
 
         /**
@@ -459,7 +477,9 @@ public abstract class NetworkMessage {
                     + getEncodedArrayLength(appPlatformBytes)
                     + 1
                     + getEncodedArrayLength(announcedAddressBytes)
-                    + 2 + 2 + 8;
+                    + 2 + 2 + 8
+                    + getEncodedArrayLength(disabledAPIsBytes)
+                    + 4;
         }
 
         /**
@@ -477,6 +497,8 @@ public abstract class NetworkMessage {
             bytes.put(shareAddress ? (byte)1 : (byte)0);
             encodeArray(bytes, announcedAddressBytes);
             bytes.putShort((short)apiPort).putShort((short)sslPort).putLong(services);
+            encodeArray(bytes, disabledAPIsBytes);
+            bytes.putInt(apiServerIdleTimeout);
         }
 
         /**
@@ -549,6 +571,24 @@ public abstract class NetworkMessage {
          */
         public long getServices() {
             return services;
+        }
+
+        /**
+         * Get the disabledAPIs
+         *
+         * @return                      disabledAPIs as base64 encoded string
+         */
+        public String getDisabledAPIs() {
+            return (disabledAPIsBytes.length > 0 ? new String(disabledAPIsBytes, UTF8) : null);
+        }
+
+        /**
+         * Get the API server idle timeout
+         *
+         * @return                      APIServer idle timeout
+         */
+        public int getApiServerIdleTimeout() {
+            return apiServerIdleTimeout;
         }
     }
 
@@ -3024,7 +3064,7 @@ public abstract class NetworkMessage {
          *
          * This method must be used if transactions were excluded in the GetBlocks message
          *
-         * @param   excludedTransaction Excluded transactions
+         * @param   excludedTransactions Excluded transactions
          * @throws  NotValidException   Block is not valid
          */
         private Block getBlock(List<Transaction> excludedTransactions) throws NotValidException {

@@ -17,6 +17,7 @@ package nxt.peer;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.http.API;
+import nxt.http.APIEnum;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import nxt.util.ThreadPool;
@@ -30,9 +31,9 @@ import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.StandardSocketOptions;
-import java.net.UnknownHostException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -43,15 +44,16 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The network handler creates outbound connections and adds them to the
@@ -116,7 +118,7 @@ public final class NetworkHandler implements Runnable {
     private static final String listenAddress = Nxt.getStringProperty("nxt.peerServerHost", "0.0.0.0");
 
     /** GetInfo message which is sent each time an outbound connection is created */
-    private static NetworkMessage getInfoMessage;
+    private static final NetworkMessage getInfoMessage;
 
     /** My address */
     static String myAddress;
@@ -195,110 +197,135 @@ public final class NetworkHandler implements Runnable {
     /**
      * Initialize the network handler
      */
-    public static void init() {
+    public static void init() {}
+
+    static {
         //
         // Don't start the network handler if we are offline
         //
-        if (Constants.isOffline) {
-            networkShutdown = true;
-            Logger.logInfoMessage("Network handler is offline");
-            return;
-        }
-        //
-        // Create the GetInfo message which is sent when an outbound connection is
-        // completed.  The remote peer will send its GetInfo message in response.
-        //
-        if (serverPort == TESTNET_PEER_PORT && !Constants.isTestnet) {
-            throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet");
-        }
-        String platform = Nxt.getStringProperty("nxt.myPlatform",
-                                System.getProperty("os.name") + " " + System.getProperty("os.arch"));
-        if (platform.length() > Peers.MAX_PLATFORM_LENGTH) {
-            platform = platform.substring(0, Peers.MAX_PLATFORM_LENGTH);
-        }
-        if (myAddress != null) {
+        if (! Constants.isOffline) {
+            //
+            // Create the GetInfo message which is sent when an outbound connection is
+            // completed.  The remote peer will send its GetInfo message in response.
+            //
+            if (serverPort == TESTNET_PEER_PORT && !Constants.isTestnet) {
+                throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet");
+            }
+            String platform = Nxt.getStringProperty("nxt.myPlatform",
+                    System.getProperty("os.name") + " " + System.getProperty("os.arch"));
+            if (platform.length() > Peers.MAX_PLATFORM_LENGTH) {
+                platform = platform.substring(0, Peers.MAX_PLATFORM_LENGTH);
+            }
+            if (myAddress != null) {
+                try {
+                    InetAddress[] myAddrs = InetAddress.getAllByName(myHost);
+                    boolean addrValid = false;
+                    Enumeration<NetworkInterface> intfs = NetworkInterface.getNetworkInterfaces();
+                    chkAddr:
+                    while (intfs.hasMoreElements()) {
+                        NetworkInterface intf = intfs.nextElement();
+                        List<InterfaceAddress> intfAddrs = intf.getInterfaceAddresses();
+                        for (InterfaceAddress intfAddr : intfAddrs) {
+                            InetAddress extAddr = intfAddr.getAddress();
+                            for (InetAddress myAddr : myAddrs) {
+                                if (extAddr.equals(myAddr)) {
+                                    addrValid = true;
+                                    break chkAddr;
+                                }
+                            }
+                        }
+                    }
+                    if (!addrValid) {
+                        InetAddress extAddr = UPnP.getExternalAddress();
+                        if (extAddr != null) {
+                            for (InetAddress myAddr : myAddrs) {
+                                if (extAddr.equals(myAddr)) {
+                                    addrValid = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!addrValid) {
+                        Logger.logWarningMessage("Your announced address does not match your external address");
+                    }
+                } catch (SocketException e) {
+                    Logger.logErrorMessage("Unable to enumerate the network interfaces: " + e.toString());
+                } catch (UnknownHostException e) {
+                    Logger.logWarningMessage("Your announced address is not valid: " + e.toString());
+                }
+            }
+            long services = 0;
+            for (Peer.Service service : Peers.myServices) {
+                services |= service.getCode();
+            }
+            String disabledAPIs = null;
+            if ((API.openAPIPort > 0 || API.openAPISSLPort > 0) && !Constants.isLightClient) {
+                EnumSet<APIEnum> disabledAPISet = EnumSet.noneOf(APIEnum.class);
+
+                API.disabledAPIs.forEach(apiName -> {
+                    APIEnum api = APIEnum.fromName(apiName);
+                    if (api != null) {
+                        disabledAPISet.add(api);
+                    }
+                });
+                API.disabledAPITags.forEach(apiTag -> {
+                    for (APIEnum api : APIEnum.values()) {
+                        if (api.getHandler() != null && api.getHandler().getAPITags().contains(apiTag)) {
+                            disabledAPISet.add(api);
+                        }
+                    }
+                });
+                disabledAPIs = APIEnum.enumSetToBase64String(disabledAPISet);
+            }
+            //TODO: getInfoMessage does not contain current blockchain state, need a separate NetworkMessage to update this
+            getInfoMessage = new NetworkMessage.GetInfoMessage(Nxt.APPLICATION, Nxt.VERSION, platform,
+                    shareAddress, announcedAddress, API.openAPIPort, API.openAPISSLPort, services,
+                    disabledAPIs, API.apiServerIdleTimeout);
             try {
-                InetAddress[] myAddrs = InetAddress.getAllByName(myHost);
-                boolean addrValid = false;
-                Enumeration<NetworkInterface> intfs = NetworkInterface.getNetworkInterfaces();
-                chkAddr: while (intfs.hasMoreElements()) {
-                    NetworkInterface intf = intfs.nextElement();
-                    List<InterfaceAddress> intfAddrs = intf.getInterfaceAddresses();
-                    for (InterfaceAddress intfAddr: intfAddrs) {
-                        InetAddress extAddr = intfAddr.getAddress();
-                        for (InetAddress myAddr : myAddrs) {
-                            if (extAddr.equals(myAddr)) {
-                                addrValid = true;
-                                break chkAddr;
-                            }
-                        }
-                    }
-                }
-                if (!addrValid) {
-                    InetAddress extAddr = UPnP.getExternalAddress();
-                    if (extAddr != null) {
-                        for (InetAddress myAddr : myAddrs) {
-                            if (extAddr.equals(myAddr)) {
-                                addrValid = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (!addrValid) {
-                    Logger.logWarningMessage("Your announced address does not match your external address");
-                }
-            } catch (SocketException e) {
-                Logger.logErrorMessage("Unable to enumerate the network interfaces: " + e.toString());
-            } catch (UnknownHostException e) {
-                Logger.logWarningMessage("Your announced address is not valid: " + e.toString());
+                //
+                // Create the selector for listening for network events
+                //
+                networkSelector = Selector.open();
+                //
+                // Create the listen channel
+                //
+                listenChannel = ServerSocketChannel.open();
+                listenChannel.configureBlocking(false);
+                listenChannel.bind(new InetSocketAddress(listenAddress, serverPort), 10);
+                listenChannel.register(networkSelector, SelectionKey.OP_ACCEPT);
+            } catch (IOException exc) {
+                networkShutdown = true;
+                throw new RuntimeException("Unable to create network listener", exc);
             }
-        }
-        long services = 0;
-        for (Peer.Service service : Peers.myServices) {
-            services |= service.getCode();
-        }
-        getInfoMessage = new NetworkMessage.GetInfoMessage(Nxt.APPLICATION, Nxt.VERSION, platform,
-                shareAddress, announcedAddress, serverPort, API.openAPIPort, API.openAPISSLPort, services);
-        try {
             //
-            // Create the selector for listening for network events
+            // Start the network handler after server initialization has completed
             //
-            networkSelector = Selector.open();
-            //
-            // Create the listen channel
-            //
-            listenChannel = ServerSocketChannel.open();
-            listenChannel.configureBlocking(false);
-            listenChannel.bind(new InetSocketAddress(listenAddress, serverPort), 10);
-            listenChannel.register(networkSelector, SelectionKey.OP_ACCEPT);
-        } catch (IOException exc) {
+            ThreadPool.runAfterStart(() -> {
+                if (enablePeerUPnP) {
+                    UPnP.addPort(serverPort);
+                }
+                //
+                // Start the network listener
+                //
+                listenerThread = new Thread(listener, "Network Listener");
+                listenerThread.setDaemon(true);
+                listenerThread.start();
+                //
+                // Start the message handlers
+                //
+                for (int i = 1; i <= 4; i++) {
+                    MessageHandler handler = new MessageHandler();
+                    Thread handlerThread = new Thread(handler, "Message Handler " + i);
+                    handlerThread.setDaemon(true);
+                    handlerThread.start();
+                }
+            });
+        } else {
             networkShutdown = true;
-            throw new RuntimeException("Unable to create network listener", exc);
+            getInfoMessage = null;
+            Logger.logInfoMessage("Network handler is offline");
         }
-        //
-        // Start the network handler after server initialization has completed
-        //
-        ThreadPool.runAfterStart(() -> {
-            if (enablePeerUPnP) {
-                UPnP.addPort(serverPort);
-            }
-            //
-            // Start the network listener
-            //
-            listenerThread = new Thread(listener, "Network Listener");
-            listenerThread.setDaemon(true);
-            listenerThread.start();
-            //
-            // Start the message handlers
-            //
-            for (int i=1; i<=4; i++) {
-                MessageHandler handler = new MessageHandler();
-                Thread handlerThread = new Thread(handler, "Message Handler " + i);
-                handlerThread.setDaemon(true);
-                handlerThread.start();
-            }
-        });
     }
 
     /**
@@ -482,8 +509,6 @@ public final class NetworkHandler implements Runnable {
 
         /**
          * Process the key event (called on the listener thread)
-         *
-         * @param   key                 Selection key
          */
         private void process() {
             try {
@@ -822,6 +847,7 @@ public final class NetworkHandler implements Runnable {
      * @param   message                 Message to send
      */
     public static void broadcastMessage(NetworkMessage message) {
+        //TODO: for peers that are light clients, do not send some types of messages
         connectionMap.values().forEach(peer -> peer.sendMessage(message));
         wakeup();
     }

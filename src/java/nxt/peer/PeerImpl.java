@@ -437,10 +437,8 @@ final class PeerImpl implements Peer {
         return Collections.unmodifiableSet(disabledAPIs);
     }
 
-    void setDisabledAPIs(Object apiSetBase64) {
-        if (apiSetBase64 instanceof String) {
-            disabledAPIs = APIEnum.base64StringToEnumSet((String) apiSetBase64);
-        }
+    void setDisabledAPIs(String apiSetBase64) {
+        disabledAPIs = APIEnum.base64StringToEnumSet(apiSetBase64);
     }
 
     @Override
@@ -448,10 +446,8 @@ final class PeerImpl implements Peer {
         return apiServerIdleTimeout;
     }
 
-    void setApiServerIdleTimeout(Object apiServerIdleTimeout) {
-        if (apiServerIdleTimeout instanceof Integer) {
-            this.apiServerIdleTimeout = (int) apiServerIdleTimeout;
-        }
+    void setApiServerIdleTimeout(int apiServerIdleTimeout) {
+        this.apiServerIdleTimeout = apiServerIdleTimeout;
     }
 
     @Override
@@ -459,13 +455,10 @@ final class PeerImpl implements Peer {
         return blockchainState;
     }
 
-    void setBlockchainState(Object blockchainStateObj) {
-        if (blockchainStateObj instanceof Integer) {
-            int blockchainStateInt = (int)blockchainStateObj;
-            if (blockchainStateInt >= 0 && blockchainStateInt < BlockchainState.values().length) {
-                this.blockchainState = BlockchainState.values()[blockchainStateInt];
-            }
-        }
+    void setBlockchainState(int blockchainState) {
+        if (blockchainState >= 0 && blockchainState < BlockchainState.values().length) {
+            this.blockchainState = BlockchainState.values()[blockchainState];
+        } //TODO: else?
     }
 
     @Override

@@ -21,14 +21,11 @@ import nxt.Db;
 import nxt.Nxt;
 import nxt.http.API;
 import nxt.util.Filter;
-import nxt.util.JSON;
 import nxt.util.Listener;
 import nxt.util.Listeners;
 import nxt.util.Logger;
 import nxt.util.QueuedThreadPool;
 import nxt.util.ThreadPool;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 
 import java.net.InetAddress;
 import java.net.URI;
@@ -80,10 +77,7 @@ public final class Peers {
     /** Peer blacklist period (seconds) */
     static final int blacklistingPeriod = Nxt.getIntProperty("nxt.blacklistingPeriod", 600);
 
-    private static JSONObject myPeerInfo;
     private static volatile Peer.BlockchainState currentBlockchainState;
-    private static volatile JSONStreamAware myPeerInfoRequest;
-    private static volatile JSONStreamAware myPeerInfoResponse;
 
     /** Get more peers */
     private static final boolean getMorePeers = Nxt.getBooleanProperty("nxt.getMorePeers");
@@ -109,18 +103,23 @@ public final class Peers {
     static final boolean ignorePeerAnnouncedAddress = Nxt.getBooleanProperty("nxt.ignorePeerAnnouncedAddress");
 
     /** Local peer services */
-    static final List<Peer.Service> myServices = new ArrayList<>();
+    static final List<Peer.Service> myServices;
 
     static {
+        List<Peer.Service> services = new ArrayList<>();
         if (!Constants.ENABLE_PRUNING && Constants.INCLUDE_EXPIRED_PRUNABLE) {
-            myServices.add(Peer.Service.PRUNABLE);
+            services.add(Peer.Service.PRUNABLE);
         }
         if (API.openAPIPort > 0) {
-            myServices.add(Peer.Service.API);
+            services.add(Peer.Service.API);
         }
         if (API.openAPISSLPort > 0) {
-            myServices.add(Peer.Service.API_SSL);
+            services.add(Peer.Service.API_SSL);
         }
+        if (API.apiServerCORS) {
+            services.add(Peer.Service.CORS);
+        }
+        myServices = Collections.unmodifiableList(services);
     }
 
     /** Well-known peers */
@@ -749,7 +748,7 @@ public final class Peers {
         }), Peers.Event.CHANGE_SERVICES);
     }
 
-    public static boolean isOldVersion(String version, int[] minVersion) {
+    static boolean isOldVersion(String version, int[] minVersion) {
         if (version == null) {
             return true;
         }
@@ -785,7 +784,7 @@ public final class Peers {
         }
     }
 
-    public static boolean isNewVersion(String version) {
+    static boolean isNewVersion(String version) {
         if (version == null) {
             return true;
         }
@@ -808,34 +807,11 @@ public final class Peers {
         return versions.length > MAX_VERSION.length;
     }
 
-    private static void checkBlockchainState() {
-        Peer.BlockchainState state = Constants.isLightClient ? Peer.BlockchainState.LIGHT_CLIENT :
+    public static Peer.BlockchainState getMyBlockchainState() {
+        return Constants.isLightClient ? Peer.BlockchainState.LIGHT_CLIENT :
                 (Nxt.getBlockchainProcessor().isDownloading() || Nxt.getBlockchain().getLastBlockTimestamp() < Nxt.getEpochTime() - 600) ? Peer.BlockchainState.DOWNLOADING :
                         (Nxt.getBlockchain().getLastBlock().getBaseTarget() / Constants.INITIAL_BASE_TARGET > 10 && !Constants.isTestnet) ? Peer.BlockchainState.FORK :
-                        Peer.BlockchainState.UP_TO_DATE;
-        if (state != currentBlockchainState) {
-            JSONObject json = new JSONObject(myPeerInfo);
-            json.put("blockchainState", state.ordinal());
-            myPeerInfoResponse = JSON.prepare(json);
-            json.put("requestType", "getInfo");
-            myPeerInfoRequest = JSON.prepareRequest(json);
-            currentBlockchainState = state;
-        }
-    }
-
-    public static JSONStreamAware getMyPeerInfoRequest() {
-        checkBlockchainState();
-        return myPeerInfoRequest;
-    }
-
-    public static JSONStreamAware getMyPeerInfoResponse() {
-        checkBlockchainState();
-        return myPeerInfoResponse;
-    }
-
-    public static Peer.BlockchainState getMyBlockchainState() {
-        checkBlockchainState();
-        return currentBlockchainState;
+                                Peer.BlockchainState.UP_TO_DATE;
     }
 
     private Peers() {} // never
