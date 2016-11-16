@@ -403,6 +403,11 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     }
 
     @Override
+    protected int getSize() {
+        return super.getSize() + 32;
+    }
+
+    @Override
     public boolean equals(Object o) {
         return o instanceof ChildTransactionImpl && this.getId() == ((Transaction)o).getId();
     }

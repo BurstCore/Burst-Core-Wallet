@@ -544,7 +544,7 @@ public abstract class TransactionImpl implements Transaction {
 
     private static final int SIGNATURE_OFFSET = 4 + 1 + 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8;
 
-    private int getSize() {
+    protected int getSize() {
         return SIGNATURE_OFFSET + 64 + 4 + 4 + 8 + appendagesSize;
     }
 
