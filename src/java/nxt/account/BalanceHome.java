@@ -46,6 +46,10 @@ public final class BalanceHome {
             public DbKey newKey(Balance balance) {
                 return balance.dbKey == null ? newKey(balance.accountId) : balance.dbKey;
             }
+            @Override
+            public Balance newEntity(DbKey dbKey) {
+                return new Balance(((DbKey.LongKey)dbKey).getId());
+            }
         };
         this.balanceTable = new VersionedEntityDbTable<Balance>(childChain.getSchemaTable("balance"), balanceDbKeyFactory) {
             @Override
@@ -60,11 +64,21 @@ public final class BalanceHome {
     }
 
     public Balance getBalance(long accountId) {
-        return balanceTable.get(balanceDbKeyFactory.newKey(accountId));
+        DbKey dbKey = balanceDbKeyFactory.newKey(accountId);
+        Balance balance = balanceTable.get(dbKey);
+        if (balance == null) {
+            balance = balanceTable.newEntity(dbKey);
+        }
+        return balance;
     }
 
     public Balance getBalance(long accountId, int height) {
-        return balanceTable.get(balanceDbKeyFactory.newKey(accountId), height);
+        DbKey dbKey = balanceDbKeyFactory.newKey(accountId);
+        Balance balance = balanceTable.get(dbKey, height);
+        if (balance == null) {
+            balance = balanceTable.newEntity(dbKey);
+        }
+        return balance;
     }
 
     public final class Balance {
@@ -74,11 +88,11 @@ public final class BalanceHome {
         private long balance;
         private long unconfirmedBalance;
 
-        Balance(long accountId, DbKey dbKey, long balance, long unconfirmedBalance) {
+        Balance(long accountId) {
             this.accountId = accountId;
-            this.dbKey = dbKey;
-            this.balance = balance;
-            this.unconfirmedBalance = unconfirmedBalance;
+            this.dbKey = balanceDbKeyFactory.newKey(accountId);
+            this.balance = 0L;
+            this.unconfirmedBalance = 0L;
         }
 
         private Balance(ResultSet rs, DbKey dbKey) throws SQLException {
