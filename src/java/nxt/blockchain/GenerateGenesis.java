@@ -18,7 +18,7 @@ package nxt.blockchain;
 
 import nxt.Constants;
 import nxt.account.Account;
-import nxt.account.PaymentAttachment;
+import nxt.account.PaymentFxtAttachment;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import nxt.util.Logger;
@@ -99,7 +99,7 @@ public final class GenerateGenesis {
                 for (long genesisRecipient : genesisRecipients) {
                     FxtTransactionImpl.BuilderImpl builder = new FxtTransactionImpl.BuilderImpl((byte) 0, creatorPublicKey,
                             genesisAmounts.get(genesisRecipient) * Constants.ONE_NXT, 0, (short) 0,
-                            PaymentAttachment.INSTANCE);
+                            PaymentFxtAttachment.INSTANCE);
                     builder.timestamp(0)
                             .recipientId(genesisRecipient)
                             .height(0)

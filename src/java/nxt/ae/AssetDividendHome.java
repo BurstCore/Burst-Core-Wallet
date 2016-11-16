@@ -60,7 +60,7 @@ public final class AssetDividendHome {
                 return assetDividend.dbKey;
             }
         };
-        this.assetDividendTable = new EntityDbTable<AssetDividend>("asset_dividend", dividendDbKeyFactory) {
+        this.assetDividendTable = new EntityDbTable<AssetDividend>(childChain.getSchemaTable("asset_dividend"), dividendDbKeyFactory) {
             @Override
             protected AssetDividend load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new AssetDividend(rs, dbKey);
