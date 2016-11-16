@@ -803,7 +803,7 @@ public final class ParameterParser {
     public static Chain getChain(HttpServletRequest request) throws ParameterException {
         String chainName = Convert.emptyToNull(request.getParameter("chain"));
         if (chainName != null) {
-            Chain chain = Chain.getChain(chainName);
+            Chain chain = Chain.getChain(chainName.toUpperCase());
             if (chain == null) {
                 throw new ParameterException(UNKNOWN_CHAIN);
             }
@@ -815,7 +815,7 @@ public final class ParameterParser {
     public static ChildChain getChildChain(HttpServletRequest request) throws ParameterException {
         String chainName = Convert.emptyToNull(request.getParameter("chain"));
         if (chainName != null) {
-            ChildChain chain = ChildChain.getChildChain(chainName);
+            ChildChain chain = ChildChain.getChildChain(chainName.toUpperCase());
             if (chain == null) {
                 throw new ParameterException(UNKNOWN_CHAIN);
             }

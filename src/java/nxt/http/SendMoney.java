@@ -18,6 +18,11 @@ package nxt.http;
 
 import nxt.NxtException;
 import nxt.account.Account;
+import nxt.account.PaymentAttachment;
+import nxt.account.PaymentFxtAttachment;
+import nxt.blockchain.Attachment;
+import nxt.blockchain.Chain;
+import nxt.blockchain.ChildChain;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,7 +40,9 @@ public final class SendMoney extends CreateTransaction {
         long recipient = ParameterParser.getAccountId(req, "recipient", true);
         long amountNQT = ParameterParser.getAmountNQT(req);
         Account account = ParameterParser.getSenderAccount(req);
-        return createTransaction(req, account, recipient, amountNQT);
+        Chain chain = ParameterParser.getChain(req);
+        Attachment attachment = chain instanceof ChildChain ? PaymentAttachment.INSTANCE : PaymentFxtAttachment.INSTANCE;
+        return createTransaction(req, account, recipient, amountNQT, attachment);
     }
 
 }

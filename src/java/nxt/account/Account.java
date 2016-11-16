@@ -21,6 +21,7 @@ import nxt.Nxt;
 import nxt.ae.AssetTransfer;
 import nxt.ae.TradeHome;
 import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Genesis;
 import nxt.blockchain.Transaction;
@@ -1200,6 +1201,14 @@ public final class Account {
 
     public long getUnconfirmedBalance(ChildChain childChain) {
         return childChain.getBalanceHome().getBalance(id).getUnconfirmedBalance();
+    }
+
+    public long getBalance(Chain chain) {
+        return chain instanceof ChildChain ? getBalance((ChildChain)chain) : getBalanceFQT();
+    }
+
+    public long getUnconfirmedBalance(Chain chain) {
+        return chain instanceof ChildChain ? getUnconfirmedBalance((ChildChain)chain) : getUnconfirmedBalanceFQT();
     }
 
     public long getForgedBalanceFQT() {

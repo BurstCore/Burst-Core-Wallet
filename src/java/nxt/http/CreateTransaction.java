@@ -20,11 +20,10 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
-import nxt.account.PaymentAttachment;
 import nxt.account.PublicKeyAnnouncementAppendix;
 import nxt.blockchain.Attachment;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
-import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.messaging.EncryptToSelfMessageAppendix;
@@ -87,11 +86,6 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
     final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, Attachment attachment)
             throws NxtException {
         return createTransaction(req, senderAccount, 0, 0, attachment);
-    }
-
-    final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountNQT)
-            throws NxtException {
-        return createTransaction(req, senderAccount, recipientId, amountNQT, PaymentAttachment.INSTANCE);
     }
 
     private PhasingAppendix parsePhasing(HttpServletRequest req) throws ParameterException {
@@ -208,22 +202,27 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
         byte[] publicKey = secretPhrase != null ? Crypto.getPublicKey(secretPhrase) : Convert.parseHexString(publicKeyValue);
 
-        //TODO: add support for FXT transactions
-        ChildChain chain = ParameterParser.getChildChain(req);
+        Chain chain = ParameterParser.getChain(req);
 
         try {
-            ChildTransaction.Builder builder = Nxt.newTransactionBuilder(chain, publicKey, amountNQT, feeNQT,
-                    deadline, attachment).referencedTransactionFullHash(referencedTransactionFullHash);
+            Transaction.Builder builder;
+            if (chain instanceof ChildChain) {
+                builder = Nxt.newTransactionBuilder((ChildChain)chain, publicKey, amountNQT, feeNQT, deadline, attachment)
+                        .referencedTransactionFullHash(referencedTransactionFullHash)
+                        .appendix(encryptedMessage)
+                        .appendix(message)
+                        .appendix(publicKeyAnnouncement)
+                        .appendix(encryptToSelfMessage)
+                        .appendix(phasing)
+                        .appendix(prunablePlainMessage)
+                        .appendix(prunableEncryptedMessage);
+            } else {
+                builder = Nxt.newTransactionBuilder(publicKey, amountNQT, feeNQT, deadline, attachment);
+                //TODO: parameter exception if unsupported appendices are found
+            }
             if (attachment.getTransactionType().canHaveRecipient()) {
                 builder.recipientId(recipientId);
             }
-            builder.appendix(encryptedMessage);
-            builder.appendix(message);
-            builder.appendix(publicKeyAnnouncement);
-            builder.appendix(encryptToSelfMessage);
-            builder.appendix(phasing);
-            builder.appendix(prunablePlainMessage);
-            builder.appendix(prunableEncryptedMessage);
             if (ecBlockId != 0) {
                 builder.ecBlockId(ecBlockId);
                 builder.ecBlockHeight(ecBlockHeight);
