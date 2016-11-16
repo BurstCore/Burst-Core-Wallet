@@ -31,7 +31,8 @@ public class Table {
     protected final String schemaTable;
 
     public Table(String schemaTable) {
-        String[] s = schemaTable.toUpperCase().split("\\.");
+        schemaTable = schemaTable.toUpperCase();
+        String[] s = schemaTable.split("\\.");
         if (s.length != 2) {
             throw new IllegalArgumentException("Missing schema name " + schemaTable);
         }

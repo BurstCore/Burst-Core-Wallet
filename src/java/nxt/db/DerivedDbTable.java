@@ -17,7 +17,6 @@
 package nxt.db;
 
 import nxt.Nxt;
-import nxt.util.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,7 +33,6 @@ public abstract class DerivedDbTable extends Table {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        Logger.logDebugMessage("Will rollback " + schemaTable);
         try (Connection con = getConnection();
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + schemaTable + " WHERE height > ?")) {
             pstmtDelete.setInt(1, height);
