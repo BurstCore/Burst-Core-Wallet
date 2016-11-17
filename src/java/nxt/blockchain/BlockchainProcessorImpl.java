@@ -1241,16 +1241,17 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             if (Constants.isTestnet) {
                 Arrays.fill(generationSignature, (byte)1);
             }
-            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, 0, digest.digest(),
+            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, 0, 0, digest.digest(),
                     Genesis.CREATOR_PUBLIC_KEY, generationSignature, Genesis.GENESIS_BLOCK_SIGNATURE, new byte[32], Collections.emptyList());
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
             Account.addOrGetAccount(Genesis.CREATOR_ID).apply(Genesis.CREATOR_PUBLIC_KEY);
-            for (int i = 0; i < Genesis.GENESIS_RECIPIENTS.length; i++) {
-                Account recipient = Account.addOrGetAccount(Genesis.GENESIS_RECIPIENTS[i]);
-                recipient.apply(Genesis.GENESIS_PUBLIC_KEYS[i]);
-                recipient.addToBalanceAndUnconfirmedBalanceFQT(null, 0, Genesis.GENESIS_AMOUNTS.get(Genesis.GENESIS_RECIPIENTS[i]) * Constants.ONE_NXT);
+            for (Map.Entry<String,Long> entry : Genesis.GENESIS_RECIPIENTS.entrySet()) {
+                byte[] recipientPublicKey = Convert.parseHexString(entry.getKey());
+                Account recipient = Account.addOrGetAccount(Account.getId(recipientPublicKey));
+                recipient.apply(recipientPublicKey);
+                recipient.addToBalanceAndUnconfirmedBalanceFQT(null, 0, entry.getValue());
             }
             accept(genesisBlock, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
             if (!genesisBlock.verifyBlockSignature()) {
@@ -1918,10 +1919,11 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (height == 0) {
                     blockchain.setLastBlock(currentBlock); // special case to avoid no last block
                     Account.addOrGetAccount(Genesis.CREATOR_ID).apply(Genesis.CREATOR_PUBLIC_KEY);
-                    for (int i = 0; i < Genesis.GENESIS_RECIPIENTS.length; i++) {
-                        Account recipient = Account.addOrGetAccount(Genesis.GENESIS_RECIPIENTS[i]);
-                        recipient.apply(Genesis.GENESIS_PUBLIC_KEYS[i]);
-                        recipient.addToBalanceAndUnconfirmedBalanceFQT(null, 0, Genesis.GENESIS_AMOUNTS.get(Genesis.GENESIS_RECIPIENTS[i]) * Constants.ONE_NXT);
+                    for (Map.Entry<String,Long> entry : Genesis.GENESIS_RECIPIENTS.entrySet()) {
+                        byte[] recipientPublicKey = Convert.parseHexString(entry.getKey());
+                        Account recipient = Account.addOrGetAccount(Account.getId(recipientPublicKey));
+                        recipient.apply(recipientPublicKey);
+                        recipient.addToBalanceAndUnconfirmedBalanceFQT(null, 0, entry.getValue());
                     }
                 } else {
                     blockchain.setLastBlock(BlockDb.findBlockAtHeight(height - 1));

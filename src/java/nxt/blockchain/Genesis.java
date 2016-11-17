@@ -18,9 +18,7 @@ package nxt.blockchain;
 
 import nxt.Constants;
 import nxt.account.Account;
-import nxt.crypto.Crypto;
 import nxt.util.Convert;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
@@ -31,7 +29,6 @@ import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 public final class Genesis {
@@ -51,45 +48,7 @@ public final class Genesis {
     public static final byte[] GENESIS_BLOCK_SIGNATURE = Convert.parseHexString((String)genesisParameters.get(Constants.isTestnet
             ? "genesisTestnetBlockSignature" : "genesisBlockSignature"));
 
-    public static final long[] GENESIS_RECIPIENTS;
-    public static final byte[][] GENESIS_PUBLIC_KEYS;
-    static {
-        JSONArray recipientPublicKeys = (JSONArray)genesisParameters.get("genesisRecipientPublicKeys");
-        GENESIS_RECIPIENTS = new long[recipientPublicKeys.size()];
-        GENESIS_PUBLIC_KEYS = new byte[GENESIS_RECIPIENTS.length][];
-        for (int i = 0; i < GENESIS_RECIPIENTS.length; i++) {
-            GENESIS_PUBLIC_KEYS[i] = Convert.parseHexString((String)recipientPublicKeys.get(i));
-            if (!Crypto.isCanonicalPublicKey(GENESIS_PUBLIC_KEYS[i])) {
-                throw new RuntimeException("Invalid genesis recipient public key " + recipientPublicKeys.get(i));
-            }
-            GENESIS_RECIPIENTS[i] = Account.getId(GENESIS_PUBLIC_KEYS[i]);
-            if (GENESIS_RECIPIENTS[i] == 0) {
-                throw new RuntimeException("Invalid genesis recipient account " + GENESIS_RECIPIENTS[i]);
-            }
-        }
-    }
-
-    public static final Map<Long, Integer> GENESIS_AMOUNTS;
-    static {
-        JSONArray amounts = (JSONArray)genesisParameters.get("genesisAmounts");
-        if (amounts.size() != GENESIS_RECIPIENTS.length) {
-            throw new RuntimeException("Number of genesis amounts does not match number of genesis recipients");
-        }
-        Map<Long,Integer> map = new HashMap<>();
-        long total = 0;
-        for (int i = 0; i < amounts.size(); i++) {
-            int amount = ((Long)amounts.get(i)).intValue();
-            if (amount <= 0) {
-                throw new RuntimeException("Invalid genesis recipient amount " + amount);
-            }
-            map.put(GENESIS_RECIPIENTS[i], amount);
-            total = Math.addExact(total, amount);
-        }
-        if (total != Constants.MAX_BALANCE_NXT) {
-            throw new RuntimeException("Genesis amount total is " + total + ", must be " + Constants.MAX_BALANCE_NXT);
-        }
-        GENESIS_AMOUNTS = Collections.unmodifiableMap(map);
-    }
+    public static final Map<String, Long> GENESIS_RECIPIENTS = Collections.unmodifiableMap((Map<String, Long>)genesisParameters.get("genesisRecipients"));
 
     public static final long EPOCH_BEGINNING;
     static {

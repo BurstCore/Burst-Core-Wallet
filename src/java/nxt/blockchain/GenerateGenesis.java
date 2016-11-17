@@ -16,12 +16,9 @@
 
 package nxt.blockchain;
 
-import nxt.Constants;
-import nxt.account.Account;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import nxt.util.Logger;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -33,7 +30,6 @@ import java.io.FileWriter;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 public final class GenerateGenesis {
@@ -60,35 +56,19 @@ public final class GenerateGenesis {
                 JSONObject inputJSON = (JSONObject) JSONValue.parseWithException(reader);
                 String creatorSecretPhrase = (String)inputJSON.get("genesisSecretPhrase");
                 byte[] creatorPublicKey = Crypto.getPublicKey(creatorSecretPhrase);
-                JSONArray recipientSecretPhrases = (JSONArray)inputJSON.get("genesisRecipientSecretPhrases");
-                JSONArray recipientPublicKeys = (JSONArray)inputJSON.get("genesisRecipientPublicKeys");
-                if (recipientPublicKeys == null) {
-                    recipientPublicKeys = new JSONArray();
-                }
-                int recipientsCount = recipientSecretPhrases != null ? recipientSecretPhrases.size() : recipientPublicKeys.size();
-                long[] genesisRecipients = new long[recipientsCount];
-                byte[][] genesisPublicKeys = new byte[recipientsCount][];
-                for (int i = 0; i < genesisRecipients.length; i++) {
-                    if (recipientSecretPhrases != null) {
-                        genesisPublicKeys[i] = Crypto.getPublicKey((String) recipientSecretPhrases.get(i));
-                        recipientPublicKeys.add(Convert.toHexString(genesisPublicKeys[i]));
-                    } else {
-                        genesisPublicKeys[i] = Convert.parseHexString((String)recipientPublicKeys.get(i));
+                JSONObject recipientSecretPhrases = (JSONObject) inputJSON.get("genesisRecipientSecretPhrases");
+                JSONObject recipients = (JSONObject) inputJSON.get("genesisRecipients");
+                if (recipients == null) {
+                    recipients = new JSONObject();
+                    for (Map.Entry entry : (Iterable<Map.Entry>) recipientSecretPhrases.entrySet()) {
+                        recipients.put(Convert.toHexString(Crypto.getPublicKey((String) entry.getKey())), entry.getValue());
                     }
-                    genesisRecipients[i] = Account.getId(genesisPublicKeys[i]);
-                }
-                Map<Long, Integer> genesisAmounts = new HashMap<>();
-                JSONArray amounts = (JSONArray)inputJSON.get("genesisAmounts");
-                for (int i = 0; i < amounts.size(); i++) {
-                    int amount = ((Long)amounts.get(i)).intValue();
-                    genesisAmounts.put(genesisRecipients[i], amount);
                 }
 
                 JSONObject outputJSON = new JSONObject();
                 outputJSON.put("genesisPublicKey", Convert.toHexString(creatorPublicKey));
                 outputJSON.put("epochBeginning", inputJSON.get("epochBeginning"));
-                outputJSON.put("genesisAmounts", amounts);
-                outputJSON.put("genesisRecipientPublicKeys", recipientPublicKeys);
+                outputJSON.put("genesisRecipients", recipients);
 
                 MessageDigest digest = Crypto.sha256();
                 byte[] payloadHash = digest.digest();
@@ -96,11 +76,11 @@ public final class GenerateGenesis {
                 byte[] testnetGenerationSignature = new byte[32];
                 Arrays.fill(testnetGenerationSignature, (byte)1);
 
-                BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, 0, payloadHash,
+                BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, 0, 0, payloadHash,
                         creatorPublicKey, generationSignature, new byte[32], Collections.emptyList(), creatorSecretPhrase);
                 outputJSON.put("genesisBlockSignature", Convert.toHexString(genesisBlock.getBlockSignature()));
 
-                BlockImpl genesisTestnetBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, 0, payloadHash,
+                BlockImpl genesisTestnetBlock = new BlockImpl(-1, 0, 0, 0, 0, 0, payloadHash,
                         creatorPublicKey, testnetGenerationSignature, new byte[32], Collections.emptyList(), creatorSecretPhrase);
                 outputJSON.put("genesisTestnetBlockSignature", Convert.toHexString(genesisTestnetBlock.getBlockSignature()));
 
