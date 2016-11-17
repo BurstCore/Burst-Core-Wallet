@@ -1234,8 +1234,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             return;
         }
         Logger.logMessage("Genesis block not in database, starting from scratch");
-        Db.db.beginTransaction();
-        try {
+        try (Connection con = Db.db.beginTransaction()) {
             MessageDigest digest = Crypto.sha256();
             byte[] generationSignature = new byte[32];
             if (Constants.isTestnet) {
@@ -1251,8 +1250,11 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             if (!genesisBlock.verifyBlockSignature()) {
                 throw new RuntimeException("Invalid genesis block signature");
             }
+            for (DerivedDbTable table : derivedTables) {
+                table.createSearchIndex(con);
+            }
             Db.db.commitTransaction();
-        } catch (NxtException e) {
+        } catch (SQLException|NxtException e) {
             Db.db.rollbackTransaction();
             Logger.logMessage(e.getMessage());
             throw new RuntimeException(e.toString(), e);
