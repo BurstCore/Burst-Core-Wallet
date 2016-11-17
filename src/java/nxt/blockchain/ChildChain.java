@@ -53,7 +53,8 @@ public final class ChildChain extends Chain {
 
     private static final Collection<ChildChain> allChildChains = Collections.unmodifiableCollection(childChains.values());
 
-    public static final ChildChain NXT = new ChildChain(2, "NXT");
+    public static final ChildChain IGNIS = new ChildChain(2, "IGNIS");
+    public static final ChildChain BTC = new ChildChain(3, "BTC");
 
     public static ChildChain getChildChain(String name) {
         return childChains.get(name);

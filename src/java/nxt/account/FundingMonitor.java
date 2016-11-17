@@ -618,13 +618,13 @@ public final class FundingMonitor {
     private static void processNxtEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws NxtException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        if (targetAccount.getBalance(ChildChain.NXT) < monitoredAccount.threshold) {
+        if (targetAccount.getBalance(ChildChain.IGNIS) < monitoredAccount.threshold) {
             Transaction.Builder builder = Nxt.newTransactionBuilder(monitor.publicKey,
                     monitoredAccount.amount, 0, (short)1440, PaymentAttachment.INSTANCE);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
-            if (Math.addExact(monitoredAccount.amount, transaction.getFee()) > fundingAccount.getUnconfirmedBalance(ChildChain.NXT)) {
+            if (Math.addExact(monitoredAccount.amount, transaction.getFee()) > fundingAccount.getUnconfirmedBalance(ChildChain.IGNIS)) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
             } else {
@@ -661,7 +661,7 @@ public final class FundingMonitor {
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
-            if (transaction.getFee() > fundingAccount.getUnconfirmedBalance(ChildChain.NXT)) {
+            if (transaction.getFee() > fundingAccount.getUnconfirmedBalance(ChildChain.IGNIS)) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
             } else {
@@ -698,7 +698,7 @@ public final class FundingMonitor {
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
-            if (transaction.getFee() > fundingAccount.getUnconfirmedBalance(ChildChain.NXT)) {
+            if (transaction.getFee() > fundingAccount.getUnconfirmedBalance(ChildChain.IGNIS)) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
             } else {
@@ -825,7 +825,7 @@ public final class FundingMonitor {
             if (stopped) {
                 return;
             }
-            long balance = account.getBalance(ChildChain.NXT);
+            long balance = account.getBalance(ChildChain.IGNIS);
             //
             // Check the NXT balance for monitored accounts
             //

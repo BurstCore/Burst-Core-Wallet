@@ -19,6 +19,9 @@ package nxt.http;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
+import nxt.blockchain.Chain;
+import nxt.blockchain.ChildChain;
+import nxt.blockchain.FxtChain;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -39,8 +42,13 @@ public final class GetBalance extends APIServlet.APIRequestHandler {
         if (height < 0) {
             height = Nxt.getBlockchain().getHeight();
         }
-        Account account = Account.getAccount(accountId, height);
-        return JSONData.accountBalance(account, includeEffectiveBalance, height);
+        Chain chain = ParameterParser.getChain(req);
+        if (chain == FxtChain.FXT) {
+            Account account = Account.getAccount(accountId, height);
+            return JSONData.accountBalance(account, includeEffectiveBalance, height);
+        } else {
+            return JSONData.balance((ChildChain)chain, accountId, height);
+        }
     }
 
 }

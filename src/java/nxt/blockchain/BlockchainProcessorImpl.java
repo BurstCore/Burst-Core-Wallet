@@ -1246,13 +1246,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
-            Account.addOrGetAccount(Genesis.CREATOR_ID).apply(Genesis.CREATOR_PUBLIC_KEY);
-            for (Map.Entry<String,Long> entry : Genesis.GENESIS_RECIPIENTS.entrySet()) {
-                byte[] recipientPublicKey = Convert.parseHexString(entry.getKey());
-                Account recipient = Account.addOrGetAccount(Account.getId(recipientPublicKey));
-                recipient.apply(recipientPublicKey);
-                recipient.addToBalanceAndUnconfirmedBalanceFQT(null, 0, entry.getValue());
-            }
+            Genesis.apply();
             accept(genesisBlock, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
             if (!genesisBlock.verifyBlockSignature()) {
                 throw new RuntimeException("Invalid genesis block signature");
@@ -1918,13 +1912,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 long currentBlockId = currentBlock.getId();
                 if (height == 0) {
                     blockchain.setLastBlock(currentBlock); // special case to avoid no last block
-                    Account.addOrGetAccount(Genesis.CREATOR_ID).apply(Genesis.CREATOR_PUBLIC_KEY);
-                    for (Map.Entry<String,Long> entry : Genesis.GENESIS_RECIPIENTS.entrySet()) {
-                        byte[] recipientPublicKey = Convert.parseHexString(entry.getKey());
-                        Account recipient = Account.addOrGetAccount(Account.getId(recipientPublicKey));
-                        recipient.apply(recipientPublicKey);
-                        recipient.addToBalanceAndUnconfirmedBalanceFQT(null, 0, entry.getValue());
-                    }
+                    Genesis.apply();
                 } else {
                     blockchain.setLastBlock(BlockDb.findBlockAtHeight(height - 1));
                 }

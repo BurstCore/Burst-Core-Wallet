@@ -463,7 +463,7 @@ public final class Currency {
         }
         listeners.notify(this, Event.BEFORE_DELETE);
         if (is(CurrencyType.RESERVABLE)) {
-            ChildChain chain = ChildChain.NXT; // TODO: crowdfunding must define a chain
+            ChildChain chain = ChildChain.IGNIS; // TODO: crowdfunding must define a chain
             if (is(CurrencyType.CLAIMABLE) && isActive()) {
                 senderAccount.addToUnconfirmedCurrencyUnits(event, eventId, currencyId,
                         -senderAccount.getCurrencyUnits(currencyId));
@@ -519,7 +519,7 @@ public final class Currency {
         }
 
         private void undoCrowdFunding(Currency currency) {
-            ChildChain chain = ChildChain.NXT; //TODO
+            ChildChain chain = ChildChain.IGNIS; //TODO
             try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = chain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                     Account.getAccount(founder.getAccountId())
@@ -536,7 +536,7 @@ public final class Currency {
         }
 
         private void distributeCurrency(Currency currency) {
-            ChildChain chain = ChildChain.NXT; //TODO
+            ChildChain chain = ChildChain.IGNIS; //TODO
             long totalAmountPerUnit = 0;
             final long remainingSupply = currency.getReserveSupply() - currency.getInitialSupply();
             List<CurrencyFounderHome.CurrencyFounder> currencyFounders = new ArrayList<>();

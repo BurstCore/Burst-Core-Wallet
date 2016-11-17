@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.db.DbIterator;
@@ -43,7 +44,7 @@ public final class GetAccount extends APIServlet.APIRequestHandler {
         boolean includeCurrencies = "true".equalsIgnoreCase(req.getParameter("includeCurrencies"));
         boolean includeEffectiveBalance = "true".equalsIgnoreCase(req.getParameter("includeEffectiveBalance"));
 
-        JSONObject response = JSONData.accountBalance(account, includeEffectiveBalance);
+        JSONObject response = JSONData.accountBalance(account, includeEffectiveBalance, Nxt.getBlockchain().getHeight());
         JSONData.putAccount(response, "account", account.getId());
 
         byte[] publicKey = Account.getPublicKey(account.getId());

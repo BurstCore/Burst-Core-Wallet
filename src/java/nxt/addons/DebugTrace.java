@@ -341,7 +341,7 @@ public final class DebugTrace {
         final long remainingSupply = currency.getReserveSupply() - currency.getInitialSupply();
         List<CurrencyFounderHome.CurrencyFounder> currencyFounders = new ArrayList<>();
         //TODO: child chain
-        ChildChain childChain = ChildChain.NXT;
+        ChildChain childChain = ChildChain.IGNIS;
         try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
             for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                 totalAmountPerUnit += founder.getAmountPerUnitNQT();
@@ -370,7 +370,7 @@ public final class DebugTrace {
 
     private void undoCrowdfunding(Currency currency) {
         //TODO: child chain
-        ChildChain childChain = ChildChain.NXT;
+        ChildChain childChain = ChildChain.IGNIS;
         try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
             for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                 Map<String,String> founderMap = getValues(founder.getAccountId(), false);
@@ -412,7 +412,7 @@ public final class DebugTrace {
             }
             if (!currency.isActive()) {
                 //TODO: child chain
-                ChildChain childChain = ChildChain.NXT;
+                ChildChain childChain = ChildChain.IGNIS;
                 try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                     for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                         Map<String,String> founderMap = getValues(founder.getAccountId(), false);
@@ -442,7 +442,7 @@ public final class DebugTrace {
 
     private Map<String,String> getValues(long accountId, boolean unconfirmed) {
         //TODO: pass childChain as parameter
-        ChildChain childChain = ChildChain.NXT;
+        ChildChain childChain = ChildChain.IGNIS;
         Map<String,String> map = new HashMap<>();
         map.put("account", Long.toUnsignedString(accountId));
         Account account = Account.getAccount(accountId);

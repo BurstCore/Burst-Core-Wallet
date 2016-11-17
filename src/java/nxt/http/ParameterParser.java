@@ -809,7 +809,7 @@ public final class ParameterParser {
             }
             return chain;
         }
-        return ChildChain.NXT;
+        return ChildChain.IGNIS;
     }
 
     public static ChildChain getChildChain(HttpServletRequest request) throws ParameterException {
@@ -821,7 +821,7 @@ public final class ParameterParser {
             }
             return chain;
         }
-        return ChildChain.NXT;
+        return ChildChain.IGNIS;
     }
 
     private ParameterParser() {} // never

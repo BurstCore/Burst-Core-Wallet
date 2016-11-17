@@ -22,6 +22,7 @@ import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEntry;
 import nxt.account.AccountRestrictions;
+import nxt.account.BalanceHome;
 import nxt.account.FundingMonitor;
 import nxt.account.HoldingType;
 import nxt.account.Token;
@@ -96,29 +97,37 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject accountBalance(Account account, boolean includeEffectiveBalance) {
-        return accountBalance(account, includeEffectiveBalance, Nxt.getBlockchain().getHeight());
-    }
-
-    //TODO: allow getting balances for a child chain
     static JSONObject accountBalance(Account account, boolean includeEffectiveBalance, int height) {
         JSONObject json = new JSONObject();
         if (account == null) {
-            json.put("balanceFQT", "0");
-            json.put("unconfirmedBalanceFQT", "0");
-            json.put("forgedBalanceFQT", "0");
+            json.put("balanceNQT", "0");
+            json.put("unconfirmedBalanceNQT", "0");
+            json.put("forgedBalanceNQT", "0");
             if (includeEffectiveBalance) {
-                json.put("effectiveBalanceFXT", "0");
-                json.put("guaranteedBalanceFQT", "0");
+                json.put("effectiveBalanceNXT", "0");
+                json.put("guaranteedBalanceNQT", "0");
             }
         } else {
-            json.put("balanceFQT", String.valueOf(account.getBalanceFQT()));
-            json.put("unconfirmedBalanceFQT", String.valueOf(account.getUnconfirmedBalanceFQT()));
-            json.put("forgedBalanceFQT", String.valueOf(account.getForgedBalanceFQT()));
+            json.put("balanceNQT", String.valueOf(account.getBalanceFQT()));
+            json.put("unconfirmedBalanceNQT", String.valueOf(account.getUnconfirmedBalanceFQT()));
+            json.put("forgedBalanceNQT", String.valueOf(account.getForgedBalanceFQT()));
             if (includeEffectiveBalance) {
-                json.put("effectiveBalanceFXT", account.getEffectiveBalanceFXT(height));
-                json.put("guaranteedBalanceFQT", String.valueOf(account.getGuaranteedBalanceFQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height)));
+                json.put("effectiveBalanceNXT", account.getEffectiveBalanceFXT(height));
+                json.put("guaranteedBalanceNQT", String.valueOf(account.getGuaranteedBalanceFQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height)));
             }
+        }
+        return json;
+    }
+
+    static JSONObject balance(ChildChain childChain, long accountId, int height) {
+        JSONObject json = new JSONObject();
+        BalanceHome.Balance balance = childChain.getBalanceHome().getBalance(accountId, height);
+        if (balance == null) {
+            json.put("balanceNQT", "0");
+            json.put("unconfirmedBalanceNQT", "0");
+        } else {
+            json.put("balanceNQT", String.valueOf(balance.getBalance()));
+            json.put("unconfirmedBalanceNQT", String.valueOf(balance.getUnconfirmedBalance()));
         }
         return json;
     }

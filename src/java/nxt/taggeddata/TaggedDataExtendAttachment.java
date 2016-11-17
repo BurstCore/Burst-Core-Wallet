@@ -90,7 +90,7 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
         }
         if (hash == null) {
             //TODO: store data hash, or the child chain id for the TaggedDataUpload chain
-            TaggedDataUploadAttachment taggedDataUpload = (TaggedDataUploadAttachment) Nxt.getBlockchain().getTransaction(ChildChain.NXT, taggedDataId).getAttachment();
+            TaggedDataUploadAttachment taggedDataUpload = (TaggedDataUploadAttachment) Nxt.getBlockchain().getTransaction(ChildChain.IGNIS, taggedDataId).getAttachment();
             hash = taggedDataUpload.getHash();
         }
         return hash;
