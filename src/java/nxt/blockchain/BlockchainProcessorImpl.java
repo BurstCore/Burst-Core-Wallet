@@ -1483,7 +1483,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new TransactionNotAcceptedException("Invalid transaction timestamp " + transaction.getTimestamp()
                     + ", current time is " + curTime + ", block timestamp is " + block.getTimestamp(), transaction);
         }
-        if (transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.fullHash(), previousLastBlock.getHeight())) {
+        if (transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash(), previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
         }
         if (transaction.referencedTransactionFullHash() != null && !transaction.hasAllReferencedTransactions(transaction.getTimestamp(), 0)) {
@@ -1534,7 +1534,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             block.getTransactions().forEach(fxtTransaction -> {
                 for (ChildTransactionImpl childTransaction : fxtTransaction.getChildTransactions()) {
                     ChildChain childChain = childTransaction.getChain();
-                    childChain.getPhasingPollHome().getLinkedPhasedTransactions(childTransaction.fullHash()).forEach(phasedTransaction -> {
+                    childChain.getPhasingPollHome().getLinkedPhasedTransactions(childTransaction.getFullHash()).forEach(phasedTransaction -> {
                         if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
                             possiblyApprovedTransactions.add((ChildTransactionImpl)phasedTransaction);
                         }

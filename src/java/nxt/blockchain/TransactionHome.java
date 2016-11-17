@@ -89,7 +89,7 @@ public final class TransactionHome {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.fullHash(), fullHash) ? transaction : null);
+                        Arrays.equals(transaction.getFullHash(), fullHash) ? transaction : null);
             }
         }
         // Search the database
@@ -148,7 +148,7 @@ public final class TransactionHome {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.fullHash(), fullHash));
+                        Arrays.equals(transaction.getFullHash(), fullHash));
             }
         }
         // Search the database
@@ -173,7 +173,7 @@ public final class TransactionHome {
         synchronized(BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
             if (transaction != null) {
-                return transaction.fullHash();
+                return transaction.getFullHash();
             }
         }
         // Search the database

@@ -971,7 +971,7 @@ public final class JSONData {
         if (signature != null) {
             json.put("signature", Convert.toHexString(signature));
             json.put("signatureHash", Convert.toHexString(Crypto.sha256().digest(signature)));
-            json.put("fullHash", transaction.getFullHash());
+            json.put("fullHash", Convert.toHexString(transaction.getFullHash()));
             json.put("transaction", transaction.getStringId());
         }
         JSONObject attachmentJSON = new JSONObject();

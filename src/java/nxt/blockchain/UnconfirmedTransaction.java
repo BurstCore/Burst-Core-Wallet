@@ -199,11 +199,6 @@ public abstract class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public String getFullHash() {
-        return transaction.getFullHash();
-    }
-
-    @Override
     public TransactionType getType() {
         return transaction.getType();
     }
@@ -289,8 +284,8 @@ public abstract class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public byte[] fullHash() {
-        return transaction.fullHash();
+    public byte[] getFullHash() {
+        return transaction.getFullHash();
     }
 
     @Override

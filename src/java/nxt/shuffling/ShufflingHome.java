@@ -543,7 +543,7 @@ public final class ShufflingHome {
             byte[][] data = attachment.getData();
             ShufflingParticipantHome.ShufflingParticipant participant = shufflingParticipantHome.getParticipant(this.id, participantId);
             participant.setData(data, transaction.getTimestamp());
-            participant.setProcessed(transaction.fullHash());
+            participant.setProcessed(transaction.getFullHash());
             if (data != null && data.length == 0) {
                 // couldn't decrypt all data from previous participants
                 cancelBy(participant);
@@ -559,7 +559,7 @@ public final class ShufflingHome {
             long participantId = transaction.getSenderId();
             this.recipientPublicKeys = attachment.getRecipientPublicKeys();
             ShufflingParticipantHome.ShufflingParticipant participant = shufflingParticipantHome.getParticipant(this.id, participantId);
-            participant.setProcessed(transaction.fullHash());
+            participant.setProcessed(transaction.getFullHash());
             if (recipientPublicKeys.length == 0) {
                 // couldn't decrypt all data from previous participants
                 cancelBy(participant);

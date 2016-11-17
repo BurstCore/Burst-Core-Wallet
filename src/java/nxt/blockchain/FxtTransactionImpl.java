@@ -258,7 +258,7 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
                 pstmt.setBytes(++i, buffer.array());
             }
             pstmt.setInt(++i, getBlockTimestamp());
-            pstmt.setBytes(++i, fullHash());
+            pstmt.setBytes(++i, getFullHash());
             pstmt.setByte(++i, getVersion());
             pstmt.setBoolean(++i, getAttachment() instanceof Appendix.Prunable);
             pstmt.setInt(++i, getECBlockHeight());

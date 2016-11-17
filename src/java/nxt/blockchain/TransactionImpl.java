@@ -402,12 +402,7 @@ public abstract class TransactionImpl implements Transaction {
     }
 
     @Override
-    public String getFullHash() {
-        return Convert.toHexString(fullHash());
-    }
-
-    @Override
-    public byte[] fullHash() {
+    public byte[] getFullHash() {
         if (fullHash == null) {
             getId();
         }

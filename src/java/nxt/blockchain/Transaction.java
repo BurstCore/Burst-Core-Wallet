@@ -74,9 +74,7 @@ public interface Transaction {
 
     byte[] getSignature();
 
-    String getFullHash();
-
-    byte[] fullHash();
+    byte[] getFullHash();
 
     TransactionType getType();
 

@@ -409,7 +409,8 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof ChildTransactionImpl && this.getId() == ((Transaction)o).getId();
+        return o instanceof ChildTransactionImpl && this.getId() == ((Transaction)o).getId()
+                && Arrays.equals(this.getFullHash(), ((Transaction)o).getFullHash());
     }
 
     @Override
@@ -543,7 +544,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
                 pstmt.setBytes(++i, buffer.array());
             }
             pstmt.setInt(++i, getBlockTimestamp());
-            pstmt.setBytes(++i, fullHash());
+            pstmt.setBytes(++i, getFullHash());
             pstmt.setByte(++i, getVersion());
             pstmt.setBoolean(++i, getMessage() != null);
             pstmt.setBoolean(++i, getEncryptedMessage() != null);
