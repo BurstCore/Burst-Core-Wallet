@@ -65,8 +65,9 @@ import java.util.stream.Stream;
  * and will be returned as the COLUMNS and KEYS values in the search results.
  *
  * Schema, table and column names are expected to be in uppercase to match the
- * way H2 stores the information.  Function aliases and triggers are created in
- * the default schema (PUBLIC).
+ * way H2 stores the information.  Function aliases are created in the default
+ * schema (PUBLIC) and triggers are created in the schema of the table being
+ * indexed.
  *
  * The database aliases are defined as follows:
  *   CREATE ALIAS FTL_CREATE_INDEX FOR "nxt.db.FullTextTrigger.createIndex"
@@ -204,13 +205,13 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             //
             // Drop the H2 Lucene V3 function aliases
             //
-            stmt.execute("DROP ALIAS IF EXISTS FTL_INIT");
-            stmt.execute("DROP ALIAS IF EXISTS FTL_CREATE_INDEX");
-            stmt.execute("DROP ALIAS IF EXISTS FTL_DROP_INDEX");
-            stmt.execute("DROP ALIAS IF EXISTS FTL_DROP_ALL");
-            stmt.execute("DROP ALIAS IF EXISTS FTL_REINDEX");
-            stmt.execute("DROP ALIAS IF EXISTS FTL_SEARCH");
-            stmt.execute("DROP ALIAS IF EXISTS FTL_SEARCH_DATA");
+            stmt.execute("DROP ALIAS IF EXISTS PUBLIC.FTL_INIT");
+            stmt.execute("DROP ALIAS IF EXISTS PUBLIC.FTL_CREATE_INDEX");
+            stmt.execute("DROP ALIAS IF EXISTS PUBLIC.FTL_DROP_INDEX");
+            stmt.execute("DROP ALIAS IF EXISTS PUBLIC.FTL_DROP_ALL");
+            stmt.execute("DROP ALIAS IF EXISTS PUBLIC.FTL_REINDEX");
+            stmt.execute("DROP ALIAS IF EXISTS PUBLIC.FTL_SEARCH");
+            stmt.execute("DROP ALIAS IF EXISTS PUBLIC.FTL_SEARCH_DATA");
             Logger.logInfoMessage("H2 fulltext function aliases dropped");
             //
             // Create our schema and table
@@ -229,10 +230,10 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                 while(rs.next()) {
                     String schema = rs.getString("SCHEMA");
                     String table = rs.getString("TABLE");
-                    stmt.execute("DROP TRIGGER IF EXISTS FTL_" + table + "_" + schema);
-                    stmt.execute(String.format("CREATE TRIGGER FTL_%s_%s AFTER INSERT,UPDATE,DELETE ON %s.%s "
+                    stmt.execute("DROP TRIGGER IF EXISTS " + schema + ".FTL_" + schema + "_" + table);
+                    stmt.execute(String.format("CREATE TRIGGER %s.FTL_%s_%s AFTER INSERT,UPDATE,DELETE ON %s.%s "
                             + "FOR EACH ROW CALL \"%s\"",
-                            schema, table, schema, table, ourClassName));
+                            schema, schema, table, schema, table, ourClassName));
                 }
             }
             //
@@ -242,9 +243,9 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             //
             // Create our function aliases
             //
-            stmt.execute("CREATE ALIAS FTL_CREATE_INDEX FOR \"" + ourClassName + ".createIndex\"");
-            stmt.execute("CREATE ALIAS FTL_DROP_INDEX FOR \"" + ourClassName + ".dropIndex\"");
-            stmt.execute("CREATE ALIAS FTL_SEARCH NOBUFFER FOR \"" + ourClassName + ".search\"");
+            stmt.execute("CREATE ALIAS PUBLIC.FTL_CREATE_INDEX FOR \"" + ourClassName + ".createIndex\"");
+            stmt.execute("CREATE ALIAS PUBLIC.FTL_DROP_INDEX FOR \"" + ourClassName + ".dropIndex\"");
+            stmt.execute("CREATE ALIAS PUBLIC.FTL_SEARCH NOBUFFER FOR \"" + ourClassName + ".search\"");
             Logger.logInfoMessage("NRS fulltext aliases created");
         } catch (SQLException exc) {
             Logger.logErrorMessage("Unable to initialize NRS fulltext search support", exc);
@@ -302,9 +303,9 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             stmt.execute(String.format("INSERT INTO FTL.INDEXES (schema, table, columns) "
                     + "VALUES('%s', '%s', '%s')",
                     schema, table, columnList));
-            stmt.execute(String.format("CREATE TRIGGER FTL_%s_%s AFTER INSERT,UPDATE,DELETE ON %s "
+            stmt.execute(String.format("CREATE TRIGGER %s.FTL_%s_%s AFTER INSERT,UPDATE,DELETE ON %s "
                     + "FOR EACH ROW CALL \"%s\"",
-                    schema, table, schemaTable, FullTextTrigger.class.getName()));
+                    schema, schema, table, schemaTable, FullTextTrigger.class.getName()));
         }
         //
         // Index the table
@@ -342,7 +343,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                     "SELECT COLUMNS FROM FTL.INDEXES WHERE SCHEMA = '%s' AND TABLE = '%s'",
                     schema, table))) {
                 if (rs.next()) {
-                    stmt.execute("DROP TRIGGER IF EXISTS FTL_" + schema + "." + table);
+                    stmt.execute("DROP TRIGGER IF EXISTS " + schema + ".FTL_" + schema + "_" + table);
                     stmt.execute(String.format("DELETE FROM FTL.INDEXES WHERE SCHEMA = '%s' AND TABLE = '%s'",
                             schema, table));
                     reindex = true;
@@ -373,7 +374,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             while(rs.next()) {
                 String table = rs.getString("TABLE");
                 String schema = rs.getString("SCHEMA");
-                stmt.execute("DROP TRIGGER IF EXISTS FTL_" + schema + "_" + table);
+                stmt.execute("DROP TRIGGER IF EXISTS " + schema + ".FTL_" + schema + "_" + table);
             }
             stmt.execute("TRUNCATE TABLE FTL.INDEXES");
             indexTriggers.clear();
