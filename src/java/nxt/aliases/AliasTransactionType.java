@@ -25,7 +25,6 @@ import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Fee;
-import nxt.blockchain.Genesis;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
 import nxt.blockchain.TransactionType;
@@ -371,9 +370,7 @@ public abstract class AliasTransactionType extends ChildTransactionType {
                 throw new NxtException.NotValidException("Invalid alias sell price: " + priceNQT);
             }
             if (priceNQT == 0) {
-                if (Genesis.CREATOR_ID == transaction.getRecipientId()) {
-                    throw new NxtException.NotValidException("Transferring aliases to Genesis account not allowed");
-                } else if (transaction.getRecipientId() == 0) {
+                if (transaction.getRecipientId() == 0) {
                     throw new NxtException.NotValidException("Missing alias transfer recipient");
                 }
             }
@@ -382,9 +379,6 @@ public abstract class AliasTransactionType extends ChildTransactionType {
                 throw new NxtException.NotCurrentlyValidException("No such alias: " + aliasName);
             } else if (alias.getAccountId() != transaction.getSenderId()) {
                 throw new NxtException.NotCurrentlyValidException("Alias doesn't belong to sender: " + aliasName);
-            }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
-                throw new NxtException.NotValidException("Selling alias to Genesis not allowed");
             }
         }
 

@@ -21,8 +21,6 @@ import nxt.account.Account;
 import nxt.account.AccountControlFxtTransactionType;
 import nxt.account.PaymentFxtTransactionType;
 
-import java.util.Arrays;
-
 public abstract class FxtTransactionType extends TransactionType {
 
     protected static final byte TYPE_CHILDCHAIN_BLOCK = -1;
@@ -68,8 +66,7 @@ public abstract class FxtTransactionType extends TransactionType {
         long amount = transaction.getAmount();
         long fee = transaction.getFee();
         long totalAmount = Math.addExact(amount, fee);
-        if (senderAccount.getUnconfirmedBalanceFQT() < totalAmount
-                && !(transaction.getTimestamp() == 0 && Arrays.equals(transaction.getSenderPublicKey(), Genesis.CREATOR_PUBLIC_KEY))) {
+        if (senderAccount.getUnconfirmedBalanceFQT() < totalAmount) {
             return false;
         }
         senderAccount.addToUnconfirmedBalanceFQT(getLedgerEvent(), transaction.getId(), -amount, -fee);

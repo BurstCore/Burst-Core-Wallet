@@ -457,7 +457,7 @@ public abstract class TransactionImpl implements Transaction {
         buffer.putInt(getTimestamp());
         buffer.putShort(getDeadline());
         buffer.put(getSenderPublicKey());
-        buffer.putLong(getType().canHaveRecipient() ? getRecipientId() : Genesis.CREATOR_ID);
+        buffer.putLong(getRecipientId());
         buffer.putLong(getAmount());
         buffer.putLong(getFee());
         buffer.put(getSignature() != null ? getSignature() : new byte[64]);

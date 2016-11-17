@@ -22,7 +22,6 @@ import nxt.account.AccountLedger;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
-import nxt.blockchain.Genesis;
 import nxt.blockchain.TransactionType;
 import org.json.simple.JSONObject;
 
@@ -94,9 +93,6 @@ public abstract class MessagingTransactionType extends ChildTransactionType {
             Attachment attachment = transaction.getAttachment();
             if (transaction.getAmount() != 0) {
                 throw new NxtException.NotValidException("Invalid arbitrary message: " + attachment.getJSONObject());
-            }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
-                throw new NxtException.NotValidException("Sending messages to Genesis not allowed.");
             }
         }
 

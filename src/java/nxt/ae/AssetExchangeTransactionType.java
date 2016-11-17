@@ -25,7 +25,6 @@ import nxt.blockchain.Appendix;
 import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Fee;
-import nxt.blockchain.Genesis;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
 import nxt.blockchain.TransactionType;
@@ -229,13 +228,9 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             AssetTransferAttachment attachment = (AssetTransferAttachment) transaction.getAttachment();
             senderAccount.addToAssetBalanceQNT(getLedgerEvent(), transaction.getId(), attachment.getAssetId(),
                     -attachment.getQuantityQNT());
-            if (recipientAccount.getId() == Genesis.CREATOR_ID) {
-                Asset.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityQNT());
-            } else {
-                recipientAccount.addToAssetAndUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
-                        attachment.getAssetId(), attachment.getQuantityQNT());
-                AssetTransfer.addAssetTransfer(transaction, attachment);
-            }
+            recipientAccount.addToAssetAndUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                    attachment.getAssetId(), attachment.getQuantityQNT());
+            AssetTransfer.addAssetTransfer(transaction, attachment);
         }
 
         @Override
@@ -250,10 +245,6 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             AssetTransferAttachment attachment = (AssetTransferAttachment)transaction.getAttachment();
             if (transaction.getAmount() != 0 || attachment.getAssetId() == 0) {
                 throw new NxtException.NotValidException("Invalid asset transfer amount or asset: " + attachment.getJSONObject());
-            }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
-                throw new NxtException.NotValidException("Asset transfer to Genesis not allowed, "
-                        + "use asset delete attachment instead");
             }
             Asset asset = Asset.getAsset(attachment.getAssetId());
             if (attachment.getQuantityQNT() <= 0 || (asset != null && attachment.getQuantityQNT() > asset.getInitialQuantityQNT())) {

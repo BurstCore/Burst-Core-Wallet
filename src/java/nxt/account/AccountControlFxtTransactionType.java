@@ -20,7 +20,6 @@ import nxt.Constants;
 import nxt.NxtException;
 import nxt.blockchain.FxtTransactionImpl;
 import nxt.blockchain.FxtTransactionType;
-import nxt.blockchain.Genesis;
 import nxt.blockchain.TransactionType;
 import org.json.simple.JSONObject;
 
@@ -94,9 +93,6 @@ public abstract class AccountControlFxtTransactionType extends FxtTransactionTyp
             if (recipientPublicKey == null) {
                 throw new NxtException.NotCurrentlyValidException("Invalid effective balance leasing: "
                         + " recipient account " + Long.toUnsignedString(transaction.getRecipientId()) + " not found or no public key published");
-            }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
-                throw new NxtException.NotValidException("Leasing to Genesis account not allowed");
             }
         }
 

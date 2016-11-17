@@ -24,7 +24,6 @@ import nxt.account.AccountLedger.LedgerEvent;
 import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Fee;
-import nxt.blockchain.Genesis;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;
 import org.json.simple.JSONObject;
@@ -405,9 +404,6 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             CurrencyTransferAttachment attachment = (CurrencyTransferAttachment) transaction.getAttachment();
             if (attachment.getUnits() <= 0) {
                 throw new NxtException.NotValidException("Invalid currency transfer: " + attachment.getJSONObject());
-            }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
-                throw new NxtException.NotValidException("Currency transfer to genesis account not allowed");
             }
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             CurrencyType.validate(currency, transaction);

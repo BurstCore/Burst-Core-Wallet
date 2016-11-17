@@ -187,7 +187,10 @@ public class AccountLedger {
         return listeners.removeListener(listener, eventType);
     }
 
-    static boolean mustLogEntry(long accountId, boolean isUnconfirmed) {
+    static boolean mustLogEntry(LedgerEvent event, long accountId, boolean isUnconfirmed) {
+        if (event == null) {
+            return false;
+        }
         //
         // Must be tracking this account
         //

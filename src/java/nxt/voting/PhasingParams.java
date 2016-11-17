@@ -121,6 +121,7 @@ public final class PhasingParams {
 
         long previousAccountId = 0;
         for (long accountId : whitelist) {
+            //TODO: allow accountId == 0 in whitelist, as a way to permanently lock an account instead of using Genesis.CREATOR_ID
             if (accountId == 0) {
                 throw new NxtException.NotValidException("Invalid accountId 0 in whitelist");
             }

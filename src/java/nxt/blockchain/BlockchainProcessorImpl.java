@@ -21,7 +21,6 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
-import nxt.account.PaymentFxtAttachment;
 import nxt.crypto.Crypto;
 import nxt.db.DbIterator;
 import nxt.db.DerivedDbTable;
@@ -1237,34 +1236,13 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         Logger.logMessage("Genesis block not in database, starting from scratch");
         Db.db.beginTransaction();
         try {
-            List<FxtTransactionImpl> transactions = new ArrayList<>();
-            for (int i = 0; i < Genesis.GENESIS_RECIPIENTS.length; i++) {
-                FxtTransactionImpl.BuilderImpl builder = new FxtTransactionImpl.BuilderImpl((byte) 0, Genesis.CREATOR_PUBLIC_KEY,
-                        Genesis.GENESIS_AMOUNTS.get(Genesis.GENESIS_RECIPIENTS[i]) * Constants.ONE_NXT, 0, (short) 0,
-                        PaymentFxtAttachment.INSTANCE);
-                builder.timestamp(0)
-                        .recipientId(Genesis.GENESIS_RECIPIENTS[i])
-                        .height(0)
-                        .ecBlockHeight(0)
-                        .ecBlockId(0)
-                        .signature(Genesis.GENESIS_SIGNATURES[i]);
-                FxtTransactionImpl transaction = builder.build();
-                if (!transaction.verifySignature()) {
-                    throw new RuntimeException("Invalid transaction signature");
-                }
-                transactions.add(transaction);
-            }
-            Collections.sort(transactions, Comparator.comparingLong(Transaction::getId));
             MessageDigest digest = Crypto.sha256();
-            for (TransactionImpl transaction : transactions) {
-                digest.update(transaction.bytes());
-            }
             byte[] generationSignature = new byte[32];
             if (Constants.isTestnet) {
                 Arrays.fill(generationSignature, (byte)1);
             }
-            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
-                    Genesis.CREATOR_PUBLIC_KEY, generationSignature, Genesis.GENESIS_BLOCK_SIGNATURE, new byte[32], transactions);
+            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, 0, digest.digest(),
+                    Genesis.CREATOR_PUBLIC_KEY, generationSignature, Genesis.GENESIS_BLOCK_SIGNATURE, new byte[32], Collections.emptyList());
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
@@ -1272,6 +1250,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             for (int i = 0; i < Genesis.GENESIS_RECIPIENTS.length; i++) {
                 Account recipient = Account.addOrGetAccount(Genesis.GENESIS_RECIPIENTS[i]);
                 recipient.apply(Genesis.GENESIS_PUBLIC_KEYS[i]);
+                recipient.addToBalanceAndUnconfirmedBalanceFQT(null, 0, Genesis.GENESIS_AMOUNTS.get(Genesis.GENESIS_RECIPIENTS[i]) * Constants.ONE_NXT);
             }
             accept(genesisBlock, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
             if (!genesisBlock.verifyBlockSignature()) {
@@ -1942,6 +1921,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     for (int i = 0; i < Genesis.GENESIS_RECIPIENTS.length; i++) {
                         Account recipient = Account.addOrGetAccount(Genesis.GENESIS_RECIPIENTS[i]);
                         recipient.apply(Genesis.GENESIS_PUBLIC_KEYS[i]);
+                        recipient.addToBalanceAndUnconfirmedBalanceFQT(null, 0, Genesis.GENESIS_AMOUNTS.get(Genesis.GENESIS_RECIPIENTS[i]) * Constants.ONE_NXT);
                     }
                 } else {
                     blockchain.setLastBlock(BlockDb.findBlockAtHeight(height - 1));

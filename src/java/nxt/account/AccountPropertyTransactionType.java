@@ -22,7 +22,6 @@ import nxt.blockchain.Appendix;
 import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Fee;
-import nxt.blockchain.Genesis;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
 import nxt.blockchain.TransactionType;
@@ -190,9 +189,6 @@ public abstract class AccountPropertyTransactionType extends ChildTransactionTyp
             if (transaction.getAmount() != 0) {
                 throw new NxtException.NotValidException("Account property transaction cannot be used to send NXT");
             }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
-                throw new NxtException.NotValidException("Setting Genesis account properties not allowed");
-            }
         }
 
         @Override
@@ -257,9 +253,6 @@ public abstract class AccountPropertyTransactionType extends ChildTransactionTyp
             }
             if (transaction.getAmount() != 0) {
                 throw new NxtException.NotValidException("Account property transaction cannot be used to send NXT");
-            }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
-                throw new NxtException.NotValidException("Deleting Genesis account properties not allowed");
             }
         }
 

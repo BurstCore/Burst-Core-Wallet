@@ -35,7 +35,6 @@ import nxt.blockchain.BlockDb;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.FxtTransactionImpl;
-import nxt.blockchain.Genesis;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
 import nxt.blockchain.TransactionProcessor;
@@ -262,9 +261,6 @@ public final class DebugTrace {
                 log(getValues(senderId, transaction, transaction.getAttachment(), false));
             }
             long recipientId = transaction.getRecipientId();
-            if (transaction.getAmount() > 0 && recipientId == 0) {
-                recipientId = Genesis.CREATOR_ID;
-            }
             if (include(recipientId)) {
                 log(getValues(recipientId, transaction, true, true, true));
                 log(getValues(recipientId, transaction, transaction.getAttachment(), true));

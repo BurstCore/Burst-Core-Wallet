@@ -18,7 +18,6 @@ package nxt.blockchain;
 
 import nxt.Constants;
 import nxt.account.Account;
-import nxt.account.PaymentFxtAttachment;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import nxt.util.Logger;
@@ -32,12 +31,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public final class GenerateGenesis {
@@ -94,39 +90,18 @@ public final class GenerateGenesis {
                 outputJSON.put("genesisAmounts", amounts);
                 outputJSON.put("genesisRecipientPublicKeys", recipientPublicKeys);
 
-                JSONArray genesisSignatures = new JSONArray();
-                List<FxtTransactionImpl> transactions = new ArrayList<>();
-                for (long genesisRecipient : genesisRecipients) {
-                    FxtTransactionImpl.BuilderImpl builder = new FxtTransactionImpl.BuilderImpl((byte) 0, creatorPublicKey,
-                            genesisAmounts.get(genesisRecipient) * Constants.ONE_NXT, 0, (short) 0,
-                            PaymentFxtAttachment.INSTANCE);
-                    builder.timestamp(0)
-                            .recipientId(genesisRecipient)
-                            .height(0)
-                            .ecBlockHeight(0)
-                            .ecBlockId(0);
-                    FxtTransactionImpl transaction = builder.build(creatorSecretPhrase);
-                    transactions.add(transaction);
-                    genesisSignatures.add(Convert.toHexString(transaction.getSignature()));
-                }
-                outputJSON.put("genesisSignatures", genesisSignatures);
-
-                Collections.sort(transactions, Comparator.comparingLong(Transaction::getId));
                 MessageDigest digest = Crypto.sha256();
-                for (TransactionImpl transaction : transactions) {
-                    digest.update(transaction.bytes());
-                }
                 byte[] payloadHash = digest.digest();
                 byte[] generationSignature = new byte[32];
                 byte[] testnetGenerationSignature = new byte[32];
                 Arrays.fill(testnetGenerationSignature, (byte)1);
 
-                BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, payloadHash,
-                        creatorPublicKey, generationSignature, new byte[32], transactions, creatorSecretPhrase);
+                BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, 0, payloadHash,
+                        creatorPublicKey, generationSignature, new byte[32], Collections.emptyList(), creatorSecretPhrase);
                 outputJSON.put("genesisBlockSignature", Convert.toHexString(genesisBlock.getBlockSignature()));
 
-                BlockImpl genesisTestnetBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, payloadHash,
-                        creatorPublicKey, testnetGenerationSignature, new byte[32], transactions, creatorSecretPhrase);
+                BlockImpl genesisTestnetBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, 0, payloadHash,
+                        creatorPublicKey, testnetGenerationSignature, new byte[32], Collections.emptyList(), creatorSecretPhrase);
                 outputJSON.put("genesisTestnetBlockSignature", Convert.toHexString(genesisTestnetBlock.getBlockSignature()));
 
                 writer.write(outputJSON.toJSONString());

@@ -148,7 +148,7 @@ public final class BalanceHome {
             Account.checkBalance(this.accountId, this.balance, this.unconfirmedBalance);
             save();
             //TODO: Account.listeners.notify(this, Event.BALANCE);
-            if (AccountLedger.mustLogEntry(this.accountId, false)) {
+            if (AccountLedger.mustLogEntry(event, this.accountId, false)) {
                 if (fee != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.accountId,
                             AccountLedger.LedgerHolding.NXT_BALANCE, null, fee, this.balance - amount));
@@ -174,7 +174,7 @@ public final class BalanceHome {
             save();
             //TODO: listeners.notify(this, Event.UNCONFIRMED_BALANCE);
             //TODO: use chain holding id in account ledger
-            if (AccountLedger.mustLogEntry(this.accountId, true)) {
+            if (AccountLedger.mustLogEntry(event, this.accountId, true)) {
                 if (fee != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.accountId,
                             AccountLedger.LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, fee, this.unconfirmedBalance - amount));
@@ -201,7 +201,7 @@ public final class BalanceHome {
             save();
             //TODO: Account.listeners.notify(this, Event.BALANCE);
             //TODO: Account.listeners.notify(this, Event.UNCONFIRMED_BALANCE);
-            if (AccountLedger.mustLogEntry(this.accountId, true)) {
+            if (AccountLedger.mustLogEntry(event, this.accountId, true)) {
                 if (fee != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.accountId,
                             AccountLedger.LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, fee, this.unconfirmedBalance - amount));
@@ -211,7 +211,7 @@ public final class BalanceHome {
                             AccountLedger.LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, amount, this.unconfirmedBalance));
                 }
             }
-            if (AccountLedger.mustLogEntry(this.accountId, false)) {
+            if (AccountLedger.mustLogEntry(event, this.accountId, false)) {
                 if (fee != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.accountId,
                             AccountLedger.LedgerHolding.NXT_BALANCE, null, fee, this.balance - amount));

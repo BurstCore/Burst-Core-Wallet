@@ -31,8 +31,6 @@ import nxt.taggeddata.TaggedDataTransactionType;
 import nxt.voting.AccountControlTransactionType;
 import nxt.voting.VotingTransactionType;
 
-import java.util.Arrays;
-
 public abstract class ChildTransactionType extends TransactionType {
 
     protected static final byte TYPE_PAYMENT = 0;
@@ -90,8 +88,7 @@ public abstract class ChildTransactionType extends TransactionType {
             senderAccount.addToUnconfirmedBalanceFQT(getLedgerEvent(), transaction.getId(), 0, -deposit);
         }
         long totalAmount = Math.addExact(amount, fee);
-        if (senderAccount.getUnconfirmedBalance(childChain) < totalAmount
-                && !(transaction.getTimestamp() == 0 && Arrays.equals(transaction.getSenderPublicKey(), Genesis.CREATOR_PUBLIC_KEY))) {
+        if (senderAccount.getUnconfirmedBalance(childChain) < totalAmount) {
             senderAccount.addToUnconfirmedBalanceFQT(getLedgerEvent(), transaction.getId(), 0, deposit);
             return false;
         }
