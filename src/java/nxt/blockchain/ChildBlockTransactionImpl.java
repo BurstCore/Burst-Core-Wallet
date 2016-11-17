@@ -49,7 +49,8 @@ class ChildBlockTransactionImpl extends FxtTransactionImpl {
     @Override
     void save(Connection con, String schemaTable) throws SQLException {
         super.save(con, schemaTable);
-        String childChainSchemaTable = getChain().getSchemaTable("transaction");
+        ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)getAttachment();
+        String childChainSchemaTable = ChildChain.getChildChain(childBlockAttachment.getChainId()).getSchemaTable("transaction");
         for (ChildTransactionImpl childTransaction : getChildTransactions()) {
             try {
                 childTransaction.save(con, childChainSchemaTable);
