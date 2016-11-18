@@ -219,10 +219,10 @@ public class ChildDbVersion extends DbVersion {
             case 69:
                 apply("CREATE INDEX IF NOT EXISTS trade_height_idx ON trade(height)");
             case 70:
-                apply("CREATE TABLE IF NOT EXISTS vote (db_id IDENTITY, id BIGINT NOT NULL, " +
-                        "poll_id BIGINT NOT NULL, voter_id BIGINT NOT NULL, vote_bytes VARBINARY NOT NULL, height INT NOT NULL)");
+                apply("CREATE TABLE IF NOT EXISTS vote (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
+                        + "poll_id BIGINT NOT NULL, voter_id BIGINT NOT NULL, vote_bytes VARBINARY NOT NULL, height INT NOT NULL)");
             case 71:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS vote_id_idx ON vote (id)");
+                apply("CREATE INDEX IF NOT EXISTS vote_id_idx ON vote (id)");
             case 72:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS vote_poll_id_idx ON vote (poll_id, voter_id)");
             case 73:
@@ -446,11 +446,12 @@ public class ChildDbVersion extends DbVersion {
             case 160:
                 apply("CREATE INDEX IF NOT EXISTS shuffling_blocks_remaining_height_idx ON shuffling (blocks_remaining, height DESC)");
             case 161:
-                apply("CREATE TABLE IF NOT EXISTS asset_dividend (db_id IDENTITY, id BIGINT NOT NULL, asset_id BIGINT NOT NULL, "
+                apply("CREATE TABLE IF NOT EXISTS asset_dividend (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
+                        + "asset_id BIGINT NOT NULL, "
                         + "amount BIGINT NOT NULL, dividend_height INT NOT NULL, total_dividend BIGINT NOT NULL, "
                         + "num_accounts BIGINT NOT NULL, timestamp INT NOT NULL, height INT NOT NULL)");
             case 162:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_dividend_id_idx ON asset_dividend (id)");
+                apply("CREATE INDEX IF NOT EXISTS asset_dividend_id_idx ON asset_dividend (id)");
             case 163:
                 apply("CREATE INDEX IF NOT EXISTS asset_dividend_asset_id_idx ON asset_dividend (asset_id, height DESC)");
             case 164:

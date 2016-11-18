@@ -16,9 +16,12 @@
 
 package nxt.db;
 
+import nxt.util.Convert;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 public interface DbKey {
 
@@ -104,6 +107,34 @@ public interface DbKey {
             return new StringKey(id);
         }
 
+    }
+
+    abstract class HashKeyFactory<T> extends Factory<T> {
+
+        // keep long id (non-unique) for index performance
+        private final String idColumn;
+        private final String hashColumn;
+
+        public HashKeyFactory(String idColumn, String hashColumn) {
+            super(" WHERE " + idColumn + " = ? AND " + hashColumn + " = ?",
+                    idColumn + ", " + hashColumn,
+                    " a." + idColumn + " = b." + idColumn + " AND a." + hashColumn + " = b." + hashColumn + " ");
+            this.idColumn = idColumn;
+            this.hashColumn = hashColumn;
+        }
+
+        @Override
+        public DbKey newKey(ResultSet rs) throws SQLException {
+            return new HashKey(rs.getBytes(hashColumn), rs.getLong(idColumn));
+        }
+
+        public DbKey newKey(byte[] hash) {
+            return new HashKey(hash);
+        }
+
+        public DbKey newKey(byte[] hash, long id) {
+            return new HashKey(hash, id);
+        }
     }
 
     abstract class LinkKeyFactory<T> extends Factory<T> {
@@ -196,6 +227,53 @@ public interface DbKey {
         @Override
         public int hashCode() {
             return id != null ? id.hashCode() : 0;
+        }
+
+    }
+
+    final class HashKey implements DbKey {
+
+        private final long id;
+        private final byte[] hash;
+
+        private HashKey(byte[] hash) {
+            this.hash = hash;
+            this.id = Convert.fullHashToId(hash);
+        }
+
+        private HashKey(byte[] hash, long id) {
+            this.hash = hash;
+            this.id = id;
+        }
+
+        public byte[] getHash() {
+            return hash;
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        @Override
+        public int setPK(PreparedStatement pstmt) throws SQLException {
+            return setPK(pstmt, 1);
+        }
+
+        @Override
+        public int setPK(PreparedStatement pstmt, int index) throws SQLException {
+            pstmt.setLong(index, id);
+            pstmt.setBytes(index + 1, hash);
+            return index + 2;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof HashKey && Arrays.equals(hash, ((HashKey)o).hash);
+        }
+
+        @Override
+        public int hashCode() {
+            return Long.hashCode(id);
         }
 
     }

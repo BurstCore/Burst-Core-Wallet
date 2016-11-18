@@ -29,6 +29,7 @@ import nxt.ms.MonetarySystemTransactionType;
 import nxt.shuffling.ShufflingTransactionType;
 import nxt.taggeddata.TaggedDataTransactionType;
 import nxt.voting.AccountControlTransactionType;
+import nxt.voting.PhasingPollHome;
 import nxt.voting.VotingTransactionType;
 
 public abstract class ChildTransactionType extends TransactionType {
@@ -157,5 +158,16 @@ public abstract class ChildTransactionType extends TransactionType {
 
     protected abstract void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount);
 
+    @Override
+    protected final void validateId(Transaction transaction) throws NxtException.ValidationException {
+        super.validateId(transaction);
+        if (PhasingPollHome.hasUnfinishedPhasedTransaction(transaction.getId())) {
+            throw new NxtException.NotCurrentlyValidException("Phased transaction currently exists with the same id");
+        }
+        validateChildTransactionId((ChildTransactionImpl)transaction);
+    }
+
+    protected void validateChildTransactionId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+    }
 
 }

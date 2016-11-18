@@ -667,6 +667,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
+    //TODO: child transactions should always be processed separately from their ChildBlockTransaction
     private void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws NxtException.ValidationException {
         TransactionImpl transaction = unconfirmedTransaction.getTransaction();
         int curTime = Nxt.getEpochTime();
@@ -675,9 +676,6 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         }
         if (transaction.getVersion() < 1) {
             throw new NxtException.NotValidException("Invalid transaction version");
-        }
-        if (transaction.getId() == 0L) {
-            throw new NxtException.NotValidException("Invalid transaction id 0");
         }
 
         BlockchainImpl.getInstance().writeLock();
@@ -691,7 +689,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 if (getUnconfirmedTransaction(transaction.getDbKey()) != null || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash())) {
                     throw new NxtException.ExistingTransactionException("Transaction already processed");
                 }
-
+                transaction.getType().validateId(transaction);
                 if (! transaction.verifySignature()) {
                     if (Account.getAccount(transaction.getSenderId()) != null) {
                         throw new NxtException.NotValidException("Transaction signature verification failed");

@@ -373,7 +373,7 @@ public abstract class TransactionImpl implements Transaction {
     }
 
     @Override
-    public long getId() {
+    public final long getId() {
         if (id == 0) {
             if (getSignature() == null) {
                 throw new IllegalStateException("Transaction is not signed yet");
@@ -391,7 +391,7 @@ public abstract class TransactionImpl implements Transaction {
     }
 
     @Override
-    public String getStringId() {
+    public final String getStringId() {
         if (stringId == null) {
             getId();
             if (stringId == null) {
@@ -402,7 +402,7 @@ public abstract class TransactionImpl implements Transaction {
     }
 
     @Override
-    public byte[] getFullHash() {
+    public final byte[] getFullHash() {
         if (fullHash == null) {
             getId();
         }
@@ -410,14 +410,14 @@ public abstract class TransactionImpl implements Transaction {
     }
 
     @Override
-    public long getSenderId() {
+    public final long getSenderId() {
         if (senderId == 0) {
             senderId = Account.getId(getSenderPublicKey());
         }
         return senderId;
     }
 
-    public DbKey getDbKey() {
+    public final DbKey getDbKey() {
         if (dbKey == null) {
             dbKey = TransactionProcessorImpl.getInstance().unconfirmedTransactionDbKeyFactory.newKey(getId());
         }

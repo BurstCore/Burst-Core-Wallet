@@ -162,6 +162,13 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         }
 
         @Override
+        protected void validateChildTransactionId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+            if (Asset.getAsset(transaction.getId()) != null) {
+                throw new NxtException.NotCurrentlyValidException("Duplicate asset id " + transaction.getStringId());
+            }
+        }
+
+        @Override
         public boolean isBlockDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
             return !isSingletonIssuance(transaction) && isDuplicate(AssetExchangeTransactionType.ASSET_ISSUANCE, getName(), duplicates, true);
         }
@@ -433,6 +440,13 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
                     attachment.getAssetId(), attachment.getQuantityQNT());
         }
 
+        @Override
+        protected void validateChildTransactionId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+            if (transaction.getChain().getOrderHome().getAskOrder(transaction.getId()) != null) {
+                throw new NxtException.NotCurrentlyValidException("Duplicate ask order id " + transaction.getStringId());
+            }
+        }
+
     };
 
     public final static TransactionType BID_ORDER_PLACEMENT = new OrderPlacement() {
@@ -484,6 +498,13 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             BidOrderPlacementAttachment attachment = (BidOrderPlacementAttachment) transaction.getAttachment();
             senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
                     Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT()));
+        }
+
+        @Override
+        protected void validateChildTransactionId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+            if (transaction.getChain().getOrderHome().getBidOrder(transaction.getId()) != null) {
+                throw new NxtException.NotCurrentlyValidException("Duplicate bid order id " + transaction.getStringId());
+            }
         }
 
     };
@@ -672,7 +693,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         @Override
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             DividendPaymentAttachment attachment = (DividendPaymentAttachment)transaction.getAttachment();
-            transaction.getChain().getAssetDividendHome().payDividends(transaction.getSenderId(), transaction.getId(), attachment);
+            transaction.getChain().getAssetDividendHome().payDividends(transaction, attachment);
         }
 
         @Override

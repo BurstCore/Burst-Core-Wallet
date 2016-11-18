@@ -183,6 +183,14 @@ public abstract class VotingTransactionType extends ChildTransactionType {
 
         }
 
+        //TODO: if poll table and poll results tables become prunable, do not enforce id uniqueness beyond the prune limit
+        @Override
+        protected void validateChildTransactionId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+            if (transaction.getChain().getPollHome().getPoll(transaction.getId()) != null) {
+                throw new NxtException.NotCurrentlyValidException("Duplicate poll id " + transaction.getStringId());
+            }
+        }
+
         @Override
         public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
             return isDuplicate(POLL_CREATION, getName(), duplicates, true);
@@ -403,10 +411,13 @@ public abstract class VotingTransactionType extends ChildTransactionType {
         public final void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             PhasingVoteCastingAttachment attachment = (PhasingVoteCastingAttachment) transaction.getAttachment();
             List<byte[]> hashes = attachment.getTransactionFullHashes();
+            //TODO: transactions may be from other child chains
             for (byte[] hash : hashes) {
                 transaction.getChain().getPhasingVoteHome().addVote(transaction, senderAccount, Convert.fullHashToId(hash));
             }
         }
+
+        //TODO: validateId?
 
         @Override
         public boolean isPhasingSafe() {

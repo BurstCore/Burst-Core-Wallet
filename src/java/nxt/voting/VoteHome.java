@@ -40,13 +40,13 @@ public final class VoteHome {
 
     private final ChildChain childChain;
     private final PollHome pollHome;
-    private final DbKey.LongKeyFactory<Vote> voteDbKeyFactory;
+    private final DbKey.HashKeyFactory<Vote> voteDbKeyFactory;
     private final EntityDbTable<Vote> voteTable;
 
     private VoteHome(ChildChain childChain) {
         this.childChain = childChain;
         this.pollHome = childChain.getPollHome();
-        this.voteDbKeyFactory = new DbKey.LongKeyFactory<Vote>("id") {
+        this.voteDbKeyFactory = new DbKey.HashKeyFactory<Vote>("id", "full_hash") {
             @Override
             public DbKey newKey(Vote vote) {
                 return vote.dbKey;
@@ -82,10 +82,6 @@ public final class VoteHome {
         return voteTable.getCount();
     }
 
-    public Vote getVote(long id) {
-        return voteTable.get(voteDbKeyFactory.newKey(id));
-    }
-
     public DbIterator<Vote> getVotes(long pollId, int from, int to) {
         return voteTable.getManyBy(new DbClause.LongClause("poll_id", pollId), from, to);
     }
@@ -105,6 +101,7 @@ public final class VoteHome {
     public final class Vote {
 
         private final long id;
+        private final byte[] hash;
         private final DbKey dbKey;
         private final long pollId;
         private final long voterId;
@@ -112,7 +109,8 @@ public final class VoteHome {
 
         private Vote(Transaction transaction, VoteCastingAttachment attachment) {
             this.id = transaction.getId();
-            this.dbKey = voteDbKeyFactory.newKey(this.id);
+            this.hash = transaction.getFullHash();
+            this.dbKey = voteDbKeyFactory.newKey(this.hash, this.id);
             this.pollId = attachment.getPollId();
             this.voterId = transaction.getSenderId();
             this.voteBytes = attachment.getPollVote();
@@ -120,6 +118,7 @@ public final class VoteHome {
 
         private Vote(ResultSet rs, DbKey dbKey) throws SQLException {
             this.id = rs.getLong("id");
+            this.hash = rs.getBytes("full_hash");
             this.dbKey = dbKey;
             this.pollId = rs.getLong("poll_id");
             this.voterId = rs.getLong("voter_id");
@@ -127,10 +126,11 @@ public final class VoteHome {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO vote (id, poll_id, voter_id, "
-                    + "vote_bytes, height) VALUES (?, ?, ?, ?, ?)")) {
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO vote (id, full_hash, poll_id, voter_id, "
+                    + "vote_bytes, height) VALUES (?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
+                pstmt.setBytes(++i, this.hash);
                 pstmt.setLong(++i, this.pollId);
                 pstmt.setLong(++i, this.voterId);
                 pstmt.setBytes(++i, this.voteBytes);
@@ -141,6 +141,10 @@ public final class VoteHome {
 
         public long getId() {
             return id;
+        }
+
+        public byte[] getFullHash() {
+            return hash;
         }
 
         public long getPollId() {

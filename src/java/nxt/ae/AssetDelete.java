@@ -38,7 +38,7 @@ public final class AssetDelete {
 
     private static final Listeners<AssetDelete,Event> listeners = new Listeners<>();
 
-    private static final DbKey.LongKeyFactory<AssetDelete> deleteDbKeyFactory = new DbKey.LongKeyFactory<AssetDelete>("id") {
+    private static final DbKey.HashKeyFactory<AssetDelete> deleteDbKeyFactory = new DbKey.HashKeyFactory<AssetDelete>("id", "full_hash") {
 
         @Override
         public DbKey newKey(AssetDelete assetDelete) {
@@ -93,6 +93,7 @@ public final class AssetDelete {
 
 
     private final long id;
+    private final byte[] hash;
     private final DbKey dbKey;
     private final long assetId;
     private final int height;
@@ -102,7 +103,8 @@ public final class AssetDelete {
 
     private AssetDelete(Transaction transaction, long assetId, long quantityQNT) {
         this.id = transaction.getId();
-        this.dbKey = deleteDbKeyFactory.newKey(this.id);
+        this.hash = transaction.getFullHash();
+        this.dbKey = deleteDbKeyFactory.newKey(this.hash, this.id);
         this.assetId = assetId;
         this.accountId = transaction.getSenderId();
         this.quantityQNT = quantityQNT;
@@ -112,6 +114,7 @@ public final class AssetDelete {
 
     private AssetDelete(ResultSet rs, DbKey dbKey) throws SQLException {
         this.id = rs.getLong("id");
+        this.hash = rs.getBytes("full_hash");
         this.dbKey = dbKey;
         this.assetId = rs.getLong("asset_id");
         this.accountId = rs.getLong("account_id");
@@ -121,11 +124,12 @@ public final class AssetDelete {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_delete (id, asset_id, "
+        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_delete (id, full_hash, asset_id, "
                 + "account_id, quantity, timestamp, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
+            pstmt.setBytes(++i, this.hash);
             pstmt.setLong(++i, this.assetId);
             pstmt.setLong(++i, this.accountId);
             pstmt.setLong(++i, this.quantityQNT);
@@ -137,6 +141,10 @@ public final class AssetDelete {
 
     public long getId() {
         return id;
+    }
+
+    public byte[] getFullHash() {
+        return hash;
     }
 
     public long getAssetId() { return assetId; }

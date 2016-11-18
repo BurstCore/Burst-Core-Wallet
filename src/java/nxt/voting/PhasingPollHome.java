@@ -91,6 +91,20 @@ public final class PhasingPollHome {
         }
     }
 
+    //The transaction may still have finished early, this only checks for finish_height not yet reached
+    public static boolean hasUnfinishedPhasedTransaction(long transactionId) {
+        try (Connection con = phasingPollFinishTable.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id FROM phasing_poll_finish "
+                     + "WHERE transaction_id = ? AND finish_height > ?")) {
+            pstmt.setLong(1, transactionId);
+            pstmt.setInt(2, Nxt.getBlockchain().getHeight());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
 
     private final ChildChain childChain;
     private final PhasingVoteHome phasingVoteHome;

@@ -1388,9 +1388,13 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         long calculatedTotalFee = 0;
         MessageDigest digest = Crypto.sha256();
         boolean hasPrunedTransactions = false;
+        Set<Long> transactionIds = fullValidation ? new HashSet<>() : null;
         for (FxtTransactionImpl fxtTransaction : block.getTransactions()) {
             validateTransaction(fxtTransaction, block, previousLastBlock, curTime);
             if (fullValidation) {
+                if (!transactionIds.add(fxtTransaction.getId())) {
+                    throw new TransactionNotAcceptedException("Duplicate transaction id", fxtTransaction);
+                }
                 fullyValidateTransaction(fxtTransaction, block, previousLastBlock, curTime);
             }
             if (!hasPrunedTransactions) {
@@ -1404,6 +1408,9 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             for (ChildTransactionImpl childTransaction : fxtTransaction.getChildTransactions()) {
                 validateTransaction(childTransaction, block, previousLastBlock, curTime);
                 if (fullValidation) {
+                    if (!transactionIds.add(childTransaction.getId())) {
+                        throw new TransactionNotAcceptedException("Duplicate transaction id", childTransaction);
+                    }
                     fullyValidateTransaction(childTransaction, block, previousLastBlock, curTime);
                 }
                 if (!hasPrunedTransactions) {
@@ -1465,10 +1472,8 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new TransactionNotAcceptedException("Invalid transaction version " + transaction.getVersion()
                     + " at height " + previousLastBlock.getHeight(), transaction);
         }
-        if (transaction.getId() == 0L) {
-            throw new TransactionNotAcceptedException("Invalid transaction id 0", transaction);
-        }
         try {
+            transaction.getType().validateId(transaction);
             transaction.validate(); // recursively validates child transactions for Fxt transactions
         } catch (NxtException.ValidationException e) {
             throw new TransactionNotAcceptedException(e.getMessage(), transaction);
@@ -1494,8 +1499,10 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new TransactionNotAcceptedException("Invalid transaction version " + transaction.getVersion()
                     + " at height " + previousLastBlock.getHeight(), transaction);
         }
-        if (transaction.getId() == 0L) {
-            throw new TransactionNotAcceptedException("Invalid transaction id 0", transaction);
+        try {
+            transaction.getType().validateId(transaction);
+        } catch (NxtException.ValidationException e) {
+            throw new TransactionNotAcceptedException(e.getMessage(), transaction);
         }
     }
 

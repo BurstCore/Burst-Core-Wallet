@@ -23,6 +23,7 @@ import nxt.account.AccountLedger;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 //TODO
 public final class ChildBlockTransactionType extends FxtTransactionType {
@@ -133,6 +134,12 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     @Override
     public Fee getBaselineFee(Transaction transaction) {
         return CHILD_BLOCK_FEE;
+    }
+
+    @Override
+    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
+        return isDuplicate(ChildBlockTransactionType.INSTANCE, String.valueOf(attachment.getChainId()), duplicates, true);
     }
 
 }

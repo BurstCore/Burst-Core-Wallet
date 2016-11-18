@@ -39,7 +39,7 @@ public final class AssetTransfer {
 
     private static final Listeners<AssetTransfer,Event> listeners = new Listeners<>();
 
-    private static final DbKey.LongKeyFactory<AssetTransfer> transferDbKeyFactory = new DbKey.LongKeyFactory<AssetTransfer>("id") {
+    private static final DbKey.HashKeyFactory<AssetTransfer> transferDbKeyFactory = new DbKey.HashKeyFactory<AssetTransfer>("id", "full_hash") {
 
         @Override
         public DbKey newKey(AssetTransfer assetTransfer) {
@@ -126,7 +126,7 @@ public final class AssetTransfer {
         return assetTransferTable.getCount(new DbClause.LongClause("asset_id", assetId));
     }
 
-    public static AssetTransfer addAssetTransfer(Transaction transaction, AssetTransferAttachment attachment) {
+    static AssetTransfer addAssetTransfer(Transaction transaction, AssetTransferAttachment attachment) {
         AssetTransfer assetTransfer = new AssetTransfer(transaction, attachment);
         assetTransferTable.insert(assetTransfer);
         listeners.notify(assetTransfer, Event.ASSET_TRANSFER);
@@ -137,6 +137,7 @@ public final class AssetTransfer {
 
 
     private final long id;
+    private final byte[] hash;
     private final DbKey dbKey;
     private final long assetId;
     private final int height;
@@ -147,7 +148,8 @@ public final class AssetTransfer {
 
     private AssetTransfer(Transaction transaction, AssetTransferAttachment attachment) {
         this.id = transaction.getId();
-        this.dbKey = transferDbKeyFactory.newKey(this.id);
+        this.hash = transaction.getFullHash();
+        this.dbKey = transferDbKeyFactory.newKey(this.hash, this.id);
         this.height = Nxt.getBlockchain().getHeight();
         this.assetId = attachment.getAssetId();
         this.senderId = transaction.getSenderId();
@@ -158,6 +160,7 @@ public final class AssetTransfer {
 
     private AssetTransfer(ResultSet rs, DbKey dbKey) throws SQLException {
         this.id = rs.getLong("id");
+        this.hash = rs.getBytes("full_hash");
         this.dbKey = dbKey;
         this.assetId = rs.getLong("asset_id");
         this.senderId = rs.getLong("sender_id");
@@ -168,11 +171,12 @@ public final class AssetTransfer {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_transfer (id, asset_id, "
+        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_transfer (id, full_hash, asset_id, "
                 + "sender_id, recipient_id, quantity, timestamp, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
+            pstmt.setBytes(++i, this.hash);
             pstmt.setLong(++i, this.assetId);
             pstmt.setLong(++i, this.senderId);
             pstmt.setLong(++i, this.recipientId);
@@ -185,6 +189,10 @@ public final class AssetTransfer {
 
     public long getId() {
         return id;
+    }
+
+    public byte[] getFullHash() {
+        return hash;
     }
 
     public long getAssetId() { return assetId; }

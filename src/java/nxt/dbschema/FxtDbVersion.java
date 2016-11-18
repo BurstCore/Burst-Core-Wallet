@@ -188,10 +188,11 @@ public class FxtDbVersion extends DbVersion {
             case 59:
                 apply("CREATE INDEX IF NOT EXISTS asset_height_id_idx ON asset (height, id)");
             case 60:
-                apply("CREATE TABLE IF NOT EXISTS asset_delete (db_id IDENTITY, id BIGINT NOT NULL, asset_id BIGINT NOT NULL, "
+                apply("CREATE TABLE IF NOT EXISTS asset_delete (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
+                        + "asset_id BIGINT NOT NULL, "
                         + "account_id BIGINT NOT NULL, quantity BIGINT NOT NULL, timestamp INT NOT NULL, height INT NOT NULL)");
             case 61:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_delete_id_idx ON asset_delete (id)");
+                apply("CREATE INDEX IF NOT EXISTS asset_delete_id_idx ON asset_delete (id)");
             case 62:
                 apply("CREATE INDEX IF NOT EXISTS asset_delete_asset_id_idx ON asset_delete (asset_id, height DESC)");
             case 63:
@@ -199,11 +200,12 @@ public class FxtDbVersion extends DbVersion {
             case 64:
                 apply("CREATE INDEX IF NOT EXISTS asset_delete_height_idx ON asset_delete (height)");
             case 65:
-                apply("CREATE TABLE IF NOT EXISTS asset_transfer (db_id IDENTITY, id BIGINT NOT NULL, asset_id BIGINT NOT NULL, "
+                apply("CREATE TABLE IF NOT EXISTS asset_transfer (db_id IDENTITY, id BIGINT NOT NULL, "
+                        + "full_hash BINARY(32) NOT NULL, asset_id BIGINT NOT NULL, "
                         + "sender_id BIGINT NOT NULL, recipient_id BIGINT NOT NULL, quantity BIGINT NOT NULL, timestamp INT NOT NULL, "
                         + "height INT NOT NULL)");
             case 66:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_transfer_id_idx ON asset_transfer (id)");
+                apply("CREATE INDEX IF NOT EXISTS asset_transfer_id_idx ON asset_transfer (id)");
             case 67:
                 apply("CREATE INDEX IF NOT EXISTS asset_transfer_asset_id_idx ON asset_transfer (asset_id, height DESC)");
             case 68:

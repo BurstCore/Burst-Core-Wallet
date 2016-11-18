@@ -21,6 +21,7 @@ import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.account.BalanceHome;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.Transaction;
 import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;
@@ -49,12 +50,12 @@ public final class AssetDividendHome {
     }
 
     private final ChildChain childChain;
-    private final DbKey.LongKeyFactory<AssetDividendHome.AssetDividend> dividendDbKeyFactory;
+    private final DbKey.HashKeyFactory<AssetDividendHome.AssetDividend> dividendDbKeyFactory;
     private final EntityDbTable<AssetDividendHome.AssetDividend> assetDividendTable;
 
     private AssetDividendHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.dividendDbKeyFactory = new DbKey.LongKeyFactory<AssetDividend>("id") {
+        this.dividendDbKeyFactory = new DbKey.HashKeyFactory<AssetDividend>("id", "full_hash") {
             @Override
             public DbKey newKey(AssetDividend assetDividend) {
                 return assetDividend.dbKey;
@@ -87,7 +88,7 @@ public final class AssetDividendHome {
         return assetDividendTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to);
     }
 
-    public AssetDividend getLastDividend(long assetId) {
+    AssetDividend getLastDividend(long assetId) {
         try (DbIterator<AssetDividend> dividends = assetDividendTable.getManyBy(new DbClause.LongClause("asset_id", assetId), 0, 0)) {
             if (dividends.hasNext()) {
                 return dividends.next();
@@ -96,8 +97,10 @@ public final class AssetDividendHome {
         return null;
     }
 
-    void payDividends(long issuerId, final long transactionId, DividendPaymentAttachment attachment) {
+    void payDividends(Transaction transaction, DividendPaymentAttachment attachment) {
         long totalDividend = 0;
+        long issuerId = transaction.getSenderId();
+        long transactionId = transaction.getId();
         List<Account.AccountAsset> accountAssets = new ArrayList<>();
         try (DbIterator<Account.AccountAsset> iterator = Account.getAssetAccounts(attachment.getAssetId(), attachment.getHeight(), 0, -1)) {
             while (iterator.hasNext()) {
@@ -117,7 +120,7 @@ public final class AssetDividendHome {
             }
         }
         balanceHome.getBalance(issuerId).addToBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
-        AssetDividend assetDividend = new AssetDividend(transactionId, attachment, totalDividend, numAccounts);
+        AssetDividend assetDividend = new AssetDividend(transaction, attachment, totalDividend, numAccounts);
         assetDividendTable.insert(assetDividend);
         listeners.notify(assetDividend, Event.ASSET_DIVIDEND);
     }
@@ -125,6 +128,7 @@ public final class AssetDividendHome {
     public final class AssetDividend {
 
         private final long id;
+        private final byte[] hash;
         private final DbKey dbKey;
         private final long assetId;
         private final long amountNQTPerQNT;
@@ -134,10 +138,11 @@ public final class AssetDividendHome {
         private final int timestamp;
         private final int height;
 
-        private AssetDividend(long transactionId, DividendPaymentAttachment attachment,
+        private AssetDividend(Transaction transaction, DividendPaymentAttachment attachment,
                               long totalDividend, long numAccounts) {
-            this.id = transactionId;
-            this.dbKey = dividendDbKeyFactory.newKey(this.id);
+            this.id = transaction.getId();
+            this.hash = transaction.getFullHash();
+            this.dbKey = dividendDbKeyFactory.newKey(this.hash, this.id);
             this.assetId = attachment.getAssetId();
             this.amountNQTPerQNT = attachment.getAmountNQTPerQNT();
             this.dividendHeight = attachment.getHeight();
@@ -149,6 +154,7 @@ public final class AssetDividendHome {
 
         private AssetDividend(ResultSet rs, DbKey dbKey) throws SQLException {
             this.id = rs.getLong("id");
+            this.hash = rs.getBytes("full_hash");
             this.dbKey = dbKey;
             this.assetId = rs.getLong("asset_id");
             this.amountNQTPerQNT = rs.getLong("amount");
@@ -160,11 +166,12 @@ public final class AssetDividendHome {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_dividend (id, asset_id, "
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_dividend (id, full_hash, asset_id, "
                     + "amount, dividend_height, total_dividend, num_accounts, timestamp, height) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
+                pstmt.setBytes(++i, this.hash);
                 pstmt.setLong(++i, this.assetId);
                 pstmt.setLong(++i, this.amountNQTPerQNT);
                 pstmt.setInt(++i, this.dividendHeight);
@@ -178,6 +185,10 @@ public final class AssetDividendHome {
 
         public long getId() {
             return id;
+        }
+
+        public byte[] getFullHash() {
+            return hash;
         }
 
         public long getAssetId() {
