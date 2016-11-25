@@ -54,6 +54,11 @@ public interface Attachment extends Appendix {
         }
 
         @Override
+        public final void validateId(Transaction transaction) throws NxtException.ValidationException {
+            getTransactionType().validateId(transaction);
+        }
+
+        @Override
         public final void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
             getTransactionType().apply((TransactionImpl) transaction, senderAccount, recipientAccount);
         }

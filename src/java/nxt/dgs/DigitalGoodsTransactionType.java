@@ -170,6 +170,13 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
         }
 
         @Override
+        protected void validateId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+            if (transaction.getChain().getDigitalGoodsHome().getGoods(transaction.getId()) != null) {
+                throw new NxtException.NotCurrentlyValidException("Duplicate goods id " + transaction.getStringId());
+            }
+        }
+
+        @Override
         public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
             return isDuplicate(DigitalGoodsTransactionType.LISTING, getName(), duplicates, true);
         }
@@ -455,6 +462,13 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
             }
             if (attachment.getDeliveryDeadlineTimestamp() <= Nxt.getBlockchain().getLastBlockTimestamp()) {
                 throw new NxtException.NotCurrentlyValidException("Delivery deadline has already expired: " + attachment.getDeliveryDeadlineTimestamp());
+            }
+        }
+
+        @Override
+        protected void validateId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+            if (transaction.getChain().getDigitalGoodsHome().getPurchase(transaction.getId()) != null) {
+                throw new NxtException.NotCurrentlyValidException("Duplicate purchase id " + transaction.getStringId());
             }
         }
 

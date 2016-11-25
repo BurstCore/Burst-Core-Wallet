@@ -47,12 +47,12 @@ public final class CurrencyFounderHome {
     }
 
     private final ChildChain childChain;
-    private final DbKey.LinkKeyFactory<CurrencyFounder> currencyFounderDbKeyFactory;
+    private final DbKey.LongLongKeyFactory<CurrencyFounder> currencyFounderDbKeyFactory;
     private final VersionedEntityDbTable<CurrencyFounder> currencyFounderTable;
 
     private CurrencyFounderHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.currencyFounderDbKeyFactory = new DbKey.LinkKeyFactory<CurrencyFounder>("currency_id", "account_id") {
+        this.currencyFounderDbKeyFactory = new DbKey.LongLongKeyFactory<CurrencyFounder>("currency_id", "account_id") {
             @Override
             public DbKey newKey(CurrencyFounder currencyFounder) {
                 return currencyFounder.dbKey;

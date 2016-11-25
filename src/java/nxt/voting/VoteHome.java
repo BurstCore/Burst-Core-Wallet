@@ -46,7 +46,7 @@ public final class VoteHome {
     private VoteHome(ChildChain childChain) {
         this.childChain = childChain;
         this.pollHome = childChain.getPollHome();
-        this.voteDbKeyFactory = new DbKey.HashKeyFactory<Vote>("id", "full_hash") {
+        this.voteDbKeyFactory = new DbKey.HashKeyFactory<Vote>("full_hash", "id") {
             @Override
             public DbKey newKey(Vote vote) {
                 return vote.dbKey;

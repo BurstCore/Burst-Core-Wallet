@@ -97,6 +97,7 @@ public final class OrderHome {
     public abstract class Order {
 
         private final long id;
+        private final byte[] hash;
         private final long accountId;
         private final long assetId;
         private final long priceNQT;
@@ -108,6 +109,7 @@ public final class OrderHome {
 
         private Order(Transaction transaction, OrderPlacementAttachment attachment) {
             this.id = transaction.getId();
+            this.hash = transaction.getFullHash();
             this.accountId = transaction.getSenderId();
             this.assetId = attachment.getAssetId();
             this.quantityQNT = attachment.getQuantityQNT();
@@ -119,6 +121,7 @@ public final class OrderHome {
 
         private Order(ResultSet rs) throws SQLException {
             this.id = rs.getLong("id");
+            this.hash = rs.getBytes("full_hash");
             this.accountId = rs.getLong("account_id");
             this.assetId = rs.getLong("asset_id");
             this.priceNQT = rs.getLong("price");
@@ -129,10 +132,12 @@ public final class OrderHome {
         }
 
         private void save(Connection con, String table) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, account_id, asset_id, "
-                    + "price, quantity, creation_height, transaction_index, transaction_height, height, latest) KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, full_hash, account_id, asset_id, "
+                    + "price, quantity, creation_height, transaction_index, transaction_height, height, latest) KEY (id, height) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
+                pstmt.setBytes(++i, this.hash);
                 pstmt.setLong(++i, this.accountId);
                 pstmt.setLong(++i, this.assetId);
                 pstmt.setLong(++i, this.priceNQT);
@@ -151,6 +156,10 @@ public final class OrderHome {
 
         public final long getId() {
             return id;
+        }
+
+        public final byte[] getFullHash() {
+            return hash;
         }
 
         public final long getAccountId() {

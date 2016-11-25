@@ -34,6 +34,7 @@ import nxt.taggeddata.TaggedDataUploadAttachment;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import nxt.voting.PhasingAppendix;
+import nxt.voting.PhasingPollHome;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -444,6 +445,17 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             validateEcBlock();
         }
         AccountRestrictions.checkTransaction(this, validatingAtFinish);
+    }
+
+    @Override
+    protected void validateId() throws NxtException.ValidationException {
+        super.validateId();
+        if (PhasingPollHome.hasUnfinishedPhasedTransaction(getId())) {
+            throw new NxtException.NotCurrentlyValidException("Phased transaction currently exists with the same id");
+        }
+        for (Appendix.AbstractAppendix appendage : appendages()) {
+            appendage.validateId(this);
+        }
     }
 
     @Override

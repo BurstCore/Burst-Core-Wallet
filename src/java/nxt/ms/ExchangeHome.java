@@ -50,13 +50,14 @@ public final class ExchangeHome {
 
     private final ChildChain childChain;
     private final Listeners<Exchange, Event> listeners;
-    private final DbKey.LinkKeyFactory<Exchange> exchangeDbKeyFactory;
+    private final DbKey.HashHashKeyFactory<Exchange> exchangeDbKeyFactory;
     private final EntityDbTable<Exchange> exchangeTable;
 
     private ExchangeHome(ChildChain childChain) {
         this.childChain = childChain;
         this.listeners = new Listeners<>();
-        this.exchangeDbKeyFactory = new DbKey.LinkKeyFactory<Exchange>("transaction_id", "offer_id") {
+        this.exchangeDbKeyFactory = new DbKey.HashHashKeyFactory<Exchange>("transaction_full_hash", "transaction_id",
+                "offer_full_hash", "offer_id") {
             @Override
             public DbKey newKey(Exchange exchange) {
                 return exchange.dbKey;
@@ -164,8 +165,10 @@ public final class ExchangeHome {
         return exchangeTable.getCount(new DbClause.LongClause("currency_id", currencyId));
     }
 
-    Exchange addExchange(Transaction transaction, long currencyId, ExchangeOfferHome.ExchangeOffer offer, long sellerId, long buyerId, long units) {
-        Exchange exchange = new Exchange(transaction.getId(), currencyId, offer, sellerId, buyerId, units);
+    Exchange addExchange(Transaction transaction, long currencyId, ExchangeOfferHome.ExchangeOffer offer,
+                         long sellerId, long buyerId, long units) {
+        Exchange exchange = new Exchange(transaction.getId(), transaction.getFullHash(), currencyId, offer,
+                sellerId, buyerId, units);
         exchangeTable.insert(exchange);
         listeners.notify(exchange, Event.EXCHANGE);
         return exchange;
@@ -175,37 +178,44 @@ public final class ExchangeHome {
     public final class Exchange {
 
         private final long transactionId;
+        private final byte[] transactionHash;
         private final int timestamp;
         private final long currencyId;
         private final long blockId;
         private final int height;
         private final long offerId;
+        private final byte[] offerHash;
         private final long sellerId;
         private final long buyerId;
         private final DbKey dbKey;
         private final long units;
         private final long rate;
 
-        private Exchange(long transactionId, long currencyId, ExchangeOfferHome.ExchangeOffer offer, long sellerId, long buyerId, long units) {
+        private Exchange(long transactionId, byte[] transactionHash, long currencyId, ExchangeOfferHome.ExchangeOffer offer,
+                         long sellerId, long buyerId, long units) {
             Block block = Nxt.getBlockchain().getLastBlock();
             this.transactionId = transactionId;
+            this.transactionHash = transactionHash;
             this.blockId = block.getId();
             this.height = block.getHeight();
             this.currencyId = currencyId;
             this.timestamp = block.getTimestamp();
             this.offerId = offer.getId();
+            this.offerHash = offer.getFullHash();
             this.sellerId = sellerId;
             this.buyerId = buyerId;
-            this.dbKey = exchangeDbKeyFactory.newKey(this.transactionId, this.offerId);
+            this.dbKey = exchangeDbKeyFactory.newKey(this.transactionHash, this.transactionId, this.offerHash, this.offerId);
             this.units = units;
             this.rate = offer.getRateNQT();
         }
 
         private Exchange(ResultSet rs, DbKey dbKey) throws SQLException {
             this.transactionId = rs.getLong("transaction_id");
+            this.transactionHash = rs.getBytes("transaction_full_hash");
             this.currencyId = rs.getLong("currency_id");
             this.blockId = rs.getLong("block_id");
             this.offerId = rs.getLong("offer_id");
+            this.offerHash = rs.getBytes("offer_full_hash");
             this.sellerId = rs.getLong("seller_id");
             this.buyerId = rs.getLong("buyer_id");
             this.dbKey = dbKey;
@@ -216,13 +226,15 @@ public final class ExchangeHome {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO exchange (transaction_id, currency_id, block_id, "
-                    + "offer_id, seller_id, buyer_id, units, rate, timestamp, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO exchange (transaction_id, transaction_full_hash, currency_id, block_id, "
+                    + "offer_id, offer_full_hash, seller_id, buyer_id, units, rate, timestamp, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.transactionId);
+                pstmt.setBytes(++i, this.transactionHash);
                 pstmt.setLong(++i, this.currencyId);
                 pstmt.setLong(++i, this.blockId);
                 pstmt.setLong(++i, this.offerId);
+                pstmt.setBytes(++i, this.offerHash);
                 pstmt.setLong(++i, this.sellerId);
                 pstmt.setLong(++i, this.buyerId);
                 pstmt.setLong(++i, this.units);
@@ -237,12 +249,20 @@ public final class ExchangeHome {
             return transactionId;
         }
 
+        public byte[] getTransactionFullHash() {
+            return transactionHash;
+        }
+
         public long getBlockId() {
             return blockId;
         }
 
         public long getOfferId() {
             return offerId;
+        }
+
+        public byte[] getOfferFullHash() {
+            return offerHash;
         }
 
         public long getSellerId() {

@@ -109,6 +109,11 @@ public abstract class FxtTransactionType extends TransactionType {
     protected abstract void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException;
 
     @Override
+    protected void validateId(Transaction transaction) throws NxtException.ValidationException {
+        throw new UnsupportedOperationException("Should not need to validate FxtTransaction ids");
+    }
+
+    @Override
     public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         return applyAttachmentUnconfirmed((FxtTransactionImpl)transaction, senderAccount);
     }

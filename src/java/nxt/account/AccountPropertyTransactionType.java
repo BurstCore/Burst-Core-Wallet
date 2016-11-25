@@ -198,6 +198,13 @@ public abstract class AccountPropertyTransactionType extends ChildTransactionTyp
         }
 
         @Override
+        protected void validateId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+            if (Account.getProperty(transaction.getId()) != null) {
+                throw new NxtException.NotCurrentlyValidException("Duplicate account property id " + transaction.getStringId());
+            }
+        }
+
+        @Override
         public boolean canHaveRecipient() {
             return true;
         }

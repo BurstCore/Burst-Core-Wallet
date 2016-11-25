@@ -24,6 +24,7 @@ import nxt.db.DbIterator;
 import nxt.db.DbKey;
 import nxt.db.DbUtils;
 import nxt.db.EntityDbTable;
+import nxt.util.Convert;
 import nxt.util.Listener;
 import nxt.util.Listeners;
 
@@ -48,14 +49,15 @@ public final class TradeHome {
     }
 
     private final Listeners<Trade, Event> listeners;
-    private final DbKey.LinkKeyFactory<Trade> tradeDbKeyFactory;
+    private final DbKey.HashHashKeyFactory<Trade> tradeDbKeyFactory;
     private final EntityDbTable<Trade> tradeTable;
     private final ChildChain childChain;
 
     private TradeHome(ChildChain childChain) {
         this.childChain = childChain;
         this.listeners = new Listeners<>();
-        this.tradeDbKeyFactory = new DbKey.LinkKeyFactory<Trade>("ask_order_id", "bid_order_id") {
+        this.tradeDbKeyFactory = new DbKey.HashHashKeyFactory<Trade>("ask_order_full_hash", "ask_order_id",
+                "bid_order_full_hash", "bid_order_id") {
             @Override
             public DbKey newKey(Trade trade) {
                 return trade.dbKey;
@@ -89,8 +91,8 @@ public final class TradeHome {
         return listeners.removeListener(listener, eventType);
     }
 
-    public Trade getTrade(long askOrderId, long bidOrderId) {
-        return tradeTable.get(tradeDbKeyFactory.newKey(askOrderId, bidOrderId));
+    public Trade getTrade(byte[] askOrderHash, byte[] bidOrderHash) {
+        return tradeTable.get(tradeDbKeyFactory.newKey(askOrderHash, bidOrderHash));
     }
 
     public DbIterator<Trade> getAssetTrades(long assetId, int from, int to) {
@@ -155,12 +157,14 @@ public final class TradeHome {
         }
     }
 
-    public DbIterator<Trade> getAskOrderTrades(long askOrderId, int from, int to) {
-        return tradeTable.getManyBy(new DbClause.LongClause("ask_order_id", askOrderId), from, to);
+    public DbIterator<Trade> getAskOrderTrades(byte[] askOrderHash, int from, int to) {
+        return tradeTable.getManyBy(new DbClause.LongClause("ask_order_id", Convert.fullHashToId(askOrderHash))
+                .and(new DbClause.BytesClause("ask_order_full_hash", askOrderHash)), from, to);
     }
 
-    public DbIterator<Trade> getBidOrderTrades(long bidOrderId, int from, int to) {
-        return tradeTable.getManyBy(new DbClause.LongClause("bid_order_id", bidOrderId), from, to);
+    public DbIterator<Trade> getBidOrderTrades(byte[] bidOrderHash, int from, int to) {
+        return tradeTable.getManyBy(new DbClause.LongClause("bid_order_id", Convert.fullHashToId(bidOrderHash))
+                .and(new DbClause.BytesClause("bid_order_full_hash", bidOrderHash)), from, to);
     }
 
     public int getTradeCount(long assetId) {
@@ -181,7 +185,9 @@ public final class TradeHome {
         private final long blockId;
         private final int height;
         private final long askOrderId;
+        private final byte[] askOrderHash;
         private final long bidOrderId;
+        private final byte[] bidOrderHash;
         private final int askOrderHeight;
         private final int bidOrderHeight;
         private final long sellerId;
@@ -198,12 +204,14 @@ public final class TradeHome {
             this.assetId = assetId;
             this.timestamp = block.getTimestamp();
             this.askOrderId = askOrder.getId();
+            this.askOrderHash = askOrder.getFullHash();
             this.bidOrderId = bidOrder.getId();
+            this.bidOrderHash = bidOrder.getFullHash();
             this.askOrderHeight = askOrder.getHeight();
             this.bidOrderHeight = bidOrder.getHeight();
             this.sellerId = askOrder.getAccountId();
             this.buyerId = bidOrder.getAccountId();
-            this.dbKey = tradeDbKeyFactory.newKey(this.askOrderId, this.bidOrderId);
+            this.dbKey = tradeDbKeyFactory.newKey(this.askOrderHash, this.askOrderId, this.bidOrderHash, this.bidOrderId);
             this.quantityQNT = Math.min(askOrder.getQuantityQNT(), bidOrder.getQuantityQNT());
             this.isBuy = askOrderHeight < bidOrderHeight ||
                     askOrderHeight == bidOrderHeight &&
@@ -216,7 +224,9 @@ public final class TradeHome {
             this.assetId = rs.getLong("asset_id");
             this.blockId = rs.getLong("block_id");
             this.askOrderId = rs.getLong("ask_order_id");
+            this.askOrderHash = rs.getBytes("ask_order_full_hash");
             this.bidOrderId = rs.getLong("bid_order_id");
+            this.bidOrderHash = rs.getBytes("bid_order_full_hash");
             this.askOrderHeight = rs.getInt("ask_order_height");
             this.bidOrderHeight = rs.getInt("bid_order_height");
             this.sellerId = rs.getLong("seller_id");
@@ -231,13 +241,15 @@ public final class TradeHome {
 
         private void save(Connection con) throws SQLException {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO trade (asset_id, block_id, "
-                    + "ask_order_id, bid_order_id, ask_order_height, bid_order_height, seller_id, buyer_id, quantity, price, is_buy, timestamp, height) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                    + "ask_order_id, ask_order_full_hash, bid_order_id, bid_order_full_hash, ask_order_height, bid_order_height, seller_id, buyer_id, quantity, price, is_buy, timestamp, height) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.assetId);
                 pstmt.setLong(++i, this.blockId);
                 pstmt.setLong(++i, this.askOrderId);
+                pstmt.setBytes(++i, this.askOrderHash);
                 pstmt.setLong(++i, this.bidOrderId);
+                pstmt.setBytes(++i, this.bidOrderHash);
                 pstmt.setInt(++i, this.askOrderHeight);
                 pstmt.setInt(++i, this.bidOrderHeight);
                 pstmt.setLong(++i, this.sellerId);
@@ -263,8 +275,16 @@ public final class TradeHome {
             return askOrderId;
         }
 
+        public byte[] getAskOrderFullHash() {
+            return askOrderHash;
+        }
+
         public long getBidOrderId() {
             return bidOrderId;
+        }
+
+        public byte[] getBidOrderFullHash() {
+            return bidOrderHash;
         }
 
         public int getAskOrderHeight() {

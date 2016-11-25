@@ -151,6 +151,13 @@ public abstract class AliasTransactionType extends ChildTransactionType {
         }
 
         @Override
+        protected void validateId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+            if (transaction.getChain().getAliasHome().getAlias(transaction.getId()) != null) {
+                throw new NxtException.NotCurrentlyValidException("Duplicate alias id " + transaction.getStringId());
+            }
+        }
+
+        @Override
         public boolean canHaveRecipient() {
             return false;
         }

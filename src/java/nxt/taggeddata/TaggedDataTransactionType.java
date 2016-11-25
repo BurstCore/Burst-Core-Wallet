@@ -165,6 +165,8 @@ public abstract class TaggedDataTransactionType extends ChildTransactionType {
             return ((ChildChain) chain).getTaggedDataHome().isPruned(transactionId);
         }
 
+        //TODO: validateId?
+
     };
 
     public static final TransactionType TAGGED_DATA_EXTEND = new TaggedDataTransactionType() {
@@ -232,6 +234,8 @@ public abstract class TaggedDataTransactionType extends ChildTransactionType {
         public boolean isPruned(Chain chain, long transactionId) {
             return false;
         }
+
+        //TODO: validateId?
 
     };
 

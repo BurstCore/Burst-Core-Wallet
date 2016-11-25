@@ -1473,7 +1473,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     + " at height " + previousLastBlock.getHeight(), transaction);
         }
         try {
-            transaction.getType().validateId(transaction);
+            transaction.validateId();
             transaction.validate(); // recursively validates child transactions for Fxt transactions
         } catch (NxtException.ValidationException e) {
             throw new TransactionNotAcceptedException(e.getMessage(), transaction);
@@ -1500,7 +1500,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     + " at height " + previousLastBlock.getHeight(), transaction);
         }
         try {
-            transaction.getType().validateId(transaction);
+            transaction.validateId();
         } catch (NxtException.ValidationException e) {
             throw new TransactionNotAcceptedException(e.getMessage(), transaction);
         }

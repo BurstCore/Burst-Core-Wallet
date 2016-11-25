@@ -162,7 +162,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         }
 
         @Override
-        protected void validateChildTransactionId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+        protected void validateId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
             if (Asset.getAsset(transaction.getId()) != null) {
                 throw new NxtException.NotCurrentlyValidException("Duplicate asset id " + transaction.getStringId());
             }
@@ -441,7 +441,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         }
 
         @Override
-        protected void validateChildTransactionId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+        protected void validateId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
             if (transaction.getChain().getOrderHome().getAskOrder(transaction.getId()) != null) {
                 throw new NxtException.NotCurrentlyValidException("Duplicate ask order id " + transaction.getStringId());
             }
@@ -501,7 +501,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         }
 
         @Override
-        protected void validateChildTransactionId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+        protected void validateId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
             if (transaction.getChain().getOrderHome().getBidOrder(transaction.getId()) != null) {
                 throw new NxtException.NotCurrentlyValidException("Duplicate bid order id " + transaction.getStringId());
             }

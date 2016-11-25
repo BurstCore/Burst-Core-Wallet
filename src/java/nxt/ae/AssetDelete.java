@@ -38,7 +38,7 @@ public final class AssetDelete {
 
     private static final Listeners<AssetDelete,Event> listeners = new Listeners<>();
 
-    private static final DbKey.HashKeyFactory<AssetDelete> deleteDbKeyFactory = new DbKey.HashKeyFactory<AssetDelete>("id", "full_hash") {
+    private static final DbKey.HashKeyFactory<AssetDelete> deleteDbKeyFactory = new DbKey.HashKeyFactory<AssetDelete>("full_hash", "id") {
 
         @Override
         public DbKey newKey(AssetDelete assetDelete) {

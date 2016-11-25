@@ -216,6 +216,14 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
                     transactionId, attachment.getInitialSupply());
         }
 
+        //TODO: do collisions with deleted currencies ids matter?
+        @Override
+        protected void validateId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+            if (Currency.getCurrency(transaction.getId()) != null) {
+                throw new NxtException.NotCurrentlyValidException("Duplicate currency id " + transaction.getStringId());
+            }
+        }
+
         @Override
         public boolean canHaveRecipient() {
             return false;
@@ -541,6 +549,13 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment) transaction.getAttachment();
             transaction.getChain().getExchangeOfferHome().publishOffer(transaction, attachment);
+        }
+
+        @Override
+        protected void validateId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+            if (transaction.getChain().getExchangeOfferHome().getBuyOffer(transaction.getId()) != null) {
+                throw new NxtException.NotCurrentlyValidException("Duplicate exchange offer id " + transaction.getStringId());
+            }
         }
 
         @Override

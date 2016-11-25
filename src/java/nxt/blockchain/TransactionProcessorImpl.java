@@ -689,7 +689,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 if (getUnconfirmedTransaction(transaction.getDbKey()) != null || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash())) {
                     throw new NxtException.ExistingTransactionException("Transaction already processed");
                 }
-                transaction.getType().validateId(transaction);
+                transaction.validateId();
                 if (! transaction.verifySignature()) {
                     if (Account.getAccount(transaction.getSenderId()) != null) {
                         throw new NxtException.NotValidException("Transaction signature verification failed");

@@ -148,6 +148,8 @@ public interface Appendix {
 
         public abstract void validate(Transaction transaction) throws NxtException.ValidationException;
 
+        public void validateId(Transaction transaction) throws NxtException.ValidationException {}
+
         public void validateAtFinish(Transaction transaction) throws NxtException.ValidationException {
             if (!isPhased(transaction)) {
                 return;

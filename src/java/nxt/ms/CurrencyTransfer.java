@@ -39,7 +39,7 @@ public final class CurrencyTransfer {
 
     private static final Listeners<CurrencyTransfer,Event> listeners = new Listeners<>();
 
-    private static final DbKey.LongKeyFactory<CurrencyTransfer> currencyTransferDbKeyFactory = new DbKey.LongKeyFactory<CurrencyTransfer>("id") {
+    private static final DbKey.HashKeyFactory<CurrencyTransfer> currencyTransferDbKeyFactory = new DbKey.HashKeyFactory<CurrencyTransfer>("full_hash", "id") {
 
         @Override
         public DbKey newKey(CurrencyTransfer transfer) {
@@ -137,6 +137,7 @@ public final class CurrencyTransfer {
 
 
     private final long id;
+    private final byte[] hash;
     private final DbKey dbKey;
     private final long currencyId;
     private final int height;
@@ -147,7 +148,8 @@ public final class CurrencyTransfer {
 
     private CurrencyTransfer(Transaction transaction, CurrencyTransferAttachment attachment) {
         this.id = transaction.getId();
-        this.dbKey = currencyTransferDbKeyFactory.newKey(this.id);
+        this.hash = transaction.getFullHash();
+        this.dbKey = currencyTransferDbKeyFactory.newKey(this.hash, this.id);
         this.height = Nxt.getBlockchain().getHeight();
         this.currencyId = attachment.getCurrencyId();
         this.senderId = transaction.getSenderId();
@@ -158,6 +160,7 @@ public final class CurrencyTransfer {
 
     private CurrencyTransfer(ResultSet rs, DbKey dbKey) throws SQLException {
         this.id = rs.getLong("id");
+        this.hash = rs.getBytes("full_hash");
         this.dbKey = dbKey;
         this.currencyId = rs.getLong("currency_id");
         this.senderId = rs.getLong("sender_id");
@@ -168,11 +171,12 @@ public final class CurrencyTransfer {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO currency_transfer (id, currency_id, "
+        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO currency_transfer (id, full_hash, currency_id, "
                 + "sender_id, recipient_id, units, timestamp, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
+            pstmt.setBytes(++i, this.hash);
             pstmt.setLong(++i, this.currencyId);
             pstmt.setLong(++i, this.senderId);
             pstmt.setLong(++i, this.recipientId);
@@ -185,6 +189,10 @@ public final class CurrencyTransfer {
 
     public long getId() {
         return id;
+    }
+
+    public byte[] getFullHash() {
+        return hash;
     }
 
     public long getCurrencyId() { return currencyId; }

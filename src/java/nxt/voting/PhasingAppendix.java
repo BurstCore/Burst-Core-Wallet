@@ -239,6 +239,11 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     }
 
     @Override
+    public void validateId(Transaction transaction) throws NxtException.ValidationException {
+        //TODO
+    }
+
+    @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ((ChildChain) transaction.getChain()).getPhasingPollHome().addPoll(transaction, this);
     }

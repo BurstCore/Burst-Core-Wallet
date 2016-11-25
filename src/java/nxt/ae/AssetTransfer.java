@@ -39,7 +39,7 @@ public final class AssetTransfer {
 
     private static final Listeners<AssetTransfer,Event> listeners = new Listeners<>();
 
-    private static final DbKey.HashKeyFactory<AssetTransfer> transferDbKeyFactory = new DbKey.HashKeyFactory<AssetTransfer>("id", "full_hash") {
+    private static final DbKey.HashKeyFactory<AssetTransfer> transferDbKeyFactory = new DbKey.HashKeyFactory<AssetTransfer>("full_hash", "id") {
 
         @Override
         public DbKey newKey(AssetTransfer assetTransfer) {

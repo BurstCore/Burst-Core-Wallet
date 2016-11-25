@@ -217,6 +217,8 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
             return isDuplicate;
         }
 
+        //TODO: validateId?
+
     };
 
     public static final TransactionType SHUFFLING_REGISTRATION = new ShufflingTransactionType() {

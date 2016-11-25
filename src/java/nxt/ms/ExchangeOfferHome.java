@@ -269,6 +269,7 @@ public final class ExchangeOfferHome {
     public abstract class ExchangeOffer {
 
         final long id;
+        final byte[] hash;
         private final long currencyId;
         private final long accountId;
         private final long rateNQT;
@@ -279,9 +280,10 @@ public final class ExchangeOfferHome {
         private final short transactionIndex;
         private final int transactionHeight;
 
-        ExchangeOffer(long id, long currencyId, long accountId, long rateNQT, long limit, long supply,
+        ExchangeOffer(long id, byte[] hash, long currencyId, long accountId, long rateNQT, long limit, long supply,
                       int expirationHeight, int transactionHeight, short transactionIndex) {
             this.id = id;
+            this.hash = hash;
             this.currencyId = currencyId;
             this.accountId = accountId;
             this.rateNQT = rateNQT;
@@ -295,6 +297,7 @@ public final class ExchangeOfferHome {
 
         ExchangeOffer(ResultSet rs) throws SQLException {
             this.id = rs.getLong("id");
+            this.hash = rs.getBytes("full_hash");
             this.currencyId = rs.getLong("currency_id");
             this.accountId = rs.getLong("account_id");
             this.rateNQT = rs.getLong("rate");
@@ -307,11 +310,12 @@ public final class ExchangeOfferHome {
         }
 
         void save(Connection con, String table) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, currency_id, account_id, "
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, full_hash, currency_id, account_id, "
                     + "rate, unit_limit, supply, expiration_height, creation_height, transaction_index, transaction_height, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                    + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
+                pstmt.setBytes(++i, this.hash);
                 pstmt.setLong(++i, this.currencyId);
                 pstmt.setLong(++i, this.accountId);
                 pstmt.setLong(++i, this.rateNQT);
@@ -328,6 +332,10 @@ public final class ExchangeOfferHome {
 
         public long getId() {
             return id;
+        }
+
+        public byte[] getFullHash() {
+            return hash;
         }
 
         public long getCurrencyId() {
@@ -434,7 +442,7 @@ public final class ExchangeOfferHome {
         private final DbKey dbKey;
 
         private BuyOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
-            super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getBuyRateNQT(),
+            super(transaction.getId(), transaction.getFullHash(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getBuyRateNQT(),
                     attachment.getTotalBuyLimit(), attachment.getInitialBuySupply(), attachment.getExpirationHeight(), transaction.getHeight(),
                     transaction.getIndex());
             this.dbKey = buyOfferDbKeyFactory.newKey(id);
@@ -525,7 +533,7 @@ public final class ExchangeOfferHome {
         private final DbKey dbKey;
 
         private SellOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
-            super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateNQT(),
+            super(transaction.getId(), transaction.getFullHash(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateNQT(),
                     attachment.getTotalSellLimit(), attachment.getInitialSellSupply(), attachment.getExpirationHeight(), transaction.getHeight(),
                     transaction.getIndex());
             this.dbKey = sellOfferDbKeyFactory.newKey(id);

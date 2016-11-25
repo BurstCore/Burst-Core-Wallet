@@ -57,7 +57,7 @@ public final class CurrencyMint {
 
     }
 
-    private static final DbKey.LinkKeyFactory<CurrencyMint> currencyMintDbKeyFactory = new DbKey.LinkKeyFactory<CurrencyMint>("currency_id", "account_id") {
+    private static final DbKey.LongLongKeyFactory<CurrencyMint> currencyMintDbKeyFactory = new DbKey.LongLongKeyFactory<CurrencyMint>("currency_id", "account_id") {
 
         @Override
         public DbKey newKey(CurrencyMint currencyMint) {

@@ -85,16 +85,16 @@ public final class ShufflingParticipantHome {
     }
 
     private final Listeners<ShufflingParticipant, Event> listeners;
-    private final DbKey.LinkKeyFactory<ShufflingParticipant> shufflingParticipantDbKeyFactory;
+    private final DbKey.LongLongKeyFactory<ShufflingParticipant> shufflingParticipantDbKeyFactory;
     private final VersionedEntityDbTable<ShufflingParticipant> shufflingParticipantTable;
-    private final DbKey.LinkKeyFactory<ShufflingData> shufflingDataDbKeyFactory;
+    private final DbKey.LongLongKeyFactory<ShufflingData> shufflingDataDbKeyFactory;
     private final PrunableDbTable<ShufflingData> shufflingDataTable;
     private final ChildChain childChain;
 
     private ShufflingParticipantHome(ChildChain childChain) {
         this.childChain = childChain;
         this.listeners = new Listeners<>();
-        this.shufflingParticipantDbKeyFactory = new DbKey.LinkKeyFactory<ShufflingParticipant>("shuffling_id", "account_id") {
+        this.shufflingParticipantDbKeyFactory = new DbKey.LongLongKeyFactory<ShufflingParticipant>("shuffling_id", "account_id") {
             @Override
             public DbKey newKey(ShufflingParticipant participant) {
                 return participant.dbKey;
@@ -111,7 +111,7 @@ public final class ShufflingParticipantHome {
                 participant.save(con);
             }
         };
-        this.shufflingDataDbKeyFactory = new DbKey.LinkKeyFactory<ShufflingData>("shuffling_id", "account_id") {
+        this.shufflingDataDbKeyFactory = new DbKey.LongLongKeyFactory<ShufflingData>("shuffling_id", "account_id") {
             @Override
             public DbKey newKey(ShufflingData shufflingData) {
                 return shufflingData.dbKey;

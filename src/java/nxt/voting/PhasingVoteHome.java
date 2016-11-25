@@ -40,12 +40,12 @@ public final class PhasingVoteHome {
     }
 
     private final ChildChain childChain;
-    private final DbKey.LinkKeyFactory<PhasingVote> phasingVoteDbKeyFactory;
+    private final DbKey.LongLongKeyFactory<PhasingVote> phasingVoteDbKeyFactory;
     private final EntityDbTable<PhasingVote> phasingVoteTable;
 
     private PhasingVoteHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.phasingVoteDbKeyFactory = new DbKey.LinkKeyFactory<PhasingVote>("transaction_id", "voter_id") {
+        this.phasingVoteDbKeyFactory = new DbKey.LongLongKeyFactory<PhasingVote>("transaction_id", "voter_id") {
             @Override
             public DbKey newKey(PhasingVote vote) {
                 return vote.dbKey;

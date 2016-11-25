@@ -40,12 +40,12 @@ public final class ExchangeRequestHome {
     }
 
     private final ChildChain childChain;
-    private final DbKey.LongKeyFactory<ExchangeRequest> exchangeRequestDbKeyFactory;
+    private final DbKey.HashKeyFactory<ExchangeRequest> exchangeRequestDbKeyFactory;
     private final EntityDbTable<ExchangeRequest> exchangeRequestTable;
 
     private ExchangeRequestHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.exchangeRequestDbKeyFactory = new DbKey.LongKeyFactory<ExchangeRequest>("id") {
+        this.exchangeRequestDbKeyFactory = new DbKey.HashKeyFactory<ExchangeRequest>("full_hash", "id") {
             @Override
             public DbKey newKey(ExchangeRequest exchangeRequest) {
                 return exchangeRequest.dbKey;
@@ -69,10 +69,6 @@ public final class ExchangeRequestHome {
 
     public int getCount() {
         return exchangeRequestTable.getCount();
-    }
-
-    public ExchangeRequest getExchangeRequest(long transactionId) {
-        return exchangeRequestTable.get(exchangeRequestDbKeyFactory.newKey(transactionId));
     }
 
     public DbIterator<ExchangeRequest> getCurrencyExchangeRequests(long currencyId, int from, int to) {
@@ -100,6 +96,7 @@ public final class ExchangeRequestHome {
     public final class ExchangeRequest {
 
         private final long id;
+        private final byte[] hash;
         private final long accountId;
         private final long currencyId;
         private final int height;
@@ -119,7 +116,8 @@ public final class ExchangeRequestHome {
 
         private ExchangeRequest(Transaction transaction, ExchangeAttachment attachment, boolean isBuy) {
             this.id = transaction.getId();
-            this.dbKey = exchangeRequestDbKeyFactory.newKey(this.id);
+            this.hash = transaction.getFullHash();
+            this.dbKey = exchangeRequestDbKeyFactory.newKey(this.hash, this.id);
             this.accountId = transaction.getSenderId();
             this.currencyId = attachment.getCurrencyId();
             this.units = attachment.getUnits();
@@ -132,6 +130,7 @@ public final class ExchangeRequestHome {
 
         private ExchangeRequest(ResultSet rs, DbKey dbKey) throws SQLException {
             this.id = rs.getLong("id");
+            this.hash = rs.getBytes("full_hash");
             this.dbKey = dbKey;
             this.accountId = rs.getLong("account_id");
             this.currencyId = rs.getLong("currency_id");
@@ -143,10 +142,11 @@ public final class ExchangeRequestHome {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO exchange_request (id, account_id, currency_id, "
-                    + "units, rate, is_buy, timestamp, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO exchange_request (id, full_hash, account_id, currency_id, "
+                    + "units, rate, is_buy, timestamp, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
+                pstmt.setBytes(++i, this.hash);
                 pstmt.setLong(++i, this.accountId);
                 pstmt.setLong(++i, this.currencyId);
                 pstmt.setLong(++i, this.units);
@@ -160,6 +160,10 @@ public final class ExchangeRequestHome {
 
         public long getId() {
             return id;
+        }
+
+        public byte[] getFullHash() {
+            return hash;
         }
 
         public long getAccountId() {

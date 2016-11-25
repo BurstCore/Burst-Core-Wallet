@@ -167,6 +167,11 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
     }
 
     @Override
+    public void validateId(Transaction transaction) throws NxtException.ValidationException {
+        //TODO
+    }
+
+    @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
             ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this);

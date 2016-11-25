@@ -55,7 +55,7 @@ public final class AssetDividendHome {
 
     private AssetDividendHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.dividendDbKeyFactory = new DbKey.HashKeyFactory<AssetDividend>("id", "full_hash") {
+        this.dividendDbKeyFactory = new DbKey.HashKeyFactory<AssetDividend>("full_hash", "id") {
             @Override
             public DbKey newKey(AssetDividend assetDividend) {
                 return assetDividend.dbKey;

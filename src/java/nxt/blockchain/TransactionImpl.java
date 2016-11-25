@@ -589,6 +589,12 @@ public abstract class TransactionImpl implements Transaction {
 
     }
 
+    protected void validateId() throws NxtException.ValidationException {
+        if (getId() == 0L) {
+            throw new NxtException.NotValidException("Invalid transaction id 0");
+        }
+    }
+
     void validateEcBlock() throws NxtException.NotCurrentlyValidException {
         if (ecBlockId != 0) {
             if (Nxt.getBlockchain().getHeight() < ecBlockHeight) {

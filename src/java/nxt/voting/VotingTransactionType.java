@@ -185,7 +185,7 @@ public abstract class VotingTransactionType extends ChildTransactionType {
 
         //TODO: if poll table and poll results tables become prunable, do not enforce id uniqueness beyond the prune limit
         @Override
-        protected void validateChildTransactionId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+        protected void validateId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
             if (transaction.getChain().getPollHome().getPoll(transaction.getId()) != null) {
                 throw new NxtException.NotCurrentlyValidException("Duplicate poll id " + transaction.getStringId());
             }

@@ -140,9 +140,6 @@ public abstract class TransactionType {
         return getName() + " type: " + getType() + ", subtype: " + getSubtype();
     }
 
-    protected void validateId(Transaction transaction) throws NxtException.ValidationException {
-        if (transaction.getId() == 0L) {
-            throw new NxtException.NotValidException("Invalid transaction id 0");
-        }
-    }
+    protected abstract void validateId(Transaction transaction) throws NxtException.ValidationException;
+
 }

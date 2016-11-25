@@ -569,7 +569,7 @@ public final class Account {
 
     };
 
-    private static final DbKey.LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new DbKey.LinkKeyFactory<AccountAsset>("account_id", "asset_id") {
+    private static final DbKey.LongLongKeyFactory<AccountAsset> accountAssetDbKeyFactory = new DbKey.LongLongKeyFactory<AccountAsset>("account_id", "asset_id") {
 
         @Override
         public DbKey newKey(AccountAsset accountAsset) {
@@ -612,7 +612,7 @@ public final class Account {
 
     };
 
-    private static final DbKey.LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new DbKey.LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
+    private static final DbKey.LongLongKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new DbKey.LongLongKeyFactory<AccountCurrency>("account_id", "currency_id") {
 
         @Override
         public DbKey newKey(AccountCurrency accountCurrency) {

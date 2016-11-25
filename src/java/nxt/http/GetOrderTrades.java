@@ -32,37 +32,37 @@ public final class GetOrderTrades extends APIServlet.APIRequestHandler {
     static final GetOrderTrades instance = new GetOrderTrades();
 
     private GetOrderTrades() {
-        super(new APITag[] {APITag.AE}, "askOrder", "bidOrder", "includeAssetInfo", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.AE}, "askOrderFullHash", "bidOrderFullHash", "includeAssetInfo", "firstIndex", "lastIndex");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
-        long askOrderId = ParameterParser.getUnsignedLong(req, "askOrder", false);
-        long bidOrderId = ParameterParser.getUnsignedLong(req, "bidOrder", false);
+        byte[] askOrderHash = ParameterParser.getBytes(req, "askOrderFullHash", false);
+        byte[] bidOrderHash = ParameterParser.getBytes(req, "bidOrderFullHash", false);
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         ChildChain childChain = ParameterParser.getChildChain(req);
 
-        if (askOrderId == 0 && bidOrderId == 0) {
-            return JSONResponses.missing("askOrder", "bidOrder");
+        if (askOrderHash.length == 0 && bidOrderHash.length == 0) {
+            return JSONResponses.missing("askOrderFullHash", "bidOrderFullHash");
         }
 
         JSONObject response = new JSONObject();
         JSONArray tradesData = new JSONArray();
-        if (askOrderId != 0 && bidOrderId != 0) {
-            TradeHome.Trade trade = childChain.getTradeHome().getTrade(askOrderId, bidOrderId);
+        if (askOrderHash.length != 0 && bidOrderHash.length != 0) {
+            TradeHome.Trade trade = childChain.getTradeHome().getTrade(askOrderHash, bidOrderHash);
             if (trade != null) {
                 tradesData.add(JSONData.trade(trade, includeAssetInfo));
             }
         } else {
             DbIterator<TradeHome.Trade> trades = null;
             try {
-                if (askOrderId != 0) {
-                    trades = childChain.getTradeHome().getAskOrderTrades(askOrderId, firstIndex, lastIndex);
+                if (askOrderHash.length != 0) {
+                    trades = childChain.getTradeHome().getAskOrderTrades(askOrderHash, firstIndex, lastIndex);
                 } else {
-                    trades = childChain.getTradeHome().getBidOrderTrades(bidOrderId, firstIndex, lastIndex);
+                    trades = childChain.getTradeHome().getBidOrderTrades(bidOrderHash, firstIndex, lastIndex);
                 }
                 while (trades.hasNext()) {
                     TradeHome.Trade trade = trades.next();
