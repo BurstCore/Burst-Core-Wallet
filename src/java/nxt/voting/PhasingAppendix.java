@@ -22,6 +22,7 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.ChildTransactionImpl;
@@ -72,6 +73,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     private final PhasingParams params;
     //TODO: allow linkedFullHashes to be from different chain
     private final byte[][] linkedFullHashes;
+    private final int[] linkedChainIds;
     private final byte[] hashedSecret;
     private final byte algorithm;
 
@@ -82,12 +84,15 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
 
         byte linkedFullHashesSize = buffer.get();
         if (linkedFullHashesSize > 0) {
+            linkedChainIds = new int[linkedFullHashesSize];
             linkedFullHashes = new byte[linkedFullHashesSize][];
             for (int i = 0; i < linkedFullHashesSize; i++) {
+                linkedChainIds[i] = buffer.getInt();
                 linkedFullHashes[i] = new byte[32];
                 buffer.get(linkedFullHashes[i]);
             }
         } else {
+            linkedChainIds = Convert.EMPTY_INT;
             linkedFullHashes = Convert.EMPTY_BYTES;
         }
         byte hashedSecretLength = buffer.get();
@@ -105,12 +110,17 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         finishHeight = ((Long) attachmentData.get("phasingFinishHeight")).intValue();
         params = new PhasingParams(attachmentData);
         JSONArray linkedFullHashesJson = (JSONArray) attachmentData.get("phasingLinkedFullHashes");
-        if (linkedFullHashesJson != null && linkedFullHashesJson.size() > 0) {
+        JSONArray linkedChainIdsJson = (JSONArray) attachmentData.get("phasingLinkedChainIds");
+        if (linkedFullHashesJson != null && linkedFullHashesJson.size() > 0
+                && linkedChainIdsJson != null && linkedChainIdsJson.size() == linkedFullHashesJson.size()) {
+            linkedChainIds = new int[linkedFullHashesJson.size()];
             linkedFullHashes = new byte[linkedFullHashesJson.size()][];
             for (int i = 0; i < linkedFullHashes.length; i++) {
+                linkedChainIds[i] = ((Long)linkedChainIdsJson.get(i)).intValue();
                 linkedFullHashes[i] = Convert.parseHexString((String) linkedFullHashesJson.get(i));
             }
         } else {
+            linkedChainIds = Convert.EMPTY_INT;
             linkedFullHashes = Convert.EMPTY_BYTES;
         }
         String hashedSecret = Convert.emptyToNull((String)attachmentData.get("phasingHashedSecret"));
@@ -123,9 +133,10 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         }
     }
 
-    public PhasingAppendix(int finishHeight, PhasingParams phasingParams, byte[][] linkedFullHashes, byte[] hashedSecret, byte algorithm) {
+    public PhasingAppendix(int finishHeight, PhasingParams phasingParams, int[] linkedChainIds, byte[][] linkedFullHashes, byte[] hashedSecret, byte algorithm) {
         this.finishHeight = finishHeight;
         this.params = phasingParams;
+        this.linkedChainIds = linkedChainIds;
         this.linkedFullHashes = Convert.nullToEmpty(linkedFullHashes);
         this.hashedSecret = hashedSecret != null ? hashedSecret : Convert.EMPTY_BYTE;
         this.algorithm = algorithm;
@@ -138,7 +149,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
 
     @Override
     protected int getMySize() {
-        return 4 + params.getMySize() + 1 + 32 * linkedFullHashes.length + 1 + hashedSecret.length + 1;
+        return 4 + params.getMySize() + 1 + (32 + 4) * linkedFullHashes.length + 1 + hashedSecret.length + 1;
     }
 
     @Override
@@ -146,8 +157,9 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         buffer.putInt(finishHeight);
         params.putMyBytes(buffer);
         buffer.put((byte) linkedFullHashes.length);
-        for (byte[] hash : linkedFullHashes) {
-            buffer.put(hash);
+        for (int i = 0; i < linkedFullHashes.length; i++) {
+            buffer.putInt(linkedChainIds[i]);
+            buffer.put(linkedFullHashes[i]);
         }
         buffer.put((byte)hashedSecret.length);
         buffer.put(hashedSecret);
@@ -160,10 +172,13 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         params.putMyJSON(json);
         if (linkedFullHashes.length > 0) {
             JSONArray linkedFullHashesJson = new JSONArray();
-            for (byte[] hash : linkedFullHashes) {
-                linkedFullHashesJson.add(Convert.toHexString(hash));
+            JSONArray linkedChainIdsJson = new JSONArray();
+            for (int i = 0; i < linkedFullHashes.length; i++) {
+                linkedChainIdsJson.add(linkedChainIds[i]);
+                linkedFullHashesJson.add(Convert.toHexString(linkedFullHashes[i]));
             }
             json.put("phasingLinkedFullHashes", linkedFullHashesJson);
+            json.put("phasingLinkedChainIds", linkedChainIdsJson);
         }
         if (hashedSecret.length > 0) {
             json.put("phasingHashedSecret", Convert.toHexString(hashedSecret));
@@ -179,16 +194,24 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
             if (linkedFullHashes.length == 0 || linkedFullHashes.length > Constants.MAX_PHASING_LINKED_TRANSACTIONS) {
                 throw new NxtException.NotValidException("Invalid number of linkedFullHashes " + linkedFullHashes.length);
             }
+            if (linkedChainIds.length != linkedFullHashes.length) {
+                throw new NxtException.NotValidException("Number of linkedChainIds " + linkedChainIds.length
+                        + "does not match number of linkedFullHashes " + linkedFullHashes.length);
+            }
             Set<Long> linkedTransactionIds = new HashSet<>(linkedFullHashes.length);
-            for (byte[] hash : linkedFullHashes) {
+            for (int i = 0; i < linkedFullHashes.length; i++) {
+                byte[] hash = linkedFullHashes[i];
                 if (Convert.emptyToNull(hash) == null || hash.length != 32) {
                     throw new NxtException.NotValidException("Invalid linkedFullHash " + Convert.toHexString(hash));
                 }
                 if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
                     throw new NxtException.NotValidException("Duplicate linked transaction ids");
                 }
-                //TODO: allow linked transactions from other chains
-                TransactionImpl linkedTransaction = transaction.getChain().getTransactionHome().findTransactionByFullHash(hash, currentHeight);
+                Chain chain = Chain.getChain(linkedChainIds[i]);
+                if (chain == null) {
+                    throw new NxtException.NotValidException("Invalid chain " + linkedChainIds[i]);
+                }
+                TransactionImpl linkedTransaction = chain.getTransactionHome().findTransactionByFullHash(hash, currentHeight);
                 if (linkedTransaction != null) {
                     if (transaction.getTimestamp() - linkedTransaction.getTimestamp() > Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN) {
                         throw new NxtException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");
@@ -336,6 +359,10 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
 
     public byte[][] getLinkedFullHashes() {
         return linkedFullHashes;
+    }
+
+    public int[] getLinkedChainIds() {
+        return linkedChainIds;
     }
 
     public byte[] getHashedSecret() {

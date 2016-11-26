@@ -1541,12 +1541,13 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             SortedSet<ChildTransactionImpl> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
             block.getTransactions().forEach(fxtTransaction -> {
                 for (ChildTransactionImpl childTransaction : fxtTransaction.getChildTransactions()) {
-                    ChildChain childChain = childTransaction.getChain();
-                    childChain.getPhasingPollHome().getLinkedPhasedTransactions(childTransaction.getFullHash()).forEach(phasedTransaction -> {
+                    PhasingPollHome.getLinkedPhasedTransactions(childTransaction.getFullHash()).forEach(phasedTransaction -> {
                         if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
                             possiblyApprovedTransactions.add((ChildTransactionImpl)phasedTransaction);
                         }
                     });
+                    //TODO: handle votes from other child chains?
+                    ChildChain childChain = childTransaction.getChain();
                     if (childTransaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING && !childTransaction.attachmentIsPhased()) {
                         PhasingVoteCastingAttachment voteCasting = (PhasingVoteCastingAttachment) childTransaction.getAttachment();
                         voteCasting.getTransactionFullHashes().forEach(hash -> {

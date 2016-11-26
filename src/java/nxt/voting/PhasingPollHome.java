@@ -17,6 +17,7 @@
 package nxt.voting;
 
 import nxt.Nxt;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.Transaction;
@@ -106,14 +107,63 @@ public final class PhasingPollHome {
         }
     }
 
+    private static DbKey.HashKeyFactory<PhasingPoll> linkedTransactionDbKeyFactory = new DbKey.HashKeyFactory<PhasingPoll>("transaction_full_hash", "transaction_id") {
+        @Override
+        public DbKey newKey(PhasingPoll poll) {
+            return poll.dbKey == null ? newKey(poll.hash, poll.id) : poll.dbKey;
+        }
+    };
+
+    private static ValuesDbTable<PhasingPoll, LinkedTransaction> linkedTransactionTable = new ValuesDbTable<PhasingPoll, LinkedTransaction>
+            ("public.phasing_poll_linked_transaction", linkedTransactionDbKeyFactory) {
+        @Override
+        protected LinkedTransaction load(Connection con, ResultSet rs) throws SQLException {
+            return new LinkedTransaction(rs.getInt("linked_chain_id"), rs.getBytes("linked_full_hash"));
+        }
+        @Override
+        protected void save(Connection con, PhasingPoll poll, LinkedTransaction linkedTransaction) throws SQLException {
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_linked_transaction (chain_id, transaction_id, transaction_full_hash, "
+                    + "linked_chain_id, linked_full_hash, linked_transaction_id, height) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+                int i = 0;
+                pstmt.setInt(++i, poll.getPhasingPollHome().childChain.getId());
+                pstmt.setLong(++i, poll.getId());
+                pstmt.setBytes(++i, poll.getFullHash());
+                pstmt.setInt(++i, linkedTransaction.chainId);
+                pstmt.setBytes(++i, linkedTransaction.hash);
+                pstmt.setLong(++i, Convert.fullHashToId(linkedTransaction.hash));
+                pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
+                pstmt.executeUpdate();
+            }
+        }
+    };
+
+    public static List<? extends ChildTransaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
+        try (Connection con = linkedTransactionTable.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT chain_id, transaction_full_hash FROM phasing_poll_linked_transaction " +
+                     "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
+            int i = 0;
+            pstmt.setLong(++i, Convert.fullHashToId(linkedTransactionFullHash));
+            pstmt.setBytes(++i, linkedTransactionFullHash);
+            List<ChildTransaction> transactions = new ArrayList<>();
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    ChildChain childChain = ChildChain.getChildChain(rs.getInt("chain_id"));
+                    transactions.add((ChildTransaction)childChain.getTransactionHome().findTransactionByFullHash(rs.getBytes("transaction_full_hash")));
+                }
+            }
+            return transactions;
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+
     private final ChildChain childChain;
     private final PhasingVoteHome phasingVoteHome;
     private final DbKey.HashKeyFactory<PhasingPoll> phasingPollDbKeyFactory;
     private final EntityDbTable<PhasingPoll> phasingPollTable;
     private final DbKey.HashKeyFactory<PhasingPoll> votersDbKeyFactory;
     private final ValuesDbTable<PhasingPoll, Long> votersTable;
-    private final DbKey.HashKeyFactory<PhasingPoll> linkedTransactionDbKeyFactory;
-    private final ValuesDbTable<PhasingPoll, byte[]> linkedTransactionTable;
     private final DbKey.HashKeyFactory<PhasingPollResult> resultDbKeyFactory;
     private final EntityDbTable<PhasingPollResult> resultTable;
 
@@ -195,32 +245,6 @@ public final class PhasingPollHome {
                 }
             }
         };
-        this.linkedTransactionDbKeyFactory = new DbKey.HashKeyFactory<PhasingPoll>("transaction_full_hash", "transaction_id") {
-            @Override
-            public DbKey newKey(PhasingPoll poll) {
-                return poll.dbKey == null ? newKey(poll.hash, poll.id) : poll.dbKey;
-            }
-        };
-        this.linkedTransactionTable = new ValuesDbTable<PhasingPoll, byte[]>(childChain.getSchemaTable("phasing_poll_linked_transaction"),
-                linkedTransactionDbKeyFactory) {
-            @Override
-            protected byte[] load(Connection con, ResultSet rs) throws SQLException {
-                return rs.getBytes("linked_full_hash");
-            }
-            @Override
-            protected void save(Connection con, PhasingPoll poll, byte[] linkedFullHash) throws SQLException {
-                try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_linked_transaction (transaction_id, transaction_full_hash, "
-                        + "linked_full_hash, linked_transaction_id, height) VALUES (?, ?, ?, ?, ?)")) {
-                    int i = 0;
-                    pstmt.setLong(++i, poll.getId());
-                    pstmt.setBytes(++i, poll.getFullHash());
-                    pstmt.setBytes(++i, linkedFullHash);
-                    pstmt.setLong(++i, Convert.fullHashToId(linkedFullHash));
-                    pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
-                    pstmt.executeUpdate();
-                }
-            }
-        };
         this.resultDbKeyFactory = new DbKey.HashKeyFactory<PhasingPollResult>("full_hash", "id") {
             @Override
             public DbKey newKey(PhasingPollResult phasingPollResult) {
@@ -237,6 +261,26 @@ public final class PhasingPollHome {
                 phasingPollResult.save(con);
             }
         };
+    }
+
+    public static final class LinkedTransaction {
+
+        private final int chainId;
+        private final byte[] hash;
+
+        private LinkedTransaction(int chainId, byte[] hash) {
+            this.chainId = chainId;
+            this.hash = hash;
+        }
+
+        public int getChainId() {
+            return chainId;
+        }
+
+        public byte[] getLinkedFullHash() {
+            return hash;
+        }
+
     }
 
     public final class PhasingPollResult {
@@ -418,26 +462,6 @@ public final class PhasingPollHome {
         }
     }
 
-    //TODO: allow linked transactions to be from different chains
-    public List<? extends ChildTransaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
-        try (Connection con = linkedTransactionTable.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT transaction_full_hash FROM phasing_poll_linked_transaction " +
-                     "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
-            int i = 0;
-            pstmt.setLong(++i, Convert.fullHashToId(linkedTransactionFullHash));
-            pstmt.setBytes(++i, linkedTransactionFullHash);
-            List<ChildTransaction> transactions = new ArrayList<>();
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    transactions.add((ChildTransaction)childChain.getTransactionHome().findTransactionByFullHash(rs.getBytes("transaction_full_hash")));
-                }
-            }
-            return transactions;
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
     public long getSenderPhasedTransactionFees(long accountId) {
         try (Connection con = phasingPollTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT SUM(transaction.fee) AS fees FROM transaction, phasing_poll " +
@@ -467,9 +491,11 @@ public final class PhasingPollHome {
             votersTable.insert(poll, Convert.toList(voters));
         }
         if (appendix.getLinkedFullHashes().length > 0) {
-            List<byte[]> linkedFullHashes = new ArrayList<>(appendix.getLinkedFullHashes().length);
-            Collections.addAll(linkedFullHashes, appendix.getLinkedFullHashes());
-            linkedTransactionTable.insert(poll, linkedFullHashes);
+            List<LinkedTransaction> linkedTransactions = new ArrayList<>(appendix.getLinkedFullHashes().length);
+            for (int i = 0; i < appendix.getLinkedFullHashes().length; i++) {
+                linkedTransactions.add(new LinkedTransaction(appendix.getLinkedChainIds()[i], appendix.getLinkedFullHashes()[i]));
+            }
+            linkedTransactionTable.insert(poll, linkedTransactions);
         }
     }
 
@@ -520,7 +546,7 @@ public final class PhasingPollHome {
             return hash;
         }
 
-        public List<byte[]> getLinkedFullHashes() {
+        public List<LinkedTransaction> getLinkedTransactions() {
             return linkedTransactionTable.get(linkedTransactionDbKeyFactory.newKey(this));
         }
 
@@ -548,9 +574,9 @@ public final class PhasingPollHome {
             int height = Math.min(this.finishHeight, Nxt.getBlockchain().getHeight());
             if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
                 int count = 0;
-                //TODO: allow linking transactions from other chains
-                for (byte[] hash : getLinkedFullHashes()) {
-                    if (childChain.getTransactionHome().hasTransactionByFullHash(hash, height)) {
+                for (LinkedTransaction linkedTransaction : getLinkedTransactions()) {
+                    if (Chain.getChain(linkedTransaction.getChainId()).getTransactionHome()
+                            .hasTransactionByFullHash(linkedTransaction.getLinkedFullHash(), height)) {
                         count += 1;
                     }
                 }

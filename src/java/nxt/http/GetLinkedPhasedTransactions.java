@@ -17,8 +17,8 @@
 package nxt.http;
 
 import nxt.NxtException;
-import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
+import nxt.voting.PhasingPollHome;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -36,10 +36,9 @@ public class GetLinkedPhasedTransactions extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         byte[] linkedFullHash = ParameterParser.getBytes(req, "linkedFullHash", true);
-        ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONArray json = new JSONArray();
-        List<? extends Transaction> transactions = childChain.getPhasingPollHome().getLinkedPhasedTransactions(linkedFullHash);
+        List<? extends Transaction> transactions = PhasingPollHome.getLinkedPhasedTransactions(linkedFullHash);
         transactions.forEach(transaction -> json.add(JSONData.transaction(transaction)));
         JSONObject response = new JSONObject();
         response.put("transactions", json);

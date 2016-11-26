@@ -664,13 +664,16 @@ public final class JSONData {
             whitelistJson.add(whitelisted);
         }
         json.put("whitelist", whitelistJson);
-        List<byte[]> linkedFullHashes = poll.getLinkedFullHashes();
+        List<PhasingPollHome.LinkedTransaction> linkedFullHashes = poll.getLinkedTransactions();
         if (linkedFullHashes.size() > 0) {
             JSONArray linkedFullHashesJSON = new JSONArray();
-            for (byte[] hash : linkedFullHashes) {
-                linkedFullHashesJSON.add(Convert.toHexString(hash));
+            JSONArray linkedChainIdsJSON = new JSONArray();
+            for (PhasingPollHome.LinkedTransaction linkedTransaction : linkedFullHashes) {
+                linkedChainIdsJSON.add(linkedTransaction.getChainId());
+                linkedFullHashesJSON.add(Convert.toHexString(linkedTransaction.getLinkedFullHash()));
             }
             json.put("linkedFullHashes", linkedFullHashesJSON);
+            json.put("linkedChainIds", linkedChainIdsJSON);
         }
         if (poll.getHashedSecret() != null) {
             json.put("hashedSecret", Convert.toHexString(poll.getHashedSecret()));

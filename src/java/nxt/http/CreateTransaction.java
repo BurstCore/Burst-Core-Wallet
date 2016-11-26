@@ -111,7 +111,8 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         byte[] hashedSecret = Convert.parseHexString(Convert.emptyToNull(req.getParameter("phasingHashedSecret")));
         byte algorithm = ParameterParser.getByte(req, "phasingHashedSecretAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
 
-        return new PhasingAppendix(finishHeight, phasingParams, linkedFullHashes, hashedSecret, algorithm);
+        //TODO: parse and populate linkedChainIds parameter
+        return new PhasingAppendix(finishHeight, phasingParams, null, linkedFullHashes, hashedSecret, algorithm);
     }
 
     final PhasingParams parsePhasingParams(HttpServletRequest req, String parameterPrefix) throws ParameterException {
