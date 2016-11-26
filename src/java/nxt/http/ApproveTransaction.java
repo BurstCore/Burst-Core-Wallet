@@ -60,7 +60,7 @@ public class ApproveTransaction extends CreateTransaction {
         List<byte[]> phasedTransactionFullHashes = new ArrayList<>(phasedTransactionValues.length);
         for (String phasedTransactionValue : phasedTransactionValues) {
             byte[] hash = Convert.parseHexString(phasedTransactionValue);
-            PhasingPollHome.PhasingPoll phasingPoll = chain.getPhasingPollHome().getPoll(Convert.fullHashToId(hash));
+            PhasingPollHome.PhasingPoll phasingPoll = chain.getPhasingPollHome().getPoll(hash);
             if (phasingPoll == null) {
                 return UNKNOWN_TRANSACTION_FULL_HASH;
             }

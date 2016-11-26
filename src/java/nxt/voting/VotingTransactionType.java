@@ -367,7 +367,7 @@ public abstract class VotingTransactionType extends ChildTransactionType {
                     throw new NxtException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
                 }
 
-                PhasingPollHome.PhasingPoll poll = transaction.getChain().getPhasingPollHome().getPoll(phasedTransactionId);
+                PhasingPollHome.PhasingPoll poll = transaction.getChain().getPhasingPollHome().getPoll(hash);
                 if (poll == null) {
                     throw new NxtException.NotCurrentlyValidException("Invalid phased transaction " + Long.toUnsignedString(phasedTransactionId)
                             + ", or phasing is finished");
@@ -413,11 +413,9 @@ public abstract class VotingTransactionType extends ChildTransactionType {
             List<byte[]> hashes = attachment.getTransactionFullHashes();
             //TODO: transactions may be from other child chains
             for (byte[] hash : hashes) {
-                transaction.getChain().getPhasingVoteHome().addVote(transaction, senderAccount, Convert.fullHashToId(hash));
+                transaction.getChain().getPhasingVoteHome().addVote(transaction, senderAccount, hash);
             }
         }
-
-        //TODO: validateId?
 
         @Override
         public boolean isPhasingSafe() {

@@ -31,21 +31,21 @@ public class GetPhasingPollVotes extends APIServlet.APIRequestHandler  {
     static final GetPhasingPollVotes instance = new GetPhasingPollVotes();
 
     private GetPhasingPollVotes() {
-        super(new APITag[] {APITag.PHASING}, "transaction", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.PHASING}, "transactionFullHash", "firstIndex", "lastIndex");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         ChildChain childChain = ParameterParser.getChildChain(req);
 
-        PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(transactionId);
+        PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(transactionFullHash);
         if (phasingPoll != null) {
             JSONObject response = new JSONObject();
             JSONArray votesJSON = new JSONArray();
-            try (DbIterator<PhasingVoteHome.PhasingVote> votes = childChain.getPhasingVoteHome().getVotes(transactionId, firstIndex, lastIndex)) {
+            try (DbIterator<PhasingVoteHome.PhasingVote> votes = childChain.getPhasingVoteHome().getVotes(transactionFullHash, firstIndex, lastIndex)) {
                 for (PhasingVoteHome.PhasingVote vote : votes) {
                     votesJSON.add(JSONData.phasingPollVote(vote));
                 }

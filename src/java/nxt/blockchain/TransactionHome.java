@@ -47,10 +47,12 @@ public final class TransactionHome {
         transactionTable = new Table(chain.getSchemaTable(chain instanceof FxtChain ? "transaction_fxt" : "transaction"));
     }
 
+    //TODO: for FxtTransactions only
     public TransactionImpl findTransaction(long transactionId) {
         return findTransaction(transactionId, Integer.MAX_VALUE);
     }
 
+    //TODO: remove
     public TransactionImpl findTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized (BlockDb.blockCache) {
@@ -112,6 +114,7 @@ public final class TransactionHome {
         }
     }
 
+    //TODO: for FxtTransactions only
     boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {
@@ -168,6 +171,7 @@ public final class TransactionHome {
         }
     }
 
+    //TODO: remove
     public byte[] getTransactionFullHash(long transactionId) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {

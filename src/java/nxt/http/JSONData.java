@@ -676,7 +676,7 @@ public final class JSONData {
             json.put("hashedSecret", Convert.toHexString(poll.getHashedSecret()));
         }
         putVoteWeighting(json, poll.getVoteWeighting());
-        PhasingPollHome.PhasingPollResult phasingPollResult = poll.getPhasingPollHome().getResult(poll.getId());
+        PhasingPollHome.PhasingPollResult phasingPollResult = poll.getPhasingPollHome().getResult(poll.getFullHash());
         json.put("finished", phasingPollResult != null);
         if (phasingPollResult != null) {
             json.put("approved", phasingPollResult.isApproved());
@@ -1009,7 +1009,7 @@ public final class JSONData {
         JSONObject json = transaction(transaction, null);
         if (includePhasingResult && transaction.isPhased()) {
             ChildChain childChain = (ChildChain)transaction.getChain();
-            PhasingPollHome.PhasingPollResult phasingPollResult = childChain.getPhasingPollHome().getResult(transaction.getId());
+            PhasingPollHome.PhasingPollResult phasingPollResult = childChain.getPhasingPollHome().getResult(transaction.getFullHash());
             if (phasingPollResult != null) {
                 json.put("approved", phasingPollResult.isApproved());
                 json.put("result", String.valueOf(phasingPollResult.getResult()));

@@ -239,11 +239,6 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     }
 
     @Override
-    public void validateId(Transaction transaction) throws NxtException.ValidationException {
-        //TODO
-    }
-
-    @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ((ChildChain) transaction.getChain()).getPhasingPollHome().addPoll(transaction, this);
     }
@@ -283,10 +278,10 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
 
     public void countVotes(ChildTransactionImpl transaction) {
         PhasingPollHome phasingPollHome = transaction.getChain().getPhasingPollHome();
-        if (phasingPollHome.getResult(transaction.getId()) != null) {
+        if (phasingPollHome.getResult(transaction.getFullHash()) != null) {
             return;
         }
-        PhasingPollHome.PhasingPoll poll = phasingPollHome.getPoll(transaction.getId());
+        PhasingPollHome.PhasingPoll poll = phasingPollHome.getPoll(transaction.getFullHash());
         long result = poll.countVotes();
         poll.finish(result);
         if (result >= poll.getQuorum()) {
@@ -302,7 +297,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     }
 
     public void tryCountVotes(ChildTransactionImpl transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        PhasingPollHome.PhasingPoll poll = transaction.getChain().getPhasingPollHome().getPoll(transaction.getId());
+        PhasingPollHome.PhasingPoll poll = transaction.getChain().getPhasingPollHome().getPoll(transaction.getFullHash());
         long result = poll.countVotes();
         if (result >= poll.getQuorum()) {
             if (!transaction.attachmentIsDuplicate(duplicates, false)) {

@@ -129,7 +129,6 @@ public enum APIEnum {
     GET_PEER("getPeer", GetPeer.instance),
     GET_PEERS("getPeers", GetPeers.instance),
     GET_PHASING_POLL("getPhasingPoll", GetPhasingPoll.instance),
-    GET_PHASING_POLLS("getPhasingPolls", GetPhasingPolls.instance),
     GET_PHASING_POLL_VOTES("getPhasingPollVotes", GetPhasingPollVotes.instance),
     GET_PHASING_POLL_VOTE("getPhasingPollVote", GetPhasingPollVote.instance),
     GET_POLL("getPoll", GetPoll.instance),

@@ -246,8 +246,8 @@ public class FxtDbVersion extends DbVersion {
             case 81:
                 apply("CREATE INDEX IF NOT EXISTS currency_supply_height_id_idx ON currency_supply (height, id)");
             case 82:
-                apply("CREATE TABLE IF NOT EXISTS phasing_poll_finish (db_id IDENTITY, transaction_id BIGINT NOT NULL, chain_id INT NOT NULL, "
-                        + "finish_height INT NOT NULL, height INT NOT NULL)");
+                apply("CREATE TABLE IF NOT EXISTS phasing_poll_finish (db_id IDENTITY, transaction_id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
+                        + "chain_id INT NOT NULL, finish_height INT NOT NULL, height INT NOT NULL)");
             case 83:
                 apply("CREATE INDEX IF NOT EXISTS phasing_poll_finish_finish_height_idx ON phasing_poll_finish (finish_height)");
             case 84:
@@ -274,6 +274,8 @@ public class FxtDbVersion extends DbVersion {
             case 93:
                 apply("CREATE INDEX IF NOT EXISTS currency_transfer_height_idx ON currency_transfer(height)");
             case 94:
+                apply("CREATE INDEX IF NOT EXISTS phasing_poll_finish_id_idx ON phasing_poll_finish (transaction_id)");
+            case 95:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate

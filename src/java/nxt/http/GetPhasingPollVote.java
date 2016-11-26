@@ -28,16 +28,16 @@ public class GetPhasingPollVote extends APIServlet.APIRequestHandler  {
     static final GetPhasingPollVote instance = new GetPhasingPollVote();
 
     private GetPhasingPollVote() {
-        super(new APITag[] {APITag.PHASING}, "transaction", "account");
+        super(new APITag[] {APITag.PHASING}, "transactionFullHash", "account");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         long accountId = ParameterParser.getAccountId(req, true);
         ChildChain childChain = ParameterParser.getChildChain(req);
 
-        PhasingVoteHome.PhasingVote phasingVote = childChain.getPhasingVoteHome().getVote(transactionId, accountId);
+        PhasingVoteHome.PhasingVote phasingVote = childChain.getPhasingVoteHome().getVote(transactionFullHash, accountId);
         if (phasingVote != null) {
             return JSONData.phasingPollVote(phasingVote);
         }

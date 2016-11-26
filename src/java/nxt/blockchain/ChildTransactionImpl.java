@@ -425,7 +425,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         if (referencedTransactionFullHash != null && referencedTransactionFullHash.length != 32) {
             throw new NxtException.NotValidException("Invalid referenced transaction full hash " + Convert.toHexString(referencedTransactionFullHash));
         }
-        boolean validatingAtFinish = phasing != null && getSignature() != null && childChain.getPhasingPollHome().getPoll(getId()) != null;
+        boolean validatingAtFinish = phasing != null && getSignature() != null && childChain.getPhasingPollHome().getPoll(getFullHash()) != null;
         for (Appendix.AbstractAppendix appendage : appendages()) {
             appendage.loadPrunable(this);
             if (! appendage.verifyVersion()) {
