@@ -130,7 +130,7 @@ public final class JSONResponses {
     public static final JSONStreamAware RESPONSE_WRITE_ERROR = responseError("responseWrite");
     public static final JSONStreamAware MISSING_TRANSACTION_FULL_HASH = missing("transactionFullHash");
     public static final JSONStreamAware UNKNOWN_TRANSACTION_FULL_HASH = unknown("transactionFullHash");
-    public static final JSONStreamAware INCORRECT_LINKED_FULL_HASH = incorrect("phasingLinkedFullHash");
+    public static final JSONStreamAware INCORRECT_LINKED_TRANSACTION = incorrect("phasingLinkedTransaction");
     public static final JSONStreamAware INCORRECT_TAGGED_DATA_NAME = incorrect("name", "(length must be not longer than " + Constants.MAX_TAGGED_DATA_NAME_LENGTH + " characters)");
     public static final JSONStreamAware INCORRECT_TAGGED_DATA_DESCRIPTION = incorrect("description", "(length must be not longer than " + Constants.MAX_TAGGED_DATA_DESCRIPTION_LENGTH + " characters)");
     public static final JSONStreamAware INCORRECT_TAGGED_DATA_TAGS = incorrect("tags", "(length must be not longer than " + Constants.MAX_TAGGED_DATA_TAGS_LENGTH + " characters)");
@@ -153,6 +153,7 @@ public final class JSONResponses {
     public static final JSONStreamAware MISSING_PROPERTY = missing("property");
     public static final JSONStreamAware INCORRECT_EC_BLOCK = incorrect("ecBlockId", "ecBlockId does not match the block id at ecBlockHeight");
     public static final JSONStreamAware UNKNOWN_CHAIN = unknown("chain");
+    public static final JSONStreamAware UNKNOWN_PHASED_TRANSACTION = unknown("phasedTransaction");
 
     public static final JSONStreamAware NOT_ENOUGH_FUNDS;
     static {

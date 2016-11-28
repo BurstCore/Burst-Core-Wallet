@@ -24,6 +24,7 @@ import nxt.blockchain.Attachment;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.util.Convert;
+import nxt.voting.PhasingPollHome;
 import nxt.voting.PhasingVoteCastingAttachment;
 import org.json.simple.JSONStreamAware;
 
@@ -33,20 +34,20 @@ import java.util.List;
 
 import static nxt.http.JSONResponses.MISSING_TRANSACTION_FULL_HASH;
 import static nxt.http.JSONResponses.TOO_MANY_PHASING_VOTES;
+import static nxt.http.JSONResponses.UNKNOWN_CHAIN;
+import static nxt.http.JSONResponses.UNKNOWN_PHASED_TRANSACTION;
 
 public class ApproveTransaction extends CreateTransaction {
     static final ApproveTransaction instance = new ApproveTransaction();
 
-    //TODO: support transactions from different chains
     private ApproveTransaction() {
-        super(new APITag[]{APITag.CREATE_TRANSACTION, APITag.PHASING}, "transactionFullHash", "transactionFullHash", "transactionFullHash",
+        super(new APITag[]{APITag.CREATE_TRANSACTION, APITag.PHASING}, "phasedTransaction", "phasedTransaction", "phasedTransaction",
                 "revealedSecret", "revealedSecretIsText");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        ChildChain chain = ParameterParser.getChildChain(req);
-        String[] phasedTransactionValues = req.getParameterValues("transactionFullHash");
+        String[] phasedTransactionValues = req.getParameterValues("phasedTransaction");
 
         if (phasedTransactionValues == null || phasedTransactionValues.length == 0) {
             return MISSING_TRANSACTION_FULL_HASH;
@@ -56,19 +57,21 @@ public class ApproveTransaction extends CreateTransaction {
             return TOO_MANY_PHASING_VOTES;
         }
 
-        //TODO: parse phasedTransactionIds parameter
-        List<ChainTransactionId> phasedTransactionIds = new ArrayList<>();
-        /*
-        byte[][] phasedTransactionFullHashes = new byte[phasedTransactionValues.length][];
-        for (int i = 0; i < phasedTransactionValues.length; i++) {
-            byte[] hash = Convert.parseHexString(phasedTransactionValues[i]);
-            PhasingPollHome.PhasingPoll phasingPoll = chain.getPhasingPollHome().getPoll(hash);
-            if (phasingPoll == null) {
-                return UNKNOWN_TRANSACTION_FULL_HASH;
+        List<ChainTransactionId> phasedTransactionIds = new ArrayList<>(phasedTransactionValues.length);
+        for (String phasedTransactionValue : phasedTransactionValues) {
+            String[] s = phasedTransactionValue.split(":");
+            int chainId = Integer.parseInt(s[0]);
+            ChildChain childChain = ChildChain.getChildChain(chainId);
+            if (childChain == null) {
+                return UNKNOWN_CHAIN;
             }
-            phasedTransactionFullHashes[i] = hash;
+            byte[] hash = Convert.parseHexString(s[1]);
+            PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(hash);
+            if (phasingPoll == null) {
+                return UNKNOWN_PHASED_TRANSACTION;
+            }
+            phasedTransactionIds.add(new ChainTransactionId(chainId, hash));
         }
-        */
 
         byte[] secret;
         String secretValue = Convert.emptyToNull(req.getParameter("revealedSecret"));

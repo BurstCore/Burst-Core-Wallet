@@ -46,10 +46,12 @@ import java.util.List;
 import static nxt.http.JSONResponses.FEATURE_NOT_AVAILABLE;
 import static nxt.http.JSONResponses.INCORRECT_DEADLINE;
 import static nxt.http.JSONResponses.INCORRECT_EC_BLOCK;
+import static nxt.http.JSONResponses.INCORRECT_LINKED_TRANSACTION;
 import static nxt.http.JSONResponses.INCORRECT_WHITELIST;
 import static nxt.http.JSONResponses.MISSING_DEADLINE;
 import static nxt.http.JSONResponses.MISSING_SECRET_PHRASE;
 import static nxt.http.JSONResponses.NOT_ENOUGH_FUNDS;
+import static nxt.http.JSONResponses.UNKNOWN_CHAIN;
 
 abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
@@ -60,7 +62,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             "messageToEncryptToSelf", "messageToEncryptToSelfIsText", "encryptToSelfMessageData", "encryptToSelfMessageNonce", "compressMessageToEncryptToSelf",
             "phased", "phasingFinishHeight", "phasingVotingModel", "phasingQuorum", "phasingMinBalance", "phasingHolding", "phasingMinBalanceModel",
             "phasingWhitelisted", "phasingWhitelisted", "phasingWhitelisted",
-            "phasingLinkedTransaction",
+            "phasingLinkedTransaction", "phasingLinkedTransaction", "phasingLinkedTransaction",
             "phasingHashedSecret", "phasingHashedSecretAlgorithm",
             "recipientPublicKey",
             "ecBlockId", "ecBlockHeight"};
@@ -97,26 +99,25 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
                 true);
         
         PhasingParams phasingParams = parsePhasingParams(req, "phasing");
-
-        List<ChainTransactionId> linkedTransactionIds = new ArrayList<>();
-        /*
-        byte[][] linkedFullHashes = null;
-        String[] linkedFullHashesValues = req.getParameterValues("phasingLinkedFullHash");
-        if (linkedFullHashesValues != null && linkedFullHashesValues.length > 0) {
-            linkedFullHashes = new byte[linkedFullHashesValues.length][];
-            for (int i = 0; i < linkedFullHashes.length; i++) {
-                linkedFullHashes[i] = Convert.parseHexString(linkedFullHashesValues[i]);
-                if (Convert.emptyToNull(linkedFullHashes[i]) == null || linkedFullHashes[i].length != 32) {
-                    throw new ParameterException(INCORRECT_LINKED_FULL_HASH);
-                }
+        String[] phasingLinkedTransactionsValues = req.getParameterValues("phasingLinkedTransaction");
+        List<ChainTransactionId> linkedTransactionIds = new ArrayList<>(phasingLinkedTransactionsValues.length);
+        for (String phasingLinkedTransactionsValue : phasingLinkedTransactionsValues) {
+            String[] s = phasingLinkedTransactionsValue.split(":");
+            int chainId = Integer.parseInt(s[0]);
+            Chain chain = Chain.getChain(chainId);
+            if (chain == null) {
+                throw new ParameterException(UNKNOWN_CHAIN);
             }
+            byte[] hash = Convert.parseHexString(s[1]);
+            if (hash == null || hash.length != 32) {
+                throw new ParameterException(INCORRECT_LINKED_TRANSACTION);
+            }
+            linkedTransactionIds.add(new ChainTransactionId(chainId, hash));
         }
-        */
 
         byte[] hashedSecret = Convert.parseHexString(Convert.emptyToNull(req.getParameter("phasingHashedSecret")));
         byte algorithm = ParameterParser.getByte(req, "phasingHashedSecretAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
 
-        //TODO: parse and populate linkedTransactionIds
         return new PhasingAppendix(finishHeight, phasingParams, linkedTransactionIds, hashedSecret, algorithm);
     }
 
