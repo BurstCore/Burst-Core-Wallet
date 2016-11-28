@@ -19,28 +19,27 @@ package nxt.voting;
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.blockchain.Attachment;
+import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.TransactionType;
 import nxt.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class PhasingVoteCastingAttachment extends Attachment.AbstractAttachment {
 
-    private final byte[][] transactionFullHashes;
-    private final int[] transactionChainIds;
+    private final List<ChainTransactionId> phasedTransactionsIds;
     private final byte[] revealedSecret;
 
     public PhasingVoteCastingAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
         byte length = buffer.get();
-        transactionChainIds = new int[length];
-        transactionFullHashes = new byte[length][];
+        phasedTransactionsIds = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
-            transactionChainIds[i] = buffer.getInt();
-            transactionFullHashes[i] = new byte[32];
-            buffer.get(transactionFullHashes[i]);
+            phasedTransactionsIds.add(ChainTransactionId.parse(buffer));
         }
         int secretLength = buffer.getInt();
         if (secretLength > Constants.MAX_PHASING_REVEALED_SECRET_LENGTH) {
@@ -56,50 +55,36 @@ public final class PhasingVoteCastingAttachment extends Attachment.AbstractAttac
 
     public PhasingVoteCastingAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        JSONArray hashes = (JSONArray) attachmentData.get("transactionFullHashes");
-        JSONArray chainIds = (JSONArray) attachmentData.get("transactionChainIds");
-        transactionFullHashes = new byte[hashes.size()][];
-        transactionChainIds = new int[hashes.size()];
-        for (int i = 0; i < hashes.size(); i++) {
-            transactionChainIds[i] = ((Long)chainIds.get(i)).intValue();
-            transactionFullHashes[i] = Convert.parseHexString((String)hashes.get(i));
-        }
+        JSONArray phasedTransactionsJson = (JSONArray) attachmentData.get("phasedTransactions");
+        phasedTransactionsIds = new ArrayList<>(phasedTransactionsJson.size());
+        phasedTransactionsJson.forEach(json -> phasedTransactionsIds.add(ChainTransactionId.parse((JSONObject)json)));
         String revealedSecret = Convert.emptyToNull((String) attachmentData.get("revealedSecret"));
         this.revealedSecret = revealedSecret != null ? Convert.parseHexString(revealedSecret) : Convert.EMPTY_BYTE;
     }
 
-    public PhasingVoteCastingAttachment(int[] transactionChainIds, byte[][] transactionFullHashes, byte[] revealedSecret) {
-        this.transactionChainIds = transactionChainIds;
-        this.transactionFullHashes = transactionFullHashes;
+    public PhasingVoteCastingAttachment(List<ChainTransactionId> phasedTransactionIds, byte[] revealedSecret) {
+        this.phasedTransactionsIds = phasedTransactionIds;
         this.revealedSecret = revealedSecret;
     }
 
     @Override
     protected int getMySize() {
-        return 1 + (32 + 4) * transactionFullHashes.length + 4 + revealedSecret.length;
+        return 1 + ChainTransactionId.BYTE_SIZE * phasedTransactionsIds.size() + 4 + revealedSecret.length;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
-        buffer.put((byte) transactionFullHashes.length);
-        for (int i = 0; i < transactionFullHashes.length; i++) {
-            buffer.putInt(transactionChainIds[i]);
-            buffer.put(transactionFullHashes[i]);
-        }
+        buffer.put((byte) phasedTransactionsIds.size());
+        phasedTransactionsIds.forEach(phasedTransaction -> phasedTransaction.put(buffer));
         buffer.putInt(revealedSecret.length);
         buffer.put(revealedSecret);
     }
 
     @Override
     protected void putMyJSON(JSONObject attachment) {
-        JSONArray transactionFullHashesJSON = new JSONArray();
-        JSONArray transactionChainIdsJSON = new JSONArray();
-        for (int i = 0; i < transactionFullHashes.length; i++) {
-            transactionChainIdsJSON.add(transactionChainIds[i]);
-            transactionFullHashesJSON.add(Convert.toHexString(transactionFullHashes[i]));
-        }
-        attachment.put("transactionFullHashes", transactionFullHashesJSON);
-        attachment.put("transactionChainIds", transactionChainIdsJSON);
+        JSONArray phasedTransactionsJSON = new JSONArray();
+        phasedTransactionsIds.forEach(phasedTransaction -> phasedTransactionsJSON.add(phasedTransaction.getJSON()));
+        attachment.put("phasedTransactions", phasedTransactionsJSON);
         if (revealedSecret.length > 0) {
             attachment.put("revealedSecret", Convert.toHexString(revealedSecret));
         }
@@ -110,12 +95,8 @@ public final class PhasingVoteCastingAttachment extends Attachment.AbstractAttac
         return VotingTransactionType.PHASING_VOTE_CASTING;
     }
 
-    public int[] getTransactionChainIds() {
-        return transactionChainIds;
-    }
-
-    public byte[][] getTransactionFullHashes() {
-        return transactionFullHashes;
+    public List<ChainTransactionId> getPhasedTransactionsIds() {
+        return phasedTransactionsIds;
     }
 
     public byte[] getRevealedSecret() {

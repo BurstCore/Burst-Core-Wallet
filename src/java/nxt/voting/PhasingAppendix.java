@@ -23,6 +23,7 @@ import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Chain;
+import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.ChildTransactionImpl;
@@ -38,8 +39,10 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,7 +61,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         if (phasing.hashedSecret.length > 0) {
             fee += (1 + (phasing.hashedSecret.length - 1) / 32) * Constants.ONE_NXT;
         }
-        fee += Constants.ONE_NXT * phasing.linkedFullHashes.length;
+        fee += Constants.ONE_NXT * phasing.linkedTransactionsIds.size();
         return fee;
     };
 
@@ -71,8 +74,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
 
     private final int finishHeight;
     private final PhasingParams params;
-    private final byte[][] linkedFullHashes;
-    private final int[] linkedChainIds;
+    private final List<ChainTransactionId> linkedTransactionsIds;
     private final byte[] hashedSecret;
     private final byte algorithm;
 
@@ -80,19 +82,14 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         super(buffer);
         finishHeight = buffer.getInt();
         params = new PhasingParams(buffer);
-
-        byte linkedFullHashesSize = buffer.get();
-        if (linkedFullHashesSize > 0) {
-            linkedChainIds = new int[linkedFullHashesSize];
-            linkedFullHashes = new byte[linkedFullHashesSize][];
-            for (int i = 0; i < linkedFullHashesSize; i++) {
-                linkedChainIds[i] = buffer.getInt();
-                linkedFullHashes[i] = new byte[32];
-                buffer.get(linkedFullHashes[i]);
+        byte size = buffer.get();
+        if (size > 0) {
+            linkedTransactionsIds = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
+                linkedTransactionsIds.add(ChainTransactionId.parse(buffer));
             }
         } else {
-            linkedChainIds = Convert.EMPTY_INT;
-            linkedFullHashes = Convert.EMPTY_BYTES;
+            linkedTransactionsIds = Collections.emptyList();
         }
         byte hashedSecretLength = buffer.get();
         if (hashedSecretLength > 0) {
@@ -108,19 +105,12 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         super(attachmentData);
         finishHeight = ((Long) attachmentData.get("phasingFinishHeight")).intValue();
         params = new PhasingParams(attachmentData);
-        JSONArray linkedFullHashesJson = (JSONArray) attachmentData.get("phasingLinkedFullHashes");
-        JSONArray linkedChainIdsJson = (JSONArray) attachmentData.get("phasingLinkedChainIds");
-        if (linkedFullHashesJson != null && linkedFullHashesJson.size() > 0
-                && linkedChainIdsJson != null && linkedChainIdsJson.size() == linkedFullHashesJson.size()) {
-            linkedChainIds = new int[linkedFullHashesJson.size()];
-            linkedFullHashes = new byte[linkedFullHashesJson.size()][];
-            for (int i = 0; i < linkedFullHashes.length; i++) {
-                linkedChainIds[i] = ((Long)linkedChainIdsJson.get(i)).intValue();
-                linkedFullHashes[i] = Convert.parseHexString((String) linkedFullHashesJson.get(i));
-            }
+        JSONArray linkedTransactionsJson = (JSONArray) attachmentData.get("phasingLinkedTransactions");
+        if (linkedTransactionsJson != null && linkedTransactionsJson.size() > 0) {
+            linkedTransactionsIds = new ArrayList<>(linkedTransactionsJson.size());
+            linkedTransactionsJson.forEach(json -> linkedTransactionsIds.add(ChainTransactionId.parse((JSONObject)json)));
         } else {
-            linkedChainIds = Convert.EMPTY_INT;
-            linkedFullHashes = Convert.EMPTY_BYTES;
+            linkedTransactionsIds = Collections.emptyList();
         }
         String hashedSecret = Convert.emptyToNull((String)attachmentData.get("phasingHashedSecret"));
         if (hashedSecret != null) {
@@ -132,11 +122,10 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         }
     }
 
-    public PhasingAppendix(int finishHeight, PhasingParams phasingParams, int[] linkedChainIds, byte[][] linkedFullHashes, byte[] hashedSecret, byte algorithm) {
+    public PhasingAppendix(int finishHeight, PhasingParams phasingParams, List<ChainTransactionId> linkedTransactionsIds, byte[] hashedSecret, byte algorithm) {
         this.finishHeight = finishHeight;
         this.params = phasingParams;
-        this.linkedChainIds = linkedChainIds;
-        this.linkedFullHashes = Convert.nullToEmpty(linkedFullHashes);
+        this.linkedTransactionsIds = linkedTransactionsIds;
         this.hashedSecret = hashedSecret != null ? hashedSecret : Convert.EMPTY_BYTE;
         this.algorithm = algorithm;
     }
@@ -148,18 +137,15 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
 
     @Override
     protected int getMySize() {
-        return 4 + params.getMySize() + 1 + (32 + 4) * linkedFullHashes.length + 1 + hashedSecret.length + 1;
+        return 4 + params.getMySize() + 1 + ChainTransactionId.BYTE_SIZE * linkedTransactionsIds.size() + 1 + hashedSecret.length + 1;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
         buffer.putInt(finishHeight);
         params.putMyBytes(buffer);
-        buffer.put((byte) linkedFullHashes.length);
-        for (int i = 0; i < linkedFullHashes.length; i++) {
-            buffer.putInt(linkedChainIds[i]);
-            buffer.put(linkedFullHashes[i]);
-        }
+        buffer.put((byte) linkedTransactionsIds.size());
+        linkedTransactionsIds.forEach(linkedTransaction -> linkedTransaction.put(buffer));
         buffer.put((byte)hashedSecret.length);
         buffer.put(hashedSecret);
         buffer.put(algorithm);
@@ -169,15 +155,10 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     protected void putMyJSON(JSONObject json) {
         json.put("phasingFinishHeight", finishHeight);
         params.putMyJSON(json);
-        if (linkedFullHashes.length > 0) {
-            JSONArray linkedFullHashesJson = new JSONArray();
-            JSONArray linkedChainIdsJson = new JSONArray();
-            for (int i = 0; i < linkedFullHashes.length; i++) {
-                linkedChainIdsJson.add(linkedChainIds[i]);
-                linkedFullHashesJson.add(Convert.toHexString(linkedFullHashes[i]));
-            }
-            json.put("phasingLinkedFullHashes", linkedFullHashesJson);
-            json.put("phasingLinkedChainIds", linkedChainIdsJson);
+        if (linkedTransactionsIds.size() > 0) {
+            JSONArray linkedTransactionsJson = new JSONArray();
+            linkedTransactionsIds.forEach(linkedTransaction -> linkedTransactionsJson.add(linkedTransaction.getJSON()));
+            json.put("phasingLinkedTransactions", linkedTransactionsJson);
         }
         if (hashedSecret.length > 0) {
             json.put("phasingHashedSecret", Convert.toHexString(hashedSecret));
@@ -190,25 +171,21 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         params.validate();
         int currentHeight = Nxt.getBlockchain().getHeight();
         if (params.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
-            if (linkedFullHashes.length == 0 || linkedFullHashes.length > Constants.MAX_PHASING_LINKED_TRANSACTIONS) {
-                throw new NxtException.NotValidException("Invalid number of linkedFullHashes " + linkedFullHashes.length);
+            if (linkedTransactionsIds.size() == 0 || linkedTransactionsIds.size() > Constants.MAX_PHASING_LINKED_TRANSACTIONS) {
+                throw new NxtException.NotValidException("Invalid number of linkedFullHashes " + linkedTransactionsIds.size());
             }
-            if (linkedChainIds.length != linkedFullHashes.length) {
-                throw new NxtException.NotValidException("Number of linkedChainIds " + linkedChainIds.length
-                        + "does not match number of linkedFullHashes " + linkedFullHashes.length);
-            }
-            Set<Long> linkedTransactionIds = new HashSet<>(linkedFullHashes.length);
-            for (int i = 0; i < linkedFullHashes.length; i++) {
-                byte[] hash = linkedFullHashes[i];
+            Set<Long> linkedTransactionIds = new HashSet<>(linkedTransactionsIds.size());
+            for (ChainTransactionId linkedTransactionId : linkedTransactionsIds) {
+                byte[] hash = linkedTransactionId.getFullHash();
                 if (Convert.emptyToNull(hash) == null || hash.length != 32) {
                     throw new NxtException.NotValidException("Invalid linkedFullHash " + Convert.toHexString(hash));
                 }
                 if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
                     throw new NxtException.NotValidException("Duplicate linked transaction ids");
                 }
-                Chain chain = Chain.getChain(linkedChainIds[i]);
+                Chain chain = linkedTransactionId.getChain();
                 if (chain == null) {
-                    throw new NxtException.NotValidException("Invalid chain " + linkedChainIds[i]);
+                    throw new NxtException.NotValidException("Invalid chain id " + linkedTransactionId.getChainId());
                 }
                 TransactionImpl linkedTransaction = chain.getTransactionHome().findTransactionByFullHash(hash, currentHeight);
                 if (linkedTransaction != null) {
@@ -220,12 +197,12 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
                     }
                 }
             }
-            if (params.getQuorum() > linkedFullHashes.length) {
+            if (params.getQuorum() > linkedTransactionsIds.size()) {
                 throw new NxtException.NotValidException("Quorum of " + params.getQuorum() + " cannot be achieved in by-transaction voting with "
-                        + linkedFullHashes.length + " linked full hashes only");
+                        + linkedTransactionsIds.size() + " linked full hashes only");
             }
         } else {
-            if (linkedFullHashes.length != 0) {
+            if (linkedTransactionsIds.size() != 0) {
                 throw new NxtException.NotValidException("LinkedFullHashes can only be used with VotingModel.TRANSACTION");
             }
         }
@@ -356,12 +333,8 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         return params.getVoteWeighting();
     }
 
-    public byte[][] getLinkedFullHashes() {
-        return linkedFullHashes;
-    }
-
-    public int[] getLinkedChainIds() {
-        return linkedChainIds;
+    public List<ChainTransactionId> getLinkedTransactionsIds() {
+        return linkedTransactionsIds;
     }
 
     public byte[] getHashedSecret() {

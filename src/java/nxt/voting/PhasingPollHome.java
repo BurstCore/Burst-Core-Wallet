@@ -17,7 +17,7 @@
 package nxt.voting;
 
 import nxt.Nxt;
-import nxt.blockchain.Chain;
+import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.Transaction;
@@ -114,23 +114,23 @@ public final class PhasingPollHome {
         }
     };
 
-    private static ValuesDbTable<PhasingPoll, LinkedTransaction> linkedTransactionTable = new ValuesDbTable<PhasingPoll, LinkedTransaction>
+    private static ValuesDbTable<PhasingPoll, ChainTransactionId> linkedTransactionTable = new ValuesDbTable<PhasingPoll, ChainTransactionId>
             ("public.phasing_poll_linked_transaction", linkedTransactionDbKeyFactory) {
         @Override
-        protected LinkedTransaction load(Connection con, ResultSet rs) throws SQLException {
-            return new LinkedTransaction(rs.getInt("linked_chain_id"), rs.getBytes("linked_full_hash"));
+        protected ChainTransactionId load(Connection con, ResultSet rs) throws SQLException {
+            return new ChainTransactionId(rs.getInt("linked_chain_id"), rs.getBytes("linked_full_hash"));
         }
         @Override
-        protected void save(Connection con, PhasingPoll poll, LinkedTransaction linkedTransaction) throws SQLException {
+        protected void save(Connection con, PhasingPoll poll, ChainTransactionId linkedTransaction) throws SQLException {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_linked_transaction (chain_id, transaction_id, transaction_full_hash, "
                     + "linked_chain_id, linked_full_hash, linked_transaction_id, height) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setInt(++i, poll.getPhasingPollHome().childChain.getId());
                 pstmt.setLong(++i, poll.getId());
                 pstmt.setBytes(++i, poll.getFullHash());
-                pstmt.setInt(++i, linkedTransaction.chainId);
-                pstmt.setBytes(++i, linkedTransaction.hash);
-                pstmt.setLong(++i, Convert.fullHashToId(linkedTransaction.hash));
+                pstmt.setInt(++i, linkedTransaction.getChainId());
+                pstmt.setBytes(++i, linkedTransaction.getFullHash());
+                pstmt.setLong(++i, Convert.fullHashToId(linkedTransaction.getFullHash()));
                 pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
                 pstmt.executeUpdate();
             }
@@ -261,26 +261,6 @@ public final class PhasingPollHome {
                 phasingPollResult.save(con);
             }
         };
-    }
-
-    public static final class LinkedTransaction {
-
-        private final int chainId;
-        private final byte[] hash;
-
-        private LinkedTransaction(int chainId, byte[] hash) {
-            this.chainId = chainId;
-            this.hash = hash;
-        }
-
-        public int getChainId() {
-            return chainId;
-        }
-
-        public byte[] getLinkedFullHash() {
-            return hash;
-        }
-
     }
 
     public final class PhasingPollResult {
@@ -490,12 +470,8 @@ public final class PhasingPollHome {
         if (voters.length > 0) {
             votersTable.insert(poll, Convert.toList(voters));
         }
-        if (appendix.getLinkedFullHashes().length > 0) {
-            List<LinkedTransaction> linkedTransactions = new ArrayList<>(appendix.getLinkedFullHashes().length);
-            for (int i = 0; i < appendix.getLinkedFullHashes().length; i++) {
-                linkedTransactions.add(new LinkedTransaction(appendix.getLinkedChainIds()[i], appendix.getLinkedFullHashes()[i]));
-            }
-            linkedTransactionTable.insert(poll, linkedTransactions);
+        if (appendix.getLinkedTransactionsIds().size() > 0) {
+            linkedTransactionTable.insert(poll, appendix.getLinkedTransactionsIds());
         }
     }
 
@@ -546,7 +522,7 @@ public final class PhasingPollHome {
             return hash;
         }
 
-        public List<LinkedTransaction> getLinkedTransactions() {
+        public List<ChainTransactionId> getLinkedTransactions() {
             return linkedTransactionTable.get(linkedTransactionDbKeyFactory.newKey(this));
         }
 
@@ -574,9 +550,8 @@ public final class PhasingPollHome {
             int height = Math.min(this.finishHeight, Nxt.getBlockchain().getHeight());
             if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
                 int count = 0;
-                for (LinkedTransaction linkedTransaction : getLinkedTransactions()) {
-                    if (Chain.getChain(linkedTransaction.getChainId()).getTransactionHome()
-                            .hasTransactionByFullHash(linkedTransaction.getLinkedFullHash(), height)) {
+                for (ChainTransactionId linkedTransaction : getLinkedTransactions()) {
+                    if (linkedTransaction.getChain().getTransactionHome().hasTransactionByFullHash(linkedTransaction.getFullHash(), height)) {
                         count += 1;
                     }
                 }

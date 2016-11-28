@@ -1547,16 +1547,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                         }
                     });
                     if (childTransaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING && !childTransaction.attachmentIsPhased()) {
-                        PhasingVoteCastingAttachment voteCasting = (PhasingVoteCastingAttachment) childTransaction.getAttachment();
-                        int[] childChainIds = voteCasting.getTransactionChainIds();
-                        byte[][] transactionFullHashes = voteCasting.getTransactionFullHashes();
-                        for (int i = 0; i < transactionFullHashes.length; i++) {
-                            ChildChain childChain = ChildChain.getChildChain(childChainIds[i]);
-                            PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(transactionFullHashes[i]);
-                            if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                                possiblyApprovedTransactions.add((ChildTransactionImpl) childChain.getTransactionHome().findTransactionByFullHash(transactionFullHashes[i]));
-                            }
-                        };
+                        addVotedTransactions(childTransaction, possiblyApprovedTransactions, block.getHeight());
                     }
                 }
             });
@@ -1564,16 +1555,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (phasedTransaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING) {
                     PhasingPollHome.PhasingPollResult result = phasedTransaction.getChain().getPhasingPollHome().getResult(phasedTransaction.getFullHash());
                     if (result != null && result.isApproved()) {
-                        PhasingVoteCastingAttachment voteCasting = (PhasingVoteCastingAttachment) phasedTransaction.getAttachment();
-                        int[] childChainIds = voteCasting.getTransactionChainIds();
-                        byte[][] transactionFullHashes = voteCasting.getTransactionFullHashes();
-                        for (int i = 0; i < transactionFullHashes.length; i++) {
-                            ChildChain childChain = ChildChain.getChildChain(childChainIds[i]);
-                            PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(transactionFullHashes[i]);
-                            if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                                possiblyApprovedTransactions.add((ChildTransactionImpl)childChain.getTransactionHome().findTransactionByFullHash(transactionFullHashes[i]));
-                            }
-                        }
+                        addVotedTransactions(phasedTransaction, possiblyApprovedTransactions, block.getHeight());
                     }
                 }
             });
@@ -1596,6 +1578,18 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         } finally {
             isProcessingBlock = false;
             AccountLedger.clearEntries();
+        }
+    }
+
+    private void addVotedTransactions(Transaction votingTransaction, Set<ChildTransactionImpl> possiblyApprovedTransactions, int blockchainHeight) {
+        PhasingVoteCastingAttachment voteCasting = (PhasingVoteCastingAttachment) votingTransaction.getAttachment();
+        List<ChainTransactionId> phasedTransactionIds = voteCasting.getPhasedTransactionsIds();
+        for (ChainTransactionId phasedTransactionId : phasedTransactionIds) {
+            ChildChain childChain = phasedTransactionId.getChildChain();
+            PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(phasedTransactionId.getFullHash());
+            if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > blockchainHeight) {
+                possiblyApprovedTransactions.add((ChildTransactionImpl)phasedTransactionId.getChildTransaction());
+            }
         }
     }
 
