@@ -1546,31 +1546,34 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                             possiblyApprovedTransactions.add((ChildTransactionImpl)phasedTransaction);
                         }
                     });
-                    //TODO: handle votes from other child chains?
-                    ChildChain childChain = childTransaction.getChain();
                     if (childTransaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING && !childTransaction.attachmentIsPhased()) {
                         PhasingVoteCastingAttachment voteCasting = (PhasingVoteCastingAttachment) childTransaction.getAttachment();
-                        voteCasting.getTransactionFullHashes().forEach(hash -> {
-                            PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(hash);
+                        int[] childChainIds = voteCasting.getTransactionChainIds();
+                        byte[][] transactionFullHashes = voteCasting.getTransactionFullHashes();
+                        for (int i = 0; i < transactionFullHashes.length; i++) {
+                            ChildChain childChain = ChildChain.getChildChain(childChainIds[i]);
+                            PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(transactionFullHashes[i]);
                             if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                                possiblyApprovedTransactions.add((ChildTransactionImpl) childChain.getTransactionHome().findTransactionByFullHash(phasingPoll.getFullHash()));
+                                possiblyApprovedTransactions.add((ChildTransactionImpl) childChain.getTransactionHome().findTransactionByFullHash(transactionFullHashes[i]));
                             }
-                        });
+                        };
                     }
                 }
             });
             validPhasedTransactions.forEach(phasedTransaction -> {
                 if (phasedTransaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING) {
-                    ChildChain childChain = phasedTransaction.getChain();
-                    PhasingPollHome.PhasingPollResult result = childChain.getPhasingPollHome().getResult(phasedTransaction.getFullHash());
+                    PhasingPollHome.PhasingPollResult result = phasedTransaction.getChain().getPhasingPollHome().getResult(phasedTransaction.getFullHash());
                     if (result != null && result.isApproved()) {
-                        PhasingVoteCastingAttachment phasingVoteCasting = (PhasingVoteCastingAttachment) phasedTransaction.getAttachment();
-                        phasingVoteCasting.getTransactionFullHashes().forEach(hash -> {
-                            PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(hash);
+                        PhasingVoteCastingAttachment voteCasting = (PhasingVoteCastingAttachment) phasedTransaction.getAttachment();
+                        int[] childChainIds = voteCasting.getTransactionChainIds();
+                        byte[][] transactionFullHashes = voteCasting.getTransactionFullHashes();
+                        for (int i = 0; i < transactionFullHashes.length; i++) {
+                            ChildChain childChain = ChildChain.getChildChain(childChainIds[i]);
+                            PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(transactionFullHashes[i]);
                             if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                                possiblyApprovedTransactions.add((ChildTransactionImpl)childChain.getTransactionHome().findTransactionByFullHash(phasingPoll.getFullHash()));
+                                possiblyApprovedTransactions.add((ChildTransactionImpl)childChain.getTransactionHome().findTransactionByFullHash(transactionFullHashes[i]));
                             }
-                        });
+                        }
                     }
                 }
             });

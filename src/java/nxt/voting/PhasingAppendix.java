@@ -71,7 +71,6 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
 
     private final int finishHeight;
     private final PhasingParams params;
-    //TODO: allow linkedFullHashes to be from different chain
     private final byte[][] linkedFullHashes;
     private final int[] linkedChainIds;
     private final byte[] hashedSecret;

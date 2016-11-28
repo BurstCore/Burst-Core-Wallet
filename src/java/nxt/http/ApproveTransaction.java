@@ -28,8 +28,6 @@ import nxt.voting.PhasingVoteCastingAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
 
 import static nxt.http.JSONResponses.MISSING_TRANSACTION_FULL_HASH;
 import static nxt.http.JSONResponses.TOO_MANY_PHASING_VOTES;
@@ -57,14 +55,15 @@ public class ApproveTransaction extends CreateTransaction {
             return TOO_MANY_PHASING_VOTES;
         }
 
-        List<byte[]> phasedTransactionFullHashes = new ArrayList<>(phasedTransactionValues.length);
-        for (String phasedTransactionValue : phasedTransactionValues) {
-            byte[] hash = Convert.parseHexString(phasedTransactionValue);
+        //TODO: also parse transactionChainIds parameter, use JSON arrays for both
+        byte[][] phasedTransactionFullHashes = new byte[phasedTransactionValues.length][];
+        for (int i = 0; i < phasedTransactionValues.length; i++) {
+            byte[] hash = Convert.parseHexString(phasedTransactionValues[i]);
             PhasingPollHome.PhasingPoll phasingPoll = chain.getPhasingPollHome().getPoll(hash);
             if (phasingPoll == null) {
                 return UNKNOWN_TRANSACTION_FULL_HASH;
             }
-            phasedTransactionFullHashes.add(hash);
+            phasedTransactionFullHashes[i] = hash;
         }
 
         byte[] secret;
@@ -81,7 +80,8 @@ public class ApproveTransaction extends CreateTransaction {
             }
         }
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new PhasingVoteCastingAttachment(phasedTransactionFullHashes, secret);
+        //TODO: transactionChainIds
+        Attachment attachment = new PhasingVoteCastingAttachment(null, phasedTransactionFullHashes, secret);
         return createTransaction(req, account, attachment);
     }
 }
