@@ -108,6 +108,4 @@ public interface Transaction {
 
     boolean isPhased();
 
-    String getReferencedTransactionFullHash();
-
 }

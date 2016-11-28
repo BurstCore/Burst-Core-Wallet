@@ -56,7 +56,7 @@ import static nxt.http.JSONResponses.UNKNOWN_CHAIN;
 abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
     private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeNQT",
-            "deadline", "referencedTransactionFullHash", "broadcast",
+            "deadline", "referencedTransaction", "broadcast",
             "message", "messageIsText", "messageIsPrunable",
             "messageToEncrypt", "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "encryptedMessageIsPrunable", "compressMessageToEncrypt",
             "messageToEncryptToSelf", "messageToEncryptToSelfIsText", "encryptToSelfMessageData", "encryptToSelfMessageNonce", "compressMessageToEncryptToSelf",
@@ -144,7 +144,14 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
     final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
                                             long amountNQT, Attachment attachment) throws NxtException {
         String deadlineValue = req.getParameter("deadline");
-        String referencedTransactionFullHash = Convert.emptyToNull(req.getParameter("referencedTransactionFullHash"));
+        ChainTransactionId referencedTransactionId = null;
+        String referencedTransactionValue = Convert.emptyToNull(req.getParameter("referencedTransaction"));
+        if (referencedTransactionValue != null) {
+            String[] s = referencedTransactionValue.split(":");
+            int chainId = Integer.parseInt(s[0]);
+            byte[] hash = Convert.parseHexString(s[1]);
+            referencedTransactionId = new ChainTransactionId(chainId, hash);
+        }
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         String publicKeyValue = Convert.emptyToNull(req.getParameter("publicKey"));
         boolean broadcast = !"false".equalsIgnoreCase(req.getParameter("broadcast")) && secretPhrase != null;
@@ -215,7 +222,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             Transaction.Builder builder;
             if (chain instanceof ChildChain) {
                 builder = Nxt.newTransactionBuilder((ChildChain)chain, publicKey, amountNQT, feeNQT, deadline, attachment)
-                        .referencedTransactionFullHash(referencedTransactionFullHash)
+                        .referencedTransaction(referencedTransactionId)
                         .appendix(encryptedMessage)
                         .appendix(message)
                         .appendix(publicKeyAnnouncement)

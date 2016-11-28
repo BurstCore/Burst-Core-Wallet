@@ -93,8 +93,8 @@ public class UnconfirmedChildTransaction extends UnconfirmedTransaction implemen
     }
 
     @Override
-    byte[] referencedTransactionFullHash() {
-        return getTransaction().referencedTransactionFullHash();
+    public ChainTransactionId getReferencedTransactionId() {
+        return getTransaction().getReferencedTransactionId();
     }
 
 }

@@ -130,11 +130,6 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
     }
 
     @Override
-    public String getReferencedTransactionFullHash() {
-        return null;
-    }
-
-    @Override
     int getFlags() {
         return 0; // reserved for future use
     }

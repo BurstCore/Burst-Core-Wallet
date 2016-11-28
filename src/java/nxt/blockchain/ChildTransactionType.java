@@ -80,7 +80,7 @@ public abstract class ChildTransactionType extends TransactionType {
         long amount = transaction.getAmount();
         long fee = transaction.getFee();
         long deposit = 0;
-        if (((ChildTransactionImpl)transaction).referencedTransactionFullHash() != null) {
+        if (((ChildTransactionImpl)transaction).getReferencedTransactionId() != null) {
             if (senderAccount.getUnconfirmedBalanceFQT() < Constants.UNCONFIRMED_POOL_DEPOSIT_FQT) {
                 return false;
             }
@@ -123,7 +123,7 @@ public abstract class ChildTransactionType extends TransactionType {
         undoAttachmentUnconfirmed(transaction, senderAccount);
         senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(),
                 transaction.getAmount(), transaction.getFee());
-        if (((ChildTransactionImpl)transaction).referencedTransactionFullHash() != null) {
+        if (((ChildTransactionImpl)transaction).getReferencedTransactionId() != null) {
             senderAccount.addToUnconfirmedBalanceFQT(getLedgerEvent(), transaction.getId(), 0,
                     Constants.UNCONFIRMED_POOL_DEPOSIT_FQT);
         }

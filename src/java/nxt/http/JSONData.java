@@ -41,6 +41,7 @@ import nxt.blockchain.Appendix;
 import nxt.blockchain.Block;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.Generator;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
@@ -964,9 +965,11 @@ public final class JSONData {
         }
         json.put("amountNQT", String.valueOf(transaction.getAmount()));
         json.put("feeNQT", String.valueOf(transaction.getFee()));
-        String referencedTransactionFullHash = transaction.getReferencedTransactionFullHash();
-        if (referencedTransactionFullHash != null) {
-            json.put("referencedTransactionFullHash", referencedTransactionFullHash);
+        if (transaction instanceof ChildTransaction) {
+            ChainTransactionId referencedTransactionId = ((ChildTransaction)transaction).getReferencedTransactionId();
+            if (referencedTransactionId != null) {
+                json.put("referencedTransaction", referencedTransactionId.getJSON());
+            }
         }
         byte[] signature = Convert.emptyToNull(transaction.getSignature());
         if (signature != null) {

@@ -1492,9 +1492,9 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         if (transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash(), previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
         }
-        if (transaction.referencedTransactionFullHash() != null && !transaction.hasAllReferencedTransactions(transaction.getTimestamp(), 0)) {
+        if (transaction.getReferencedTransactionId() != null && !transaction.hasAllReferencedTransactions(transaction.getTimestamp(), 0)) {
             throw new TransactionNotAcceptedException("Missing or invalid referenced transaction "
-                    + transaction.getReferencedTransactionFullHash(), transaction);
+                    + transaction.getReferencedTransactionId(), transaction);
         }
         if (transaction.getVersion() != getTransactionVersion(previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Invalid transaction version " + transaction.getVersion()

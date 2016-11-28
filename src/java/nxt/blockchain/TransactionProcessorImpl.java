@@ -139,8 +139,8 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 if ((result = Integer.compare(o2.getHeight(), o1.getHeight())) != 0) {
                     return result;
                 }
-                if ((result = Boolean.compare(o2.referencedTransactionFullHash() != null,
-                        o1.referencedTransactionFullHash() != null)) != 0) {
+                if ((result = Boolean.compare(o2.getReferencedTransactionId() != null,
+                        o1.getReferencedTransactionId() != null)) != 0) {
                     return result;
                 }
                 if ((result = Long.compare(o1.getFeePerByte(), o2.getFeePerByte())) != 0) {

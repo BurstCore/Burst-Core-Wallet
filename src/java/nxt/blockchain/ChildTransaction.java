@@ -29,7 +29,7 @@ public interface ChildTransaction extends Transaction {
 
     interface Builder extends Transaction.Builder {
 
-        Builder referencedTransactionFullHash(String referencedTransactionFullHash);
+        Builder referencedTransaction(ChainTransactionId referencedTransaction);
 
         Builder appendix(MessageAppendix message);
 
@@ -56,6 +56,8 @@ public interface ChildTransaction extends Transaction {
     FxtTransaction getFxtTransaction();
 
     long getFxtTransactionId();
+
+    ChainTransactionId getReferencedTransactionId();
 
     MessageAppendix getMessage();
 

@@ -61,6 +61,9 @@ public final class ChainTransactionId {
         int chainId = buffer.getInt();
         byte[] hash = new byte[32];
         buffer.get(hash);
+        if (Convert.emptyToNull(hash) == null) {
+            return null;
+        }
         return new ChainTransactionId(chainId, hash);
     }
 
@@ -70,6 +73,9 @@ public final class ChainTransactionId {
     }
 
     public static ChainTransactionId parse(JSONObject json) {
+        if (json == null) {
+            return null;
+        }
         int chainId = ((Long)json.get("chainId")).intValue();
         byte[] hash = Convert.parseHexString((String)json.get("transactionFullHash"));
         return new ChainTransactionId(chainId, hash);
@@ -80,5 +86,10 @@ public final class ChainTransactionId {
         json.put("chainId", chainId);
         json.put("transactionFullHash", Convert.toHexString(hash));
         return json;
+    }
+
+    @Override
+    public String toString() {
+        return "chain: " + Chain.getChain(chainId).getName() + ", full hash: " + Convert.toHexString(hash);
     }
 }

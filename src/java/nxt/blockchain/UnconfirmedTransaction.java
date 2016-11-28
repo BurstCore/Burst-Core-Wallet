@@ -288,11 +288,8 @@ public abstract class UnconfirmedTransaction implements Transaction {
         return transaction.getFullHash();
     }
 
-    @Override
-    public String getReferencedTransactionFullHash() {
-        return transaction.getReferencedTransactionFullHash();
+    public ChainTransactionId getReferencedTransactionId() {
+        return null;
     }
-
-    abstract byte[] referencedTransactionFullHash();
 
 }

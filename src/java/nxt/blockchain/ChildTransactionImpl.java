@@ -53,7 +53,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
 
     public static final class BuilderImpl extends TransactionImpl.BuilderImpl implements ChildTransaction.Builder {
 
-        private byte[] referencedTransactionFullHash;
+        private ChainTransactionId referencedTransactionId;
         private long fxtTransactionId;
         private MessageAppendix message;
         private EncryptedMessageAppendix encryptedMessage;
@@ -106,13 +106,8 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         }
 
         @Override
-        public BuilderImpl referencedTransactionFullHash(String referencedTransactionFullHash) {
-            this.referencedTransactionFullHash = Convert.parseHexString(referencedTransactionFullHash);
-            return this;
-        }
-
-        BuilderImpl referencedTransactionFullHash(byte[] referencedTransactionFullHash) {
-            this.referencedTransactionFullHash = referencedTransactionFullHash;
+        public BuilderImpl referencedTransaction(ChainTransactionId referencedTransactionId) {
+            this.referencedTransactionId = referencedTransactionId;
             return this;
         }
 
@@ -200,7 +195,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     private final ChildChain childChain;
     private final long fee;
     private final byte[] signature;
-    private final byte[] referencedTransactionFullHash;
+    private final ChainTransactionId referencedTransactionId;
     private final MessageAppendix message;
     private final EncryptedMessageAppendix encryptedMessage;
     private final EncryptToSelfMessageAppendix encryptToSelfMessage;
@@ -215,7 +210,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     private ChildTransactionImpl(BuilderImpl builder, String secretPhrase) throws NxtException.NotValidException {
         super(builder);
         this.childChain = ChildChain.getChildChain(builder.chainId);
-        this.referencedTransactionFullHash = builder.referencedTransactionFullHash;
+        this.referencedTransactionId = builder.referencedTransactionId;
         this.fxtTransactionId = builder.fxtTransactionId;
         this.message  = builder.message;
         this.encryptedMessage = builder.encryptedMessage;
@@ -278,12 +273,8 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     }
 
     @Override
-    public String getReferencedTransactionFullHash() {
-        return Convert.toHexString(referencedTransactionFullHash);
-    }
-
-    public byte[] referencedTransactionFullHash() {
-        return referencedTransactionFullHash;
+    public ChainTransactionId getReferencedTransactionId() {
+        return referencedTransactionId;
     }
 
     @Override
@@ -357,8 +348,8 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     @Override
     public JSONObject getJSONObject() {
         JSONObject json = super.getJSONObject();
-        if (referencedTransactionFullHash != null) {
-            json.put("referencedTransactionFullHash", Convert.toHexString(referencedTransactionFullHash));
+        if (referencedTransactionId != null) {
+            json.put("referencedTransaction", referencedTransactionId.getJSON());
         }
         return json;
     }
@@ -366,7 +357,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     @Override
     public long getMinimumFeeFQT(int blockchainHeight) {
         long totalFee = super.getMinimumFeeFQT(blockchainHeight);
-        if (referencedTransactionFullHash != null) {
+        if (referencedTransactionId != null) {
             totalFee = Math.addExact(totalFee, Constants.ONE_NXT);
         }
         return totalFee;
@@ -382,11 +373,10 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
 
     @Override
     boolean hasAllReferencedTransactions(int timestamp, int count) {
-        if (referencedTransactionFullHash == null) {
+        if (referencedTransactionId == null) {
             return timestamp - getTimestamp() < Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN && count < 10;
         }
-        //TODO: allow referencing transactions from other chains
-        TransactionImpl referencedTransaction = childChain.getTransactionHome().findTransactionByFullHash(referencedTransactionFullHash);
+        TransactionImpl referencedTransaction = (TransactionImpl)referencedTransactionId.getTransaction();
         return referencedTransaction != null
                 && referencedTransaction.getHeight() < getHeight()
                 && referencedTransaction.hasAllReferencedTransactions(timestamp, count + 1);
@@ -395,9 +385,10 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     @Override
     ByteBuffer generateBytes() {
         ByteBuffer buffer = super.generateBytes();
-        if (referencedTransactionFullHash != null) {
-            buffer.put(referencedTransactionFullHash);
+        if (referencedTransactionId != null) {
+            referencedTransactionId.put(buffer);
         } else {
+            buffer.putInt(0);
             buffer.put(new byte[32]);
         }
         return buffer;
@@ -405,7 +396,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
 
     @Override
     protected int getSize() {
-        return super.getSize() + 32;
+        return super.getSize() + ChainTransactionId.BYTE_SIZE;
     }
 
     @Override
@@ -422,8 +413,13 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     @Override
     public void validate() throws NxtException.ValidationException {
         super.validate();
-        if (referencedTransactionFullHash != null && referencedTransactionFullHash.length != 32) {
-            throw new NxtException.NotValidException("Invalid referenced transaction full hash " + Convert.toHexString(referencedTransactionFullHash));
+        if (referencedTransactionId != null) {
+            if (referencedTransactionId.getFullHash().length != 32) {
+                throw new NxtException.NotValidException("Invalid referenced transaction full hash " + Convert.toHexString(referencedTransactionId.getFullHash()));
+            }
+            if (referencedTransactionId.getChain() == null) {
+                throw new NxtException.NotValidException("Invalid referenced transaction chain " + referencedTransactionId.getChainId());
+            }
         }
         boolean validatingAtFinish = phasing != null && getSignature() != null && childChain.getPhasingPollHome().getPoll(getFullHash()) != null;
         for (Appendix.AbstractAppendix appendage : appendages()) {
@@ -469,7 +465,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
                 recipientAccount = Account.addOrGetAccount(getRecipientId());
             }
         }
-        if (referencedTransactionFullHash != null) {
+        if (referencedTransactionId != null) {
             senderAccount.addToUnconfirmedBalanceFQT(getType().getLedgerEvent(), getId(),
                     0, Constants.UNCONFIRMED_POOL_DEPOSIT_FQT);
         }
@@ -521,19 +517,25 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     @Override
     void save(Connection con, String schemaTable) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + schemaTable
-                + " (id, deadline, recipient_id, amount, fee, referenced_transaction_full_hash, height, "
+                + " (id, deadline, recipient_id, amount, fee, referenced_transaction_chain_id, referenced_transaction_full_hash, height, "
                 + "block_id, signature, timestamp, type, subtype, sender_id, attachment_bytes, "
                 + "block_timestamp, full_hash, version, has_message, has_encrypted_message, has_public_key_announcement, "
                 + "has_encrypttoself_message, phased, has_prunable_message, has_prunable_encrypted_message, "
                 + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index, fxt_transaction_id) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, getId());
             pstmt.setShort(++i, getDeadline());
             DbUtils.setLongZeroToNull(pstmt, ++i, getRecipientId());
             pstmt.setLong(++i, getAmount());
             pstmt.setLong(++i, getFee());
-            DbUtils.setBytes(pstmt, ++i, referencedTransactionFullHash());
+            if (referencedTransactionId != null) {
+                pstmt.setInt(++i, referencedTransactionId.getChainId());
+                pstmt.setBytes(++i, referencedTransactionId.getFullHash());
+            } else {
+                pstmt.setNull(++i, Types.INTEGER);
+                pstmt.setNull(++i, Types.BINARY);
+            }
             pstmt.setInt(++i, getHeight());
             pstmt.setLong(++i, getBlockId());
             pstmt.setBytes(++i, getSignature());
@@ -572,11 +574,12 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             pstmt.setLong(++i, getFxtTransactionId());
             pstmt.executeUpdate();
         }
-        if (referencedTransactionFullHash() != null) {
+        //TODO
+        if (referencedTransactionId != null) {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO referenced_transaction "
                     + "(transaction_id, referenced_transaction_id) VALUES (?, ?)")) {
                 pstmt.setLong(1, getId());
-                pstmt.setLong(2, Convert.fullHashToId(referencedTransactionFullHash()));
+                pstmt.setLong(2, Convert.fullHashToId(referencedTransactionId.getFullHash()));
                 pstmt.executeUpdate();
             }
         }
@@ -590,12 +593,15 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     public static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, long amount, long fee, short deadline,
                                                                   Attachment.AbstractAttachment attachment, ByteBuffer buffer, Connection con, ResultSet rs) throws NxtException.NotValidException {
         try {
-            byte[] referencedTransactionFullHash = rs.getBytes("referenced_transaction_full_hash");
-            long fxtTransactionId = rs.getLong("fxt_transaction_id");
             ChildTransactionImpl.BuilderImpl builder = new ChildTransactionImpl.BuilderImpl(chainId, version, null,
                     amount, fee, deadline, attachment);
-            builder.referencedTransactionFullHash(referencedTransactionFullHash)
-                    .fxtTransactionId(fxtTransactionId);
+            byte[] referencedTransactionFullHash = rs.getBytes("referenced_transaction_full_hash");
+            if (referencedTransactionFullHash != null) {
+                int referencedTransactionChainId = rs.getInt("referenced_transaction_chain_id");
+                builder.referencedTransaction(new ChainTransactionId(referencedTransactionChainId, referencedTransactionFullHash));
+            }
+            long fxtTransactionId = rs.getLong("fxt_transaction_id");
+            builder.fxtTransactionId(fxtTransactionId);
             if (rs.getBoolean("has_message")) {
                 builder.appendix(new MessageAppendix(buffer));
             }
@@ -655,10 +661,8 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             if ((flags & position) != 0) {
                 childBuilder.appendix(new PrunableEncryptedMessageAppendix(buffer));
             }
-            byte[] referencedTransactionFullHash = new byte[32];
-            buffer.get(referencedTransactionFullHash);
-            referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
-            childBuilder.referencedTransactionFullHash(referencedTransactionFullHash);
+            ChainTransactionId referencedTransaction = ChainTransactionId.parse(buffer);
+            childBuilder.referencedTransaction(referencedTransaction);
             return childBuilder;
         } catch (NxtException.NotValidException|RuntimeException e) {
             Logger.logDebugMessage("Failed to parse transaction bytes: " + Convert.toHexString(buffer.array()));
@@ -677,8 +681,8 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
                                                                          Attachment.AbstractAttachment attachment, JSONObject attachmentData, JSONObject transactionData) {
         try {
             ChildTransactionImpl.BuilderImpl childBuilder = new BuilderImpl(chainId, version, senderPublicKey, amount, fee, deadline, attachment);
-            String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
-            childBuilder.referencedTransactionFullHash(referencedTransactionFullHash);
+            ChainTransactionId referencedTransaction = ChainTransactionId.parse((JSONObject)transactionData.get("referencedTransaction"));
+            childBuilder.referencedTransaction(referencedTransaction);
             if (attachmentData != null) {
                 childBuilder.appendix(MessageAppendix.parse(attachmentData));
                 childBuilder.appendix(EncryptedMessageAppendix.parse(attachmentData));
