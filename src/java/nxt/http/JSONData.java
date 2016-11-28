@@ -39,6 +39,7 @@ import nxt.ae.TradeHome;
 import nxt.aliases.AliasHome;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Block;
+import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Generator;
 import nxt.blockchain.Transaction;
@@ -664,16 +665,13 @@ public final class JSONData {
             whitelistJson.add(whitelisted);
         }
         json.put("whitelist", whitelistJson);
-        List<PhasingPollHome.LinkedTransaction> linkedFullHashes = poll.getLinkedTransactions();
-        if (linkedFullHashes.size() > 0) {
-            JSONArray linkedFullHashesJSON = new JSONArray();
-            JSONArray linkedChainIdsJSON = new JSONArray();
-            for (PhasingPollHome.LinkedTransaction linkedTransaction : linkedFullHashes) {
-                linkedChainIdsJSON.add(linkedTransaction.getChainId());
-                linkedFullHashesJSON.add(Convert.toHexString(linkedTransaction.getLinkedFullHash()));
+        List<ChainTransactionId> linkedTransactions = poll.getLinkedTransactions();
+        if (linkedTransactions.size() > 0) {
+            JSONArray linkedTransactionsJSON = new JSONArray();
+            for (ChainTransactionId linkedTransaction : linkedTransactions) {
+                linkedTransactionsJSON.add(linkedTransaction.getJSON());
             }
-            json.put("linkedFullHashes", linkedFullHashesJSON);
-            json.put("linkedChainIds", linkedChainIdsJSON);
+            json.put("linkedTransactions", linkedTransactionsJSON);
         }
         if (poll.getHashedSecret() != null) {
             json.put("hashedSecret", Convert.toHexString(poll.getHashedSecret()));

@@ -21,17 +21,18 @@ import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
+import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.util.Convert;
-import nxt.voting.PhasingPollHome;
 import nxt.voting.PhasingVoteCastingAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 
 import static nxt.http.JSONResponses.MISSING_TRANSACTION_FULL_HASH;
 import static nxt.http.JSONResponses.TOO_MANY_PHASING_VOTES;
-import static nxt.http.JSONResponses.UNKNOWN_TRANSACTION_FULL_HASH;
 
 public class ApproveTransaction extends CreateTransaction {
     static final ApproveTransaction instance = new ApproveTransaction();
@@ -55,7 +56,9 @@ public class ApproveTransaction extends CreateTransaction {
             return TOO_MANY_PHASING_VOTES;
         }
 
-        //TODO: also parse transactionChainIds parameter, use JSON arrays for both
+        //TODO: parse phasedTransactionIds parameter
+        List<ChainTransactionId> phasedTransactionIds = new ArrayList<>();
+        /*
         byte[][] phasedTransactionFullHashes = new byte[phasedTransactionValues.length][];
         for (int i = 0; i < phasedTransactionValues.length; i++) {
             byte[] hash = Convert.parseHexString(phasedTransactionValues[i]);
@@ -65,6 +68,7 @@ public class ApproveTransaction extends CreateTransaction {
             }
             phasedTransactionFullHashes[i] = hash;
         }
+        */
 
         byte[] secret;
         String secretValue = Convert.emptyToNull(req.getParameter("revealedSecret"));
@@ -80,8 +84,7 @@ public class ApproveTransaction extends CreateTransaction {
             }
         }
         Account account = ParameterParser.getSenderAccount(req);
-        //TODO: transactionChainIds
-        Attachment attachment = new PhasingVoteCastingAttachment(null, phasedTransactionFullHashes, secret);
+        Attachment attachment = new PhasingVoteCastingAttachment(phasedTransactionIds, secret);
         return createTransaction(req, account, attachment);
     }
 }
