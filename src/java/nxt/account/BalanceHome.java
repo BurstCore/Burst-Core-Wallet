@@ -17,7 +17,8 @@
 package nxt.account;
 
 import nxt.Nxt;
-import nxt.blockchain.ChildChain;
+import nxt.blockchain.Chain;
+import nxt.blockchain.FxtChain;
 import nxt.db.DbKey;
 import nxt.db.VersionedEntityDbTable;
 
@@ -28,19 +29,19 @@ import java.sql.SQLException;
 
 public final class BalanceHome {
 
-    public static BalanceHome forChain(ChildChain childChain) {
-        if (childChain.getBalanceHome() != null) {
+    public static BalanceHome forChain(Chain chain) {
+        if (chain.getBalanceHome() != null) {
             throw new IllegalStateException("already set");
         }
-        return new BalanceHome(childChain);
+        return new BalanceHome(chain);
     }
 
     private final DbKey.LongKeyFactory<Balance> balanceDbKeyFactory;
     private final VersionedEntityDbTable<Balance> balanceTable;
-    private final ChildChain childChain;
+    private final Chain chain;
 
-    private BalanceHome(ChildChain childChain) {
-        this.childChain = childChain;
+    private BalanceHome(Chain chain) {
+        this.chain = chain;
         this.balanceDbKeyFactory = new DbKey.LongKeyFactory<Balance>("account_id") {
             @Override
             public DbKey newKey(Balance balance) {
@@ -51,7 +52,7 @@ public final class BalanceHome {
                 return new Balance(((DbKey.LongKey)dbKey).getId());
             }
         };
-        this.balanceTable = new VersionedEntityDbTable<Balance>(childChain.getSchemaTable("balance"), balanceDbKeyFactory) {
+        this.balanceTable = new VersionedEntityDbTable<Balance>(chain.getSchemaTable(chain instanceof FxtChain ? "balance_fxt" : "balance"), balanceDbKeyFactory) {
             @Override
             protected Balance load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Balance(rs, dbKey);
@@ -103,7 +104,7 @@ public final class BalanceHome {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO balance (account_id, "
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + balanceTable.getSchemaTable() + " (account_id, "
                     + "balance, unconfirmed_balance, height, latest) "
                     + "KEY (account_id, height) VALUES (?, ?, ?, ?, TRUE)")) {
                 int i = 0;
@@ -145,6 +146,9 @@ public final class BalanceHome {
             }
             long totalAmount = Math.addExact(amount, fee);
             this.balance = Math.addExact(this.balance, totalAmount);
+            if (chain == FxtChain.FXT) {
+                Account.addToGuaranteedBalanceFQT(this.accountId, totalAmount);
+            }
             Account.checkBalance(this.accountId, this.balance, this.unconfirmedBalance);
             save();
             //TODO: Account.listeners.notify(this, Event.BALANCE);
@@ -190,13 +194,16 @@ public final class BalanceHome {
             addToBalanceAndUnconfirmedBalance(event, eventId, amount, 0);
         }
 
-        private void addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
+        void addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
             if (amount == 0 && fee == 0) {
                 return;
             }
             long totalAmount = Math.addExact(amount, fee);
             this.balance = Math.addExact(this.balance, totalAmount);
             this.unconfirmedBalance = Math.addExact(this.unconfirmedBalance, totalAmount);
+            if (chain == FxtChain.FXT) {
+                Account.addToGuaranteedBalanceFQT(this.accountId, totalAmount);
+            }
             Account.checkBalance(this.accountId, this.balance, this.unconfirmedBalance);
             save();
             //TODO: Account.listeners.notify(this, Event.BALANCE);

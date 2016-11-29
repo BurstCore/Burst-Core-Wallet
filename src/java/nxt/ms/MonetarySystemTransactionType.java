@@ -271,7 +271,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             ReserveIncreaseAttachment attachment = (ReserveIncreaseAttachment) transaction.getAttachment();
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
-            if (senderAccount.getUnconfirmedBalance(transaction.getChain()) >= Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitNQT())) {
+            if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitNQT())) {
                 senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
                         -Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitNQT()));
                 return true;
@@ -522,7 +522,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment) transaction.getAttachment();
-            if (senderAccount.getUnconfirmedBalance(transaction.getChain()) >= Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateNQT())
+            if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateNQT())
                     && senderAccount.getUnconfirmedCurrencyUnits(attachment.getCurrencyId()) >= attachment.getInitialSellSupply()) {
                 senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
                         -Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateNQT()));
@@ -618,7 +618,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             ExchangeBuyAttachment attachment = (ExchangeBuyAttachment) transaction.getAttachment();
-            if (senderAccount.getUnconfirmedBalance(transaction.getChain()) >= Math.multiplyExact(attachment.getUnits(), attachment.getRateNQT())) {
+            if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= Math.multiplyExact(attachment.getUnits(), attachment.getRateNQT())) {
                 senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
                         -Math.multiplyExact(attachment.getUnits(), attachment.getRateNQT()));
                 return true;

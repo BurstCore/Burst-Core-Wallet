@@ -479,7 +479,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         @Override
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             BidOrderPlacementAttachment attachment = (BidOrderPlacementAttachment) transaction.getAttachment();
-            if (senderAccount.getUnconfirmedBalance(transaction.getChain()) >= Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT())) {
+            if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT())) {
                 senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
                         -Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT()));
                 return true;
@@ -683,7 +683,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             }
             long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
             long totalDividendPayment = Math.multiplyExact(attachment.getAmountNQTPerQNT(), quantityQNT);
-            if (senderAccount.getUnconfirmedBalance(transaction.getChain()) >= totalDividendPayment) {
+            if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= totalDividendPayment) {
                 senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(), -totalDividendPayment);
                 return true;
             }

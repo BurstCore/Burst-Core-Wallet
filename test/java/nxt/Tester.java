@@ -17,6 +17,7 @@
 package nxt;
 
 import nxt.account.Account;
+import nxt.blockchain.FxtChain;
 import nxt.crypto.Crypto;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
@@ -51,8 +52,8 @@ public class Tester {
         this.rsAccount = Convert.rsAccount(id);
         Account account = Account.getAccount(publicKey);
         if (account != null) {
-            this.initialBalance = account.getBalanceFQT();
-            this.initialUnconfirmedBalance = account.getUnconfirmedBalanceFQT();
+            this.initialBalance = FxtChain.FXT.getBalanceHome().getBalance(account.getId()).getBalance();
+            this.initialUnconfirmedBalance = FxtChain.FXT.getBalanceHome().getBalance(account.getId()).getUnconfirmedBalance();
             this.initialEffectiveBalance = account.getEffectiveBalanceFXT();
             DbIterator<Account.AccountAsset> assets = account.getAssets(0, -1);
             for (Account.AccountAsset accountAsset : assets) {
@@ -104,11 +105,11 @@ public class Tester {
     }
 
     public long getBalanceDiff() {
-        return Account.getAccount(id).getBalanceFQT() - initialBalance;
+        return FxtChain.FXT.getBalanceHome().getBalance(id).getBalance() - initialBalance;
     }
 
     public long getUnconfirmedBalanceDiff() {
-        return Account.getAccount(id).getUnconfirmedBalanceFQT() - initialUnconfirmedBalance;
+        return FxtChain.FXT.getBalanceHome().getBalance(id).getUnconfirmedBalance() - initialUnconfirmedBalance;
     }
 
     public long getInitialBalance() {
@@ -116,7 +117,7 @@ public class Tester {
     }
 
     public long getBalance() {
-        return getAccount().getBalanceFQT();
+        return FxtChain.FXT.getBalanceHome().getBalance(id).getBalance();
     }
 
     public long getAssetQuantityDiff(long assetId) {

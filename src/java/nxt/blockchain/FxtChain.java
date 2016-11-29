@@ -32,21 +32,13 @@ public final class FxtChain extends Chain {
 
     public static void init() {}
 
-    private final TransactionHome transactionHome;
-
     private FxtChain() {
         super(1, FXT_NAME);
-        this.transactionHome = TransactionHome.forChain(this);
     }
 
     @Override
     public String getDbSchema() {
         return "PUBLIC";
-    }
-
-    @Override
-    public TransactionHome getTransactionHome() {
-        return transactionHome;
     }
 
     @Override

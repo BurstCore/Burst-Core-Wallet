@@ -21,6 +21,7 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.FxtChain;
 import nxt.http.API;
 import nxt.http.APIEnum;
 import nxt.util.Convert;
@@ -327,8 +328,7 @@ final class PeerImpl implements Peer {
         }
         if (hallmarkBalance == -1 || hallmarkBalanceHeight < Nxt.getBlockchain().getHeight() - 60) {
             long accountId = hallmark.getAccountId();
-            Account account = Account.getAccount(accountId);
-            hallmarkBalance = account == null ? 0 : account.getBalanceFQT();
+            hallmarkBalance = FxtChain.FXT.getBalanceHome().getBalance(accountId).getBalance();
             hallmarkBalanceHeight = Nxt.getBlockchain().getHeight();
         }
         return (int)(adjustedWeight * (hallmarkBalance / Constants.ONE_NXT) / Constants.MAX_BALANCE_NXT);

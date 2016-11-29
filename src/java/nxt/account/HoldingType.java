@@ -24,12 +24,12 @@ public enum HoldingType {
 
         @Override
         public long getBalance(Account account, long holdingId) {
-            return account.getBalance(Chain.getChain(Math.toIntExact(holdingId)));
+            return Chain.getChain(Math.toIntExact(holdingId)).getBalanceHome().getBalance(account.getId()).getBalance();
         }
 
         @Override
         public long getUnconfirmedBalance(Account account, long holdingId) {
-            return account.getUnconfirmedBalance(Chain.getChain(Math.toIntExact(holdingId)));
+            return Chain.getChain(Math.toIntExact(holdingId)).getBalanceHome().getBalance(account.getId()).getUnconfirmedBalance();
         }
 
         @Override

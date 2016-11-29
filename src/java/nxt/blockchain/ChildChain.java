@@ -17,7 +17,6 @@
 package nxt.blockchain;
 
 import nxt.NxtException;
-import nxt.account.BalanceHome;
 import nxt.ae.AssetDividendHome;
 import nxt.ae.OrderHome;
 import nxt.ae.TradeHome;
@@ -72,7 +71,6 @@ public final class ChildChain extends Chain {
 
     private final AliasHome aliasHome;
     private final AssetDividendHome assetDividendHome;
-    private final BalanceHome balanceHome;
     private final CurrencyFounderHome currencyFounderHome;
     private final DigitalGoodsHome digitalGoodsHome;
     private final ExchangeHome exchangeHome;
@@ -87,14 +85,12 @@ public final class ChildChain extends Chain {
     private final ShufflingParticipantHome shufflingParticipantHome;
     private final TaggedDataHome taggedDataHome;
     private final TradeHome tradeHome;
-    private final TransactionHome transactionHome;
     private final VoteHome voteHome;
 
     private ChildChain(int id, String name) {
         super(id, name);
         this.aliasHome = AliasHome.forChain(this);
         this.assetDividendHome = AssetDividendHome.forChain(this);
-        this.balanceHome = BalanceHome.forChain(this);
         this.currencyFounderHome = CurrencyFounderHome.forChain(this);
         this.digitalGoodsHome = DigitalGoodsHome.forChain(this);
         this.exchangeHome = ExchangeHome.forChain(this);
@@ -109,7 +105,6 @@ public final class ChildChain extends Chain {
         this.shufflingParticipantHome = ShufflingParticipantHome.forChain(this);
         this.taggedDataHome = TaggedDataHome.forChain(this);
         this.tradeHome = TradeHome.forChain(this);
-        this.transactionHome = TransactionHome.forChain(this);
         this.voteHome = VoteHome.forChain(this);
         childChains.put(name, this);
         childChainsById.put(id, this);
@@ -121,10 +116,6 @@ public final class ChildChain extends Chain {
 
     public AssetDividendHome getAssetDividendHome() {
         return assetDividendHome;
-    }
-
-    public BalanceHome getBalanceHome() {
-        return balanceHome;
     }
 
     public CurrencyFounderHome getCurrencyFounderHome() {
@@ -181,10 +172,6 @@ public final class ChildChain extends Chain {
 
     public TradeHome getTradeHome() {
         return tradeHome;
-    }
-
-    public TransactionHome getTransactionHome() {
-        return transactionHome;
     }
 
     public VoteHome getVoteHome() {

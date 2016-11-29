@@ -62,7 +62,7 @@ public class FxtDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS transaction_fxt_block_timestamp_idx ON transaction_fxt (block_timestamp DESC)");
             case 11:
                 apply("CREATE TABLE IF NOT EXISTS account (db_id IDENTITY, id BIGINT NOT NULL, "
-                        + "balance BIGINT NOT NULL, unconfirmed_balance BIGINT NOT NULL, has_control_phasing BOOLEAN NOT NULL DEFAULT FALSE, "
+                        + "has_control_phasing BOOLEAN NOT NULL DEFAULT FALSE, "
                         + "forged_balance BIGINT NOT NULL, active_lessee_id BIGINT, height INT NOT NULL, "
                         + "latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 12:
@@ -288,6 +288,14 @@ public class FxtDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS phasing_poll_linked_transaction_link_id_idx "
                         + "ON phasing_poll_linked_transaction (linked_transaction_id, transaction_id)");
             case 99:
+                apply("CREATE TABLE IF NOT EXISTS balance_fxt (db_id IDENTITY, account_id BIGINT NOT NULL, "
+                        + "balance BIGINT NOT NULL, unconfirmed_balance BIGINT NOT NULL, "
+                        + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+            case 100:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS balance_fxt_id_height_idx ON balance_fxt (account_id, height DESC)");
+            case 101:
+                apply("CREATE INDEX IF NOT EXISTS balance_fxt_height_id_idx ON balance_fxt (height, account_id)");
+            case 102:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate

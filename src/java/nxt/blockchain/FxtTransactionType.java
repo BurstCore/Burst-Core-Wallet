@@ -66,12 +66,12 @@ public abstract class FxtTransactionType extends TransactionType {
         long amount = transaction.getAmount();
         long fee = transaction.getFee();
         long totalAmount = Math.addExact(amount, fee);
-        if (senderAccount.getUnconfirmedBalanceFQT() < totalAmount) {
+        if (FxtChain.FXT.getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() < totalAmount) {
             return false;
         }
-        senderAccount.addToUnconfirmedBalanceFQT(getLedgerEvent(), transaction.getId(), -amount, -fee);
+        senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), transaction.getId(), -amount, -fee);
         if (!applyAttachmentUnconfirmed(transaction, senderAccount)) {
-            senderAccount.addToUnconfirmedBalanceFQT(getLedgerEvent(), transaction.getId(), amount, fee);
+            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), transaction.getId(), amount, fee);
             return false;
         }
         return true;
@@ -82,14 +82,14 @@ public abstract class FxtTransactionType extends TransactionType {
         long amount = transaction.getAmount();
         long transactionId = transaction.getId();
         //if (!transaction.attachmentIsPhased()) {
-        senderAccount.addToBalanceFQT(getLedgerEvent(), transactionId, -amount, -transaction.getFee());
+        senderAccount.addToBalance(FxtChain.FXT, getLedgerEvent(), transactionId, -amount, -transaction.getFee());
         /* never phased
         } else {
             senderAccount.addToBalanceFQT(getLedgerEvent(), transactionId, -amount);
         }
         */
         if (recipientAccount != null) {
-            recipientAccount.addToBalanceAndUnconfirmedBalanceFQT(getLedgerEvent(), transactionId, amount);
+            recipientAccount.addToBalanceAndUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), transactionId, amount);
         }
         applyAttachment(transaction, senderAccount, recipientAccount);
     }
@@ -97,8 +97,7 @@ public abstract class FxtTransactionType extends TransactionType {
     @Override
     public final void undoUnconfirmed(TransactionImpl transaction, Account senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
-        senderAccount.addToUnconfirmedBalanceFQT(getLedgerEvent(), transaction.getId(),
-                transaction.getAmount(), transaction.getFee());
+        senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), transaction.getId(), transaction.getAmount(), transaction.getFee());
     }
 
     @Override

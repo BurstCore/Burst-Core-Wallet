@@ -17,6 +17,7 @@
 package nxt;
 
 import nxt.account.Account;
+import nxt.blockchain.FxtChain;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 
@@ -40,8 +41,8 @@ public class AccountCurrencyBalance {
         Account account = Account.getAccount(Crypto.getPublicKey(secretPhrase));
         accountId = account.getId();
         this.currencyId = Convert.parseUnsignedLong(currency);
-        this.unconfirmedBalance = account.getUnconfirmedBalanceFQT();
-        this.balance = account.getBalanceFQT();
+        this.unconfirmedBalance = FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance();
+        this.balance = FxtChain.FXT.getBalanceHome().getBalance(accountId).getBalance();
         this.unconfirmedCurrencyUnits = account.getUnconfirmedCurrencyUnits(currencyId);
         this.currencyUnits = account.getCurrencyUnits(currencyId);
     }

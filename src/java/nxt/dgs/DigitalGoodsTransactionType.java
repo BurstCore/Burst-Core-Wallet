@@ -420,7 +420,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
         @Override
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             PurchaseAttachment attachment = (PurchaseAttachment) transaction.getAttachment();
-            if (senderAccount.getUnconfirmedBalance(transaction.getChain()) >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT())) {
+            if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT())) {
                 senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
                         -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
                 return true;
@@ -682,7 +682,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
         @Override
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             RefundAttachment attachment = (RefundAttachment) transaction.getAttachment();
-            if (senderAccount.getUnconfirmedBalance(transaction.getChain()) >= attachment.getRefundNQT()) {
+            if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= attachment.getRefundNQT()) {
                 senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(), -attachment.getRefundNQT());
                 return true;
             }

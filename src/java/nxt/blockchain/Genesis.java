@@ -64,7 +64,7 @@ public final class Genesis {
                 byte[] recipientPublicKey = Convert.parseHexString(entry.getKey());
                 Account recipient = Account.addOrGetAccount(Account.getId(recipientPublicKey));
                 recipient.apply(recipientPublicKey);
-                recipient.addToBalanceAndUnconfirmedBalanceFQT(null, 0, entry.getValue());
+                recipient.addToBalanceAndUnconfirmedBalance(FxtChain.FXT, null, (long) 0, entry.getValue());
                 total += entry.getValue();
             }
             Logger.logDebugMessage("Total balance " + total + " ARDR");

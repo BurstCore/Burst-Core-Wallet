@@ -466,8 +466,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             }
         }
         if (referencedTransactionId != null) {
-            senderAccount.addToUnconfirmedBalanceFQT(getType().getLedgerEvent(), getId(),
-                    0, Constants.UNCONFIRMED_POOL_DEPOSIT_FQT);
+            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getType().getLedgerEvent(), getId(), (long) 0, Constants.UNCONFIRMED_POOL_DEPOSIT_FQT);
         }
         if (attachmentIsPhased()) {
             childChain.getBalanceHome().getBalance(getSenderId()).addToBalance(getType().getLedgerEvent(), getId(), 0, -fee);

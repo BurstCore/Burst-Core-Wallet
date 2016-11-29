@@ -53,7 +53,7 @@ public final class VoteWeighting {
         COIN(1) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long balance = Account.getBalance(Chain.getChain(Math.toIntExact(voteWeighting.holdingId)), voterId, height);
+                long balance = Chain.getChain(Math.toIntExact(voteWeighting.holdingId)).getBalanceHome().getBalance(voterId, height).getBalance();
                 return balance >= voteWeighting.minBalance ? balance : 0;
             }
             @Override
@@ -146,7 +146,7 @@ public final class VoteWeighting {
         COIN(1) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return Account.getBalance(Chain.getChain(Math.toIntExact(voteWeighting.holdingId)), voterId, height);
+                return Chain.getChain(Math.toIntExact(voteWeighting.holdingId)).getBalanceHome().getBalance(voterId, height).getBalance();
             }
         },
         ASSET(2) {

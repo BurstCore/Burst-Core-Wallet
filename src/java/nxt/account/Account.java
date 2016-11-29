@@ -23,6 +23,7 @@ import nxt.ae.TradeHome;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.FxtChain;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
@@ -736,26 +737,6 @@ public final class Account {
         return publicKeyTable.getCount();
     }
 
-    public static long getBalance(Chain chain, long accountId) {
-        return chain instanceof ChildChain ? ((ChildChain)chain).getBalanceHome().getBalance(accountId).getBalance()
-                : getAccount(accountId).getBalanceFQT();
-    }
-
-    public long getUnconfirmedBalance(Chain chain, long accountId) {
-        return chain instanceof ChildChain ? ((ChildChain)chain).getBalanceHome().getBalance(accountId).getUnconfirmedBalance()
-                : getAccount(accountId).getUnconfirmedBalanceFQT();
-    }
-
-    public static long getBalance(Chain chain, long accountId, int height) {
-        return chain instanceof ChildChain ? ((ChildChain)chain).getBalanceHome().getBalance(accountId, height).getBalance()
-                : getAccount(accountId, height).getBalanceFQT();
-    }
-
-    public long getUnconfirmedBalance(Chain chain, long accountId, int height) {
-        return chain instanceof ChildChain ? ((ChildChain)chain).getBalanceHome().getBalance(accountId, height).getUnconfirmedBalance()
-                : getAccount(accountId, height).getUnconfirmedBalanceFQT();
-    }
-
     public static int getAssetAccountCount(long assetId) {
         return accountAssetTable.getCount(new DbClause.LongClause("asset_id", assetId));
     }
@@ -1095,8 +1076,6 @@ public final class Account {
     private final long id;
     private final DbKey dbKey;
     private PublicKey publicKey;
-    private long balanceFQT;
-    private long unconfirmedBalanceFQT;
     private long forgedBalanceFQT;
     private long activeLesseeId;
     private Set<ControlType> controls;
@@ -1120,19 +1099,14 @@ public final class Account {
         } else {
             controls = Collections.emptySet();
         }
-        this.balanceFQT = rs.getLong("balance");
-        this.unconfirmedBalanceFQT = rs.getLong("unconfirmed_balance");
     }
 
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, "
-                + "balance, unconfirmed_balance, forged_balance, "
-                + "active_lessee_id, has_control_phasing, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "forged_balance, active_lessee_id, has_control_phasing, height, latest) "
+                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
-            pstmt.setLong(++i, this.balanceFQT);
-            pstmt.setLong(++i, this.unconfirmedBalanceFQT);
             pstmt.setLong(++i, this.forgedBalanceFQT);
             DbUtils.setLongZeroToNull(pstmt, ++i, this.activeLesseeId);
             pstmt.setBoolean(++i, controls.contains(ControlType.PHASING_ONLY));
@@ -1142,7 +1116,7 @@ public final class Account {
     }
 
     private void save() {
-        if (balanceFQT == 0 && unconfirmedBalanceFQT == 0 && forgedBalanceFQT == 0 && activeLesseeId == 0 && controls.isEmpty()) {
+        if (forgedBalanceFQT == 0 && activeLesseeId == 0 && controls.isEmpty()) {
             accountTable.delete(this, true);
         } else {
             accountTable.insert(this);
@@ -1205,31 +1179,6 @@ public final class Account {
         return decrypted;
     }
 
-    public long getBalanceFQT() {
-        return balanceFQT;
-    }
-
-    public long getUnconfirmedBalanceFQT() {
-        return unconfirmedBalanceFQT;
-    }
-
-    //TODO: skip retrieving the Account when only the balance is needed
-    public long getBalance(ChildChain childChain) {
-        return childChain.getBalanceHome().getBalance(id).getBalance();
-    }
-
-    public long getUnconfirmedBalance(ChildChain childChain) {
-        return childChain.getBalanceHome().getBalance(id).getUnconfirmedBalance();
-    }
-
-    public long getBalance(Chain chain) {
-        return chain instanceof ChildChain ? getBalance((ChildChain)chain) : getBalanceFQT();
-    }
-
-    public long getUnconfirmedBalance(Chain chain) {
-        return chain instanceof ChildChain ? getUnconfirmedBalance((ChildChain)chain) : getUnconfirmedBalanceFQT();
-    }
-
     public long getForgedBalanceFQT() {
         return forgedBalanceFQT;
     }
@@ -1240,8 +1189,8 @@ public final class Account {
 
     public long getEffectiveBalanceFXT(int height) {
         if (height <= 1440) {
-            Account genesisRecipient = Account.getAccount(id, 0);
-            return genesisRecipient == null ? 0 : genesisRecipient.getBalanceFQT() / Constants.ONE_NXT;
+            BalanceHome.Balance genesisRecipientBalance = FxtChain.FXT.getBalanceHome().getBalance(id, 0);
+            return genesisRecipientBalance.getBalance() / Constants.ONE_NXT;
         }
         if (this.publicKey == null) {
             this.publicKey = publicKeyTable.get(accountDbKeyFactory.newKey(this));
@@ -1272,7 +1221,7 @@ public final class Account {
         long[] balances = new long[lessors.size()];
         for (int i = 0; i < lessors.size(); i++) {
             lessorIds[i] = lessors.get(i).getId();
-            balances[i] = lessors.get(i).getBalanceFQT();
+            balances[i] = FxtChain.FXT.getBalanceHome().getBalance(lessors.get(i).id, height).getBalance();
         }
         int blockchainHeight = Nxt.getBlockchain().getHeight();
         try (Connection con = accountGuaranteedBalanceTable.getConnection();
@@ -1327,6 +1276,7 @@ public final class Account {
                     || height > Nxt.getBlockchain().getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
             }
+            long balanceFQT = FxtChain.FXT.getBalanceHome().getBalance(id, currentHeight).getBalance();
             try (Connection con = accountGuaranteedBalanceTable.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS additions "
                          + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
@@ -1684,139 +1634,28 @@ public final class Account {
         }
     }
 
-    void addToBalanceFQT(AccountLedger.LedgerEvent event, long eventId, long amount) {
-        addToBalanceFQT(event, eventId, amount, 0);
+    public void addToBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
+        chain.getBalanceHome().getBalance(id).addToBalance(event, eventId, amount, fee);
     }
 
-    public void addToBalanceFQT(AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
-        if (amount == 0 && fee == 0) {
-            return;
-        }
-        long totalAmount = Math.addExact(amount, fee);
-        this.balanceFQT = Math.addExact(this.balanceFQT, totalAmount);
-        addToGuaranteedBalanceFQT(totalAmount);
-        checkBalance(this.id, this.balanceFQT, this.unconfirmedBalanceFQT);
-        save();
-        listeners.notify(this, Event.BALANCE);
-        if (AccountLedger.mustLogEntry(event, this.id, false)) {
-            if (fee != 0) {
-                AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        AccountLedger.LedgerHolding.NXT_BALANCE, null, fee, this.balanceFQT - amount));
-            }
-            if (amount != 0) {
-                AccountLedger.logEntry(new AccountLedger.LedgerEntry(event, eventId, this.id,
-                        AccountLedger.LedgerHolding.NXT_BALANCE, null, amount, this.balanceFQT));
-            }
-        }
+    public void addToUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
+        chain.getBalanceHome().getBalance(id).addToUnconfirmedBalance(event, eventId, amount, fee);
     }
 
-    void addToUnconfirmedBalanceFQT(AccountLedger.LedgerEvent event, long eventId, long amount) {
-        addToUnconfirmedBalanceFQT(event, eventId, amount, 0);
+    public void addToBalanceAndUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
+        chain.getBalanceHome().getBalance(id).addToBalanceAndUnconfirmedBalance(event, eventId, amount, fee);
     }
 
-    public void addToUnconfirmedBalanceFQT(AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
-        if (amount == 0 && fee == 0) {
-            return;
-        }
-        long totalAmount = Math.addExact(amount, fee);
-        this.unconfirmedBalanceFQT = Math.addExact(this.unconfirmedBalanceFQT, totalAmount);
-        checkBalance(this.id, this.balanceFQT, this.unconfirmedBalanceFQT);
-        save();
-        listeners.notify(this, Event.UNCONFIRMED_BALANCE);
-        if (AccountLedger.mustLogEntry(event, this.id, true)) {
-            if (fee != 0) {
-                AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        AccountLedger.LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, fee, this.unconfirmedBalanceFQT - amount));
-            }
-            if (amount != 0) {
-                AccountLedger.logEntry(new AccountLedger.LedgerEntry(event, eventId, this.id,
-                        AccountLedger.LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, amount, this.unconfirmedBalanceFQT));
-            }
-        }
-    }
-
-    public void addToBalanceAndUnconfirmedBalanceFQT(AccountLedger.LedgerEvent event, long eventId, long amount) {
-        addToBalanceAndUnconfirmedBalanceFQT(event, eventId, amount, 0);
-    }
-
-    void addToBalanceAndUnconfirmedBalanceFQT(AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
-        if (amount == 0 && fee == 0) {
-            return;
-        }
-        long totalAmount = Math.addExact(amount, fee);
-        this.balanceFQT = Math.addExact(this.balanceFQT, totalAmount);
-        this.unconfirmedBalanceFQT = Math.addExact(this.unconfirmedBalanceFQT, totalAmount);
-        addToGuaranteedBalanceFQT(totalAmount);
-        checkBalance(this.id, this.balanceFQT, this.unconfirmedBalanceFQT);
-        save();
-        listeners.notify(this, Event.BALANCE);
-        listeners.notify(this, Event.UNCONFIRMED_BALANCE);
-        if (AccountLedger.mustLogEntry(event, this.id, true)) {
-            if (fee != 0) {
-                AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        AccountLedger.LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, fee, this.unconfirmedBalanceFQT - amount));
-            }
-            if (amount != 0) {
-                AccountLedger.logEntry(new AccountLedger.LedgerEntry(event, eventId, this.id,
-                        AccountLedger.LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, amount, this.unconfirmedBalanceFQT));
-            }
-        }
-        if (AccountLedger.mustLogEntry(event, this.id, false)) {
-            if (fee != 0) {
-                AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        AccountLedger.LedgerHolding.NXT_BALANCE, null, fee, this.balanceFQT - amount));
-            }
-            if (amount != 0) {
-                AccountLedger.logEntry(new AccountLedger.LedgerEntry(event, eventId, this.id,
-                        AccountLedger.LedgerHolding.NXT_BALANCE, null, amount, this.balanceFQT));
-            }
-        }
-    }
-
-    //TODO: skip retrieving the Account when only balance needs to be updated
-    public void addToBalance(ChildChain childChain, AccountLedger.LedgerEvent event, long eventId, long amount) {
-        childChain.getBalanceHome().getBalance(id).addToBalance(event, eventId, amount);
-    }
-
-    public void addToBalance(ChildChain childChain, AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
-        childChain.getBalanceHome().getBalance(id).addToBalance(event, eventId, amount, fee);
-    }
-
-    public void addToUnconfirmedBalance(ChildChain childChain, AccountLedger.LedgerEvent event, long eventId, long amount) {
-        childChain.getBalanceHome().getBalance(id).addToUnconfirmedBalance(event, eventId, amount);
-    }
-
-    public void addToUnconfirmedBalance(ChildChain childChain, AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
-        childChain.getBalanceHome().getBalance(id).addToUnconfirmedBalance(event, eventId, amount, fee);
-    }
-
-    public void addToBalanceAndUnconfirmedBalance(ChildChain childChain, AccountLedger.LedgerEvent event, long eventId, long amount) {
-        childChain.getBalanceHome().getBalance(id).addToBalanceAndUnconfirmedBalance(event, eventId, amount);
-    }
-
-    //TODO: cleanup
     public void addToBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount) {
-        if (chain instanceof ChildChain) {
-            ((ChildChain)chain).getBalanceHome().getBalance(id).addToBalance(event, eventId, amount);
-        } else {
-            addToBalanceFQT(event, eventId, amount);
-        }
+        chain.getBalanceHome().getBalance(id).addToBalance(event, eventId, amount);
     }
 
     public void addToUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount) {
-        if (chain instanceof ChildChain) {
-            ((ChildChain)chain).getBalanceHome().getBalance(id).addToUnconfirmedBalance(event, eventId, amount);
-        } else {
-            addToUnconfirmedBalanceFQT(event, eventId, amount);
-        }
+        chain.getBalanceHome().getBalance(id).addToUnconfirmedBalance(event, eventId, amount);
     }
 
     public void addToBalanceAndUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount) {
-        if (chain instanceof ChildChain) {
-            ((ChildChain) chain).getBalanceHome().getBalance(id).addToBalanceAndUnconfirmedBalance(event, eventId, amount);
-        } else {
-            addToBalanceAndUnconfirmedBalanceFQT(event, eventId, amount);
-        }
+        chain.getBalanceHome().getBalance(id).addToBalanceAndUnconfirmedBalance(event, eventId, amount);
     }
 
     public void addToForgedBalanceFQT(long amount) {
@@ -1839,7 +1678,7 @@ public final class Account {
         }
     }
 
-    void addToGuaranteedBalanceFQT(long amount) {
+    static void addToGuaranteedBalanceFQT(long accountId, long amount) {
         if (amount <= 0) {
             return;
         }
@@ -1849,14 +1688,14 @@ public final class Account {
                      + "WHERE account_id = ? and height = ?");
              PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "
                      + " additions, height) KEY (account_id, height) VALUES(?, ?, ?)")) {
-            pstmtSelect.setLong(1, this.id);
+            pstmtSelect.setLong(1, accountId);
             pstmtSelect.setInt(2, blockchainHeight);
             try (ResultSet rs = pstmtSelect.executeQuery()) {
                 long additions = amount;
                 if (rs.next()) {
                     additions = Math.addExact(additions, rs.getLong("additions"));
                 }
-                pstmtUpdate.setLong(1, this.id);
+                pstmtUpdate.setLong(1, accountId);
                 pstmtUpdate.setLong(2, additions);
                 pstmtUpdate.setInt(3, blockchainHeight);
                 pstmtUpdate.executeUpdate();

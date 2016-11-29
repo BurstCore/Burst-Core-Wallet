@@ -42,6 +42,7 @@ import nxt.blockchain.Block;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
+import nxt.blockchain.FxtChain;
 import nxt.blockchain.Generator;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
@@ -110,8 +111,8 @@ public final class JSONData {
                 json.put("guaranteedBalanceNQT", "0");
             }
         } else {
-            json.put("balanceNQT", String.valueOf(account.getBalanceFQT()));
-            json.put("unconfirmedBalanceNQT", String.valueOf(account.getUnconfirmedBalanceFQT()));
+            json.put("balanceNQT", String.valueOf(FxtChain.FXT.getBalanceHome().getBalance(account.getId(), height).getBalance()));
+            json.put("unconfirmedBalanceNQT", String.valueOf(FxtChain.FXT.getBalanceHome().getBalance(account.getId(), height).getUnconfirmedBalance()));
             json.put("forgedBalanceNQT", String.valueOf(account.getForgedBalanceFQT()));
             if (includeEffectiveBalance) {
                 json.put("effectiveBalanceNXT", account.getEffectiveBalanceFXT(height));

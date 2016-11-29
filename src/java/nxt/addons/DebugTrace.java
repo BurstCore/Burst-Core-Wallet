@@ -445,9 +445,8 @@ public final class DebugTrace {
         ChildChain childChain = ChildChain.IGNIS;
         Map<String,String> map = new HashMap<>();
         map.put("account", Long.toUnsignedString(accountId));
-        Account account = Account.getAccount(accountId);
-        map.put("balance", String.valueOf(account != null ? account.getBalance(childChain) : 0));
-        map.put("unconfirmed balance", String.valueOf(account != null ? account.getUnconfirmedBalance(childChain) : 0));
+        map.put("balance", String.valueOf(childChain.getBalanceHome().getBalance(accountId).getBalance()));
+        map.put("unconfirmed balance", String.valueOf(childChain.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()));
         map.put("timestamp", String.valueOf(Nxt.getBlockchain().getLastBlock().getTimestamp()));
         map.put("height", String.valueOf(Nxt.getBlockchain().getHeight()));
         map.put("event", unconfirmed ? "unconfirmed balance" : "balance");
