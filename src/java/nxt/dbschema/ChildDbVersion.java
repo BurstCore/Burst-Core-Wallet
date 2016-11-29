@@ -435,9 +435,8 @@ public class ChildDbVersion extends DbVersion {
             case 157:
                 apply(null);
             case 158:
-                //TODO: use full hash instead of id, add referenced chain_id
-                apply("CREATE TABLE IF NOT EXISTS referenced_transaction (db_id IDENTITY, transaction_id BIGINT NOT NULL, "
-                        + "FOREIGN KEY (transaction_id) REFERENCES transaction (id) ON DELETE CASCADE, "
+                apply("CREATE TABLE IF NOT EXISTS referenced_transaction (db_id IDENTITY, transaction_id BIGINT NOT NULL, transaction_full_hash BINARY(32) NOT NULL, "
+                        + "FOREIGN KEY (transaction_id, transaction_full_hash) REFERENCES transaction (id, full_hash) ON DELETE CASCADE, "
                         + "referenced_transaction_id BIGINT NOT NULL)");
             case 159:
                 apply("CREATE INDEX IF NOT EXISTS referenced_transaction_referenced_transaction_id_idx ON referenced_transaction (referenced_transaction_id)");

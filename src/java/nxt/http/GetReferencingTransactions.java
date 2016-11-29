@@ -32,19 +32,19 @@ public final class GetReferencingTransactions extends APIServlet.APIRequestHandl
     static final GetReferencingTransactions instance = new GetReferencingTransactions();
 
     private GetReferencingTransactions() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.TRANSACTIONS}, "transactionFullHash", "firstIndex", "lastIndex");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        byte[] referencedTransactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         ChildChain childChain = ParameterParser.getChildChain(req);
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = Nxt.getBlockchain().getReferencingTransactions(childChain, transactionId, firstIndex, lastIndex)) {
+        try (DbIterator<? extends Transaction> iterator = Nxt.getBlockchain().getReferencingTransactions(childChain, referencedTransactionFullHash, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
                 transactions.add(JSONData.transaction(transaction));

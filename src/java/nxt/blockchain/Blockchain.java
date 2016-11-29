@@ -90,6 +90,6 @@ public interface Blockchain {
 
     List<? extends Transaction> getExpectedTransactions(Filter<Transaction> filter);
 
-    DbIterator<? extends ChildTransaction> getReferencingTransactions(ChildChain chain, long transactionId, int from, int to);
+    DbIterator<? extends ChildTransaction> getReferencingTransactions(ChildChain chain, byte[] referencedTransactionFullHash, int from, int to);
 
 }

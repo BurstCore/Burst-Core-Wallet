@@ -574,12 +574,13 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             pstmt.setLong(++i, getFxtTransactionId());
             pstmt.executeUpdate();
         }
-        //TODO
         if (referencedTransactionId != null) {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO referenced_transaction "
-                    + "(transaction_id, referenced_transaction_id) VALUES (?, ?)")) {
-                pstmt.setLong(1, getId());
-                pstmt.setLong(2, Convert.fullHashToId(referencedTransactionId.getFullHash()));
+                    + "(transaction_id, transaction_full_hash, referenced_transaction_id) VALUES (?, ?, ?)")) {
+                int i = 0;
+                pstmt.setLong(++i, getId());
+                pstmt.setBytes(++i, getFullHash());
+                pstmt.setLong(++i, Convert.fullHashToId(referencedTransactionId.getFullHash()));
                 pstmt.executeUpdate();
             }
         }

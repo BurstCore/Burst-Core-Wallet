@@ -498,19 +498,21 @@ public final class BlockchainImpl implements Blockchain {
         }
     }
 
-    //TODO
     @Override
-    public DbIterator<ChildTransactionImpl> getReferencingTransactions(ChildChain childChain, long transactionId, int from, int to) {
+    public DbIterator<ChildTransactionImpl> getReferencingTransactions(ChildChain childChain, byte[] referencedTransactionFullHash, int from, int to) {
         Connection con = null;
         try {
             con = Db.db.getConnection(childChain.getDbSchema());
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, referenced_transaction "
                     + "WHERE referenced_transaction.referenced_transaction_id = ? "
                     + "AND referenced_transaction.transaction_id = transaction.id "
+                    + "AND referenced_transaction.transaction_full_hash = transaction.full_hash "
+                    + "AND transaction.referenced_transaction_full_hash = ? "
                     + "ORDER BY transaction.block_timestamp DESC, transaction.transaction_index DESC "
                     + DbUtils.limitsClause(from, to));
             int i = 0;
-            pstmt.setLong(++i, transactionId);
+            pstmt.setLong(++i, Convert.fullHashToId(referencedTransactionFullHash));
+            pstmt.setBytes(++i, referencedTransactionFullHash);
             DbUtils.setLimits(++i, pstmt, from, to);
             return getTransactions(childChain, con, pstmt);
         } catch (SQLException e) {
