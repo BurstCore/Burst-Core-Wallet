@@ -548,12 +548,8 @@ public final class ParameterParser {
         return HoldingType.get(ParameterParser.getByte(req, "holdingType", (byte) 0, (byte) 2, false));
     }
 
-    public static long getHoldingId(HttpServletRequest req, HoldingType holdingType) throws ParameterException {
-        long holdingId = ParameterParser.getUnsignedLong(req, "holding", holdingType != HoldingType.COIN);
-        if (holdingType == HoldingType.COIN && holdingId != 0) {
-            throw new ParameterException(JSONResponses.incorrect("holding", "holding id should not be specified if holdingType is NXT"));
-        }
-        return holdingId;
+    public static long getHoldingId(HttpServletRequest req) throws ParameterException {
+        return ParameterParser.getUnsignedLong(req, "holding", true);
     }
 
     public static String getAccountProperty(HttpServletRequest req, boolean isMandatory) throws ParameterException {

@@ -119,7 +119,7 @@ public final class FundingMonitor {
      * Create a monitor
      *
      * @param   holdingType         Holding type
-     * @param   holdingId           Asset or Currency identifier, ignored for NXT monitor
+     * @param   holdingId           Asset, Currency, or Coin (chain id) identifier
      * @param   property            Account property name
      * @param   amount              Fund amount
      * @param   threshold           Fund threshold
@@ -131,7 +131,7 @@ public final class FundingMonitor {
                                     long amount, long threshold, int interval,
                                     long accountId, String secretPhrase) {
         this.holdingType = holdingType;
-        this.holdingId = (holdingType != HoldingType.COIN ? holdingId : 0);
+        this.holdingId = holdingId;
         this.property = property;
         this.amount = amount;
         this.threshold = threshold;
@@ -381,7 +381,7 @@ public final class FundingMonitor {
             while (monitorIt.hasNext()) {
                 monitor = monitorIt.next();
                 if (monitor.holdingType == holdingType && monitor.property.equals(property) &&
-                        (holdingType == HoldingType.COIN || monitor.holdingId == holdingId) &&
+                        monitor.holdingId == holdingId &&
                         monitor.accountId == accountId) {
                     monitorIt.remove();
                     wasStopped = true;

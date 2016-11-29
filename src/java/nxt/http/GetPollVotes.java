@@ -50,7 +50,7 @@ public class GetPollVotes extends APIServlet.APIRequestHandler  {
                 >= Nxt.getBlockchainProcessor().getMinRollbackHeight()) {
             VoteWeighting voteWeighting = poll.getVoteWeighting();
             VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
-            weighter = voterId -> votingModel.calcWeight(childChain, voteWeighting, voterId, countHeight);
+            weighter = voterId -> votingModel.calcWeight(voteWeighting, voterId, countHeight);
         }
         JSONArray votesJson = new JSONArray();
         try (DbIterator<VoteHome.Vote> votes = childChain.getVoteHome().getVotes(poll.getId(), firstIndex, lastIndex)) {

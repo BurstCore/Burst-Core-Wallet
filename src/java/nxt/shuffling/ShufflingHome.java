@@ -618,7 +618,7 @@ public final class ShufflingHome {
             try (DbIterator<ShufflingParticipantHome.ShufflingParticipant> participants = shufflingParticipantHome.getParticipants(id)) {
                 for (ShufflingParticipantHome.ShufflingParticipant participant : participants) {
                     Account participantAccount = Account.getAccount(participant.getAccountId());
-                    holdingType.addToBalance(childChain, participantAccount, event, this.id, this.holdingId, -amount);
+                    holdingType.addToBalance(participantAccount, event, this.id, this.holdingId, -amount);
                     if (holdingType != HoldingType.COIN) {
                         participantAccount.addToBalance(childChain, event, this.id, -Constants.SHUFFLING_DEPOSIT_NQT);
                     }
@@ -628,7 +628,7 @@ public final class ShufflingHome {
                 long recipientId = Account.getId(recipientPublicKey);
                 Account recipientAccount = Account.addOrGetAccount(recipientId);
                 recipientAccount.apply(recipientPublicKey);
-                holdingType.addToBalanceAndUnconfirmedBalance(childChain, recipientAccount, event, this.id, this.holdingId, amount);
+                holdingType.addToBalanceAndUnconfirmedBalance(recipientAccount, event, this.id, this.holdingId, amount);
                 if (holdingType != HoldingType.COIN) {
                     recipientAccount.addToBalanceAndUnconfirmedBalance(childChain, event, this.id, Constants.SHUFFLING_DEPOSIT_NQT);
                 }
@@ -648,7 +648,7 @@ public final class ShufflingHome {
             try (DbIterator<ShufflingParticipantHome.ShufflingParticipant> participants = shufflingParticipantHome.getParticipants(id)) {
                 for (ShufflingParticipantHome.ShufflingParticipant participant : participants) {
                     Account participantAccount = Account.getAccount(participant.getAccountId());
-                    holdingType.addToUnconfirmedBalance(childChain, participantAccount, event, this.id, this.holdingId, this.amount);
+                    holdingType.addToUnconfirmedBalance(participantAccount, event, this.id, this.holdingId, this.amount);
                     if (participantAccount.getId() != blamedAccountId) {
                         if (holdingType != HoldingType.COIN) {
                             participantAccount.addToUnconfirmedBalance(childChain, event, this.id, Constants.SHUFFLING_DEPOSIT_NQT);

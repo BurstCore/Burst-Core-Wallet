@@ -335,7 +335,7 @@ public final class PollHome {
             VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
             try (DbIterator<VoteHome.Vote> votes = voteHome.getVotes(this.getId(), 0, -1)) {
                 for (VoteHome.Vote vote : votes) {
-                    long weight = votingModel.calcWeight(childChain, voteWeighting, vote.getVoterId(), height);
+                    long weight = votingModel.calcWeight(voteWeighting, vote.getVoterId(), height);
                     if (weight <= 0) {
                         continue;
                     }

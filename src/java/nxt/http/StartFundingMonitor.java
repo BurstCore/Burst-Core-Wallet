@@ -77,7 +77,7 @@ public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         HoldingType holdingType = ParameterParser.getHoldingType(req);
-        long holdingId = ParameterParser.getHoldingId(req, holdingType);
+        long holdingId = ParameterParser.getHoldingId(req);
         String property = ParameterParser.getAccountProperty(req, true);
         long amount = ParameterParser.getLong(req, "amount", 0, Long.MAX_VALUE, true);
         if (amount < FundingMonitor.MIN_FUND_AMOUNT) {

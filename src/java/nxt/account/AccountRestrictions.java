@@ -152,7 +152,6 @@ public final class AccountRestrictions {
             if (phasingAppendix == null) {
                 throw new AccountControlException("Non-phased transaction when phasing account control is enabled");
             }
-            //TODO: store chain_id in phasingParams holdingId, or add to account control table
             if (!phasingParams.equals(phasingAppendix.getParams())) {
                 throw new AccountControlException("Phasing parameters mismatch phasing account control. Expected: " +
                         phasingParams.toString() + " . Actual: " + phasingAppendix.getParams().toString());

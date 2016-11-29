@@ -564,7 +564,7 @@ public final class PhasingPollHome {
             long cumulativeWeight = 0;
             try (DbIterator<PhasingVoteHome.PhasingVote> votes = phasingVoteHome.getVotes(this.hash, 0, Integer.MAX_VALUE)) {
                 for (PhasingVoteHome.PhasingVote vote : votes) {
-                    cumulativeWeight += votingModel.calcWeight(childChain, voteWeighting, vote.getVoterId(), height);
+                    cumulativeWeight += votingModel.calcWeight(voteWeighting, vote.getVoterId(), height);
                 }
             }
             return cumulativeWeight;

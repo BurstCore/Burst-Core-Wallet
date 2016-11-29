@@ -736,6 +736,26 @@ public final class Account {
         return publicKeyTable.getCount();
     }
 
+    public static long getBalance(Chain chain, long accountId) {
+        return chain instanceof ChildChain ? ((ChildChain)chain).getBalanceHome().getBalance(accountId).getBalance()
+                : getAccount(accountId).getBalanceFQT();
+    }
+
+    public long getUnconfirmedBalance(Chain chain, long accountId) {
+        return chain instanceof ChildChain ? ((ChildChain)chain).getBalanceHome().getBalance(accountId).getUnconfirmedBalance()
+                : getAccount(accountId).getUnconfirmedBalanceFQT();
+    }
+
+    public static long getBalance(Chain chain, long accountId, int height) {
+        return chain instanceof ChildChain ? ((ChildChain)chain).getBalanceHome().getBalance(accountId, height).getBalance()
+                : getAccount(accountId, height).getBalanceFQT();
+    }
+
+    public long getUnconfirmedBalance(Chain chain, long accountId, int height) {
+        return chain instanceof ChildChain ? ((ChildChain)chain).getBalanceHome().getBalance(accountId, height).getUnconfirmedBalance()
+                : getAccount(accountId, height).getUnconfirmedBalanceFQT();
+    }
+
     public static int getAssetAccountCount(long assetId) {
         return accountAssetTable.getCount(new DbClause.LongClause("asset_id", assetId));
     }
@@ -1772,6 +1792,31 @@ public final class Account {
 
     public void addToBalanceAndUnconfirmedBalance(ChildChain childChain, AccountLedger.LedgerEvent event, long eventId, long amount) {
         childChain.getBalanceHome().getBalance(id).addToBalanceAndUnconfirmedBalance(event, eventId, amount);
+    }
+
+    //TODO: cleanup
+    public void addToBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount) {
+        if (chain instanceof ChildChain) {
+            ((ChildChain)chain).getBalanceHome().getBalance(id).addToBalance(event, eventId, amount);
+        } else {
+            addToBalanceFQT(event, eventId, amount);
+        }
+    }
+
+    public void addToUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount) {
+        if (chain instanceof ChildChain) {
+            ((ChildChain)chain).getBalanceHome().getBalance(id).addToUnconfirmedBalance(event, eventId, amount);
+        } else {
+            addToUnconfirmedBalanceFQT(event, eventId, amount);
+        }
+    }
+
+    public void addToBalanceAndUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount) {
+        if (chain instanceof ChildChain) {
+            ((ChildChain) chain).getBalanceHome().getBalance(id).addToBalanceAndUnconfirmedBalance(event, eventId, amount);
+        } else {
+            addToBalanceAndUnconfirmedBalanceFQT(event, eventId, amount);
+        }
     }
 
     public void addToForgedBalanceFQT(long amount) {

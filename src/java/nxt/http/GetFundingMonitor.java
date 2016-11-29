@@ -80,7 +80,7 @@ public class GetFundingMonitor extends APIServlet.APIRequestHandler {
             }
             final long accountId = account;
             final HoldingType holdingType = ParameterParser.getHoldingType(req);
-            final long holdingId = ParameterParser.getHoldingId(req, holdingType);
+            final long holdingId = ParameterParser.getHoldingId(req);
             final String property = ParameterParser.getAccountProperty(req, false);
             Filter<FundingMonitor> filter;
             if (property != null) {
