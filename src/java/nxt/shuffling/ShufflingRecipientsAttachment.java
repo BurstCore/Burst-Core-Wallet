@@ -29,7 +29,7 @@ public final class ShufflingRecipientsAttachment extends AbstractShufflingAttach
 
     private final byte[][] recipientPublicKeys;
 
-    public ShufflingRecipientsAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+    ShufflingRecipientsAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
         int count = buffer.get();
         if (count > Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS || count < 0) {
@@ -42,7 +42,7 @@ public final class ShufflingRecipientsAttachment extends AbstractShufflingAttach
         }
     }
 
-    public ShufflingRecipientsAttachment(JSONObject attachmentData) {
+    ShufflingRecipientsAttachment(JSONObject attachmentData) {
         super(attachmentData);
         JSONArray jsonArray = (JSONArray)attachmentData.get("recipientPublicKeys");
         this.recipientPublicKeys = new byte[jsonArray.size()][];
@@ -51,8 +51,8 @@ public final class ShufflingRecipientsAttachment extends AbstractShufflingAttach
         }
     }
 
-    public ShufflingRecipientsAttachment(long shufflingId, byte[][] recipientPublicKeys, byte[] shufflingStateHash) {
-        super(shufflingId, shufflingStateHash);
+    ShufflingRecipientsAttachment(byte[] shufflingFullHash, byte[][] recipientPublicKeys, byte[] shufflingStateHash) {
+        super(shufflingFullHash, shufflingStateHash);
         this.recipientPublicKeys = recipientPublicKeys;
     }
 

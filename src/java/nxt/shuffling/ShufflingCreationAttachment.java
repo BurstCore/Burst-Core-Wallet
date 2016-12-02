@@ -32,7 +32,7 @@ public final class ShufflingCreationAttachment extends Attachment.AbstractAttach
     private final byte participantCount;
     private final short registrationPeriod;
 
-    public ShufflingCreationAttachment(ByteBuffer buffer) {
+    ShufflingCreationAttachment(ByteBuffer buffer) {
         super(buffer);
         this.holdingId = buffer.getLong();
         this.holdingType = HoldingType.get(buffer.get());
@@ -41,7 +41,7 @@ public final class ShufflingCreationAttachment extends Attachment.AbstractAttach
         this.registrationPeriod = buffer.getShort();
     }
 
-    public ShufflingCreationAttachment(JSONObject attachmentData) {
+    ShufflingCreationAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.holdingId = Convert.parseUnsignedLong((String) attachmentData.get("holding"));
         this.holdingType = HoldingType.get(((Long)attachmentData.get("holdingType")).byteValue());

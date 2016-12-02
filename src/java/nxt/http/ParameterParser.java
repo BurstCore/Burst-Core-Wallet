@@ -308,7 +308,7 @@ public final class ParameterParser {
 
     public static ShufflingHome.Shuffling getShuffling(HttpServletRequest req) throws ParameterException {
         ChildChain childChain = ParameterParser.getChildChain(req);
-        ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(getUnsignedLong(req, "shuffling", true));
+        ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(getBytes(req, "shufflingFullHash", true));
         if (shuffling == null) {
             throw new ParameterException(UNKNOWN_SHUFFLING);
         }

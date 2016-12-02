@@ -31,7 +31,7 @@ public final class ShufflingVerify extends CreateTransaction {
     static final ShufflingVerify instance = new ShufflingVerify();
 
     private ShufflingVerify() {
-        super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shuffling", "shufflingStateHash");
+        super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shufflingFullHash", "shufflingStateHash");
     }
 
     @Override
@@ -41,7 +41,7 @@ public final class ShufflingVerify extends CreateTransaction {
         if (!Arrays.equals(shufflingStateHash, shuffling.getStateHash())) {
             return JSONResponses.incorrect("shufflingStateHash", "Shuffling is in a different state now");
         }
-        Attachment attachment = new ShufflingVerificationAttachment(shuffling.getId(), shufflingStateHash);
+        Attachment attachment = new ShufflingVerificationAttachment(shuffling.getFullHash(), shufflingStateHash);
 
         Account account = ParameterParser.getSenderAccount(req);
         return createTransaction(req, account, attachment);

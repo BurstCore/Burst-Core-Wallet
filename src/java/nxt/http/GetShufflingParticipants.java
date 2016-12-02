@@ -31,17 +31,17 @@ public final class GetShufflingParticipants extends APIServlet.APIRequestHandler
     static final GetShufflingParticipants instance = new GetShufflingParticipants();
 
     private GetShufflingParticipants() {
-        super(new APITag[] {APITag.SHUFFLING}, "shuffling");
+        super(new APITag[] {APITag.SHUFFLING}, "shufflingFullHash");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        long shufflingId = ParameterParser.getUnsignedLong(req, "shuffling", true);
+        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
         ChildChain childChain = ParameterParser.getChildChain(req);
         JSONObject response = new JSONObject();
         JSONArray participantsJSONArray = new JSONArray();
         response.put("participants", participantsJSONArray);
-        try (DbIterator<ShufflingParticipantHome.ShufflingParticipant> participants = childChain.getShufflingParticipantHome().getParticipants(shufflingId)) {
+        try (DbIterator<ShufflingParticipantHome.ShufflingParticipant> participants = childChain.getShufflingParticipantHome().getParticipants(shufflingFullHash)) {
             for (ShufflingParticipantHome.ShufflingParticipant participant : participants) {
                 participantsJSONArray.add(JSONData.participant(participant));
             }

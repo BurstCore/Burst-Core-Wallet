@@ -23,16 +23,16 @@ import java.nio.ByteBuffer;
 
 public final class ShufflingVerificationAttachment extends AbstractShufflingAttachment {
 
-    public ShufflingVerificationAttachment(ByteBuffer buffer) {
+    ShufflingVerificationAttachment(ByteBuffer buffer) {
         super(buffer);
     }
 
-    public ShufflingVerificationAttachment(JSONObject attachmentData) {
+    ShufflingVerificationAttachment(JSONObject attachmentData) {
         super(attachmentData);
     }
 
-    public ShufflingVerificationAttachment(long shufflingId, byte[] shufflingStateHash) {
-        super(shufflingId, shufflingStateHash);
+    public ShufflingVerificationAttachment(byte[] shufflingFullHash, byte[] shufflingStateHash) {
+        super(shufflingFullHash, shufflingStateHash);
     }
 
     @Override

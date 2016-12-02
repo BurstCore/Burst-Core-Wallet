@@ -27,13 +27,13 @@ public final class ShufflingRegistrationAttachment extends Attachment.AbstractAt
 
     private final byte[] shufflingFullHash;
 
-    public ShufflingRegistrationAttachment(ByteBuffer buffer) {
+    ShufflingRegistrationAttachment(ByteBuffer buffer) {
         super(buffer);
         this.shufflingFullHash = new byte[32];
         buffer.get(this.shufflingFullHash);
     }
 
-    public ShufflingRegistrationAttachment(JSONObject attachmentData) {
+    ShufflingRegistrationAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.shufflingFullHash = Convert.parseHexString((String) attachmentData.get("shufflingFullHash"));
     }
@@ -63,8 +63,8 @@ public final class ShufflingRegistrationAttachment extends Attachment.AbstractAt
     }
 
     @Override
-    public long getShufflingId() {
-        return Convert.fullHashToId(shufflingFullHash);
+    public byte[] getShufflingFullHash() {
+        return shufflingFullHash;
     }
 
     @Override

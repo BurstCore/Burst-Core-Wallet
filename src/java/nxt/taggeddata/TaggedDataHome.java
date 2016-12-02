@@ -481,7 +481,7 @@ public final class TaggedDataHome {
         private void save(Connection con) throws SQLException {
             try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, full_hash, account_id, name, description, tags, parsed_tags, "
                     + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                    + "KEY (id, full_hash, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
                 pstmt.setBytes(++i, this.transactionFullHash);

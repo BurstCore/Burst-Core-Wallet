@@ -43,14 +43,14 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     private volatile byte[][] data;
     private final byte[] hash;
 
-    public ShufflingProcessingAttachment(ByteBuffer buffer) {
+    ShufflingProcessingAttachment(ByteBuffer buffer) {
         super(buffer);
         this.hash = new byte[32];
         buffer.get(hash);
         this.data = Arrays.equals(hash, emptyDataHash) ? Convert.EMPTY_BYTES : null;
     }
 
-    public ShufflingProcessingAttachment(JSONObject attachmentData) {
+    ShufflingProcessingAttachment(JSONObject attachmentData) {
         super(attachmentData);
         JSONArray jsonArray = (JSONArray)attachmentData.get("data");
         if (jsonArray != null) {
@@ -65,8 +65,8 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
         }
     }
 
-    public ShufflingProcessingAttachment(long shufflingId, byte[][] data, byte[] shufflingStateHash) {
-        super(shufflingId, shufflingStateHash);
+    ShufflingProcessingAttachment(byte[] shufflingFullHash, byte[][] data, byte[] shufflingStateHash) {
+        super(shufflingFullHash, shufflingStateHash);
         this.data = data;
         this.hash = null;
     }
@@ -135,7 +135,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (data == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            data = ((ChildChain) transaction.getChain()).getShufflingParticipantHome().getData(getShufflingId(), transaction.getSenderId());
+            data = ((ChildChain) transaction.getChain()).getShufflingParticipantHome().getData(getShufflingFullHash(), transaction.getSenderId());
         }
     }
 
@@ -146,7 +146,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        ((ChildChain) transaction.getChain()).getShufflingParticipantHome().restoreData(getShufflingId(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
+        ((ChildChain) transaction.getChain()).getShufflingParticipantHome().restoreData(getShufflingFullHash(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
     }
 
 }

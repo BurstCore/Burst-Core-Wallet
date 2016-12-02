@@ -423,7 +423,7 @@ public final class Shuffler {
         if (shufflingParticipant == null || shufflingParticipant.getIndex() == shuffling.getParticipantCount() - 1) {
             return;
         }
-        if (shuffling.getShufflingParticipantHome().getData(shuffling.getId(), accountId) == null) {
+        if (shuffling.getShufflingParticipantHome().getData(shuffling.getFullHash(), accountId) == null) {
             return;
         }
         submitCancel(shuffling);
@@ -443,7 +443,7 @@ public final class Shuffler {
 
     private void submitVerify(ShufflingHome.Shuffling shuffling) {
         Logger.logDebugMessage("Account %s verifying shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        ShufflingVerificationAttachment attachment = new ShufflingVerificationAttachment(shuffling.getId(), shuffling.getStateHash());
+        ShufflingVerificationAttachment attachment = new ShufflingVerificationAttachment(shuffling.getFullHash(), shuffling.getStateHash());
         submitTransaction(attachment);
     }
 

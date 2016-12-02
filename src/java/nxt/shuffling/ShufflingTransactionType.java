@@ -221,8 +221,6 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
             return isDuplicate;
         }
 
-        //TODO: validateId?
-
     };
 
     public static final TransactionType SHUFFLING_REGISTRATION = new ShufflingTransactionType() {
@@ -255,16 +253,16 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             ShufflingRegistrationAttachment attachment = (ShufflingRegistrationAttachment) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             if (shuffling == null) {
-                throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
+                throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Convert.toHexString(attachment.getShufflingFullHash()));
             }
             byte[] shufflingStateHash = shuffling.getStateHash();
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new NxtException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
             if (shuffling.getStage() != ShufflingStage.REGISTRATION) {
-                throw new NxtException.NotCurrentlyValidException("Shuffling registration has ended for " + Long.toUnsignedString(attachment.getShufflingId()));
+                throw new NxtException.NotCurrentlyValidException("Shuffling registration has ended for " + Convert.toHexString(attachment.getShufflingFullHash()));
             }
             if (shuffling.getParticipant(transaction.getSenderId()) != null) {
                 throw new NxtException.NotCurrentlyValidException(String.format("Account %s is already registered for shuffling %s",
@@ -278,7 +276,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
             ShufflingRegistrationAttachment attachment = (ShufflingRegistrationAttachment) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             return TransactionType.isDuplicate(SHUFFLING_REGISTRATION,
                     Long.toUnsignedString(shuffling.getId()) + "." + Long.toUnsignedString(transaction.getSenderId()), duplicates, true)
                     || TransactionType.isDuplicate(SHUFFLING_REGISTRATION,
@@ -289,7 +287,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             ShufflingRegistrationAttachment attachment = (ShufflingRegistrationAttachment) transaction.getAttachment();
             ChildChain childChain = transaction.getChain();
-            ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             HoldingType holdingType = shuffling.getHoldingType();
             if (holdingType != HoldingType.COIN) {
                 if (holdingType.getUnconfirmedBalance(senderAccount, shuffling.getHoldingId()) >= shuffling.getAmount()
@@ -310,7 +308,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             ShufflingRegistrationAttachment attachment = (ShufflingRegistrationAttachment) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             shuffling.addParticipant(transaction.getSenderId());
         }
 
@@ -318,7 +316,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             ShufflingRegistrationAttachment attachment = (ShufflingRegistrationAttachment) transaction.getAttachment();
             ChildChain childChain = transaction.getChain();
-            ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             HoldingType holdingType = shuffling.getHoldingType();
             if (holdingType != HoldingType.COIN) {
                 holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), shuffling.getAmount());
@@ -365,13 +363,13 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment)transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             if (shuffling == null) {
-                throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
+                throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Convert.toHexString(attachment.getShufflingFullHash()));
             }
             if (shuffling.getStage() != ShufflingStage.PROCESSING) {
                 throw new NxtException.NotCurrentlyValidException(String.format("Shuffling %s is not in processing stage",
-                        Long.toUnsignedString(attachment.getShufflingId())));
+                        Convert.toHexString(attachment.getShufflingFullHash())));
             }
             ShufflingParticipantHome.ShufflingParticipant participant = shuffling.getParticipant(transaction.getSenderId());
             if (participant == null) {
@@ -419,7 +417,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
             ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             return TransactionType.isDuplicate(SHUFFLING_PROCESSING, Long.toUnsignedString(shuffling.getId()), duplicates, true);
         }
 
@@ -431,7 +429,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment)transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             shuffling.updateParticipantData(transaction, attachment);
         }
 
@@ -447,7 +445,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         public boolean isPruned(Chain chain, byte[] fullHash) {
             Transaction transaction = chain.getTransactionHome().findTransactionByFullHash(fullHash);
             ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment)transaction.getAttachment();
-            return ((ChildChain) chain).getShufflingParticipantHome().getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
+            return ((ChildChain) chain).getShufflingParticipantHome().getData(attachment.getShufflingFullHash(), transaction.getSenderId()) == null;
         }
 
     };
@@ -487,13 +485,13 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             ShufflingRecipientsAttachment attachment = (ShufflingRecipientsAttachment)transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             if (shuffling == null) {
-                throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
+                throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Convert.toHexString(attachment.getShufflingFullHash()));
             }
             if (shuffling.getStage() != ShufflingStage.PROCESSING) {
                 throw new NxtException.NotCurrentlyValidException(String.format("Shuffling %s is not in processing stage",
-                        Long.toUnsignedString(attachment.getShufflingId())));
+                        Convert.toHexString(attachment.getShufflingFullHash())));
             }
             ShufflingParticipantHome.ShufflingParticipant participant = shuffling.getParticipant(transaction.getSenderId());
             if (participant == null) {
@@ -534,7 +532,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
             ShufflingRecipientsAttachment attachment = (ShufflingRecipientsAttachment) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             return TransactionType.isDuplicate(SHUFFLING_PROCESSING, Long.toUnsignedString(shuffling.getId()), duplicates, true);
         }
 
@@ -546,7 +544,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             ShufflingRecipientsAttachment attachment = (ShufflingRecipientsAttachment)transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             shuffling.updateRecipients(transaction, attachment);
         }
 
@@ -590,12 +588,12 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             ShufflingVerificationAttachment attachment = (ShufflingVerificationAttachment) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             if (shuffling == null) {
-                throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
+                throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Convert.toHexString(attachment.getShufflingFullHash()));
             }
             if (shuffling.getStage() != ShufflingStage.VERIFICATION) {
-                throw new NxtException.NotCurrentlyValidException("Shuffling not in verification stage: " + Long.toUnsignedString(attachment.getShufflingId()));
+                throw new NxtException.NotCurrentlyValidException("Shuffling not in verification stage: " + Convert.toHexString(attachment.getShufflingFullHash()));
             }
             ShufflingParticipantHome.ShufflingParticipant participant = shuffling.getParticipant(transaction.getSenderId());
             if (participant == null) {
@@ -604,7 +602,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
             }
             if (!participant.getState().canBecome(ShufflingParticipantHome.State.VERIFIED)) {
                 throw new NxtException.NotCurrentlyValidException(String.format("Shuffling participant %s in state %s cannot become verified",
-                        Long.toUnsignedString(attachment.getShufflingId()), participant.getState()));
+                        Convert.toHexString(attachment.getShufflingFullHash()), participant.getState()));
             }
             if (participant.getIndex() == shuffling.getParticipantCount() - 1) {
                 throw new NxtException.NotValidException("Last participant cannot submit verification transaction");
@@ -618,7 +616,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
             ShufflingVerificationAttachment attachment = (ShufflingVerificationAttachment) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             return TransactionType.isDuplicate(SHUFFLING_VERIFICATION,
                     Long.toUnsignedString(shuffling.getId()) + "." + Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
         }
@@ -631,7 +629,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             ShufflingVerificationAttachment attachment = (ShufflingVerificationAttachment) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             shuffling.verify(transaction.getSenderId());
         }
 
@@ -681,9 +679,9 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             ShufflingCancellationAttachment attachment = (ShufflingCancellationAttachment) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             if (shuffling == null) {
-                throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
+                throw new NxtException.NotCurrentlyValidException("Shuffling not found: " + Convert.toHexString(attachment.getShufflingFullHash()));
             }
             long cancellingAccountId = attachment.getCancellingAccountId();
             if (cancellingAccountId == 0 && !shuffling.getStage().canBecome(ShufflingStage.BLAME)) {
@@ -700,7 +698,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
             }
             if (!participant.getState().canBecome(ShufflingParticipantHome.State.CANCELLED)) {
                 throw new NxtException.NotCurrentlyValidException(String.format("Shuffling participant %s in state %s cannot submit cancellation",
-                        Long.toUnsignedString(attachment.getShufflingId()), participant.getState()));
+                        Convert.toHexString(attachment.getShufflingFullHash()), participant.getState()));
             }
             if (participant.getIndex() == shuffling.getParticipantCount() - 1) {
                 throw new NxtException.NotValidException("Last participant cannot submit cancellation transaction");
@@ -731,7 +729,7 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
             ShufflingCancellationAttachment attachment = (ShufflingCancellationAttachment) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingId());
+            ShufflingHome.Shuffling shuffling = ((ChildChain) transaction.getChain()).getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             return TransactionType.isDuplicate(SHUFFLING_VERIFICATION, // use VERIFICATION for unique type
                     Long.toUnsignedString(shuffling.getId()) + "." + Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
         }
@@ -744,8 +742,9 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         @Override
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             ShufflingCancellationAttachment attachment = (ShufflingCancellationAttachment) transaction.getAttachment();
-            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingId());
-            ShufflingParticipantHome.ShufflingParticipant participant = transaction.getChain().getShufflingParticipantHome().getParticipant(shuffling.getId(), senderAccount.getId());
+            ShufflingHome.Shuffling shuffling = transaction.getChain().getShufflingHome().getShuffling(attachment.getShufflingFullHash());
+            ShufflingParticipantHome.ShufflingParticipant participant = transaction.getChain().getShufflingParticipantHome()
+                    .getParticipant(shuffling.getFullHash(), senderAccount.getId());
             shuffling.cancelBy(participant, attachment.getBlameData(), attachment.getKeySeeds());
         }
 

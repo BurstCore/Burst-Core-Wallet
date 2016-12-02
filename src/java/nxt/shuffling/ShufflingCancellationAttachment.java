@@ -33,7 +33,7 @@ public final class ShufflingCancellationAttachment extends AbstractShufflingAtta
     private final byte[][] keySeeds;
     private final long cancellingAccountId;
 
-    public ShufflingCancellationAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
+    ShufflingCancellationAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
         int count = buffer.get();
         if (count > Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS || count <= 0) {
@@ -60,7 +60,7 @@ public final class ShufflingCancellationAttachment extends AbstractShufflingAtta
         this.cancellingAccountId = buffer.getLong();
     }
 
-    public ShufflingCancellationAttachment(JSONObject attachmentData) {
+    ShufflingCancellationAttachment(JSONObject attachmentData) {
         super(attachmentData);
         JSONArray jsonArray = (JSONArray)attachmentData.get("blameData");
         this.blameData = new byte[jsonArray.size()][];
@@ -75,8 +75,8 @@ public final class ShufflingCancellationAttachment extends AbstractShufflingAtta
         this.cancellingAccountId = Convert.parseUnsignedLong((String) attachmentData.get("cancellingAccount"));
     }
 
-    public ShufflingCancellationAttachment(long shufflingId, byte[][] blameData, byte[][] keySeeds, byte[] shufflingStateHash, long cancellingAccountId) {
-        super(shufflingId, shufflingStateHash);
+    ShufflingCancellationAttachment(byte[] shufflingFullHash, byte[][] blameData, byte[][] keySeeds, byte[] shufflingStateHash, long cancellingAccountId) {
+        super(shufflingFullHash, shufflingStateHash);
         this.blameData = blameData;
         this.keySeeds = keySeeds;
         this.cancellingAccountId = cancellingAccountId;

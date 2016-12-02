@@ -20,7 +20,7 @@ import nxt.blockchain.Attachment;
 
 public interface ShufflingAttachment extends Attachment {
 
-    long getShufflingId();
+    byte[] getShufflingFullHash();
 
     byte[] getShufflingStateHash();
 

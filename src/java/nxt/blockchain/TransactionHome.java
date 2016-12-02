@@ -166,27 +166,6 @@ public final class TransactionHome {
         }
     }
 
-    //TODO: remove
-    public byte[] getTransactionFullHash(long transactionId) {
-        // Check the block cache
-        synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
-            if (transaction != null) {
-                return transaction.getFullHash();
-            }
-        }
-        // Search the database
-        try (Connection con = transactionTable.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT full_hash FROM " + transactionTable.getSchemaTable() + " WHERE id = ? ORDER BY height DESC LIMIT 1")) {
-            pstmt.setLong(1, transactionId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() ? rs.getBytes("full_hash") : null;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
     static List<FxtTransactionImpl> findBlockTransactions(long blockId) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {

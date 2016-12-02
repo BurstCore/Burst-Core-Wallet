@@ -282,7 +282,7 @@ public final class DebugTrace {
     }
 
     private void traceShufflingDistribute(ShufflingHome.Shuffling shuffling) {
-        shuffling.getShufflingParticipantHome().getParticipants(shuffling.getId()).forEach(shufflingParticipant -> {
+        shuffling.getShufflingParticipantHome().getParticipants(shuffling.getFullHash()).forEach(shufflingParticipant -> {
             if (include(shufflingParticipant.getAccountId())) {
                 log(getValues(shufflingParticipant.getAccountId(), shuffling, false));
             }

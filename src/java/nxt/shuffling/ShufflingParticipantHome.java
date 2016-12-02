@@ -85,16 +85,16 @@ public final class ShufflingParticipantHome {
     }
 
     private final Listeners<ShufflingParticipant, Event> listeners;
-    private final DbKey.LongLongKeyFactory<ShufflingParticipant> shufflingParticipantDbKeyFactory;
+    private final DbKey.HashLongKeyFactory<ShufflingParticipant> shufflingParticipantDbKeyFactory;
     private final VersionedEntityDbTable<ShufflingParticipant> shufflingParticipantTable;
-    private final DbKey.LongLongKeyFactory<ShufflingData> shufflingDataDbKeyFactory;
+    private final DbKey.HashLongKeyFactory<ShufflingData> shufflingDataDbKeyFactory;
     private final PrunableDbTable<ShufflingData> shufflingDataTable;
     private final ChildChain childChain;
 
     private ShufflingParticipantHome(ChildChain childChain) {
         this.childChain = childChain;
         this.listeners = new Listeners<>();
-        this.shufflingParticipantDbKeyFactory = new DbKey.LongLongKeyFactory<ShufflingParticipant>("shuffling_id", "account_id") {
+        this.shufflingParticipantDbKeyFactory = new DbKey.HashLongKeyFactory<ShufflingParticipant>("shuffling_full_hash", "shuffling_id", "account_id") {
             @Override
             public DbKey newKey(ShufflingParticipant participant) {
                 return participant.dbKey;
@@ -111,7 +111,7 @@ public final class ShufflingParticipantHome {
                 participant.save(con);
             }
         };
-        this.shufflingDataDbKeyFactory = new DbKey.LongLongKeyFactory<ShufflingData>("shuffling_id", "account_id") {
+        this.shufflingDataDbKeyFactory = new DbKey.HashLongKeyFactory<ShufflingData>("shuffling_full_hash", "shuffling_id", "account_id") {
             @Override
             public DbKey newKey(ShufflingData shufflingData) {
                 return shufflingData.dbKey;
@@ -137,42 +137,47 @@ public final class ShufflingParticipantHome {
         return listeners.removeListener(listener, eventType);
     }
 
-    public DbIterator<ShufflingParticipant> getParticipants(long shufflingId) {
-        return shufflingParticipantTable.getManyBy(new DbClause.LongClause("shuffling_id", shufflingId), 0, -1, " ORDER BY participant_index ");
+    public DbIterator<ShufflingParticipant> getParticipants(byte[] shufflingFullHash) {
+        return shufflingParticipantTable.getManyBy(new DbClause.LongClause("shuffling_id", Convert.fullHashToId(shufflingFullHash))
+                .and(new DbClause.BytesClause("shuffling_full_hash", shufflingFullHash)), 0, -1, " ORDER BY participant_index ");
     }
 
-    public ShufflingParticipant getParticipant(long shufflingId, long accountId) {
-        return shufflingParticipantTable.get(shufflingParticipantDbKeyFactory.newKey(shufflingId, accountId));
+    public ShufflingParticipant getParticipant(byte[] shufflingFullHash, long accountId) {
+        return shufflingParticipantTable.get(shufflingParticipantDbKeyFactory.newKey(shufflingFullHash, accountId));
     }
 
-    ShufflingParticipant getLastParticipant(long shufflingId) {
-        return shufflingParticipantTable.getBy(new DbClause.LongClause("shuffling_id", shufflingId).and(new DbClause.NullClause("next_account_id")));
+    ShufflingParticipant getLastParticipant(byte[] shufflingFullHash) {
+        return shufflingParticipantTable.getBy(new DbClause.LongClause("shuffling_id", Convert.fullHashToId(shufflingFullHash))
+                .and(new DbClause.BytesClause("shuffling_full_hash", shufflingFullHash))
+                .and(new DbClause.NullClause("next_account_id")));
     }
 
-    void addParticipant(long shufflingId, long accountId, int index) {
-        ShufflingParticipant participant = new ShufflingParticipant(shufflingId, accountId, index);
+    void addParticipant(ShufflingHome.Shuffling shuffling, long accountId, int index) {
+        ShufflingParticipant participant = new ShufflingParticipant(shuffling, accountId, index);
         shufflingParticipantTable.insert(participant);
         listeners.notify(participant, Event.PARTICIPANT_REGISTERED);
     }
 
-    int getVerifiedCount(long shufflingId) {
-        return shufflingParticipantTable.getCount(new DbClause.LongClause("shuffling_id", shufflingId).and(
-                new DbClause.ByteClause("state", State.VERIFIED.getCode())));
+    int getVerifiedCount(ShufflingHome.Shuffling shuffling) {
+        return shufflingParticipantTable.getCount(new DbClause.LongClause("shuffling_id", shuffling.getId())
+                .and(new DbClause.BytesClause("shuffling_full_hash", shuffling.getFullHash()))
+                .and(new DbClause.ByteClause("state", State.VERIFIED.getCode())));
     }
 
-    void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height) {
-        if (data != null && getData(shufflingId, accountId) == null) {
-            shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, height));
+    void restoreData(byte[] shufflingFullHash, long accountId, byte[][] data, int timestamp, int height) {
+        if (data != null && getData(shufflingFullHash, accountId) == null) {
+            shufflingDataTable.insert(new ShufflingData(shufflingFullHash, accountId, data, timestamp, height));
         }
     }
 
-    public byte[][] getData(long shufflingId, long accountId) {
-        ShufflingData shufflingData = shufflingDataTable.get(shufflingDataDbKeyFactory.newKey(shufflingId, accountId));
+    public byte[][] getData(byte[] shufflingFullHash, long accountId) {
+        ShufflingData shufflingData = shufflingDataTable.get(shufflingDataDbKeyFactory.newKey(shufflingFullHash, Convert.fullHashToId(shufflingFullHash), accountId));
         return shufflingData != null ? shufflingData.data : null;
     }
 
     private final class ShufflingData {
 
+        private final byte[] shufflingFullHash;
         private final long shufflingId;
         private final long accountId;
         private final DbKey dbKey;
@@ -180,10 +185,11 @@ public final class ShufflingParticipantHome {
         private final int transactionTimestamp;
         private final int height;
 
-        private ShufflingData(long shufflingId, long accountId, byte[][] data, int transactionTimestamp, int height) {
-            this.shufflingId = shufflingId;
+        private ShufflingData(byte[] shufflingFullHash, long accountId, byte[][] data, int transactionTimestamp, int height) {
+            this.shufflingFullHash = shufflingFullHash;
+            this.shufflingId = Convert.fullHashToId(shufflingFullHash);
             this.accountId = accountId;
-            this.dbKey = shufflingDataDbKeyFactory.newKey(shufflingId, accountId);
+            this.dbKey = shufflingDataDbKeyFactory.newKey(shufflingFullHash, shufflingId, accountId);
             this.data = data;
             this.transactionTimestamp = transactionTimestamp;
             this.height = height;
@@ -191,6 +197,7 @@ public final class ShufflingParticipantHome {
 
         private ShufflingData(ResultSet rs, DbKey dbKey) throws SQLException {
             this.shufflingId = rs.getLong("shuffling_id");
+            this.shufflingFullHash = rs.getBytes("shuffling_full_hash");
             this.accountId = rs.getLong("account_id");
             this.dbKey = dbKey;
             this.data = DbUtils.getArray(rs, "data", byte[][].class, Convert.EMPTY_BYTES);
@@ -199,11 +206,12 @@ public final class ShufflingParticipantHome {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO shuffling_data (shuffling_id, account_id, data, "
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO shuffling_data (shuffling_id, shuffling_full_hash, account_id, data, "
                     + "transaction_timestamp, height) "
-                    + "VALUES (?, ?, ?, ?, ?)")) {
+                    + "VALUES (?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.shufflingId);
+                pstmt.setBytes(++i, this.shufflingFullHash);
                 pstmt.setLong(++i, this.accountId);
                 DbUtils.setArrayEmptyToNull(pstmt, ++i, this.data);
                 pstmt.setInt(++i, this.transactionTimestamp);
@@ -216,6 +224,7 @@ public final class ShufflingParticipantHome {
     public final class ShufflingParticipant {
 
         private final long shufflingId;
+        private final byte[] shufflingFullHash;
         private final long accountId; // sender account
         private final DbKey dbKey;
         private final int index;
@@ -226,10 +235,11 @@ public final class ShufflingParticipantHome {
         private byte[][] keySeeds; // to be revealed only if shuffle is being cancelled
         private byte[] dataTransactionFullHash;
 
-        private ShufflingParticipant(long shufflingId, long accountId, int index) {
-            this.shufflingId = shufflingId;
+        private ShufflingParticipant(ShufflingHome.Shuffling shuffling, long accountId, int index) {
+            this.shufflingFullHash = shuffling.getFullHash();
+            this.shufflingId = shuffling.getId();
             this.accountId = accountId;
-            this.dbKey = shufflingParticipantDbKeyFactory.newKey(shufflingId, accountId);
+            this.dbKey = shufflingParticipantDbKeyFactory.newKey(shufflingFullHash, shufflingId, accountId);
             this.index = index;
             this.state = State.REGISTERED;
             this.blameData = Convert.EMPTY_BYTES;
@@ -238,6 +248,7 @@ public final class ShufflingParticipantHome {
 
         private ShufflingParticipant(ResultSet rs, DbKey dbKey) throws SQLException {
             this.shufflingId = rs.getLong("shuffling_id");
+            this.shufflingFullHash = rs.getBytes("shuffling_full_hash");
             this.accountId = rs.getLong("account_id");
             this.dbKey = dbKey;
             this.nextAccountId = rs.getLong("next_account_id");
@@ -249,12 +260,13 @@ public final class ShufflingParticipantHome {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling_participant (shuffling_id, "
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling_participant (shuffling_id, shuffling_full_hash, "
                     + "account_id, next_account_id, participant_index, state, blame_data, key_seeds, data_transaction_full_hash, height, latest) "
-                    + "KEY (shuffling_id, account_id, height) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                    + "KEY (shuffling_id, shuffling_full_hash, account_id, height) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.shufflingId);
+                pstmt.setBytes(++i, this.shufflingFullHash);
                 pstmt.setLong(++i, this.accountId);
                 DbUtils.setLongZeroToNull(pstmt, ++i, this.nextAccountId);
                 pstmt.setInt(++i, this.index);
@@ -269,6 +281,10 @@ public final class ShufflingParticipantHome {
 
         public long getShufflingId() {
             return shufflingId;
+        }
+
+        public byte[] getShufflingFullHash() {
+            return shufflingFullHash;
         }
 
         public long getAccountId() {
@@ -305,12 +321,12 @@ public final class ShufflingParticipantHome {
         }
 
         public byte[][] getData() {
-            return ShufflingParticipantHome.this.getData(shufflingId, accountId);
+            return ShufflingParticipantHome.this.getData(shufflingFullHash, accountId);
         }
 
         void setData(byte[][] data, int timestamp) {
             if (data != null && Nxt.getEpochTime() - timestamp < Constants.MAX_PRUNABLE_LIFETIME && getData() == null) {
-                shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, Nxt.getBlockchain().getHeight()));
+                shufflingDataTable.insert(new ShufflingData(shufflingFullHash, accountId, data, timestamp, Nxt.getBlockchain().getHeight()));
             }
         }
 

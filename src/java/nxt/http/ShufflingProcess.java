@@ -37,7 +37,7 @@ public final class ShufflingProcess extends CreateTransaction {
 
     private ShufflingProcess() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION},
-                "shuffling", "recipientSecretPhrase", "recipientPublicKey");
+                "shufflingFullHash", "recipientSecretPhrase", "recipientPublicKey");
     }
 
     @Override

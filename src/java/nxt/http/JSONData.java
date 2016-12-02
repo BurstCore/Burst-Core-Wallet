@@ -417,7 +417,7 @@ public final class JSONData {
         }
         if (includeParticipantState) {
             ShufflingParticipantHome.ShufflingParticipant participant = shuffler.getChildChain().getShufflingParticipantHome()
-                    .getParticipant(Convert.fullHashToId(shuffler.getShufflingFullHash()), shuffler.getAccountId());
+                    .getParticipant(shuffler.getShufflingFullHash(), shuffler.getAccountId());
             if (participant != null) {
                 json.put("participantState", participant.getState().getCode());
             }

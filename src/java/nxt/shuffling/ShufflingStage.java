@@ -32,7 +32,7 @@ public enum ShufflingStage {
         byte[] getHash(ShufflingHome.Shuffling shuffling) {
             if (shuffling.getAssigneeAccountId() == shuffling.getIssuerId()) {
                 try (DbIterator<ShufflingParticipantHome.ShufflingParticipant> participants =
-                             shuffling.getShufflingParticipantHome().getParticipants(shuffling.getId())) {
+                             shuffling.getShufflingParticipantHome().getParticipants(shuffling.getFullHash())) {
                     return ShufflingHome.getParticipantsHash(participants);
                 }
             } else {
@@ -62,7 +62,7 @@ public enum ShufflingStage {
                 return hash;
             }
             try (DbIterator<ShufflingParticipantHome.ShufflingParticipant> participants =
-                         shuffling.getShufflingParticipantHome().getParticipants(shuffling.getId())) {
+                         shuffling.getShufflingParticipantHome().getParticipants(shuffling.getFullHash())) {
                 return ShufflingHome.getParticipantsHash(participants);
             }
         }
