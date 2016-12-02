@@ -20,6 +20,7 @@ import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public final class ChainTransactionId {
 
@@ -27,10 +28,12 @@ public final class ChainTransactionId {
 
     private final int chainId;
     private final byte[] hash;
+    private final long id;
 
     public ChainTransactionId(int chainId, byte[] hash) {
         this.chainId = chainId;
         this.hash = hash;
+        this.id = Convert.fullHashToId(hash);
     }
 
     public int getChainId() {
@@ -39,6 +42,10 @@ public final class ChainTransactionId {
 
     public byte[] getFullHash() {
         return hash;
+    }
+
+    public long getTransactionId() {
+        return id;
     }
 
     public Chain getChain() {
@@ -86,6 +93,16 @@ public final class ChainTransactionId {
         json.put("chainId", chainId);
         json.put("transactionFullHash", Convert.toHexString(hash));
         return json;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        return object instanceof ChainTransactionId && chainId == ((ChainTransactionId)object).chainId && Arrays.equals(hash, ((ChainTransactionId)object).hash);
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.hashCode(id);
     }
 
     @Override

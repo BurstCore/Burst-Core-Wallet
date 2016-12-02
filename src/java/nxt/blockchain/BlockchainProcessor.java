@@ -65,7 +65,7 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
 
     int restorePrunedData(Chain chain);
 
-    Transaction restorePrunedTransaction(Chain chain, long transactionId);
+    Transaction restorePrunedTransaction(Chain chain, byte[] transactionFullHash);
 
     long getGenesisBlockId();
 

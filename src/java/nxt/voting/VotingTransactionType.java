@@ -29,7 +29,6 @@ import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
 import nxt.blockchain.TransactionType;
-import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -367,7 +366,7 @@ public abstract class VotingTransactionType extends ChildTransactionType {
                 if (childChain == null) {
                     throw new NxtException.NotValidException("Invalid child chain id " + phasedTransactionId.getChainId());
                 }
-                String phasedTransactionStringId = Long.toUnsignedString(Convert.fullHashToId(phasedTransactionId.getFullHash()));
+                String phasedTransactionStringId = Long.toUnsignedString(phasedTransactionId.getTransactionId());
                 PhasingPollHome.PhasingPoll poll = childChain.getPhasingPollHome().getPoll(phasedTransactionId.getFullHash());
                 if (poll == null) {
                     throw new NxtException.NotCurrentlyValidException("Invalid phased transaction " + phasedTransactionStringId

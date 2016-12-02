@@ -29,6 +29,7 @@ import nxt.db.VersionedEntityDbTable;
 import nxt.db.VersionedPersistentDbTable;
 import nxt.db.VersionedPrunableDbTable;
 import nxt.db.VersionedValuesDbTable;
+import nxt.util.Convert;
 import nxt.util.Logger;
 import nxt.util.Search;
 
@@ -50,18 +51,18 @@ public final class TaggedDataHome {
     }
 
     private final ChildChain childChain;
-    private final DbKey.LongKeyFactory<TaggedData> taggedDataKeyFactory;
+    private final DbKey.HashKeyFactory<TaggedData> taggedDataKeyFactory;
     private final VersionedPrunableDbTable<TaggedData> taggedDataTable;
-    private final DbKey.LongKeyFactory<Timestamp> timestampKeyFactory;
+    private final DbKey.HashKeyFactory<Timestamp> timestampKeyFactory;
     private final VersionedEntityDbTable<Timestamp> timestampTable;
-    private final DbKey.LongKeyFactory<Long> extendDbKeyFactory;
-    private final VersionedValuesDbTable<Long, Long> extendTable;
+    private final DbKey.HashKeyFactory<byte[]> extendDbKeyFactory;
+    private final VersionedValuesDbTable<byte[], byte[]> extendTable;
     private final DbKey.StringKeyFactory<Tag> tagDbKeyFactory;
     private final VersionedPersistentDbTable<Tag> tagTable;
 
     private TaggedDataHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.taggedDataKeyFactory = new DbKey.LongKeyFactory<TaggedData>("id") {
+        this.taggedDataKeyFactory = new DbKey.HashKeyFactory<TaggedData>("full_hash", "id") {
             @Override
             public DbKey newKey(TaggedData taggedData) {
                 return taggedData.dbKey;
@@ -107,7 +108,7 @@ public final class TaggedDataHome {
                 super.prune();
             }
         };
-        this.timestampKeyFactory = new DbKey.LongKeyFactory<Timestamp>("id") {
+        this.timestampKeyFactory = new DbKey.HashKeyFactory<Timestamp>("full_hash", "id") {
             @Override
             public DbKey newKey(Timestamp timestamp) {
                 return timestamp.dbKey;
@@ -123,24 +124,22 @@ public final class TaggedDataHome {
                 timestamp.save(con);
             }
         };
-        this.extendDbKeyFactory = new DbKey.LongKeyFactory<Long>("id") {
-            @Override
-            public DbKey newKey(Long taggedDataId) {
-                return newKey(taggedDataId.longValue());
-            }
+        this.extendDbKeyFactory = new DbKey.HashKeyFactory<byte[]>("full_hash", "id") {
         };
-        this.extendTable = new VersionedValuesDbTable<Long, Long>(childChain.getSchemaTable("tagged_data_extend"), extendDbKeyFactory) {
+        this.extendTable = new VersionedValuesDbTable<byte[], byte[]>(childChain.getSchemaTable("tagged_data_extend"), extendDbKeyFactory) {
             @Override
-            protected Long load(Connection con, ResultSet rs) throws SQLException {
-                return rs.getLong("extend_id");
+            protected byte[] load(Connection con, ResultSet rs) throws SQLException {
+                return rs.getBytes("extend_full_hash");
             }
             @Override
-            protected void save(Connection con, Long taggedDataId, Long extendId) throws SQLException {
-                try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO tagged_data_extend (id, extend_id, "
-                        + "height, latest) VALUES (?, ?, ?, TRUE)")) {
+            protected void save(Connection con, byte[] taggedDataTransactionFullHash, byte[] extendTransactionFullHash) throws SQLException {
+                try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO tagged_data_extend (id, full_hash, extend_id, extend_full_hash, "
+                        + "height, latest) VALUES (?, ?, ?, ?, ?, TRUE)")) {
                     int i = 0;
-                    pstmt.setLong(++i, taggedDataId);
-                    pstmt.setLong(++i, extendId);
+                    pstmt.setLong(++i, Convert.fullHashToId(taggedDataTransactionFullHash));
+                    pstmt.setBytes(++i, taggedDataTransactionFullHash);
+                    pstmt.setLong(++i, Convert.fullHashToId(extendTransactionFullHash));
+                    pstmt.setBytes(++i, extendTransactionFullHash);
                     pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
                     pstmt.executeUpdate();
                 }
@@ -237,12 +236,12 @@ public final class TaggedDataHome {
         return taggedDataTable.getAll(from, to);
     }
 
-    public TaggedData getData(long transactionId) {
-        return taggedDataTable.get(taggedDataKeyFactory.newKey(transactionId));
+    public TaggedData getData(byte[] transactionFullHash) {
+        return taggedDataTable.get(taggedDataKeyFactory.newKey(transactionFullHash));
     }
 
-    public List<Long> getExtendTransactionIds(long taggedDataId) {
-        return extendTable.get(extendDbKeyFactory.newKey(taggedDataId));
+    public List<byte[]> getExtendTransactionIds(byte[] taggedDataTransactionFullHash) {
+        return extendTable.get(extendDbKeyFactory.newKey(taggedDataTransactionFullHash));
     }
 
     public DbIterator<TaggedData> getData(String channel, long accountId, int from, int to) {
@@ -271,20 +270,20 @@ public final class TaggedDataHome {
 
     void add(TransactionImpl transaction, TaggedDataUploadAttachment attachment) {
         if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME && attachment.getData() != null) {
-            TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
+            TaggedData taggedData = taggedDataTable.get(taggedDataKeyFactory.newKey(transaction.getFullHash()));
             if (taggedData == null) {
                 taggedData = new TaggedData(transaction, attachment);
                 taggedDataTable.insert(taggedData);
                 addTags(taggedData);
             }
         }
-        Timestamp timestamp = new Timestamp(transaction.getId(), transaction.getTimestamp());
+        Timestamp timestamp = new Timestamp(transaction.getId(), transaction.getFullHash(), transaction.getTimestamp());
         timestampTable.insert(timestamp);
     }
 
     void extend(Transaction transaction, TaggedDataExtendAttachment attachment) {
-        long taggedDataId = attachment.getTaggedDataId();
-        DbKey dbKey = taggedDataKeyFactory.newKey(taggedDataId);
+        byte[] taggedDataTransactionFullHash = attachment.getTaggedDataTransactionFullHash();
+        DbKey dbKey = taggedDataKeyFactory.newKey(taggedDataTransactionFullHash);
         Timestamp timestamp = timestampTable.get(dbKey);
         if (transaction.getTimestamp() - Constants.MIN_PRUNABLE_LIFETIME > timestamp.timestamp) {
             timestamp.timestamp = transaction.getTimestamp();
@@ -292,13 +291,13 @@ public final class TaggedDataHome {
             timestamp.timestamp = timestamp.timestamp + Math.min(Constants.MIN_PRUNABLE_LIFETIME, Integer.MAX_VALUE - timestamp.timestamp);
         }
         timestampTable.insert(timestamp);
-        List<Long> extendTransactionIds = extendTable.get(dbKey);
-        extendTransactionIds.add(transaction.getId());
-        extendTable.insert(taggedDataId, extendTransactionIds);
+        List<byte[]> extendTransactionIds = extendTable.get(dbKey);
+        extendTransactionIds.add(transaction.getFullHash());
+        extendTable.insert(taggedDataTransactionFullHash, extendTransactionIds);
         if (Nxt.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
-                TransactionImpl uploadTransaction = transaction.getChain().getTransactionHome().findTransaction(taggedDataId);
+                TransactionImpl uploadTransaction = transaction.getChain().getTransactionHome().findTransactionByFullHash(taggedDataTransactionFullHash);
                 taggedData = new TaggedData(uploadTransaction, attachment);
                 addTags(taggedData);
             }
@@ -316,8 +315,8 @@ public final class TaggedDataHome {
         taggedDataTable.insert(taggedData);
         addTags(taggedData, height);
         int timestamp = transaction.getTimestamp();
-        for (long extendTransactionId : getExtendTransactionIds(transaction.getId())) {
-            Transaction extendTransaction = transaction.getChain().getTransactionHome().findTransaction(extendTransactionId);
+        for (byte[] extendTransactionFullHash : getExtendTransactionIds(transaction.getFullHash())) {
+            Transaction extendTransaction = transaction.getChain().getTransactionHome().findTransactionByFullHash(extendTransactionFullHash);
             if (extendTransaction.getTimestamp() - Constants.MIN_PRUNABLE_LIFETIME > timestamp) {
                 timestamp = extendTransaction.getTimestamp();
             } else {
@@ -330,10 +329,11 @@ public final class TaggedDataHome {
         }
     }
 
-    public boolean isPruned(long transactionId) {
+    public boolean isPruned(byte[] transactionFullHash) {
         try (Connection con = taggedDataTable.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT 1 FROM tagged_data WHERE id = ?")) {
-            pstmt.setLong(1, transactionId);
+             PreparedStatement pstmt = con.prepareStatement("SELECT 1 FROM tagged_data WHERE id = ? AND full_hash = ?")) {
+            pstmt.setLong(1, Convert.fullHashToId(transactionFullHash));
+            pstmt.setBytes(2, transactionFullHash);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return !rs.next();
             }
@@ -345,26 +345,30 @@ public final class TaggedDataHome {
     private final class Timestamp {
 
         private final long id;
+        private final byte[] hash;
         private final DbKey dbKey;
         private int timestamp;
 
-        private Timestamp(long id, int timestamp) {
+        private Timestamp(long id, byte[] hash, int timestamp) {
             this.id = id;
-            this.dbKey = timestampKeyFactory.newKey(this.id);
+            this.hash = hash;
+            this.dbKey = timestampKeyFactory.newKey(this.hash, this.id);
             this.timestamp = timestamp;
         }
 
         private Timestamp(ResultSet rs, DbKey dbKey) throws SQLException {
             this.id = rs.getLong("id");
+            this.hash = rs.getBytes("full_hash");
             this.dbKey = dbKey;
             this.timestamp = rs.getInt("timestamp");
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data_timestamp (id, timestamp, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, TRUE)")) {
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data_timestamp (id, full_hash, timestamp, height, latest) "
+                    + "KEY (id, full_hash, height) VALUES (?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
+                pstmt.setBytes(++i, this.hash);
                 pstmt.setInt(++i, this.timestamp);
                 pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
                 pstmt.executeUpdate();
@@ -416,6 +420,7 @@ public final class TaggedDataHome {
     public final class TaggedData {
 
         private final long id;
+        private final byte[] transactionFullHash;
         private final DbKey dbKey;
         private final long accountId;
         private final String name;
@@ -437,7 +442,8 @@ public final class TaggedDataHome {
 
         private TaggedData(Transaction transaction, TaggedDataAttachment attachment, int blockTimestamp, int height) {
             this.id = transaction.getId();
-            this.dbKey = taggedDataKeyFactory.newKey(this.id);
+            this.transactionFullHash = transaction.getFullHash();
+            this.dbKey = taggedDataKeyFactory.newKey(this.transactionFullHash, this.id);
             this.accountId = transaction.getSenderId();
             this.name = attachment.getName();
             this.description = attachment.getDescription();
@@ -455,6 +461,7 @@ public final class TaggedDataHome {
 
         private TaggedData(ResultSet rs, DbKey dbKey) throws SQLException {
             this.id = rs.getLong("id");
+            this.transactionFullHash = rs.getBytes("full_hash");
             this.dbKey = dbKey;
             this.accountId = rs.getLong("account_id");
             this.name = rs.getString("name");
@@ -472,11 +479,12 @@ public final class TaggedDataHome {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, account_id, name, description, tags, parsed_tags, "
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, full_hash, account_id, name, description, tags, parsed_tags, "
                     + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                    + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
+                pstmt.setBytes(++i, this.transactionFullHash);
                 pstmt.setLong(++i, this.accountId);
                 pstmt.setString(++i, this.name);
                 pstmt.setString(++i, this.description);
@@ -496,6 +504,10 @@ public final class TaggedDataHome {
 
         public long getId() {
             return id;
+        }
+
+        public byte[] getTransactionFullHash() {
+            return transactionFullHash;
         }
 
         public long getAccountId() {

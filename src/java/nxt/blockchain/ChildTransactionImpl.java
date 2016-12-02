@@ -579,7 +579,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
                 int i = 0;
                 pstmt.setLong(++i, getId());
                 pstmt.setBytes(++i, getFullHash());
-                pstmt.setLong(++i, Convert.fullHashToId(referencedTransactionId.getFullHash()));
+                pstmt.setLong(++i, referencedTransactionId.getTransactionId());
                 pstmt.executeUpdate();
             }
         }

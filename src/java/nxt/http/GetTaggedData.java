@@ -32,22 +32,22 @@ public final class GetTaggedData extends APIServlet.APIRequestHandler {
     static final GetTaggedData instance = new GetTaggedData();
 
     private GetTaggedData() {
-        super(new APITag[] {APITag.DATA}, "transaction", "includeData", "retrieve");
+        super(new APITag[] {APITag.DATA}, "transactionFullHash", "includeData", "retrieve");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         boolean includeData = !"false".equalsIgnoreCase(req.getParameter("includeData"));
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
         ChildChain childChain = ParameterParser.getChildChain(req);
-
-        TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionId);
+        TaggedDataHome taggedDataHome = childChain.getTaggedDataHome();
+        TaggedDataHome.TaggedData taggedData = taggedDataHome.getData(transactionFullHash);
         if (taggedData == null && retrieve) {
-            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
+            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionFullHash) == null) {
                 return PRUNED_TRANSACTION;
             }
-            taggedData = childChain.getTaggedDataHome().getData(transactionId);
+            taggedData = taggedDataHome.getData(transactionFullHash);
         }
         if (taggedData != null) {
             return JSONData.taggedData(taggedData, includeData);

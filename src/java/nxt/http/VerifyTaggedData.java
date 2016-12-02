@@ -37,16 +37,16 @@ public final class VerifyTaggedData extends APIServlet.APIRequestHandler {
     static final VerifyTaggedData instance = new VerifyTaggedData();
 
     private VerifyTaggedData() {
-        super("file", new APITag[]{APITag.DATA}, "transaction",
+        super("file", new APITag[]{APITag.DATA}, "transactionFullHash",
                 "name", "description", "tags", "type", "channel", "isText", "filename", "data");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         ChildChain childChain = ParameterParser.getChildChain(req);
-        Transaction transaction = Nxt.getBlockchain().getTransaction(childChain, transactionId);
+        Transaction transaction = Nxt.getBlockchain().getTransactionByFullHash(childChain, transactionFullHash);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }

@@ -19,7 +19,7 @@ package nxt.peer;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.blockchain.Blockchain;
-import nxt.blockchain.Chain;
+import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.Transaction;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -41,18 +41,15 @@ public class GetTransactions extends PeerServlet.PeerRequestHandler {
         }
         JSONObject response = new JSONObject();
         JSONArray transactionArray = new JSONArray();
-        JSONArray transactionIds = (JSONArray)request.get("transactionIds");
-        String chainName = (String)request.get("chain");
-        //TODO: add chain to getTransactions parameters, return error if invalid
-        Chain chain = Chain.getChain(chainName);
+        JSONArray transactions = (JSONArray)request.get("transactions");
         Blockchain blockchain = Nxt.getBlockchain();
         //
         // Return the transactions to the caller
         //
-        if (transactionIds != null) {
-            transactionIds.forEach(transactionId -> {
-                long id = Long.parseUnsignedLong((String)transactionId);
-                Transaction transaction = blockchain.getTransaction(chain, id);
+        if (transactions != null) {
+            transactions.forEach(chainTransactionJson -> {
+                ChainTransactionId chainTransactionId = ChainTransactionId.parse((JSONObject)chainTransactionJson);
+                Transaction transaction = blockchain.getTransactionByFullHash(chainTransactionId.getChain(), chainTransactionId.getFullHash());
                 if (transaction != null) {
                     transaction.getAppendages(true);
                     JSONObject transactionJSON = transaction.getJSONObject();

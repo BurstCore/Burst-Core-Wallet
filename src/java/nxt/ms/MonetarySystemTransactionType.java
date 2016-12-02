@@ -17,7 +17,6 @@
 package nxt.ms;
 
 import nxt.Constants;
-import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger.LedgerEvent;
@@ -287,9 +286,8 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             if (currency != null) {
                 reserveSupply = currency.getReserveSupply();
             } else { // currency must have been deleted, get reserve supply from the original issuance transaction
-                Transaction currencyIssuance = Nxt.getBlockchain().getTransaction(transaction.getChain(), attachment.getCurrencyId());
-                CurrencyIssuanceAttachment currencyIssuanceAttachment = (CurrencyIssuanceAttachment) currencyIssuance.getAttachment();
-                reserveSupply = currencyIssuanceAttachment.getReserveSupply();
+                //TODO: can't rely on finding the original issuance transaction
+                throw new RuntimeException("FIXME");
             }
             senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
                     Math.multiplyExact(reserveSupply, attachment.getAmountPerUnitNQT()));

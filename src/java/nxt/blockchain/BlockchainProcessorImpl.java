@@ -95,7 +95,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
     private int initialScanHeight;
     private volatile int lastTrimHeight;
     private volatile int lastRestoreTime = 0;
-    private final Set<Long> prunableTransactions = new HashSet<>();
+    private final Set<ChainTransactionId> prunableTransactions = new HashSet<>();
 
     private final Listeners<Block, Event> blockListeners = new Listeners<>();
     private volatile Peer lastBlockchainFeeder;
@@ -838,7 +838,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 // as we process them while still retaining the entry if we need to
                 // retry later using a different archive peer
                 //
-                Set<Long> processing;
+                Set<ChainTransactionId> processing;
                 synchronized (prunableTransactions) {
                     processing = new HashSet<>(prunableTransactions.size());
                     processing.addAll(prunableTransactions);
@@ -854,17 +854,16 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     JSONObject request = new JSONObject();
                     JSONArray requestList = new JSONArray();
                     synchronized (prunableTransactions) {
-                        Iterator<Long> it = processing.iterator();
+                        Iterator<ChainTransactionId> it = processing.iterator();
                         while (it.hasNext()) {
-                            long id = it.next();
-                            requestList.add(Long.toUnsignedString(id));
+                            requestList.add(it.next().getJSON());
                             it.remove();
                             if (requestList.size() == 100)
                                 break;
                         }
                     }
                     request.put("requestType", "getTransactions");
-                    request.put("transactionIds", requestList);
+                    request.put("transactions", requestList);
                     JSONObject response = peer.send(JSON.prepareRequest(request), 10 * 1024 * 1024);
                     if (response == null) {
                         return;
@@ -881,7 +880,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     // Remove transactions that have been successfully processed
                     //
                     synchronized (prunableTransactions) {
-                        processed.forEach(transaction -> prunableTransactions.remove(transaction.getId()));
+                        processed.forEach(transaction -> prunableTransactions.remove(new ChainTransactionId(transaction.getChain().getId(), transaction.getFullHash())));
                     }
                 }
                 Logger.logDebugMessage("Done retrieving prunable transactions from " + peer.getHost());
@@ -1130,12 +1129,12 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             List<TransactionHome.PrunableTransaction> transactionList =
                     chain.getTransactionHome().findPrunableTransactions(con, minTimestamp, maxTimestamp);
             transactionList.forEach(prunableTransaction -> {
-                long id = prunableTransaction.getId();
-                if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(chain, id)) ||
+                byte[] fullHash = prunableTransaction.getFullHash();
+                if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(chain, fullHash)) ||
                         (chain instanceof ChildChain &&
-                        ((ChildChain) chain).getPrunableMessageHome().isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage()))) {
+                        ((ChildChain) chain).getPrunableMessageHome().isPruned(fullHash, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage()))) {
                     synchronized (prunableTransactions) {
-                        prunableTransactions.add(id);
+                        prunableTransactions.add(new ChainTransactionId(chain.getId(), fullHash));
                     }
                 }
             });
@@ -1152,10 +1151,9 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    //TODO: use transactionFullHash
     @Override
-    public Transaction restorePrunedTransaction(Chain chain, long transactionId) {
-        TransactionImpl transaction = chain.getTransactionHome().findTransaction(transactionId);
+    public Transaction restorePrunedTransaction(Chain chain, byte[] transactionFullHash) {
+        TransactionImpl transaction = chain.getTransactionHome().findTransactionByFullHash(transactionFullHash);
         if (transaction == null) {
             throw new IllegalArgumentException("Transaction not found");
         }
@@ -1176,11 +1174,12 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             Logger.logDebugMessage("Cannot find any archive peers");
             return null;
         }
+        ChainTransactionId chainTransactionId = new ChainTransactionId(chain.getId(), transactionFullHash);
         JSONObject json = new JSONObject();
         JSONArray requestList = new JSONArray();
-        requestList.add(Long.toUnsignedString(transactionId));
+        requestList.add(chainTransactionId.getJSON());
         json.put("requestType", "getTransactions");
-        json.put("transactionIds", requestList);
+        json.put("transactions", requestList);
         JSONStreamAware request = JSON.prepareRequest(json);
         for (Peer peer : peers) {
             if (peer.getState() != Peer.State.CONNECTED) {
@@ -1204,7 +1203,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     continue;
                 }
                 synchronized (prunableTransactions) {
-                    prunableTransactions.remove(transactionId);
+                    prunableTransactions.remove(chainTransactionId);
                 }
                 return processed.get(0);
             } catch (NxtException.NotValidException e) {
@@ -1599,7 +1598,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if ((appendage instanceof Appendix.Prunable) &&
                         !((Appendix.Prunable)appendage).hasPrunableData()) {
                     synchronized (prunableTransactions) {
-                        prunableTransactions.add(transaction.getId());
+                        prunableTransactions.add(new ChainTransactionId(transaction.getChain().getId(), transaction.getFullHash()));
                     }
                     lastRestoreTime = 0;
                     break;

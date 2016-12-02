@@ -36,20 +36,21 @@ public final class DownloadPrunableMessage extends APIServlet.APIRequestHandler 
     static final DownloadPrunableMessage instance = new DownloadPrunableMessage();
 
     private DownloadPrunableMessage() {
-        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "save");
+        super(new APITag[] {APITag.MESSAGES}, "transactionFullHash", "secretPhrase", "sharedKey", "retrieve", "save");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest request, HttpServletResponse response) throws NxtException {
-        long transactionId = ParameterParser.getUnsignedLong(request, "transaction", true);
+        byte[] transactionFullHash = ParameterParser.getBytes(request, "transactionFullHash", true);
         boolean retrieve = "true".equalsIgnoreCase(request.getParameter("retrieve"));
         ChildChain childChain = ParameterParser.getChildChain(request);
-        PrunableMessageHome.PrunableMessage prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
+        PrunableMessageHome prunableMessageHome = childChain.getPrunableMessageHome();
+        PrunableMessageHome.PrunableMessage prunableMessage = prunableMessageHome.getPrunableMessage(transactionFullHash);
         if (prunableMessage == null && retrieve) {
-            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
+            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionFullHash) == null) {
                 return PRUNED_TRANSACTION;
             }
-            prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
+            prunableMessage = prunableMessageHome.getPrunableMessage(transactionFullHash);
         }
         String secretPhrase = ParameterParser.getSecretPhrase(request, false);
         byte[] sharedKey = ParameterParser.getBytes(request, "sharedKey", false);
@@ -75,7 +76,7 @@ public final class DownloadPrunableMessage extends APIServlet.APIRequestHandler 
             data = Convert.EMPTY_BYTE;
         }
         String contentDisposition = "true".equalsIgnoreCase(request.getParameter("save")) ? "attachment" : "inline";
-        response.setHeader("Content-Disposition", contentDisposition + "; filename=" + Long.toUnsignedString(transactionId));
+        response.setHeader("Content-Disposition", contentDisposition + "; filename=" + Long.toUnsignedString(Convert.fullHashToId(transactionFullHash)));
         response.setContentLength(data.length);
         try (OutputStream out = response.getOutputStream()) {
             try {

@@ -161,11 +161,9 @@ public abstract class TaggedDataTransactionType extends ChildTransactionType {
         }
 
         @Override
-        public boolean isPruned(Chain chain, long transactionId) {
-            return ((ChildChain) chain).getTaggedDataHome().isPruned(transactionId);
+        public boolean isPruned(Chain chain, byte[] fullHash) {
+            return ((ChildChain) chain).getTaggedDataHome().isPruned(fullHash);
         }
-
-        //TODO: validateId?
 
     };
 
@@ -198,12 +196,14 @@ public abstract class TaggedDataTransactionType extends ChildTransactionType {
                 throw new NxtException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
             ChildChain childChain = transaction.getChain();
-            TransactionImpl uploadTransaction = childChain.getTransactionHome().findTransaction(attachment.getTaggedDataId(), Nxt.getBlockchain().getHeight());
+            TransactionImpl uploadTransaction = childChain.getTransactionHome().findTransactionByFullHash(
+                    attachment.getTaggedDataTransactionFullHash(), Nxt.getBlockchain().getHeight());
             if (uploadTransaction == null) {
-                throw new NxtException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
+                throw new NxtException.NotCurrentlyValidException("No such tagged data upload "
+                        + Long.toUnsignedString(Convert.fullHashToId(attachment.getTaggedDataTransactionFullHash())));
             }
             if (uploadTransaction.getType() != TAGGED_DATA_UPLOAD) {
-                throw new NxtException.NotValidException("Transaction " + Long.toUnsignedString(attachment.getTaggedDataId())
+                throw new NxtException.NotValidException("Transaction " + Long.toUnsignedString(Convert.fullHashToId(attachment.getTaggedDataTransactionFullHash()))
                         + " is not a tagged data upload");
             }
             if (attachment.getData() != null) {
@@ -213,7 +213,7 @@ public abstract class TaggedDataTransactionType extends ChildTransactionType {
                             + " upload hash: " + Convert.toHexString(taggedDataUpload.getHash()));
                 }
             }
-            TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(attachment.getTaggedDataId());
+            TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(attachment.getTaggedDataTransactionFullHash());
             if (taggedData != null && taggedData.getTransactionTimestamp() > Nxt.getEpochTime() + 6 * Constants.MIN_PRUNABLE_LIFETIME) {
                 throw new NxtException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
             }
@@ -231,11 +231,9 @@ public abstract class TaggedDataTransactionType extends ChildTransactionType {
         }
 
         @Override
-        public boolean isPruned(Chain chain, long transactionId) {
+        public boolean isPruned(Chain chain, byte[] fullHash) {
             return false;
         }
-
-        //TODO: validateId?
 
     };
 

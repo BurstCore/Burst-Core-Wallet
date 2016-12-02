@@ -36,7 +36,7 @@ public final class ExtendTaggedData extends CreateTransaction {
     static final ExtendTaggedData instance = new ExtendTaggedData();
 
     private ExtendTaggedData() {
-        super("file", new APITag[] {APITag.DATA, APITag.CREATE_TRANSACTION}, "transaction",
+        super("file", new APITag[] {APITag.DATA, APITag.CREATE_TRANSACTION}, "transactionFullHash",
                 "name", "description", "tags", "type", "channel", "isText", "filename", "data");
     }
 
@@ -44,11 +44,11 @@ public final class ExtendTaggedData extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
         Account account = ParameterParser.getSenderAccount(req);
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         ChildChain childChain = ParameterParser.getChildChain(req);
-        TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionId);
+        TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionFullHash);
         if (taggedData == null) {
-            Transaction transaction = Nxt.getBlockchain().getTransaction(childChain, transactionId);
+            Transaction transaction = Nxt.getBlockchain().getTransactionByFullHash(childChain, transactionFullHash);
             if (transaction == null || transaction.getType() != TaggedDataTransactionType.TAGGED_DATA_UPLOAD) {
                 return UNKNOWN_TRANSACTION;
             }

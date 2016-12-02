@@ -31,18 +31,18 @@ public class RetrievePrunedTransaction extends APIServlet.APIRequestHandler {
     static final RetrievePrunedTransaction instance = new RetrievePrunedTransaction();
 
     private RetrievePrunedTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transaction");
+        super(new APITag[] {APITag.TRANSACTIONS}, "transactionFullHash");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         ChildChain childChain = ParameterParser.getChildChain(req);
-        Transaction transaction = Nxt.getBlockchain().getTransaction(childChain, transactionId);
+        Transaction transaction = Nxt.getBlockchain().getTransactionByFullHash(childChain, transactionFullHash);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
-        transaction = Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId);
+        transaction = Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionFullHash);
         if (transaction == null) {
             return PRUNED_TRANSACTION;
         }

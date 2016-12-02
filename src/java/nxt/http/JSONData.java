@@ -81,6 +81,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+//TODO: add fullHash field in addition to id when id is not unique
 public final class JSONData {
 
     static JSONObject alias(AliasHome.Alias alias) {
@@ -604,9 +605,12 @@ public final class JSONData {
             if (currency != null) {
                 json.put("decimals", currency.getDecimals());
             } else {
+                //TODO: return error?
+                /*
                 Transaction currencyIssuance = Nxt.getBlockchain().getTransaction(poll.getChildChain(), voteWeighting.getHoldingId());
                 CurrencyIssuanceAttachment currencyIssuanceAttachment = (CurrencyIssuanceAttachment) currencyIssuance.getAttachment();
                 json.put("decimals", currencyIssuanceAttachment.getDecimals());
+                */
             }
         }
         putVoteWeighting(json, voteWeighting);
@@ -1075,6 +1079,7 @@ public final class JSONData {
     static JSONObject prunableMessage(PrunableMessageHome.PrunableMessage prunableMessage, String secretPhrase, byte[] sharedKey) {
         JSONObject json = new JSONObject();
         json.put("transaction", Long.toUnsignedString(prunableMessage.getId()));
+        json.put("transactionFullHash", Convert.toHexString(prunableMessage.getFullHash()));
         if (prunableMessage.getMessage() == null || prunableMessage.getEncryptedData() == null) {
             json.put("isText", prunableMessage.getMessage() != null ? prunableMessage.messageIsText() : prunableMessage.encryptedMessageIsText());
         }

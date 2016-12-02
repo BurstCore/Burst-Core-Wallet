@@ -149,11 +149,6 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
     }
 
     @Override
-    public void validateId(Transaction transaction) throws NxtException.ValidationException {
-        //TODO
-    }
-
-    @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
             ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this);
@@ -189,7 +184,7 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
     public final void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
             PrunableMessageHome.PrunableMessage prunableMessage = ((ChildChain) transaction.getChain()).getPrunableMessageHome()
-                    .getPrunableMessage(transaction.getId());
+                    .getPrunableMessage(transaction.getFullHash());
             if (prunableMessage != null && prunableMessage.getMessage() != null) {
                 this.prunableMessage = prunableMessage;
             }

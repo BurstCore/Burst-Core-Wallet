@@ -54,7 +54,7 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
     }
 
     private VerifyPrunableMessage() {
-        super(new APITag[] {APITag.MESSAGES}, "transaction",
+        super(new APITag[] {APITag.MESSAGES}, "transactionFullHash",
                 "message", "messageIsText",
                 "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "compressMessageToEncrypt");
     }
@@ -62,9 +62,9 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         ChildChain childChain = ParameterParser.getChildChain(req);
-        ChildTransaction transaction = (ChildTransaction)Nxt.getBlockchain().getTransaction(childChain, transactionId);
+        ChildTransaction transaction = (ChildTransaction)Nxt.getBlockchain().getTransactionByFullHash(childChain, transactionFullHash);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }

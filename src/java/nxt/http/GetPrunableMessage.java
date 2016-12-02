@@ -32,12 +32,12 @@ public final class GetPrunableMessage extends APIServlet.APIRequestHandler {
     static final GetPrunableMessage instance = new GetPrunableMessage();
 
     private GetPrunableMessage() {
-        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");
+        super(new APITag[] {APITag.MESSAGES}, "transactionFullHash", "secretPhrase", "sharedKey", "retrieve");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", false);
         if (sharedKey.length != 0 && secretPhrase != null) {
@@ -45,12 +45,13 @@ public final class GetPrunableMessage extends APIServlet.APIRequestHandler {
         }
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
         ChildChain childChain = ParameterParser.getChildChain(req);
-        PrunableMessageHome.PrunableMessage prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
+        PrunableMessageHome prunableMessageHome = childChain.getPrunableMessageHome();
+        PrunableMessageHome.PrunableMessage prunableMessage = prunableMessageHome.getPrunableMessage(transactionFullHash);
         if (prunableMessage == null && retrieve) {
-            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
+            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionFullHash) == null) {
                 return PRUNED_TRANSACTION;
             }
-            prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
+            prunableMessage = prunableMessageHome.getPrunableMessage(transactionFullHash);
         }
         if (prunableMessage != null) {
             return JSONData.prunableMessage(prunableMessage, secretPhrase, sharedKey);

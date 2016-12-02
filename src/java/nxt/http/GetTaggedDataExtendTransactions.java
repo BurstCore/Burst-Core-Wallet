@@ -35,19 +35,20 @@ public final class GetTaggedDataExtendTransactions extends APIServlet.APIRequest
     static final GetTaggedDataExtendTransactions instance = new GetTaggedDataExtendTransactions();
 
     private GetTaggedDataExtendTransactions() {
-        super(new APITag[] {APITag.DATA}, "transaction");
+        super(new APITag[] {APITag.DATA}, "transactionFullHash");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        long taggedDataId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         ChildChain childChain = ParameterParser.getChildChain(req);
-        List<Long> extendTransactions = childChain.getTaggedDataHome().getExtendTransactionIds(taggedDataId);
+        List<byte[]> extendTransactions = childChain.getTaggedDataHome().getExtendTransactionIds(transactionFullHash);
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         Blockchain blockchain = Nxt.getBlockchain();
         Filter<Appendix> filter = (appendix) -> ! (appendix instanceof TaggedDataExtendAttachment);
-        extendTransactions.forEach(transactionId -> jsonArray.add(JSONData.transaction(blockchain.getTransaction(childChain, transactionId), filter)));
+        extendTransactions.forEach(extendTransactionFullHash -> jsonArray.add(
+                JSONData.transaction(blockchain.getTransactionByFullHash(childChain, extendTransactionFullHash), filter)));
         response.put("extendTransactions", jsonArray);
         return response;
     }

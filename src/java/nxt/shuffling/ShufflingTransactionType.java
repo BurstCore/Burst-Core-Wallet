@@ -444,8 +444,8 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         }
 
         @Override
-        public boolean isPruned(Chain chain, long transactionId) {
-            Transaction transaction = chain.getTransactionHome().findTransaction(transactionId);
+        public boolean isPruned(Chain chain, byte[] fullHash) {
+            Transaction transaction = chain.getTransactionHome().findTransactionByFullHash(fullHash);
             ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment)transaction.getAttachment();
             return ((ChildChain) chain).getShufflingParticipantHome().getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
         }

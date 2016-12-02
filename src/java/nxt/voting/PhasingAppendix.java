@@ -174,13 +174,13 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
             if (linkedTransactionsIds.size() == 0 || linkedTransactionsIds.size() > Constants.MAX_PHASING_LINKED_TRANSACTIONS) {
                 throw new NxtException.NotValidException("Invalid number of linkedFullHashes " + linkedTransactionsIds.size());
             }
-            Set<Long> linkedTransactionIds = new HashSet<>(linkedTransactionsIds.size());
+            Set<ChainTransactionId> idSet = new HashSet<>(linkedTransactionsIds.size());
             for (ChainTransactionId linkedTransactionId : linkedTransactionsIds) {
                 byte[] hash = linkedTransactionId.getFullHash();
                 if (Convert.emptyToNull(hash) == null || hash.length != 32) {
                     throw new NxtException.NotValidException("Invalid linkedFullHash " + Convert.toHexString(hash));
                 }
-                if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
+                if (!idSet.add(linkedTransactionId)) {
                     throw new NxtException.NotValidException("Duplicate linked transaction ids");
                 }
                 Chain chain = linkedTransactionId.getChain();

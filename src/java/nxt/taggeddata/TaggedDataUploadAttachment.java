@@ -93,8 +93,8 @@ public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
     }
 
     @Override
-    long getTaggedDataId(Transaction transaction) {
-        return transaction.getId();
+    byte[] getTaggedDataTransactionFullHash(Transaction transaction) {
+        return transaction.getFullHash();
     }
 
     @Override

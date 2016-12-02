@@ -417,6 +417,7 @@ public abstract class TransactionImpl implements Transaction {
         return senderId;
     }
 
+    //TODO: move to UnconfirmedTransaction
     public final DbKey getDbKey() {
         if (dbKey == null) {
             dbKey = TransactionProcessorImpl.getInstance().unconfirmedTransactionDbKeyFactory.newKey(getId());

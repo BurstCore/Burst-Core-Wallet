@@ -257,13 +257,13 @@ public class DesktopApplication extends Application {
     private void download(String requestType, Map<String, String> params) {
         String chainName = params.get("chain");
         ChildChain childChain = ChildChain.getChildChain(chainName);
-        long transactionId = Convert.parseUnsignedLong(params.get("transaction"));
-        TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionId);
+        byte[] transactionFullHash = Convert.parseHexString(params.get("transactionFullHash"));
+        TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionFullHash);
         boolean retrieve = "true".equals(params.get("retrieve"));
         if (requestType.equals("downloadTaggedData")) {
             if (taggedData == null && retrieve) {
                 try {
-                    if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
+                    if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionFullHash) == null) {
                         growl("Pruned transaction data not currently available from any peer");
                         return;
                     }
@@ -271,7 +271,7 @@ public class DesktopApplication extends Application {
                     growl("Pruned transaction data cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                     return;
                 }
-                taggedData = childChain.getTaggedDataHome().getData(transactionId);
+                taggedData = childChain.getTaggedDataHome().getData(transactionFullHash);
             }
             if (taggedData == null) {
                 growl("Tagged data not found");
@@ -284,10 +284,10 @@ public class DesktopApplication extends Application {
             }
             downloadFile(data, filename);
         } else if (requestType.equals("downloadPrunableMessage")) {
-            PrunableMessageHome.PrunableMessage prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
+            PrunableMessageHome.PrunableMessage prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionFullHash);
             if (prunableMessage == null && retrieve) {
                 try {
-                    if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionId) == null) {
+                    if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionFullHash) == null) {
                         growl("Pruned message not currently available from any peer");
                         return;
                     }
@@ -295,7 +295,7 @@ public class DesktopApplication extends Application {
                     growl("Pruned message cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                     return;
                 }
-                prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionId);
+                prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionFullHash);
             }
             String secretPhrase = params.get("secretPhrase");
             byte[] sharedKey = Convert.parseHexString(params.get("sharedKey"));
@@ -325,7 +325,7 @@ public class DesktopApplication extends Application {
             if (data == null) {
                 data = Convert.EMPTY_BYTE;
             }
-            downloadFile(data, "" + transactionId);
+            downloadFile(data, Long.toUnsignedString(Convert.fullHashToId(transactionFullHash)));
         }
     }
 

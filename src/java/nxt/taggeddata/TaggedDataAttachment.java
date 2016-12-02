@@ -195,7 +195,7 @@ public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (data == null && taggedData == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            taggedData = ((ChildChain) transaction.getChain()).getTaggedDataHome().getData(getTaggedDataId(transaction));
+            taggedData = ((ChildChain) transaction.getChain()).getTaggedDataHome().getData(getTaggedDataTransactionFullHash(transaction));
         }
     }
 
@@ -204,6 +204,6 @@ public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment
         return (taggedData != null || data != null);
     }
 
-    abstract long getTaggedDataId(Transaction transaction);
+    abstract byte[] getTaggedDataTransactionFullHash(Transaction transaction);
 
 }

@@ -349,18 +349,13 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public TransactionImpl getTransaction(Chain chain, long transactionId) {
-        return chain.getTransactionHome().findTransaction(transactionId);
+    public TransactionImpl getTransactionByFullHash(Chain chain, byte[] fullHash) {
+        return chain.getTransactionHome().findTransactionByFullHash(fullHash);
     }
 
     @Override
-    public TransactionImpl getTransactionByFullHash(Chain chain, String fullHash) {
-        return chain.getTransactionHome().findTransactionByFullHash(Convert.parseHexString(fullHash));
-    }
-
-    @Override
-    public boolean hasTransactionByFullHash(Chain chain, String fullHash) {
-        return chain.getTransactionHome().hasTransactionByFullHash(Convert.parseHexString(fullHash));
+    public boolean hasTransactionByFullHash(Chain chain, byte[] fullHash) {
+        return chain.getTransactionHome().hasTransactionByFullHash(fullHash);
     }
 
     @Override

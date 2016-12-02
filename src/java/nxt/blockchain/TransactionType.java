@@ -101,7 +101,7 @@ public abstract class TransactionType {
         return true;
     }
 
-    public boolean isPruned(Chain chain, long transactionId) {
+    public boolean isPruned(Chain chain, byte[] fullHash) {
         return false;
     }
 

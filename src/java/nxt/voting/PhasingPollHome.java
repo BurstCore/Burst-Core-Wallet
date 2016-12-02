@@ -130,7 +130,7 @@ public final class PhasingPollHome {
                 pstmt.setBytes(++i, poll.getFullHash());
                 pstmt.setInt(++i, linkedTransaction.getChainId());
                 pstmt.setBytes(++i, linkedTransaction.getFullHash());
-                pstmt.setLong(++i, Convert.fullHashToId(linkedTransaction.getFullHash()));
+                pstmt.setLong(++i, linkedTransaction.getTransactionId());
                 pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
                 pstmt.executeUpdate();
             }

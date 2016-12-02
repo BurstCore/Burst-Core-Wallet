@@ -25,8 +25,6 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static nxt.http.JSONResponses.INCORRECT_TRANSACTION;
-import static nxt.http.JSONResponses.MISSING_TRANSACTION;
 import static nxt.http.JSONResponses.UNKNOWN_TRANSACTION;
 
 public final class GetTransactionBytes extends APIServlet.APIRequestHandler {
@@ -34,30 +32,20 @@ public final class GetTransactionBytes extends APIServlet.APIRequestHandler {
     static final GetTransactionBytes instance = new GetTransactionBytes();
 
     private GetTransactionBytes() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transaction");
+        super(new APITag[] {APITag.TRANSACTIONS}, "fullHash");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        String transactionValue = req.getParameter("transaction");
-        if (transactionValue == null) {
-            return MISSING_TRANSACTION;
-        }
-
-        long transactionId;
+        byte[] transactionFullHash = ParameterParser.getBytes(req, "fullHash", true);
         Transaction transaction;
-        try {
-            transactionId = Convert.parseUnsignedLong(transactionValue);
-        } catch (RuntimeException e) {
-            return INCORRECT_TRANSACTION;
-        }
         Chain chain = ParameterParser.getChain(req);
 
-        transaction = Nxt.getBlockchain().getTransaction(chain, transactionId);
+        transaction = Nxt.getBlockchain().getTransactionByFullHash(chain, transactionFullHash);
         JSONObject response = new JSONObject();
         if (transaction == null) {
-            transaction = Nxt.getTransactionProcessor().getUnconfirmedTransaction(transactionId);
+            transaction = Nxt.getTransactionProcessor().getUnconfirmedTransaction(Convert.fullHashToId(transactionFullHash));
             if (transaction == null) {
                 return UNKNOWN_TRANSACTION;
             }

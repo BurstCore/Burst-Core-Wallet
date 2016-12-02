@@ -43,13 +43,13 @@ public final class PrunableMessageHome {
         return new PrunableMessageHome(childChain);
     }
 
-    private final DbKey.LongKeyFactory<PrunableMessage> prunableMessageKeyFactory;
+    private final DbKey.HashKeyFactory<PrunableMessage> prunableMessageKeyFactory;
     private final PrunableDbTable<PrunableMessage> prunableMessageTable;
     private final ChildChain childChain;
 
     private PrunableMessageHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.prunableMessageKeyFactory = new DbKey.LongKeyFactory<PrunableMessage>("id") {
+        this.prunableMessageKeyFactory = new DbKey.HashKeyFactory<PrunableMessage>("full_hash", "id") {
             @Override
             public DbKey newKey(PrunableMessage prunableMessage) {
                 return prunableMessage.dbKey;
@@ -79,8 +79,8 @@ public final class PrunableMessageHome {
         return prunableMessageTable.getAll(from, to);
     }
 
-    public PrunableMessage getPrunableMessage(long transactionId) {
-        return prunableMessageTable.get(prunableMessageKeyFactory.newKey(transactionId));
+    public PrunableMessage getPrunableMessage(byte[] transactionFullHash) {
+        return prunableMessageTable.get(prunableMessageKeyFactory.newKey(transactionFullHash));
     }
 
     public DbIterator<PrunableMessage> getPrunableMessages(long accountId, int from, int to) {
@@ -129,7 +129,7 @@ public final class PrunableMessageHome {
 
     void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix, int blockTimestamp, int height) {
         if (appendix.getMessage() != null) {
-            PrunableMessage prunableMessage = prunableMessageTable.get(transaction.getDbKey());
+            PrunableMessage prunableMessage = prunableMessageTable.get(prunableMessageKeyFactory.newKey(transaction.getFullHash()));
             if (prunableMessage == null) {
                 prunableMessage = new PrunableMessage(transaction, blockTimestamp, height);
             } else if (prunableMessage.height != height) {
@@ -148,7 +148,7 @@ public final class PrunableMessageHome {
 
     public void add(TransactionImpl transaction, PrunableEncryptedMessageAppendix appendix, int blockTimestamp, int height) {
         if (appendix.getEncryptedData() != null) {
-            PrunableMessage prunableMessage = prunableMessageTable.get(transaction.getDbKey());
+            PrunableMessage prunableMessage = prunableMessageTable.get(prunableMessageKeyFactory.newKey(transaction.getFullHash()));
             if (prunableMessage == null) {
                 prunableMessage = new PrunableMessage(transaction, blockTimestamp, height);
             } else if (prunableMessage.height != height) {
@@ -161,13 +161,14 @@ public final class PrunableMessageHome {
         }
     }
 
-    public boolean isPruned(long transactionId, boolean hasPrunablePlainMessage, boolean hasPrunableEncryptedMessage) {
+    public boolean isPruned(byte[] transactionFullHash, boolean hasPrunablePlainMessage, boolean hasPrunableEncryptedMessage) {
         if (!hasPrunablePlainMessage && !hasPrunableEncryptedMessage) {
             return false;
         }
         try (Connection con = prunableMessageTable.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT message, encrypted_message FROM prunable_message WHERE id = ?")) {
-            pstmt.setLong(1, transactionId);
+             PreparedStatement pstmt = con.prepareStatement("SELECT message, encrypted_message FROM prunable_message WHERE id = ? AND full_hash = ?")) {
+            pstmt.setLong(1, Convert.fullHashToId(transactionFullHash));
+            pstmt.setBytes(2, transactionFullHash);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return !rs.next()
                         || (hasPrunablePlainMessage && rs.getBytes("message") == null)
@@ -181,6 +182,7 @@ public final class PrunableMessageHome {
     public final class PrunableMessage {
 
         private final long id;
+        private final byte[] hash;
         private final DbKey dbKey;
         private final long senderId;
         private final long recipientId;
@@ -195,7 +197,8 @@ public final class PrunableMessageHome {
 
         private PrunableMessage(Transaction transaction, int blockTimestamp, int height) {
             this.id = transaction.getId();
-            this.dbKey = prunableMessageKeyFactory.newKey(this.id);
+            this.hash = transaction.getFullHash();
+            this.dbKey = prunableMessageKeyFactory.newKey(this.hash, this.id);
             this.senderId = transaction.getSenderId();
             this.recipientId = transaction.getRecipientId();
             this.blockTimestamp = blockTimestamp;
@@ -216,6 +219,7 @@ public final class PrunableMessageHome {
 
         private PrunableMessage(ResultSet rs, DbKey dbKey) throws SQLException {
             this.id = rs.getLong("id");
+            this.hash = rs.getBytes("full_hash");
             this.dbKey = dbKey;
             this.senderId = rs.getLong("sender_id");
             this.recipientId = rs.getLong("recipient_id");
@@ -238,12 +242,13 @@ public final class PrunableMessageHome {
             if (message == null && encryptedData == null) {
                 throw new IllegalStateException("Prunable message not fully initialized");
             }
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO prunable_message (id, sender_id, recipient_id, "
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO prunable_message (id, full_hash, sender_id, recipient_id, "
                     + "message, encrypted_message, message_is_text, encrypted_is_text, is_compressed, block_timestamp, transaction_timestamp, height) "
-                    + "KEY (id) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                    + "KEY (id, full_hash) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
+                pstmt.setBytes(++i, this.hash);
                 pstmt.setLong(++i, this.senderId);
                 DbUtils.setLongZeroToNull(pstmt, ++i, this.recipientId);
                 DbUtils.setBytes(pstmt, ++i, this.message);
@@ -280,6 +285,10 @@ public final class PrunableMessageHome {
 
         public long getId() {
             return id;
+        }
+
+        public byte[] getFullHash() {
+            return hash;
         }
 
         public long getSenderId() {

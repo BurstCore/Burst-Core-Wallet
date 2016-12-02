@@ -49,16 +49,11 @@ public final class TransactionHome {
 
     //TODO: for FxtTransactions only
     public TransactionImpl findTransaction(long transactionId) {
-        return findTransaction(transactionId, Integer.MAX_VALUE);
-    }
-
-    //TODO: remove
-    public TransactionImpl findTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized (BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
             if (transaction != null) {
-                return transaction.getHeight() <= height ? transaction : null;
+                return transaction;
             }
         }
         // Search the database
@@ -67,7 +62,7 @@ public final class TransactionHome {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    if (rs.getInt("height") <= height) {
+                    if (rs.getInt("height") <= Integer.MAX_VALUE) {
                         return TransactionImpl.newTransactionBuilder(chain, con, rs).build();
                     }
                 }
@@ -230,7 +225,7 @@ public final class TransactionHome {
 
     List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
         List<PrunableTransaction> result = new ArrayList<>();
-        try (PreparedStatement pstmt = con.prepareStatement("SELECT id, type, subtype, "
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT full_hash, type, subtype, "
                 + "has_prunable_attachment AS prunable_attachment, "
                 + "has_prunable_message AS prunable_plain_message, "
                 + "has_prunable_encrypted_message AS prunable_encrypted_message "
@@ -240,11 +235,11 @@ public final class TransactionHome {
             pstmt.setInt(2, maxTimestamp);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    long id = rs.getLong("id");
+                    byte[] fullHash = rs.getBytes("full_hash");
                     byte type = rs.getByte("type");
                     byte subtype = rs.getByte("subtype");
                     TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
-                    result.add(new PrunableTransaction(id, transactionType,
+                    result.add(new PrunableTransaction(fullHash, transactionType,
                             rs.getBoolean("prunable_attachment"),
                             rs.getBoolean("prunable_plain_message"),
                             rs.getBoolean("prunable_encrypted_message")));
@@ -269,23 +264,23 @@ public final class TransactionHome {
     }
 
     static class PrunableTransaction {
-        private final long id;
+        private final byte[] fullHash;
         private final TransactionType transactionType;
         private final boolean prunableAttachment;
         private final boolean prunablePlainMessage;
         private final boolean prunableEncryptedMessage;
 
-        private PrunableTransaction(long id, TransactionType transactionType, boolean prunableAttachment,
+        private PrunableTransaction(byte[] fullHash, TransactionType transactionType, boolean prunableAttachment,
                                     boolean prunablePlainMessage, boolean prunableEncryptedMessage) {
-            this.id = id;
+            this.fullHash = fullHash;
             this.transactionType = transactionType;
             this.prunableAttachment = prunableAttachment;
             this.prunablePlainMessage = prunablePlainMessage;
             this.prunableEncryptedMessage = prunableEncryptedMessage;
         }
 
-        public long getId() {
-            return id;
+        public byte[] getFullHash() {
+            return fullHash;
         }
 
         public TransactionType getTransactionType() {

@@ -36,42 +36,43 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
     }
 
     private volatile byte[] hash;
-    private final long taggedDataId;
+    private final byte[] taggedDataTransactionFullHash;
     private final boolean jsonIsPruned;
 
     TaggedDataExtendAttachment(ByteBuffer buffer) {
         super(buffer);
-        this.taggedDataId = buffer.getLong();
+        this.taggedDataTransactionFullHash = new byte[32];
+        buffer.get(taggedDataTransactionFullHash);
         this.jsonIsPruned = false;
     }
 
     TaggedDataExtendAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        this.taggedDataId = Convert.parseUnsignedLong((String)attachmentData.get("taggedData"));
+        this.taggedDataTransactionFullHash = Convert.parseHexString((String)attachmentData.get("taggedDataTransactionFullHash"));
         this.jsonIsPruned = attachmentData.get("data") == null;
     }
 
     public TaggedDataExtendAttachment(TaggedDataHome.TaggedData taggedData) {
         super(taggedData.getName(), taggedData.getDescription(), taggedData.getTags(), taggedData.getType(),
                 taggedData.getChannel(), taggedData.isText(), taggedData.getFilename(), taggedData.getData());
-        this.taggedDataId = taggedData.getId();
+        this.taggedDataTransactionFullHash = taggedData.getTransactionFullHash();
         this.jsonIsPruned = false;
     }
 
     @Override
     protected int getMySize() {
-        return 8;
+        return 32;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
-        buffer.putLong(taggedDataId);
+        buffer.put(taggedDataTransactionFullHash);
     }
 
     @Override
     protected void putMyJSON(JSONObject attachment) {
         super.putMyJSON(attachment);
-        attachment.put("taggedData", Long.toUnsignedString(taggedDataId));
+        attachment.put("taggedDataTransactionFullHash", Convert.toHexString(taggedDataTransactionFullHash));
     }
 
     @Override
@@ -79,8 +80,8 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
         return TaggedDataTransactionType.TAGGED_DATA_EXTEND;
     }
 
-    public long getTaggedDataId() {
-        return taggedDataId;
+    public byte[] getTaggedDataTransactionFullHash() {
+        return taggedDataTransactionFullHash;
     }
 
     @Override
@@ -90,15 +91,16 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
         }
         if (hash == null) {
             //TODO: store data hash, or the child chain id for the TaggedDataUpload chain
-            TaggedDataUploadAttachment taggedDataUpload = (TaggedDataUploadAttachment) Nxt.getBlockchain().getTransaction(ChildChain.IGNIS, taggedDataId).getAttachment();
+            TaggedDataUploadAttachment taggedDataUpload =
+                    (TaggedDataUploadAttachment) Nxt.getBlockchain().getTransactionByFullHash(ChildChain.IGNIS, taggedDataTransactionFullHash).getAttachment();
             hash = taggedDataUpload.getHash();
         }
         return hash;
     }
 
     @Override
-    long getTaggedDataId(Transaction transaction) {
-        return taggedDataId;
+    byte[] getTaggedDataTransactionFullHash(Transaction transaction) {
+        return taggedDataTransactionFullHash;
     }
 
     boolean jsonIsPruned() {
