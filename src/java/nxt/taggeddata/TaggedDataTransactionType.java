@@ -196,6 +196,9 @@ public abstract class TaggedDataTransactionType extends ChildTransactionType {
                 throw new NxtException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
             ChildChain childChain = transaction.getChain();
+            if (attachment.getChainId() != childChain.getId()) {
+                throw new NxtException.NotValidException("Invalid chain id");
+            }
             TransactionImpl uploadTransaction = childChain.getTransactionHome().findTransactionByFullHash(
                     attachment.getTaggedDataTransactionFullHash(), Nxt.getBlockchain().getHeight());
             if (uploadTransaction == null) {

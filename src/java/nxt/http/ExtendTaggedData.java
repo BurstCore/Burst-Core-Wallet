@@ -55,7 +55,7 @@ public final class ExtendTaggedData extends CreateTransaction {
             TaggedDataUploadAttachment taggedDataUpload = ParameterParser.getTaggedData(req);
             taggedData = childChain.getTaggedDataHome().new TaggedData(transaction, taggedDataUpload);
         }
-        TaggedDataExtendAttachment taggedDataExtend = new TaggedDataExtendAttachment(taggedData);
+        TaggedDataExtendAttachment taggedDataExtend = new TaggedDataExtendAttachment(childChain, taggedData);
         return createTransaction(req, account, taggedDataExtend);
 
     }

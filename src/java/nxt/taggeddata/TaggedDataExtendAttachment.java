@@ -16,7 +16,6 @@
 
 package nxt.taggeddata;
 
-import nxt.Nxt;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
@@ -37,10 +36,12 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
 
     private volatile byte[] hash;
     private final byte[] taggedDataTransactionFullHash;
+    private final int chainId;
     private final boolean jsonIsPruned;
 
     TaggedDataExtendAttachment(ByteBuffer buffer) {
         super(buffer);
+        this.chainId = buffer.getInt();
         this.taggedDataTransactionFullHash = new byte[32];
         buffer.get(taggedDataTransactionFullHash);
         this.jsonIsPruned = false;
@@ -48,30 +49,34 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
 
     TaggedDataExtendAttachment(JSONObject attachmentData) {
         super(attachmentData);
+        this.chainId = ((Long)attachmentData.get("chainId")).intValue();
         this.taggedDataTransactionFullHash = Convert.parseHexString((String)attachmentData.get("taggedDataTransactionFullHash"));
         this.jsonIsPruned = attachmentData.get("data") == null;
     }
 
-    public TaggedDataExtendAttachment(TaggedDataHome.TaggedData taggedData) {
+    public TaggedDataExtendAttachment(ChildChain childChain, TaggedDataHome.TaggedData taggedData) {
         super(taggedData.getName(), taggedData.getDescription(), taggedData.getTags(), taggedData.getType(),
                 taggedData.getChannel(), taggedData.isText(), taggedData.getFilename(), taggedData.getData());
+        this.chainId = childChain.getId();
         this.taggedDataTransactionFullHash = taggedData.getTransactionFullHash();
         this.jsonIsPruned = false;
     }
 
     @Override
     protected int getMySize() {
-        return 32;
+        return 4 + 32;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
+        buffer.putInt(chainId);
         buffer.put(taggedDataTransactionFullHash);
     }
 
     @Override
     protected void putMyJSON(JSONObject attachment) {
         super.putMyJSON(attachment);
+        attachment.put("chainId", chainId);
         attachment.put("taggedDataTransactionFullHash", Convert.toHexString(taggedDataTransactionFullHash));
     }
 
@@ -84,15 +89,18 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
         return taggedDataTransactionFullHash;
     }
 
+    public int getChainId() {
+        return chainId;
+    }
+
     @Override
     public byte[] getHash() {
         if (hash == null) {
             hash = super.getHash();
         }
         if (hash == null) {
-            //TODO: store data hash, or the child chain id for the TaggedDataUpload chain
-            TaggedDataUploadAttachment taggedDataUpload =
-                    (TaggedDataUploadAttachment) Nxt.getBlockchain().getTransactionByFullHash(ChildChain.IGNIS, taggedDataTransactionFullHash).getAttachment();
+            TaggedDataUploadAttachment taggedDataUpload = (TaggedDataUploadAttachment) ChildChain.getChain(chainId).getTransactionHome()
+                            .findTransactionByFullHash(taggedDataTransactionFullHash).getAttachment();
             hash = taggedDataUpload.getHash();
         }
         return hash;
