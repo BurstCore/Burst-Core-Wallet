@@ -425,7 +425,7 @@ public final class Generator implements Comparable<Generator> {
         private long effectiveBalanceNXT;
         private byte[] publicKey;
 
-        public ActiveGenerator(long accountId) {
+        private ActiveGenerator(long accountId) {
             this.accountId = accountId;
             this.hitTime = Long.MAX_VALUE;
         }

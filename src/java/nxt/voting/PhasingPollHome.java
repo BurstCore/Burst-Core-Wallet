@@ -107,14 +107,14 @@ public final class PhasingPollHome {
         }
     }
 
-    private static DbKey.HashKeyFactory<PhasingPoll> linkedTransactionDbKeyFactory = new DbKey.HashKeyFactory<PhasingPoll>("transaction_full_hash", "transaction_id") {
+    private static final DbKey.HashKeyFactory<PhasingPoll> linkedTransactionDbKeyFactory = new DbKey.HashKeyFactory<PhasingPoll>("transaction_full_hash", "transaction_id") {
         @Override
         public DbKey newKey(PhasingPoll poll) {
             return poll.dbKey == null ? newKey(poll.hash, poll.id) : poll.dbKey;
         }
     };
 
-    private static ValuesDbTable<PhasingPoll, ChainTransactionId> linkedTransactionTable = new ValuesDbTable<PhasingPoll, ChainTransactionId>
+    private static final ValuesDbTable<PhasingPoll, ChainTransactionId> linkedTransactionTable = new ValuesDbTable<PhasingPoll, ChainTransactionId>
             ("public.phasing_poll_linked_transaction", linkedTransactionDbKeyFactory) {
         @Override
         protected ChainTransactionId load(Connection con, ResultSet rs) throws SQLException {

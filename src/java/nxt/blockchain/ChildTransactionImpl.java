@@ -307,10 +307,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         return attachment.isPhased(this);
     }
 
-    PublicKeyAnnouncementAppendix getPublicKeyAnnouncement() {
-        return publicKeyAnnouncement;
-    }
-
     @Override
     public PrunablePlainMessageAppendix getPrunablePlainMessage() {
         if (prunablePlainMessage != null) {
@@ -319,20 +315,12 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         return prunablePlainMessage;
     }
 
-    boolean hasPrunablePlainMessage() {
-        return prunablePlainMessage != null;
-    }
-
     @Override
     public PrunableEncryptedMessageAppendix getPrunableEncryptedMessage() {
         if (prunableEncryptedMessage != null) {
             prunableEncryptedMessage.loadPrunable(this);
         }
         return prunableEncryptedMessage;
-    }
-
-    boolean hasPrunableEncryptedMessage() {
-        return prunableEncryptedMessage != null;
     }
 
     @Override
@@ -559,13 +547,13 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             pstmt.setInt(++i, getBlockTimestamp());
             pstmt.setBytes(++i, getFullHash());
             pstmt.setByte(++i, getVersion());
-            pstmt.setBoolean(++i, getMessage() != null);
-            pstmt.setBoolean(++i, getEncryptedMessage() != null);
-            pstmt.setBoolean(++i, getPublicKeyAnnouncement() != null);
-            pstmt.setBoolean(++i, getEncryptToSelfMessage() != null);
-            pstmt.setBoolean(++i, getPhasing() != null);
-            pstmt.setBoolean(++i, hasPrunablePlainMessage());
-            pstmt.setBoolean(++i, hasPrunableEncryptedMessage());
+            pstmt.setBoolean(++i, message != null);
+            pstmt.setBoolean(++i, encryptedMessage != null);
+            pstmt.setBoolean(++i, publicKeyAnnouncement != null);
+            pstmt.setBoolean(++i, encryptToSelfMessage != null);
+            pstmt.setBoolean(++i, phasing != null);
+            pstmt.setBoolean(++i, prunablePlainMessage != null);
+            pstmt.setBoolean(++i, prunableEncryptedMessage != null);
             pstmt.setBoolean(++i, getAttachment() instanceof Appendix.Prunable);
             pstmt.setInt(++i, getECBlockHeight());
             DbUtils.setLongZeroToNull(pstmt, ++i, getECBlockId());
@@ -583,6 +571,11 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
                 pstmt.executeUpdate();
             }
         }
+    }
+
+    @Override
+    final UnconfirmedChildTransaction newUnconfirmedTransaction(long arrivalTimestamp) {
+        return new UnconfirmedChildTransaction(this, arrivalTimestamp);
     }
 
     static ChildTransactionImpl loadTransaction(ChildChain childChain, Connection con, ResultSet rs) throws NxtException.NotValidException {

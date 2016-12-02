@@ -268,8 +268,8 @@ public final class ExchangeOfferHome {
 
     public abstract class ExchangeOffer {
 
-        final long id;
-        final byte[] hash;
+        protected final long id;
+        private final byte[] hash;
         private final long currencyId;
         private final long accountId;
         private final long rateNQT;

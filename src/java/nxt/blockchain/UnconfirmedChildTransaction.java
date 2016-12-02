@@ -29,13 +29,13 @@ import org.json.simple.JSONValue;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class UnconfirmedChildTransaction extends UnconfirmedTransaction implements ChildTransaction {
+class UnconfirmedChildTransaction extends UnconfirmedTransaction implements ChildTransaction {
 
-    public UnconfirmedChildTransaction(ChildTransactionImpl transaction, long arrivalTimestamp) {
+    UnconfirmedChildTransaction(ChildTransactionImpl transaction, long arrivalTimestamp) {
         super(transaction, arrivalTimestamp);
     }
 
-    public UnconfirmedChildTransaction(ResultSet rs) throws SQLException, NxtException.NotValidException {
+    UnconfirmedChildTransaction(ResultSet rs) throws SQLException, NxtException.NotValidException {
         super(ChildTransactionImpl.newTransactionBuilder(
                 rs.getBytes("transaction_bytes"),
                 rs.getString("prunable_json") != null ? (JSONObject) JSONValue.parse(rs.getString("prunable_json")) : null),

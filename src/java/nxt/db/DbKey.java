@@ -479,7 +479,7 @@ public interface DbKey {
 
         @Override
         public boolean equals(Object o) {
-            return o instanceof HashLongKey && Arrays.equals(hashB, ((HashHashKey) o).hashB)
+            return o instanceof HashHashKey && Arrays.equals(hashB, ((HashHashKey) o).hashB)
                     && Arrays.equals(hashA, ((HashHashKey)o).hashA);
         }
 

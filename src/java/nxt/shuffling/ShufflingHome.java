@@ -44,7 +44,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -427,7 +426,7 @@ public final class ShufflingHome {
             }
             outputDataList.add(bytesToEncrypt);
             // Shuffle the tokens and save the shuffled tokens as the participant data
-            Collections.sort(outputDataList, Convert.byteArrayComparator);
+            outputDataList.sort(Convert.byteArrayComparator);
             if (isLast) {
                 Set<Long> recipientAccounts = new HashSet<>(participantCount);
                 for (byte[] publicKey : outputDataList) {

@@ -26,7 +26,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -64,7 +63,7 @@ public final class GetExpectedBuyOffers extends APIServlet.APIRequestHandler {
 
         List<? extends Transaction> transactions = Nxt.getBlockchain().getExpectedTransactions(filter);
         if (sortByRate) {
-            Collections.sort(transactions, rateComparator);
+            transactions.sort(rateComparator);
         }
 
         JSONObject response = new JSONObject();

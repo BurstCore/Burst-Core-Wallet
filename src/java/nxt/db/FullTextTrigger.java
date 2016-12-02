@@ -660,13 +660,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     public void rollback() {
         Thread thread = Thread.currentThread();
         synchronized(tableUpdates) {
-            Iterator<TableUpdate> it = tableUpdates.iterator();
-            while (it.hasNext()) {
-                TableUpdate update = it.next();
-                if (update.getThread() == thread) {
-                    it.remove();
-                }
-            }
+            tableUpdates.removeIf(update -> update.getThread() == thread);
         }
     }
 

@@ -22,7 +22,6 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountRestrictions;
 import nxt.crypto.Crypto;
-import nxt.db.DbKey;
 import nxt.util.Convert;
 import nxt.util.Filter;
 import nxt.util.Logger;
@@ -44,11 +43,11 @@ public abstract class TransactionImpl implements Transaction {
 
     public static abstract class BuilderImpl implements Builder {
 
-        final short deadline;
+        private final short deadline;
         final byte[] senderPublicKey;
-        final long amount;
-        final TransactionType type;
-        final byte version;
+        private final long amount;
+        private final TransactionType type;
+        private final byte version;
         final long fee;
         final int chainId;
 
@@ -213,7 +212,6 @@ public abstract class TransactionImpl implements Transaction {
     private volatile String stringId;
     private volatile long senderId;
     private volatile byte[] fullHash;
-    private volatile DbKey dbKey;
     volatile byte[] bytes = null;
 
 
@@ -415,14 +413,6 @@ public abstract class TransactionImpl implements Transaction {
             senderId = Account.getId(getSenderPublicKey());
         }
         return senderId;
-    }
-
-    //TODO: move to UnconfirmedTransaction
-    public final DbKey getDbKey() {
-        if (dbKey == null) {
-            dbKey = TransactionProcessorImpl.getInstance().unconfirmedTransactionDbKeyFactory.newKey(getId());
-        }
-        return dbKey;
     }
 
     public final byte[] getBytes() {
@@ -667,6 +657,8 @@ public abstract class TransactionImpl implements Transaction {
     abstract void apply();
 
     abstract void save(Connection con, String schemaTable) throws SQLException;
+
+    abstract UnconfirmedTransaction newUnconfirmedTransaction(long arrivalTime);
 
     static TransactionImpl parseTransaction(JSONObject transactionData) throws NxtException.NotValidException {
         TransactionImpl transaction = newTransactionBuilder(transactionData).build();

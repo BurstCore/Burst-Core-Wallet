@@ -198,6 +198,11 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
     }
 
     @Override
+    final UnconfirmedFxtTransaction newUnconfirmedTransaction(long arrivalTimestamp) {
+        return new UnconfirmedFxtTransaction(this, arrivalTimestamp);
+    }
+
+    @Override
     public boolean equals(Object o) {
         return o instanceof FxtTransactionImpl && this.getId() == ((Transaction)o).getId();
     }

@@ -25,11 +25,11 @@ import java.sql.SQLException;
 
 class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTransaction {
 
-    public UnconfirmedFxtTransaction(FxtTransactionImpl transaction, long arrivalTimestamp) {
+    UnconfirmedFxtTransaction(FxtTransactionImpl transaction, long arrivalTimestamp) {
         super(transaction, arrivalTimestamp);
     }
 
-    public UnconfirmedFxtTransaction(ResultSet rs) throws SQLException, NxtException.NotValidException {
+    UnconfirmedFxtTransaction(ResultSet rs) throws SQLException, NxtException.NotValidException {
         super(FxtTransactionImpl.newTransactionBuilder(
                 rs.getBytes("transaction_bytes"),
                 rs.getString("prunable_json") != null ? (JSONObject) JSONValue.parse(rs.getString("prunable_json")) : null),

@@ -31,14 +31,6 @@ import java.util.List;
 
 public abstract class UnconfirmedTransaction implements Transaction {
 
-    static UnconfirmedTransaction wrap(TransactionImpl transaction, long arrivalTimestamp) {
-        if (transaction instanceof FxtTransaction) {
-            return new UnconfirmedFxtTransaction((FxtTransactionImpl)transaction, arrivalTimestamp);
-        } else {
-            return new UnconfirmedChildTransaction((ChildTransactionImpl)transaction, arrivalTimestamp);
-        }
-    }
-
     static UnconfirmedTransaction load(ResultSet rs) throws SQLException {
         Chain chain = Chain.getChain(rs.getInt("chain_id"));
         try {
@@ -49,6 +41,7 @@ public abstract class UnconfirmedTransaction implements Transaction {
     }
 
     private final TransactionImpl transaction;
+    private final DbKey dbKey;
     private final long arrivalTimestamp;
     private final long feePerByte;
 
@@ -56,6 +49,7 @@ public abstract class UnconfirmedTransaction implements Transaction {
         this.transaction = transaction;
         this.arrivalTimestamp = arrivalTimestamp;
         this.feePerByte = transaction.getFee() / transaction.getFullSize();
+        this.dbKey = TransactionProcessorImpl.getInstance().unconfirmedTransactionDbKeyFactory.newKey(transaction.getId());
     }
 
     UnconfirmedTransaction(TransactionImpl.BuilderImpl builder,  ResultSet rs) throws SQLException {
@@ -64,6 +58,7 @@ public abstract class UnconfirmedTransaction implements Transaction {
             this.transaction.setHeight(rs.getInt("transaction_height"));
             this.arrivalTimestamp = rs.getLong("arrival_timestamp");
             this.feePerByte = rs.getLong("fee_per_byte");
+            this.dbKey = TransactionProcessorImpl.getInstance().unconfirmedTransactionDbKeyFactory.newKey(transaction.getId());
         } catch (NxtException.ValidationException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -125,7 +120,7 @@ public abstract class UnconfirmedTransaction implements Transaction {
     }
 
     DbKey getDbKey() {
-        return transaction.getDbKey();
+        return dbKey;
     }
 
     @Override

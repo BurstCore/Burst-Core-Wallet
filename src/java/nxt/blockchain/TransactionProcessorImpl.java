@@ -78,7 +78,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
 
         @Override
         public DbKey newKey(UnconfirmedTransaction unconfirmedTransaction) {
-            return unconfirmedTransaction.getTransaction().getDbKey();
+            return unconfirmedTransaction.getDbKey();
         }
 
     };
@@ -417,7 +417,8 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 Logger.logMessage("Transaction " + transaction.getStringId() + " already in blockchain, will not broadcast again");
                 return;
             }
-            if (getUnconfirmedTransaction(((TransactionImpl)transaction).getDbKey()) != null) {
+            DbKey dbKey = unconfirmedTransactionDbKeyFactory.newKey(transaction.getId());
+            if (getUnconfirmedTransaction(dbKey) != null) {
                 if (enableTransactionRebroadcasting) {
                     broadcastedTransactions.add((TransactionImpl) transaction);
                     Logger.logMessage("Transaction " + transaction.getStringId() + " already in unconfirmed pool, will re-broadcast");
@@ -427,7 +428,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 return;
             }
             transaction.validate();
-            UnconfirmedTransaction unconfirmedTransaction = UnconfirmedTransaction.wrap((TransactionImpl) transaction, System.currentTimeMillis());
+            UnconfirmedTransaction unconfirmedTransaction = ((TransactionImpl) transaction).newUnconfirmedTransaction(System.currentTimeMillis());
             boolean broadcastLater = BlockchainProcessorImpl.getInstance().isProcessingBlock();
             if (broadcastLater) {
                 waitingTransactions.add(unconfirmedTransaction);
@@ -562,7 +563,8 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
             int deleted = pstmt.executeUpdate();
             if (deleted > 0) {
                 transaction.undoUnconfirmed();
-                transactionCache.remove(transaction.getDbKey());
+                DbKey dbKey = unconfirmedTransactionDbKeyFactory.newKey(transaction.getId());
+                transactionCache.remove(dbKey);
                 transactionListeners.notify(Collections.singletonList(transaction), Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
             }
         } catch (SQLException e) {
@@ -578,7 +580,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         try {
             for (Transaction transaction : transactions) {
                 ((TransactionImpl)transaction).unsetBlock();
-                waitingTransactions.add(UnconfirmedTransaction.wrap((TransactionImpl)transaction, Math.min(currentTime, Convert.fromEpochTime(transaction.getTimestamp()))));
+                waitingTransactions.add(((TransactionImpl)transaction).newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(transaction.getTimestamp()))));
             }
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
@@ -635,11 +637,12 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
             try {
                 TransactionImpl transaction = TransactionImpl.parseTransaction((JSONObject) transactionData);
                 receivedTransactions.add(transaction);
-                if (getUnconfirmedTransaction(transaction.getDbKey()) != null || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash())) {
+                DbKey dbKey = unconfirmedTransactionDbKeyFactory.newKey(transaction.getId());
+                if (getUnconfirmedTransaction(dbKey) != null || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash())) {
                     continue;
                 }
                 transaction.validate();
-                UnconfirmedTransaction unconfirmedTransaction = UnconfirmedTransaction.wrap(transaction, arrivalTimestamp);
+                UnconfirmedTransaction unconfirmedTransaction = transaction.newUnconfirmedTransaction(arrivalTimestamp);
                 processTransaction(unconfirmedTransaction);
                 if (broadcastedTransactions.contains(transaction)) {
                     Logger.logDebugMessage("Received back transaction " + transaction.getStringId()
@@ -685,8 +688,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 if (Nxt.getBlockchain().getHeight() < Constants.LAST_KNOWN_BLOCK && !testUnconfirmedTransactions) {
                     throw new NxtException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
                 }
-
-                if (getUnconfirmedTransaction(transaction.getDbKey()) != null || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash())) {
+                if (getUnconfirmedTransaction(unconfirmedTransaction.getDbKey()) != null || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash())) {
                     throw new NxtException.ExistingTransactionException("Transaction already processed");
                 }
                 transaction.validateId();
