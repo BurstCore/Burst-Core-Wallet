@@ -60,7 +60,7 @@ import java.util.concurrent.ConcurrentMap;
 public final class Account {
 
     public enum Event {
-        BALANCE, UNCONFIRMED_BALANCE, ASSET_BALANCE, UNCONFIRMED_ASSET_BALANCE, CURRENCY_BALANCE, UNCONFIRMED_CURRENCY_BALANCE,
+        ASSET_BALANCE, UNCONFIRMED_ASSET_BALANCE, CURRENCY_BALANCE, UNCONFIRMED_CURRENCY_BALANCE,
         LEASE_SCHEDULED, LEASE_STARTED, LEASE_ENDED, SET_PROPERTY, DELETE_PROPERTY
     }
 
@@ -683,8 +683,6 @@ public final class Account {
     private static final ConcurrentMap<DbKey, byte[]> publicKeyCache = Nxt.getBooleanProperty("nxt.enablePublicKeyCache") ?
             new ConcurrentHashMap<>() : null;
 
-    private static final Listeners<Account,Event> listeners = new Listeners<>();
-
     private static final Listeners<AccountAsset,Event> assetListeners = new Listeners<>();
 
     private static final Listeners<AccountCurrency,Event> currencyListeners = new Listeners<>();
@@ -692,14 +690,6 @@ public final class Account {
     private static final Listeners<AccountLease,Event> leaseListeners = new Listeners<>();
 
     private static final Listeners<AccountProperty,Event> propertyListeners = new Listeners<>();
-
-    public static boolean addListener(Listener<Account> listener, Event eventType) {
-        return listeners.addListener(listener, eventType);
-    }
-
-    public static boolean removeListener(Listener<Account> listener, Event eventType) {
-        return listeners.removeListener(listener, eventType);
-    }
 
     public static boolean addAssetListener(Listener<AccountAsset> listener, Event eventType) {
         return assetListeners.addListener(listener, eventType);
@@ -1429,7 +1419,6 @@ public final class Account {
             accountProperty.value = value;
         }
         accountPropertyTable.insert(accountProperty);
-        listeners.notify(this, Event.SET_PROPERTY);
         propertyListeners.notify(accountProperty, Event.SET_PROPERTY);
     }
 
@@ -1442,7 +1431,6 @@ public final class Account {
             throw new RuntimeException("Property " + Long.toUnsignedString(propertyId) + " cannot be deleted by " + Long.toUnsignedString(this.id));
         }
         accountPropertyTable.delete(accountProperty);
-        listeners.notify(this, Event.DELETE_PROPERTY);
         propertyListeners.notify(accountProperty, Event.DELETE_PROPERTY);
     }
 
@@ -1496,7 +1484,6 @@ public final class Account {
             accountAsset.quantityQNT = assetBalance;
         }
         accountAsset.save();
-        listeners.notify(this, Event.ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
         if (AccountLedger.mustLogEntry(event, this.id, false)) {
             AccountLedger.logEntry(new AccountLedger.LedgerEntry(event, eventId, this.id, AccountLedger.LedgerHolding.ASSET_BALANCE, assetId,
@@ -1518,7 +1505,6 @@ public final class Account {
             accountAsset.unconfirmedQuantityQNT = unconfirmedAssetBalance;
         }
         accountAsset.save();
-        listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.UNCONFIRMED_ASSET_BALANCE);
         if (AccountLedger.mustLogEntry(event, this.id, true)) {
             AccountLedger.logEntry(new AccountLedger.LedgerEntry(event, eventId, this.id,
@@ -1544,8 +1530,6 @@ public final class Account {
             accountAsset.unconfirmedQuantityQNT = unconfirmedAssetBalance;
         }
         accountAsset.save();
-        listeners.notify(this, Event.ASSET_BALANCE);
-        listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.UNCONFIRMED_ASSET_BALANCE);
         if (AccountLedger.mustLogEntry(event, this.id, true)) {
@@ -1574,7 +1558,6 @@ public final class Account {
             accountCurrency.units = currencyUnits;
         }
         accountCurrency.save();
-        listeners.notify(this, Event.CURRENCY_BALANCE);
         currencyListeners.notify(accountCurrency, Event.CURRENCY_BALANCE);
         if (AccountLedger.mustLogEntry(event, this.id, false)) {
             AccountLedger.logEntry(new AccountLedger.LedgerEntry(event, eventId, this.id, AccountLedger.LedgerHolding.CURRENCY_BALANCE, currencyId,
@@ -1595,7 +1578,6 @@ public final class Account {
             accountCurrency.unconfirmedUnits = unconfirmedCurrencyUnits;
         }
         accountCurrency.save();
-        listeners.notify(this, Event.UNCONFIRMED_CURRENCY_BALANCE);
         currencyListeners.notify(accountCurrency, Event.UNCONFIRMED_CURRENCY_BALANCE);
         if (AccountLedger.mustLogEntry(event, this.id, true)) {
             AccountLedger.logEntry(new AccountLedger.LedgerEntry(event, eventId, this.id,
@@ -1621,8 +1603,6 @@ public final class Account {
             accountCurrency.unconfirmedUnits = unconfirmedCurrencyUnits;
         }
         accountCurrency.save();
-        listeners.notify(this, Event.CURRENCY_BALANCE);
-        listeners.notify(this, Event.UNCONFIRMED_CURRENCY_BALANCE);
         currencyListeners.notify(accountCurrency, Event.CURRENCY_BALANCE);
         currencyListeners.notify(accountCurrency, Event.UNCONFIRMED_CURRENCY_BALANCE);
         if (AccountLedger.mustLogEntry(event, this.id, true)) {

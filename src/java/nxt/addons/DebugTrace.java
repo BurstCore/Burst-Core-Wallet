@@ -19,6 +19,7 @@ package nxt.addons;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.account.Account;
+import nxt.account.BalanceHome;
 import nxt.account.HoldingType;
 import nxt.ae.AskOrderPlacementAttachment;
 import nxt.ae.AssetDeleteAttachment;
@@ -33,6 +34,7 @@ import nxt.blockchain.Attachment;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockDb;
 import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.FxtTransactionImpl;
@@ -110,9 +112,9 @@ public final class DebugTrace {
         Currency.addListener(debugTrace::undoCrowdfunding, Currency.Event.BEFORE_UNDO_CROWDFUNDING);
         Currency.addListener(debugTrace::delete, Currency.Event.BEFORE_DELETE);
         CurrencyMint.addListener(debugTrace::currencyMint, CurrencyMint.Event.CURRENCY_MINT);
-        Account.addListener(account -> debugTrace.trace(account, false), Account.Event.BALANCE);
+        BalanceHome.addListener(balance -> debugTrace.trace(balance, false), BalanceHome.Event.BALANCE);
         if (LOG_UNCONFIRMED) {
-            Account.addListener(account -> debugTrace.trace(account, true), Account.Event.UNCONFIRMED_BALANCE);
+            BalanceHome.addListener(balance -> debugTrace.trace(balance, true), BalanceHome.Event.UNCONFIRMED_BALANCE);
         }
         Account.addAssetListener(accountAsset -> debugTrace.trace(accountAsset, false), Account.Event.ASSET_BALANCE);
         if (LOG_UNCONFIRMED) {
@@ -202,9 +204,9 @@ public final class DebugTrace {
         }
     }
 
-    private void trace(Account account, boolean unconfirmed) {
-        if (include(account.getId())) {
-            log(getValues(account.getId(), unconfirmed));
+    private void trace(BalanceHome.Balance balance, boolean unconfirmed) {
+        if (include(balance.getAccountId())) {
+            log(getValues(balance, unconfirmed));
         }
     }
 
@@ -446,6 +448,18 @@ public final class DebugTrace {
         map.put("account", Long.toUnsignedString(accountId));
         map.put("balance", String.valueOf(childChain.getBalanceHome().getBalance(accountId).getBalance()));
         map.put("unconfirmed balance", String.valueOf(childChain.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()));
+        map.put("timestamp", String.valueOf(Nxt.getBlockchain().getLastBlock().getTimestamp()));
+        map.put("height", String.valueOf(Nxt.getBlockchain().getHeight()));
+        map.put("event", unconfirmed ? "unconfirmed balance" : "balance");
+        return map;
+    }
+
+    private Map<String,String> getValues(BalanceHome.Balance balance, boolean unconfirmed) {
+        Chain chain = balance.getChain();
+        Map<String,String> map = new HashMap<>();
+        map.put("account", Long.toUnsignedString(balance.getAccountId()));
+        map.put("balance", String.valueOf(balance.getBalance()));
+        map.put("unconfirmed balance", String.valueOf(balance.getUnconfirmedBalance()));
         map.put("timestamp", String.valueOf(Nxt.getBlockchain().getLastBlock().getTimestamp()));
         map.put("height", String.valueOf(Nxt.getBlockchain().getHeight()));
         map.put("event", unconfirmed ? "unconfirmed balance" : "balance");

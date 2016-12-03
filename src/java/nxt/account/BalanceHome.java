@@ -21,6 +21,8 @@ import nxt.blockchain.Chain;
 import nxt.blockchain.FxtChain;
 import nxt.db.DbKey;
 import nxt.db.VersionedEntityDbTable;
+import nxt.util.Listener;
+import nxt.util.Listeners;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -29,11 +31,25 @@ import java.sql.SQLException;
 
 public final class BalanceHome {
 
+    public enum Event {
+        BALANCE, UNCONFIRMED_BALANCE
+    }
+
     public static BalanceHome forChain(Chain chain) {
         if (chain.getBalanceHome() != null) {
             throw new IllegalStateException("already set");
         }
         return new BalanceHome(chain);
+    }
+
+    private static final Listeners<Balance, Event> listeners = new Listeners<>();
+
+    public static boolean addListener(Listener<Balance> listener, Event eventType) {
+        return listeners.addListener(listener, eventType);
+    }
+
+    public static boolean removeListener(Listener<Balance> listener, Event eventType) {
+        return listeners.removeListener(listener, eventType);
     }
 
     private final DbKey.LongKeyFactory<Balance> balanceDbKeyFactory;
@@ -124,6 +140,10 @@ public final class BalanceHome {
             }
         }
 
+        public Chain getChain() {
+            return BalanceHome.this.chain;
+        }
+
         public long getAccountId() {
             return accountId;
         }
@@ -151,7 +171,7 @@ public final class BalanceHome {
             }
             Account.checkBalance(this.accountId, this.balance, this.unconfirmedBalance);
             save();
-            //TODO: Account.listeners.notify(this, Event.BALANCE);
+            listeners.notify(this, Event.BALANCE);
             if (AccountLedger.mustLogEntry(event, this.accountId, false)) {
                 if (fee != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.accountId,
@@ -176,7 +196,7 @@ public final class BalanceHome {
             this.unconfirmedBalance = Math.addExact(this.unconfirmedBalance, totalAmount);
             Account.checkBalance(this.accountId, this.balance, this.unconfirmedBalance);
             save();
-            //TODO: listeners.notify(this, Event.UNCONFIRMED_BALANCE);
+            listeners.notify(this, Event.UNCONFIRMED_BALANCE);
             //TODO: use chain holding id in account ledger
             if (AccountLedger.mustLogEntry(event, this.accountId, true)) {
                 if (fee != 0) {
@@ -206,8 +226,8 @@ public final class BalanceHome {
             }
             Account.checkBalance(this.accountId, this.balance, this.unconfirmedBalance);
             save();
-            //TODO: Account.listeners.notify(this, Event.BALANCE);
-            //TODO: Account.listeners.notify(this, Event.UNCONFIRMED_BALANCE);
+            listeners.notify(this, Event.BALANCE);
+            listeners.notify(this, Event.UNCONFIRMED_BALANCE);
             if (AccountLedger.mustLogEntry(event, this.accountId, true)) {
                 if (fee != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.accountId,

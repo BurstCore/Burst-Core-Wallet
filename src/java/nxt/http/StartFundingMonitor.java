@@ -21,6 +21,7 @@ import nxt.account.Account;
 import nxt.account.FundingMonitor;
 import nxt.account.HoldingType;
 import nxt.ae.Asset;
+import nxt.blockchain.Chain;
 import nxt.crypto.Crypto;
 import nxt.ms.Currency;
 import org.json.simple.JSONObject;
@@ -35,7 +36,7 @@ import static nxt.http.JSONResponses.incorrect;
 /**
  * Start a funding monitor
  * <p>
- * A funding monitor will transfer NXT, ASSET or CURRENCY from the funding account
+ * A funding monitor will transfer COIN, ASSET or CURRENCY from the funding account
  * to a recipient account when the amount held by the recipient account drops below
  * the threshold.  The transfer will not be done until the current block
  * height is greater than equal to the block height of the last transfer plus the
@@ -102,6 +103,11 @@ public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
                     throw new ParameterException(JSONResponses.UNKNOWN_CURRENCY);
                 }
                 break;
+            case COIN:
+                Chain chain = Chain.getChain(Math.toIntExact(holdingId));
+                if (chain == null) {
+                    throw new ParameterException(JSONResponses.UNKNOWN_CHAIN);
+                }
         }
         Account account = Account.getAccount(Crypto.getPublicKey(secretPhrase));
         if (account == null) {

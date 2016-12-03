@@ -23,6 +23,7 @@ import nxt.ae.AssetTransferAttachment;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
@@ -154,7 +155,7 @@ public final class FundingMonitor {
     /**
      * Return the holding identifier
      *
-     * @return                      Holding identifier for asset or currency
+     * @return                      Holding identifier for asset, currency, or coin
      */
     public long getHoldingId() {
         return holdingId;
@@ -221,7 +222,7 @@ public final class FundingMonitor {
      * string: {"amount":"long","threshold":"long","interval":integer}
      *
      * @param   holdingType         Holding type
-     * @param   holdingId           Asset or currency identifier, ignored for NXT monitor
+     * @param   holdingId           Asset, currency, or coin identifier
      * @param   property            Account property name
      * @param   amount              Fund amount
      * @param   threshold           Fund threshold
@@ -481,7 +482,7 @@ public final class FundingMonitor {
             //
             // Register our event listeners
             //
-            Account.addListener(new AccountEventHandler(), Account.Event.BALANCE);
+            BalanceHome.addListener(new BalanceEventHandler(), BalanceHome.Event.BALANCE);
             Account.addAssetListener(new AssetEventHandler(), Account.Event.ASSET_BALANCE);
             Account.addCurrencyListener(new CurrencyEventHandler(), Account.Event.CURRENCY_BALANCE);
             Account.addPropertyListener(new SetPropertyEventHandler(), Account.Event.SET_PROPERTY);
@@ -578,7 +579,7 @@ public final class FundingMonitor {
                             } else {
                                 switch (monitoredAccount.monitor.holdingType) {
                                     case COIN:
-                                        processNxtEvent(monitoredAccount, targetAccount, fundingAccount);
+                                        processCoinEvent(monitoredAccount, targetAccount, fundingAccount);
                                         break;
                                     case ASSET:
                                         processAssetEvent(monitoredAccount, targetAccount, fundingAccount);
@@ -608,31 +609,33 @@ public final class FundingMonitor {
     }
 
     /**
-     * Process a NXT event
+     * Process a COIN event
      *
      * @param   monitoredAccount            Monitored account
      * @param   targetAccount               Target account
      * @param   fundingAccount              Funding account
      * @throws NxtException                Unable to create transaction
      */
-    private static void processNxtEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
+    private static void processCoinEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws NxtException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        if (ChildChain.IGNIS.getBalanceHome().getBalance(targetAccount.getId()).getBalance() < monitoredAccount.threshold) {
+        Chain chain = Chain.getChain(Math.toIntExact(monitor.holdingId));
+        BalanceHome balanceHome = chain.getBalanceHome();
+        if (balanceHome.getBalance(targetAccount.getId()).getBalance() < monitoredAccount.threshold) {
             Transaction.Builder builder = Nxt.newTransactionBuilder(monitor.publicKey,
                     monitoredAccount.amount, 0, (short)1440, PaymentAttachment.INSTANCE);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
-            if (Math.addExact(monitoredAccount.amount, transaction.getFee()) > ChildChain.IGNIS.getBalanceHome().getBalance(fundingAccount.getId()).getUnconfirmedBalance()) {
+            if (Math.addExact(monitoredAccount.amount, transaction.getFee()) > balanceHome.getBalance(fundingAccount.getId()).getUnconfirmedBalance()) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
             } else {
                 Nxt.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = Nxt.getBlockchain().getHeight();
-                Logger.logDebugMessage(String.format("NXT funding transaction %s for %f NXT submitted from %s to %s",
+                Logger.logDebugMessage(String.format("Coin funding transaction %s for %f %s submitted from %s to %s",
                         transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_NXT,
-                        monitor.accountName, monitoredAccount.accountName));
+                        chain.getName(), monitor.accountName, monitoredAccount.accountName));
             }
         }
     }
@@ -661,6 +664,7 @@ public final class FundingMonitor {
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
+            //TODO: specify chain on which to submit transaction and pay fees
             if (transaction.getFee() > ChildChain.IGNIS.getBalanceHome().getBalance(fundingAccount.getId()).getUnconfirmedBalance()) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
@@ -698,6 +702,7 @@ public final class FundingMonitor {
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
+            //TODO: specify chain on which to submit transaction and pay fees
             if (transaction.getFee() > ChildChain.IGNIS.getBalanceHome().getBalance(fundingAccount.getId()).getUnconfirmedBalance()) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
@@ -813,30 +818,31 @@ public final class FundingMonitor {
     /**
      * Account event handler (BALANCE event)
      */
-    private static final class AccountEventHandler implements Listener<Account> {
+    private static final class BalanceEventHandler implements Listener<BalanceHome.Balance> {
 
         /**
-         * Account event notification
+         * Balance event notification
          *
-         * @param   account                 Account
+         * @param   balance                 Balance
          */
         @Override
-        public void notify(Account account) {
+        public void notify(BalanceHome.Balance balance) {
             if (stopped) {
                 return;
             }
-            long balance = ChildChain.IGNIS.getBalanceHome().getBalance(account.getId()).getBalance();
             //
-            // Check the NXT balance for monitored accounts
+            // Check the coin balance for monitored accounts
             //
             synchronized(monitors) {
-                List<MonitoredAccount> accountList = accounts.get(account.getId());
+                List<MonitoredAccount> accountList = accounts.get(balance.getAccountId());
                 if (accountList != null) {
                     accountList.forEach((maccount) -> {
-                       if (maccount.monitor.holdingType == HoldingType.COIN && balance < maccount.threshold &&
-                               !pendingEvents.contains(maccount)) {
-                           pendingEvents.add(maccount);
-                       }
+                        if (maccount.monitor.holdingType == HoldingType.COIN &&
+                                maccount.monitor.holdingId == balance.getChain().getId() &&
+                                balance.getBalance() < maccount.threshold &&
+                                !pendingEvents.contains(maccount)) {
+                            pendingEvents.add(maccount);
+                        }
                     });
                 }
             }

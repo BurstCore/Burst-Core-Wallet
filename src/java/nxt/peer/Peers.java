@@ -18,8 +18,9 @@ package nxt.peer;
 
 import nxt.Constants;
 import nxt.Nxt;
-import nxt.account.Account;
+import nxt.account.BalanceHome;
 import nxt.blockchain.Block;
+import nxt.blockchain.FxtChain;
 import nxt.blockchain.Transaction;
 import nxt.dbschema.Db;
 import nxt.http.API;
@@ -765,11 +766,15 @@ public final class Peers {
     }
 
     static {
-        Account.addListener(account -> peers.values().forEach(peer -> {
-            if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
-                Peers.listeners.notify(peer, Event.WEIGHT);
+        BalanceHome.addListener(balance -> {
+            if (balance.getChain() == FxtChain.FXT) {
+                peers.values().forEach(peer -> {
+                    if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == balance.getAccountId()) {
+                        Peers.listeners.notify(peer, Event.WEIGHT);
+                    }
+                });
             }
-        }), Account.Event.BALANCE);
+        }, BalanceHome.Event.BALANCE);
     }
 
     static {
