@@ -49,6 +49,16 @@ public final class AssetDividendHome {
         return new AssetDividendHome(childChain);
     }
 
+    private static final Listeners<AssetDividend,Event> listeners = new Listeners<>();
+
+    public static boolean addListener(Listener<AssetDividend> listener, Event eventType) {
+        return listeners.addListener(listener, eventType);
+    }
+
+    public static boolean removeListener(Listener<AssetDividend> listener, Event eventType) {
+        return listeners.removeListener(listener, eventType);
+    }
+
     private final ChildChain childChain;
     private final DbKey.HashKeyFactory<AssetDividendHome.AssetDividend> dividendDbKeyFactory;
     private final EntityDbTable<AssetDividendHome.AssetDividend> assetDividendTable;
@@ -71,17 +81,6 @@ public final class AssetDividendHome {
                 assetDividend.save(con);
             }
         };
-    }
-
-    private final Listeners<AssetDividend,Event> listeners = new Listeners<>();
-
-
-    public boolean addListener(Listener<AssetDividend> listener, Event eventType) {
-        return listeners.addListener(listener, eventType);
-    }
-
-    public boolean removeListener(Listener<AssetDividend> listener, Event eventType) {
-        return listeners.removeListener(listener, eventType);
     }
 
     public DbIterator<AssetDividend> getAssetDividends(long assetId, int from, int to) {
