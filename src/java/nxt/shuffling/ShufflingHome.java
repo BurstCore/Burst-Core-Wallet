@@ -63,15 +63,22 @@ public final class ShufflingHome {
         return new ShufflingHome(childChain);
     }
 
-    //TODO: static listeners?
-    private final Listeners<Shuffling, Event> listeners;
+    private final static Listeners<Shuffling, Event> listeners = new Listeners<>();
+
+    public static boolean addListener(Listener<Shuffling> listener, Event eventType) {
+        return listeners.addListener(listener, eventType);
+    }
+
+    public static boolean removeListener(Listener<Shuffling> listener, Event eventType) {
+        return listeners.removeListener(listener, eventType);
+    }
+
     private final DbKey.HashKeyFactory<Shuffling> shufflingDbKeyFactory;
     private final VersionedEntityDbTable<Shuffling> shufflingTable;
     private final ChildChain childChain;
 
     private ShufflingHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.listeners = new Listeners<>();
         this.shufflingDbKeyFactory = new DbKey.HashKeyFactory<Shuffling>("full_hash", "id") {
             @Override
             public DbKey newKey(Shuffling shuffling) {
@@ -109,14 +116,6 @@ public final class ShufflingHome {
                 }
             });
         }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
-    }
-
-    public boolean addListener(Listener<Shuffling> listener, Event eventType) {
-        return listeners.addListener(listener, eventType);
-    }
-
-    public boolean removeListener(Listener<Shuffling> listener, Event eventType) {
-        return listeners.removeListener(listener, eventType);
     }
 
     public int getCount() {

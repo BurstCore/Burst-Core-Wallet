@@ -84,7 +84,16 @@ public final class ShufflingParticipantHome {
         return new ShufflingParticipantHome(childChain);
     }
 
-    private final Listeners<ShufflingParticipant, Event> listeners;
+    private final static Listeners<ShufflingParticipant, Event> listeners = new Listeners<>();
+
+    public static boolean addListener(Listener<ShufflingParticipant> listener, Event eventType) {
+        return listeners.addListener(listener, eventType);
+    }
+
+    public static boolean removeListener(Listener<ShufflingParticipant> listener, Event eventType) {
+        return listeners.removeListener(listener, eventType);
+    }
+
     private final DbKey.HashLongKeyFactory<ShufflingParticipant> shufflingParticipantDbKeyFactory;
     private final VersionedEntityDbTable<ShufflingParticipant> shufflingParticipantTable;
     private final DbKey.HashLongKeyFactory<ShufflingData> shufflingDataDbKeyFactory;
@@ -93,7 +102,6 @@ public final class ShufflingParticipantHome {
 
     private ShufflingParticipantHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.listeners = new Listeners<>();
         this.shufflingParticipantDbKeyFactory = new DbKey.HashLongKeyFactory<ShufflingParticipant>("shuffling_full_hash", "shuffling_id", "account_id") {
             @Override
             public DbKey newKey(ShufflingParticipant participant) {
@@ -127,14 +135,6 @@ public final class ShufflingParticipantHome {
                 shufflingData.save(con);
             }
         };
-    }
-
-    public boolean addListener(Listener<ShufflingParticipant> listener, Event eventType) {
-        return listeners.addListener(listener, eventType);
-    }
-
-    public boolean removeListener(Listener<ShufflingParticipant> listener, Event eventType) {
-        return listeners.removeListener(listener, eventType);
     }
 
     public DbIterator<ShufflingParticipant> getParticipants(byte[] shufflingFullHash) {
