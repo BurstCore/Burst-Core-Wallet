@@ -48,14 +48,22 @@ public final class TradeHome {
         return new TradeHome(childChain);
     }
 
-    private final Listeners<Trade, Event> listeners;
+    private static final Listeners<Trade, Event> listeners = new Listeners<>();
+
+    public static boolean addListener(Listener<Trade> listener, Event eventType) {
+        return listeners.addListener(listener, eventType);
+    }
+
+    public static boolean removeListener(Listener<Trade> listener, Event eventType) {
+        return listeners.removeListener(listener, eventType);
+    }
+
     private final DbKey.HashHashKeyFactory<Trade> tradeDbKeyFactory;
     private final EntityDbTable<Trade> tradeTable;
     private final ChildChain childChain;
 
     private TradeHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.listeners = new Listeners<>();
         this.tradeDbKeyFactory = new DbKey.HashHashKeyFactory<Trade>("ask_order_full_hash", "ask_order_id",
                 "bid_order_full_hash", "bid_order_id") {
             @Override
@@ -81,14 +89,6 @@ public final class TradeHome {
 
     public int getCount() {
         return tradeTable.getCount();
-    }
-
-    public boolean addListener(Listener<Trade> listener, Event eventType) {
-        return listeners.addListener(listener, eventType);
-    }
-
-    public boolean removeListener(Listener<Trade> listener, Event eventType) {
-        return listeners.removeListener(listener, eventType);
     }
 
     public Trade getTrade(byte[] askOrderHash, byte[] bidOrderHash) {

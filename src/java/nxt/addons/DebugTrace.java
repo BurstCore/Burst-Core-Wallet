@@ -103,10 +103,8 @@ public final class DebugTrace {
         final DebugTrace debugTrace = new DebugTrace(accountIds, logName);
         ShufflingHome.addListener(debugTrace::traceShufflingDistribute, ShufflingHome.Event.SHUFFLING_DONE);
         ShufflingHome.addListener(debugTrace::traceShufflingCancel, ShufflingHome.Event.SHUFFLING_CANCELLED);
-        ChildChain.getAll().forEach(childChain -> {
-            childChain.getTradeHome().addListener(debugTrace::trace, TradeHome.Event.TRADE);
-            childChain.getExchangeHome().addListener(debugTrace::trace, ExchangeHome.Event.EXCHANGE);
-        });
+        TradeHome.addListener(debugTrace::trace, TradeHome.Event.TRADE);
+        ExchangeHome.addListener(debugTrace::trace, ExchangeHome.Event.EXCHANGE);
         Currency.addListener(debugTrace::crowdfunding, Currency.Event.BEFORE_DISTRIBUTE_CROWDFUNDING);
         Currency.addListener(debugTrace::undoCrowdfunding, Currency.Event.BEFORE_UNDO_CROWDFUNDING);
         Currency.addListener(debugTrace::delete, Currency.Event.BEFORE_DELETE);

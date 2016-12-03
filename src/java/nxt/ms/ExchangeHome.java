@@ -48,14 +48,22 @@ public final class ExchangeHome {
         return new ExchangeHome(childChain);
     }
 
+    private static final Listeners<Exchange, Event> listeners = new Listeners<>();
+
+    public static boolean addListener(Listener<Exchange> listener, Event eventType) {
+        return listeners.addListener(listener, eventType);
+    }
+
+    public static boolean removeListener(Listener<Exchange> listener, Event eventType) {
+        return listeners.removeListener(listener, eventType);
+    }
+
     private final ChildChain childChain;
-    private final Listeners<Exchange, Event> listeners;
     private final DbKey.HashHashKeyFactory<Exchange> exchangeDbKeyFactory;
     private final EntityDbTable<Exchange> exchangeTable;
 
     private ExchangeHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.listeners = new Listeners<>();
         this.exchangeDbKeyFactory = new DbKey.HashHashKeyFactory<Exchange>("transaction_full_hash", "transaction_id",
                 "offer_full_hash", "offer_id") {
             @Override
@@ -81,14 +89,6 @@ public final class ExchangeHome {
 
     public int getCount() {
         return exchangeTable.getCount();
-    }
-
-    public boolean addListener(Listener<Exchange> listener, Event eventType) {
-        return listeners.addListener(listener, eventType);
-    }
-
-    public boolean removeListener(Listener<Exchange> listener, Event eventType) {
-        return listeners.removeListener(listener, eventType);
     }
 
     public DbIterator<Exchange> getCurrencyExchanges(long currencyId, int from, int to) {

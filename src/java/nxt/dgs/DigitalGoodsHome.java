@@ -61,9 +61,26 @@ public final class DigitalGoodsHome {
         return new DigitalGoodsHome(childChain);
     }
 
+    private static final Listeners<Goods,Event> goodsListeners = new Listeners<>();
+    private static final Listeners<Purchase,Event> purchaseListeners = new Listeners<>();
+
+    public static boolean addGoodsListener(Listener<Goods> listener, Event eventType) {
+        return goodsListeners.addListener(listener, eventType);
+    }
+
+    public static boolean removeGoodsListener(Listener<Goods> listener, Event eventType) {
+        return goodsListeners.removeListener(listener, eventType);
+    }
+
+    public static boolean addPurchaseListener(Listener<Purchase> listener, Event eventType) {
+        return purchaseListeners.addListener(listener, eventType);
+    }
+
+    public static boolean removePurchaseListener(Listener<Purchase> listener, Event eventType) {
+        return purchaseListeners.removeListener(listener, eventType);
+    }
+
     private final ChildChain childChain;
-    private final Listeners<Goods,Event> goodsListeners;
-    private final Listeners<Purchase,Event> purchaseListeners;
     private final DbKey.StringKeyFactory<Tag> tagDbKeyFactory;
     private final VersionedEntityDbTable<Tag> tagTable;
     private final DbKey.LongKeyFactory<Goods> goodsDbKeyFactory;
@@ -77,8 +94,6 @@ public final class DigitalGoodsHome {
 
     private DigitalGoodsHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.goodsListeners = new Listeners<>();
-        this.purchaseListeners = new Listeners<>();
         this.tagDbKeyFactory = new DbKey.StringKeyFactory<Tag>("tag") {
             @Override
             public DbKey newKey(Tag tag) {
@@ -206,22 +221,6 @@ public final class DigitalGoodsHome {
                 purchase.setPending(false);
             }
         }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
-    }
-
-    public boolean addGoodsListener(Listener<Goods> listener, Event eventType) {
-        return goodsListeners.addListener(listener, eventType);
-    }
-
-    public boolean removeGoodsListener(Listener<Goods> listener, Event eventType) {
-        return goodsListeners.removeListener(listener, eventType);
-    }
-
-    public boolean addPurchaseListener(Listener<Purchase> listener, Event eventType) {
-        return purchaseListeners.addListener(listener, eventType);
-    }
-
-    public boolean removePurchaseListener(Listener<Purchase> listener, Event eventType) {
-        return purchaseListeners.removeListener(listener, eventType);
     }
 
     public int getTagCount() {
