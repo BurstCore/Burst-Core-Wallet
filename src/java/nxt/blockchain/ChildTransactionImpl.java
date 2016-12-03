@@ -401,6 +401,9 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     @Override
     public void validate() throws NxtException.ValidationException {
         super.validate();
+        if (ChildTransactionType.findTransactionType(getType().getType(), getType().getSubtype()) == null) {
+            throw new NxtException.NotValidException("Invalid transaction type " + getType().getName() + " for ChildTransaction");
+        }
         if (referencedTransactionId != null) {
             if (referencedTransactionId.getFullHash().length != 32) {
                 throw new NxtException.NotValidException("Invalid referenced transaction full hash " + Convert.toHexString(referencedTransactionId.getFullHash()));

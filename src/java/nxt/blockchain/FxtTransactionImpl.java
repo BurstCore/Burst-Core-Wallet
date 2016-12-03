@@ -147,6 +147,9 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
     @Override
     public void validate() throws NxtException.ValidationException {
         super.validate();
+        if (FxtTransactionType.findTransactionType(getType().getType(), getType().getSubtype()) == null) {
+            throw new NxtException.NotValidException("Invalid transaction type " + getType().getName() + " for FxtTransaction");
+        }
         for (Appendix.AbstractAppendix appendage : appendages()) {
             appendage.loadPrunable(this);
             if (! appendage.verifyVersion()) {
