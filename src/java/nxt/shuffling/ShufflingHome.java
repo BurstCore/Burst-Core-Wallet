@@ -96,7 +96,7 @@ public final class ShufflingHome {
             }
         };
         Nxt.getBlockchainProcessor().addListener(block -> {
-            if (block.getTransactions().size() == Constants.MAX_NUMBER_OF_TRANSACTIONS
+            if (block.getFxtTransactions().size() == Constants.MAX_NUMBER_OF_TRANSACTIONS
                     || block.getPayloadLength() > Constants.MAX_PAYLOAD_LENGTH - Constants.MIN_TRANSACTION_SIZE) {
                 return;
             }

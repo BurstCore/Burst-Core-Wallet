@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-//TODO: enforce uniqueness of derived object id's
 public final class TransactionHome {
 
     public static TransactionHome forChain(Chain chain) {
@@ -47,23 +46,22 @@ public final class TransactionHome {
         transactionTable = new Table(chain.getSchemaTable(chain instanceof FxtChain ? "transaction_fxt" : "transaction"));
     }
 
-    //TODO: for FxtTransactions only
-    public TransactionImpl findTransaction(long transactionId) {
+    static FxtTransactionImpl findFxtTransaction(long transactionId) {
         // Check the block cache
         synchronized (BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
+            FxtTransactionImpl transaction = BlockDb.fxtTransactionCache.get(transactionId);
             if (transaction != null) {
                 return transaction;
             }
         }
         // Search the database
-        try (Connection con = transactionTable.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable() + " WHERE id = ? ORDER BY height DESC")) {
+        try (Connection con = Db.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction_fxt WHERE id = ? ORDER BY height DESC")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     if (rs.getInt("height") <= Integer.MAX_VALUE) {
-                        return TransactionImpl.newTransactionBuilder(chain, con, rs).build();
+                        return FxtTransactionImpl.loadTransaction(con, rs);
                     }
                 }
                 return null;
@@ -83,10 +81,17 @@ public final class TransactionHome {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
         synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
-            if (transaction != null) {
-                return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.getFullHash(), fullHash) ? transaction : null);
+            if (chain == FxtChain.FXT) {
+                TransactionImpl transaction = BlockDb.fxtTransactionCache.get(transactionId);
+                if (transaction != null) {
+                    return (transaction.getHeight() <= height &&
+                            Arrays.equals(transaction.getFullHash(), fullHash) ? transaction : null);
+                }
+            } else {
+                TransactionImpl transaction = BlockDb.childTransactionCache.get(new ChainTransactionId(chain.getId(), fullHash));
+                if (transaction != null && transaction.getHeight() <= height) {
+                    return transaction;
+                }
             }
         }
         // Search the database
@@ -109,18 +114,17 @@ public final class TransactionHome {
         }
     }
 
-    //TODO: for FxtTransactions only
-    boolean hasTransaction(long transactionId, int height) {
+    static boolean hasFxtTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
+            TransactionImpl transaction = BlockDb.fxtTransactionCache.get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height);
             }
         }
         // Search the database
-        try (Connection con = transactionTable.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT height FROM " + transactionTable.getSchemaTable() + " WHERE id = ? ORDER BY height DESC")) {
+        try (Connection con = Db.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT height FROM transaction_fxt WHERE id = ? ORDER BY height DESC")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -143,10 +147,15 @@ public final class TransactionHome {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
         synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
-            if (transaction != null) {
-                return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.getFullHash(), fullHash));
+            if (chain == FxtChain.FXT) {
+                TransactionImpl transaction = BlockDb.fxtTransactionCache.get(transactionId);
+                if (transaction != null) {
+                    return (transaction.getHeight() <= height &&
+                            Arrays.equals(transaction.getFullHash(), fullHash));
+                }
+            } else {
+                TransactionImpl transaction = BlockDb.childTransactionCache.get(new ChainTransactionId(chain.getId(), fullHash));
+                return transaction != null && transaction.getHeight() <= height;
             }
         }
         // Search the database
@@ -171,7 +180,7 @@ public final class TransactionHome {
         synchronized(BlockDb.blockCache) {
             BlockImpl block = BlockDb.blockCache.get(blockId);
             if (block != null) {
-                return block.getTransactions();
+                return block.getFxtTransactions();
             }
         }
         // Search the database

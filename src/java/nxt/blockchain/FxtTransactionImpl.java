@@ -189,7 +189,8 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
         setIndex(-1);
     }
 
-    List<ChildTransactionImpl> getChildTransactions() {
+    @Override
+    public List<ChildTransactionImpl> getChildTransactions() {
         return Collections.emptyList();
     }
 

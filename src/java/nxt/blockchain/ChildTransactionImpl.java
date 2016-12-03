@@ -248,7 +248,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     @Override
     public FxtTransactionImpl getFxtTransaction() {
         if (fxtTransaction == null && fxtTransactionId != 0) {
-            fxtTransaction = (FxtTransactionImpl) FxtChain.FXT.getTransactionHome().findTransaction(fxtTransactionId);
+            fxtTransaction = TransactionHome.findFxtTransaction(fxtTransactionId);
         }
         return fxtTransaction;
     }

@@ -49,7 +49,7 @@ public final class DownloadTimer implements AddOn {
 
                 @Override
                 public void notify(Block block) {
-                    int n = block.getTransactions().size();
+                    int n = block.getFxtTransactions().size();
                     transactions += n;
                     dtransactions += n;
                     int height = block.getHeight();

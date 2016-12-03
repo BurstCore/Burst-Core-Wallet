@@ -51,7 +51,6 @@ import nxt.dgs.DigitalGoodsHome;
 import nxt.messaging.PrunableMessageHome;
 import nxt.ms.Currency;
 import nxt.ms.CurrencyFounderHome;
-import nxt.ms.CurrencyIssuanceAttachment;
 import nxt.ms.CurrencyTransfer;
 import nxt.ms.CurrencyTransferAttachment;
 import nxt.ms.CurrencyType;
@@ -432,7 +431,7 @@ public final class JSONData {
         putAccount(json, "generator", block.getGeneratorId());
         json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
         json.put("timestamp", block.getTimestamp());
-        json.put("numberOfTransactions", block.getTransactions().size());
+        json.put("numberOfTransactions", block.getFxtTransactions().size());
         json.put("totalAmountNQT", String.valueOf(block.getTotalAmountNQT()));
         json.put("totalFeeNQT", String.valueOf(block.getTotalFeeNQT()));
         json.put("payloadLength", block.getPayloadLength());
@@ -451,9 +450,9 @@ public final class JSONData {
         json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
         JSONArray transactions = new JSONArray();
         if (includeTransactions) {
-            block.getTransactions().forEach(transaction -> transactions.add(transaction(transaction)));
+            block.getFxtTransactions().forEach(transaction -> transactions.add(transaction(transaction)));
         } else {
-            block.getTransactions().forEach(transaction -> transactions.add(transaction.getStringId()));
+            block.getFxtTransactions().forEach(transaction -> transactions.add(transaction.getStringId()));
         }
         json.put("transactions", transactions);
         //TODO

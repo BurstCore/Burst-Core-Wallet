@@ -22,6 +22,7 @@ import org.json.simple.JSONValue;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTransaction {
 
@@ -39,6 +40,11 @@ class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTra
     @Override
     FxtTransactionImpl getTransaction() {
         return (FxtTransactionImpl)super.getTransaction();
+    }
+
+    @Override
+    public List<? extends ChildTransaction> getChildTransactions() {
+        return getTransaction().getChildTransactions();
     }
 
 }

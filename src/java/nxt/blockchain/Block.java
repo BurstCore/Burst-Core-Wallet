@@ -51,7 +51,7 @@ public interface Block {
 
     byte[] getPayloadHash();
 
-    List<? extends Transaction> getTransactions();
+    List<? extends FxtTransaction> getFxtTransactions();
 
     byte[] getGenerationSignature();
 

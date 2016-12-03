@@ -84,7 +84,7 @@ public final class Generator implements Comparable<Generator> {
                                         Logger.logDebugMessage("Pop off: " + generator.toString() + " will pop off last block " + lastBlock.getStringId());
                                         List<BlockImpl> poppedOffBlock = BlockchainProcessorImpl.getInstance().popOffTo(previousBlock);
                                         for (BlockImpl block : poppedOffBlock) {
-                                            TransactionProcessorImpl.getInstance().processLater(block.getTransactions());
+                                            TransactionProcessorImpl.getInstance().processLater(block.getFxtTransactions());
                                         }
                                         lastBlock = previousBlock;
                                         lastBlockId = previousBlock.getId();

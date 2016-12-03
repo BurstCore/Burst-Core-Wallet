@@ -1670,14 +1670,14 @@ public class TestAutomatedShuffling extends BlockchainTest {
             generateBlock();
             Block block = Nxt.getBlockchain().getLastBlock();
             int blockJsonSize = block.getJSONObject().toJSONString().length();
-            Logger.logMessage("Block size " + blockJsonSize + " block payload " + block.getPayloadLength() + " tx count " + block.getTransactions().size());
+            Logger.logMessage("Block size " + blockJsonSize + " block payload " + block.getPayloadLength() + " tx count " + block.getFxtTransactions().size());
             if (blockJsonSize > maxBlockJsonSize) {
                 maxBlockJsonSize = blockJsonSize;
             }
             if (block.getPayloadLength() > maxBlockPayload) {
                 maxBlockPayload = block.getPayloadLength();
             }
-            for (Transaction transaction : block.getTransactions()) {
+            for (Transaction transaction : block.getFxtTransactions()) {
                 if (transaction.getType() == ShufflingTransactionType.SHUFFLING_PROCESSING) {
                     if (transaction.getFullSize() > maxProcessTransactionFullSize) {
                         maxProcessTransactionFullSize = transaction.getFullSize();
@@ -1717,14 +1717,14 @@ public class TestAutomatedShuffling extends BlockchainTest {
             generateBlock();
             Block block = Nxt.getBlockchain().getLastBlock();
             int blockJsonSize = block.getJSONObject().toJSONString().length();
-            Logger.logMessage("Block size " + blockJsonSize + " block payload " + block.getPayloadLength() + " tx count " + block.getTransactions().size());
+            Logger.logMessage("Block size " + blockJsonSize + " block payload " + block.getPayloadLength() + " tx count " + block.getFxtTransactions().size());
             if (blockJsonSize > maxBlockJsonSize) {
                 maxBlockJsonSize = blockJsonSize;
             }
             if (block.getPayloadLength() > maxBlockPayload) {
                 maxBlockPayload = block.getPayloadLength();
             }
-            for (Transaction transaction : block.getTransactions()) {
+            for (Transaction transaction : block.getFxtTransactions()) {
                 if (transaction.getType() == ShufflingTransactionType.SHUFFLING_PROCESSING) {
                     if (transaction.getFullSize() > maxProcessTransactionFullSize) {
                         maxProcessTransactionFullSize = transaction.getFullSize();

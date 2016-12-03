@@ -41,7 +41,7 @@ class ChildBlockTransactionImpl extends FxtTransactionImpl {
     }
 
     @Override
-    List<ChildTransactionImpl> getChildTransactions() {
+    public List<ChildTransactionImpl> getChildTransactions() {
         ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)getAttachment();
         return childBlockAttachment.getChildTransactions(this);
     }

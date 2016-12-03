@@ -63,7 +63,7 @@ public final class PopOff extends APIServlet.APIRequestHandler {
         JSONObject response = new JSONObject();
         response.put("blocks", blocksJSON);
         if (keepTransactions) {
-            blocks.forEach(block -> Nxt.getTransactionProcessor().processLater(block.getTransactions()));
+            blocks.forEach(block -> Nxt.getTransactionProcessor().processLater(block.getFxtTransactions()));
         }
         return response;
     }

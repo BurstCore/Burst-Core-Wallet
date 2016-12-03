@@ -160,7 +160,7 @@ public final class BlockImpl implements Block {
     }
 
     @Override
-    public List<FxtTransactionImpl> getTransactions() {
+    public List<FxtTransactionImpl> getFxtTransactions() {
         if (this.blockTransactions == null) {
             List<FxtTransactionImpl> transactions = Collections.unmodifiableList(TransactionHome.findBlockTransactions(getId()));
             for (FxtTransactionImpl transaction : transactions) {
@@ -256,7 +256,7 @@ public final class BlockImpl implements Block {
         json.put("previousBlockHash", Convert.toHexString(previousBlockHash));
         json.put("blockSignature", Convert.toHexString(blockSignature));
         JSONArray transactionsData = new JSONArray();
-        getTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
+        getFxtTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
         json.put("transactions", transactionsData);
         return json;
     }
@@ -302,7 +302,7 @@ public final class BlockImpl implements Block {
             buffer.putInt(version);
             buffer.putInt(timestamp);
             buffer.putLong(previousBlockId);
-            buffer.putInt(getTransactions().size());
+            buffer.putInt(getFxtTransactions().size());
             buffer.putLong(totalAmountNQT);
             buffer.putLong(totalFeeNQT);
             buffer.putInt(payloadLength);
@@ -373,7 +373,7 @@ public final class BlockImpl implements Block {
         long totalBackFees = 0;
         if (this.height > 3) {
             long[] backFees = new long[3];
-            for (FxtTransactionImpl transaction : getTransactions()) {
+            for (FxtTransactionImpl transaction : getFxtTransactions()) {
                 long[] fees = transaction.getBackFees();
                 for (int i = 0; i < fees.length; i++) {
                     backFees[i] += fees[i];
@@ -409,14 +409,14 @@ public final class BlockImpl implements Block {
             this.height = 0;
         }
         short index = 0;
-        for (FxtTransactionImpl transaction : getTransactions()) {
+        for (FxtTransactionImpl transaction : getFxtTransactions()) {
             transaction.setBlock(this);
             transaction.setIndex(index++);
         }
     }
 
     void loadTransactions() {
-        for (FxtTransactionImpl transaction : getTransactions()) {
+        for (FxtTransactionImpl transaction : getFxtTransactions()) {
             transaction.bytes();
             transaction.getAppendages();
         }

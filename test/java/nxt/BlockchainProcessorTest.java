@@ -197,7 +197,7 @@ public class BlockchainProcessorTest extends AbstractBlockchainTest {
         List<BlockImpl> poppedBlocks = blockchainProcessor.popOffTo(endHeight - numBlocks);
         if (preserveTransactions) {
             for (BlockImpl block : poppedBlocks) {
-                TransactionProcessorImpl.getInstance().processLater(block.getTransactions());
+                TransactionProcessorImpl.getInstance().processLater(block.getFxtTransactions());
             }
         }
         Assert.assertEquals(endHeight - numBlocks, blockchain.getHeight());

@@ -18,6 +18,8 @@ package nxt.blockchain;
 
 import nxt.NxtException;
 
+import java.util.List;
+
 public interface FxtTransaction extends Transaction {
 
     interface Builder extends Transaction.Builder {
@@ -27,5 +29,7 @@ public interface FxtTransaction extends Transaction {
         FxtTransaction build(String secretPhrase) throws NxtException.NotValidException;
 
     }
+
+    List<? extends ChildTransaction> getChildTransactions();
 
 }

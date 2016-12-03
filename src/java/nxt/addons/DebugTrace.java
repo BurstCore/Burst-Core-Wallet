@@ -34,6 +34,7 @@ import nxt.blockchain.Block;
 import nxt.blockchain.BlockDb;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.FxtTransactionImpl;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
@@ -246,7 +247,7 @@ public final class DebugTrace {
     }
 
     private void trace(Block block) {
-        for (Transaction transaction : block.getTransactions()) {
+        for (Transaction transaction : block.getFxtTransactions()) {
             long senderId = transaction.getSenderId();
             if (((TransactionImpl)transaction).attachmentIsPhased()) {
                 if (include(senderId)) {
@@ -533,7 +534,7 @@ public final class DebugTrace {
         long totalBackFees = 0;
         if (block.getHeight() > 3) {
             long[] backFees = new long[3];
-            for (Transaction transaction : block.getTransactions()) {
+            for (FxtTransaction transaction : block.getFxtTransactions()) {
                 long[] fees = ((FxtTransactionImpl)transaction).getBackFees();
                 for (int i = 0; i < fees.length; i++) {
                     backFees[i] += fees[i];

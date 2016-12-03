@@ -561,7 +561,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 List<BlockImpl> peerPoppedOffBlocks = popOffTo(commonBlock);
                 pushedForkBlocks = 0;
                 for (BlockImpl block : peerPoppedOffBlocks) {
-                    TransactionProcessorImpl.getInstance().processLater(block.getTransactions());
+                    TransactionProcessorImpl.getInstance().processLater(block.getFxtTransactions());
                 }
             }
 
@@ -579,7 +579,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             } else {
                 Logger.logDebugMessage("Switched to peer's fork");
                 for (BlockImpl block : myPoppedOffBlocks) {
-                    TransactionProcessorImpl.getInstance().processLater(block.getTransactions());
+                    TransactionProcessorImpl.getInstance().processLater(block.getFxtTransactions());
                 }
             }
 
@@ -1073,12 +1073,12 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 lastBlock = popOffTo(previousBlock).get(0);
                 try {
                     pushBlock(block);
-                    TransactionProcessorImpl.getInstance().processLater(lastBlock.getTransactions());
+                    TransactionProcessorImpl.getInstance().processLater(lastBlock.getFxtTransactions());
                     Logger.logDebugMessage("Last block " + lastBlock.getStringId() + " was replaced by " + block.getStringId());
                 } catch (BlockNotAcceptedException e) {
                     Logger.logDebugMessage("Replacement block failed to be accepted, pushing back our last block");
                     pushBlock(lastBlock);
-                    TransactionProcessorImpl.getInstance().processLater(block.getTransactions());
+                    TransactionProcessorImpl.getInstance().processLater(block.getFxtTransactions());
                 }
             } finally {
                 blockchain.writeUnlock();
@@ -1373,8 +1373,8 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         if (!block.verifyBlockSignature()) {
             throw new BlockNotAcceptedException("Block signature verification failed", block);
         }
-        if (block.getTransactions().size() > Constants.MAX_NUMBER_OF_TRANSACTIONS) {
-            throw new BlockNotAcceptedException("Invalid block transaction count " + block.getTransactions().size(), block);
+        if (block.getFxtTransactions().size() > Constants.MAX_NUMBER_OF_TRANSACTIONS) {
+            throw new BlockNotAcceptedException("Invalid block transaction count " + block.getFxtTransactions().size(), block);
         }
         if (block.getPayloadLength() > Constants.MAX_PAYLOAD_LENGTH || block.getPayloadLength() < 0) {
             throw new BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);
@@ -1389,7 +1389,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         MessageDigest digest = Crypto.sha256();
         boolean hasPrunedTransactions = false;
         Set<Long> transactionIds = fullValidation ? new HashSet<>() : null;
-        for (FxtTransactionImpl fxtTransaction : block.getTransactions()) {
+        for (FxtTransactionImpl fxtTransaction : block.getFxtTransactions()) {
             validateTransaction(fxtTransaction, block, previousLastBlock, curTime);
             if (fullValidation) {
                 if (!transactionIds.add(fxtTransaction.getId())) {
@@ -1465,7 +1465,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new TransactionNotAcceptedException("Invalid transaction timestamp " + transaction.getTimestamp()
                     + ", current time is " + curTime + ", block timestamp is " + block.getTimestamp(), transaction);
         }
-        if (FxtChain.FXT.getTransactionHome().hasTransaction(transaction.getId(), previousLastBlock.getHeight())) {
+        if (TransactionHome.hasFxtTransaction(transaction.getId(), previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
         }
         if (transaction.getVersion() != getTransactionVersion(previousLastBlock.getHeight())) {
@@ -1510,7 +1510,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                         Map<TransactionType, Map<String, Integer>> duplicates) throws TransactionNotAcceptedException {
         try {
             isProcessingBlock = true;
-            for (FxtTransactionImpl transaction : block.getTransactions()) {
+            for (FxtTransactionImpl transaction : block.getFxtTransactions()) {
                 if (! transaction.applyUnconfirmed()) {
                     throw new TransactionNotAcceptedException("Double spending", transaction);
                 }
@@ -1525,7 +1525,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotes(transaction));
             invalidPhasedTransactions.forEach(transaction -> transaction.getPhasing().reject(transaction));
             int fromTimestamp = Nxt.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME;
-            for (FxtTransactionImpl transaction : block.getTransactions()) {
+            for (FxtTransactionImpl transaction : block.getFxtTransactions()) {
                 try {
                     transaction.apply();
                     checkMissingPrunable(transaction, fromTimestamp);
@@ -1538,7 +1538,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             }
             SortedSet<ChildTransactionImpl> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
-            block.getTransactions().forEach(fxtTransaction -> {
+            block.getFxtTransactions().forEach(fxtTransaction -> {
                 for (ChildTransactionImpl childTransaction : fxtTransaction.getChildTransactions()) {
                     PhasingPollHome.getLinkedPhasedTransactions(childTransaction.getFullHash()).forEach(phasedTransaction -> {
                         if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
@@ -1570,8 +1570,8 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             });
             blockListeners.notify(block, Event.AFTER_BLOCK_APPLY);
-            if (block.getTransactions().size() > 0) {
-                TransactionProcessorImpl.getInstance().notifyListeners(block.getTransactions(), TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
+            if (block.getFxtTransactions().size() > 0) {
+                TransactionProcessorImpl.getInstance().notifyListeners(block.getFxtTransactions(), TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
             }
             AccountLedger.commitEntries();
         } finally {
@@ -1960,7 +1960,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                         throw new NxtException.NotValidException("Block JSON cannot be parsed back to the same block");
                                     }
                                     validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
-                                    for (TransactionImpl transaction : currentBlock.getTransactions()) {
+                                    for (TransactionImpl transaction : currentBlock.getFxtTransactions()) {
                                         byte[] transactionBytes = transaction.bytes();
                                         if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionBytes).build().bytes())) {
                                             throw new NxtException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
@@ -1971,6 +1971,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                             throw new NxtException.NotValidException("Transaction JSON cannot be parsed back to the same transaction: "
                                                     + transaction.getJSONObject().toJSONString());
                                         }
+                                        //TODO: also check parsing for child transactions?
                                     }
                                 }
                                 blockListeners.notify(currentBlock, Event.BEFORE_BLOCK_ACCEPT);
@@ -1987,13 +1988,13 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                         + (currentBlock == null ? 0 : currentBlock.getHeight()) + " failed, deleting from database");
                                 if (currentBlock != null) {
                                     currentBlock.loadTransactions();
-                                    TransactionProcessorImpl.getInstance().processLater(currentBlock.getTransactions());
+                                    TransactionProcessorImpl.getInstance().processLater(currentBlock.getFxtTransactions());
                                 }
                                 while (rs.next()) {
                                     try {
                                         currentBlock = BlockDb.loadBlock(con, rs, true);
                                         currentBlock.loadTransactions();
-                                        TransactionProcessorImpl.getInstance().processLater(currentBlock.getTransactions());
+                                        TransactionProcessorImpl.getInstance().processLater(currentBlock.getFxtTransactions());
                                     } catch (RuntimeException e2) {
                                         Logger.logErrorMessage(e2.toString(), e);
                                         break;

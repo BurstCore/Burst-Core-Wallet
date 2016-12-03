@@ -44,7 +44,8 @@ public final class BlockDb {
     static final int BLOCK_CACHE_SIZE = 10;
     static final Map<Long, BlockImpl> blockCache = new HashMap<>();
     static final SortedMap<Integer, BlockImpl> heightMap = new TreeMap<>();
-    static final Map<Long, TransactionImpl> transactionCache = new HashMap<>();
+    static final Map<Long, FxtTransactionImpl> fxtTransactionCache = new HashMap<>();
+    static final Map<ChainTransactionId, ChildTransactionImpl> childTransactionCache = new HashMap<>();
     static final Blockchain blockchain = Nxt.getBlockchain();
     static {
         Nxt.getBlockchainProcessor().addListener((block) -> {
@@ -55,12 +56,23 @@ public final class BlockDb {
                     Block cacheBlock = it.next();
                     int cacheHeight = cacheBlock.getHeight();
                     if (cacheHeight <= height - BLOCK_CACHE_SIZE || cacheHeight >= height) {
-                        cacheBlock.getTransactions().forEach((tx) -> transactionCache.remove(tx.getId()));
+                        cacheBlock.getFxtTransactions().forEach(fxtTransaction -> {
+                            fxtTransactionCache.remove(fxtTransaction.getId());
+                            fxtTransaction.getChildTransactions().forEach(childTransaction -> {
+                                childTransactionCache.remove(new ChainTransactionId(childTransaction.getChain().getId(), childTransaction.getFullHash()));
+                            });
+                        });
                         heightMap.remove(cacheHeight);
                         it.remove();
                     }
                 }
-                block.getTransactions().forEach((tx) -> transactionCache.put(tx.getId(), (TransactionImpl)tx));
+                block.getFxtTransactions().forEach(fxtTransaction -> {
+                    fxtTransactionCache.put(fxtTransaction.getId(), (FxtTransactionImpl)fxtTransaction);
+                    fxtTransaction.getChildTransactions().forEach(childTransaction -> {
+                        childTransactionCache.put(new ChainTransactionId(childTransaction.getChain().getId(), childTransaction.getFullHash()),
+                                (ChildTransactionImpl)childTransaction);
+                    });
+                });
                 heightMap.put(height, (BlockImpl)block);
                 blockCache.put(block.getId(), (BlockImpl)block);
             }
@@ -71,7 +83,8 @@ public final class BlockDb {
         synchronized (blockCache) {
             blockCache.clear();
             heightMap.clear();
-            transactionCache.clear();
+            fxtTransactionCache.clear();
+            childTransactionCache.clear();
         }
     }
 
@@ -279,7 +292,7 @@ public final class BlockDb {
                 pstmt.setBytes(++i, block.getPayloadHash());
                 pstmt.setLong(++i, block.getGeneratorId());
                 pstmt.executeUpdate();
-                TransactionHome.saveTransactions(con, block.getTransactions());
+                TransactionHome.saveTransactions(con, block.getFxtTransactions());
             }
             if (block.getPreviousBlockId() != 0) {
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = ? WHERE id = ?")) {

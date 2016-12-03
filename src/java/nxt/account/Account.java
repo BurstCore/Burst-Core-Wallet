@@ -1050,17 +1050,20 @@ public final class Account {
 
             Nxt.getBlockchainProcessor().addListener(block -> {
                 publicKeyCache.remove(accountDbKeyFactory.newKey(block.getGeneratorId()));
-                block.getTransactions().forEach(transaction -> {
-                    publicKeyCache.remove(accountDbKeyFactory.newKey(transaction.getSenderId()));
-                    if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
-                        publicKeyCache.remove(accountDbKeyFactory.newKey(transaction.getRecipientId()));
-                    }
-                    if (transaction.getType() == ShufflingTransactionType.SHUFFLING_RECIPIENTS) {
-                        ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
-                        for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
-                            publicKeyCache.remove(accountDbKeyFactory.newKey(Account.getId(publicKey)));
+                block.getFxtTransactions().forEach(fxtTransaction -> {
+                    publicKeyCache.remove(accountDbKeyFactory.newKey(fxtTransaction.getSenderId()));
+                    fxtTransaction.getChildTransactions().forEach(childTransaction -> {
+                        publicKeyCache.remove(accountDbKeyFactory.newKey(childTransaction.getSenderId()));
+                        if (!childTransaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
+                            publicKeyCache.remove(accountDbKeyFactory.newKey(childTransaction.getRecipientId()));
                         }
-                    }
+                        if (childTransaction.getType() == ShufflingTransactionType.SHUFFLING_RECIPIENTS) {
+                            ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) childTransaction.getAttachment();
+                            for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
+                                publicKeyCache.remove(accountDbKeyFactory.newKey(Account.getId(publicKey)));
+                            }
+                        }
+                    });
                 });
             }, BlockchainProcessor.Event.BLOCK_POPPED);
 
