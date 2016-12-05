@@ -28,8 +28,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.security.MessageDigest;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 
 public final class GenerateGenesis {
@@ -67,7 +70,12 @@ public final class GenerateGenesis {
 
                 JSONObject outputJSON = new JSONObject();
                 outputJSON.put("genesisPublicKey", Convert.toHexString(creatorPublicKey));
-                outputJSON.put("epochBeginning", inputJSON.get("epochBeginning"));
+                String epochBeginning = (String) inputJSON.get("epochBeginning");
+                if (epochBeginning == null) {
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+                    epochBeginning = dateFormat.format(new Date());
+                }
+                outputJSON.put("epochBeginning", epochBeginning);
                 outputJSON.put("genesisRecipients", recipients);
 
                 MessageDigest digest = Crypto.sha256();

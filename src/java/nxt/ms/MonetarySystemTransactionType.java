@@ -126,11 +126,25 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public Fee getBaselineFee(Transaction transaction) {
             CurrencyIssuanceAttachment attachment = (CurrencyIssuanceAttachment) transaction.getAttachment();
-            if (Currency.getCurrencyByCode(attachment.getCode()) != null || Currency.getCurrencyByCode(attachment.getName()) != null
-                    || Currency.getCurrencyByName(attachment.getName()) != null || Currency.getCurrencyByName(attachment.getCode()) != null) {
+            int minLength = Math.min(attachment.getCode().length(), attachment.getName().length());
+            Currency oldCurrency;
+            int oldMinLength = Integer.MAX_VALUE;
+            if ((oldCurrency = Currency.getCurrencyByCode(attachment.getCode())) != null) {
+                oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
+            }
+            if ((oldCurrency = Currency.getCurrencyByCode(attachment.getName())) != null) {
+                oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
+            }
+            if ((oldCurrency = Currency.getCurrencyByName(attachment.getName())) != null) {
+                oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
+            }
+            if ((oldCurrency = Currency.getCurrencyByName(attachment.getCode())) != null) {
+                oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
+            }
+            if (minLength >= oldMinLength) {
                 return FIVE_LETTER_CURRENCY_ISSUANCE_FEE;
             }
-            switch (Math.min(attachment.getCode().length(), attachment.getName().length())) {
+            switch (minLength) {
                 case 3:
                     return THREE_LETTER_CURRENCY_ISSUANCE_FEE;
                 case 4:
