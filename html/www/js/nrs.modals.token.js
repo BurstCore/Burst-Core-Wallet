@@ -21,7 +21,7 @@
 var NRS = (function(NRS, $) {
     var tokenModal = $("#token_modal");
     tokenModal.on("show.bs.modal", function(e) {
-		$("#generate_token_output, #decode_token_output").html("").hide();
+		$("#generate_token_output, #decode_token_output, #generate_token_output_qr_code").html("").hide();
 
 		$("#token_modal_generate_token").show();
 		$("#generate_token_button").show();
@@ -31,7 +31,7 @@ var NRS = (function(NRS, $) {
 		if (isOffline) {
 			$(this).find("ul.nav li").hide();
 			$(this).find("ul.nav li:first").show();
-			$("#generate_token_is_offline").val("true");
+            $(this).find(".mobile-offline").val("true");
 		}
 	});
 	
@@ -93,24 +93,29 @@ var NRS = (function(NRS, $) {
 		var data = NRS.getFormData($("#generate_token_form"));
         var website = data.website;
         var tokenOutput = $("#generate_token_output");
+        var outputQrCodeContainer = $("#generate_token_output_qr_code");
         if (!website || website == "") {
             tokenOutput.html($.t("data_required_field"));
             tokenOutput.addClass("callout-danger").removeClass("callout-info").show();
+            outputQrCodeContainer.hide();
             return;
         }
-		var isOffline = !!$("#generate_token_is_offline").val();
+		var isOffline = !!$(this).find(".mobile-offline").val();
         if (!NRS.rememberPassword) {
 			var secretPhrase = data.secretPhrase;
 			var publicKey = NRS.getPublicKey(converters.stringToHexString(secretPhrase));
 			if (publicKey != NRS.publicKey && !isOffline) {
 				tokenOutput.html($.t("error_incorrect_passphrase"));
 				tokenOutput.addClass("callout-danger").removeClass("callout-info").show();
+                outputQrCodeContainer.hide();
 				return;
 			}
 		}
         var token = NRS.generateToken(website, secretPhrase);
         tokenOutput.html($.t("generated_token_is") + "<br/><br/><textarea readonly style='width:100%' rows='3'>" + token + "</textarea>");
         tokenOutput.addClass("callout-info").removeClass("callout-danger").show();
+        NRS.generateQRCode("#generate_token_output_qr_code", token, 14);
+        outputQrCodeContainer.show();
         e.preventDefault();
     });
 

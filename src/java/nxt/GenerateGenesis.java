@@ -25,6 +25,8 @@ import org.json.simple.JSONValue;
 
 import java.io.*;
 import java.security.MessageDigest;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public final class GenerateGenesis {
@@ -77,7 +79,12 @@ public final class GenerateGenesis {
 
                 JSONObject outputJSON = new JSONObject();
                 outputJSON.put("genesisPublicKey", Convert.toHexString(creatorPublicKey));
-                outputJSON.put("epochBeginning", inputJSON.get("epochBeginning"));
+                String epochBeginning = (String) inputJSON.get("epochBeginning");
+                if (epochBeginning == null) {
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+                    epochBeginning = dateFormat.format(new Date());
+                }
+                outputJSON.put("epochBeginning", epochBeginning);
                 outputJSON.put("genesisAmounts", amounts);
                 outputJSON.put("genesisRecipientPublicKeys", recipientPublicKeys);
 
@@ -119,6 +126,7 @@ public final class GenerateGenesis {
 
                 writer.write(outputJSON.toJSONString());
                 writer.newLine();
+                System.out.println("Genesis block generated: " + output.getAbsolutePath());
             }
         } catch (Exception e) {
             e.printStackTrace();

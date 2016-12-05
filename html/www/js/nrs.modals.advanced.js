@@ -54,7 +54,12 @@ var NRS = (function(NRS, $, undefined) {
             if (window.URL) {
                 var jsonAsBlob = new Blob([jsonStr], {type: 'text/plain'});
                 downloadLink.prop('download', namePrefix + '.transaction.' + transaction.transactionJSON.timestamp + '.json');
-                downloadLink.prop('href', window.URL.createObjectURL(jsonAsBlob));
+                try {
+                    downloadLink.prop('href', window.URL.createObjectURL(jsonAsBlob));
+				} catch(e) {
+                    NRS.logConsole("Desktop Application in Java 8 does not support createObjectURL");
+                    downloadLink.hide();
+				}
             } else {
                 downloadLink.hide();
             }
@@ -370,7 +375,7 @@ var NRS = (function(NRS, $, undefined) {
 			$(this).find("ul.nav li").hide();
 			$(this).find("ul.nav li:first").show();
 			$("#validate_transaction").prop("disabled", "true");
-			$("#sign_transaction_is_offline").val("true");
+			$(".mobile-offline").val("true");
 		}
 	});
 
@@ -454,7 +459,12 @@ var NRS = (function(NRS, $, undefined) {
         if (window.URL) {
             var jsonAsBlob = new Blob([jsonStr], {type: 'text/plain'});
             downloadLink.prop('download', 'signed.transaction.' + response.transactionJSON.timestamp + '.json');
-            downloadLink.prop('href', window.URL.createObjectURL(jsonAsBlob));
+            try {
+                downloadLink.prop('href', window.URL.createObjectURL(jsonAsBlob));
+			} catch(e) {
+            	NRS.logConsole("Desktop Application in Java 8 does not support createObjectURL");
+                downloadLink.hide();
+			}
         } else {
             downloadLink.hide();
         }
@@ -468,10 +478,10 @@ var NRS = (function(NRS, $, undefined) {
 			NRS.logConsole("Sign transaction locally");
 			var output = {};
 			var secretPhrase = (NRS.rememberPassword ? _password : data.secretPhrase);
-			var isOffline = $("#sign_transaction_is_offline").val();
+			var isOffline = $(".mobile-offline").val();
 			if (NRS.getAccountId(secretPhrase) == NRS.account || isOffline) {
 				try {
-					var signature = NRS.signBytes(data.unsignedTransactionBytes, secretPhrase);
+					var signature = NRS.signBytes(data.unsignedTransactionBytes, converters.stringToHexString(secretPhrase));
 					updateSignature(signature);
 				} catch (e) {
 					output.errorMessage = e.message;
