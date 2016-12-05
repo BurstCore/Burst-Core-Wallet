@@ -6,10 +6,9 @@ running each blockchain instance for no longer than 21 days. It may also
 contain other modifications intended to make it unsuitable for production use.
 
 A temporary permission is granted to use this software only for testing
-purposes, and only until November 30, 2016. Production use, sub-licensing, and
-redistribution is prohibited. The full terms and conditions of the evaluation
-license under which this software is distributed are available in the enclosed
-EVALUATION-LICENSE.pdf document.
+purposes. Production use, sub-licensing, and redistribution is prohibited. The
+full terms and conditions of the evaluation license under which this software
+is distributed are available in the enclosed EVALUATION-LICENSE.pdf document.
 
 This software uses third party libraries, distributed under licenses described
 in 3RD-PARTY-LICENSES.txt.
