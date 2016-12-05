@@ -31,7 +31,7 @@ import static nxt.http.JSONResponses.MISSING_PEER;
 public class AddPeer extends APIRequestHandler {
 
     static final AddPeer instance = new AddPeer();
-    
+
     private AddPeer() {
         super(new APITag[] {APITag.NETWORK}, "peer");
     }
@@ -46,8 +46,10 @@ public class AddPeer extends APIRequestHandler {
         JSONObject response = new JSONObject();
         Peer peer = Peers.findOrCreatePeer(peerAddress, true);
         if (peer != null) {
-            boolean isNewlyAdded = Peers.addPeer(peer, peerAddress);
-            Peers.connectPeer(peer);
+            boolean isNewlyAdded = Peers.addPeer(peer);
+            if (peer.getState() != Peer.State.CONNECTED &&  peer.getAnnouncedAddress() != null) {
+                peer.connectPeer();
+            }
             response = JSONData.peer(peer);
             response.put("isNewlyAdded", isNewlyAdded);
         } else {

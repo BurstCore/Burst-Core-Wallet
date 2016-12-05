@@ -79,6 +79,7 @@ public final class API {
 
     public static final int TESTNET_API_PORT = 6876;
     public static final int TESTNET_API_SSLPORT = 6877;
+    public static final int MIN_COMPRESS_SIZE = 256;
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
 
     public static final int openAPIPort;
@@ -248,7 +249,7 @@ public final class API {
                 gzipHandler.setExcludedPaths("/nxt", "/nxt-proxy");
             }
             gzipHandler.setIncludedMethods("GET", "POST");
-            gzipHandler.setMinGzipSize(nxt.peer.Peers.MIN_COMPRESS_SIZE);
+            gzipHandler.setMinGzipSize(MIN_COMPRESS_SIZE);
             apiHandler.setGzipHandler(gzipHandler);
 
             apiHandler.addServlet(APITestServlet.class, "/test");

@@ -17,10 +17,10 @@
 package nxt.http;
 
 
-import nxt.blockchain.BlockchainProcessor;
 import nxt.BlockchainTest;
 import nxt.Helper;
 import nxt.Nxt;
+import nxt.blockchain.BlockchainProcessor;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

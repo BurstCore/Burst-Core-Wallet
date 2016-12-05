@@ -26,6 +26,8 @@ import nxt.ae.Asset;
 import nxt.ae.AssetDelete;
 import nxt.ae.AssetTransfer;
 import nxt.blockchain.Attachment;
+import nxt.blockchain.Block;
+import nxt.blockchain.BlockImpl;
 import nxt.blockchain.Blockchain;
 import nxt.blockchain.BlockchainImpl;
 import nxt.blockchain.BlockchainProcessor;
@@ -52,6 +54,7 @@ import nxt.http.APIProxy;
 import nxt.ms.Currency;
 import nxt.ms.CurrencyMint;
 import nxt.ms.CurrencyTransfer;
+import nxt.peer.NetworkHandler;
 import nxt.peer.Peers;
 import nxt.util.Convert;
 import nxt.util.Logger;
@@ -78,7 +81,7 @@ import java.util.Properties;
 
 public final class Nxt {
 
-    public static final String VERSION = "1.11.1e";
+    public static final String VERSION = "2.0.0";
     public static final String APPLICATION = "NRS";
 
     private static volatile Time time = new Time.EpochTime();
@@ -302,6 +305,11 @@ public final class Nxt {
 
     public static FxtTransaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountFQT, long feeFQT, short deadline, Attachment attachment) {
         return new FxtTransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountFQT, feeFQT, deadline, (Attachment.AbstractAttachment)attachment);
+	}
+
+    public static Block newBlockBuilder(byte[] blockBytes, List<? extends FxtTransaction> blockTransactions)
+            throws NxtException.NotValidException {
+        return new BlockImpl(blockBytes, blockTransactions);
     }
 
     public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws NxtException.NotValidException {
@@ -350,6 +358,7 @@ public final class Nxt {
         FundingMonitor.shutdown();
         ThreadPool.shutdown();
         Peers.shutdown();
+        NetworkHandler.shutdown();
         Db.shutdown();
         Logger.logShutdownMessage("Nxt server " + VERSION + " stopped.");
         Logger.shutdown();
@@ -384,6 +393,7 @@ public final class Nxt {
                 Currency.init();
                 CurrencyMint.init();
                 CurrencyTransfer.init();
+                NetworkHandler.init();
                 Peers.init();
                 APIProxy.init();
                 Generator.init();
@@ -437,6 +447,7 @@ public final class Nxt {
 
     private static void setSystemProperties() {
       // Override system settings that the user has define in nxt.properties file.
+        // TODO: no longer supported?
       String[] systemProperties = new String[] {
         "socksProxyHost",
         "socksProxyPort",

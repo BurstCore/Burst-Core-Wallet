@@ -17,98 +17,114 @@
 package nxt.peer;
 
 import nxt.Nxt;
-import nxt.util.Convert;
-import nxt.util.JSON;
+import nxt.NxtException;
+import nxt.blockchain.Transaction;
 import nxt.util.Logger;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 
-final class GetInfo extends PeerServlet.PeerRequestHandler {
+import java.util.Collections;
+import java.util.List;
 
-    static final GetInfo instance = new GetInfo();
-
-    private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("error", Errors.INVALID_ANNOUNCED_ADDRESS);
-        INVALID_ANNOUNCED_ADDRESS = JSON.prepare(response);
-    }
+final class GetInfo {
 
     private GetInfo() {}
 
-    @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
-        PeerImpl peerImpl = (PeerImpl)peer;
-        peerImpl.setLastUpdated(Nxt.getEpochTime());
-        long origServices = peerImpl.getServices();
-        String servicesString = (String)request.get("services");
-        peerImpl.setServices(servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
-        peerImpl.analyzeHallmark((String)request.get("hallmark"));
+    /**
+     * Process the GetInfo message and send our GetInfo message in response
+     *
+     * @param   peer                    Peer
+     * @param   message                 GetInfo message
+     * @return                          Always null since the response message is sent asynchronously
+     */
+    static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetInfoMessage message) {
+        //
+        // Process the peer information
+        //
         if (!Peers.ignorePeerAnnouncedAddress) {
-            String announcedAddress = Convert.emptyToNull((String) request.get("announcedAddress"));
+            String announcedAddress = message.getAnnouncedAddress();
             if (announcedAddress != null) {
-                announcedAddress = Peers.addressWithPort(announcedAddress.toLowerCase());
-                if (announcedAddress != null) {
-                    if (!peerImpl.verifyAnnouncedAddress(announcedAddress)) {
-                        Logger.logDebugMessage("GetInfo: ignoring invalid announced address for " + peerImpl.getHost());
-                        if (!peerImpl.verifyAnnouncedAddress(peerImpl.getAnnouncedAddress())) {
-                            Logger.logDebugMessage("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
-                            Peers.setAnnouncedAddress(peerImpl, null);
-                        }
-                        peerImpl.setState(Peer.State.NON_CONNECTED);
-                        return INVALID_ANNOUNCED_ADDRESS;
+                announcedAddress = announcedAddress.toLowerCase().trim();
+                if (!peer.verifyAnnouncedAddress(announcedAddress)) {
+                    Logger.logDebugMessage("GetInfo: ignoring invalid announced address for " + peer.getHost());
+                    String oldAnnouncedAddress = peer.getAnnouncedAddress();
+                    if (!peer.verifyAnnouncedAddress(oldAnnouncedAddress)) {
+                        Logger.logDebugMessage("GetInfo: old announced address for " + peer.getHost() + " no longer valid");
+                        Peers.changePeerAnnouncedAddress(peer, null);
                     }
-                    if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
-                        Logger.logDebugMessage("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
-                        int oldPort = peerImpl.getPort();
-                        Peers.setAnnouncedAddress(peerImpl, announcedAddress);
-                        if (peerImpl.getPort() != oldPort) {
-                            // force checking connectivity to new announced port
-                            peerImpl.setState(Peer.State.NON_CONNECTED);
-                        }
-                    }
-                } else {
-                    Peers.setAnnouncedAddress(peerImpl, null);
+                    peer.disconnectPeer();
+                    return null;
                 }
+                if (!announcedAddress.equals(peer.getAnnouncedAddress())) {
+                    Logger.logDebugMessage("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
+                    Peers.changePeerAnnouncedAddress(peer, announcedAddress);
+                }
+            } else if (!peer.getHost().equals(peer.getAnnouncedAddress())) {
+                Peers.changePeerAnnouncedAddress(peer, null);
             }
         }
-        String application = (String)request.get("application");
+        String application = message.getApplicationName();
         if (application == null) {
             application = "?";
         }
-        peerImpl.setApplication(application.trim());
+        peer.setApplication(application.trim());
 
-        String version = (String)request.get("version");
+        String version = message.getApplicationVersion();
         if (version == null) {
             version = "?";
         }
-        peerImpl.setVersion(version.trim());
+        peer.setVersion(version.trim());
 
-        String platform = (String)request.get("platform");
+        String platform = message.getApplicationPlatform();
         if (platform == null) {
             platform = "?";
         }
-        peerImpl.setPlatform(platform.trim());
+        peer.setPlatform(platform.trim());
 
-        peerImpl.setShareAddress(Boolean.TRUE.equals(request.get("shareAddress")));
+        peer.setShareAddress(message.getShareAddress());
 
-        peerImpl.setApiPort(request.get("apiPort"));
-        peerImpl.setApiSSLPort(request.get("apiSSLPort"));
-        peerImpl.setDisabledAPIs(request.get("disabledAPIs"));
-        peerImpl.setApiServerIdleTimeout(request.get("apiServerIdleTimeout"));
-        peerImpl.setBlockchainState(request.get("blockchainState"));
+        peer.setApiPort(message.getApiPort());
+        peer.setApiSSLPort(message.getSslPort());
 
-        if (peerImpl.getServices() != origServices) {
-            Peers.notifyListeners(peerImpl, Peers.Event.CHANGED_SERVICES);
+        long origServices = peer.getServices();
+        peer.setServices(message.getServices());
+        if (peer.getServices() != origServices) {
+            Peers.notifyListeners(peer, Peers.Event.CHANGE_SERVICES);
         }
 
-        return Peers.getMyPeerInfoResponse();
+        peer.setDisabledAPIs(message.getDisabledAPIs());
+        peer.setApiServerIdleTimeout(message.getApiServerIdleTimeout());
+        /*
+        //TODO: implement separately
+        peerImpl.setBlockchainState(request.get("blockchainState"));
+		*/
 
+        //
+        // Indicate the connection handshake is complete.  For an inbound connection, we need
+        // to send our GetInfo message.  For an outbound connection, we have already sent our
+        // GetInfo message.
+        //
+        peer.handshakeComplete();
+        if (peer.isInbound()) {
+            NetworkHandler.sendGetInfoMessage(peer);
+        }
+        //
+        // Get the unconfirmed transactions.  This is done when a connection is established
+        // to synchronize the unconfirmed transaction pools of both peers.
+        //
+        Peers.peersService.execute(() -> {
+            List<Long> unconfirmed = Nxt.getTransactionProcessor().getAllUnconfirmedTransactionIds();
+            Collections.sort(unconfirmed);
+            NetworkMessage.TransactionsMessage response = (NetworkMessage.TransactionsMessage)peer.sendRequest(
+                    new NetworkMessage.GetUnconfirmedTransactionsMessage(unconfirmed));
+            if (response == null || response.getTransactionCount() == 0) {
+                return;
+            }
+            try {
+                List<Transaction> transactions = response.getTransactions();
+                Nxt.getTransactionProcessor().processPeerTransactions(transactions);
+            } catch (NxtException.ValidationException | RuntimeException e) {
+                peer.blacklist(e);
+            }
+        });
+        return null;
     }
-
-    @Override
-    boolean rejectWhileDownloading() {
-        return false;
-    }
-
 }

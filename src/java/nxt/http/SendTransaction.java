@@ -19,7 +19,8 @@ package nxt.http;
 import nxt.NxtException;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Transaction;
-import nxt.peer.Peers;
+import nxt.peer.NetworkHandler;
+import nxt.peer.NetworkMessage;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -71,7 +72,7 @@ public final class SendTransaction extends APIServlet.APIRequestHandler {
         try {
             Transaction.Builder builder = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
-            Peers.sendToSomePeers(Collections.singletonList(transaction));
+            NetworkHandler.broadcastMessage(new NetworkMessage.TransactionsInventoryMessage(Collections.singletonList(transaction)));
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", Convert.toHexString(transaction.getFullHash()));
         } catch (NxtException.ValidationException|RuntimeException e) {

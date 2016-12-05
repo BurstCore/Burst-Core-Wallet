@@ -79,7 +79,7 @@ public class APIProxy {
             for (String host : currentPeersHosts) {
                 Peer peer = Peers.getPeer(host);
                 if (peer != null) {
-                    Peers.connectPeer(peer);
+                    peer.connectPeer();
                 }
             }
         }

@@ -16,7 +16,6 @@
 
 package nxt.http;
 
-import nxt.Constants;
 import nxt.peer.Peer;
 import nxt.peer.Peers;
 import nxt.util.Convert;
@@ -45,12 +44,11 @@ public final class DumpPeers extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         String version = Convert.nullToEmpty(req.getParameter("version"));
-        int weight = ParameterParser.getInt(req, "weight", 0, (int)Constants.MAX_BALANCE_NXT, false);
         boolean connect = "true".equalsIgnoreCase(req.getParameter("connect")) && API.checkPassword(req);
         if (connect) {
             List<Callable<Object>> connects = new ArrayList<>();
             Peers.getAllPeers().forEach(peer -> connects.add(() -> {
-                Peers.connectPeer(peer);
+                peer.connectPeer();
                 return null;
             }));
             ExecutorService service = Executors.newFixedThreadPool(10);
@@ -62,14 +60,13 @@ public final class DumpPeers extends APIServlet.APIRequestHandler {
         }
         Set<String> addresses = new HashSet<>();
         Peers.getAllPeers().forEach(peer -> {
-                    if (peer.getState() == Peer.State.CONNECTED
-                            && peer.shareAddress()
-                            && !peer.isBlacklisted()
-                            && peer.getVersion() != null && peer.getVersion().startsWith(version)
-                            && (weight == 0 || peer.getWeight() > weight)) {
-                        addresses.add(peer.getAnnouncedAddress());
-                    }
-                });
+            if (peer.getState() == Peer.State.CONNECTED
+                    && peer.shareAddress()
+                    && !peer.isBlacklisted()
+                    && peer.getVersion() != null && peer.getVersion().startsWith(version)) {
+                addresses.add(peer.getAnnouncedAddress());
+            }
+        });
         StringBuilder buf = new StringBuilder();
         for (String address : addresses) {
             buf.append(address).append("; ");

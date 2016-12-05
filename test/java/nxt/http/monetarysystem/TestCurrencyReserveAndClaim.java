@@ -16,12 +16,12 @@
 
 package nxt.http.monetarysystem;
 
-import nxt.account.Account;
 import nxt.BlockchainTest;
 import nxt.Constants;
-import nxt.ms.CurrencyType;
+import nxt.account.Account;
 import nxt.crypto.Crypto;
 import nxt.http.APICall;
+import nxt.ms.CurrencyType;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import org.json.simple.JSONArray;

@@ -17,8 +17,8 @@
 package nxt.http.shuffling;
 
 import nxt.Constants;
-import nxt.account.HoldingType;
 import nxt.Tester;
+import nxt.account.HoldingType;
 import nxt.http.APICall;
 import nxt.util.Convert;
 import nxt.util.Logger;

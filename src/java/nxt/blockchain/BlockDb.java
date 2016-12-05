@@ -93,6 +93,10 @@ public final class BlockDb {
     }
 
     static BlockImpl findBlock(long blockId) {
+        return findBlock(blockId, false);
+    }
+
+    static BlockImpl findBlock(long blockId, boolean loadTransactions) {
         // Check the block cache
         synchronized (blockCache) {
             BlockImpl block = blockCache.get(blockId);
@@ -107,7 +111,7 @@ public final class BlockDb {
             try (ResultSet rs = pstmt.executeQuery()) {
                 BlockImpl block = null;
                 if (rs.next()) {
-                    block = loadBlock(con, rs);
+                    block = loadBlock(con, rs, loadTransactions);
                 }
                 return block;
             }

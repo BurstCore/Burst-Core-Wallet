@@ -16,9 +16,9 @@
 
 package nxt.http;
 
-import nxt.account.Account;
 import nxt.BlockchainTest;
 import nxt.Constants;
+import nxt.account.Account;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
 import nxt.util.Convert;

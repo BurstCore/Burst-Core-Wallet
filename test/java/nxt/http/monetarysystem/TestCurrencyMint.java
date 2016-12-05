@@ -18,10 +18,10 @@ package nxt.http.monetarysystem;
 
 import nxt.BlockchainTest;
 import nxt.Constants;
-import nxt.ms.CurrencyMinting;
-import nxt.ms.CurrencyType;
 import nxt.crypto.HashFunction;
 import nxt.http.APICall;
+import nxt.ms.CurrencyMinting;
+import nxt.ms.CurrencyType;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;
