@@ -22,7 +22,7 @@ import java.util.Properties;
 
 public abstract class AbstractForgingTest extends AbstractBlockchainTest {
 
-    protected static final int minStartHeight = 150000;
+    protected static final int minStartHeight = 0;
     protected static int startHeight;
     protected final static String testForgingSecretPhrase = "aSykrgKGZNlSVOMDxkZZgbTvQqJPGtsBggb";
 
