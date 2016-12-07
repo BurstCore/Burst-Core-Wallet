@@ -83,6 +83,8 @@ final class GetInfo {
 
         peer.setApiPort(message.getApiPort());
         peer.setApiSSLPort(message.getSslPort());
+        peer.setDisabledAPIs(message.getDisabledAPIs());
+        peer.setApiServerIdleTimeout(message.getApiServerIdleTimeout());
 
         long origServices = peer.getServices();
         peer.setServices(message.getServices());
@@ -90,8 +92,6 @@ final class GetInfo {
             Peers.notifyListeners(peer, Peers.Event.CHANGE_SERVICES);
         }
 
-        peer.setDisabledAPIs(message.getDisabledAPIs());
-        peer.setApiServerIdleTimeout(message.getApiServerIdleTimeout());
         /*
         //TODO: implement separately
         peerImpl.setBlockchainState(request.get("blockchainState"));

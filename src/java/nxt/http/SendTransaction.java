@@ -72,6 +72,7 @@ public final class SendTransaction extends APIServlet.APIRequestHandler {
         try {
             Transaction.Builder builder = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
+            //TODO: either need a new NetworkMessage.BroadcastTransactionMessage, or need to add the transaction to the TransactionsInventory
             NetworkHandler.broadcastMessage(new NetworkMessage.TransactionsInventoryMessage(Collections.singletonList(transaction)));
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", Convert.toHexString(transaction.getFullHash()));

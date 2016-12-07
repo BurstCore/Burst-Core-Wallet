@@ -16,6 +16,7 @@
 
 package nxt.peer;
 
+import nxt.Nxt;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.Transaction;
 
@@ -43,7 +44,16 @@ public class GetTransactions {
         }
         List<Transaction> transactions = new ArrayList<>(transactionIds.size());
         for (ChainTransactionId transactionId : transactionIds) {
-            Transaction transaction = transactionId.getTransaction();
+            //first check the transaction inventory
+            Transaction transaction = TransactionsInventory.getCachedTransaction(transactionId);
+            if (transaction == null) {
+                //check the unconfirmed pool
+                transaction = Nxt.getTransactionProcessor().getUnconfirmedTransaction(transactionId.getTransactionId());
+            }
+            if (transaction == null) {
+                //check the blockchain
+                transaction = transactionId.getTransaction();
+            }
             if (transaction != null) {
                 transaction.getAppendages(true);
                 transactions.add(transaction);

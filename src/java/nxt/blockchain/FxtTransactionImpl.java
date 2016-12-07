@@ -207,12 +207,12 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         return o instanceof FxtTransactionImpl && this.getId() == ((Transaction)o).getId();
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return (int)(getId() ^ (getId() >>> 32));
     }
 

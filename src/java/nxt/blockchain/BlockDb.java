@@ -59,7 +59,7 @@ public final class BlockDb {
                         cacheBlock.getFxtTransactions().forEach(fxtTransaction -> {
                             fxtTransactionCache.remove(fxtTransaction.getId());
                             fxtTransaction.getChildTransactions().forEach(childTransaction -> {
-                                childTransactionCache.remove(new ChainTransactionId(childTransaction.getChain().getId(), childTransaction.getFullHash()));
+                                childTransactionCache.remove(ChainTransactionId.getChainTransactionId(childTransaction));
                             });
                         });
                         heightMap.remove(cacheHeight);
@@ -69,8 +69,7 @@ public final class BlockDb {
                 block.getFxtTransactions().forEach(fxtTransaction -> {
                     fxtTransactionCache.put(fxtTransaction.getId(), (FxtTransactionImpl)fxtTransaction);
                     fxtTransaction.getChildTransactions().forEach(childTransaction -> {
-                        childTransactionCache.put(new ChainTransactionId(childTransaction.getChain().getId(), childTransaction.getFullHash()),
-                                (ChildTransactionImpl)childTransaction);
+                        childTransactionCache.put(ChainTransactionId.getChainTransactionId(childTransaction), (ChildTransactionImpl)childTransaction);
                     });
                 });
                 heightMap.put(height, (BlockImpl)block);

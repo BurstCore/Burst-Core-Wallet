@@ -16,6 +16,7 @@
 
 package nxt.peer;
 
+import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.ChainTransactionId;
@@ -32,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 final class TransactionsInventory {
 
     /** Transaction cache */
-    private static final ConcurrentHashMap<Long, Transaction> transactionCache = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<ChainTransactionId, Transaction> transactionCache = new ConcurrentHashMap<>();
 
     /** Pending transactions */
     private static final Set<ChainTransactionId> pendingTransactions = Collections.synchronizedSet(new HashSet<>());
@@ -69,7 +70,7 @@ final class TransactionsInventory {
         // unconfirmed transactions, so our cache is just to reduce transaction
         // requests.
         //
-        int now = Nxt.getEpochTime();
+        final int now = Nxt.getEpochTime();
         Iterator<Transaction> it = transactionCache.values().iterator();
         while (it.hasNext()) {
             Transaction transaction = it.next();
@@ -105,9 +106,13 @@ final class TransactionsInventory {
                             List<Transaction> transactions = response.getTransactions();
                             Nxt.getTransactionProcessor().processPeerTransactions(transactions);
                             transactions.forEach(tx -> {
-                                requestIds.remove(tx.getId());
-                                pendingTransactions.remove(tx.getId());
-                                transactionCache.put(tx.getId(), tx);
+                                ChainTransactionId transactionId = ChainTransactionId.getChainTransactionId(tx);
+                                requestIds.remove(transactionId);
+                                pendingTransactions.remove(transactionId);
+                                //do not allow transactions from the future in the transaction cache
+                                if (tx.getTimestamp() < now + Constants.MAX_TIMEDRIFT) {
+                                    transactionCache.put(transactionId, tx);
+                                }
                             });
                         } catch (RuntimeException | NxtException.ValidationException e) {
                             feederPeer.blacklist(e);
@@ -134,7 +139,7 @@ final class TransactionsInventory {
      * @param   transactionId           The transaction identifier
      * @return                          Cached transaction or null
      */
-    static Transaction getCachedTransaction(long transactionId) {
+    static Transaction getCachedTransaction(ChainTransactionId transactionId) {
         return transactionCache.get(transactionId);
     }
 }

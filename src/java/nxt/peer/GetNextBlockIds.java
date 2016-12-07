@@ -28,7 +28,7 @@ final class GetNextBlockIds {
      * Process the GetNextBlockIds message and return the BlockIds message
      *
      * @param   peer                    Peer
-     * @param   message                 Request message
+     * @param   request                 Request message
      * @return                          Response message
      */
     static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetNextBlockIdsMessage request) {

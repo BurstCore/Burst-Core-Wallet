@@ -32,6 +32,7 @@ final class GetBlocks {
      */
     static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetBlocksMessage request) {
         List<Long> blockIds = request.getBlockIds();
+        //TODO: need to handle excluded transactions
         List<Block> blocks = new ArrayList<>(blockIds.size());
         for (Long blockId : blockIds) {
             Block block = Nxt.getBlockchain().getBlock(blockId, true);

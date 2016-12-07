@@ -30,7 +30,7 @@ final class GetMilestoneBlockIds {
      * Process the GetMilestoneBlockIds message and return the MilestoneBlockIds message
      *
      * @param   peer                    Peer
-     * @param   message                 Request message
+     * @param   request                 Request message
      * @return                          Response message
      */
     static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetMilestoneBlockIdsMessage request) {

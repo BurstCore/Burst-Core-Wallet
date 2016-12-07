@@ -388,13 +388,13 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         return o instanceof ChildTransactionImpl && this.getId() == ((Transaction)o).getId()
                 && Arrays.equals(this.getFullHash(), ((Transaction)o).getFullHash());
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return (int)(getId() ^ (getId() >>> 32));
     }
 

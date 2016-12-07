@@ -100,12 +100,12 @@ public abstract class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         return o instanceof UnconfirmedTransaction && transaction.equals(((UnconfirmedTransaction)o).getTransaction());
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return transaction.hashCode();
     }
 

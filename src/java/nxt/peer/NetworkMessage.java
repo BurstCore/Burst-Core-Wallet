@@ -1743,6 +1743,8 @@ public abstract class NetworkMessage {
         }
     }
 
+    //TODO: this is never used for getting more than one block, perhaps replace with GetBlockMessage
+    //and then can use long transaction ids as exclude list, not ChainTransactionIds
     /**
      * The GetBlocks message is sent when a peer is notified that a new block is available.
      * The Blocks message is returned in response.  The sender can include a list of transactions
@@ -1751,7 +1753,7 @@ public abstract class NetworkMessage {
      * <ul>
      * <li>Message identifier (long)
      * <li>Block identifier list (long)
-     * <li>Transaction exclusion list (long)
+     * <li>Transaction exclusion list (ChainTransactionId)
      * </ul>
      */
     public static class GetBlocksMessage extends NetworkMessage {
@@ -1760,7 +1762,7 @@ public abstract class NetworkMessage {
         private final List<Long> blockIds;
 
         /** Transaction exclusion list */
-        private final List<Long> excludedTransactions;
+        private final List<ChainTransactionId> excludedTransactions;
 
         /**
          * Construct the message from the message bytes
@@ -1815,7 +1817,7 @@ public abstract class NetworkMessage {
          * @param   blockIds                Block identifiers
          * @param   excludedTransactions    Excluded transactions or null
          */
-        public GetBlocksMessage(List<Long> blockIds, List<Long> excludedTransactions) {
+        public GetBlocksMessage(List<Long> blockIds, List<ChainTransactionId> excludedTransactions) {
             super("GetBlocks");
             if (blockIds.size() > MAX_LIST_SIZE) {
                 throw new RuntimeException("List size " + blockIds.size() + " exceeds the maximum of " + MAX_LIST_SIZE);
@@ -1823,9 +1825,9 @@ public abstract class NetworkMessage {
             if (excludedTransactions != null && excludedTransactions.size() > MAX_LIST_SIZE) {
                 throw new RuntimeException("List size " + excludedTransactions.size() + " exceeds maximum of " + MAX_LIST_SIZE);
             }
+            this.excludedTransactions = (excludedTransactions != null ? excludedTransactions : Collections.emptyList());
             this.messageId = nextMessageId.incrementAndGet();
             this.blockIds = blockIds;
-            this.excludedTransactions = (excludedTransactions != null ? excludedTransactions : Collections.emptyList());
         }
 
         /**
@@ -1852,7 +1854,7 @@ public abstract class NetworkMessage {
             }
             excludedTransactions = new ArrayList<>(count);
             for (int i=0; i<count; i++) {
-                excludedTransactions.add(bytes.getLong());
+                excludedTransactions.add(ChainTransactionId.parse(bytes));
             }
         }
 
@@ -1863,7 +1865,7 @@ public abstract class NetworkMessage {
          */
         @Override
         int getLength() {
-            return super.getLength() + 8 + 2 + (8 * blockIds.size()) + 2 + (8 * excludedTransactions.size());
+            return super.getLength() + 8 + 2 + (8 * blockIds.size()) + 2 + (ChainTransactionId.BYTE_SIZE * excludedTransactions.size());
         }
 
         /**
@@ -1879,7 +1881,7 @@ public abstract class NetworkMessage {
             bytes.putShort((short)blockIds.size());
             blockIds.forEach((id) -> bytes.putLong(id));
             bytes.putShort((short)excludedTransactions.size());
-            excludedTransactions.forEach((id) -> bytes.putLong(id));
+            excludedTransactions.forEach((id) -> id.put(bytes));
         }
 
         /**
@@ -1916,7 +1918,7 @@ public abstract class NetworkMessage {
          *
          * @return                          Transaction identifiers
          */
-        public List<Long> getExcludedTransactions() {
+        public List<ChainTransactionId> getExcludedTransactions() {
             return excludedTransactions;
         }
     }
@@ -2052,7 +2054,7 @@ public abstract class NetworkMessage {
         /**
          * Get the blocks
          *
-         * This method cannot be used if blocks were excluded in the GetBlocks message
+         * This method cannot be used if transactions were excluded in the GetBlocks message
          *
          * @return                          Block list
          * @throws  NotValidException       Block is not valid
@@ -2068,7 +2070,7 @@ public abstract class NetworkMessage {
         /**
          * Get the blocks
          *
-         * This method must be used if blocks were excluded in the GetBlocks message
+         * This method must be used if transactions were excluded in the GetBlocks message
          *
          * @param   excludedTransactions    Transactions that were excluded from the blocks
          * @return                          Block list
@@ -2172,7 +2174,7 @@ public abstract class NetworkMessage {
          */
         @Override
         public int getLength() {
-            return super.getLength() + 8 + 2 + (8 * transactionIds.size());
+            return super.getLength() + 8 + 2 + (ChainTransactionId.BYTE_SIZE * transactionIds.size());
         }
 
         /**
@@ -2507,7 +2509,7 @@ public abstract class NetworkMessage {
      * <li>Block identifier (long)
      * <li>Previous block identifier (long)
      * <li>Block timestamp (integer)
-     * <li>Transaction identifier list (long)
+     * <li>Transaction identifier list (ChainTransactionId)
      * </ul>
      */
     public static class BlockInventoryMessage extends NetworkMessage {
@@ -2521,8 +2523,9 @@ public abstract class NetworkMessage {
         /** Block timestamp */
         private final int timestamp;
 
+        //TODO: reduce message size by storing separately Fxt transactionIds, and for each child chain an array of child transactionIds
         /** Transaction identifiers */
-        private final List<Long> transactionIds;
+        private final List<ChainTransactionId> transactionIds;
 
         /**
          * Construct the message from the message bytes
@@ -2576,7 +2579,10 @@ public abstract class NetworkMessage {
                 throw new RuntimeException("List size " + transactions.size() + " exceeds the maximum of " + MAX_LIST_SIZE);
             }
             transactionIds = new ArrayList<>(transactions.size());
-            transactions.forEach(tx -> transactionIds.add(tx.getId()));
+            transactions.forEach(fxtTransaction -> {
+                transactionIds.add(ChainTransactionId.getChainTransactionId(fxtTransaction));
+                fxtTransaction.getChildTransactions().forEach(childTransaction -> transactionIds.add(ChainTransactionId.getChainTransactionId(childTransaction)));
+            });
         }
 
         /**
@@ -2597,7 +2603,7 @@ public abstract class NetworkMessage {
             }
             transactionIds = new ArrayList<>(count);
             for (int i=0; i<count; i++) {
-                transactionIds.add(bytes.getLong());
+                transactionIds.add(ChainTransactionId.parse(bytes));
             }
         }
 
@@ -2608,7 +2614,7 @@ public abstract class NetworkMessage {
          */
         @Override
         int getLength() {
-            return super.getLength() + 8 + 8 + 4 + 2 + (8 * transactionIds.size());
+            return super.getLength() + 8 + 8 + 4 + 2 + (ChainTransactionId.BYTE_SIZE * transactionIds.size());
         }
 
         /**
@@ -2622,7 +2628,7 @@ public abstract class NetworkMessage {
             super.getBytes(bytes);
             bytes.putLong(blockId).putLong(previousBlockId).putInt(timestamp);
             bytes.putShort((short)transactionIds.size());
-            transactionIds.forEach(id -> bytes.putLong(id));
+            transactionIds.forEach(id -> id.put(bytes));
         }
 
         /**
@@ -2667,7 +2673,7 @@ public abstract class NetworkMessage {
          *
          * @return                          Transaction identifiers
          */
-        public List<Long> getTransactionIds() {
+        public List<ChainTransactionId> getTransactionIds() {
             return transactionIds;
         }
     }
@@ -2682,7 +2688,7 @@ public abstract class NetworkMessage {
      * <p>
      * Each transaction list entry has the following format:
      * <ul>
-     * <li>Transaction identifier (long)
+     * <li>Transaction identifier (ChainTransactionId)
      * <li>Transaction timestamp (integer)
      * </ul>
      */
@@ -2691,6 +2697,7 @@ public abstract class NetworkMessage {
         /** Transaction identifier */
         private final List<ChainTransactionId> transactionIds;
 
+        //TODO: are these timestamps actually used?
         /** Transaction timestamp */
         private final List<Integer> timestamps;
 
@@ -2742,7 +2749,7 @@ public abstract class NetworkMessage {
             transactionIds = new ArrayList<>(transactions.size());
             timestamps = new ArrayList<>(transactions.size());
             for (Transaction transaction : transactions) {
-                transactionIds.add(new ChainTransactionId(transaction.getChain().getId(), transaction.getFullHash()));
+                transactionIds.add(ChainTransactionId.getChainTransactionId(transaction));
                 timestamps.add(transaction.getTimestamp());
             }
         }
@@ -2775,7 +2782,7 @@ public abstract class NetworkMessage {
          */
         @Override
         int getLength() {
-            return super.getLength() + 2 + (8 * transactionIds.size()) + (4 * timestamps.size());
+            return super.getLength() + 2 + (ChainTransactionId.BYTE_SIZE * transactionIds.size()) + (4 * timestamps.size());
         }
 
         /**
@@ -3168,6 +3175,7 @@ public abstract class NetworkMessage {
             if (transactionBytes.length == 8) {
                 throw new IllegalArgumentException("No excluded transactions provided");
             }
+            //TODO: allow excluding child transactions from the prunable attachment bytes, when those represent a ChildBlockAttachment
             if (prunableAttachmentBytes.length > 0) {
                 prunableAttachment = (JSONObject)JSONValue.parse(new String(prunableAttachmentBytes));
             } else {
@@ -3177,6 +3185,8 @@ public abstract class NetworkMessage {
             return builder.build();
         }
 
+        //TODO: this only works when excludedTransactions contains transactions from a single block only,
+        // because long transactionIds are not guaranteed to be unique across blocks
         /**
          * Get the transaction
          *

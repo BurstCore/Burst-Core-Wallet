@@ -19,6 +19,7 @@ package nxt.peer;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Block;
+import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.Transaction;
 import nxt.util.Logger;
 
@@ -80,8 +81,8 @@ final class BlockInventory {
                     // Build the GetBlocks request.  We will exclude transactions that are
                     // in the TransactionsInventory transaction cache.
                     //
-                    List<Long> invTransactionIds = request.getTransactionIds();
-                    List<Long> excludedIds = new ArrayList<>(invTransactionIds.size());
+                    List<ChainTransactionId> invTransactionIds = request.getTransactionIds();
+                    List<ChainTransactionId> excludedIds = new ArrayList<>(invTransactionIds.size());
                     List<Transaction> cachedTransactions = new ArrayList<>(invTransactionIds.size());
                     invTransactionIds.forEach(id -> {
                         Transaction tx = TransactionsInventory.getCachedTransaction(id);

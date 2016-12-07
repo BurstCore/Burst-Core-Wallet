@@ -26,7 +26,7 @@ final class GetPeers {
      * Process the GetPeers message and return the AddPeers message
      *
      * @param   peer                    Peer
-     * @param   message                 Request message
+     * @param   request                 Request message
      * @return                          Response message
      */
     static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetPeersMessage request) {

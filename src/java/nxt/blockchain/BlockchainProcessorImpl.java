@@ -860,7 +860,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     // Remove transactions that have been successfully processed
                     //
                     synchronized (prunableTransactions) {
-                        processed.forEach(transaction -> prunableTransactions.remove(new ChainTransactionId(transaction.getChain().getId(), transaction.getFullHash())));
+                        processed.forEach(transaction -> prunableTransactions.remove(ChainTransactionId.getChainTransactionId(transaction)));
                     }
                 }
                 Logger.logDebugMessage("Done retrieving prunable transactions from " + peer.getHost());
@@ -1246,7 +1246,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             Logger.logDebugMessage("Cannot find any archive peers");
             return null;
         }
-        ChainTransactionId chainTransactionId = new ChainTransactionId(chain.getId(), transactionFullHash);
+        ChainTransactionId chainTransactionId = ChainTransactionId.getChainTransactionId(transaction);
         List<ChainTransactionId> requestList = Collections.singletonList(chainTransactionId);
         for (Peer peer : peers) {
             if (peer.getState() != Peer.State.CONNECTED) {
@@ -1666,7 +1666,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if ((appendage instanceof Appendix.Prunable) &&
                         !((Appendix.Prunable)appendage).hasPrunableData()) {
                     synchronized (prunableTransactions) {
-                        prunableTransactions.add(new ChainTransactionId(transaction.getChain().getId(), transaction.getFullHash()));
+                        prunableTransactions.add(ChainTransactionId.getChainTransactionId(transaction));
                     }
                     lastRestoreTime = 0;
                     break;
