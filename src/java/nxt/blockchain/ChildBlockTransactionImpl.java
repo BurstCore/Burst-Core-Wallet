@@ -35,6 +35,14 @@ final class ChildBlockTransactionImpl extends FxtTransactionImpl {
         super(builder, secretPhrase);
     }
 
+    ChildChain getChildChain() {
+        return ChildChain.getChildChain(((ChildBlockAttachment)attachment).getChainId());
+    }
+
+    byte[][] getChildTransactionFullHashes() {
+        return ((ChildBlockAttachment)getAttachment()).getChildTransactionFullHashes();
+    }
+
     @Override
     void setBlock(BlockImpl block) {
         super.setBlock(block);
@@ -89,6 +97,10 @@ final class ChildBlockTransactionImpl extends FxtTransactionImpl {
             childTransactions = Collections.unmodifiableList(list);
         }
         return childTransactions;
+    }
+
+    synchronized void clearChildTransactions() {
+        childTransactions = null;
     }
 
     @Override

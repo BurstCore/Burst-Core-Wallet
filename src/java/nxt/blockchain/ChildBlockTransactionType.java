@@ -74,7 +74,10 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
         if (ChildChain.getChildChain(attachment.getChainId()) == null) {
             throw new NxtException.NotValidException("No such child chain id: " + attachment.getChainId());
         }
-        //TODO: its own validation?
+        long[] backFees = attachment.getBackFees();
+        if (backFees.length > 3) {
+            throw new NxtException.NotValidException("Invalid backFees length");
+        }
         long[] minBackFees = new long[3];
         int blockchainHeight = Nxt.getBlockchain().getHeight();
         for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
@@ -88,7 +91,6 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
                 minBackFees[i] += childMinBackFees[i];
             }
         }
-        long[] backFees = attachment.getBackFees();
         for (int i = 0; i < minBackFees.length; i++) {
             if (i >= backFees.length || backFees[i] < minBackFees[i]) {
                 throw new NxtException.NotValidException("Insufficient back fees");
@@ -117,6 +119,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
 
     @Override
     protected void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
+        ((ChildBlockTransactionImpl)transaction).clearChildTransactions();
         // child transactions undoAttachmentUnconfirmed called when they are removed from the unconfirmed pool
     }
 

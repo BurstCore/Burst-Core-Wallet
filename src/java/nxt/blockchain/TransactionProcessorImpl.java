@@ -263,7 +263,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     @Override
-    public DbIterator<? extends Transaction> getUnconfirmedFxtTransactions() {
+    public DbIterator<UnconfirmedTransaction> getUnconfirmedFxtTransactions() {
         return unconfirmedTransactionTable.getManyBy(new DbClause.StringClause("chain", "FXT"), 0, -1);
     }
 
@@ -479,6 +479,21 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 DbKey dbKey = unconfirmedTransactionDbKeyFactory.newKey(transaction.getId());
                 transactionCache.remove(dbKey);
                 transactionListeners.notify(Collections.singletonList(transaction), Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
+                if (transaction.getChain() != FxtChain.FXT) {
+                    try (DbIterator<UnconfirmedTransaction> iterator = getUnconfirmedFxtTransactions()) {
+                        while (iterator.hasNext()) {
+                            Transaction fxtTransaction = iterator.next().getTransaction();
+                            if (fxtTransaction instanceof ChildBlockTransactionImpl && ((ChildBlockTransactionImpl)fxtTransaction).getChildChain() == transaction.getChain()) {
+                                byte[][] childTransactionHashes = ((ChildBlockTransactionImpl)fxtTransaction).getChildTransactionFullHashes();
+                                for (byte[] hash : childTransactionHashes) {
+                                    if (Arrays.equals(hash, transaction.getFullHash())) {
+                                        removeUnconfirmedTransaction((TransactionImpl)fxtTransaction);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         } catch (SQLException e) {
             Logger.logErrorMessage(e.toString(), e);
