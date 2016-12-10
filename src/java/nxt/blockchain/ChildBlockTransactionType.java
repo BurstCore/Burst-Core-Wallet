@@ -33,10 +33,9 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     private static final Fee CHILD_BLOCK_FEE = new Fee() {
         @Override
         public long getFee(TransactionImpl transaction, Appendix appendage) {
-            ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
             long totalFee = 0;
             int blockchainHeight = Nxt.getBlockchain().getHeight();
-            for (ChildTransactionImpl childTransaction : attachment.getChildTransactions((FxtTransactionImpl)transaction)) {
+            for (ChildTransactionImpl childTransaction : ((FxtTransactionImpl)transaction).getChildTransactions()) {
                 totalFee += childTransaction.getMinimumFeeFQT(blockchainHeight);
             }
             return totalFee;
@@ -78,7 +77,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
         //TODO: its own validation?
         long[] minBackFees = new long[3];
         int blockchainHeight = Nxt.getBlockchain().getHeight();
-        for (ChildTransactionImpl childTransaction : attachment.getChildTransactions(transaction)) {
+        for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
             childTransaction.validate();
             if (transaction.getExpiration() > childTransaction.getExpiration()) {
                 throw new NxtException.NotValidException("ChildBlock transaction " + transaction.getStringId() + " expiration " + transaction.getExpiration()
@@ -107,7 +106,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     protected void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
         long totalFee = 0;
-        for (ChildTransactionImpl childTransaction : attachment.getChildTransactions(transaction)) {
+        for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
             childTransaction.apply();
             totalFee = Math.addExact(totalFee, childTransaction.getFee());
         }

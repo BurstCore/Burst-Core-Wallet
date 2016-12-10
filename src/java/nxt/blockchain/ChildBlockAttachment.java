@@ -24,7 +24,6 @@ import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ChildBlockAttachment extends Attachment.AbstractAttachment implements Appendix.Prunable {
@@ -38,7 +37,6 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     private final int chainId;
     private volatile byte[][] childTransactionFullHashes;
-    private List<ChildTransactionImpl> childTransactions;
     private final byte[] hash;
     private final long[] backFees;
 
@@ -95,7 +93,6 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         this.backFees = backFees;
     }
 
-    //TODO: include full size of child transactions???
     @Override
     protected int getMyFullSize() {
         if (childTransactionFullHashes == null) {
@@ -144,30 +141,16 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         return ChildBlockTransactionType.INSTANCE;
     }
 
-
-    public synchronized List<ChildTransactionImpl> getChildTransactions(FxtTransactionImpl fxtTransaction) {
-        if (childTransactions == null) {
-            TransactionHome transactionHome = ChildChain.getChildChain(chainId).getTransactionHome();
-            childTransactions = new ArrayList<>();
-            short index = 0;
-            for (byte[] fullHash : childTransactionFullHashes) {
-                ChildTransactionImpl childTransaction = (ChildTransactionImpl)transactionHome.findTransactionByFullHash(fullHash);
-                //TODO: get transactions from unconfirmed pool
-                //TODO: handle missing child transaction
-                childTransaction.setFxtTransaction(fxtTransaction);
-                childTransaction.setIndex(index++);
-                childTransactions.add(childTransaction);
-            }
-        }
-        return childTransactions;
-    }
-
     public int getChainId() {
         return chainId;
     }
 
     public long[] getBackFees() {
         return backFees;
+    }
+
+    public byte[][] getChildTransactionFullHashes() {
+        return childTransactionFullHashes;
     }
 
     //Prunable:
@@ -190,7 +173,9 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (childTransactionFullHashes == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            //TODO
+            TransactionHome transactionHome = ChildChain.getChildChain(chainId).getTransactionHome();
+            List<byte[]> hashes = transactionHome.findChildTransactionFullHashes(transaction.getId());
+            childTransactionFullHashes = hashes.toArray(new byte[hashes.size()][]);
         }
     }
 
@@ -201,7 +186,7 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        //TODO
+        throw new UnsupportedOperationException("Pruning of child transactions not yet implemented");
     }
 
 }

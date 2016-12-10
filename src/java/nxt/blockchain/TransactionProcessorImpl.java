@@ -268,15 +268,15 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     @Override
-    public Transaction getUnconfirmedTransaction(long transactionId) {
+    public UnconfirmedTransaction getUnconfirmedTransaction(long transactionId) {
         DbKey dbKey = unconfirmedTransactionDbKeyFactory.newKey(transactionId);
         return getUnconfirmedTransaction(dbKey);
     }
 
-    private Transaction getUnconfirmedTransaction(DbKey dbKey) {
+    private UnconfirmedTransaction getUnconfirmedTransaction(DbKey dbKey) {
         Nxt.getBlockchain().readLock();
         try {
-            Transaction transaction = transactionCache.get(dbKey);
+            UnconfirmedTransaction transaction = transactionCache.get(dbKey);
             if (transaction != null) {
                 return transaction;
             }

@@ -16,13 +16,20 @@
 
 package nxt.blockchain;
 
+import nxt.Nxt;
 import nxt.NxtException;
+import nxt.util.Convert;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-class ChildBlockTransactionImpl extends FxtTransactionImpl {
+final class ChildBlockTransactionImpl extends FxtTransactionImpl {
+
+    private List<ChildTransactionImpl> childTransactions;
 
     ChildBlockTransactionImpl(FxtTransactionImpl.BuilderImpl builder, String secretPhrase) throws NxtException.NotValidException {
         super(builder, secretPhrase);
@@ -41,23 +48,58 @@ class ChildBlockTransactionImpl extends FxtTransactionImpl {
     }
 
     @Override
-    public List<ChildTransactionImpl> getChildTransactions() {
-        ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)getAttachment();
-        return childBlockAttachment.getChildTransactions(this);
+    public void validate() throws NxtException.ValidationException {
+        try {
+            getChildTransactions();
+        } catch (RuntimeException e) {
+            throw new NxtException.NotCurrentlyValidException("Missing or invalid child transaction", e);
+        }
+        super.validate();
     }
 
     @Override
-    void save(Connection con, String schemaTable) throws SQLException {
+    public synchronized List<ChildTransactionImpl> getChildTransactions() {
+        ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)getAttachment();
+        if (childTransactions == null) {
+            List<ChildTransactionImpl> list;
+            if (TransactionHome.hasFxtTransaction(this.getId(), Nxt.getBlockchain().getHeight())) {
+                TransactionHome transactionHome = ChildChain.getChildChain(childBlockAttachment.getChainId()).getTransactionHome();
+                list = transactionHome.findChildTransactions(this.getId());
+                short index = 0;
+                for (ChildTransactionImpl childTransaction : list) {
+                    childTransaction.setFxtTransaction(this);
+                    childTransaction.setIndex(index++);
+                }
+            } else {
+                TransactionProcessorImpl transactionProcessor = TransactionProcessorImpl.getInstance();
+                byte[][] hashes = childBlockAttachment.getChildTransactionFullHashes();
+                list = new ArrayList<>(hashes.length);
+                for (byte[] fullHash : hashes) {
+                    UnconfirmedTransaction unconfirmedTransaction = transactionProcessor.getUnconfirmedTransaction(Convert.fullHashToId(fullHash));
+                    if (unconfirmedTransaction == null) {
+                        throw new IllegalStateException(String.format("Missing child transaction %s", Convert.toHexString(fullHash)));
+                    }
+                    if (!Arrays.equals(unconfirmedTransaction.getFullHash(), fullHash)) {
+                        throw new IllegalStateException(String.format("Unconfirmed transaction hash mismatch %s %s",
+                                Convert.toHexString(fullHash), Convert.toHexString(unconfirmedTransaction.getFullHash())));
+                    }
+                    list.add((ChildTransactionImpl)unconfirmedTransaction.getTransaction());
+                }
+            }
+            childTransactions = Collections.unmodifiableList(list);
+        }
+        return childTransactions;
+    }
+
+    @Override
+    synchronized void save(Connection con, String schemaTable) throws SQLException {
         super.save(con, schemaTable);
         ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)getAttachment();
         String childChainSchemaTable = ChildChain.getChildChain(childBlockAttachment.getChainId()).getSchemaTable("transaction");
         for (ChildTransactionImpl childTransaction : getChildTransactions()) {
-            try {
-                childTransaction.save(con, childChainSchemaTable);
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
+            childTransaction.save(con, childChainSchemaTable);
         }
+        childTransactions = null;
     }
 
     @Override
@@ -68,12 +110,16 @@ class ChildBlockTransactionImpl extends FxtTransactionImpl {
 
     @Override
     boolean hasAllReferencedTransactions(int timestamp, int count) {
-        for (ChildTransactionImpl childTransaction : getChildTransactions()) {
-            if (!childTransaction.hasAllReferencedTransactions(timestamp, count)) {
-                return false;
+        try {
+            for (ChildTransactionImpl childTransaction : getChildTransactions()) {
+                if (!childTransaction.hasAllReferencedTransactions(timestamp, count)) {
+                    return false;
+                }
             }
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
         }
-        return true;
     }
 
 }

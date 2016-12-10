@@ -24,7 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTransaction {
+final class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTransaction {
 
     UnconfirmedFxtTransaction(FxtTransactionImpl transaction, long arrivalTimestamp) {
         super(transaction, arrivalTimestamp);
