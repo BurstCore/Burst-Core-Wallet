@@ -25,7 +25,6 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-//TODO
 public final class ChildBlockFxtTransactionType extends FxtTransactionType {
 
     public static final ChildBlockFxtTransactionType INSTANCE = new ChildBlockFxtTransactionType();

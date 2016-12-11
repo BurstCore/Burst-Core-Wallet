@@ -133,6 +133,10 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
     private final PriorityQueue<UnconfirmedTransaction> waitingTransactions = new PriorityQueue<UnconfirmedTransaction>(
             (UnconfirmedTransaction o1, UnconfirmedTransaction o2) -> {
                 int result;
+                if ((result = Boolean.compare(o2.getType() == ChildBlockFxtTransactionType.INSTANCE,
+                        o1.getType() == ChildBlockFxtTransactionType.INSTANCE)) != 0) {
+                    return result;
+                }
                 if ((result = Integer.compare(o2.getHeight(), o1.getHeight())) != 0) {
                     return result;
                 }
@@ -552,6 +556,10 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
+    //process ChildBlockTransactions last
+    private static final Comparator<Transaction> peerTransactionComparator = (o1, o2) ->
+            Boolean.compare(o2.getType() != ChildBlockFxtTransactionType.INSTANCE, o1.getType() != ChildBlockFxtTransactionType.INSTANCE);
+
     @Override
     public void processPeerTransactions(List<Transaction> transactions) throws NxtException.NotValidException {
         if (Nxt.getBlockchain().getHeight() <= Constants.LAST_KNOWN_BLOCK && !testUnconfirmedTransactions) {
@@ -560,6 +568,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         if (transactions.isEmpty()) {
             return;
         }
+        transactions.sort(peerTransactionComparator);
         long arrivalTimestamp = System.currentTimeMillis();
         List<TransactionImpl> receivedTransactions = new ArrayList<>();
         List<TransactionImpl> sendToPeersTransactions = new ArrayList<>();
@@ -602,7 +611,6 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
-    //TODO: child transactions should always be processed separately from their ChildBlockTransaction
     private void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws NxtException.ValidationException {
         TransactionImpl transaction = unconfirmedTransaction.getTransaction();
         int curTime = Nxt.getEpochTime();
