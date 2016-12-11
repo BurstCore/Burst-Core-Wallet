@@ -56,8 +56,8 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
             }
             appendages(Collections.unmodifiableList(list));
             preBuild(secretPhrase);
-            return getAttachment().getTransactionType() == ChildBlockTransactionType.INSTANCE ?
-                    new ChildBlockTransactionImpl(this, secretPhrase) : new FxtTransactionImpl(this, secretPhrase);
+            return getAttachment().getTransactionType() == ChildBlockFxtTransactionType.INSTANCE ?
+                    new ChildBlockFxtTransactionImpl(this, secretPhrase) : new FxtTransactionImpl(this, secretPhrase);
         }
 
         @Override

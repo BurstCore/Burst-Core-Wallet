@@ -249,7 +249,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         return fxtTransactionId;
     }
 
-    void setFxtTransaction(ChildBlockTransactionImpl fxtTransaction) {
+    void setFxtTransaction(ChildBlockFxtTransactionImpl fxtTransaction) {
         this.fxtTransactionId = fxtTransaction.getId();
         setBlock(fxtTransaction.getBlock());
     }

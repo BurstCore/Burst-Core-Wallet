@@ -26,9 +26,9 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 //TODO
-public final class ChildBlockTransactionType extends FxtTransactionType {
+public final class ChildBlockFxtTransactionType extends FxtTransactionType {
 
-    public static final ChildBlockTransactionType INSTANCE = new ChildBlockTransactionType();
+    public static final ChildBlockFxtTransactionType INSTANCE = new ChildBlockFxtTransactionType();
 
     private static final Fee CHILD_BLOCK_FEE = new Fee() {
         @Override
@@ -140,7 +140,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
-        return isDuplicate(ChildBlockTransactionType.INSTANCE, String.valueOf(attachment.getChainId()), duplicates, true);
+        return isDuplicate(ChildBlockFxtTransactionType.INSTANCE, String.valueOf(attachment.getChainId()), duplicates, true);
     }
 
 }

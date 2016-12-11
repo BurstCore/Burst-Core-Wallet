@@ -27,11 +27,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-final class ChildBlockTransactionImpl extends FxtTransactionImpl {
+final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl {
 
     private List<ChildTransactionImpl> childTransactions;
 
-    ChildBlockTransactionImpl(FxtTransactionImpl.BuilderImpl builder, String secretPhrase) throws NxtException.NotValidException {
+    ChildBlockFxtTransactionImpl(FxtTransactionImpl.BuilderImpl builder, String secretPhrase) throws NxtException.NotValidException {
         super(builder, secretPhrase);
     }
 

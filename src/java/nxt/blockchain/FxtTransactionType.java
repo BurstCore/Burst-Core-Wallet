@@ -38,7 +38,7 @@ public abstract class FxtTransactionType extends TransactionType {
             case TYPE_CHILDCHAIN_BLOCK:
                 switch (subtype) {
                     case SUBTYPE_CHILDCHAIN_BLOCK:
-                        return ChildBlockTransactionType.INSTANCE;
+                        return ChildBlockFxtTransactionType.INSTANCE;
                     default:
                         return null;
                 }

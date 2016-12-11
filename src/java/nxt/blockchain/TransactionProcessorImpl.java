@@ -483,8 +483,8 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                     try (DbIterator<UnconfirmedTransaction> iterator = getUnconfirmedFxtTransactions()) {
                         while (iterator.hasNext()) {
                             Transaction fxtTransaction = iterator.next().getTransaction();
-                            if (fxtTransaction instanceof ChildBlockTransactionImpl && ((ChildBlockTransactionImpl)fxtTransaction).getChildChain() == transaction.getChain()) {
-                                byte[][] childTransactionHashes = ((ChildBlockTransactionImpl)fxtTransaction).getChildTransactionFullHashes();
+                            if (fxtTransaction instanceof ChildBlockFxtTransactionImpl && ((ChildBlockFxtTransactionImpl)fxtTransaction).getChildChain() == transaction.getChain()) {
+                                byte[][] childTransactionHashes = ((ChildBlockFxtTransactionImpl)fxtTransaction).getChildTransactionFullHashes();
                                 for (byte[] hash : childTransactionHashes) {
                                     if (Arrays.equals(hash, transaction.getFullHash())) {
                                         removeUnconfirmedTransaction((TransactionImpl)fxtTransaction);
