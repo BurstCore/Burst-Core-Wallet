@@ -86,8 +86,6 @@ final class TransactionsInventory {
             // we have received all of the transactions or we run out of peers.
             //
             try {
-                NetworkMessage.GetTransactionsMessage transactionsRequest =
-                        new NetworkMessage.GetTransactionsMessage(requestIds);
                 List<Peer> connectedPeers = Peers.getConnectedPeers();
                 if (connectedPeers.isEmpty()) {
                     return;
@@ -99,6 +97,8 @@ final class TransactionsInventory {
                 int index = startIndex;
                 while (true) {
                     Peer feederPeer = connectedPeers.get(index);
+                    NetworkMessage.GetTransactionsMessage transactionsRequest =
+                            new NetworkMessage.GetTransactionsMessage(requestIds);
                     NetworkMessage.TransactionsMessage response =
                             (NetworkMessage.TransactionsMessage)feederPeer.sendRequest(transactionsRequest);
                     if (response != null && response.getTransactionCount() > 0) {
