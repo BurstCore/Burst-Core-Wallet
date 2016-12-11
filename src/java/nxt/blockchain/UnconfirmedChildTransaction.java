@@ -53,11 +53,6 @@ final class UnconfirmedChildTransaction extends UnconfirmedTransaction implement
     }
 
     @Override
-    public FxtTransaction getFxtTransaction() {
-        return getTransaction().getFxtTransaction();
-    }
-
-    @Override
     public long getFxtTransactionId() {
         return getTransaction().getFxtTransactionId();
     }

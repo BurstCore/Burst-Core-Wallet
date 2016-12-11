@@ -119,7 +119,6 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
 
     @Override
     protected void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
-        ((ChildBlockTransactionImpl)transaction).clearChildTransactions();
         // child transactions undoAttachmentUnconfirmed called when they are removed from the unconfirmed pool
     }
 

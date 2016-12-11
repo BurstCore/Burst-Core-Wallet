@@ -286,7 +286,10 @@ public final class TransactionHome {
         try {
             short index = 0;
             for (FxtTransactionImpl transaction : transactions) {
-                transaction.setIndex(index++);
+                if (transaction.getIndex() != index++) {
+                    throw new IllegalStateException(String.format("Fxt transaction index set to %d, must be %d",
+                            transaction.getIndex(), --index));
+                }
                 transaction.save(con, "transaction_fxt");
             }
         } catch (SQLException e) {

@@ -204,7 +204,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     private final PrunablePlainMessageAppendix prunablePlainMessage;
     private final PrunableEncryptedMessageAppendix prunableEncryptedMessage;
 
-    private volatile FxtTransactionImpl fxtTransaction;
     private volatile long fxtTransactionId;
 
     private ChildTransactionImpl(BuilderImpl builder, String secretPhrase) throws NxtException.NotValidException {
@@ -246,30 +245,19 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     }
 
     @Override
-    public FxtTransactionImpl getFxtTransaction() {
-        if (fxtTransaction == null && fxtTransactionId != 0) {
-            fxtTransaction = TransactionHome.findFxtTransaction(fxtTransactionId);
-        }
-        return fxtTransaction;
-    }
-
-    @Override
     public long getFxtTransactionId() {
         return fxtTransactionId;
     }
 
-    //TODO: set when including in a ChildBlock
-    public void setFxtTransaction(FxtTransactionImpl fxtTransaction) {
+    void setFxtTransaction(ChildBlockTransactionImpl fxtTransaction) {
         this.fxtTransactionId = fxtTransaction.getId();
-        this.fxtTransaction = fxtTransaction;
         setBlock(fxtTransaction.getBlock());
     }
 
-    //TODO: unset - when?
     void unsetFxtTransaction() {
         this.fxtTransactionId = 0;
-        this.fxtTransaction = null;
         unsetBlock();
+        setIndex(-1);
     }
 
     @Override

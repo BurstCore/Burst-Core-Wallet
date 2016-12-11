@@ -53,8 +53,6 @@ public interface ChildTransaction extends Transaction {
 
     ChildChain getChain();
 
-    FxtTransaction getFxtTransaction();
-
     long getFxtTransactionId();
 
     ChainTransactionId getReferencedTransactionId();

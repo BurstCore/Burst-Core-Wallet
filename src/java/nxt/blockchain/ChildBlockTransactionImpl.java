@@ -44,15 +44,22 @@ final class ChildBlockTransactionImpl extends FxtTransactionImpl {
     }
 
     @Override
-    void setBlock(BlockImpl block) {
+    synchronized void setBlock(BlockImpl block) {
         super.setBlock(block);
-        getChildTransactions().forEach(childTransaction -> childTransaction.setBlock(block));
+        if (childTransactions != null) {
+            short index = 0;
+            for (ChildTransactionImpl childTransaction : getChildTransactions()) {
+                childTransaction.setFxtTransaction(this);
+                childTransaction.setIndex(index++);
+            }
+        }
     }
 
     @Override
-    void unsetBlock() {
+    synchronized void unsetBlock() {
         super.unsetBlock();
-        getChildTransactions().forEach(childTransaction -> childTransaction.unsetBlock());
+        getChildTransactions().forEach(childTransaction -> childTransaction.unsetFxtTransaction());
+        childTransactions = null;
     }
 
     @Override
@@ -73,10 +80,8 @@ final class ChildBlockTransactionImpl extends FxtTransactionImpl {
             if (TransactionHome.hasFxtTransaction(this.getId(), Nxt.getBlockchain().getHeight())) {
                 TransactionHome transactionHome = ChildChain.getChildChain(childBlockAttachment.getChainId()).getTransactionHome();
                 list = transactionHome.findChildTransactions(this.getId());
-                short index = 0;
                 for (ChildTransactionImpl childTransaction : list) {
                     childTransaction.setFxtTransaction(this);
-                    childTransaction.setIndex(index++);
                 }
             } else {
                 TransactionProcessorImpl transactionProcessor = TransactionProcessorImpl.getInstance();
@@ -99,16 +104,24 @@ final class ChildBlockTransactionImpl extends FxtTransactionImpl {
         return childTransactions;
     }
 
-    synchronized void clearChildTransactions() {
-        childTransactions = null;
-    }
-
     @Override
     synchronized void save(Connection con, String schemaTable) throws SQLException {
         super.save(con, schemaTable);
         ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)getAttachment();
         String childChainSchemaTable = ChildChain.getChildChain(childBlockAttachment.getChainId()).getSchemaTable("transaction");
+        if (childTransactions == null) {
+            throw new IllegalStateException("Child transactions must be loaded first");
+        }
+        short index = 0;
         for (ChildTransactionImpl childTransaction : getChildTransactions()) {
+            if (childTransaction.getFxtTransactionId() != this.getId()) {
+                throw new IllegalStateException(String.format("Child transaction fxtTransactionId set to %s, must be %s",
+                        Long.toUnsignedString(childTransaction.getFxtTransactionId()), this.getStringId()));
+            }
+            if (childTransaction.getIndex() != index++) {
+                throw new IllegalStateException(String.format("Child transaction index set to %d, must be %d",
+                        childTransaction.getIndex(), --index));
+            }
             childTransaction.save(con, childChainSchemaTable);
         }
         childTransactions = null;
