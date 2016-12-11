@@ -23,6 +23,7 @@ import nxt.account.AccountPropertyTransactionType;
 import nxt.account.PaymentTransactionType;
 import nxt.ae.AssetExchangeTransactionType;
 import nxt.aliases.AliasTransactionType;
+import nxt.ce.CoinExchangeTransactionType;
 import nxt.dgs.DigitalGoodsTransactionType;
 import nxt.messaging.MessagingTransactionType;
 import nxt.ms.MonetarySystemTransactionType;
@@ -44,6 +45,7 @@ public abstract class ChildTransactionType extends TransactionType {
     protected static final byte TYPE_ALIASES = 8;
     protected static final byte TYPE_VOTING = 9;
     protected static final byte TYPE_ACCOUNT_PROPERTY = 10;
+    protected static final byte TYPE_COIN_EXCHANGE = 11;
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {
@@ -69,6 +71,8 @@ public abstract class ChildTransactionType extends TransactionType {
                 return VotingTransactionType.findTransactionType(subtype);
             case TYPE_ACCOUNT_PROPERTY:
                 return AccountPropertyTransactionType.findTransactionType(subtype);
+            case TYPE_COIN_EXCHANGE:
+                return CoinExchangeTransactionType.findTransactionType(subtype);
             default:
                 return null;
         }

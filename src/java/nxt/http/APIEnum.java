@@ -280,7 +280,14 @@ public enum APIEnum {
     SEND_TRANSACTION("sendTransaction", SendTransaction.instance),
     GET_ASSET_DIVIDENDS("getAssetDividends", GetAssetDividends.instance),
     BLACKLIST_API_PROXY_PEER("blacklistAPIProxyPeer", BlacklistAPIProxyPeer.instance),
-    GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", GetNextBlockGeneratorsTemp.instance);
+    GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", GetNextBlockGeneratorsTemp.instance),
+    EXCHANGE_COINS("exchangeCoins", ExchangeCoins.instance),
+    CANCEL_COIN_EXCHANGE("cancelCoinExchange", CancelCoinExchange.instance),
+    GET_COIN_EXCHANGE_ORDER("getCoinExchangeOrder", GetCoinExchangeOrder.instance),
+    GET_COIN_EXCHANGE_ORDER_IDS("getCoinExchangeOrderIds", GetCoinExchangeOrderIds.instance),
+    GET_COIN_EXCHANGE_ORDERS("getCoinExchangeOrders", GetCoinExchangeOrders.instance),
+    GET_LAST_COIN_EXCHANGE_TRADE("getLastCoinExchangeTrade", GetLastCoinExchangeTrade.instance),
+    GET_COIN_EXCHANGE_TRADES("getCoinExchangeTrades", GetCoinExchangeTrades.instance);
 
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 

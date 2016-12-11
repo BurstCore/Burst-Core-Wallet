@@ -25,6 +25,8 @@ import nxt.blockchain.Attachment;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.ChildTransactionType;
+import nxt.blockchain.FxtTransactionType;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.messaging.EncryptToSelfMessageAppendix;
@@ -89,7 +91,12 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
     final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, Attachment attachment)
             throws NxtException {
-        return createTransaction(req, senderAccount, 0, 0, attachment);
+        return createTransaction(req, senderAccount, 0, 0, attachment, null);
+    }
+
+    final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, Attachment attachment,
+            Chain txChain) throws NxtException {
+        return createTransaction(req, senderAccount, 0, 0, attachment, txChain);
     }
 
     private PhasingAppendix parsePhasing(HttpServletRequest req) throws ParameterException {
@@ -97,7 +104,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
                 Nxt.getBlockchain().getHeight() + 1,
                 Nxt.getBlockchain().getHeight() + Constants.MAX_PHASING_DURATION + 1,
                 true);
-        
+
         PhasingParams phasingParams = parsePhasingParams(req, "phasing");
         String[] phasingLinkedTransactionsValues = req.getParameterValues("phasingLinkedTransaction");
         List<ChainTransactionId> linkedTransactionIds = new ArrayList<>(phasingLinkedTransactionsValues.length);
@@ -143,6 +150,11 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
     final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
                                             long amountNQT, Attachment attachment) throws NxtException {
+        return createTransaction(req, senderAccount, recipientId, amountNQT, attachment, null);
+    }
+
+    final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
+                                            long amountNQT, Attachment attachment, Chain txChain) throws NxtException {
         String deadlineValue = req.getParameter("deadline");
         ChainTransactionId referencedTransactionId = null;
         String referencedTransactionValue = Convert.emptyToNull(req.getParameter("referencedTransaction"));
@@ -216,11 +228,23 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
         byte[] publicKey = secretPhrase != null ? Crypto.getPublicKey(secretPhrase) : Convert.parseHexString(publicKeyValue);
 
-        Chain chain = ParameterParser.getChain(req);
+        // Allow the caller to specify the chain for the transaction instead of using
+        // the 'chain' request parameter
+        Chain chain;
+        if (txChain == null) {
+            chain = ParameterParser.getChain(req);
+        } else {
+            chain = txChain;
+        }
 
         try {
             Transaction.Builder builder;
             if (chain instanceof ChildChain) {
+                if (!(attachment.getTransactionType() instanceof ChildTransactionType)) {
+                    throw new ParameterException(JSONResponses.incorrect("chain",
+                            attachment.getTransactionType().getName() + " attachment not allowed for "
+                                    + chain.getName() + " chain"));
+                }
                 builder = Nxt.newTransactionBuilder((ChildChain)chain, publicKey, amountNQT, feeNQT, deadline, attachment)
                         .referencedTransaction(referencedTransactionId)
                         .appendix(encryptedMessage)
@@ -231,8 +255,12 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
                         .appendix(prunablePlainMessage)
                         .appendix(prunableEncryptedMessage);
             } else {
+                if (!(attachment.getTransactionType() instanceof FxtTransactionType)) {
+                    throw new ParameterException(JSONResponses.incorrect("chain",
+                            attachment.getTransactionType().getName() + " attachment not allowed for "
+                                    + chain.getName() + " chain"));
+                }
                 builder = Nxt.newTransactionBuilder(publicKey, amountNQT, feeNQT, deadline, attachment);
-                //TODO: parameter exception if unsupported appendices are found
             }
             if (attachment.getTransactionType().canHaveRecipient()) {
                 builder.recipientId(recipientId);

@@ -39,12 +39,14 @@ import nxt.ae.TradeHome;
 import nxt.aliases.AliasHome;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Block;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.FxtChain;
 import nxt.blockchain.Generator;
 import nxt.blockchain.Transaction;
+import nxt.ce.CoinExchange;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
 import nxt.dgs.DigitalGoodsHome;
@@ -357,6 +359,34 @@ public final class JSONData {
         json.put("rateNQT", String.valueOf(availableOffers.getRateNQT()));
         json.put("units", String.valueOf(availableOffers.getUnits()));
         json.put("amountNQT", String.valueOf(availableOffers.getAmountNQT()));
+        return json;
+    }
+
+    static JSONObject coinExchangeOrder(CoinExchange.Order order) {
+        JSONObject json = new JSONObject();
+        json.put("order", Long.toUnsignedString(order.getId()));
+        json.put("orderFullHash", Convert.toHexString(order.getFullHash()));
+        json.put("chain", Chain.getChain(order.getChainId()).getName());
+        json.put("exchange", Chain.getChain(order.getExchangeId()).getName());
+        putAccount(json, "account", order.getAccountId());
+        json.put("amountNQT", order.getQuantity());
+        json.put("bidNQT", order.getBidPrice());
+        json.put("askNQT", order.getAskPrice());
+        return json;
+    }
+
+    static JSONObject coinExchangeTrade(CoinExchange.Trade trade) {
+        JSONObject json = new JSONObject();
+        json.put("order", Long.toUnsignedString(trade.getOrderId()));
+        json.put("orderFullHash", Convert.toHexString(trade.getOrderFullHash()));
+        json.put("chain", Chain.getChain(trade.getChainId()).getName());
+        json.put("exchange", Chain.getChain(trade.getExchangeId()).getName());
+        putAccount(json, "account", trade.getAccountId());
+        json.put("amountNQT", trade.getExchangeQuantity());
+        json.put("priceNQT", trade.getExchangePrice());
+        json.put("block", Long.toUnsignedString(trade.getBlockId()));
+        json.put("height", trade.getHeight());
+        json.put("timestamp", trade.getTimestamp());
         return json;
     }
 

@@ -514,6 +514,14 @@ public final class JSONResponses {
         MONITOR_NOT_STARTED = JSON.prepare(response);
     }
 
+    public static final JSONStreamAware NO_TRADES_FOUND;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 8);
+        response.put("errorDescription", "No trades found");
+        NO_TRADES_FOUND = JSON.prepare(response);
+    }
+
     private JSONResponses() {} // never
 
 }

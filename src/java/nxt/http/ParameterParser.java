@@ -808,6 +808,20 @@ public final class ParameterParser {
         return ChildChain.IGNIS;
     }
 
+    public static Chain getChain(HttpServletRequest request, String name, boolean isMandatory) throws ParameterException {
+        String chainName = Convert.emptyToNull(request.getParameter(name));
+        if (chainName != null) {
+            Chain chain = Chain.getChain(chainName.toUpperCase());
+            if (chain == null) {
+                throw new ParameterException(JSONResponses.unknown(name));
+            }
+            return chain;
+        } else if (isMandatory) {
+            throw new ParameterException(JSONResponses.missing(name));
+        }
+        return null;
+    }
+
     public static ChildChain getChildChain(HttpServletRequest request) throws ParameterException {
         String chainName = Convert.emptyToNull(request.getParameter("chain"));
         if (chainName != null) {

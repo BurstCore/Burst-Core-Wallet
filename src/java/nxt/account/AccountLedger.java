@@ -460,7 +460,11 @@ public class AccountLedger {
             SHUFFLING_REGISTRATION(51, true),
             SHUFFLING_PROCESSING(52, true),
             SHUFFLING_CANCELLATION(53, true),
-            SHUFFLING_DISTRIBUTION(54, true);
+            SHUFFLING_DISTRIBUTION(54, true),
+        // TYPE_COIN_EXCHANGE
+            COIN_EXCHANGE_ORDER_ISSUE(58, true),
+            COIN_EXCHANGE_ORDER_CANCEL(59, true),
+            COIN_EXCHANGE_TRADE(60, true);
 
 
         /** Event code mapping */

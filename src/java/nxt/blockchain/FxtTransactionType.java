@@ -20,12 +20,14 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountControlFxtTransactionType;
 import nxt.account.PaymentFxtTransactionType;
+import nxt.ce.CoinExchangeFxtTransactionType;
 
 public abstract class FxtTransactionType extends TransactionType {
 
     protected static final byte TYPE_CHILDCHAIN_BLOCK = -1;
     protected static final byte TYPE_PAYMENT = -2;
     protected static final byte TYPE_ACCOUNT_CONTROL = -3;
+    protected static final byte TYPE_COIN_EXCHANGE = -4;
 
     protected static final byte SUBTYPE_CHILDCHAIN_BLOCK = 0;
 
@@ -56,6 +58,8 @@ public abstract class FxtTransactionType extends TransactionType {
                     default:
                         return null;
                 }
+            case TYPE_COIN_EXCHANGE:
+                return CoinExchangeFxtTransactionType.findTransactionType(subtype);
             default:
                 return null;
         }

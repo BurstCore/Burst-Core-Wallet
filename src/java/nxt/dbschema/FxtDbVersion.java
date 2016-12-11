@@ -296,6 +296,33 @@ public class FxtDbVersion extends DbVersion {
             case 101:
                 apply("CREATE INDEX IF NOT EXISTS balance_fxt_height_id_idx ON balance_fxt (height, account_id)");
             case 102:
+                apply("CREATE TABLE IF NOT EXISTS coin_order_fxt (db_id IDENTITY, id BIGINT NOT NULL,"
+                        + "account_id BIGINT NOT NULL, chain_id INT NOT NULL, exchange_id INT NOT NULL, "
+                        + "full_hash BINARY(32) NOT NULL,"
+                        + "quantity BIGINT NOT NULL, bid_price BIGINT NOT NULL, ask_price BIGINT NOT NULL,"
+                        + "creation_height INT NOT NULL, height INT NOT NULL, transaction_height INT NOT NULL,"
+                        + "transaction_index SMALLINT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+            case 103:
+                apply("CREATE INDEX IF NOT EXISTS coin_order_fxt_id_idx ON coin_order_fxt (id, height DESC)");
+            case 104:
+                apply("CREATE INDEX IF NOT EXISTS coin_order_fxt_chain_idx ON coin_order_fxt (chain_id, exchange_id)");
+            case 105:
+                apply("CREATE INDEX IF NOT EXISTS coin_order_fxt_exchange_idx ON coin_order_fxt (exchange_id)");
+            case 106:
+                apply("CREATE INDEX IF NOT EXISTS coin_order_fxt_account_idx ON coin_order_fxt (account_id)");
+            case 107:
+                apply("CREATE TABLE IF NOT EXISTS coin_trade_fxt (db_id IDENTITY, "
+                        + "chain_id INT NOT NULL, exchange_id INT NOT NULL, account_id BIGINT NOT NULL, "
+                        + "block_id BIGINT NOT NULL, height INT NOT NULL, timestamp INT NOT NULL,"
+                        + "exchange_quantity BIGINT NOT NULL, exchange_price BIGINT NOT NULL,"
+                        + "order_id BIGINT NOT NULL, order_full_hash BINARY(32) NOT NULL)");
+            case 108:
+                apply("CREATE INDEX IF NOT EXISTS coin_trade_fxt_chain_idx ON coin_trade_fxt (chain_id)");
+            case 109:
+                apply("CREATE INDEX IF NOT EXISTS coin_trade_fxt_exchange_idx ON coin_trade_fxt (exchange_id)");
+            case 110:
+                apply("CREATE INDEX IF NOT EXISTS coin_trade_fxt_account_idx ON coin_trade_fxt (account_id)");
+            case 111:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate

@@ -41,6 +41,7 @@ import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
 import nxt.blockchain.TransactionProcessor;
 import nxt.blockchain.TransactionProcessorImpl;
+import nxt.ce.CoinExchange;
 import nxt.crypto.Crypto;
 import nxt.dbschema.Db;
 import nxt.env.DirProvider;
@@ -384,6 +385,7 @@ public final class Nxt {
                 Currency.init();
                 CurrencyMint.init();
                 CurrencyTransfer.init();
+                CoinExchange.init();
                 Peers.init();
                 APIProxy.init();
                 Generator.init();
