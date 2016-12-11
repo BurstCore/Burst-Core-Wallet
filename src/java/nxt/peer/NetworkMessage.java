@@ -3065,7 +3065,7 @@ public abstract class NetworkMessage {
             for (TransactionBytes transaction : blockTransactions) {
                 transactions.add((FxtTransaction)transaction.getTransaction());
             }
-            return Nxt.newBlockBuilder(blockBytes, transactions);
+            return Nxt.parseBlock(blockBytes, transactions);
         }
 
         /**
@@ -3081,7 +3081,7 @@ public abstract class NetworkMessage {
             for (TransactionBytes transaction : blockTransactions) {
                 transactions.add((FxtTransaction)transaction.getTransaction(excludedTransactions));
             }
-            return Nxt.newBlockBuilder(blockBytes, transactions);
+            return Nxt.parseBlock(blockBytes, transactions);
         }
     }
 
@@ -3181,8 +3181,7 @@ public abstract class NetworkMessage {
             } else {
                 prunableAttachment = null;
             }
-            Transaction.Builder builder = Nxt.newTransactionBuilder(transactionBytes, prunableAttachment);
-            return builder.build();
+            return Nxt.parseTransaction(transactionBytes, prunableAttachment);
         }
 
         //TODO: this only works when excludedTransactions contains transactions from a single block only,

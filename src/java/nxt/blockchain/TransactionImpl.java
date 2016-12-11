@@ -660,8 +660,8 @@ public abstract class TransactionImpl implements Transaction {
 
     abstract UnconfirmedTransaction newUnconfirmedTransaction(long arrivalTime);
 
-    static TransactionImpl parseTransaction(JSONObject transactionData) throws NxtException.NotValidException {
-        TransactionImpl transaction = newTransactionBuilder(transactionData).build();
+    public static TransactionImpl parseTransaction(byte[] transactionBytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
+        TransactionImpl transaction = newTransactionBuilder(transactionBytes, prunableAttachments).build();
         if (transaction.getSignature() != null && !transaction.checkSignature()) {
             throw new NxtException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
         }

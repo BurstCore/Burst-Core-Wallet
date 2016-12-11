@@ -58,7 +58,7 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
 
     void processPeerTransactions(List<Transaction> transactions) throws NxtException.ValidationException;
 
-    void processLater(Collection<? extends Transaction> transactions);
+    void processLater(Collection<? extends FxtTransaction> transactions);
 
     SortedSet<? extends Transaction> getCachedUnconfirmedTransactions(List<Long> exclude);
 

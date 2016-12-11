@@ -81,7 +81,7 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl {
                 TransactionHome transactionHome = ChildChain.getChildChain(childBlockAttachment.getChainId()).getTransactionHome();
                 list = transactionHome.findChildTransactions(this.getId());
                 for (ChildTransactionImpl childTransaction : list) {
-                    childTransaction.setFxtTransaction(this);
+                    childTransaction.setBlock(this.getBlock());
                 }
             } else {
                 TransactionProcessorImpl transactionProcessor = TransactionProcessorImpl.getInstance();

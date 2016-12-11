@@ -59,8 +59,8 @@ public final class BlockImpl implements Block {
     private volatile long generatorId;
     private volatile byte[] bytes = null;
 
-
-    public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
+    //for forging new blocks only
+    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
                      byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions, String secretPhrase) {
         this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
                 generatorPublicKey, generationSignature, null, previousBlockHash, transactions);
@@ -86,22 +86,22 @@ public final class BlockImpl implements Block {
         }
     }
 
+    //for loading from db only
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength,
               byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
               byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id,
               List<FxtTransactionImpl> blockTransactions) {
         this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
-                null, generationSignature, blockSignature, previousBlockHash, null);
+                null, generationSignature, blockSignature, previousBlockHash, blockTransactions);
         this.cumulativeDifficulty = cumulativeDifficulty;
         this.baseTarget = baseTarget;
         this.nextBlockId = nextBlockId;
         this.height = height;
         this.id = id;
         this.generatorId = generatorId;
-        this.blockTransactions = blockTransactions;
     }
 
-    public BlockImpl(byte[] blockBytes, List<? extends FxtTransaction> blockTransactions) throws NxtException.NotValidException {
+    private BlockImpl(byte[] blockBytes, List<? extends FxtTransaction> blockTransactions) throws NxtException.NotValidException {
         ByteBuffer buffer = ByteBuffer.wrap(blockBytes);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         version = buffer.getInt();
@@ -126,8 +126,9 @@ public final class BlockImpl implements Block {
         if (transactionCount != blockTransactions.size()) {
             throw new NxtException.NotValidException("Block transaction count " + transactionCount + " is incorrect");
         }
-        this.blockTransactions = new ArrayList<>(transactionCount);
-        blockTransactions.forEach((transaction) -> this.blockTransactions.add((FxtTransactionImpl)transaction));
+        List<FxtTransactionImpl> list = new ArrayList<>(transactionCount);
+        blockTransactions.forEach((transaction) -> list.add((FxtTransactionImpl)transaction));
+        this.blockTransactions = Collections.unmodifiableList(list);
     }
 
     @Override
@@ -290,35 +291,6 @@ public final class BlockImpl implements Block {
         return json;
     }
 
-    static BlockImpl parseBlock(JSONObject blockData) throws NxtException.NotValidException {
-        try {
-            int version = ((Long) blockData.get("version")).intValue();
-            int timestamp = ((Long) blockData.get("timestamp")).intValue();
-            long previousBlock = Convert.parseUnsignedLong((String) blockData.get("previousBlock"));
-            long totalAmountNQT = Convert.parseLong(blockData.get("totalAmountNQT"));
-            long totalFeeNQT = Convert.parseLong(blockData.get("totalFeeNQT"));
-            int payloadLength = ((Long) blockData.get("payloadLength")).intValue();
-            byte[] payloadHash = Convert.parseHexString((String) blockData.get("payloadHash"));
-            byte[] generatorPublicKey = Convert.parseHexString((String) blockData.get("generatorPublicKey"));
-            byte[] generationSignature = Convert.parseHexString((String) blockData.get("generationSignature"));
-            byte[] blockSignature = Convert.parseHexString((String) blockData.get("blockSignature"));
-            byte[] previousBlockHash = version == 1 ? null : Convert.parseHexString((String) blockData.get("previousBlockHash"));
-            List<FxtTransactionImpl> blockTransactions = new ArrayList<>();
-            for (Object transactionData : (JSONArray) blockData.get("transactions")) {
-                blockTransactions.add((FxtTransactionImpl)TransactionImpl.parseTransaction((JSONObject) transactionData));
-            }
-            BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash, generatorPublicKey,
-                    generationSignature, blockSignature, previousBlockHash, blockTransactions);
-            if (!block.checkSignature()) {
-                throw new NxtException.NotValidException("Invalid block signature");
-            }
-            return block;
-        } catch (NxtException.NotValidException|RuntimeException e) {
-            Logger.logDebugMessage("Failed to parse block: " + blockData.toJSONString());
-            throw e;
-        }
-    }
-
     @Override
     public byte[] getBytes() {
         return Arrays.copyOf(bytes(), bytes.length);
@@ -345,6 +317,14 @@ public final class BlockImpl implements Block {
             bytes = buffer.array();
         }
         return bytes;
+    }
+
+    public static BlockImpl parseBlock(byte[] blockBytes, List<? extends FxtTransaction> blockTransactions) throws NxtException.NotValidException {
+        BlockImpl block = new BlockImpl(blockBytes, blockTransactions);
+        if (!block.checkSignature()) {
+            throw new NxtException.NotValidException("Invalid block signature");
+        }
+        return block;
     }
 
     boolean verifyBlockSignature() {

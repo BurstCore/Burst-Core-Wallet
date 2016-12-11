@@ -2023,12 +2023,16 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                     int curTime = Nxt.getEpochTime();
                                     validate(currentBlock, blockchain.getLastBlock(), curTime);
                                     byte[] blockBytes = currentBlock.bytes();
-                                    JSONObject blockJSON = (JSONObject) JSONValue.parse(currentBlock.getJSONObject().toJSONString());
-                                    if (!Arrays.equals(blockBytes, BlockImpl.parseBlock(blockJSON).bytes())) {
-                                        throw new NxtException.NotValidException("Block JSON cannot be parsed back to the same block");
+                                    if (!Arrays.equals(blockBytes, BlockImpl.parseBlock(blockBytes, currentBlock.getFxtTransactions()).bytes())) {
+                                        throw new NxtException.NotValidException("Block bytes cannot be parsed back to the same block");
                                     }
                                     validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
-                                    for (TransactionImpl transaction : currentBlock.getFxtTransactions()) {
+                                    List<TransactionImpl> transactions = new ArrayList<>();
+                                    for (FxtTransactionImpl fxtTransaction : currentBlock.getFxtTransactions()) {
+                                        transactions.add(fxtTransaction);
+                                        transactions.addAll(fxtTransaction.getChildTransactions());
+                                    }
+                                    for (TransactionImpl transaction : transactions) {
                                         byte[] transactionBytes = transaction.bytes();
                                         if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionBytes).build().bytes())) {
                                             throw new NxtException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
@@ -2039,7 +2043,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                             throw new NxtException.NotValidException("Transaction JSON cannot be parsed back to the same transaction: "
                                                     + transaction.getJSONObject().toJSONString());
                                         }
-                                        //TODO: also check parsing for child transactions?
                                     }
                                 }
                                 blockListeners.notify(currentBlock, Event.BEFORE_BLOCK_ACCEPT);

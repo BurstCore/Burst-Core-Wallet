@@ -502,14 +502,17 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     @Override
-    public void processLater(Collection<? extends Transaction> transactions) {
+    public void processLater(Collection<? extends FxtTransaction> transactions) {
         long currentTime = System.currentTimeMillis();
         BlockchainImpl.getInstance().writeLock();
         try {
-            for (Transaction transaction : transactions) {
-                ((TransactionImpl)transaction).unsetBlock();
-                waitingTransactions.add(((TransactionImpl)transaction).newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(transaction.getTimestamp()))));
-            }
+            transactions.forEach(fxtTransaction -> {
+                ((FxtTransactionImpl)fxtTransaction).unsetBlock();
+                waitingTransactions.add(((TransactionImpl)fxtTransaction).newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(fxtTransaction.getTimestamp()))));
+                fxtTransaction.getChildTransactions().forEach(childTransaction -> {
+                    waitingTransactions.add(((TransactionImpl)childTransaction).newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(childTransaction.getTimestamp()))));
+                });
+            });
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
         }
