@@ -197,6 +197,11 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
         return Collections.emptyList();
     }
 
+    @Override
+    public void setChildTransactions(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
+        throw new UnsupportedOperationException("Only allowed for ChildBlockFxtTransactions");
+    }
+
     public long[] getBackFees() {
         return Convert.EMPTY_LONG;
     }

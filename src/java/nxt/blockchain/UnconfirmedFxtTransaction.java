@@ -47,4 +47,9 @@ final class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements 
         return getTransaction().getChildTransactions();
     }
 
+    @Override
+    public void setChildTransactions(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
+        getTransaction().setChildTransactions(childTransactions);
+    }
+
 }

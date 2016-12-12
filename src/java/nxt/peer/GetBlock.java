@@ -16,30 +16,21 @@ package nxt.peer;
 import nxt.Nxt;
 import nxt.blockchain.Block;
 
-import java.util.ArrayList;
-import java.util.List;
+final class GetBlock {
 
-final class GetBlocks {
-
-    private GetBlocks() { }
+    private GetBlock() { }
 
     /**
-     * Process the GetBlocks message and return the Blocks message
+     * Process the GetBlock message and return the BlocksMessage
      *
      * @param   peer                    Peer
      * @param   request                 Request message
      * @return                          Response message
      */
-    static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetBlocksMessage request) {
-        List<Long> blockIds = request.getBlockIds();
-        //TODO: need to handle excluded transactions
-        List<Block> blocks = new ArrayList<>(blockIds.size());
-        for (Long blockId : blockIds) {
-            Block block = Nxt.getBlockchain().getBlock(blockId, true);
-            if (block != null) {
-                blocks.add(block);
-            }
-        }
-        return new NetworkMessage.BlocksMessage(request.getMessageId(), blocks);
+    static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetBlockMessage request) {
+        long blockId = request.getBlockId();
+        byte[] excludedTransactions = request.getExcludedTransactions();
+        Block block = Nxt.getBlockchain().getBlock(blockId, true);
+        return new NetworkMessage.BlocksMessage(request.getMessageId(), block, excludedTransactions);
     }
 }

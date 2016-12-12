@@ -105,6 +105,28 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl {
     }
 
     @Override
+    public synchronized void setChildTransactions(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
+        if (this.childTransactions != null) {
+            throw new IllegalStateException("Child transactions already set");
+        }
+        byte[][] childTransactionHashes = getChildTransactionFullHashes();
+        if (childTransactions.size() != childTransactionHashes.length) {
+            throw new NxtException.NotValidException(String.format("Child transactions size %d does not match child hashes count %d",
+                    childTransactions.size(), childTransactionHashes.length));
+        }
+        List<ChildTransactionImpl> list = new ArrayList<>();
+        for (int i = 0; i < childTransactionHashes.length; i++) {
+            ChildTransactionImpl childTransaction = (ChildTransactionImpl)childTransactions.get(i);
+            if (!Arrays.equals(childTransactionHashes[i], childTransaction.getFullHash())) {
+                throw new NxtException.NotValidException(String.format("Child transaction full hash mismatch: %s, %s",
+                        Convert.toHexString(childTransactionHashes[i]), Convert.toHexString(childTransaction.getFullHash())));
+            }
+            list.add(childTransaction);
+        }
+        this.childTransactions = list;
+    }
+
+    @Override
     synchronized void save(Connection con, String schemaTable) throws SQLException {
         super.save(con, schemaTable);
         ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)getAttachment();

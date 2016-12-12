@@ -32,4 +32,6 @@ public interface FxtTransaction extends Transaction {
 
     List<? extends ChildTransaction> getChildTransactions();
 
+    void setChildTransactions(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException;
+
 }

@@ -23,7 +23,7 @@ import nxt.blockchain.Transaction;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GetTransactions {
+class GetTransactions {
 
     private GetTransactions() {}
 

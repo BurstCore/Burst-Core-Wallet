@@ -19,6 +19,8 @@ import nxt.Nxt;
 import nxt.NxtException.NotValidException;
 import nxt.blockchain.Block;
 import nxt.blockchain.ChainTransactionId;
+import nxt.blockchain.ChildTransaction;
+import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.Transaction;
 import nxt.util.Convert;
@@ -33,8 +35,10 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -85,7 +89,7 @@ public abstract class NetworkMessage {
         processors.put("Blocks", new BlocksMessage());
         processors.put("CumulativeDifficulty", new CumulativeDifficultyMessage());
         processors.put("Error", new ErrorMessage());
-        processors.put("GetBlocks", new GetBlocksMessage());
+        processors.put("GetBlocks", new GetBlockMessage());
         processors.put("GetCumulativeDifficulty", new GetCumulativeDifficultyMessage());
         processors.put("GetInfo", new GetInfoMessage());
         processors.put("GetMilestoneBlockIds", new GetMilestoneBlockIdsMessage());
@@ -820,7 +824,7 @@ public abstract class NetworkMessage {
      * message is returned as an asynchronous response.
      */
     public static class GetPeersMessage extends NetworkMessage {
-/**
+        /**
          * Construct the message from the message bytes
          *
          * @param   bytes                       Message bytes following the message name
@@ -1743,26 +1747,24 @@ public abstract class NetworkMessage {
         }
     }
 
-    //TODO: this is never used for getting more than one block, perhaps replace with GetBlockMessage
-    //and then can use long transaction ids as exclude list, not ChainTransactionIds
     /**
-     * The GetBlocks message is sent when a peer is notified that a new block is available.
+     * The GetBlock message is sent when a peer is notified that a new block is available.
      * The Blocks message is returned in response.  The sender can include a list of transactions
      * to be excluded when creating the Blocks message.  The sender must then supply
      * the excluded transactions when it receives the Blocks message.
      * <ul>
      * <li>Message identifier (long)
-     * <li>Block identifier list (long)
-     * <li>Transaction exclusion list (ChainTransactionId)
+     * <li>Block identifier (long)
+     * <li>Transaction exclusion BitSet (byte[])
      * </ul>
      */
-    public static class GetBlocksMessage extends NetworkMessage {
+    public static class GetBlockMessage extends NetworkMessage {
 
         /** Block identifier list */
-        private final List<Long> blockIds;
+        private final long blockId;
 
-        /** Transaction exclusion list */
-        private final List<ChainTransactionId> excludedTransactions;
+        /** Transaction exclusion BitSet */
+        private final byte[] excludedTransactions;
 
         /**
          * Construct the message from the message bytes
@@ -1776,7 +1778,7 @@ public abstract class NetworkMessage {
         @Override
         protected NetworkMessage constructMessage(ByteBuffer bytes)
                                     throws BufferOverflowException, BufferUnderflowException, NetworkException {
-            return new GetBlocksMessage(bytes);
+            return new GetBlockMessage(bytes);
         }
 
         /**
@@ -1787,74 +1789,63 @@ public abstract class NetworkMessage {
          */
         @Override
         NetworkMessage processMessage(PeerImpl peer) {
-            return GetBlocks.processRequest(peer, this);
+            return GetBlock.processRequest(peer, this);
         }
 
         /**
          * Construct a GetBlocks message
          */
-        private GetBlocksMessage() {
+        private GetBlockMessage() {
             super("GetBlocks");
             messageId = 0;
-            blockIds = null;
+            blockId = 0;
             excludedTransactions = null;
         }
 
         /**
          * Construct a GetBlocks message
          *
-         * @param   blockIds                Block identifiers
+         * @param   blockId                Block identifier
          */
-        public GetBlocksMessage(List<Long> blockIds) {
-            this(blockIds, null);
+        public GetBlockMessage(long blockId) {
+            this(blockId, null);
         }
 
         /**
-         * Construct a GetBlocks message
+         * Construct a GetBlock message
          *
          * Transactions can be excluded
          *
-         * @param   blockIds                Block identifiers
+         * @param   blockId                Block identifier
          * @param   excludedTransactions    Excluded transactions or null
          */
-        public GetBlocksMessage(List<Long> blockIds, List<ChainTransactionId> excludedTransactions) {
+        public GetBlockMessage(long blockId, BitSet excludedTransactions) {
             super("GetBlocks");
-            if (blockIds.size() > MAX_LIST_SIZE) {
-                throw new RuntimeException("List size " + blockIds.size() + " exceeds the maximum of " + MAX_LIST_SIZE);
-            }
-            if (excludedTransactions != null && excludedTransactions.size() > MAX_LIST_SIZE) {
-                throw new RuntimeException("List size " + excludedTransactions.size() + " exceeds maximum of " + MAX_LIST_SIZE);
-            }
-            this.excludedTransactions = (excludedTransactions != null ? excludedTransactions : Collections.emptyList());
+            this.excludedTransactions = excludedTransactions == null ? null : excludedTransactions.toByteArray();
             this.messageId = nextMessageId.incrementAndGet();
-            this.blockIds = blockIds;
+            this.blockId = blockId;
         }
 
         /**
-         * Construct a GetBlocks message
+         * Construct a GetBlock message
          *
          * @param   bytes                       Message bytes
          * @throws  BufferUnderflowException    Message is too small
          * @throws  NetworkException            Message is not valid
          */
-        private GetBlocksMessage(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
+        private GetBlockMessage(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
             super("GetBlocks", bytes);
             this.messageId = bytes.getLong();
+            blockId = bytes.getLong();
             int count = (int)bytes.getShort() & 0xffff;
-            if (count > MAX_LIST_SIZE) {
-                throw new NetworkException("List size " + count + " exceeds the maximum of " + MAX_LIST_SIZE);
+            if (count > MAX_ARRAY_LENGTH) {
+                throw new NetworkException("Excluded transactions size " + count + " exceeds the maximum of " + MAX_ARRAY_LENGTH);
             }
-            blockIds = new ArrayList<>(count);
-            for (int i=0; i<count; i++) {
-                blockIds.add(bytes.getLong());
-            }
-            count = (int)bytes.getShort() & 0xffff;
-            if (count > MAX_LIST_SIZE) {
-                throw new NetworkException("List size " + count + " exceeds the maximum of " + MAX_LIST_SIZE);
-            }
-            excludedTransactions = new ArrayList<>(count);
-            for (int i=0; i<count; i++) {
-                excludedTransactions.add(ChainTransactionId.parse(bytes));
+            if (count > 0) {
+                this.excludedTransactions = new byte[count];
+                bytes.get(excludedTransactions);
+            } else {
+                this.excludedTransactions = null;
             }
         }
 
@@ -1865,7 +1856,7 @@ public abstract class NetworkMessage {
          */
         @Override
         int getLength() {
-            return super.getLength() + 8 + 2 + (8 * blockIds.size()) + 2 + (ChainTransactionId.BYTE_SIZE * excludedTransactions.size());
+            return super.getLength() + 8 + 8 + 2 + excludedTransactions.length;
         }
 
         /**
@@ -1878,10 +1869,13 @@ public abstract class NetworkMessage {
         void getBytes(ByteBuffer bytes) throws BufferOverflowException {
             super.getBytes(bytes);
             bytes.putLong(messageId);
-            bytes.putShort((short)blockIds.size());
-            blockIds.forEach((id) -> bytes.putLong(id));
-            bytes.putShort((short)excludedTransactions.size());
-            excludedTransactions.forEach((id) -> id.put(bytes));
+            bytes.putLong(blockId);
+            if (excludedTransactions != null) {
+                bytes.putShort((short) excludedTransactions.length);
+                bytes.put(excludedTransactions);
+            } else {
+                bytes.putShort((short)0);
+            }
         }
 
         /**
@@ -1905,12 +1899,12 @@ public abstract class NetworkMessage {
         }
 
         /**
-         * Get the block identifiers
+         * Get the block identifier
          *
-         * @return                          Block identifiers
+         * @return                          Block identifier
          */
-        public List<Long> getBlockIds() {
-            return blockIds;
+        public long getBlockId() {
+            return blockId;
         }
 
         /**
@@ -1918,13 +1912,13 @@ public abstract class NetworkMessage {
          *
          * @return                          Transaction identifiers
          */
-        public List<ChainTransactionId> getExcludedTransactions() {
+        public byte[] getExcludedTransactions() {
             return excludedTransactions;
         }
     }
 
     /**
-     * The Blocks message is returned in response to the GetBlocks and GetNextBlocks message.
+     * The Blocks message is returned in response to the GetBlock and GetNextBlocks message.
      * The message identifier is obtained from the request message.
      * <ul>
      * <li>Message identifier (long)
@@ -1983,6 +1977,26 @@ public abstract class NetworkMessage {
                 blockBytes.add(bytes);
                 totalBlockLength += bytes.getLength();
             });
+        }
+
+        /**
+         * Construct a Blocks message
+         *
+         * @param   messageId               Message identifier
+         * @param   block                  Block
+         * @param   excludedTransactions    transactions to exclude
+         */
+        public BlocksMessage(long messageId, Block block, byte[] excludedTransactions) {
+            super("Blocks");
+            this.messageId = messageId;
+            totalBlockLength = 0;
+            if (block == null) {
+                blockBytes = Collections.emptyList();
+            } else {
+                BlockBytes bytes = excludedTransactions == null ? new BlockBytes(block) : new BlockBytes(block, BitSet.valueOf(excludedTransactions));
+                blockBytes = Collections.singletonList(bytes);
+                totalBlockLength += bytes.getLength();
+            }
         }
 
         /**
@@ -2054,7 +2068,7 @@ public abstract class NetworkMessage {
         /**
          * Get the blocks
          *
-         * This method cannot be used if transactions were excluded in the GetBlocks message
+         * This method cannot be used if transactions were excluded in the GetBlock message
          *
          * @return                          Block list
          * @throws  NotValidException       Block is not valid
@@ -2070,18 +2084,20 @@ public abstract class NetworkMessage {
         /**
          * Get the blocks
          *
-         * This method must be used if transactions were excluded in the GetBlocks message
+         * This method must be used if transactions were excluded in the GetBlock message
          *
          * @param   excludedTransactions    Transactions that were excluded from the blocks
          * @return                          Block list
          * @throws  NotValidException       Block is not valid
          */
-        public List<Block> getBlocks(List<Transaction> excludedTransactions) throws NotValidException {
-            List<Block> blocks = new ArrayList<>(blockBytes.size());
-            for (BlockBytes bytes : blockBytes) {
-                blocks.add(bytes.getBlock(excludedTransactions));
+        public Block getBlock(List<Transaction> excludedTransactions) throws NotValidException {
+            if (blockBytes.size() > 1) {
+                throw new IllegalArgumentException("BlocksMessage of more than one block does not support excludedTransactions");
             }
-            return blocks;
+            if (blockBytes.isEmpty()) {
+                return null;
+            }
+            return blockBytes.get(0).getBlock(excludedTransactions);
         }
     }
 
@@ -2504,13 +2520,16 @@ public abstract class NetworkMessage {
 
     /**
      * The BlockInventory message is sent when a peer has received a new block.
-     * The peer responds with a GetBlocks request if it wants to get the block.
+     * The peer responds with a GetBlock request if it wants to get the block.
      * <ul>
      * <li>Block identifier (long)
      * <li>Previous block identifier (long)
      * <li>Block timestamp (integer)
      * <li>Transaction identifier list (ChainTransactionId)
      * </ul>
+     * The ordering of transactions in the transaction identifier list must be
+     * same as the one used by BlockBytes when returning block and transaction
+     * bytes, as the exclude transactions feature depends on this.
      */
     public static class BlockInventoryMessage extends NetworkMessage {
 
@@ -2523,9 +2542,12 @@ public abstract class NetworkMessage {
         /** Block timestamp */
         private final int timestamp;
 
-        //TODO: reduce message size by storing separately Fxt transactionIds, and for each child chain an array of child transactionIds
         /** Transaction identifiers */
         private final List<ChainTransactionId> transactionIds;
+
+        private int[] childCounts;
+
+        private int totalLength;
 
         /**
          * Construct the message from the message bytes
@@ -2562,6 +2584,7 @@ public abstract class NetworkMessage {
             previousBlockId = 0;
             timestamp = 0;
             transactionIds = null;
+            totalLength = 0;
         }
 
         /**
@@ -2574,15 +2597,25 @@ public abstract class NetworkMessage {
             blockId = block.getId();
             previousBlockId = block.getPreviousBlockId();
             timestamp = block.getTimestamp();
+            totalLength = 8 + 8 + 4 + 2;
             List<? extends FxtTransaction> transactions = block.getFxtTransactions();
             if (transactions.size() > MAX_LIST_SIZE) {
                 throw new RuntimeException("List size " + transactions.size() + " exceeds the maximum of " + MAX_LIST_SIZE);
             }
-            transactionIds = new ArrayList<>(transactions.size());
-            transactions.forEach(fxtTransaction -> {
+            childCounts = new int[transactions.size()];
+            transactionIds = new ArrayList<>();
+            for (int i = 0; i < childCounts.length; i++) {
+                FxtTransaction fxtTransaction = transactions.get(i);
                 transactionIds.add(ChainTransactionId.getChainTransactionId(fxtTransaction));
+                totalLength += 32; // fxtTransactionHash
+                int childCount = fxtTransaction.getChildTransactions().size();
+                totalLength += 2; // childCount
+                if (childCount > 0) {
+                    totalLength += 4 + childCount * 32; // childChainId and childTransactionHashes
+                }
+                childCounts[i] = childCount;
                 fxtTransaction.getChildTransactions().forEach(childTransaction -> transactionIds.add(ChainTransactionId.getChainTransactionId(childTransaction)));
-            });
+            }
         }
 
         /**
@@ -2597,13 +2630,30 @@ public abstract class NetworkMessage {
             blockId = bytes.getLong();
             previousBlockId = bytes.getLong();
             timestamp = bytes.getInt();
-            int count = (int)bytes.getShort() & 0xffff;
+            int count = (int)bytes.getShort() & 0xffff; //FxtTransaction count
             if (count > MAX_LIST_SIZE) {
                 throw new NetworkException("List size " + count + " exceeds the maximum of " + MAX_LIST_SIZE);
             }
-            transactionIds = new ArrayList<>(count);
+            int totalCount = count;
+            transactionIds = new ArrayList<>();
+            childCounts = new int[count];
             for (int i=0; i<count; i++) {
-                transactionIds.add(ChainTransactionId.parse(bytes));
+                byte[] fxtTransactionHash = new byte[32];
+                bytes.get(fxtTransactionHash);
+                transactionIds.add(new ChainTransactionId(FxtChain.FXT.getId(), fxtTransactionHash));
+                int childCount = (int)bytes.getShort() & 0xffff;
+                childCounts[i] = childCount;
+                if (childCount > 0) {
+                    if ((totalCount += childCount) > MAX_LIST_SIZE) {
+                        throw new NetworkException("Total list size " + totalCount + " exceeds the maximum of " + MAX_LIST_SIZE);
+                    }
+                    int childChainId = bytes.getInt();
+                    while (childCount-- > 0) {
+                        byte[] childTransactionHash = new byte[32];
+                        bytes.get(childTransactionHash);
+                        transactionIds.add(new ChainTransactionId(childChainId, childTransactionHash));
+                    }
+                }
             }
         }
 
@@ -2614,7 +2664,7 @@ public abstract class NetworkMessage {
          */
         @Override
         int getLength() {
-            return super.getLength() + 8 + 8 + 4 + 2 + (ChainTransactionId.BYTE_SIZE * transactionIds.size());
+            return super.getLength() + totalLength;
         }
 
         /**
@@ -2627,8 +2677,22 @@ public abstract class NetworkMessage {
         void getBytes(ByteBuffer bytes) throws BufferOverflowException {
             super.getBytes(bytes);
             bytes.putLong(blockId).putLong(previousBlockId).putInt(timestamp);
-            bytes.putShort((short)transactionIds.size());
-            transactionIds.forEach(id -> id.put(bytes));
+            bytes.putShort((short)childCounts.length);
+            Iterator<ChainTransactionId> iterator = transactionIds.iterator();
+            for (int i = 0; i < childCounts.length; i++) {
+                ChainTransactionId fxtTransactionId = iterator.next();
+                bytes.put(fxtTransactionId.getFullHash());
+                int childCount = childCounts[i];
+                bytes.putShort((short)childCount);
+                if (childCount > 0) {
+                    ChainTransactionId childTransactionId = iterator.next();
+                    bytes.putInt(childTransactionId.getChainId());
+                    bytes.put(childTransactionId.getFullHash());
+                }
+                while (childCount-- > 0) {
+                    bytes.put(iterator.next().getFullHash());
+                }
+            }
         }
 
         /**
@@ -2978,16 +3042,20 @@ public abstract class NetworkMessage {
      * Encoded block bytes
      * <ul>
      * <li>Block
-     * <li>Transaction list (missing transactions are represented by just the transaction identifier)
+     * <li>Transaction list (missing transactions are represented by empty transaction bytes)
      * </ul>
+     * The ordering of transactions must be same as used in the BlockInventoryMessage.
      */
     private static class BlockBytes {
 
         /** Block bytes */
         private final byte[] blockBytes;
 
-        /** Block transactions */
+        /** Block transactions, each FxtTransaction is followed by its ChildTransactions, if any */
         private final List<TransactionBytes> blockTransactions;
+
+        /** Child transaction counts for each FxtTransaction */
+        private final int[] childCounts;
 
         /** Total block byte length */
         private int length;
@@ -2999,14 +3067,58 @@ public abstract class NetworkMessage {
          */
         private BlockBytes(Block block) {
             blockBytes = block.getBytes();
+            length = getEncodedArrayLength(blockBytes) + 2; // fxtTransactions count (short)
+            List<? extends FxtTransaction> transactions = block.getFxtTransactions();
+            blockTransactions = new ArrayList<>();
+            childCounts = new int[transactions.size()];
+            for (int i = 0; i < childCounts.length; i++) {
+                FxtTransaction fxtTransaction = transactions.get(i);
+                TransactionBytes transactionBytes = new TransactionBytes(fxtTransaction);
+                blockTransactions.add(transactionBytes);
+                length += transactionBytes.getLength() + 2; // childTransactions count (short)
+                childCounts[i] = fxtTransaction.getChildTransactions().size();
+                fxtTransaction.getChildTransactions().forEach(childTransaction -> {
+                    TransactionBytes childTransactionBytes = new TransactionBytes(childTransaction);
+                    blockTransactions.add(childTransactionBytes);
+                    length += childTransactionBytes.getLength();
+                });
+            }
+        }
+
+        /**
+         * Construct an encoded block
+         *
+         * @param   block               Block
+         * @param   excludedTransactions    transactions to exclude
+         */
+        private BlockBytes(Block block, BitSet excludedTransactions) {
+            blockBytes = block.getBytes();
             length = getEncodedArrayLength(blockBytes) + 2;
             List<? extends FxtTransaction> transactions = block.getFxtTransactions();
-            blockTransactions = new ArrayList<>(transactions.size());
-            transactions.forEach((transaction) -> {
-                TransactionBytes transactionBytes = new TransactionBytes(transaction);
-                blockTransactions.add(transactionBytes);
-                length += transactionBytes.getLength();
-            });
+            blockTransactions = new ArrayList<>();
+            childCounts = new int[transactions.size()];
+            int index = 0;
+            for (int i = 0; i < childCounts.length; i++) {
+                FxtTransaction fxtTransaction = transactions.get(i);
+                if (!excludedTransactions.get(index++)) {
+                    TransactionBytes transactionBytes = new TransactionBytes(fxtTransaction);
+                    blockTransactions.add(transactionBytes);
+                    length += transactionBytes.getLength();
+                } else {
+                    blockTransactions.add(TransactionBytes.EXCLUDED);
+                }
+                length += 2; // childTransactions count (short) always included
+                childCounts[i] = fxtTransaction.getChildTransactions().size();
+                for (ChildTransaction childTransaction : fxtTransaction.getChildTransactions()) {
+                    if (!excludedTransactions.get(index++)) {
+                        TransactionBytes childTransactionBytes = new TransactionBytes(childTransaction);
+                        blockTransactions.add(childTransactionBytes);
+                        length += childTransactionBytes.getLength();
+                    } else {
+                        blockTransactions.add(TransactionBytes.EXCLUDED);
+                    }
+                }
+            }
         }
 
         /**
@@ -3019,15 +3131,27 @@ public abstract class NetworkMessage {
         private BlockBytes(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
             blockBytes = decodeArray(bytes);
             length = getEncodedArrayLength(blockBytes) + 2;
-            int count = (int)bytes.getShort() & 0xffff;
+            int count = (int)bytes.getShort() & 0xffff; //FxtTransaction count
             if (count > MAX_LIST_SIZE) {
                 throw new NetworkException("Array size " + count + " exceeds the maximum size");
             }
-            blockTransactions = new ArrayList<>(count);
-            for (int i=0; i<count; i++) {
-                TransactionBytes transactionBytes = new TransactionBytes(bytes);
-                blockTransactions.add(transactionBytes);
-                length += transactionBytes.getLength();
+            int totalCount = count;
+            blockTransactions = new ArrayList<>();
+            childCounts = new int[count];
+            for (int i = 0; i < count; i++) {
+                TransactionBytes fxtTransactionBytes = TransactionBytes.parse(bytes);
+                blockTransactions.add(fxtTransactionBytes);
+                length += fxtTransactionBytes.getLength() + 2; //child count
+                int childCount = (int)bytes.getShort() & 0xffff;
+                childCounts[i] = childCount;
+                if ((totalCount += childCount) > MAX_LIST_SIZE) {
+                    throw new NetworkException("Array size " + totalCount + " exceeds the maximum size");
+                }
+                while (childCount-- > 0) {
+                    TransactionBytes childTransactionBytes = TransactionBytes.parse(bytes);
+                    blockTransactions.add(childTransactionBytes);
+                    length += childTransactionBytes.getLength();
+                }
             }
         }
 
@@ -3048,8 +3172,15 @@ public abstract class NetworkMessage {
          */
         private void getBytes(ByteBuffer bytes) throws BufferOverflowException {
             encodeArray(bytes, blockBytes);
-            bytes.putShort((short)blockTransactions.size());
-            blockTransactions.forEach((transaction) -> transaction.getBytes(bytes));
+            bytes.putShort((short)childCounts.length);
+            Iterator<TransactionBytes> iterator = blockTransactions.iterator();
+            for (int childCount : childCounts) {
+                iterator.next().getBytes(bytes);
+                bytes.putShort((short) childCount);
+                while (childCount-- > 0) {
+                    iterator.next().getBytes(bytes);
+                }
+            }
         }
 
         /**
@@ -3061,11 +3192,20 @@ public abstract class NetworkMessage {
          * @throws  NotValidException   Block is not valid
          */
         private Block getBlock() throws NotValidException {
-            List<FxtTransaction> transactions = new ArrayList<>(blockTransactions.size());
-            for (TransactionBytes transaction : blockTransactions) {
-                transactions.add((FxtTransaction)transaction.getTransaction());
+            List<FxtTransaction> fxtTransactions = new ArrayList<>(childCounts.length);
+            Iterator<TransactionBytes> iterator = blockTransactions.iterator();
+            for (int childCount : childCounts) {
+                FxtTransaction fxtTransaction = (FxtTransaction)iterator.next().getTransaction();
+                if (childCount > 0) {
+                    List<ChildTransaction> childTransactions = new ArrayList<>();
+                    while (childCount-- > 0) {
+                        childTransactions.add((ChildTransaction) iterator.next().getTransaction());
+                    }
+                    fxtTransaction.setChildTransactions(childTransactions);
+                }
+                fxtTransactions.add(fxtTransaction);
             }
-            return Nxt.parseBlock(blockBytes, transactions);
+            return Nxt.parseBlock(blockBytes, fxtTransactions);
         }
 
         /**
@@ -3077,11 +3217,24 @@ public abstract class NetworkMessage {
          * @throws  NotValidException   Block is not valid
          */
         private Block getBlock(List<Transaction> excludedTransactions) throws NotValidException {
-            List<FxtTransaction> transactions = new ArrayList<>(blockTransactions.size());
-            for (TransactionBytes transaction : blockTransactions) {
-                transactions.add((FxtTransaction)transaction.getTransaction(excludedTransactions));
+            if (excludedTransactions.isEmpty()) {
+                return getBlock();
             }
-            return Nxt.parseBlock(blockBytes, transactions);
+            List<FxtTransaction> fxtTransactions = new ArrayList<>(childCounts.length);
+            Iterator<TransactionBytes> iterator = blockTransactions.iterator();
+            Iterator<Transaction> excluded = excludedTransactions.iterator();
+            for (int childCount : childCounts) {
+                FxtTransaction fxtTransaction = (FxtTransaction)iterator.next().getTransaction(excluded);
+                if (childCount > 0) {
+                    List<ChildTransaction> childTransactions = new ArrayList<>();
+                    while (childCount-- > 0) {
+                        childTransactions.add((ChildTransaction)iterator.next().getTransaction(excluded));
+                    }
+                    fxtTransaction.setChildTransactions(childTransactions);
+                }
+                fxtTransactions.add(fxtTransaction);
+            }
+            return Nxt.parseBlock(blockBytes, fxtTransactions);
         }
     }
 
@@ -3094,6 +3247,17 @@ public abstract class NetworkMessage {
      * </ul>
      */
     private static class TransactionBytes {
+
+        private static final TransactionBytes EXCLUDED = new TransactionBytes(Convert.EMPTY_BYTE, Convert.EMPTY_BYTE);
+
+        private static TransactionBytes parse(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
+            byte[] transactionBytes = decodeArray(bytes);
+            if (transactionBytes.length == 0) {
+                return EXCLUDED;
+            }
+            byte[] prunableAttachmentBytes = decodeArray(bytes);
+            return new TransactionBytes(transactionBytes, prunableAttachmentBytes);
+        }
 
         /** Transaction bytes */
         private final byte[] transactionBytes;
@@ -3113,21 +3277,19 @@ public abstract class NetworkMessage {
             if (prunableAttachment != null) {
                 prunableAttachmentBytes = JSON.toJSONString(prunableAttachment).getBytes(UTF8);
             } else {
-                prunableAttachmentBytes = new byte[0];
+                prunableAttachmentBytes = Convert.EMPTY_BYTE;
             }
         }
 
         /**
          * Construct an encoded transaction
          *
-         * @param   transactionId       Transaction identifier
+         * @param   transactionBytes
+         * @param   prunableAttachmentBytes
          */
-        private TransactionBytes(long transactionId) {
-            transactionBytes = new byte[8];
-            for (int i=0; i<8; i++) {
-                transactionBytes[i] = (byte)(transactionId>>>(i*8));
-            }
-            prunableAttachmentBytes = new byte[0];
+        private TransactionBytes(byte[] transactionBytes, byte[] prunableAttachmentBytes) {
+            this.transactionBytes = transactionBytes;
+            this.prunableAttachmentBytes = prunableAttachmentBytes;
         }
 
         /**
@@ -3139,7 +3301,7 @@ public abstract class NetworkMessage {
          */
         private TransactionBytes(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
             transactionBytes = decodeArray(bytes);
-            prunableAttachmentBytes = decodeArray(bytes);
+            prunableAttachmentBytes = transactionBytes.length > 0 ? decodeArray(bytes) : Convert.EMPTY_BYTE;
         }
 
         /**
@@ -3148,7 +3310,7 @@ public abstract class NetworkMessage {
          * @return                      Encoded transaction length
          */
         private int getLength() {
-            return getEncodedArrayLength(transactionBytes) + getEncodedArrayLength(prunableAttachmentBytes);
+            return getEncodedArrayLength(transactionBytes) + (transactionBytes.length > 0 ? getEncodedArrayLength(prunableAttachmentBytes) : 0);
         }
 
         /**
@@ -3159,7 +3321,9 @@ public abstract class NetworkMessage {
          */
         private void getBytes(ByteBuffer bytes) {
             encodeArray(bytes, transactionBytes);
-            encodeArray(bytes, prunableAttachmentBytes);
+            if (transactionBytes.length > 0) {
+                encodeArray(bytes, prunableAttachmentBytes);
+            }
         }
 
         /**
@@ -3172,10 +3336,9 @@ public abstract class NetworkMessage {
          */
         private Transaction getTransaction() throws NotValidException {
             JSONObject prunableAttachment;
-            if (transactionBytes.length == 8) {
+            if (transactionBytes.length == 0) {
                 throw new IllegalArgumentException("No excluded transactions provided");
             }
-            //TODO: allow excluding child transactions from the prunable attachment bytes, when those represent a ChildBlockAttachment
             if (prunableAttachmentBytes.length > 0) {
                 prunableAttachment = (JSONObject)JSONValue.parse(new String(prunableAttachmentBytes));
             } else {
@@ -3184,35 +3347,19 @@ public abstract class NetworkMessage {
             return Nxt.parseTransaction(transactionBytes, prunableAttachment);
         }
 
-        //TODO: this only works when excludedTransactions contains transactions from a single block only,
-        // because long transactionIds are not guaranteed to be unique across blocks
         /**
          * Get the transaction
          *
          * This method must be used if transactions were excluded
          *
-         * @param   excludedTransactions    Excluded transactions
+         * @param   excluded    Excluded transactions iterator
          * @throws  NotValidException       Transaction is not valid
          */
-        private Transaction getTransaction(List<Transaction> excludedTransactions) throws NotValidException {
-            if (transactionBytes.length != 8) {
+        private Transaction getTransaction(Iterator<Transaction> excluded) throws NotValidException {
+            if (transactionBytes.length != 0) {
                 return getTransaction();
             }
-            long transactionId = 0;
-            for (int i=0; i<8; i++) {
-                transactionId |= ((long)transactionBytes[i] & 0xff) << (i*8);
-            }
-            Transaction transaction = null;
-            for (Transaction tx : excludedTransactions) {
-                if (tx.getId() == transactionId) {
-                    transaction = tx;
-                    break;
-                }
-            }
-            if (transaction == null) {
-                throw new NotValidException("Excluded transaction not found");
-            }
-            return transaction;
+            return excluded.next();
         }
     }
 }

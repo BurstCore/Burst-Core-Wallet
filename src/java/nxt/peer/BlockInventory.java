@@ -24,6 +24,7 @@ import nxt.blockchain.Transaction;
 import nxt.util.Logger;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -82,17 +83,17 @@ final class BlockInventory {
                     // in the TransactionsInventory transaction cache.
                     //
                     List<ChainTransactionId> invTransactionIds = request.getTransactionIds();
-                    List<ChainTransactionId> excludedIds = new ArrayList<>(invTransactionIds.size());
+                    BitSet excludedTransactionIds = new BitSet();
                     List<Transaction> cachedTransactions = new ArrayList<>(invTransactionIds.size());
-                    invTransactionIds.forEach(id -> {
-                        Transaction tx = TransactionsInventory.getCachedTransaction(id);
+                    for (int i = 0; i < invTransactionIds.size(); i++) {
+                        Transaction tx = TransactionsInventory.getCachedTransaction(invTransactionIds.get(i));
                         if (tx != null) {
                             cachedTransactions.add(tx);
-                            excludedIds.add(id);
+                            excludedTransactionIds.set(i);
                         }
-                    });
-                    NetworkMessage.GetBlocksMessage blockRequest =
-                            new NetworkMessage.GetBlocksMessage(Collections.singletonList(invBlockId), excludedIds);
+                    }
+                    NetworkMessage.GetBlockMessage blockRequest =
+                            new NetworkMessage.GetBlockMessage(invBlockId, excludedTransactionIds);
                     //
                     // Request the block, starting with the peer that sent the BlocksInventory message
                     //
@@ -124,7 +125,7 @@ final class BlockInventory {
                     //
                     // Process the block
                     //
-                    Block block = response.getBlocks(cachedTransactions).get(0);
+                    Block block = response.getBlock(cachedTransactions);
                     long previousBlockId = block.getPreviousBlockId();
                     Block lastBlock = Nxt.getBlockchain().getLastBlock();
                     blockCache.put(block.getId(), block);
