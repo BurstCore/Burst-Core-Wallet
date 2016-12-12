@@ -77,15 +77,24 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl {
         ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)getAttachment();
         if (childTransactions == null) {
             List<ChildTransactionImpl> list;
+            byte[][] hashes = childBlockAttachment.getChildTransactionFullHashes();
             if (TransactionHome.hasFxtTransaction(this.getId(), Nxt.getBlockchain().getHeight())) {
                 TransactionHome transactionHome = ChildChain.getChildChain(childBlockAttachment.getChainId()).getTransactionHome();
                 list = transactionHome.findChildTransactions(this.getId());
+                if (list.size() != hashes.length) {
+                    throw new IllegalStateException("Not all child transactions found");
+                }
+                for (int i = 0; i < hashes.length; i++) {
+                    if (!Arrays.equals(hashes[i], list.get(i).getFullHash())) {
+                        throw new IllegalStateException(String.format("Child transaction hash mismatch %s %s",
+                                Convert.toHexString(hashes[i]), Convert.toHexString(list.get(i).getFullHash())));
+                    }
+                }
                 for (ChildTransactionImpl childTransaction : list) {
                     childTransaction.setBlock(this.getBlock());
                 }
             } else {
                 TransactionProcessorImpl transactionProcessor = TransactionProcessorImpl.getInstance();
-                byte[][] hashes = childBlockAttachment.getChildTransactionFullHashes();
                 list = new ArrayList<>(hashes.length);
                 for (byte[] fullHash : hashes) {
                     UnconfirmedTransaction unconfirmedTransaction = transactionProcessor.getUnconfirmedTransaction(Convert.fullHashToId(fullHash));

@@ -20,10 +20,13 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
+import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public final class ChildBlockFxtTransactionType extends FxtTransactionType {
 
@@ -70,15 +73,29 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
     @Override
     protected void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
-        if (ChildChain.getChildChain(attachment.getChainId()) == null) {
+        ChildChain childChain = ChildChain.getChildChain(attachment.getChainId());
+        if (childChain == null) {
             throw new NxtException.NotValidException("No such child chain id: " + attachment.getChainId());
+        }
+        byte[][] childTransactionHashes = attachment.getChildTransactionFullHashes();
+        if (childTransactionHashes.length == 0) {
+            throw new NxtException.NotValidException("Empty ChildBlock transaction");
+        }
+        int blockchainHeight = Nxt.getBlockchain().getHeight();
+        Set<Long> childIds = new HashSet<>();
+        for (byte[] childTransactionHash : childTransactionHashes) {
+            if (!childIds.add(Convert.fullHashToId(childTransactionHash))) {
+                throw new NxtException.NotValidException("Duplicate child transaction hash");
+            }
+            if (childChain.getTransactionHome().hasTransactionByFullHash(childTransactionHash, blockchainHeight)) {
+                throw new NxtException.NotValidException("Child transaction already included at an earlier height");
+            }
         }
         long[] backFees = attachment.getBackFees();
         if (backFees.length > 3) {
             throw new NxtException.NotValidException("Invalid backFees length");
         }
         long[] minBackFees = new long[3];
-        int blockchainHeight = Nxt.getBlockchain().getHeight();
         for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
             childTransaction.validate();
             if (transaction.getExpiration() > childTransaction.getExpiration()) {
