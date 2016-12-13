@@ -81,7 +81,7 @@ final class BlockInventory {
                 Peer feederPeer = null;
                 try {
                     //
-                    // Build the GetBlocks request.  We will exclude transactions that are
+                    // Build the GetBlock request.  We will exclude transactions that are
                     // in the TransactionsInventory transaction cache.
                     //
                     List<ChainTransactionId> invTransactionIds = request.getTransactionIds();

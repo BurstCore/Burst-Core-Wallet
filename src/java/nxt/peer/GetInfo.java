@@ -120,7 +120,8 @@ final class GetInfo {
             }
             try {
                 List<Transaction> transactions = response.getTransactions();
-                Nxt.getTransactionProcessor().processPeerTransactions(transactions);
+                List<? extends Transaction> addedTransactions = Nxt.getTransactionProcessor().processPeerTransactions(transactions);
+                TransactionsInventory.cacheTransactions(addedTransactions);
             } catch (NxtException.ValidationException | RuntimeException e) {
                 peer.blacklist(e);
             }

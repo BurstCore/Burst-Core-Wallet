@@ -561,12 +561,12 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
             Boolean.compare(o2.getType() != ChildBlockFxtTransactionType.INSTANCE, o1.getType() != ChildBlockFxtTransactionType.INSTANCE);
 
     @Override
-    public void processPeerTransactions(List<Transaction> transactions) throws NxtException.NotValidException {
+    public List<TransactionImpl> processPeerTransactions(List<Transaction> transactions) throws NxtException.NotValidException {
         if (Nxt.getBlockchain().getHeight() <= Constants.LAST_KNOWN_BLOCK && !testUnconfirmedTransactions) {
-            return;
+            return Collections.emptyList();
         }
         if (transactions.isEmpty()) {
-            return;
+            return Collections.emptyList();
         }
         transactions.sort(peerTransactionComparator);
         long arrivalTimestamp = System.currentTimeMillis();
@@ -609,6 +609,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         if (!exceptions.isEmpty()) {
             throw new NxtException.NotValidException("Peer sends invalid transactions: " + exceptions.toString());
         }
+        return addedUnconfirmedTransactions;
     }
 
     private void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws NxtException.ValidationException {

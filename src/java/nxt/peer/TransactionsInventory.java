@@ -16,7 +16,6 @@
 
 package nxt.peer;
 
-import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.ChainTransactionId;
@@ -104,16 +103,13 @@ final class TransactionsInventory {
                     if (response != null && response.getTransactionCount() > 0) {
                         try {
                             List<Transaction> transactions = response.getTransactions();
-                            Nxt.getTransactionProcessor().processPeerTransactions(transactions);
+                            List<? extends Transaction> addedTransactions = Nxt.getTransactionProcessor().processPeerTransactions(transactions);
                             transactions.forEach(tx -> {
                                 ChainTransactionId transactionId = ChainTransactionId.getChainTransactionId(tx);
                                 requestIds.remove(transactionId);
                                 pendingTransactions.remove(transactionId);
-                                //do not allow transactions from the future in the transaction cache
-                                if (tx.getTimestamp() < now + Constants.MAX_TIMEDRIFT) {
-                                    transactionCache.put(transactionId, tx);
-                                }
                             });
+                            cacheTransactions(addedTransactions);
                         } catch (RuntimeException | NxtException.ValidationException e) {
                             feederPeer.blacklist(e);
                         }
@@ -141,5 +137,11 @@ final class TransactionsInventory {
      */
     static Transaction getCachedTransaction(ChainTransactionId transactionId) {
         return transactionCache.get(transactionId);
+    }
+
+    static void cacheTransactions(List<? extends Transaction> transactions) {
+        transactions.forEach(transaction -> {
+            transactionCache.put(ChainTransactionId.getChainTransactionId(transaction), transaction);
+        });
     }
 }
