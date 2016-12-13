@@ -496,7 +496,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             //
             blockchain.writeLock();
             try {
-                List<BlockImpl> forkBlocks = new ArrayList<>();
+                List<Block> forkBlocks = new ArrayList<>();
                 for (int index = 1; index < chainBlockIds.size() && blockchain.getHeight() - startHeight < 720; index++) {
                     PeerBlock peerBlock = blockMap.get(chainBlockIds.get(index));
                     if (peerBlock == null) {
@@ -519,7 +519,11 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 int myForkSize = blockchain.getHeight() - startHeight;
                 if (!forkBlocks.isEmpty() && myForkSize < 720) {
                     Logger.logDebugMessage("Will process a fork of " + forkBlocks.size() + " blocks, mine is " + myForkSize);
-                    processFork(feederPeer, forkBlocks, commonBlock);
+                    try {
+                        processFork(forkBlocks, commonBlock);
+                    } catch (BlockNotAcceptedException e) {
+                        feederPeer.blacklist(e);
+                    }
                 }
             } finally {
                 blockchain.writeUnlock();
@@ -527,37 +531,37 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
 
         }
 
-        private void processFork(final Peer peer, final List<BlockImpl> forkBlocks, final Block commonBlock) {
+    };
 
-            BigInteger curCumulativeDifficulty = blockchain.getLastBlock().getCumulativeDifficulty();
-
-            List<BlockImpl> myPoppedOffBlocks = popOffTo(commonBlock);
-
-            int pushedForkBlocks = 0;
-            if (blockchain.getLastBlock().getId() == commonBlock.getId()) {
-                for (BlockImpl block : forkBlocks) {
-                    if (blockchain.getLastBlock().getId() == block.getPreviousBlockId()) {
-                        try {
-                            pushBlock(block);
+    private void processFork(final List<Block> forkBlocks, final Block commonBlock) throws BlockNotAcceptedException {
+        BigInteger curCumulativeDifficulty = blockchain.getLastBlock().getCumulativeDifficulty();
+        List<BlockImpl> myPoppedOffBlocks = popOffTo(commonBlock);
+        BlockImpl lowerCumulativeDifficultyBlock = null;
+        int pushedForkBlocks = 0;
+        try {
+            try {
+                if (blockchain.getLastBlock().getId() == commonBlock.getId()) {
+                    for (Block block : forkBlocks) {
+                        if (blockchain.getLastBlock().getId() == block.getPreviousBlockId()) {
+                            pushBlock((BlockImpl)block);
                             pushedForkBlocks += 1;
-                        } catch (BlockNotAcceptedException e) {
-                            peer.blacklist(e);
-                            break;
                         }
                     }
                 }
-            }
-
-            if (pushedForkBlocks > 0 && blockchain.getLastBlock().getCumulativeDifficulty().compareTo(curCumulativeDifficulty) < 0) {
-                Logger.logDebugMessage("Pop off caused by peer " + peer.getHost() + ", blacklisting");
-                peer.blacklist("Pop off");
-                List<BlockImpl> peerPoppedOffBlocks = popOffTo(commonBlock);
-                pushedForkBlocks = 0;
-                for (BlockImpl block : peerPoppedOffBlocks) {
-                    TransactionProcessorImpl.getInstance().processLater(block.getFxtTransactions());
+            } finally {
+                if (pushedForkBlocks > 0 && blockchain.getLastBlock().getCumulativeDifficulty().compareTo(curCumulativeDifficulty) <= 0) {
+                    lowerCumulativeDifficultyBlock = blockchain.getLastBlock();
+                    List<BlockImpl> peerPoppedOffBlocks = popOffTo(commonBlock);
+                    pushedForkBlocks = 0;
+                    for (BlockImpl block : peerPoppedOffBlocks) {
+                        TransactionProcessorImpl.getInstance().processLater(block.getFxtTransactions());
+                    }
                 }
             }
-
+            if (lowerCumulativeDifficultyBlock != null) {
+                throw new BlockNotAcceptedException("Lower cumulative difficulty", lowerCumulativeDifficultyBlock);
+            }
+        } finally {
             if (pushedForkBlocks == 0) {
                 Logger.logDebugMessage("Didn't accept any blocks, pushing back my previous blocks");
                 for (int i = myPoppedOffBlocks.size() - 1; i >= 0; i--) {
@@ -575,10 +579,8 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     TransactionProcessorImpl.getInstance().processLater(block.getFxtTransactions());
                 }
             }
-
         }
-
-    };
+    }
 
     /**
      * Callable method to get the next block segment from the selected peer
@@ -1083,6 +1085,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     Logger.logDebugMessage("Replacement block failed to be accepted, pushing back our last block");
                     pushBlock(lastBlock);
                     TransactionProcessorImpl.getInstance().processLater(block.getFxtTransactions());
+                    throw e;
                 }
             } finally {
                 blockchain.writeUnlock();
@@ -1109,48 +1112,10 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             BlockImpl lastBlock = blockchain.getLastBlock();
             BlockImpl commonBlock = blockchain.getBlock(lastBlock.getPreviousBlockId());
             BlockImpl previousBlock = (BlockImpl)inputBlocks.get(0);
-            BlockImpl peerBlock = (BlockImpl)inputBlocks.get(1);
             if (commonBlock.getId() != previousBlock.getPreviousBlockId()) {
                 return;                 // Blockchain has changed
             }
-            previousBlock.setPrevious(commonBlock);
-            peerBlock.setPrevious(previousBlock);
-            if (peerBlock.getCumulativeDifficulty().compareTo(lastBlock.getCumulativeDifficulty()) <= 0) {
-                return;                 // Peer chain is not better
-            }
-            List<BlockImpl> myPoppedOffBlocks = popOffTo(commonBlock);
-            int pushedForkBlocks = 0;
-            if (blockchain.getLastBlock().getId() == commonBlock.getId()) {
-                for (Block block : inputBlocks) {
-                    if (blockchain.getLastBlock().getId() == block.getPreviousBlockId()) {
-                        try {
-                            pushBlock((BlockImpl)block);
-                            pushedForkBlocks += 1;
-                        } catch (BlockNotAcceptedException e) {
-                            Logger.logDebugMessage("Replacement block failed to be accepted");
-                            pushedForkBlocks = 0;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (pushedForkBlocks == 0) {
-                Logger.logDebugMessage("Didn't accept any blocks, pushing back my previous blocks");
-                for (int i = myPoppedOffBlocks.size() - 1; i >= 0; i--) {
-                    BlockImpl block = myPoppedOffBlocks.remove(i);
-                    try {
-                        pushBlock(block);
-                    } catch (BlockNotAcceptedException e) {
-                        Logger.logErrorMessage("Popped off block no longer acceptable: " + block.getJSONObject().toJSONString(), e);
-                        break;
-                    }
-                }
-            } else {
-                Logger.logDebugMessage("Switched to peer's fork");
-                for (BlockImpl block : myPoppedOffBlocks) {
-                    TransactionProcessorImpl.getInstance().processLater(block.getFxtTransactions());
-                }
-            }
+            processFork(inputBlocks, commonBlock);
         } finally {
             blockchain.writeUnlock();
         }
