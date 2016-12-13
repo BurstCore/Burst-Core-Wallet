@@ -16,17 +16,20 @@
 
 package nxt.http;
 
+import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Transaction;
 import nxt.peer.NetworkHandler;
 import nxt.peer.NetworkMessage;
+import nxt.peer.TransactionsInventory;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Sends a transaction to some peers.
@@ -72,8 +75,10 @@ public final class SendTransaction extends APIServlet.APIRequestHandler {
         try {
             Transaction.Builder builder = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
-            //TODO: either need a new NetworkMessage.BroadcastTransactionMessage, or need to add the transaction to the TransactionsInventory
-            NetworkHandler.broadcastMessage(new NetworkMessage.TransactionsInventoryMessage(Collections.singletonList(transaction)));
+            List<Transaction> transactions = Collections.singletonList(transaction);
+            TransactionsInventory.cacheTransactions(transactions);
+            NetworkHandler.broadcastMessage(new NetworkMessage.TransactionsInventoryMessage(transactions));
+            Nxt.getTransactionProcessor().broadcastLater(transaction);
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", Convert.toHexString(transaction.getFullHash()));
         } catch (NxtException.ValidationException|RuntimeException e) {

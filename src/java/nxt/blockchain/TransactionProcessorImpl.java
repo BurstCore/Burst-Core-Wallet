@@ -27,6 +27,7 @@ import nxt.db.EntityDbTable;
 import nxt.dbschema.Db;
 import nxt.peer.NetworkHandler;
 import nxt.peer.NetworkMessage;
+import nxt.peer.TransactionsInventory;
 import nxt.util.Convert;
 import nxt.util.Listener;
 import nxt.util.Listeners;
@@ -216,6 +217,39 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
 
     };
 
+    private final Runnable rebroadcastTransactionsThread = () -> {
+
+        try {
+            try {
+                if (Nxt.getBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
+                    return;
+                }
+                List<Transaction> transactionList = new ArrayList<>();
+                int curTime = Nxt.getEpochTime();
+                for (TransactionImpl transaction : broadcastedTransactions) {
+                    if (transaction.getExpiration() < curTime || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash())) {
+                        broadcastedTransactions.remove(transaction);
+                    } else if (transaction.getTimestamp() < curTime - 30) {
+                        transactionList.add(transaction);
+                    }
+                }
+
+                if (transactionList.size() > 0) {
+                    TransactionsInventory.cacheTransactions(transactionList);
+                    NetworkHandler.broadcastMessage(new NetworkMessage.TransactionsInventoryMessage(transactionList));
+                }
+
+            } catch (Exception e) {
+                Logger.logMessage("Error in transaction re-broadcasting thread", e);
+            }
+        } catch (Throwable t) {
+            Logger.logErrorMessage("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
+            t.printStackTrace();
+            System.exit(1);
+        }
+
+    };
+
     private final Runnable processWaitingTransactionsThread = () -> {
 
         try {
@@ -237,6 +271,9 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
 
     private TransactionProcessorImpl() {
         if (!Constants.isLightClient) {
+            if (!Constants.isOffline) {
+                ThreadPool.scheduleThread("RebroadcastTransactions", rebroadcastTransactionsThread, 23);
+            }
             ThreadPool.scheduleThread("RemoveUnconfirmedTransactions", removeUnconfirmedTransactionsThread, 20);
             ThreadPool.scheduleThread("ProcessWaitingTransactions", processWaitingTransactionsThread, 1);
         }
@@ -361,6 +398,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 processTransaction(unconfirmedTransaction);
                 Logger.logDebugMessage("Accepted new transaction " + transaction.getStringId());
                 List<Transaction> acceptedTransactions = Collections.singletonList(transaction);
+                TransactionsInventory.cacheTransactions(acceptedTransactions);
                 NetworkHandler.broadcastMessage(new NetworkMessage.TransactionsInventoryMessage(acceptedTransactions));
                 transactionListeners.notify(acceptedTransactions, Event.ADDED_UNCONFIRMED_TRANSACTIONS);
                 if (enableTransactionRebroadcasting) {
@@ -370,6 +408,11 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
         }
+    }
+
+    @Override
+    public void broadcastLater(Transaction transaction) {
+        broadcastedTransactions.add((TransactionImpl)transaction);
     }
 
     @Override

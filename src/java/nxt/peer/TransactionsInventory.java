@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-final class TransactionsInventory {
+public final class TransactionsInventory {
 
     /** Transaction cache */
     private static final ConcurrentHashMap<ChainTransactionId, Transaction> transactionCache = new ConcurrentHashMap<>();
@@ -139,7 +139,7 @@ final class TransactionsInventory {
         return transactionCache.get(transactionId);
     }
 
-    static void cacheTransactions(List<? extends Transaction> transactions) {
+    public static void cacheTransactions(List<? extends Transaction> transactions) {
         transactions.forEach(transaction -> {
             transactionCache.put(ChainTransactionId.getChainTransactionId(transaction), transaction);
         });
