@@ -16,6 +16,7 @@
 
 package nxt.peer;
 
+import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Block;
@@ -144,7 +145,9 @@ final class BlockInventory {
                             }
                         }
                     } catch (BlockchainProcessor.BlockOutOfOrderException ignore) {}
-                    blockCache.put(block.getId(), block);
+                    if (block.getTimestamp() < Nxt.getEpochTime() + Constants.MAX_TIMEDRIFT) {
+                        blockCache.put(block.getId(), block);
+                    }
                     int now = Nxt.getEpochTime();
                     Iterator<Block> it = blockCache.values().iterator();
                     while (it.hasNext()) {
