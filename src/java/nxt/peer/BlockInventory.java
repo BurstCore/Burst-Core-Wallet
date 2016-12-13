@@ -19,6 +19,7 @@ package nxt.peer;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Block;
+import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.Transaction;
 import nxt.util.Logger;
@@ -128,20 +129,22 @@ final class BlockInventory {
                     Block block = response.getBlock(cachedTransactions);
                     long previousBlockId = block.getPreviousBlockId();
                     Block lastBlock = Nxt.getBlockchain().getLastBlock();
-                    blockCache.put(block.getId(), block);
-                    if (previousBlockId == lastBlock.getId() ||
-                            (previousBlockId == lastBlock.getPreviousBlockId() &&
-                                    block.getTimestamp() < lastBlock.getTimestamp())) {
-                        Nxt.getBlockchainProcessor().processPeerBlock(block);
-                    } else  {
-                        Block tipBlock = blockCache.get(previousBlockId);
-                        if (tipBlock != null && tipBlock.getPreviousBlockId() == lastBlock.getPreviousBlockId()) {
-                            List<Block> blockList = new ArrayList<>(2);
-                            blockList.add(tipBlock);
-                            blockList.add(block);
-                            Nxt.getBlockchainProcessor().processPeerBlocks(blockList);
+                    try {
+                        if (previousBlockId == lastBlock.getId() ||
+                                (previousBlockId == lastBlock.getPreviousBlockId() &&
+                                        block.getTimestamp() < lastBlock.getTimestamp())) {
+                            Nxt.getBlockchainProcessor().processPeerBlock(block);
+                        } else {
+                            Block tipBlock = blockCache.get(previousBlockId);
+                            if (tipBlock != null && tipBlock.getPreviousBlockId() == lastBlock.getPreviousBlockId()) {
+                                List<Block> blockList = new ArrayList<>(2);
+                                blockList.add(tipBlock);
+                                blockList.add(block);
+                                Nxt.getBlockchainProcessor().processPeerBlocks(blockList);
+                            }
                         }
-                    }
+                    } catch (BlockchainProcessor.BlockOutOfOrderException ignore) {}
+                    blockCache.put(block.getId(), block);
                     int now = Nxt.getEpochTime();
                     Iterator<Block> it = blockCache.values().iterator();
                     while (it.hasNext()) {
