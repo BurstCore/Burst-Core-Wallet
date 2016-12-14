@@ -305,7 +305,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public DbIterator<UnconfirmedTransaction> getUnconfirmedFxtTransactions() {
-        return unconfirmedTransactionTable.getManyBy(new DbClause.StringClause("chain", "FXT"), 0, -1);
+        return unconfirmedTransactionTable.getManyBy(new DbClause.IntClause("chain_id", FxtChain.FXT.getId()), 0, -1);
     }
 
     @Override

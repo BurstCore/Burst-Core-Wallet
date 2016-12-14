@@ -19,7 +19,7 @@ import nxt.Nxt;
 import nxt.NxtException.NotValidException;
 import nxt.blockchain.Block;
 import nxt.blockchain.ChainTransactionId;
-import nxt.blockchain.ChildBlockAttachment;
+import nxt.blockchain.ChildBlockFxtTransaction;
 import nxt.blockchain.ChildBlockFxtTransactionType;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.FxtChain;
@@ -2811,9 +2811,9 @@ public abstract class NetworkMessage {
             for (Transaction transaction : transactions) {
                 set.add(ChainTransactionId.getChainTransactionId(transaction));
                 if (transaction.getType() == ChildBlockFxtTransactionType.INSTANCE) {
-                    ChildBlockAttachment attachment = (ChildBlockAttachment)transaction.getAttachment();
-                    for (byte[] childTransactionHash : attachment.getChildTransactionFullHashes()) {
-                        set.add(new ChainTransactionId(attachment.getChainId(), childTransactionHash));
+                    ChildBlockFxtTransaction childBlockFxtTransaction = (ChildBlockFxtTransaction)transaction;
+                    for (byte[] childTransactionHash : childBlockFxtTransaction.getChildTransactionFullHashes()) {
+                        set.add(new ChainTransactionId(childBlockFxtTransaction.getChildChain().getId(), childTransactionHash));
                     }
                 }
             }

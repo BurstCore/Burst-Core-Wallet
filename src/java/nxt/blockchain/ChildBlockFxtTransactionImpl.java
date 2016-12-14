@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl {
+final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements ChildBlockFxtTransaction {
 
     private List<ChildTransactionImpl> childTransactions;
 
@@ -35,11 +35,13 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl {
         super(builder, secretPhrase);
     }
 
-    ChildChain getChildChain() {
+    @Override
+    public ChildChain getChildChain() {
         return ChildChain.getChildChain(((ChildBlockAttachment)attachment).getChainId());
     }
 
-    byte[][] getChildTransactionFullHashes() {
+    @Override
+    public byte[][] getChildTransactionFullHashes() {
         return ((ChildBlockAttachment)getAttachment()).getChildTransactionFullHashes();
     }
 
