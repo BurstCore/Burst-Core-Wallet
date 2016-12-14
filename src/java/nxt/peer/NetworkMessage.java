@@ -19,6 +19,8 @@ import nxt.Nxt;
 import nxt.NxtException.NotValidException;
 import nxt.blockchain.Block;
 import nxt.blockchain.ChainTransactionId;
+import nxt.blockchain.ChildBlockAttachment;
+import nxt.blockchain.ChildBlockFxtTransactionType;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransaction;
@@ -38,9 +40,11 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -2746,6 +2750,8 @@ public abstract class NetworkMessage {
      * The TransactionsInventory message is sent when a peer has received new transactions.
      * The peer responds with a GetTransactions message if it wants to
      * receive the transactions.
+     * TransactionsInventory messages also include the child transaction identifiers for
+     * each of the ChildBlockTransactions in them.
      * <ul>
      * <li>Transaction list
      * </ul>
@@ -2753,17 +2759,12 @@ public abstract class NetworkMessage {
      * Each transaction list entry has the following format:
      * <ul>
      * <li>Transaction identifier (ChainTransactionId)
-     * <li>Transaction timestamp (integer)
      * </ul>
      */
     public static class TransactionsInventoryMessage extends NetworkMessage {
 
         /** Transaction identifier */
         private final List<ChainTransactionId> transactionIds;
-
-        //TODO: are these timestamps actually used?
-        /** Transaction timestamp */
-        private final List<Integer> timestamps;
 
         /**
          * Construct the message from the message bytes
@@ -2797,7 +2798,6 @@ public abstract class NetworkMessage {
         private TransactionsInventoryMessage() {
             super("TransactionsInventory");
             transactionIds = null;
-            timestamps = null;
         }
 
         /**
@@ -2807,14 +2807,19 @@ public abstract class NetworkMessage {
          */
         public TransactionsInventoryMessage(List<? extends Transaction> transactions) {
             super("TransactionsInventory");
-            if (transactions.size() > MAX_LIST_SIZE) {
-                throw new RuntimeException("List size " + transactions.size() + " exceeds the maximum of " + MAX_LIST_SIZE);
-            }
-            transactionIds = new ArrayList<>(transactions.size());
-            timestamps = new ArrayList<>(transactions.size());
+            Set<ChainTransactionId> set = new HashSet<>();
             for (Transaction transaction : transactions) {
-                transactionIds.add(ChainTransactionId.getChainTransactionId(transaction));
-                timestamps.add(transaction.getTimestamp());
+                set.add(ChainTransactionId.getChainTransactionId(transaction));
+                if (transaction.getType() == ChildBlockFxtTransactionType.INSTANCE) {
+                    ChildBlockAttachment attachment = (ChildBlockAttachment)transaction.getAttachment();
+                    for (byte[] childTransactionHash : attachment.getChildTransactionFullHashes()) {
+                        set.add(new ChainTransactionId(attachment.getChainId(), childTransactionHash));
+                    }
+                }
+            }
+            transactionIds = new ArrayList<>(set);
+            if (transactionIds.size() > MAX_LIST_SIZE) {
+                throw new RuntimeException("List size " + transactions.size() + " exceeds the maximum of " + MAX_LIST_SIZE);
             }
         }
 
@@ -2832,10 +2837,8 @@ public abstract class NetworkMessage {
                 throw new NetworkException("List size " + count + " exceeds the maximum of " + MAX_LIST_SIZE);
             }
             transactionIds = new ArrayList<>(count);
-            timestamps = new ArrayList<>(count);
             for (int i=0; i<count; i++) {
                 transactionIds.add(ChainTransactionId.parse(bytes));
-                timestamps.add(bytes.getInt());
             }
         }
 
@@ -2846,7 +2849,7 @@ public abstract class NetworkMessage {
          */
         @Override
         int getLength() {
-            return super.getLength() + 2 + (ChainTransactionId.BYTE_SIZE * transactionIds.size()) + (4 * timestamps.size());
+            return super.getLength() + 2 + (ChainTransactionId.BYTE_SIZE * transactionIds.size());
         }
 
         /**
@@ -2861,7 +2864,6 @@ public abstract class NetworkMessage {
             bytes.putShort((short)transactionIds.size());
             for (int i=0; i<transactionIds.size(); i++) {
                 transactionIds.get(i).put(bytes);
-                bytes.putInt(timestamps.get(i));
             }
         }
 
@@ -2884,14 +2886,6 @@ public abstract class NetworkMessage {
             return transactionIds;
         }
 
-        /**
-         * Get the timestamps
-         *
-         * @return                          Timestamp
-         */
-        public List<Integer> getTimestamps() {
-            return timestamps;
-        }
     }
 
     /**
