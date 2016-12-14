@@ -416,7 +416,7 @@ public final class CoinExchange {
             try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table
                     + " (id, account_id, chain_id, exchange_id, quantity, bid_price, ask_price, "
                     + "full_hash, creation_height, height, transaction_height, transaction_index, latest) "
-                    + "KEY(id, height) "
+                    + "KEY(id, height, full_hash) "
                     + "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)" )) {
                 int i = 0;
                 pstmt.setLong(++i, id);
