@@ -39,7 +39,7 @@ public final class TransactionsInventory {
     private static final Set<ChainTransactionId> pendingTransactions = Collections.synchronizedSet(new HashSet<>());
 
     /** Currently not valid transactions */
-    private static final Set<Transaction> notCurrentlyValidTransactions = Collections.synchronizedSet(new HashSet<>());
+    private static final ConcurrentHashMap<ChainTransactionId, Transaction> notCurrentlyValidTransactions = new ConcurrentHashMap<>();
 
     private TransactionsInventory() {}
 
@@ -57,7 +57,8 @@ public final class TransactionsInventory {
         //
         List<ChainTransactionId> requestIds = new ArrayList<>(Math.min(100, transactionIds.size()));
         for (ChainTransactionId transactionId : transactionIds) {
-            if (transactionCache.get(transactionId) == null && !pendingTransactions.contains(transactionId)) {
+            if (transactionCache.get(transactionId) == null && notCurrentlyValidTransactions.get(transactionId) == null
+                    && !pendingTransactions.contains(transactionId)) {
                 requestIds.add(transactionId);
                 pendingTransactions.add(transactionId);
                 if (requestIds.size() >= 100) {
@@ -74,7 +75,7 @@ public final class TransactionsInventory {
         // requests.
         transactionCache.values().removeIf(transaction -> now - transaction.getTimestamp() > 10 * 60);
         // Remove transactions that have been not valid for longer than 10 min, or are from the future
-        notCurrentlyValidTransactions.removeIf(transaction -> now - transaction.getTimestamp() > 10 * 60 || transaction.getTimestamp() > now + Constants.MAX_TIMEDRIFT);
+        notCurrentlyValidTransactions.values().removeIf(transaction -> now - transaction.getTimestamp() > 10 * 60 || transaction.getTimestamp() > now + Constants.MAX_TIMEDRIFT);
         Peers.peersService.execute(() -> {
             //
             // Request the transactions, starting with the peer that sent the TransactionsInventory
@@ -102,14 +103,14 @@ public final class TransactionsInventory {
                     if (response != null && response.getTransactionCount() > 0) {
                         try {
                             List<Transaction> transactions = response.getTransactions();
-                            List<? extends Transaction> addedTransactions = Nxt.getTransactionProcessor().processPeerTransactions(transactions);
+                            notAcceptedTransactions.addAll(transactions);
                             transactions.forEach(tx -> {
                                 ChainTransactionId transactionId = ChainTransactionId.getChainTransactionId(tx);
                                 requestIds.remove(transactionId);
                                 pendingTransactions.remove(transactionId);
                             });
+                            List<? extends Transaction> addedTransactions = Nxt.getTransactionProcessor().processPeerTransactions(transactions);
                             cacheTransactions(addedTransactions);
-                            notAcceptedTransactions.addAll(transactions);
                             notAcceptedTransactions.removeAll(addedTransactions);
                         } catch (RuntimeException | NxtException.ValidationException e) {
                             feederPeer.blacklist(e);
@@ -124,10 +125,10 @@ public final class TransactionsInventory {
                     }
                 }
                 try {
-                    notCurrentlyValidTransactions.addAll(notAcceptedTransactions);
+                    notAcceptedTransactions.forEach(transaction -> notCurrentlyValidTransactions.put(ChainTransactionId.getChainTransactionId(transaction), transaction));
                     //some not currently valid transactions may have become valid as others were fetched from peers, try processing them again
-                    List<? extends Transaction> addedTransactions = Nxt.getTransactionProcessor().processPeerTransactions(new ArrayList<>(notCurrentlyValidTransactions));
-                    notCurrentlyValidTransactions.removeAll(addedTransactions);
+                    List<? extends Transaction> addedTransactions = Nxt.getTransactionProcessor().processPeerTransactions(new ArrayList<>(notCurrentlyValidTransactions.values()));
+                    addedTransactions.forEach(transaction -> notCurrentlyValidTransactions.remove(ChainTransactionId.getChainTransactionId(transaction)));
                 } catch (NxtException.NotValidException e) {
                     Logger.logErrorMessage(e.getMessage(), e); //should not happen
                 }
