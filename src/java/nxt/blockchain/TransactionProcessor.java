@@ -58,7 +58,7 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
 
     void broadcastLater(Transaction transaction);
 
-    List<? extends Transaction> processPeerTransactions(List<Transaction> transactions) throws NxtException.ValidationException;
+    List<? extends Transaction> processPeerTransactions(List<Transaction> transactions) throws NxtException.NotValidException;
 
     void processLater(Collection<? extends FxtTransaction> transactions);
 

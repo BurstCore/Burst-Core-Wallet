@@ -16,15 +16,16 @@
 
 package nxt.peer;
 
+import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.Transaction;
+import nxt.util.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +37,9 @@ public final class TransactionsInventory {
 
     /** Pending transactions */
     private static final Set<ChainTransactionId> pendingTransactions = Collections.synchronizedSet(new HashSet<>());
+
+    /** Currently not valid transactions */
+    private static final Set<Transaction> notCurrentlyValidTransactions = Collections.synchronizedSet(new HashSet<>());
 
     private TransactionsInventory() {}
 
@@ -64,19 +68,13 @@ public final class TransactionsInventory {
         if (requestIds.isEmpty()) {
             return null;
         }
-        //
+        final int now = Nxt.getEpochTime();
         // Remove old transactions from our cache.  The transaction processor tracks
         // unconfirmed transactions, so our cache is just to reduce transaction
         // requests.
-        //
-        final int now = Nxt.getEpochTime();
-        Iterator<Transaction> it = transactionCache.values().iterator();
-        while (it.hasNext()) {
-            Transaction transaction = it.next();
-            if (now - transaction.getTimestamp() > 10*60) {
-                it.remove();
-            }
-        }
+        transactionCache.values().removeIf(transaction -> now - transaction.getTimestamp() > 10 * 60);
+        // Remove transactions that have been not valid for longer than 10 min, or are from the future
+        notCurrentlyValidTransactions.removeIf(transaction -> now - transaction.getTimestamp() > 10 * 60 || transaction.getTimestamp() > now + Constants.MAX_TIMEDRIFT);
         Peers.peersService.execute(() -> {
             //
             // Request the transactions, starting with the peer that sent the TransactionsInventory
@@ -94,6 +92,7 @@ public final class TransactionsInventory {
                     startIndex = 0;
                 }
                 int index = startIndex;
+                Set<Transaction> notAcceptedTransactions = new HashSet<>();
                 while (true) {
                     Peer feederPeer = connectedPeers.get(index);
                     NetworkMessage.GetTransactionsMessage transactionsRequest =
@@ -110,6 +109,8 @@ public final class TransactionsInventory {
                                 pendingTransactions.remove(transactionId);
                             });
                             cacheTransactions(addedTransactions);
+                            notAcceptedTransactions.addAll(transactions);
+                            notAcceptedTransactions.removeAll(addedTransactions);
                         } catch (RuntimeException | NxtException.ValidationException e) {
                             feederPeer.blacklist(e);
                         }
@@ -121,6 +122,14 @@ public final class TransactionsInventory {
                     if (index == startIndex) {
                         break;
                     }
+                }
+                try {
+                    notCurrentlyValidTransactions.addAll(notAcceptedTransactions);
+                    //some not currently valid transactions may have become valid as others were fetched from peers, try processing them again
+                    List<? extends Transaction> addedTransactions = Nxt.getTransactionProcessor().processPeerTransactions(new ArrayList<>(notCurrentlyValidTransactions));
+                    notCurrentlyValidTransactions.removeAll(addedTransactions);
+                } catch (NxtException.NotValidException e) {
+                    Logger.logErrorMessage(e.getMessage(), e); //should not happen
                 }
             } finally {
                 requestIds.forEach(id -> pendingTransactions.remove(id));
