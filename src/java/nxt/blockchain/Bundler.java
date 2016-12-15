@@ -162,6 +162,10 @@ public final class Bundler {
         return currentTotalFeesFQT;
     }
 
+    public final long getOverpayFQTPerFXT() {
+        return overpayFQTPerFXT;
+    }
+
     private List<ChildBlockFxtTransaction> bundle() {
         int blockchainHeight = Nxt.getBlockchain().getHeight();
         List<ChildBlockFxtTransaction> childBlockFxtTransactions = new ArrayList<>();
