@@ -340,7 +340,10 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     }
 
     public long[] getMinimumBackFeesFQT(int blockchainHeight) {
-        long minimumFee = getMinimumFeeFQT(blockchainHeight);
+        return getMinimumBackFeesFQT(blockchainHeight, getMinimumFeeFQT(blockchainHeight));
+    }
+
+    long[] getMinimumBackFeesFQT(int blockchainHeight, long minimumFee) {
         if (minimumFee == 0) {
             return Convert.EMPTY_LONG;
         }

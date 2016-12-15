@@ -16,6 +16,7 @@
 
 package nxt.blockchain;
 
+import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
@@ -80,6 +81,10 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
         byte[][] childTransactionHashes = attachment.getChildTransactionFullHashes();
         if (childTransactionHashes.length == 0) {
             throw new NxtException.NotValidException("Empty ChildBlock transaction");
+        }
+        //TODO: define child block transaction count and size limits
+        if (childTransactionHashes.length > Constants.MAX_NUMBER_OF_TRANSACTIONS) {
+            throw new NxtException.NotValidException("Too many child transactions: " + childTransactionHashes.length);
         }
         int blockchainHeight = Nxt.getBlockchain().getHeight();
         Set<Long> childIds = new HashSet<>();

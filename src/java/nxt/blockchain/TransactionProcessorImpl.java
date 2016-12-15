@@ -309,6 +309,16 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     @Override
+    public DbIterator<UnconfirmedTransaction> getUnconfirmedChildTransactions() {
+        return unconfirmedTransactionTable.getManyBy(new DbClause.IntClause("chain_id", DbClause.Op.NE, FxtChain.FXT.getId()), 0, -1);
+    }
+
+    @Override
+    public DbIterator<UnconfirmedTransaction> getUnconfirmedChildTransactions(ChildChain childChain) {
+        return unconfirmedTransactionTable.getManyBy(new DbClause.IntClause("chain_id", childChain.getId()), 0, -1);
+    }
+
+    @Override
     public UnconfirmedTransaction getUnconfirmedTransaction(long transactionId) {
         DbKey dbKey = unconfirmedTransactionDbKeyFactory.newKey(transactionId);
         return getUnconfirmedTransaction(dbKey);

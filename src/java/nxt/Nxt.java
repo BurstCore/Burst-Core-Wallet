@@ -32,6 +32,7 @@ import nxt.blockchain.Blockchain;
 import nxt.blockchain.BlockchainImpl;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.BlockchainProcessorImpl;
+import nxt.blockchain.Bundler;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.ChildTransactionImpl;
@@ -400,6 +401,7 @@ public final class Nxt {
                 Peers.init();
                 APIProxy.init();
                 Generator.init();
+                Bundler.init();
                 AddOns.init();
                 API.init();
                 DebugTrace.init();

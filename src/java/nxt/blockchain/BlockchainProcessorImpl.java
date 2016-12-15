@@ -1762,9 +1762,8 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
     SortedSet<UnconfirmedFxtTransaction> selectUnconfirmedFxtTransactions(Map<TransactionType, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp) {
         List<UnconfirmedFxtTransaction> orderedUnconfirmedTransactions = new ArrayList<>();
         try (FilteringIterator<UnconfirmedTransaction> unconfirmedTransactions = new FilteringIterator<>(
-                TransactionProcessorImpl.getInstance().getAllUnconfirmedTransactions(),
-                transaction -> transaction.getTransaction() instanceof FxtTransaction
-                        && transaction.getTransaction().hasAllReferencedTransactions(transaction.getTimestamp(), 0))) {
+                TransactionProcessorImpl.getInstance().getUnconfirmedFxtTransactions(),
+                transaction -> transaction.getTransaction().hasAllReferencedTransactions(transaction.getTimestamp(), 0))) {
             for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
                 orderedUnconfirmedTransactions.add((UnconfirmedFxtTransaction)unconfirmedTransaction);
             }
