@@ -43,8 +43,9 @@ public final class Bundler {
         return childChainBundlers.get(accountId);
     }
 
-    public static synchronized Bundler addOrChangeBundler(ChildChain childChain, String secretPhrase, long minRateNQTPerFXT, long totalFeesLimitFQT) {
-        return new Bundler(childChain, secretPhrase, minRateNQTPerFXT, totalFeesLimitFQT);
+    public static synchronized Bundler addOrChangeBundler(ChildChain childChain, String secretPhrase,
+                                                          long minRateNQTPerFXT, long totalFeesLimitFQT, long overpayFQTPerFXT) {
+        return new Bundler(childChain, secretPhrase, minRateNQTPerFXT, totalFeesLimitFQT, overpayFQTPerFXT);
     }
 
     public static List<Bundler> getAllBundlers() {
@@ -72,6 +73,16 @@ public final class Bundler {
     public static Bundler stopBundler(ChildChain childChain, long accountId) {
         Map<Long, Bundler> childChainBundlers = bundlers.computeIfAbsent(childChain, k -> new ConcurrentHashMap<>());
         return childChainBundlers.remove(accountId);
+    }
+
+    public static void stopAccountBundlers(long accountId) {
+        bundlers.values().forEach(childChainBundlers -> {
+            childChainBundlers.remove(accountId);
+        });
+    }
+
+    public static void stopChildChainBundlers(ChildChain childChain) {
+        bundlers.remove(childChain);
     }
 
     public static void stopAllBundlers() {
@@ -108,15 +119,17 @@ public final class Bundler {
     private final long accountId;
     private final long minRateNQTPerFXT;
     private final long totalFeesLimitFQT;
+    private final long overpayFQTPerFXT;
     private volatile long currentTotalFeesFQT;
 
-    private Bundler(ChildChain childChain, String secretPhrase, long minRateNQTPerFXT, long totalFeesLimitFQT) {
+    private Bundler(ChildChain childChain, String secretPhrase, long minRateNQTPerFXT, long totalFeesLimitFQT, long overpayFQTPerFXT) {
         this.childChain = childChain;
         this.secretPhrase = secretPhrase;
         this.publicKey = Crypto.getPublicKey(secretPhrase);
         this.accountId = Account.getId(publicKey);
         this.minRateNQTPerFXT = minRateNQTPerFXT;
         this.totalFeesLimitFQT = totalFeesLimitFQT;
+        this.overpayFQTPerFXT = overpayFQTPerFXT;
         Map<Long, Bundler> chainBundlers = bundlers.get(childChain);
         if (chainBundlers == null) {
             chainBundlers = new ConcurrentHashMap<>();
@@ -167,7 +180,7 @@ public final class Bundler {
                         .compareTo(BigInteger.valueOf(minRateNQTPerFXT).multiply(BigInteger.valueOf(minChildFeeFQT))) < 0) {
                     continue;
                 }
-                if (currentTotalFeesFQT + totalMinFeeFQT + minChildFeeFQT > totalFeesLimitFQT) {
+                if (currentTotalFeesFQT + overpay(totalMinFeeFQT + minChildFeeFQT) > totalFeesLimitFQT && totalFeesLimitFQT > 0) {
                     Logger.logDebugMessage("Bundler " + Long.toUnsignedString(accountId) + " will exceed total fees limit, not bundling");
                     continue;
                 }
@@ -181,12 +194,18 @@ public final class Bundler {
                 //TODO: need to check block size limits in addition to transaction count
                 if (childTransactions.size() == Constants.MAX_NUMBER_OF_TRANSACTIONS) {
                     if (!hasChildBlockFxtTransaction(childTransactionSet)) {
-                        try {
-                            ChildBlockFxtTransaction childBlockFxtTransaction = bundle(childTransactions, totalMinFeeFQT, backFees);
-                            currentTotalFeesFQT += childBlockFxtTransaction.getFee();
-                            childBlockFxtTransactions.add(childBlockFxtTransaction);
-                        } catch (NxtException.ValidationException e) {
-                            Logger.logInfoMessage(e.getMessage(), e);
+                        long totalFeeFQT = overpay(totalMinFeeFQT);
+                        if (totalFeeFQT <= FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()) {
+                            try {
+                                ChildBlockFxtTransaction childBlockFxtTransaction = bundle(childTransactions, totalFeeFQT, backFees);
+                                currentTotalFeesFQT += totalFeeFQT;
+                                childBlockFxtTransactions.add(childBlockFxtTransaction);
+                            } catch (NxtException.ValidationException e) {
+                                Logger.logInfoMessage(e.getMessage(), e);
+                            }
+                        } else {
+                            Logger.logInfoMessage("Bundler account " + Long.toUnsignedString(accountId)
+                                    + " does not have sufficient balance to cover total Ardor fees " + totalMinFeeFQT);
                         }
                     }
                     childTransactions = new ArrayList<>();
@@ -230,6 +249,10 @@ public final class Bundler {
             }
         }
         return false;
+    }
+
+    private long overpay(long feeFQT) {
+        return Math.addExact(feeFQT, Math.multiplyExact(overpayFQTPerFXT, feeFQT) / Constants.ONE_NXT);
     }
 
 }

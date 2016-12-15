@@ -39,6 +39,7 @@ import nxt.ae.TradeHome;
 import nxt.aliases.AliasHome;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Block;
+import nxt.blockchain.Bundler;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
@@ -1134,6 +1135,16 @@ public final class JSONData {
         json.put("requirePost", handler.requirePost());
         json.put("requirePassword", handler.requirePassword());
         json.put("requireFullClient", handler.requireFullClient());
+        return json;
+    }
+
+    static JSONObject bundler(Bundler bundler) {
+        JSONObject json = new JSONObject();
+        putAccount(json, "bundler", bundler.getAccountId());
+        json.put("chain", bundler.getChildChain().getName());
+        json.put("totalFeesLimitFQT", bundler.getTotalFeesLimitFQT());
+        json.put("currentTotalFeesFQT", bundler.getCurrentTotalFeesFQT());
+        json.put("minRateNQTPerFQT", bundler.getMinRateNQTPerFXT());
         return json;
     }
 
