@@ -121,7 +121,7 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         json.put("chain", chainId);
         if (childTransactionFullHashes != null) {
             JSONArray jsonArray = new JSONArray();
-            json.put("childTransactionsFullHashes", jsonArray);
+            json.put("childTransactionFullHashes", jsonArray);
             for (byte[] bytes : childTransactionFullHashes) {
                 jsonArray.add(Convert.toHexString(bytes));
             }

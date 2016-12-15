@@ -942,6 +942,7 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("type", transaction.getType().getType());
         json.put("subtype", transaction.getType().getSubtype());
+        json.put("chain", transaction.getChain().getId());
         json.put("phased", transaction.isPhased());
         json.put("timestamp", transaction.getTimestamp());
         json.put("deadline", transaction.getDeadline());

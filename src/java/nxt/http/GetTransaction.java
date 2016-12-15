@@ -45,23 +45,17 @@ public final class GetTransaction extends APIServlet.APIRequestHandler {
         Transaction transaction;
         try {
             transaction = Nxt.getBlockchain().getTransactionByFullHash(chain, transactionFullHash);
-            if (transaction == null) {
-                return UNKNOWN_TRANSACTION;
+            if (transaction != null) {
+                return JSONData.transaction(transaction, includePhasingResult);
             }
+            transaction = Nxt.getTransactionProcessor().getUnconfirmedTransaction(Convert.fullHashToId(transactionFullHash));
+            if (transaction != null) {
+                return JSONData.unconfirmedTransaction(transaction);
+            }
+            return UNKNOWN_TRANSACTION;
         } catch (RuntimeException e) {
             return INCORRECT_TRANSACTION;
         }
-
-        if (transaction == null) {
-            transaction = Nxt.getTransactionProcessor().getUnconfirmedTransaction(Convert.fullHashToId(transactionFullHash));
-            if (transaction == null) {
-                return UNKNOWN_TRANSACTION;
-            }
-            return JSONData.unconfirmedTransaction(transaction);
-        } else {
-            return JSONData.transaction(transaction, includePhasingResult);
-        }
-
     }
 
 }
