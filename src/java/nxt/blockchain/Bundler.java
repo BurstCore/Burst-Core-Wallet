@@ -196,7 +196,7 @@ public final class Bundler {
                     backFees[i] += childMinBackFees[i];
                 }
                 //TODO: need to check block size limits in addition to transaction count
-                if (childTransactions.size() == Constants.MAX_NUMBER_OF_TRANSACTIONS) {
+                if (childTransactions.size() == Constants.MAX_NUMBER_OF_TRANSACTIONS || ! unconfirmedTransactions.hasNext()) {
                     if (!hasChildBlockFxtTransaction(childTransactionSet)) {
                         long totalFeeFQT = overpay(totalMinFeeFQT);
                         if (totalFeeFQT <= FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()) {

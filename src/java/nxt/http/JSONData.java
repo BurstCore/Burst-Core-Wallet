@@ -1144,7 +1144,7 @@ public final class JSONData {
         json.put("chain", bundler.getChildChain().getName());
         json.put("totalFeesLimitFQT", String.valueOf(bundler.getTotalFeesLimitFQT()));
         json.put("currentTotalFeesFQT", String.valueOf(bundler.getCurrentTotalFeesFQT()));
-        json.put("minRateNQTPerFQT", String.valueOf(bundler.getMinRateNQTPerFXT()));
+        json.put("minRateNQTPerFXT", String.valueOf(bundler.getMinRateNQTPerFXT()));
         json.put("overpayFQTPerFXT", String.valueOf(bundler.getOverpayFQTPerFXT()));
         return json;
     }
