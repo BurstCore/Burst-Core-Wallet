@@ -33,22 +33,21 @@ public final class GetBundlers extends APIServlet.APIRequestHandler {
     static final GetBundlers instance = new GetBundlers();
 
     private GetBundlers() {
-        super(new APITag[] {APITag.FORGING}, "account", "secretPhrase", "adminPassword", "allChains");
+        super(new APITag[] {APITag.FORGING}, "account", "secretPhrase", "adminPassword");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         long accountId = ParameterParser.getAccountId(req, false);
-        ChildChain childChain = ParameterParser.getChildChain(req);
-        boolean allChains = "true".equalsIgnoreCase(req.getParameter("allChains"));
+        ChildChain childChain = ParameterParser.getChildChain(req, false);
         List<Bundler> bundlers;
         if (secretPhrase != null) {
             if (accountId != 0 && Account.getId(Crypto.getPublicKey(secretPhrase)) != accountId) {
                 return JSONResponses.INCORRECT_ACCOUNT;
             }
             accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
-            if (allChains) {
+            if (childChain == null) {
                 bundlers = Bundler.getAccountBundlers(accountId);
             } else {
                 Bundler bundler = Bundler.getBundler(childChain, accountId);
@@ -57,14 +56,14 @@ public final class GetBundlers extends APIServlet.APIRequestHandler {
         } else {
             API.verifyPassword(req);
             if (accountId != 0) {
-                if (allChains) {
+                if (childChain == null) {
                     bundlers = Bundler.getAccountBundlers(accountId);
                 } else {
                     Bundler bundler = Bundler.getBundler(childChain, accountId);
                     bundlers = bundler == null ? Collections.emptyList() : Collections.singletonList(bundler);
                 }
             } else {
-                if (allChains) {
+                if (childChain == null) {
                     bundlers = Bundler.getAllBundlers();
                 } else {
                     bundlers = Bundler.getChildChainBundlers(childChain);

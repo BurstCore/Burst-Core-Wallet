@@ -30,22 +30,21 @@ public final class StopBundler extends APIServlet.APIRequestHandler {
     static final StopBundler instance = new StopBundler();
 
     private StopBundler() {
-        super(new APITag[] {APITag.FORGING}, "account", "secretPhrase", "adminPassword", "allChains");
+        super(new APITag[] {APITag.FORGING}, "account", "secretPhrase", "adminPassword");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         long accountId = ParameterParser.getAccountId(req, false);
-        ChildChain childChain = ParameterParser.getChildChain(req);
-        boolean allChains = "true".equalsIgnoreCase(req.getParameter("allChains"));
+        ChildChain childChain = ParameterParser.getChildChain(req, false);
         JSONObject response = new JSONObject();
         if (secretPhrase != null) {
             if (accountId != 0 && Account.getId(Crypto.getPublicKey(secretPhrase)) != accountId) {
                 return JSONResponses.INCORRECT_ACCOUNT;
             }
             accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
-            if (allChains) {
+            if (childChain == null) {
                 Bundler.stopAccountBundlers(accountId);
                 response.put("stoppedAccountBundlers", true);
             } else {
@@ -55,7 +54,7 @@ public final class StopBundler extends APIServlet.APIRequestHandler {
         } else {
             API.verifyPassword(req);
             if (accountId != 0) {
-                if (allChains) {
+                if (childChain == null) {
                     Bundler.stopAccountBundlers(accountId);
                     response.put("stoppedAccountBundlers", true);
                 } else {
@@ -63,7 +62,7 @@ public final class StopBundler extends APIServlet.APIRequestHandler {
                     response.put("stoppedBundler", bundler != null);
                 }
             } else {
-                if (allChains) {
+                if (childChain == null) {
                     Bundler.stopAllBundlers();
                     response.put("stoppedAllBundlers", true);
                 } else {
