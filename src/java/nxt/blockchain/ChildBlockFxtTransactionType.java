@@ -43,6 +43,10 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
             }
             return totalFee;
         }
+        @Override
+        public long[] getBackFees(long fee) {
+            return new long[] {fee / 4, fee / 4, fee / 4};
+        }
     };
 
     @Override

@@ -163,7 +163,14 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
     @Override
     public long[] getBackFees() {
         ChildBlockAttachment attachment = (ChildBlockAttachment)getAttachment();
-        return attachment.getBackFees();
+        long[] myBackFees = attachment.getFee(this, Nxt.getBlockchain().getHeight()).getBackFees(getFee());
+        long[] childBackFees = attachment.getBackFees();
+        long[] backFees = new long[Math.min(myBackFees.length, childBackFees.length)];
+        for (int i = 0; i < backFees.length; i++) {
+            backFees[i] = myBackFees[i];
+            backFees[i] += childBackFees[i];
+        }
+        return backFees;
     }
 
     @Override
