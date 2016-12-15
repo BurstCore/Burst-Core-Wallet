@@ -27,7 +27,6 @@ import nxt.util.Logger;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,8 +35,49 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class Bundler {
 
-    private static final Map<ChildChain, Map<String, Bundler>> bundlers = new ConcurrentHashMap<>();
+    private static final Map<ChildChain, Map<Long, Bundler>> bundlers = new ConcurrentHashMap<>();
     private static final TransactionProcessorImpl transactionProcessor = TransactionProcessorImpl.getInstance();
+
+    public static Bundler getBundler(ChildChain childChain, long accountId) {
+        Map<Long, Bundler> childChainBundlers = bundlers.computeIfAbsent(childChain, k -> new ConcurrentHashMap<>());
+        return childChainBundlers.get(accountId);
+    }
+
+    public static synchronized Bundler addOrChangeBundler(ChildChain childChain, String secretPhrase, long minRateNQTPerFXT) {
+        return new Bundler(childChain, secretPhrase, minRateNQTPerFXT);
+    }
+
+    public static List<Bundler> getAllBundlers() {
+        List<Bundler> allBundlers = new ArrayList<>();
+        bundlers.values().forEach(childChainBundlers -> allBundlers.addAll(childChainBundlers.values()));
+        return allBundlers;
+    }
+
+    public static List<Bundler> getChildChainBundlers(ChildChain childChain) {
+        Map<Long, Bundler> childChainBundlers = bundlers.computeIfAbsent(childChain, k -> new ConcurrentHashMap<>());
+        return new ArrayList<>(childChainBundlers.values());
+    }
+
+    public static List<Bundler> getAccountBundlers(long accountId) {
+        List<Bundler> accountBundlers = new ArrayList<>();
+        bundlers.values().forEach(childChainBundlers -> {
+            Bundler bundler = childChainBundlers.get(accountId);
+            if (bundler != null) {
+                accountBundlers.add(bundler);
+            }
+        });
+        return accountBundlers;
+    }
+
+    public static Bundler stopBundler(ChildChain childChain, long accountId) {
+        Map<Long, Bundler> childChainBundlers = bundlers.computeIfAbsent(childChain, k -> new ConcurrentHashMap<>());
+        return childChainBundlers.remove(accountId);
+    }
+
+    public static void stopAllBundlers() {
+        bundlers.clear();
+    }
+
     public static void init() {}
 
     static {
@@ -68,18 +108,18 @@ public final class Bundler {
     private final long accountId;
     private final long minRateNQTPerFXT;
 
-    public Bundler(ChildChain childChain, String secretPhrase, long minRateNQTPerFXT) {
+    private Bundler(ChildChain childChain, String secretPhrase, long minRateNQTPerFXT) {
         this.childChain = childChain;
         this.secretPhrase = secretPhrase;
         this.publicKey = Crypto.getPublicKey(secretPhrase);
         this.accountId = Account.getId(publicKey);
         this.minRateNQTPerFXT = minRateNQTPerFXT;
-        Map<String, Bundler> chainBundlers = bundlers.get(childChain);
+        Map<Long, Bundler> chainBundlers = bundlers.get(childChain);
         if (chainBundlers == null) {
-            chainBundlers = new HashMap<>();
+            chainBundlers = new ConcurrentHashMap<>();
             bundlers.put(childChain, chainBundlers);
         }
-        chainBundlers.put(secretPhrase, this);
+        chainBundlers.put(accountId, this);
     }
 
     public final ChildChain getChildChain() {
@@ -92,6 +132,10 @@ public final class Bundler {
 
     public final long getAccountId() {
         return accountId;
+    }
+
+    public final long getMinRateNQTPerFXT() {
+        return minRateNQTPerFXT;
     }
 
     private List<ChildBlockFxtTransaction> bundle() {
