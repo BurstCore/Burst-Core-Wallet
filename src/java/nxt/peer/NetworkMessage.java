@@ -2688,7 +2688,7 @@ public abstract class NetworkMessage {
                 bytes.put(fxtTransactionId.getFullHash());
                 int childCount = childCounts[i];
                 bytes.putShort((short)childCount);
-                if (childCount > 0) {
+                if (childCount-- > 0) {
                     ChainTransactionId childTransactionId = iterator.next();
                     bytes.putInt(childTransactionId.getChainId());
                     bytes.put(childTransactionId.getFullHash());
@@ -3100,6 +3100,7 @@ public abstract class NetworkMessage {
                     length += transactionBytes.getLength();
                 } else {
                     blockTransactions.add(TransactionBytes.EXCLUDED);
+                    length += TransactionBytes.EXCLUDED.getLength();
                 }
                 length += 2; // childTransactions count (short) always included
                 childCounts[i] = fxtTransaction.getChildTransactions().size();
@@ -3110,6 +3111,7 @@ public abstract class NetworkMessage {
                         length += childTransactionBytes.getLength();
                     } else {
                         blockTransactions.add(TransactionBytes.EXCLUDED);
+                        length += TransactionBytes.EXCLUDED.getLength();
                     }
                 }
             }

@@ -18,7 +18,6 @@ package nxt.http;
 
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.blockchain.Appendix;
 import nxt.blockchain.Transaction;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
@@ -44,7 +43,7 @@ import javax.servlet.http.HttpServletRequest;
  * In case the client submits transactionBytes for a transaction containing prunable appendages, the client also needs
  * to submit the prunableAttachmentJSON parameter which includes the attachment JSON for the prunable appendages.<br>
  * <p>
- * Prunable appendages are classes implementing the {@link Appendix.Prunable} interface.
+ * Prunable appendages are classes implementing the {@link nxt.blockchain.Appendix.Prunable} interface.
  */
 public final class BroadcastTransaction extends APIServlet.APIRequestHandler {
 
