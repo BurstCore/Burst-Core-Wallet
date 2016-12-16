@@ -46,9 +46,9 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
 
     DbIterator<? extends Transaction> getUnconfirmedChildTransactions(ChildChain chain);
 
-    Transaction getUnconfirmedTransaction(long transactionId);
+    UnconfirmedTransaction getUnconfirmedTransaction(long transactionId);
 
-    Transaction[] getAllWaitingTransactions();
+    UnconfirmedTransaction[] getAllWaitingTransactions();
 
     Transaction[] getAllBroadcastedTransactions();
 

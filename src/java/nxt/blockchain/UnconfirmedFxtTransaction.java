@@ -38,7 +38,7 @@ final class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements 
     }
 
     @Override
-    FxtTransactionImpl getTransaction() {
+    public FxtTransactionImpl getTransaction() {
         return (FxtTransactionImpl)super.getTransaction();
     }
 

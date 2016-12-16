@@ -87,7 +87,7 @@ public abstract class UnconfirmedTransaction implements Transaction {
         }
     }
 
-    TransactionImpl getTransaction() {
+    public TransactionImpl getTransaction() {
         return transaction;
     }
 

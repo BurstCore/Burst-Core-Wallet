@@ -175,7 +175,6 @@ public final class Bundler {
             List<ChildTransaction> childTransactions = new ArrayList<>();
             Set<ChildTransaction> childTransactionSet = new HashSet<>();
             long totalMinFeeFQT = 0;
-            long[] backFees = new long[3];
             while (unconfirmedTransactions.hasNext()) {
                 ChildTransactionImpl childTransaction = (ChildTransactionImpl) unconfirmedTransactions.next().getTransaction();
                 long minChildFeeFQT = childTransaction.getMinimumFeeFQT(blockchainHeight);
@@ -191,17 +190,13 @@ public final class Bundler {
                 childTransactions.add(childTransaction);
                 childTransactionSet.add(childTransaction);
                 totalMinFeeFQT += minChildFeeFQT;
-                long[] childMinBackFees = childTransaction.getMinimumBackFeesFQT(blockchainHeight, minChildFeeFQT);
-                for (int i = 0; i < childMinBackFees.length; i++) {
-                    backFees[i] += childMinBackFees[i];
-                }
                 //TODO: need to check block size limits in addition to transaction count
                 if (childTransactions.size() == Constants.MAX_NUMBER_OF_TRANSACTIONS || ! unconfirmedTransactions.hasNext()) {
                     if (!hasChildBlockFxtTransaction(childTransactionSet)) {
                         long totalFeeFQT = overpay(totalMinFeeFQT);
                         if (totalFeeFQT <= FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()) {
                             try {
-                                ChildBlockFxtTransaction childBlockFxtTransaction = bundle(childTransactions, totalFeeFQT, backFees);
+                                ChildBlockFxtTransaction childBlockFxtTransaction = bundle(childTransactions, totalFeeFQT);
                                 currentTotalFeesFQT += totalFeeFQT;
                                 childBlockFxtTransactions.add(childBlockFxtTransaction);
                             } catch (NxtException.ValidationException e) {
@@ -215,20 +210,15 @@ public final class Bundler {
                     childTransactions = new ArrayList<>();
                     childTransactionSet.clear();
                     totalMinFeeFQT = 0;
-                    backFees = new long[3];
                 }
             }
         }
         return childBlockFxtTransactions;
     }
 
-    private ChildBlockFxtTransaction bundle(List<ChildTransaction> childTransactions, long feeFQT, long[] backFees) throws NxtException.ValidationException {
-        byte[][] childTransactionFullHashes = new byte[childTransactions.size()][];
-        for (int i = 0; i < childTransactionFullHashes.length; i++) {
-            childTransactionFullHashes[i] = childTransactions.get(i).getFullHash();
-        }
+    private ChildBlockFxtTransaction bundle(List<ChildTransaction> childTransactions, long feeFQT) throws NxtException.ValidationException {
         FxtTransaction.Builder builder = Nxt.newTransactionBuilder(publicKey, 0, feeFQT, (short)10,
-                new ChildBlockAttachment(childChain, childTransactionFullHashes, backFees));
+                new ChildBlockAttachment(childTransactions));
         ChildBlockFxtTransaction childBlockFxtTransaction = (ChildBlockFxtTransaction)builder.build(secretPhrase);
         childBlockFxtTransaction.validate();
         Logger.logDebugMessage("Created ChildBlockFxtTransaction: " + childBlockFxtTransaction.getJSONObject().toJSONString());

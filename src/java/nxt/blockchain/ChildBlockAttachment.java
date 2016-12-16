@@ -16,6 +16,7 @@
 
 package nxt.blockchain;
 
+import nxt.Nxt;
 import nxt.NxtException;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
@@ -86,11 +87,33 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         }
     }
 
-    ChildBlockAttachment(ChildChain childChain, byte[][] childTransactionFullHashes, long[] backFees) {
+    public ChildBlockAttachment(ChildChain childChain, byte[][] childTransactionFullHashes, long[] backFees) {
         this.chainId = childChain.getId();
         this.childTransactionFullHashes = childTransactionFullHashes;
         this.hash = null;
         this.backFees = backFees;
+    }
+
+    public ChildBlockAttachment(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
+        if (childTransactions == null || childTransactions.isEmpty()) {
+            throw new NxtException.NotValidException("Empty ChildBlockAttachment not allowed");
+        }
+        this.chainId = childTransactions.get(0).getChain().getId();
+        this.childTransactionFullHashes = new byte[childTransactions.size()][];
+        this.backFees = new long[3];
+        this.hash = null;
+        int blockchainHeight = Nxt.getBlockchain().getHeight();
+        for (int i = 0; i < childTransactionFullHashes.length; i++) {
+            ChildTransactionImpl childTransaction = (ChildTransactionImpl)childTransactions.get(i);
+            if (childTransaction.getChain().getId() != this.chainId) {
+                throw new NxtException.NotValidException("Child transactions belong to different child chains");
+            }
+            childTransactionFullHashes[i] = childTransaction.getFullHash();
+            long[] childMinBackFees = childTransaction.getMinimumBackFeesFQT(blockchainHeight);
+            for (int j = 0; j < childMinBackFees.length; j++) {
+                backFees[j] += childMinBackFees[j];
+            }
+        }
     }
 
     @Override

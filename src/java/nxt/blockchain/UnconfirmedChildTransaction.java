@@ -43,7 +43,7 @@ final class UnconfirmedChildTransaction extends UnconfirmedTransaction implement
     }
 
     @Override
-    ChildTransactionImpl getTransaction() {
+    public ChildTransactionImpl getTransaction() {
         return (ChildTransactionImpl)super.getTransaction();
     }
 

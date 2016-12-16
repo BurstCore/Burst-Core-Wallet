@@ -280,7 +280,8 @@ public enum APIEnum {
     GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", GetNextBlockGeneratorsTemp.instance),
     START_BUNDLER("startBundler", StartBundler.instance),
     STOP_BUNDLER("stopBundler", StopBundler.instance),
-    GET_BUNDLERS("getBundlers", GetBundlers.instance);
+    GET_BUNDLERS("getBundlers", GetBundlers.instance),
+    BUNDLE_TRANSACTIONS("bundleTransactions", BundleTransactions.instance);
 
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 

@@ -100,21 +100,22 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         
         PhasingParams phasingParams = parsePhasingParams(req, "phasing");
         String[] phasingLinkedTransactionsValues = req.getParameterValues("phasingLinkedTransaction");
-        List<ChainTransactionId> linkedTransactionIds = new ArrayList<>(phasingLinkedTransactionsValues.length);
-        for (String phasingLinkedTransactionsValue : phasingLinkedTransactionsValues) {
-            String[] s = phasingLinkedTransactionsValue.split(":");
-            int chainId = Integer.parseInt(s[0]);
-            Chain chain = Chain.getChain(chainId);
-            if (chain == null) {
-                throw new ParameterException(UNKNOWN_CHAIN);
+        List<ChainTransactionId> linkedTransactionIds = new ArrayList<>();
+        if (phasingLinkedTransactionsValues != null) {
+            for (String phasingLinkedTransactionsValue : phasingLinkedTransactionsValues) {
+                String[] s = phasingLinkedTransactionsValue.split(":");
+                int chainId = Integer.parseInt(s[0]);
+                Chain chain = Chain.getChain(chainId);
+                if (chain == null) {
+                    throw new ParameterException(UNKNOWN_CHAIN);
+                }
+                byte[] hash = Convert.parseHexString(s[1]);
+                if (hash == null || hash.length != 32) {
+                    throw new ParameterException(INCORRECT_LINKED_TRANSACTION);
+                }
+                linkedTransactionIds.add(new ChainTransactionId(chainId, hash));
             }
-            byte[] hash = Convert.parseHexString(s[1]);
-            if (hash == null || hash.length != 32) {
-                throw new ParameterException(INCORRECT_LINKED_TRANSACTION);
-            }
-            linkedTransactionIds.add(new ChainTransactionId(chainId, hash));
         }
-
         byte[] hashedSecret = Convert.parseHexString(Convert.emptyToNull(req.getParameter("phasingHashedSecret")));
         byte algorithm = ParameterParser.getByte(req, "phasingHashedSecretAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
 
