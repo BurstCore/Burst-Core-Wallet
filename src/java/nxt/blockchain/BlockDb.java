@@ -402,13 +402,20 @@ public final class BlockDb {
              Statement stmt = con.createStatement()) {
             try {
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY FALSE");
-                stmt.executeUpdate("TRUNCATE TABLE transaction");
+                stmt.executeUpdate("TRUNCATE TABLE transaction_fxt");
                 stmt.executeUpdate("TRUNCATE TABLE block");
+                ChildChain.getAll().forEach(childChain -> {
+                    try {
+                        stmt.executeUpdate("TRUNCATE TABLE " + childChain.getSchemaTable("transaction"));
+                    } catch (SQLException e) {
+                        Logger.logErrorMessage(e.toString(), e);
+                    }
+                });
                 BlockchainProcessorImpl.getInstance().getDerivedTables().forEach(table -> {
-                    if (table.isPersistent()) {
-                        try {
-                            stmt.executeUpdate("TRUNCATE TABLE " + table.toString());
-                        } catch (SQLException ignore) {}
+                    try {
+                        stmt.executeUpdate("TRUNCATE TABLE " + table.toString());
+                    } catch (SQLException e) {
+                        Logger.logErrorMessage(e.toString(), e);
                     }
                 });
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY TRUE");

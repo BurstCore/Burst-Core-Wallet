@@ -80,7 +80,7 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
         if (childTransactions == null) {
             List<ChildTransactionImpl> list;
             byte[][] hashes = childBlockAttachment.getChildTransactionFullHashes();
-            if (TransactionHome.hasFxtTransaction(this.getId(), Nxt.getBlockchain().getHeight())) {
+            if (TransactionHome.hasFxtTransaction(this.getId(), Nxt.getBlockchain().getHeight() + 1)) {
                 TransactionHome transactionHome = ChildChain.getChildChain(childBlockAttachment.getChainId()).getTransactionHome();
                 list = transactionHome.findChildTransactions(this.getId());
                 if (list.size() != hashes.length) {
@@ -117,9 +117,6 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
 
     @Override
     public synchronized void setChildTransactions(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
-        if (this.childTransactions != null) {
-            throw new IllegalStateException("Child transactions already set");
-        }
         byte[][] childTransactionHashes = getChildTransactionFullHashes();
         if (childTransactions.size() != childTransactionHashes.length) {
             throw new NxtException.NotValidException(String.format("Child transactions size %d does not match child hashes count %d",

@@ -563,12 +563,14 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         long currentTime = System.currentTimeMillis();
         BlockchainImpl.getInstance().writeLock();
         try {
-            transactions.forEach(fxtTransaction -> {
-                ((FxtTransactionImpl)fxtTransaction).unsetBlock();
-                waitingTransactions.add(((TransactionImpl)fxtTransaction).newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(fxtTransaction.getTimestamp()))));
+            transactions.forEach(fxt -> {
+                FxtTransactionImpl fxtTransaction = (FxtTransactionImpl)fxt;
                 fxtTransaction.getChildTransactions().forEach(childTransaction -> {
-                    waitingTransactions.add(((TransactionImpl)childTransaction).newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(childTransaction.getTimestamp()))));
+                    childTransaction.unsetBlock();
+                    waitingTransactions.add(childTransaction.newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(childTransaction.getTimestamp()))));
                 });
+                fxtTransaction.unsetBlock();
+                waitingTransactions.add(fxtTransaction.newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(fxtTransaction.getTimestamp()))));
             });
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
