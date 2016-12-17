@@ -498,12 +498,12 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     @Override
     void save(Connection con, String schemaTable) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + schemaTable
-                + " (id, deadline, recipient_id, amount, fee, referenced_transaction_chain_id, referenced_transaction_full_hash, height, "
-                + "block_id, signature, timestamp, type, subtype, sender_id, attachment_bytes, "
+                + " (id, deadline, recipient_id, amount, fee, referenced_transaction_chain_id, referenced_transaction_full_hash, referenced_transaction_id, "
+                + "height, block_id, signature, timestamp, type, subtype, sender_id, attachment_bytes, "
                 + "block_timestamp, full_hash, version, has_message, has_encrypted_message, has_public_key_announcement, "
                 + "has_encrypttoself_message, phased, has_prunable_message, has_prunable_encrypted_message, "
                 + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index, fxt_transaction_id) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, getId());
             pstmt.setShort(++i, getDeadline());
@@ -513,9 +513,11 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             if (referencedTransactionId != null) {
                 pstmt.setInt(++i, referencedTransactionId.getChainId());
                 pstmt.setBytes(++i, referencedTransactionId.getFullHash());
+                pstmt.setLong(++i, referencedTransactionId.getTransactionId());
             } else {
                 pstmt.setNull(++i, Types.INTEGER);
                 pstmt.setNull(++i, Types.BINARY);
+                pstmt.setNull(++i, Types.BIGINT);
             }
             pstmt.setInt(++i, getHeight());
             pstmt.setLong(++i, getBlockId());
@@ -554,16 +556,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             pstmt.setShort(++i, getIndex());
             pstmt.setLong(++i, getFxtTransactionId());
             pstmt.executeUpdate();
-        }
-        if (referencedTransactionId != null) {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO referenced_transaction "
-                    + "(transaction_id, transaction_full_hash, referenced_transaction_id) VALUES (?, ?, ?)")) {
-                int i = 0;
-                pstmt.setLong(++i, getId());
-                pstmt.setBytes(++i, getFullHash());
-                pstmt.setLong(++i, referencedTransactionId.getTransactionId());
-                pstmt.executeUpdate();
-            }
         }
     }
 
