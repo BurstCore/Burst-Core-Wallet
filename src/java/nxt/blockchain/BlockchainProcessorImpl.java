@@ -1137,7 +1137,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             try {
                 setGetMoreBlocks(false);
-                scheduleScan(0, false);
                 //BlockDb.deleteBlock(Genesis.GENESIS_BLOCK_ID); // fails with stack overflow in H2
                 BlockDb.deleteAll();
                 addGenesisBlock();
