@@ -155,7 +155,9 @@ public final class TransactionHome {
                 }
             } else {
                 TransactionImpl transaction = BlockDb.childTransactionCache.get(new ChainTransactionId(chain.getId(), fullHash));
-                return transaction != null && transaction.getHeight() <= height;
+                if (transaction != null) {
+                    return transaction.getHeight() <= height;
+                }
             }
         }
         // Search the database
