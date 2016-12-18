@@ -29,13 +29,13 @@ public final class GetCoinExchangeOrder extends APIServlet.APIRequestHandler {
     static final GetCoinExchangeOrder instance = new GetCoinExchangeOrder();
 
     private GetCoinExchangeOrder() {
-        super(new APITag[] {APITag.CE}, "orderFullHash");
+        super(new APITag[] {APITag.CE}, "order");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        byte[] orderHash = ParameterParser.getBytes(req, "orderFullHash", true);
-        Order order = CoinExchange.getOrder(orderHash);
+        long orderId = ParameterParser.getUnsignedLong(req, "order", true);
+        Order order = CoinExchange.getOrder(orderId);
         if (order == null) {
             return UNKNOWN_ORDER;
         }

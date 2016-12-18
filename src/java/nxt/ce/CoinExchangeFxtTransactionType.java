@@ -128,6 +128,14 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
         }
 
         @Override
+        protected void validateId(FxtTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
+            if (CoinExchange.getOrder(transaction.getId()) != null) {
+                throw new NxtException.NotCurrentlyValidException(
+                        "Duplicate coin exchange order id " + transaction.getStringId());
+            }
+        }
+
+        @Override
         public final boolean canHaveRecipient() {
             return false;
         }
@@ -177,15 +185,15 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
                                               Map<TransactionType, Map<String, Integer>> duplicates) {
             OrderCancelAttachment attachment = (OrderCancelAttachment)transaction.getAttachment();
             return TransactionType.isDuplicate(CoinExchangeTransactionType.ORDER_CANCEL,
-                    Convert.toHexString(attachment.getOrderHash()), duplicates, true);
+                    Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
         }
 
         @Override
         public void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             OrderCancelAttachment attachment = (OrderCancelAttachment)transaction.getAttachment();
-            CoinExchange.Order order = CoinExchange.getOrder(attachment.getOrderHash());
+            CoinExchange.Order order = CoinExchange.getOrder(attachment.getOrderId());
             if (order != null) {
-                CoinExchange.removeOrder(attachment.getOrderHash());
+                CoinExchange.removeOrder(attachment.getOrderId());
                 BalanceHome.Balance balance = Chain.getChain(order.getChainId()).getBalanceHome().getBalance(senderAccount.getId());
                 balance.addToUnconfirmedBalance(AccountLedger.LedgerEvent.COIN_EXCHANGE_ORDER_CANCEL, transaction.getId(),
                         order.getQuantity());
@@ -195,12 +203,14 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
         @Override
         public final void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException {
             OrderCancelAttachment attachment = (OrderCancelAttachment)transaction.getAttachment();
-            CoinExchange.Order order = CoinExchange.getOrder(attachment.getOrderHash());
+            CoinExchange.Order order = CoinExchange.getOrder(attachment.getOrderId());
             if (order == null) {
-                throw new NxtException.NotCurrentlyValidException("Invalid coin exchange order: " + Convert.toHexString(attachment.getOrderHash()));
+                throw new NxtException.NotCurrentlyValidException(
+                        "Invalid coin exchange order: " + Long.toUnsignedString(attachment.getOrderId()));
             }
             if (order.getAccountId() != transaction.getSenderId()) {
-                throw new NxtException.NotValidException("Order " + Convert.toHexString(attachment.getOrderHash())
+                throw new NxtException.NotValidException(
+                        "Order " + Long.toUnsignedString(order.getId())
                         + " was created by account "
                         + Long.toUnsignedString(order.getAccountId()));
             }

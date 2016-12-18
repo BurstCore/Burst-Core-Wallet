@@ -170,6 +170,14 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
     }
 
     @Override
+    protected void validateId() throws NxtException.ValidationException {
+        super.validateId();
+        for (Appendix.AbstractAppendix appendage : appendages()) {
+            appendage.validateId(this);
+        }
+    }
+
+    @Override
     void apply() {
         Account senderAccount = Account.getAccount(getSenderId());
         senderAccount.apply(getSenderPublicKey());

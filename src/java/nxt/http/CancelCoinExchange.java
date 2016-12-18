@@ -33,16 +33,18 @@ public final class CancelCoinExchange extends CreateTransaction {
     static final CancelCoinExchange instance = new CancelCoinExchange();
 
     private CancelCoinExchange() {
-        super(new APITag[] {APITag.CE, APITag.CREATE_TRANSACTION}, "orderFullHash");
+        super(new APITag[] {APITag.CE, APITag.CREATE_TRANSACTION}, "order");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        byte[] orderHash = ParameterParser.getBytes(req, "orderFullHash", true);
+        long orderId = ParameterParser.getUnsignedLong(req, "order", true);
         Chain chain = ParameterParser.getChain(req);
         Account account = ParameterParser.getSenderAccount(req);
+        // The cancel transaction can be issued on any chain since the order identifier is unique
+        // and we don't know which chain contains the order transaction
         Attachment attachment = (chain.getId() == FxtChain.FXT.getId() ?
-                new OrderCancelFxtAttachment(orderHash) : new OrderCancelAttachment(orderHash));
+                new OrderCancelFxtAttachment(orderId) : new OrderCancelAttachment(orderId));
         try {
             return createTransaction(req, account, attachment);
         } catch (NxtException.InsufficientBalanceException e) {

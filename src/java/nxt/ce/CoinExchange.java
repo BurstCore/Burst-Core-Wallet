@@ -57,8 +57,8 @@ public final class CoinExchange {
 
     private static final BigDecimal askConstant = new BigDecimal(1L, MathContext.DECIMAL128);
     private static final BigDecimal minAsk = new BigDecimal("0.00000001", MathContext.DECIMAL128);
-    private static final DbKey.HashKeyFactory<Order> orderDbKeyFactory =
-            new DbKey.HashKeyFactory<Order>("full_hash", "id") {
+    private static final DbKey.LongKeyFactory<Order> orderDbKeyFactory =
+            new DbKey.LongKeyFactory<Order>("id") {
         @Override
         public DbKey newKey(Order order) {
             return order.dbKey;
@@ -79,8 +79,8 @@ public final class CoinExchange {
             return " ORDER BY creation_height DESC ";
         }
     };
-    private static final DbKey.HashKeyFactory<Trade> tradeDbKeyFactory =
-            new DbKey.HashKeyFactory<Trade>("order_full_hash", "order_id") {
+    private static final DbKey.LongKeyFactory<Trade> tradeDbKeyFactory =
+            new DbKey.LongKeyFactory<Trade>("order_id") {
         @Override
         public DbKey newKey(Trade trade) {
             return trade.dbKey;
@@ -149,10 +149,10 @@ public final class CoinExchange {
     /**
      * Remove a coin exchange order
      *
-     * @param   fullHash            Order full hash
+     * @param   orderId             Order identifier
      */
-    static void removeOrder(byte[] fullHash) {
-        orderTable.delete(getOrder(fullHash));
+    static void removeOrder(long orderId) {
+        orderTable.delete(getOrder(orderId));
     }
 
     /**
@@ -167,11 +167,11 @@ public final class CoinExchange {
     /**
      * Return a coin exchange order
      *
-     * @param   fullHash            Order full hash
+     * @param   orderId             Order identifier
      * @return                      Coin exchange order or null if not found
      */
-    public static Order getOrder(byte[] fullHash) {
-        return orderTable.get(orderDbKeyFactory.newKey(fullHash));
+    public static Order getOrder(long orderId) {
+        return orderTable.get(orderDbKeyFactory.newKey(orderId));
     }
 
     /**
@@ -394,7 +394,7 @@ public final class CoinExchange {
             } else {
                 this.askPrice = askValue.longValue();
             }
-            this.dbKey = orderDbKeyFactory.newKey(fullHash);
+            this.dbKey = orderDbKeyFactory.newKey(this.id);
         }
 
         private Order(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -544,7 +544,7 @@ public final class CoinExchange {
             this.orderFullHash = order.getFullHash();
             this.exchangeQuantity = exchangeQuantity;
             this.exchangePrice = exchangePrice;
-            dbKey = tradeDbKeyFactory.newKey(this.orderFullHash, this.orderId);
+            dbKey = tradeDbKeyFactory.newKey(this.orderId);
         }
 
         private Trade(ResultSet rs, DbKey dbKey) throws SQLException {

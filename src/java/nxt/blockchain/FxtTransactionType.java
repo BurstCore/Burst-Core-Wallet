@@ -113,7 +113,10 @@ public abstract class FxtTransactionType extends TransactionType {
 
     @Override
     protected void validateId(Transaction transaction) throws NxtException.ValidationException {
-        throw new UnsupportedOperationException("Should not need to validate FxtTransaction ids");
+        validateId((FxtTransactionImpl)transaction);
+    }
+
+    protected void validateId(FxtTransactionImpl transaction) throws NxtException.ValidationException {
     }
 
     @Override

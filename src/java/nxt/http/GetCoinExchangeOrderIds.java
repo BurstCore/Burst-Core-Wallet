@@ -58,11 +58,11 @@ public final class GetCoinExchangeOrderIds extends APIServlet.APIRequestHandler 
         JSONArray orders = new JSONArray();
         try (DbIterator<Order> it = CoinExchange.getOrders(accountId, chainId, exchangeId, firstIndex, lastIndex)) {
             while (it.hasNext()) {
-                orders.add(Convert.toHexString(it.next().getFullHash()));
+                orders.add(Long.toUnsignedString(it.next().getId()));
             }
         }
         JSONObject response = new JSONObject();
-        response.put("orderFullHashs", orders);
+        response.put("orderIds", orders);
         return response;
     }
 }
