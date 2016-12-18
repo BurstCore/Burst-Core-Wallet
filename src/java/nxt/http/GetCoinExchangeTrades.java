@@ -19,7 +19,6 @@ import nxt.blockchain.Chain;
 import nxt.ce.CoinExchange;
 import nxt.ce.CoinExchange.Trade;
 import nxt.db.DbIterator;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -54,10 +53,11 @@ public final class GetCoinExchangeTrades extends APIServlet.APIRequestHandler {
         long accountId = ParameterParser.getAccountId(req, "account", false);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
-        DbIterator<Trade> it = CoinExchange.getTrades(accountId, chainId, exchangeId, firstIndex, lastIndex);
         JSONArray orders = new JSONArray();
-        while (it.hasNext()) {
-            orders.add(JSONData.coinExchangeTrade(it.next()));
+        try (DbIterator<Trade> it = CoinExchange.getTrades(accountId, chainId, exchangeId, firstIndex, lastIndex)) {
+            while (it.hasNext()) {
+                orders.add(JSONData.coinExchangeTrade(it.next()));
+            }
         }
         JSONObject response = new JSONObject();
         response.put("trades", orders);

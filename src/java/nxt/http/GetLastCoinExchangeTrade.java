@@ -19,12 +19,11 @@ import nxt.blockchain.Chain;
 import nxt.ce.CoinExchange;
 import nxt.ce.CoinExchange.Trade;
 import nxt.db.DbIterator;
-
-import static nxt.http.JSONResponses.NO_TRADES_FOUND;
-
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
+
+import static nxt.http.JSONResponses.NO_TRADES_FOUND;
 
 public final class GetLastCoinExchangeTrade extends APIServlet.APIRequestHandler {
 
@@ -50,11 +49,12 @@ public final class GetLastCoinExchangeTrade extends APIServlet.APIRequestHandler
         Chain exchange = ParameterParser.getChain(req, "exchange", false);
         int exchangeId = exchange != null ? exchange.getId() : 0;
         long accountId = ParameterParser.getAccountId(req, "account", false);
-        DbIterator<Trade> it = CoinExchange.getTrades(accountId, chainId, exchangeId, 0, 0);
-        if (it.hasNext()) {
-            return JSONData.coinExchangeTrade(it.next());
-        } else {
-            return NO_TRADES_FOUND;
+        try (DbIterator<Trade> it = CoinExchange.getTrades(accountId, chainId, exchangeId, 0, 0)) {
+            if (it.hasNext()) {
+                return JSONData.coinExchangeTrade(it.next());
+            } else {
+                return NO_TRADES_FOUND;
+            }
         }
     }
 }
