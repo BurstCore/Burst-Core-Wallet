@@ -35,11 +35,12 @@ public final class GetLastCoinExchangeTrade extends APIServlet.APIRequestHandler
      * <li>account - Select trades for this account
      * <li>chain - Select trades exchanging coins for this chain
      * <li>exchange - Select trades requesting coins for this chain
+     * <li>orderFullHash - Select trades for this coin exchange order
      * </ul>
      * <p>All trades will be selected if no search criteria is specified.
      */
     private GetLastCoinExchangeTrade() {
-        super(new APITag[] {APITag.CE}, "exchange", "account");
+        super(new APITag[] {APITag.CE}, "exchange", "account", "orderFullHash");
     }
 
     @Override
@@ -49,7 +50,8 @@ public final class GetLastCoinExchangeTrade extends APIServlet.APIRequestHandler
         Chain exchange = ParameterParser.getChain(req, "exchange", false);
         int exchangeId = exchange != null ? exchange.getId() : 0;
         long accountId = ParameterParser.getAccountId(req, "account", false);
-        try (DbIterator<Trade> it = CoinExchange.getTrades(accountId, chainId, exchangeId, 0, 0)) {
+        byte[] orderFullHash = ParameterParser.getBytes(req, "orderFullHash", false);
+        try (DbIterator<Trade> it = CoinExchange.getTrades(accountId, chainId, exchangeId, orderFullHash, 0, 0)) {
             if (it.hasNext()) {
                 return JSONData.coinExchangeTrade(it.next());
             } else {

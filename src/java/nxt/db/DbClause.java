@@ -16,6 +16,8 @@
 
 package nxt.db;
 
+import nxt.util.Convert;
+
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
@@ -213,6 +215,25 @@ public abstract class DbClause {
             return index + 1;
         }
 
+    }
+
+    public static final class HashClause extends DbClause {
+
+        private final byte[] hashValue;
+        private final long idValue;
+
+        public HashClause(String hashColumnName, String idColumnName, byte[] hashValue) {
+            super(" " + idColumnName + " = ? AND " + hashColumnName + " = ? ");
+            this.hashValue = hashValue;
+            this.idValue = Convert.fullHashToId(hashValue);
+        }
+
+        @Override
+        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+            pstmt.setLong(index, idValue);
+            pstmt.setBytes(index + 1, hashValue);
+            return index + 2;
+        }
     }
 
     public static final class BooleanClause extends DbClause {

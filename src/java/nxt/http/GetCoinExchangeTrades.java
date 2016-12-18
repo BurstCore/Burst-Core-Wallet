@@ -35,13 +35,14 @@ public final class GetCoinExchangeTrades extends APIServlet.APIRequestHandler {
      * <li>account - Select trades for this account
      * <li>chain - Select trades exchanging coins for this chain
      * <li>exchange - Select trades requesting coins for this chain
+     * <li>orderFullHash - Select trades for this coin exchange order
      * </ul>
      *
      * <p<>All trades will be returned if no search criteria are specified.
      * The orders will be sorted by timestamp in descending order.
      */
     private GetCoinExchangeTrades() {
-        super(new APITag[] {APITag.CE}, "exchange", "account", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.CE}, "exchange", "account", "orderFullHash", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -51,10 +52,12 @@ public final class GetCoinExchangeTrades extends APIServlet.APIRequestHandler {
         Chain exchange = ParameterParser.getChain(req, "exchange", false);
         int exchangeId = exchange != null ? exchange.getId() : 0;
         long accountId = ParameterParser.getAccountId(req, "account", false);
+        byte[] orderFullHash = ParameterParser.getBytes(req, "orderFullHash", false);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         JSONArray orders = new JSONArray();
-        try (DbIterator<Trade> it = CoinExchange.getTrades(accountId, chainId, exchangeId, firstIndex, lastIndex)) {
+        try (DbIterator<Trade> it = CoinExchange.getTrades(accountId, chainId, exchangeId, orderFullHash,
+                firstIndex, lastIndex)) {
             while (it.hasNext()) {
                 orders.add(JSONData.coinExchangeTrade(it.next()));
             }

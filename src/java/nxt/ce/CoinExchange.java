@@ -79,8 +79,8 @@ public final class CoinExchange {
             return " ORDER BY creation_height DESC ";
         }
     };
-    private static final DbKey.LongKeyFactory<Trade> tradeDbKeyFactory =
-            new DbKey.LongKeyFactory<Trade>("order_id") {
+    private static final DbKey.HashKeyFactory<Trade> tradeDbKeyFactory =
+            new DbKey.HashKeyFactory<Trade>("order_full_hash", "order_id") {
         @Override
         public DbKey newKey(Trade trade) {
             return trade.dbKey;
@@ -245,11 +245,13 @@ public final class CoinExchange {
      * @param   accountId           Account identifier (0 if no account criteria)
      * @param   chainId             Chain identifier (0 if no chain criteria)
      * @param   exchangeId          Exchange identifier (0 if no exchange criteria)
+     * @param   orderFullHash       Coin exchange order full hash (null or zero-length if no order criteria)
      * @param   from                Starting index within search results
      * @param   to                  Ending index within search results
      * @return                      Database iterator
      */
-    public static DbIterator<Trade> getTrades(long accountId, int chainId, int exchangeId, int from, int to) {
+    public static DbIterator<Trade> getTrades(long accountId, int chainId, int exchangeId, byte[] orderFullHash,
+                                              int from, int to) {
         List<DbClause> dbClauses = new ArrayList<>();
         if (accountId != 0) {
             dbClauses.add(new DbClause.LongClause("account_id", accountId));
@@ -259,6 +261,9 @@ public final class CoinExchange {
         }
         if (exchangeId != 0) {
             dbClauses.add(new DbClause.IntClause("exchange_id", exchangeId));
+        }
+        if (orderFullHash != null && orderFullHash.length != 0) {
+            dbClauses.add(new DbClause.HashClause("order_full_hash", "order_id", orderFullHash));
         }
         DbClause dbClause = null;
         if (dbClauses.isEmpty()) {
@@ -544,7 +549,7 @@ public final class CoinExchange {
             this.orderFullHash = order.getFullHash();
             this.exchangeQuantity = exchangeQuantity;
             this.exchangePrice = exchangePrice;
-            dbKey = tradeDbKeyFactory.newKey(this.orderId);
+            dbKey = tradeDbKeyFactory.newKey(this.orderFullHash, this.orderId);
         }
 
         private Trade(ResultSet rs, DbKey dbKey) throws SQLException {
