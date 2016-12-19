@@ -48,7 +48,6 @@ public enum APIEnum {
     DGS_PURCHASE("dgsPurchase", DGSPurchase.instance),
     DGS_QUANTITY_CHANGE("dgsQuantityChange", DGSQuantityChange.instance),
     DGS_REFUND("dgsRefund", DGSRefund.instance),
-    DECODE_HALLMARK("decodeHallmark", DecodeHallmark.instance),
     DECODE_TOKEN("decodeToken", DecodeToken.instance),
     DECODE_FILE_TOKEN("decodeFileToken", DecodeFileToken.instance),
     DECODE_Q_R_CODE("decodeQRCode", DecodeQRCode.instance),
@@ -123,7 +122,6 @@ public enum APIEnum {
     GET_DGS_TAGS_LIKE("getDGSTagsLike", GetDGSTagsLike.instance),
     GET_GUARANTEED_BALANCE("getGuaranteedBalance", GetGuaranteedBalance.instance),
     GET_E_C_BLOCK("getECBlock", GetECBlock.instance),
-    GET_INBOUND_PEERS("getInboundPeers", GetInboundPeers.instance),
     GET_PLUGINS("getPlugins", GetPlugins.instance),
     GET_MY_INFO("getMyInfo", GetMyInfo.instance),
     GET_PEER("getPeer", GetPeer.instance),
@@ -197,7 +195,6 @@ public enum APIEnum {
     LEASE_BALANCE("leaseBalance", LeaseBalance.instance),
     LONG_CONVERT("longConvert", LongConvert.instance),
     HEX_CONVERT("hexConvert", HexConvert.instance),
-    MARK_HOST("markHost", MarkHost.instance),
     PARSE_TRANSACTION("parseTransaction", ParseTransaction.instance),
     PLACE_ASK_ORDER("placeAskOrder", PlaceAskOrder.instance),
     PLACE_BID_ORDER("placeBidOrder", PlaceBidOrder.instance),
@@ -281,6 +278,10 @@ public enum APIEnum {
     GET_ASSET_DIVIDENDS("getAssetDividends", GetAssetDividends.instance),
     BLACKLIST_API_PROXY_PEER("blacklistAPIProxyPeer", BlacklistAPIProxyPeer.instance),
     GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", GetNextBlockGeneratorsTemp.instance),
+    START_BUNDLER("startBundler", StartBundler.instance),
+    STOP_BUNDLER("stopBundler", StopBundler.instance),
+    GET_BUNDLERS("getBundlers", GetBundlers.instance),
+    BUNDLE_TRANSACTIONS("bundleTransactions", BundleTransactions.instance),
     EXCHANGE_COINS("exchangeCoins", ExchangeCoins.instance),
     CANCEL_COIN_EXCHANGE("cancelCoinExchange", CancelCoinExchange.instance),
     GET_COIN_EXCHANGE_ORDER("getCoinExchangeOrder", GetCoinExchangeOrder.instance),
@@ -333,9 +334,12 @@ public enum APIEnum {
     }
 
     public static EnumSet<APIEnum> base64StringToEnumSet(String apiSetBase64) {
+        EnumSet<APIEnum> result = EnumSet.noneOf(APIEnum.class);
+        if (apiSetBase64 == null) {
+            return result;
+        }
         byte[] decoded = Base64.getDecoder().decode(apiSetBase64);
         BitSet bs = BitSet.valueOf(decoded);
-        EnumSet<APIEnum> result = EnumSet.noneOf(APIEnum.class);
         for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
             result.add(APIEnum.values()[i]);
             if (i == Integer.MAX_VALUE) {

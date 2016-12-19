@@ -16,6 +16,7 @@
 
 package nxt.blockchain;
 
+import nxt.Nxt;
 import nxt.NxtException;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
@@ -24,13 +25,12 @@ import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ChildBlockAttachment extends Attachment.AbstractAttachment implements Appendix.Prunable {
 
     public static ChildBlockAttachment parse(JSONObject attachmentData) throws NxtException.NotValidException {
-        if (!Appendix.hasAppendix(ChildBlockTransactionType.INSTANCE.getName(), attachmentData)) {
+        if (!Appendix.hasAppendix(ChildBlockFxtTransactionType.INSTANCE.getName(), attachmentData)) {
             return null;
         }
         return new ChildBlockAttachment(attachmentData);
@@ -38,7 +38,6 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     private final int chainId;
     private volatile byte[][] childTransactionFullHashes;
-    private List<ChildTransactionImpl> childTransactions;
     private final byte[] hash;
     private final long[] backFees;
 
@@ -88,14 +87,35 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         }
     }
 
-    ChildBlockAttachment(ChildChain childChain, byte[][] childTransactionFullHashes, long[] backFees) {
+    public ChildBlockAttachment(ChildChain childChain, byte[][] childTransactionFullHashes, long[] backFees) {
         this.chainId = childChain.getId();
         this.childTransactionFullHashes = childTransactionFullHashes;
         this.hash = null;
         this.backFees = backFees;
     }
 
-    //TODO: include full size of child transactions???
+    public ChildBlockAttachment(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
+        if (childTransactions == null || childTransactions.isEmpty()) {
+            throw new NxtException.NotValidException("Empty ChildBlockAttachment not allowed");
+        }
+        this.chainId = childTransactions.get(0).getChain().getId();
+        this.childTransactionFullHashes = new byte[childTransactions.size()][];
+        this.backFees = new long[3];
+        this.hash = null;
+        int blockchainHeight = Nxt.getBlockchain().getHeight();
+        for (int i = 0; i < childTransactionFullHashes.length; i++) {
+            ChildTransactionImpl childTransaction = (ChildTransactionImpl)childTransactions.get(i);
+            if (childTransaction.getChain().getId() != this.chainId) {
+                throw new NxtException.NotValidException("Child transactions belong to different child chains");
+            }
+            childTransactionFullHashes[i] = childTransaction.getFullHash();
+            long[] childMinBackFees = childTransaction.getMinimumBackFeesFQT(blockchainHeight);
+            for (int j = 0; j < childMinBackFees.length; j++) {
+                backFees[j] += childMinBackFees[j];
+            }
+        }
+    }
+
     @Override
     protected int getMyFullSize() {
         if (childTransactionFullHashes == null) {
@@ -124,7 +144,7 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         json.put("chain", chainId);
         if (childTransactionFullHashes != null) {
             JSONArray jsonArray = new JSONArray();
-            json.put("childTransactionsFullHashes", jsonArray);
+            json.put("childTransactionFullHashes", jsonArray);
             for (byte[] bytes : childTransactionFullHashes) {
                 jsonArray.add(Convert.toHexString(bytes));
             }
@@ -141,25 +161,7 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     @Override
     public TransactionType getTransactionType() {
-        return ChildBlockTransactionType.INSTANCE;
-    }
-
-
-    public synchronized List<ChildTransactionImpl> getChildTransactions(FxtTransactionImpl fxtTransaction) {
-        if (childTransactions == null) {
-            TransactionHome transactionHome = ChildChain.getChildChain(chainId).getTransactionHome();
-            childTransactions = new ArrayList<>();
-            short index = 0;
-            for (byte[] fullHash : childTransactionFullHashes) {
-                ChildTransactionImpl childTransaction = (ChildTransactionImpl)transactionHome.findTransactionByFullHash(fullHash);
-                //TODO: get transactions from unconfirmed pool
-                //TODO: handle missing child transaction
-                childTransaction.setFxtTransaction(fxtTransaction);
-                childTransaction.setIndex(index++);
-                childTransactions.add(childTransaction);
-            }
-        }
-        return childTransactions;
+        return ChildBlockFxtTransactionType.INSTANCE;
     }
 
     public int getChainId() {
@@ -168,6 +170,10 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     public long[] getBackFees() {
         return backFees;
+    }
+
+    public byte[][] getChildTransactionFullHashes() {
+        return childTransactionFullHashes;
     }
 
     //Prunable:
@@ -190,7 +196,9 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (childTransactionFullHashes == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            //TODO
+            TransactionHome transactionHome = ChildChain.getChildChain(chainId).getTransactionHome();
+            List<byte[]> hashes = transactionHome.findChildTransactionFullHashes(transaction.getId());
+            childTransactionFullHashes = hashes.toArray(new byte[hashes.size()][]);
         }
     }
 
@@ -201,7 +209,7 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        //TODO
+        throw new UnsupportedOperationException("Pruning of child transactions not yet implemented");
     }
 
 }

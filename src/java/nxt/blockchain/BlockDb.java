@@ -59,7 +59,7 @@ public final class BlockDb {
                         cacheBlock.getFxtTransactions().forEach(fxtTransaction -> {
                             fxtTransactionCache.remove(fxtTransaction.getId());
                             fxtTransaction.getChildTransactions().forEach(childTransaction -> {
-                                childTransactionCache.remove(new ChainTransactionId(childTransaction.getChain().getId(), childTransaction.getFullHash()));
+                                childTransactionCache.remove(ChainTransactionId.getChainTransactionId(childTransaction));
                             });
                         });
                         heightMap.remove(cacheHeight);
@@ -69,8 +69,7 @@ public final class BlockDb {
                 block.getFxtTransactions().forEach(fxtTransaction -> {
                     fxtTransactionCache.put(fxtTransaction.getId(), (FxtTransactionImpl)fxtTransaction);
                     fxtTransaction.getChildTransactions().forEach(childTransaction -> {
-                        childTransactionCache.put(new ChainTransactionId(childTransaction.getChain().getId(), childTransaction.getFullHash()),
-                                (ChildTransactionImpl)childTransaction);
+                        childTransactionCache.put(ChainTransactionId.getChainTransactionId(childTransaction), (ChildTransactionImpl)childTransaction);
                     });
                 });
                 heightMap.put(height, (BlockImpl)block);
@@ -93,6 +92,10 @@ public final class BlockDb {
     }
 
     static BlockImpl findBlock(long blockId) {
+        return findBlock(blockId, false);
+    }
+
+    static BlockImpl findBlock(long blockId, boolean loadTransactions) {
         // Check the block cache
         synchronized (blockCache) {
             BlockImpl block = blockCache.get(blockId);
@@ -107,7 +110,7 @@ public final class BlockDb {
             try (ResultSet rs = pstmt.executeQuery()) {
                 BlockImpl block = null;
                 if (rs.next()) {
-                    block = loadBlock(con, rs);
+                    block = loadBlock(con, rs, loadTransactions);
                 }
                 return block;
             }
@@ -399,13 +402,20 @@ public final class BlockDb {
              Statement stmt = con.createStatement()) {
             try {
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY FALSE");
-                stmt.executeUpdate("TRUNCATE TABLE transaction");
+                stmt.executeUpdate("TRUNCATE TABLE transaction_fxt");
                 stmt.executeUpdate("TRUNCATE TABLE block");
+                ChildChain.getAll().forEach(childChain -> {
+                    try {
+                        stmt.executeUpdate("TRUNCATE TABLE " + childChain.getSchemaTable("transaction"));
+                    } catch (SQLException e) {
+                        Logger.logErrorMessage(e.toString(), e);
+                    }
+                });
                 BlockchainProcessorImpl.getInstance().getDerivedTables().forEach(table -> {
-                    if (table.isPersistent()) {
-                        try {
-                            stmt.executeUpdate("TRUNCATE TABLE " + table.toString());
-                        } catch (SQLException ignore) {}
+                    try {
+                        stmt.executeUpdate("TRUNCATE TABLE " + table.toString());
+                    } catch (SQLException e) {
+                        Logger.logErrorMessage(e.toString(), e);
                     }
                 });
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY TRUE");

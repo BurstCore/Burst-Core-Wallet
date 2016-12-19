@@ -797,6 +797,10 @@ public final class ParameterParser {
     }
 
     public static Chain getChain(HttpServletRequest request) throws ParameterException {
+        return getChain(request, true);
+    }
+
+    public static Chain getChain(HttpServletRequest request, boolean isMandatory) throws ParameterException {
         String chainName = Convert.emptyToNull(request.getParameter("chain"));
         if (chainName != null) {
             Chain chain = Chain.getChain(chainName.toUpperCase());
@@ -804,8 +808,11 @@ public final class ParameterParser {
                 throw new ParameterException(UNKNOWN_CHAIN);
             }
             return chain;
+        } else if (isMandatory) {
+            return ChildChain.IGNIS;
+        } else {
+            return null;
         }
-        return ChildChain.IGNIS;
     }
 
     public static Chain getChain(HttpServletRequest request, String name, boolean isMandatory) throws ParameterException {
@@ -823,6 +830,10 @@ public final class ParameterParser {
     }
 
     public static ChildChain getChildChain(HttpServletRequest request) throws ParameterException {
+        return getChildChain(request, true);
+    }
+
+    public static ChildChain getChildChain(HttpServletRequest request, boolean isMandatory) throws ParameterException {
         String chainName = Convert.emptyToNull(request.getParameter("chain"));
         if (chainName != null) {
             ChildChain chain = ChildChain.getChildChain(chainName.toUpperCase());
@@ -830,8 +841,11 @@ public final class ParameterParser {
                 throw new ParameterException(UNKNOWN_CHAIN);
             }
             return chain;
+        } else if (isMandatory) {
+            return ChildChain.IGNIS;
+        } else {
+            return null;
         }
-        return ChildChain.IGNIS;
     }
 
     private ParameterParser() {} // never

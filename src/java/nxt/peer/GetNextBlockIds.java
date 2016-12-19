@@ -17,41 +17,27 @@
 package nxt.peer;
 
 import nxt.Nxt;
-import nxt.util.Convert;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 
 import java.util.List;
 
-final class GetNextBlockIds extends PeerServlet.PeerRequestHandler {
-
-    static final GetNextBlockIds instance = new GetNextBlockIds();
+final class GetNextBlockIds {
 
     private GetNextBlockIds() {}
 
-
-    @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
-
-        JSONObject response = new JSONObject();
-
-        JSONArray nextBlockIds = new JSONArray();
-        long blockId = Convert.parseUnsignedLong((String) request.get("blockId"));
-        int limit = (int)Convert.parseLong(request.get("limit"));
+    /**
+     * Process the GetNextBlockIds message and return the BlockIds message
+     *
+     * @param   peer                    Peer
+     * @param   request                 Request message
+     * @return                          Response message
+     */
+    static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetNextBlockIdsMessage request) {
+        long blockId = request.getBlockId();
+        int limit = request.getLimit();
         if (limit > 1440) {
-            return GetNextBlocks.TOO_MANY_BLOCKS_REQUESTED;
+            throw new IllegalArgumentException(Errors.TOO_MANY_BLOCKS_REQUESTED);
         }
         List<Long> ids = Nxt.getBlockchain().getBlockIdsAfter(blockId, limit > 0 ? limit : 1440);
-        ids.forEach(id -> nextBlockIds.add(Long.toUnsignedString(id)));
-        response.put("nextBlockIds", nextBlockIds);
-
-        return response;
+        return new NetworkMessage.BlockIdsMessage(request.getMessageId(), ids);
     }
-
-    @Override
-    boolean rejectWhileDownloading() {
-        return true;
-    }
-
 }

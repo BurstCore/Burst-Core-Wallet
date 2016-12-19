@@ -16,30 +16,36 @@
 
 package nxt.blockchain;
 
+import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
+import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
-//TODO
-public final class ChildBlockTransactionType extends FxtTransactionType {
+public final class ChildBlockFxtTransactionType extends FxtTransactionType {
 
-    public static final ChildBlockTransactionType INSTANCE = new ChildBlockTransactionType();
+    public static final ChildBlockFxtTransactionType INSTANCE = new ChildBlockFxtTransactionType();
 
     private static final Fee CHILD_BLOCK_FEE = new Fee() {
         @Override
         public long getFee(TransactionImpl transaction, Appendix appendage) {
-            ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
             long totalFee = 0;
             int blockchainHeight = Nxt.getBlockchain().getHeight();
-            for (ChildTransactionImpl childTransaction : attachment.getChildTransactions((FxtTransactionImpl)transaction)) {
+            for (ChildTransactionImpl childTransaction : ((FxtTransactionImpl)transaction).getChildTransactions()) {
                 totalFee += childTransaction.getMinimumFeeFQT(blockchainHeight);
             }
             return totalFee;
+        }
+        @Override
+        public long[] getBackFees(long fee) {
+            return new long[] {fee / 4, fee / 4, fee / 4};
         }
     };
 
@@ -72,13 +78,34 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     @Override
     protected void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
-        if (ChildChain.getChildChain(attachment.getChainId()) == null) {
+        ChildChain childChain = ChildChain.getChildChain(attachment.getChainId());
+        if (childChain == null) {
             throw new NxtException.NotValidException("No such child chain id: " + attachment.getChainId());
         }
-        //TODO: its own validation?
-        long[] minBackFees = new long[3];
+        byte[][] childTransactionHashes = attachment.getChildTransactionFullHashes();
+        if (childTransactionHashes.length == 0) {
+            throw new NxtException.NotValidException("Empty ChildBlock transaction");
+        }
+        //TODO: define child block transaction count and size limits
+        if (childTransactionHashes.length > Constants.MAX_NUMBER_OF_TRANSACTIONS) {
+            throw new NxtException.NotValidException("Too many child transactions: " + childTransactionHashes.length);
+        }
         int blockchainHeight = Nxt.getBlockchain().getHeight();
-        for (ChildTransactionImpl childTransaction : attachment.getChildTransactions(transaction)) {
+        Set<Long> childIds = new HashSet<>();
+        for (byte[] childTransactionHash : childTransactionHashes) {
+            if (!childIds.add(Convert.fullHashToId(childTransactionHash))) {
+                throw new NxtException.NotValidException("Duplicate child transaction hash");
+            }
+            if (childChain.getTransactionHome().hasTransactionByFullHash(childTransactionHash, blockchainHeight)) {
+                throw new NxtException.NotValidException("Child transaction already included at an earlier height");
+            }
+        }
+        long[] backFees = attachment.getBackFees();
+        if (backFees.length > 3) {
+            throw new NxtException.NotValidException("Invalid backFees length");
+        }
+        long[] minBackFees = new long[3];
+        for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
             childTransaction.validate();
             if (transaction.getExpiration() > childTransaction.getExpiration()) {
                 throw new NxtException.NotValidException("ChildBlock transaction " + transaction.getStringId() + " expiration " + transaction.getExpiration()
@@ -89,7 +116,6 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
                 minBackFees[i] += childMinBackFees[i];
             }
         }
-        long[] backFees = attachment.getBackFees();
         for (int i = 0; i < minBackFees.length; i++) {
             if (i >= backFees.length || backFees[i] < minBackFees[i]) {
                 throw new NxtException.NotValidException("Insufficient back fees");
@@ -107,7 +133,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     protected void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
         long totalFee = 0;
-        for (ChildTransactionImpl childTransaction : attachment.getChildTransactions(transaction)) {
+        for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
             childTransaction.apply();
             totalFee = Math.addExact(totalFee, childTransaction.getFee());
         }
@@ -139,7 +165,7 @@ public final class ChildBlockTransactionType extends FxtTransactionType {
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
-        return isDuplicate(ChildBlockTransactionType.INSTANCE, String.valueOf(attachment.getChainId()), duplicates, true);
+        return isDuplicate(ChildBlockFxtTransactionType.INSTANCE, String.valueOf(attachment.getChainId()), duplicates, true);
     }
 
 }

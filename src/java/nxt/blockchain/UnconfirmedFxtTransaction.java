@@ -24,7 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTransaction {
+final class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTransaction {
 
     UnconfirmedFxtTransaction(FxtTransactionImpl transaction, long arrivalTimestamp) {
         super(transaction, arrivalTimestamp);
@@ -38,13 +38,18 @@ class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTra
     }
 
     @Override
-    FxtTransactionImpl getTransaction() {
+    public FxtTransactionImpl getTransaction() {
         return (FxtTransactionImpl)super.getTransaction();
     }
 
     @Override
     public List<? extends ChildTransaction> getChildTransactions() {
         return getTransaction().getChildTransactions();
+    }
+
+    @Override
+    public void setChildTransactions(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
+        getTransaction().setChildTransactions(childTransactions);
     }
 
 }

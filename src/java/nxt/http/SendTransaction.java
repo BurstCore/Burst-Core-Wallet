@@ -16,16 +16,19 @@
 
 package nxt.http;
 
+import nxt.Nxt;
 import nxt.NxtException;
-import nxt.blockchain.Appendix;
 import nxt.blockchain.Transaction;
-import nxt.peer.Peers;
+import nxt.peer.NetworkHandler;
+import nxt.peer.NetworkMessage;
+import nxt.peer.TransactionsInventory;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Sends a transaction to some peers.
@@ -50,7 +53,7 @@ import java.util.Collections;
  * In case the client submits transactionBytes for a transaction containing prunable appendages, the client also needs
  * to submit the prunableAttachmentJSON parameter which includes the attachment JSON for the prunable appendages.<br>
  * <p>
- * Prunable appendages are classes implementing the {@link Appendix.Prunable} interface.
+ * Prunable appendages are classes implementing the {@link nxt.blockchain.Appendix.Prunable} interface.
  */
 public final class SendTransaction extends APIServlet.APIRequestHandler {
 
@@ -71,7 +74,10 @@ public final class SendTransaction extends APIServlet.APIRequestHandler {
         try {
             Transaction.Builder builder = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
-            Peers.sendToSomePeers(Collections.singletonList(transaction));
+            List<Transaction> transactions = Collections.singletonList(transaction);
+            TransactionsInventory.cacheTransactions(transactions);
+            NetworkHandler.broadcastMessage(new NetworkMessage.TransactionsInventoryMessage(transactions));
+            Nxt.getTransactionProcessor().broadcastLater(transaction);
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", Convert.toHexString(transaction.getFullHash()));
         } catch (NxtException.ValidationException|RuntimeException e) {

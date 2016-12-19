@@ -155,7 +155,9 @@ public final class TransactionHome {
                 }
             } else {
                 TransactionImpl transaction = BlockDb.childTransactionCache.get(new ChainTransactionId(chain.getId(), fullHash));
-                return transaction != null && transaction.getHeight() <= height;
+                if (transaction != null) {
+                    return transaction.getHeight() <= height;
+                }
             }
         }
         // Search the database
@@ -173,6 +175,49 @@ public final class TransactionHome {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    List<byte[]> findChildTransactionFullHashes(long fxtTransactionId) {
+        if (chain == FxtChain.FXT) {
+            throw new RuntimeException("Invalid chain");
+        }
+        List<byte[]> list = new ArrayList<>();
+        try (Connection con = transactionTable.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT full_hash FROM " + transactionTable.getSchemaTable()
+                     + " WHERE fxt_transaction_id = ? ORDER BY transaction_index")) {
+            pstmt.setLong(1, fxtTransactionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(rs.getBytes("full_hash"));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return list;
+    }
+
+    List<ChildTransactionImpl> findChildTransactions(long fxtTransactionId) {
+        if (chain == FxtChain.FXT) {
+            throw new RuntimeException("Invalid chain");
+        }
+        List<ChildTransactionImpl> list = new ArrayList<>();
+        try (Connection con = transactionTable.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable()
+                     + " WHERE fxt_transaction_id = ? ORDER BY transaction_index")) {
+            pstmt.setLong(1, fxtTransactionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(ChildTransactionImpl.loadTransaction((ChildChain)chain, con, rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        } catch (NxtException.ValidationException e) {
+            throw new RuntimeException("Transaction already in database for fxtTransactionId = " + Long.toUnsignedString(fxtTransactionId)
+                    + " does not pass validation!", e);
+        }
+        return list;
     }
 
     static List<FxtTransactionImpl> findBlockTransactions(long blockId) {
@@ -243,7 +288,10 @@ public final class TransactionHome {
         try {
             short index = 0;
             for (FxtTransactionImpl transaction : transactions) {
-                transaction.setIndex(index++);
+                if (transaction.getIndex() != index++) {
+                    throw new IllegalStateException(String.format("Fxt transaction index set to %d, must be %d",
+                            transaction.getIndex(), --index));
+                }
                 transaction.save(con, "transaction_fxt");
             }
         } catch (SQLException e) {

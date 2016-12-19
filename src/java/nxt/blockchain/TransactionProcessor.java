@@ -19,8 +19,6 @@ package nxt.blockchain;
 import nxt.NxtException;
 import nxt.db.DbIterator;
 import nxt.util.Observable;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.util.Collection;
 import java.util.List;
@@ -36,15 +34,21 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
         REJECT_PHASED_TRANSACTION
     }
 
+    List<Long> getAllUnconfirmedTransactionIds();
+    
     DbIterator<? extends Transaction> getAllUnconfirmedTransactions();
 
     DbIterator<? extends Transaction> getAllUnconfirmedTransactions(String sort);
 
     DbIterator<? extends Transaction> getUnconfirmedFxtTransactions();
 
-    Transaction getUnconfirmedTransaction(long transactionId);
+    DbIterator<? extends Transaction> getUnconfirmedChildTransactions();
 
-    Transaction[] getAllWaitingTransactions();
+    DbIterator<? extends Transaction> getUnconfirmedChildTransactions(ChildChain chain);
+
+    UnconfirmedTransaction getUnconfirmedTransaction(long transactionId);
+
+    UnconfirmedTransaction[] getAllWaitingTransactions();
 
     Transaction[] getAllBroadcastedTransactions();
 
@@ -56,11 +60,13 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
 
     void broadcast(Transaction transaction) throws NxtException.ValidationException;
 
-    void processPeerTransactions(JSONObject request) throws NxtException.ValidationException;
+    void broadcastLater(Transaction transaction);
 
-    void processLater(Collection<? extends Transaction> transactions);
+    List<? extends Transaction> processPeerTransactions(List<Transaction> transactions) throws NxtException.NotValidException;
 
-    SortedSet<? extends Transaction> getCachedUnconfirmedTransactions(List<String> exclude);
+    void processLater(Collection<? extends FxtTransaction> transactions);
 
-    List<Transaction> restorePrunableData(JSONArray transactions) throws NxtException.NotValidException;
+    SortedSet<? extends Transaction> getCachedUnconfirmedTransactions(List<Long> exclude);
+
+    List<Transaction> restorePrunableData(List<Transaction> transactions) throws NxtException.NotValidException;
 }

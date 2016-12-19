@@ -56,8 +56,8 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
             }
             appendages(Collections.unmodifiableList(list));
             preBuild(secretPhrase);
-            return getAttachment().getTransactionType() == ChildBlockTransactionType.INSTANCE ?
-                    new ChildBlockTransactionImpl(this, secretPhrase) : new FxtTransactionImpl(this, secretPhrase);
+            return getAttachment().getTransactionType() == ChildBlockFxtTransactionType.INSTANCE ?
+                    new ChildBlockFxtTransactionImpl(this, secretPhrase) : new FxtTransactionImpl(this, secretPhrase);
         }
 
         @Override
@@ -205,6 +205,11 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
         return Collections.emptyList();
     }
 
+    @Override
+    public void setChildTransactions(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
+        throw new UnsupportedOperationException("Only allowed for ChildBlockFxtTransactions");
+    }
+
     public long[] getBackFees() {
         return Convert.EMPTY_LONG;
     }
@@ -215,12 +220,12 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         return o instanceof FxtTransactionImpl && this.getId() == ((Transaction)o).getId();
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return (int)(getId() ^ (getId() >>> 32));
     }
 

@@ -29,7 +29,7 @@ import org.json.simple.JSONValue;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-class UnconfirmedChildTransaction extends UnconfirmedTransaction implements ChildTransaction {
+final class UnconfirmedChildTransaction extends UnconfirmedTransaction implements ChildTransaction {
 
     UnconfirmedChildTransaction(ChildTransactionImpl transaction, long arrivalTimestamp) {
         super(transaction, arrivalTimestamp);
@@ -43,18 +43,13 @@ class UnconfirmedChildTransaction extends UnconfirmedTransaction implements Chil
     }
 
     @Override
-    ChildTransactionImpl getTransaction() {
+    public ChildTransactionImpl getTransaction() {
         return (ChildTransactionImpl)super.getTransaction();
     }
 
     @Override
     public ChildChain getChain() {
         return getTransaction().getChain();
-    }
-
-    @Override
-    public FxtTransaction getFxtTransaction() {
-        return getTransaction().getFxtTransaction();
     }
 
     @Override

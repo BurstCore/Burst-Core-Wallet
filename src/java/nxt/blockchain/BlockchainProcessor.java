@@ -20,7 +20,6 @@ import nxt.NxtException;
 import nxt.db.DerivedDbTable;
 import nxt.peer.Peer;
 import nxt.util.Observable;
-import org.json.simple.JSONObject;
 
 import java.util.List;
 
@@ -43,11 +42,17 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
 
     boolean isProcessingBlock();
 
+    void suspendDownload(boolean suspend);
+
+    boolean isDownloadSuspended();
+
     int getMinRollbackHeight();
 
     int getInitialScanHeight();
 
-    void processPeerBlock(JSONObject request) throws NxtException;
+    void processPeerBlock(Block inputBlock) throws NxtException;
+
+    void processPeerBlocks(List<Block> inputBlocks) throws NxtException;
 
     void fullReset();
 

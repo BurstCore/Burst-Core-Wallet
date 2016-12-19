@@ -19,7 +19,6 @@ package nxt.voting;
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.NxtException.ValidationException;
-import nxt.account.AccountRestrictions;
 import nxt.ae.Asset;
 import nxt.ms.Currency;
 import nxt.util.Convert;
@@ -30,7 +29,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
- * Class for handling phasing parameters shared between {@link PhasingAppendix} and {@link AccountRestrictions.PhasingOnly}
+ * Class for handling phasing parameters shared between {@link PhasingAppendix} and {@link nxt.account.AccountRestrictions.PhasingOnly}
  */
 public final class PhasingParams {
 

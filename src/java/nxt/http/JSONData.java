@@ -40,6 +40,7 @@ import nxt.aliases.AliasHome;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Block;
 import nxt.blockchain.Chain;
+import nxt.blockchain.Bundler;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
@@ -62,7 +63,6 @@ import nxt.ms.ExchangeOfferHome;
 import nxt.ms.ExchangeRequestHome;
 import nxt.ms.MonetarySystemTransactionType;
 import nxt.ms.PublishExchangeOfferAttachment;
-import nxt.peer.Hallmark;
 import nxt.peer.Peer;
 import nxt.shuffling.Shuffler;
 import nxt.shuffling.ShufflingHome;
@@ -544,18 +544,6 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject hallmark(Hallmark hallmark) {
-        JSONObject json = new JSONObject();
-        putAccount(json, "account", Account.getId(hallmark.getPublicKey()));
-        json.put("host", hallmark.getHost());
-        json.put("port", hallmark.getPort());
-        json.put("weight", hallmark.getWeight());
-        String dateString = Hallmark.formatDate(hallmark.getDate());
-        json.put("date", dateString);
-        json.put("valid", hallmark.isValid());
-        return json;
-    }
-
     static JSONObject token(Token token) {
         JSONObject json = new JSONObject();
         putAccount(json, "account", Account.getId(token.getPublicKey()));
@@ -571,10 +559,6 @@ public final class JSONData {
         json.put("state", peer.getState().ordinal());
         json.put("announcedAddress", peer.getAnnouncedAddress());
         json.put("shareAddress", peer.shareAddress());
-        if (peer.getHallmark() != null) {
-            json.put("hallmark", peer.getHallmark().getHallmarkString());
-        }
-        json.put("weight", peer.getWeight());
         json.put("downloadedVolume", peer.getDownloadedVolume());
         json.put("uploadedVolume", peer.getUploadedVolume());
         json.put("application", peer.getApplication());
@@ -590,8 +574,6 @@ public final class JSONData {
         json.put("lastUpdated", peer.getLastUpdated());
         json.put("lastConnectAttempt", peer.getLastConnectAttempt());
         json.put("inbound", peer.isInbound());
-        json.put("inboundWebSocket", peer.isInboundWebSocket());
-        json.put("outboundWebSocket", peer.isOutboundWebSocket());
         if (peer.isBlacklisted()) {
             json.put("blacklistingCause", peer.getBlacklistingCause());
         }
@@ -992,6 +974,7 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("type", transaction.getType().getType());
         json.put("subtype", transaction.getType().getSubtype());
+        json.put("chain", transaction.getChain().getId());
         json.put("phased", transaction.isPhased());
         json.put("timestamp", transaction.getTimestamp());
         json.put("deadline", transaction.getDeadline());
@@ -1185,6 +1168,17 @@ public final class JSONData {
         json.put("requirePost", handler.requirePost());
         json.put("requirePassword", handler.requirePassword());
         json.put("requireFullClient", handler.requireFullClient());
+        return json;
+    }
+
+    static JSONObject bundler(Bundler bundler) {
+        JSONObject json = new JSONObject();
+        putAccount(json, "bundler", bundler.getAccountId());
+        json.put("chain", bundler.getChildChain().getName());
+        json.put("totalFeesLimitFQT", String.valueOf(bundler.getTotalFeesLimitFQT()));
+        json.put("currentTotalFeesFQT", String.valueOf(bundler.getCurrentTotalFeesFQT()));
+        json.put("minRateNQTPerFXT", String.valueOf(bundler.getMinRateNQTPerFXT()));
+        json.put("overpayFQTPerFXT", String.valueOf(bundler.getOverpayFQTPerFXT()));
         return json;
     }
 

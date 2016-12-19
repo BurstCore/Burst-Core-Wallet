@@ -126,8 +126,8 @@ public final class Constants {
     // LAST_KNOWN_BLOCK must also be set in html/www/js/nrs.constants.js
     public static final int LAST_KNOWN_BLOCK = isTestnet ? 0 : 0;
 
-    public static final int[] MIN_VERSION = new int[] {1, 0};
-    public static final int[] MIN_PROXY_VERSION = new int[] {1, 0};
+    public static final int[] MIN_VERSION = new int[] {2, 0};
+    public static final int[] MIN_PROXY_VERSION = new int[] {2, 0};
 
     public static final long UNCONFIRMED_POOL_DEPOSIT_FQT = (isTestnet ? 50 : 100) * ONE_NXT;
     public static final long SHUFFLING_DEPOSIT_NQT = (isTestnet ? 7 : 1000) * ONE_NXT;

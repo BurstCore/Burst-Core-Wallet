@@ -11,27 +11,14 @@
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 package nxt.blockchain;
 
-import nxt.NxtException;
+public interface ChildBlockFxtTransaction extends FxtTransaction {
 
-import java.util.List;
+    ChildChain getChildChain();
 
-public interface FxtTransaction extends Transaction {
-
-    interface Builder extends Transaction.Builder {
-
-        FxtTransaction build() throws NxtException.NotValidException;
-
-        FxtTransaction build(String secretPhrase) throws NxtException.NotValidException;
-
-    }
-
-    List<? extends ChildTransaction> getChildTransactions();
-
-    void setChildTransactions(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException;
+    byte[][] getChildTransactionFullHashes();
 
 }

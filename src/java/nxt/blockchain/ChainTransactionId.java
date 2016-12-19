@@ -64,6 +64,10 @@ public final class ChainTransactionId {
         return (ChildTransaction)ChildChain.getChildChain(chainId).getTransactionHome().findTransactionByFullHash(hash);
     }
 
+    public static ChainTransactionId getChainTransactionId(Transaction transaction) {
+        return new ChainTransactionId(transaction.getChain().getId(), transaction.getFullHash());
+    }
+
     public static ChainTransactionId parse(ByteBuffer buffer) {
         int chainId = buffer.getInt();
         byte[] hash = new byte[32];

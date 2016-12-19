@@ -16,53 +16,49 @@
 
 package nxt.peer;
 
-import nxt.Constants;
 import nxt.Nxt;
-import nxt.blockchain.Blockchain;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.Transaction;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 
-/**
- * Get the transactions
- */
-public class GetTransactions extends PeerServlet.PeerRequestHandler {
+import java.util.ArrayList;
+import java.util.List;
 
-    static final GetTransactions instance = new GetTransactions();
+class GetTransactions {
 
     private GetTransactions() {}
 
-    @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
-        if (!Constants.INCLUDE_EXPIRED_PRUNABLE) {
-            return PeerServlet.UNSUPPORTED_REQUEST_TYPE;
+    /**
+     * Process the GetTransactions message and return the Transactions message.
+     * The request consists of a list of transactions to return.
+     *
+     * A maximum of 100 transactions can be requested.
+     *
+     * @param   peer                    Peer
+     * @param   request                 Request message
+     * @return                          Response message
+     */
+    static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetTransactionsMessage request) {
+        List<ChainTransactionId> transactionIds = request.getTransactionIds();
+        if (transactionIds.size() > 100) {
+            throw new IllegalArgumentException(Errors.TOO_MANY_TRANSACTIONS_REQUESTED);
         }
-        JSONObject response = new JSONObject();
-        JSONArray transactionArray = new JSONArray();
-        JSONArray transactions = (JSONArray)request.get("transactions");
-        Blockchain blockchain = Nxt.getBlockchain();
-        //
-        // Return the transactions to the caller
-        //
-        if (transactions != null) {
-            transactions.forEach(chainTransactionJson -> {
-                ChainTransactionId chainTransactionId = ChainTransactionId.parse((JSONObject)chainTransactionJson);
-                Transaction transaction = blockchain.getTransactionByFullHash(chainTransactionId.getChain(), chainTransactionId.getFullHash());
-                if (transaction != null) {
-                    transaction.getAppendages(true);
-                    JSONObject transactionJSON = transaction.getJSONObject();
-                    transactionArray.add(transactionJSON);
-                }
-            });
+        List<Transaction> transactions = new ArrayList<>(transactionIds.size());
+        for (ChainTransactionId transactionId : transactionIds) {
+            //first check the transaction inventory
+            Transaction transaction = TransactionsInventory.getCachedTransaction(transactionId);
+            if (transaction == null) {
+                //check the unconfirmed pool
+                transaction = Nxt.getTransactionProcessor().getUnconfirmedTransaction(transactionId.getTransactionId());
+            }
+            if (transaction == null) {
+                //check the blockchain
+                transaction = transactionId.getTransaction();
+            }
+            if (transaction != null) {
+                transaction.getAppendages(true);
+                transactions.add(transaction);
+            }
         }
-        response.put("transactions", transactionArray);
-        return response;
-    }
-
-    @Override
-    boolean rejectWhileDownloading() {
-        return true;
+        return new NetworkMessage.TransactionsMessage(request.getMessageId(), transactions);
     }
 }
