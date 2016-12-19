@@ -809,7 +809,7 @@ public final class ParameterParser {
             }
             return chain;
         } else if (isMandatory) {
-            return ChildChain.IGNIS;
+            throw new ParameterException(MISSING_CHAIN);
         } else {
             return null;
         }
@@ -842,7 +842,7 @@ public final class ParameterParser {
             }
             return chain;
         } else if (isMandatory) {
-            return ChildChain.IGNIS;
+            throw new ParameterException(MISSING_CHAIN);
         } else {
             return null;
         }
