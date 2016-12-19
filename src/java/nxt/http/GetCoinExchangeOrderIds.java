@@ -19,7 +19,6 @@ import nxt.blockchain.Chain;
 import nxt.ce.CoinExchange;
 import nxt.ce.CoinExchange.Order;
 import nxt.db.DbIterator;
-import nxt.util.Convert;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

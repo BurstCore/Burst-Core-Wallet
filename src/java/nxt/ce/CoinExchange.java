@@ -79,8 +79,8 @@ public final class CoinExchange {
             return " ORDER BY creation_height DESC ";
         }
     };
-    private static final DbKey.HashKeyFactory<Trade> tradeDbKeyFactory =
-            new DbKey.HashKeyFactory<Trade>("order_full_hash", "order_id") {
+    private static final DbKey.HashHashKeyFactory<Trade> tradeDbKeyFactory =
+            new DbKey.HashHashKeyFactory<Trade>("order_full_hash", "order_id", "match_full_hash", "match_id") {
         @Override
         public DbKey newKey(Trade trade) {
             return trade.dbKey;
@@ -219,13 +219,25 @@ public final class CoinExchange {
      * @param   exchangeQuantity    Number of coins received
      * @param   exchangePrice       Exchange price
      * @param   order               Order
+     * @param   match               Match order
      * @return                      Trade
      */
-    private static Trade addTrade(long exchangeQuantity, long exchangePrice, Order order) {
-        Trade trade = new Trade(exchangeQuantity, exchangePrice, order);
+    private static Trade addTrade(long exchangeQuantity, long exchangePrice, Order order, Order match) {
+        Trade trade = new Trade(exchangeQuantity, exchangePrice, order, match);
         tradeTable.insert(trade);
         listeners.notify(trade, Event.TRADE);
         return trade;
+    }
+
+    /**
+     * Return a coin exchange trade
+     *
+     * @param   orderFullHash       Coin exchange order full hash
+     * @param   matchFullHash       Matching order full hash
+     * @return                      Coin exchange trade or null if not found
+     */
+    public static Trade getTrade(byte[] orderFullHash, byte[] matchFullHash) {
+        return tradeTable.get(tradeDbKeyFactory.newKey(orderFullHash, matchFullHash));
     }
 
     /**
@@ -325,7 +337,7 @@ public final class CoinExchange {
             //
             long exchangeQuantity = bidQuantity < askQuantity ? bidQuantity : askQuantity;
             long exchangePrice = price.movePointRight(8).longValue();
-            Trade bidTrade = addTrade(exchangeQuantity, exchangePrice, bidOrder);
+            Trade bidTrade = addTrade(exchangeQuantity, exchangePrice, bidOrder, askOrder);
             //
             // Create the trade for the exchange coin
             //
@@ -335,7 +347,7 @@ public final class CoinExchange {
                 exchangeQuantity = bidOrder.getQuantity();
             }
             exchangePrice = cost.movePointRight(8).longValue();
-            Trade askTrade = addTrade(exchangeQuantity, exchangePrice, askOrder);
+            Trade askTrade = addTrade(exchangeQuantity, exchangePrice, askOrder, bidOrder);
             //
             // Update the buyer balances
             //
@@ -536,8 +548,10 @@ public final class CoinExchange {
         private final long accountId;
         private final long orderId;
         private final byte[] orderFullHash;
+        private final long matchId;
+        private final byte[] matchFullHash;
 
-        private Trade(long exchangeQuantity, long exchangePrice, Order order) {
+        private Trade(long exchangeQuantity, long exchangePrice, Order order, Order match) {
             Block block = Nxt.getBlockchain().getLastBlock();
             this.blockId = block.getId();
             this.height = block.getHeight();
@@ -549,7 +563,9 @@ public final class CoinExchange {
             this.orderFullHash = order.getFullHash();
             this.exchangeQuantity = exchangeQuantity;
             this.exchangePrice = exchangePrice;
-            dbKey = tradeDbKeyFactory.newKey(this.orderFullHash, this.orderId);
+            this.matchId = match.getId();
+            this.matchFullHash = match.getFullHash();
+            dbKey = tradeDbKeyFactory.newKey(this.orderFullHash, this.orderId, this.matchFullHash, this.matchId);
         }
 
         private Trade(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -564,13 +580,15 @@ public final class CoinExchange {
             this.orderFullHash = rs.getBytes("order_full_hash");
             this.exchangeQuantity = rs.getLong("exchange_quantity");
             this.exchangePrice = rs.getLong("exchange_price");
+            this.matchId = rs.getLong("match_id");
+            this.matchFullHash = rs.getBytes("match_full_hash");
         }
 
         private void save(Connection con, String table) throws SQLException {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + table
                     + "(chain_id, exchange_id, block_id, height, timestamp, exchange_quantity, exchange_price, "
-                    + "account_id, order_id, order_full_hash) "
-                    + "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                    + "account_id, order_id, order_full_hash, match_id, match_full_hash) "
+                    + "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setInt(++i, chainId);
                 pstmt.setInt(++i, exchangeId);
@@ -582,6 +600,8 @@ public final class CoinExchange {
                 pstmt.setLong(++i, accountId);
                 pstmt.setLong(++i, orderId);
                 pstmt.setBytes(++i, orderFullHash);
+                pstmt.setLong(++i, matchId);
+                pstmt.setBytes(++i, matchFullHash);
                 pstmt.executeUpdate();
             }
         }
@@ -626,11 +646,20 @@ public final class CoinExchange {
             return orderFullHash;
         }
 
+        public long getMatchId() {
+            return matchId;
+        }
+
+        public byte[] getMatchFullHash() {
+            return matchFullHash;
+        }
+
         @Override
         public String toString() {
             return "Coin exchange trade: " + Chain.getChain(exchangeId).getName()
                     + " chain: " + Chain.getChain(chainId).getName()
                     + " order: " + Long.toUnsignedString(orderId)
+                    + " match: " + Long.toUnsignedString(matchId)
                     + " account: " + Long.toUnsignedString(accountId)
                     + " exchange price: " + exchangePrice
                     + " exchange quantity: " + exchangeQuantity

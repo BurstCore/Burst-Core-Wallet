@@ -315,7 +315,8 @@ public class FxtDbVersion extends DbVersion {
                         + "chain_id INT NOT NULL, exchange_id INT NOT NULL, account_id BIGINT NOT NULL, "
                         + "block_id BIGINT NOT NULL, height INT NOT NULL, timestamp INT NOT NULL,"
                         + "exchange_quantity BIGINT NOT NULL, exchange_price BIGINT NOT NULL,"
-                        + "order_id BIGINT NOT NULL, order_full_hash BINARY(32) NOT NULL)");
+                        + "order_id BIGINT NOT NULL, order_full_hash BINARY(32) NOT NULL,"
+                        + "match_id BIGINT NOT NULL, match_full_hash BINARY(32) NOT NULL)");
             case 108:
                 apply("CREATE INDEX IF NOT EXISTS coin_trade_fxt_chain_idx ON coin_trade_fxt (chain_id)");
             case 109:

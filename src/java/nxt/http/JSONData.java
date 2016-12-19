@@ -379,6 +379,8 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("order", Long.toUnsignedString(trade.getOrderId()));
         json.put("orderFullHash", Convert.toHexString(trade.getOrderFullHash()));
+        json.put("match", Long.toUnsignedString(trade.getMatchId()));
+        json.put("matchFullHash", Convert.toHexString(trade.getMatchFullHash()));
         json.put("chain", Chain.getChain(trade.getChainId()).getName());
         json.put("exchange", Chain.getChain(trade.getExchangeId()).getName());
         putAccount(json, "account", trade.getAccountId());
