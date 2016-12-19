@@ -75,10 +75,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class NetworkHandler implements Runnable {
 
     /** Default peer port */
-    static final int DEFAULT_PEER_PORT = 7873;
+    static final int DEFAULT_PEER_PORT = 27874;
 
     /** Testnet peer port */
-    static final int TESTNET_PEER_PORT = 6873;
+    static final int TESTNET_PEER_PORT = 26874;
 
     /** Maximum number of pending messages for a single peer */
     static final int MAX_PENDING_MESSAGES = 10;
