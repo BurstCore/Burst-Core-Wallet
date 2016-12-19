@@ -23,8 +23,6 @@ import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;
-import nxt.util.Convert;
-
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -116,6 +114,10 @@ public abstract class CoinExchangeTransactionType extends ChildTransactionType {
             if (attachment.getQuantityQNT() <= 0 || attachment.getQuantityQNT() > Constants.MAX_BALANCE_NQT ||
                     attachment.getPriceNQT() <= 0 || attachment.getPriceNQT() > Constants.MAX_BALANCE_NQT) {
                 throw new NxtException.NotValidException("Invalid coin exchange order: " + attachment.getJSONObject());
+            }
+            if (transaction.getChain() != attachment.getChain()) {
+                throw new NxtException.NotValidException("Coin exchange order for chain " + attachment.getChain().getName()
+                        + " was submitted on chain " + transaction.getChain().getName());
             }
         }
 
@@ -209,6 +211,11 @@ public abstract class CoinExchangeTransactionType extends ChildTransactionType {
                 throw new NxtException.NotValidException("Order " + Long.toUnsignedString(order.getId())
                         + " was created by account "
                         + Long.toUnsignedString(order.getAccountId()));
+            }
+            if (transaction.getChain().getId() != order.getChainId()) {
+                throw new NxtException.NotValidException("Coin exchange order cancellation for order on chain "
+                        + Chain.getChain(order.getChainId()).getName()
+                        + " was submitted on chain " + transaction.getChain().getName());
             }
         }
 

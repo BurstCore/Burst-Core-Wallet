@@ -13,9 +13,6 @@
  */
 package nxt.ce;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
@@ -23,13 +20,15 @@ import nxt.account.AccountLedger;
 import nxt.account.BalanceHome;
 import nxt.blockchain.Chain;
 import nxt.blockchain.Fee;
+import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransactionImpl;
 import nxt.blockchain.FxtTransactionType;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;
-import nxt.util.Convert;
-
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * Coin exchange transaction types for the Fxt chain
@@ -125,6 +124,9 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
                     attachment.getPriceNQT() <= 0 || attachment.getPriceNQT() > Constants.MAX_BALANCE_NQT) {
                 throw new NxtException.NotValidException("Invalid coin exchange order: " + attachment.getJSONObject());
             }
+            if (attachment.getChain() != FxtChain.FXT && attachment.getExchangeChain() != FxtChain.FXT) {
+                throw new NxtException.NotValidException("Only exchange orders to/from Ardor may be submitted on the Fxt chain");
+            }
         }
 
         @Override
@@ -213,6 +215,9 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
                         "Order " + Long.toUnsignedString(order.getId())
                         + " was created by account "
                         + Long.toUnsignedString(order.getAccountId()));
+            }
+            if (order.getChainId() != FxtChain.FXT.getId() && order.getExchangeId() != FxtChain.FXT.getId()) {
+                throw new NxtException.NotValidException("Only cancellations of orders to/from Ardor may be submitted on the Fxt chain");
             }
         }
 

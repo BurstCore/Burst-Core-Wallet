@@ -19,14 +19,16 @@ import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.Chain;
 import nxt.blockchain.FxtChain;
+import nxt.ce.CoinExchange;
 import nxt.ce.OrderCancelAttachment;
 import nxt.ce.OrderCancelFxtAttachment;
-
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static nxt.http.JSONResponses.INCORRECT_CHAIN;
 import static nxt.http.JSONResponses.NOT_ENOUGH_FUNDS;
+import static nxt.http.JSONResponses.UNKNOWN_ORDER;
 
 public final class CancelCoinExchange extends CreateTransaction {
 
@@ -41,12 +43,21 @@ public final class CancelCoinExchange extends CreateTransaction {
         long orderId = ParameterParser.getUnsignedLong(req, "order", true);
         Chain chain = ParameterParser.getChain(req);
         Account account = ParameterParser.getSenderAccount(req);
-        // The cancel transaction can be issued on any chain since the order identifier is unique
-        // and we don't know which chain contains the order transaction
-        Attachment attachment = (chain.getId() == FxtChain.FXT.getId() ?
+        CoinExchange.Order order = CoinExchange.getOrder(orderId);
+        if (order == null) {
+            return UNKNOWN_ORDER;
+        }
+        if (order.getChainId() != chain.getId()) {
+            return INCORRECT_CHAIN;
+        }
+        // require the cancellation order to be submitted on the same chain as the order,
+        // but always submit the transaction on the Fxt chain if it was one of the chains involved
+        Chain exchange = Chain.getChain(order.getExchangeId());
+        Chain txChain = (exchange.getId() == FxtChain.FXT.getId() ? exchange : chain);
+        Attachment attachment = (txChain.getId() == FxtChain.FXT.getId() ?
                 new OrderCancelFxtAttachment(orderId) : new OrderCancelAttachment(orderId));
         try {
-            return createTransaction(req, account, attachment);
+            return createTransaction(req, account, attachment, txChain);
         } catch (NxtException.InsufficientBalanceException e) {
             return NOT_ENOUGH_FUNDS;
         }

@@ -153,6 +153,7 @@ public final class JSONResponses {
     public static final JSONStreamAware MISSING_PROPERTY = missing("property");
     public static final JSONStreamAware INCORRECT_EC_BLOCK = incorrect("ecBlockId", "ecBlockId does not match the block id at ecBlockHeight");
     public static final JSONStreamAware UNKNOWN_CHAIN = unknown("chain");
+    public static final JSONStreamAware INCORRECT_CHAIN = incorrect("chain");
     public static final JSONStreamAware UNKNOWN_PHASED_TRANSACTION = unknown("phasedTransaction");
 
     public static final JSONStreamAware NOT_ENOUGH_FUNDS;
