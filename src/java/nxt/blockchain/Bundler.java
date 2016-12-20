@@ -35,6 +35,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class Bundler {
 
+    private static final short defaultChildBlockDeadline = (short)Nxt.getIntProperty("nxt.defaultChildBlockDeadline");
+
     private static final Map<ChildChain, Map<Long, Bundler>> bundlers = new ConcurrentHashMap<>();
     private static final TransactionProcessorImpl transactionProcessor = TransactionProcessorImpl.getInstance();
 
@@ -178,7 +180,7 @@ public final class Bundler {
             long totalMinFeeFQT = 0;
             while (unconfirmedTransactions.hasNext()) {
                 ChildTransactionImpl childTransaction = (ChildTransactionImpl) unconfirmedTransactions.next().getTransaction();
-                if (childTransaction.getExpiration() < now || childTransaction.getTimestamp() > now) {
+                if (childTransaction.getExpiration() < now + 60 * defaultChildBlockDeadline || childTransaction.getTimestamp() > now) {
                     continue;
                 }
                 long minChildFeeFQT = childTransaction.getMinimumFeeFQT(blockchainHeight);
@@ -221,7 +223,7 @@ public final class Bundler {
     }
 
     private ChildBlockFxtTransaction bundle(List<ChildTransaction> childTransactions, long feeFQT, int timestamp) throws NxtException.ValidationException {
-        FxtTransaction.Builder builder = Nxt.newTransactionBuilder(publicKey, 0, feeFQT, (short)10,
+        FxtTransaction.Builder builder = Nxt.newTransactionBuilder(publicKey, 0, feeFQT, defaultChildBlockDeadline,
                 new ChildBlockAttachment(childTransactions));
         builder.timestamp(timestamp);
         ChildBlockFxtTransaction childBlockFxtTransaction = (ChildBlockFxtTransaction)builder.build(secretPhrase);
