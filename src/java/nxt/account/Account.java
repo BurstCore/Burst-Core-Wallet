@@ -1181,14 +1181,14 @@ public final class Account {
     }
 
     public long getEffectiveBalanceFXT(int height) {
-        if (height <= 1440) {
+        if (height <= Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
             BalanceHome.Balance genesisRecipientBalance = FxtChain.FXT.getBalanceHome().getBalance(id, 0);
             return genesisRecipientBalance.getBalance() / Constants.ONE_NXT;
         }
         if (this.publicKey == null) {
             this.publicKey = publicKeyTable.get(accountDbKeyFactory.newKey(this));
         }
-        if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.height <= 1440) {
+        if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.height <= Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         Nxt.getBlockchain().readLock();

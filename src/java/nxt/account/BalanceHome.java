@@ -16,6 +16,7 @@
 
 package nxt.account;
 
+import nxt.Constants;
 import nxt.Nxt;
 import nxt.blockchain.Chain;
 import nxt.blockchain.FxtChain;
@@ -68,16 +69,46 @@ public final class BalanceHome {
                 return new Balance(((DbKey.LongKey)dbKey).getId());
             }
         };
-        this.balanceTable = new VersionedEntityDbTable<Balance>(chain.getSchemaTable(chain instanceof FxtChain ? "balance_fxt" : "balance"), balanceDbKeyFactory) {
-            @Override
-            protected Balance load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-                return new Balance(rs, dbKey);
-            }
-            @Override
-            protected void save(Connection con, Balance balance) throws SQLException {
-                balance.save(con);
-            }
-        };
+        if (chain instanceof FxtChain) {
+            this.balanceTable = new VersionedEntityDbTable<Balance>(chain.getSchemaTable("balance_fxt"), balanceDbKeyFactory) {
+                @Override
+                protected Balance load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+                    return new Balance(rs, dbKey);
+                }
+                @Override
+                protected void save(Connection con, Balance balance) throws SQLException {
+                    balance.save(con);
+                }
+                @Override
+                public void trim(int height) {
+                    if (height + Constants.MAX_ROLLBACK <= Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
+                        return;
+                    }
+                    super.trim(height);
+                }
+                @Override
+                public void checkAvailable(int height) {
+                    if (Nxt.getBlockchain().getHeight() > Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
+                        super.checkAvailable(height);
+                        return;
+                    }
+                    if (height > Nxt.getBlockchain().getHeight()) {
+                        throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + Nxt.getBlockchain().getHeight());
+                    }
+                }
+            };
+        } else {
+            this.balanceTable = new VersionedEntityDbTable<Balance>(chain.getSchemaTable("balance"), balanceDbKeyFactory) {
+                @Override
+                protected Balance load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+                    return new Balance(rs, dbKey);
+                }
+                @Override
+                protected void save(Connection con, Balance balance) throws SQLException {
+                    balance.save(con);
+                }
+            };
+        }
     }
 
     public Balance getBalance(long accountId) {
