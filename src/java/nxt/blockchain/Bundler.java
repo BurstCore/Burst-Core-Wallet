@@ -168,6 +168,7 @@ public final class Bundler {
 
     private List<ChildBlockFxtTransaction> bundle() {
         int blockchainHeight = Nxt.getBlockchain().getHeight();
+        int now = Nxt.getEpochTime();
         List<ChildBlockFxtTransaction> childBlockFxtTransactions = new ArrayList<>();
         try (FilteringIterator<UnconfirmedTransaction> unconfirmedTransactions = new FilteringIterator<>(
                 TransactionProcessorImpl.getInstance().getUnconfirmedChildTransactions(childChain),
@@ -177,6 +178,9 @@ public final class Bundler {
             long totalMinFeeFQT = 0;
             while (unconfirmedTransactions.hasNext()) {
                 ChildTransactionImpl childTransaction = (ChildTransactionImpl) unconfirmedTransactions.next().getTransaction();
+                if (childTransaction.getExpiration() < now || childTransaction.getTimestamp() > now) {
+                    continue;
+                }
                 long minChildFeeFQT = childTransaction.getMinimumFeeFQT(blockchainHeight);
                 long childFee = childTransaction.getFee();
                 if (BigInteger.valueOf(childFee).multiply(BigInteger.valueOf(Constants.ONE_NXT))
@@ -196,7 +200,7 @@ public final class Bundler {
                         long totalFeeFQT = overpay(totalMinFeeFQT);
                         if (totalFeeFQT <= FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()) {
                             try {
-                                ChildBlockFxtTransaction childBlockFxtTransaction = bundle(childTransactions, totalFeeFQT);
+                                ChildBlockFxtTransaction childBlockFxtTransaction = bundle(childTransactions, totalFeeFQT, now);
                                 currentTotalFeesFQT += totalFeeFQT;
                                 childBlockFxtTransactions.add(childBlockFxtTransaction);
                             } catch (NxtException.ValidationException e) {
@@ -216,9 +220,10 @@ public final class Bundler {
         return childBlockFxtTransactions;
     }
 
-    private ChildBlockFxtTransaction bundle(List<ChildTransaction> childTransactions, long feeFQT) throws NxtException.ValidationException {
+    private ChildBlockFxtTransaction bundle(List<ChildTransaction> childTransactions, long feeFQT, int timestamp) throws NxtException.ValidationException {
         FxtTransaction.Builder builder = Nxt.newTransactionBuilder(publicKey, 0, feeFQT, (short)10,
                 new ChildBlockAttachment(childTransactions));
+        builder.timestamp(timestamp);
         ChildBlockFxtTransaction childBlockFxtTransaction = (ChildBlockFxtTransaction)builder.build(secretPhrase);
         childBlockFxtTransaction.validate();
         Logger.logDebugMessage("Created ChildBlockFxtTransaction: " + childBlockFxtTransaction.getJSONObject().toJSONString());

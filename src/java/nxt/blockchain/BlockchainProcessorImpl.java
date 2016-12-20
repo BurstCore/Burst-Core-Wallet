@@ -1514,12 +1514,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private void fullyValidateTransaction(ChildTransactionImpl transaction, BlockImpl block, BlockImpl previousLastBlock, int curTime)
             throws BlockNotAcceptedException {
-        //TODO: use FxtTransaction timestamp instead of block timestamp as limit?
-        if (transaction.getTimestamp() > block.getTimestamp() + Constants.MAX_TIMEDRIFT
-                || transaction.getExpiration() < block.getTimestamp()) {
-            throw new TransactionNotAcceptedException("Invalid transaction timestamp " + transaction.getTimestamp()
-                    + ", current time is " + curTime + ", block timestamp is " + block.getTimestamp(), transaction);
-        }
         if (transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash(), previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
         }

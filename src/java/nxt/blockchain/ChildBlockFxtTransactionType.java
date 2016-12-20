@@ -107,6 +107,10 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
         long[] minBackFees = new long[3];
         for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
             childTransaction.validate();
+            if (transaction.getTimestamp() < childTransaction.getTimestamp()) {
+                throw new NxtException.NotValidException("ChildBlock transaction " + transaction.getStringId() + " timestamp " + transaction.getTimestamp()
+                        + " is before child transaction " + childTransaction.getStringId() + " timestamp " + childTransaction.getTimestamp());
+            }
             if (transaction.getExpiration() > childTransaction.getExpiration()) {
                 throw new NxtException.NotValidException("ChildBlock transaction " + transaction.getStringId() + " expiration " + transaction.getExpiration()
                         + " is after child transaction " + childTransaction.getStringId() + " expiration " + childTransaction.getExpiration());
