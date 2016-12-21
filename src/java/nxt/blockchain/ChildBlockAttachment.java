@@ -195,7 +195,7 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-        if (childTransactionFullHashes == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
+        if (childTransactionFullHashes == null) {
             TransactionHome transactionHome = ChildChain.getChildChain(chainId).getTransactionHome();
             List<byte[]> hashes = transactionHome.findChildTransactionFullHashes(transaction.getId());
             childTransactionFullHashes = hashes.toArray(new byte[hashes.size()][]);
