@@ -16,11 +16,22 @@
 
 package nxt;
 
+import java.text.SimpleDateFormat;
+
 public final class Constants {
 
     public static final boolean isTestnet = Nxt.getBooleanProperty("nxt.isTestnet");
     public static final boolean isOffline = Nxt.getBooleanProperty("nxt.isOffline");
     public static final boolean isLightClient = Nxt.getBooleanProperty("nxt.isLightClient");
+
+    public static final long EPOCH_BEGINNING;
+    static {
+        try {
+            EPOCH_BEGINNING = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").parse("2016-12-22 15:20:00 +0000").getTime();
+        } catch (Exception e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     public static final int MAX_NUMBER_OF_TRANSACTIONS = 255;
     public static final int MIN_TRANSACTION_SIZE = 176;

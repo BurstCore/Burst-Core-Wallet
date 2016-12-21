@@ -18,76 +18,66 @@ package nxt.blockchain;
 
 import nxt.Constants;
 import nxt.account.Account;
+import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import nxt.util.Logger;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
-public final class Genesis {
+final class Genesis {
 
-    //TODO: remove completely?
-    public static final byte[] CREATOR_PUBLIC_KEY;
-    public static final long CREATOR_ID;
-    public static final byte[] GENESIS_BLOCK_SIGNATURE;
+    static final byte[] generationSignature = Constants.isTestnet ?
+            new byte[] {
+                    -41, -41, -30, -100, -63, -37, 62, 1, 56, -127, 84, 112, -8, 1, 96, -10,
+                    52, -33, -20, 94, -63, 58, -35, 110, -24, -46, -78, 38, -21, -82, -96, 42
+            } : new byte[32];
 
-    public static final long EPOCH_BEGINNING;
-
-    static {
-        try (InputStream is = ClassLoader.getSystemResourceAsStream("genesis.json")) {
-            JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
-            CREATOR_PUBLIC_KEY = Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
-            CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
-            GENESIS_BLOCK_SIGNATURE = Convert.parseHexString((String)genesisParameters.get(Constants.isTestnet
-                    ? "genesisTestnetBlockSignature" : "genesisBlockSignature"));
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
-            EPOCH_BEGINNING = dateFormat.parse((String) genesisParameters.get("epochBeginning")).getTime();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load genesis parameters", e);
-        }
-    }
-
-    static void apply() {
-        Account.addOrGetAccount(Genesis.CREATOR_ID).apply(Genesis.CREATOR_PUBLIC_KEY);
-        try (InputStream is = ClassLoader.getSystemResourceAsStream("genesis.json")) {
-            JSONObject genesisParameters = (JSONObject) JSONValue.parseWithException(new InputStreamReader(is));
-            Logger.logDebugMessage("Loading genesis amounts for ARDR");
-            long total = 0;
-            for (Map.Entry<String, Long> entry : ((Map<String, Long>)genesisParameters.get("genesisRecipients")).entrySet()) {
-                byte[] recipientPublicKey = Convert.parseHexString(entry.getKey());
-                Account recipient = Account.addOrGetAccount(Account.getId(recipientPublicKey));
-                recipient.apply(recipientPublicKey);
-                recipient.addToBalanceAndUnconfirmedBalance(FxtChain.FXT, null, (long) 0, entry.getValue());
-                total += entry.getValue();
-            }
-            Logger.logDebugMessage("Total balance " + total + " ARDR");
+    static byte[] apply() {
+        MessageDigest digest = Crypto.sha256();
+        try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
+                ClassLoader.getSystemResourceAsStream("PUBLIC_KEY" + (Constants.isTestnet ? "-testnet.json" : ".json")), digest))) {
+            JSONArray json = (JSONArray) JSONValue.parseWithException(is);
+            Logger.logDebugMessage("Loading public keys");
+            json.forEach(jsonPublicKey -> {
+                byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
+                Account account = Account.addOrGetAccount(Account.getId(publicKey));
+                account.apply(publicKey);
+            });
+            Logger.logDebugMessage("Loaded " + json.size() + " public keys");
         } catch (IOException|ParseException e) {
-            throw new RuntimeException("Failed to process genesis recipients accounts", e);
+            throw new RuntimeException("Failed to process genesis recipients public keys", e);
         }
-        for (ChildChain childChain : ChildChain.getAll()) {
-            try (InputStream is = ClassLoader.getSystemResourceAsStream(childChain.getName() + ".json")) {
-                JSONObject childChainParameters = (JSONObject) JSONValue.parseWithException(new InputStreamReader(is));
-                Logger.logDebugMessage("Loading genesis amounts for " + childChain.getName());
+        List<Chain> chains = new ArrayList<>(ChildChain.getAll());
+        chains.add(FxtChain.FXT);
+        chains.sort(Comparator.comparingInt(Chain::getId));
+        for (Chain chain : chains) {
+            try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
+                    ClassLoader.getSystemResourceAsStream(chain.getName() + (Constants.isTestnet ? "-testnet.json" : ".json")), digest))) {
+                JSONObject chainBalances = (JSONObject) JSONValue.parseWithException(is);
+                Logger.logDebugMessage("Loading genesis amounts for " + chain.getName());
                 long total = 0;
-                for (Map.Entry<String, Long> entry : ((Map<String, Long>)childChainParameters.get("genesisRecipients")).entrySet()) {
-                    byte[] recipientPublicKey = Convert.parseHexString(entry.getKey());
-                    Account recipient = Account.addOrGetAccount(Account.getId(recipientPublicKey));
-                    recipient.apply(recipientPublicKey);
-                    recipient.addToBalanceAndUnconfirmedBalance(childChain, null, 0, entry.getValue());
+                for (Map.Entry<String, Long> entry : ((Map<String, Long>)chainBalances).entrySet()) {
+                    Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()));
+                    account.addToBalanceAndUnconfirmedBalance(chain, null, 0, entry.getValue());
                     total += entry.getValue();
                 }
-                Logger.logDebugMessage("Total balance " + total + " " + childChain.getName());
+                Logger.logDebugMessage("Total balance " + total + " " + chain.getName());
             } catch (IOException|ParseException e) {
-                throw new RuntimeException("Failed to process child chain recipients accounts for " + childChain.getName(), e);
+                throw new RuntimeException("Failed to process genesis recipients accounts for " + chain.getName(), e);
             }
         }
+        return digest.digest();
     }
 
     private Genesis() {} // never

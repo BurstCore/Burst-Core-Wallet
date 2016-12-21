@@ -326,6 +326,8 @@ public class FxtDbVersion extends DbVersion {
             case 111:
                 apply("CREATE INDEX IF NOT EXISTS coin_trade_fxt_order_idx ON coin_trade_fxt (order_id)");
             case 112:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS public_key_account_id_height_idx ON public_key (account_id, height DESC)");
+            case 113:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate

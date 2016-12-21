@@ -20,7 +20,6 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.account.HoldingType;
 import nxt.blockchain.ChildTransactionType;
-import nxt.blockchain.Genesis;
 import nxt.blockchain.TransactionType;
 import nxt.crypto.HashFunction;
 import nxt.ms.CurrencyMinting;
@@ -52,8 +51,7 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
             try {
                 JSONObject response = new JSONObject();
                 response.put("genesisBlockId", Long.toUnsignedString(Nxt.getBlockchainProcessor().getGenesisBlockId()));
-                response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
-                response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
+                response.put("epochBeginning", Constants.EPOCH_BEGINNING);
                 response.put("maxBlockPayloadLength", Constants.MAX_PAYLOAD_LENGTH);
                 response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
                 response.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);

@@ -59,17 +59,8 @@ public final class BlockImpl implements Block {
     private volatile long generatorId;
     private volatile byte[] bytes = null;
 
-    //for forging new blocks only
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
-                     byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions, String secretPhrase) {
-        this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
-                generatorPublicKey, generationSignature, null, previousBlockHash, transactions);
-        blockSignature = Crypto.sign(bytes(), secretPhrase);
-        bytes = null;
-    }
-
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions) {
+    private BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
+                      byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions) {
         this.version = version;
         this.timestamp = timestamp;
         this.previousBlockId = previousBlockId;
@@ -84,6 +75,22 @@ public final class BlockImpl implements Block {
         if (transactions != null) {
             this.blockTransactions = Collections.unmodifiableList(transactions);
         }
+    }
+
+    //genesis block only
+    BlockImpl(byte[] generationSignature) {
+        this(-1, 0, 0, 0, 0, 0, new byte[32],
+                new byte[32], generationSignature, new byte[64], new byte[32], Collections.emptyList());
+        this.height = 0;
+    }
+
+    //for forging new blocks only
+    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
+                     byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions, String secretPhrase) {
+        this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
+                generatorPublicKey, generationSignature, null, previousBlockHash, transactions);
+        blockSignature = Crypto.sign(bytes(), secretPhrase);
+        bytes = null;
     }
 
     //for loading from db only
