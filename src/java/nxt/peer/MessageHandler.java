@@ -123,7 +123,7 @@ class MessageHandler implements Runnable {
                         severeError = false;
                     } else {
                         severeError = true;
-                        Logger.logDebugMessage("Unable to process message from " + peer.getHost() + ": " + errorMessage);
+                        Logger.logDebugMessage("Unable to process message from " + peer.getHost() + ": " + errorMessage, exc);
                     }
                     if (message != null && message.requiresResponse()) {
                         response = new NetworkMessage.ErrorMessage(message.getMessageId(),
