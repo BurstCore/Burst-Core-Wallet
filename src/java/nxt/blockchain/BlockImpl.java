@@ -427,7 +427,10 @@ public final class BlockImpl implements Block {
         for (FxtTransactionImpl transaction : getFxtTransactions()) {
             transaction.bytes();
             transaction.getAppendages();
-            transaction.getChildTransactions();
+            transaction.getChildTransactions().forEach(childTransaction -> {
+                childTransaction.bytes();
+                childTransaction.getAppendages();
+            });
         }
     }
 
