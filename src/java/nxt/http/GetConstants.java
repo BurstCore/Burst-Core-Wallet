@@ -19,7 +19,9 @@ package nxt.http;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.account.HoldingType;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransactionType;
+import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransactionType;
 import nxt.blockchain.Genesis;
 import nxt.blockchain.TransactionType;
@@ -213,6 +215,11 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 JSONArray notForwardedRequests = new JSONArray();
                 notForwardedRequests.addAll(APIProxy.NOT_FORWARDED_REQUESTS);
                 response.put("proxyNotForwardedRequests", notForwardedRequests);
+
+                JSONObject chainsJSON = new JSONObject();
+                chainsJSON.put(FxtChain.FXT.getName(), FxtChain.FXT.getId());
+                ChildChain.getAll().forEach(chain -> chainsJSON.put(chain.getName(), chain.getId()));
+                response.put("chains", chainsJSON);
 
                 CONSTANTS = JSON.prepare(response);
             } catch (Exception e) {
