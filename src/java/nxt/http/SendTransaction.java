@@ -107,4 +107,9 @@ public final class SendTransaction extends APIServlet.APIRequestHandler {
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

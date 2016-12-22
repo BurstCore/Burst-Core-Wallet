@@ -48,4 +48,9 @@ public final class GetGuaranteedBalance extends APIServlet.APIRequestHandler {
         return response;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

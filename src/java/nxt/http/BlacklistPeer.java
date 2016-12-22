@@ -77,4 +77,9 @@ public class BlacklistPeer extends APIRequestHandler {
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

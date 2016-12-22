@@ -45,4 +45,10 @@ public class GetLinkedPhasedTransactions extends APIServlet.APIRequestHandler {
 
         return response;
     }
+
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

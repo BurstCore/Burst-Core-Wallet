@@ -64,4 +64,9 @@ public final class GetAccountProperties extends APIServlet.APIRequestHandler {
 
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

@@ -290,4 +290,10 @@ public class GetAccountLedger extends APIServlet.APIRequestHandler {
         response.put("entries", responseEntries);
         return response;
     }
+
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

@@ -49,4 +49,9 @@ public final class GetAllWaitingTransactions extends APIServlet.APIRequestHandle
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

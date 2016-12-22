@@ -62,4 +62,9 @@ public final class RebroadcastUnconfirmedTransactions extends APIServlet.APIRequ
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

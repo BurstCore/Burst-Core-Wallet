@@ -76,4 +76,9 @@ public final class GenerateFileToken extends APIServlet.APIRequestHandler {
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

@@ -248,6 +248,11 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
     public static JSONStreamAware getConstants() {
         return Holder.CONSTANTS;
     }

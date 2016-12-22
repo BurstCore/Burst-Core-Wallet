@@ -73,4 +73,10 @@ public class BlacklistAPIProxyPeer extends APIServlet.APIRequestHandler {
     protected boolean requireBlockchain() {
         return false;
     }
+
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

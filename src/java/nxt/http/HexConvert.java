@@ -61,4 +61,9 @@ public final class HexConvert extends APIServlet.APIRequestHandler {
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

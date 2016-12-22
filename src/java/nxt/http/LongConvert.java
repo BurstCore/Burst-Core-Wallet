@@ -68,4 +68,9 @@ public final class LongConvert extends APIServlet.APIRequestHandler {
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

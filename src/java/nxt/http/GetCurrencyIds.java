@@ -49,4 +49,9 @@ public final class GetCurrencyIds extends APIServlet.APIRequestHandler {
         return response;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

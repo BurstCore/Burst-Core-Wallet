@@ -54,4 +54,9 @@ public final class GetAllBroadcastedTransactions extends APIServlet.APIRequestHa
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

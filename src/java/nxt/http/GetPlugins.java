@@ -99,4 +99,9 @@ public final class GetPlugins extends APIServlet.APIRequestHandler {
         }
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

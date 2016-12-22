@@ -58,4 +58,9 @@ public final class GetAccountBlocks extends APIServlet.APIRequestHandler {
         return response;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

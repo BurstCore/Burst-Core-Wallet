@@ -182,6 +182,11 @@ public class EventWait extends APIServlet.APIRequestHandler {
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
     /**
      * Format the EventWait response
      *

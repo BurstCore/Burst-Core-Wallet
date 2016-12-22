@@ -47,4 +47,9 @@ public final class GetAllPhasingOnlyControls extends APIServlet.APIRequestHandle
         return response;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

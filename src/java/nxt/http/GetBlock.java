@@ -84,4 +84,9 @@ public final class GetBlock extends APIServlet.APIRequestHandler {
 
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

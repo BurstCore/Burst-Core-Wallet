@@ -84,4 +84,9 @@ public final class BroadcastTransaction extends APIServlet.APIRequestHandler {
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

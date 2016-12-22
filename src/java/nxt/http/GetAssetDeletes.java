@@ -77,4 +77,10 @@ public final class GetAssetDeletes extends APIServlet.APIRequestHandler {
     protected boolean startDbTransaction() {
         return true;
     }
+
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

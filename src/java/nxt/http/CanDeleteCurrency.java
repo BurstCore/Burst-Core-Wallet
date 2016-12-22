@@ -40,4 +40,9 @@ public final class CanDeleteCurrency extends APIServlet.APIRequestHandler {
         return response;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

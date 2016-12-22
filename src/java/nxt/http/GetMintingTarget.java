@@ -57,4 +57,9 @@ public final class GetMintingTarget extends APIServlet.APIRequestHandler {
         return json;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

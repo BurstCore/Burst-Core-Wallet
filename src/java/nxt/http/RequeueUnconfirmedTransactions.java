@@ -62,4 +62,9 @@ public final class RequeueUnconfirmedTransactions extends APIServlet.APIRequestH
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

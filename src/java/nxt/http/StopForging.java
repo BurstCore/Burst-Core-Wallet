@@ -63,4 +63,9 @@ public final class StopForging extends APIServlet.APIRequestHandler {
         return true;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

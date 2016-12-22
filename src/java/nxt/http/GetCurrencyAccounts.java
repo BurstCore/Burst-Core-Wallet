@@ -55,4 +55,9 @@ public final class GetCurrencyAccounts extends APIServlet.APIRequestHandler {
 
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

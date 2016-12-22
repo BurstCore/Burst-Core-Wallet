@@ -54,4 +54,9 @@ public final class GetCurrenciesByIssuer extends APIServlet.APIRequestHandler {
         return response;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

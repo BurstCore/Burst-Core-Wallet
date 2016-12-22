@@ -85,4 +85,9 @@ public final class GetShufflers extends APIServlet.APIRequestHandler {
         return true;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

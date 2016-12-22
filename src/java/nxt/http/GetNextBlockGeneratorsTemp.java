@@ -112,4 +112,10 @@ public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandl
     protected boolean allowRequiredBlockParameters() {
         return false;
     }
+
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

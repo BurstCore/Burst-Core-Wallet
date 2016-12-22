@@ -46,4 +46,10 @@ public final class GetCoinExchangeTrade extends APIServlet.APIRequestHandler {
         }
         return JSONData.coinExchangeTrade(trade);
     }
+
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

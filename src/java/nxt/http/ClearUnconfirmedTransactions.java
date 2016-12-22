@@ -62,4 +62,9 @@ public final class ClearUnconfirmedTransactions extends APIServlet.APIRequestHan
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

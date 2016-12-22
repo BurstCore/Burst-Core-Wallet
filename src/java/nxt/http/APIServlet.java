@@ -64,6 +64,9 @@ public final class APIServlet extends HttpServlet {
 
         protected APIRequestHandler(String fileParameter, APITag[] apiTags, String... origParameters) {
             List<String> parameters = new ArrayList<>();
+            if (isChainSpecific()) {
+                parameters.add("chain");
+            }
             Collections.addAll(parameters, origParameters);
             if ((requirePassword() || parameters.contains("lastIndex")) && ! API.disableAdminPassword) {
                 parameters.add("adminPassword");
@@ -72,8 +75,6 @@ public final class APIServlet extends HttpServlet {
                 parameters.add("requireBlock");
                 parameters.add("requireLastBlock");
             }
-            //TODO: only add chain parameter if APIRequestHandler supports child chains
-            parameters.add("chain");
             this.parameters = Collections.unmodifiableList(parameters);
             this.apiTags = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(apiTags)));
             this.fileParameter = fileParameter;
@@ -119,6 +120,10 @@ public final class APIServlet extends HttpServlet {
 
         protected boolean requireFullClient() {
             return false;
+        }
+
+        protected boolean isChainSpecific() {
+            return true;
         }
 
     }

@@ -59,4 +59,9 @@ public final class GetPhasingOnlyControl extends APIServlet.APIRequestHandler {
         return phasingOnly == null ? JSON.emptyJSON : JSONData.phasingOnly(phasingOnly);
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

@@ -48,6 +48,10 @@ public final class PopOffCounter implements AddOn {
             protected boolean allowRequiredBlockParameters() {
                 return false;
             }
+            @Override
+            protected boolean isChainSpecific() {
+                return false;
+            }
         };
     }
 

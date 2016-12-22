@@ -42,8 +42,8 @@ public class GetPollVotes extends APIServlet.APIRequestHandler  {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         boolean includeWeights = "true".equalsIgnoreCase(req.getParameter("includeWeights"));
-        ChildChain childChain = ParameterParser.getChildChain(req);
         PollHome.Poll poll = ParameterParser.getPoll(req);
+        ChildChain childChain = poll.getChildChain();
         int countHeight;
         JSONData.VoteWeighter weighter = null;
         if (includeWeights && (countHeight = Math.min(poll.getFinishHeight(), Nxt.getBlockchain().getHeight()))

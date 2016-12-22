@@ -39,7 +39,7 @@ public class GetPollVote extends APIServlet.APIRequestHandler  {
         PollHome.Poll poll = ParameterParser.getPoll(req);
         long accountId = ParameterParser.getAccountId(req, true);
         boolean includeWeights = "true".equalsIgnoreCase(req.getParameter("includeWeights"));
-        ChildChain childChain = ParameterParser.getChildChain(req);
+        ChildChain childChain = poll.getChildChain();
         VoteHome.Vote vote = childChain.getVoteHome().getVote(poll.getId(), accountId);
         if (vote != null) {
             int countHeight;

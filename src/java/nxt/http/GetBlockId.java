@@ -58,4 +58,9 @@ public final class GetBlockId extends APIServlet.APIRequestHandler {
 
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

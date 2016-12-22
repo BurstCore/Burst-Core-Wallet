@@ -81,4 +81,9 @@ public final class StopShuffler extends APIServlet.APIRequestHandler {
         return true;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

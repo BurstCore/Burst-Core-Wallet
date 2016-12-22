@@ -47,9 +47,9 @@ public final class GetState extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         JSONObject response = GetBlockchainStatus.instance.processRequest(req);
-        ChildChain childChain = ParameterParser.getChildChain(req);
 
         if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && API.checkPassword(req)) {
+            ChildChain childChain = ParameterParser.getChildChain(req);
             response.put("numberOfTransactions", Nxt.getBlockchain().getTransactionCount(childChain));
             response.put("numberOfAccounts", Account.getCount());
             response.put("numberOfAssets", Asset.getCount());

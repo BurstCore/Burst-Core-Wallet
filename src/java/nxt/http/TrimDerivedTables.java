@@ -58,4 +58,9 @@ public final class TrimDerivedTables extends APIServlet.APIRequestHandler {
         return false;
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

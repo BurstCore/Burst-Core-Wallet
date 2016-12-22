@@ -35,4 +35,9 @@ public final class GetAsset extends APIServlet.APIRequestHandler {
         return JSONData.asset(ParameterParser.getAsset(req), includeCounts);
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

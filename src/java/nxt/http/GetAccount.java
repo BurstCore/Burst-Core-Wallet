@@ -133,4 +133,9 @@ public final class GetAccount extends APIServlet.APIRequestHandler {
 
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }
