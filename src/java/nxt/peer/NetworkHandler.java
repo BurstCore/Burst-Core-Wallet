@@ -81,7 +81,7 @@ public final class NetworkHandler implements Runnable {
     static final int TESTNET_PEER_PORT = 26874;
 
     /** Maximum number of pending messages for a single peer */
-    static final int MAX_PENDING_MESSAGES = 10;
+    static final int MAX_PENDING_MESSAGES = 25;
 
     /** Message header magic bytes */
     private static final byte[] MESSAGE_HEADER_MAGIC = new byte[] {(byte)0x03, (byte)0x2c, (byte)0x05, (byte)0xc2};

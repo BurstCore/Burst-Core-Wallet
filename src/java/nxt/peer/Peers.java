@@ -152,6 +152,9 @@ public final class Peers {
     /** Peer executor service pool */
     static final ExecutorService peersService = new QueuedThreadPool(2, 15);
 
+    /** Start time */
+    private static final int startTime = Nxt.getEpochTime();
+
     /**
      * Initialize peer processing
      */
@@ -597,7 +600,7 @@ public final class Peers {
                         && peer.getAnnouncedAddress() != null
                         && peer.shareAddress()
                         && peer.getState() != Peer.State.CONNECTED
-                        && now - peer.getLastUpdated() > 60*60
+                        && (now - peer.getLastUpdated() > 60*60 || peer.getLastUpdated() < startTime)
                         && now - peer.getLastConnectAttempt() > 10*60);
                 while (!resultList.isEmpty() && connectCount > 0) {
                     int i = ThreadLocalRandom.current().nextInt(resultList.size());

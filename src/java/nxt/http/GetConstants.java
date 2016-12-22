@@ -20,6 +20,7 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.account.HoldingType;
 import nxt.blockchain.ChildTransactionType;
+import nxt.blockchain.FxtTransactionType;
 import nxt.blockchain.TransactionType;
 import nxt.crypto.HashFunction;
 import nxt.ms.CurrencyMinting;
@@ -58,23 +59,44 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
 
                 JSONObject transactionJSON = new JSONObject();
                 JSONObject transactionSubTypesJSON = new JSONObject();
-                outer:
+                TransactionType transactionType;
+                outerChild:
                 for (int type = 0; ; type++) {
                     JSONObject typeJSON = new JSONObject();
                     JSONObject subtypesJSON = new JSONObject();
                     for (int subtype = 0; ; subtype++) {
-                        TransactionType transactionType;
-                        try {
-                            transactionType = ChildTransactionType.findTransactionType((byte) type, (byte) subtype);
-                        } catch (IllegalArgumentException ignore) {
-                            continue;
-                        }
+                        transactionType = ChildTransactionType.findTransactionType((byte)type, (byte)subtype);
                         if (transactionType == null) {
                             if (subtype == 0) {
-                                break outer;
-                            } else {
-                                break;
+                                break outerChild;
                             }
+                            break;
+                        }
+                        JSONObject subtypeJSON = new JSONObject();
+                        subtypeJSON.put("name", transactionType.getName());
+                        subtypeJSON.put("canHaveRecipient", transactionType.canHaveRecipient());
+                        subtypeJSON.put("mustHaveRecipient", transactionType.mustHaveRecipient());
+                        subtypeJSON.put("isPhasingSafe", transactionType.isPhasingSafe());
+                        subtypeJSON.put("isPhasable", transactionType.isPhasable());
+                        subtypeJSON.put("type", type);
+                        subtypeJSON.put("subtype", subtype);
+                        subtypesJSON.put(subtype, subtypeJSON);
+                        transactionSubTypesJSON.put(transactionType.getName(), subtypeJSON);
+                    }
+                    typeJSON.put("subtypes", subtypesJSON);
+                    transactionJSON.put(type, typeJSON);
+                }
+                outerFxt:
+                for (int type = -1; ; type--) {
+                    JSONObject typeJSON = new JSONObject();
+                    JSONObject subtypesJSON = new JSONObject();
+                    for (int subtype = 0; ; subtype++) {
+                        transactionType = FxtTransactionType.findTransactionType((byte)type, (byte)subtype);
+                        if (transactionType == null) {
+                            if (subtype == 0) {
+                                break outerFxt;
+                            }
+                            break;
                         }
                         JSONObject subtypeJSON = new JSONObject();
                         subtypeJSON.put("name", transactionType.getName());
