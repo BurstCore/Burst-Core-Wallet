@@ -17,6 +17,7 @@
 package nxt.blockchain;
 
 import nxt.Constants;
+import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountRestrictions;
@@ -219,8 +220,9 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         this.prunablePlainMessage = builder.prunablePlainMessage;
         this.prunableEncryptedMessage = builder.prunableEncryptedMessage;
         if (builder.fee <= 0) {
-            //TODO
-            throw new NxtException.NotValidException("Minimum fee calculation not yet implemented");
+            long minFee = getMinimumFeeFQT(Nxt.getBlockchain().getHeight());
+            throw new NxtException.NotValidException(String.format("Please include fee in %s equivalent to %f %s",
+                    childChain.getName(), ((double)minFee)/Constants.ONE_NXT, FxtChain.FXT.getName()));
         }
         this.fee = builder.fee;
         if (builder.signature != null && secretPhrase != null) {
