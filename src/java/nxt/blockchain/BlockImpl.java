@@ -82,6 +82,9 @@ public final class BlockImpl implements Block {
         this(-1, 0, 0, 0, 0, 0, new byte[32],
                 new byte[32], generationSignature, new byte[64], new byte[32], Collections.emptyList());
         this.height = 0;
+        if (Constants.isTestnet) {
+            this.baseTarget = Constants.INITIAL_BASE_TARGET * 10;
+        }
     }
 
     //for forging new blocks only

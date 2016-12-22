@@ -44,6 +44,7 @@ final class Genesis {
             } : new byte[32];
 
     static byte[] apply() {
+        Account.addOrGetAccount(Account.getId(new byte[32])).apply(new byte[32]);
         MessageDigest digest = Crypto.sha256();
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                 ClassLoader.getSystemResourceAsStream("PUBLIC_KEY" + (Constants.isTestnet ? "-testnet.json" : ".json")), digest))) {
