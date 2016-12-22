@@ -366,8 +366,8 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("order", Long.toUnsignedString(order.getId()));
         json.put("orderFullHash", Convert.toHexString(order.getFullHash()));
-        json.put("chain", Chain.getChain(order.getChainId()).getName());
-        json.put("exchange", Chain.getChain(order.getExchangeId()).getName());
+        json.put("chain", Chain.getChain(order.getChainId()).getId());
+        json.put("exchange", Chain.getChain(order.getExchangeId()).getId());
         putAccount(json, "account", order.getAccountId());
         json.put("amountNQT", String.valueOf(order.getQuantity()));
         json.put("bidNQT", String.valueOf(order.getBidPrice()));
@@ -381,8 +381,8 @@ public final class JSONData {
         json.put("orderFullHash", Convert.toHexString(trade.getOrderFullHash()));
         json.put("match", Long.toUnsignedString(trade.getMatchId()));
         json.put("matchFullHash", Convert.toHexString(trade.getMatchFullHash()));
-        json.put("chain", Chain.getChain(trade.getChainId()).getName());
-        json.put("exchange", Chain.getChain(trade.getExchangeId()).getName());
+        json.put("chain", Chain.getChain(trade.getChainId()).getId());
+        json.put("exchange", Chain.getChain(trade.getExchangeId()).getId());
         putAccount(json, "account", trade.getAccountId());
         json.put("amountNQT", String.valueOf(trade.getExchangeQuantity()));
         json.put("priceNQT", String.valueOf(trade.getExchangePrice()));
