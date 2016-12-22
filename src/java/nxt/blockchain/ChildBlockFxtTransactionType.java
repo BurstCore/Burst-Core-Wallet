@@ -61,8 +61,7 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
 
     @Override
     public AccountLedger.LedgerEvent getLedgerEvent() {
-        //TODO
-        return null;
+        return AccountLedger.LedgerEvent.CHILD_BLOCK;
     }
 
     @Override
@@ -141,9 +140,8 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
             childTransaction.apply();
             totalFee = Math.addExact(totalFee, childTransaction.getFee());
         }
-        //TODO: new account ledger event type
         senderAccount.addToBalanceAndUnconfirmedBalance(ChildChain.getChildChain(attachment.getChainId()),
-                AccountLedger.LedgerEvent.BLOCK_GENERATED, transaction.getId(), totalFee);
+                getLedgerEvent(), transaction.getId(), totalFee);
     }
 
     @Override

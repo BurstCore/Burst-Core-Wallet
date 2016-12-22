@@ -63,8 +63,7 @@ public abstract class PaymentFxtTransactionType extends FxtTransactionType {
 
         @Override
         public final AccountLedger.LedgerEvent getLedgerEvent() {
-            //TODO
-            return null;
+            return AccountLedger.LedgerEvent.FXT_PAYMENT;
         }
 
         @Override

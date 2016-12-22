@@ -399,6 +399,7 @@ public class AccountLedger {
             BLOCK_GENERATED(1, false),
             REJECT_PHASED_TRANSACTION(2, true),
             TRANSACTION_FEE(50, true),
+            CHILD_BLOCK(62, true),
         // TYPE_PAYMENT
             ORDINARY_PAYMENT(3, true),
         // TYPE_MESSAGING
@@ -464,7 +465,9 @@ public class AccountLedger {
         // TYPE_COIN_EXCHANGE
             COIN_EXCHANGE_ORDER_ISSUE(58, true),
             COIN_EXCHANGE_ORDER_CANCEL(59, true),
-            COIN_EXCHANGE_TRADE(60, true);
+            COIN_EXCHANGE_TRADE(60, true),
+        // TYPE_FXT_PAYMENT
+            FXT_PAYMENT(61, true);
 
 
         /** Event code mapping */
