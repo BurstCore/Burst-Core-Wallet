@@ -80,7 +80,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
 
         @Override
         public String getName() {
-            return "CoinExchangeOrderIssue";
+            return "FxtCoinExchangeOrderIssue";
         }
 
         @Override
@@ -160,7 +160,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
 
         @Override
         public String getName() {
-            return "CoinExchangeOrderCancel";
+            return "FxtCoinExchangeOrderCancel";
         }
 
         @Override
