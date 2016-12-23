@@ -278,7 +278,6 @@ public final class NetworkHandler implements Runnable {
                 });
                 disabledAPIs = APIEnum.enumSetToBase64String(disabledAPISet);
             }
-            //TODO: getInfoMessage does not contain current blockchain state, need a separate NetworkMessage to update this
             getInfoMessage = new NetworkMessage.GetInfoMessage(Nxt.APPLICATION, Nxt.VERSION, platform,
                     shareAddress, announcedAddress, API.openAPIPort, API.openAPISSLPort, services,
                     disabledAPIs, API.apiServerIdleTimeout);
@@ -843,13 +842,16 @@ public final class NetworkHandler implements Runnable {
     }
 
     /**
-     * Broadcast a message to all connected peers
+     * Broadcast a message to all connected peers except light clients
      *
      * @param   message                 Message to send
      */
     public static void broadcastMessage(NetworkMessage message) {
-        //TODO: for peers that are light clients, do not send some types of messages
-        connectionMap.values().forEach(peer -> peer.sendMessage(message));
+        connectionMap.values().forEach(peer -> {
+            if (peer.getBlockchainState() != Peer.BlockchainState.LIGHT_CLIENT) {
+                peer.sendMessage(message);
+            }
+        });
         wakeup();
     }
 
