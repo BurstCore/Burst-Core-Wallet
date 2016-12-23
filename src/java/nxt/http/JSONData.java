@@ -180,6 +180,7 @@ public final class JSONData {
         json.put("code", currency.getCode());
         json.put("description", currency.getDescription());
         json.put("type", currency.getType());
+        json.put("chain", currency.getChildChain().getId());
         json.put("initialSupply", String.valueOf(currency.getInitialSupply()));
         json.put("currentSupply", String.valueOf(currency.getCurrentSupply()));
         json.put("reserveSupply", String.valueOf(currency.getReserveSupply()));

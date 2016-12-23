@@ -17,6 +17,7 @@
 package nxt.http;
 
 import nxt.NxtException;
+import nxt.blockchain.ChildChain;
 import nxt.ms.Currency;
 import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
@@ -44,7 +45,8 @@ public final class GetCurrency extends APIServlet.APIRequestHandler {
             if (currencyCode == null) {
                 return MISSING_CURRENCY;
             }
-            currency = Currency.getCurrencyByCode(currencyCode);
+            ChildChain childChain = ParameterParser.getChildChain(req);
+            currency = Currency.getCurrencyByCode(childChain, currencyCode);
         } else {
             currency = Currency.getCurrency(currencyId);
         }

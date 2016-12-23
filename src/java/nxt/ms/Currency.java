@@ -19,6 +19,7 @@ package nxt.ms;
 import nxt.Nxt;
 import nxt.account.Account;
 import nxt.account.AccountLedger.LedgerEvent;
+import nxt.account.BalanceHome;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;
@@ -150,12 +151,12 @@ public final class Currency {
         return currencyTable.get(currencyDbKeyFactory.newKey(id));
     }
 
-    public static Currency getCurrencyByName(String name) {
-        return currencyTable.getBy(new DbClause.StringClause("name_lower", name.toLowerCase()));
+    public static Currency getCurrencyByName(ChildChain childChain, String name) {
+        return currencyTable.getBy(new DbClause.StringClause("name_lower", name.toLowerCase()).and(new DbClause.IntClause("chain", childChain.getId())));
     }
 
-    public static Currency getCurrencyByCode(String code) {
-        return currencyTable.getBy(new DbClause.StringClause("code", code.toUpperCase()));
+    public static Currency getCurrencyByCode(ChildChain childChain, String code) {
+        return currencyTable.getBy(new DbClause.StringClause("code", code.toUpperCase()).and(new DbClause.IntClause("chain", childChain.getId())));
     }
 
     public static DbIterator<Currency> getCurrencyIssuedBy(long accountId, int from, int to) {
@@ -168,17 +169,18 @@ public final class Currency {
 
     static void addCurrency(LedgerEvent event, long eventId, Transaction transaction, Account senderAccount,
                             CurrencyIssuanceAttachment attachment) {
+        ChildChain childChain = (ChildChain)transaction.getChain();
         Currency oldCurrency;
-        if ((oldCurrency = Currency.getCurrencyByCode(attachment.getCode())) != null) {
+        if ((oldCurrency = Currency.getCurrencyByCode(childChain, attachment.getCode())) != null) {
             oldCurrency.delete(event, eventId, senderAccount);
         }
-        if ((oldCurrency = Currency.getCurrencyByCode(attachment.getName())) != null) {
+        if ((oldCurrency = Currency.getCurrencyByCode(childChain, attachment.getName())) != null) {
             oldCurrency.delete(event, eventId, senderAccount);
         }
-        if ((oldCurrency = Currency.getCurrencyByName(attachment.getName())) != null) {
+        if ((oldCurrency = Currency.getCurrencyByName(childChain, attachment.getName())) != null) {
             oldCurrency.delete(event, eventId, senderAccount);
         }
-        if ((oldCurrency = Currency.getCurrencyByName(attachment.getCode())) != null) {
+        if ((oldCurrency = Currency.getCurrencyByName(childChain, attachment.getCode())) != null) {
             oldCurrency.delete(event, eventId, senderAccount);
         }
         Currency currency = new Currency(transaction, attachment);
@@ -205,6 +207,7 @@ public final class Currency {
     private final String code;
     private final String description;
     private final int type;
+    private final ChildChain childChain;
     private final long maxSupply;
     private final long reserveSupply;
     private final int creationHeight;
@@ -226,6 +229,7 @@ public final class Currency {
         this.code = attachment.getCode();
         this.description = attachment.getDescription();
         this.type = attachment.getType();
+        this.childChain = (ChildChain)transaction.getChain();
         this.initialSupply = attachment.getInitialSupply();
         this.reserveSupply = attachment.getReserveSupply();
         this.maxSupply = attachment.getMaxSupply();
@@ -247,6 +251,7 @@ public final class Currency {
         this.code = rs.getString("code");
         this.description = rs.getString("description");
         this.type = rs.getInt("type");
+        this.childChain = ChildChain.getChildChain(rs.getInt("chain"));
         this.initialSupply = rs.getLong("initial_supply");
         this.reserveSupply = rs.getLong("reserve_supply");
         this.maxSupply = rs.getLong("max_supply");
@@ -262,9 +267,9 @@ public final class Currency {
 
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency (id, account_id, name, code, "
-                + "description, type, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_nqt, "
+                + "description, type, chain, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_nqt, "
                 + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, this.currencyId);
             pstmt.setLong(++i, this.accountId);
@@ -272,6 +277,7 @@ public final class Currency {
             pstmt.setString(++i, this.code);
             pstmt.setString(++i, this.description);
             pstmt.setInt(++i, this.type);
+            pstmt.setInt(++i, this.childChain.getId());
             pstmt.setLong(++i, this.initialSupply);
             pstmt.setLong(++i, this.reserveSupply);
             pstmt.setLong(++i, this.maxSupply);
@@ -310,6 +316,10 @@ public final class Currency {
 
     public int getType() {
         return type;
+    }
+
+    public ChildChain getChildChain() {
+        return childChain;
     }
 
     public long getInitialSupply() {
@@ -463,22 +473,21 @@ public final class Currency {
         }
         listeners.notify(this, Event.BEFORE_DELETE);
         if (is(CurrencyType.RESERVABLE)) {
-            ChildChain chain = ChildChain.IGNIS; // TODO: crowdfunding must define a chain
             if (is(CurrencyType.CLAIMABLE) && isActive()) {
                 senderAccount.addToUnconfirmedCurrencyUnits(event, eventId, currencyId,
                         -senderAccount.getCurrencyUnits(currencyId));
-                Currency.claimReserve(chain, event, eventId, senderAccount, currencyId, senderAccount.getCurrencyUnits(currencyId));
+                Currency.claimReserve(childChain, event, eventId, senderAccount, currencyId, senderAccount.getCurrencyUnits(currencyId));
             }
             if (!isActive()) {
-                try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = chain.getCurrencyFounderHome().getCurrencyFounders(currencyId, 0, Integer.MAX_VALUE)) {
+                BalanceHome balanceHome = childChain.getBalanceHome();
+                try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currencyId, 0, Integer.MAX_VALUE)) {
                     for (CurrencyFounderHome.CurrencyFounder founder : founders) {
-                        Account.getAccount(founder.getAccountId())
-                                .addToBalanceAndUnconfirmedBalance(chain, event, eventId, Math.multiplyExact(reserveSupply,
-                                        founder.getAmountPerUnitNQT()));
+                        balanceHome.getBalance(founder.getAccountId()).addToBalanceAndUnconfirmedBalance(event, eventId,
+                                Math.multiplyExact(reserveSupply, founder.getAmountPerUnitNQT()));
                     }
                 }
             }
-            chain.getCurrencyFounderHome().remove(currencyId);
+            childChain.getCurrencyFounderHome().remove(currencyId);
         }
         if (is(CurrencyType.EXCHANGEABLE)) {
             for (ChildChain chain : ChildChain.getAll()) {
@@ -519,28 +528,27 @@ public final class Currency {
         }
 
         private void undoCrowdFunding(Currency currency) {
-            ChildChain chain = ChildChain.IGNIS; //TODO
-            try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = chain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+            ChildChain childChain = currency.getChildChain();
+            BalanceHome balanceHome = childChain.getBalanceHome();
+            try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounderHome.CurrencyFounder founder : founders) {
-                    Account.getAccount(founder.getAccountId())
-                            .addToBalanceAndUnconfirmedBalance(chain, LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
-                                    Math.multiplyExact(currency.getReserveSupply(),
-                                            founder.getAmountPerUnitNQT()));
+                    balanceHome.getBalance(founder.getAccountId()).addToBalanceAndUnconfirmedBalance(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(), Math.multiplyExact(currency.getReserveSupply(),
+                                                        founder.getAmountPerUnitNQT()));
                 }
             }
             Account.getAccount(currency.getAccountId())
                     .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
                             currency.getId(), - currency.getInitialSupply());
             currencyTable.delete(currency);
-            chain.getCurrencyFounderHome().remove(currency.getId());
+            childChain.getCurrencyFounderHome().remove(currency.getId());
         }
 
         private void distributeCurrency(Currency currency) {
-            ChildChain chain = ChildChain.IGNIS; //TODO
+            ChildChain childChain = currency.getChildChain();
             long totalAmountPerUnit = 0;
             final long remainingSupply = currency.getReserveSupply() - currency.getInitialSupply();
             List<CurrencyFounderHome.CurrencyFounder> currencyFounders = new ArrayList<>();
-            try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = chain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+            try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                     totalAmountPerUnit += founder.getAmountPerUnitNQT();
                     currencyFounders.add(founder);
@@ -558,7 +566,7 @@ public final class Currency {
             issuerAccount.addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
                     currency.getId(), currency.getReserveSupply() - currency.getCurrentSupply());
             if (!currency.is(CurrencyType.CLAIMABLE)) {
-                issuerAccount.addToBalanceAndUnconfirmedBalance(chain, LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+                issuerAccount.addToBalanceAndUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
                         Math.multiplyExact(totalAmountPerUnit, currency.getReserveSupply()));
             }
             currencySupply.currentSupply = currency.getReserveSupply();

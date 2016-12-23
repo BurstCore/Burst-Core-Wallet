@@ -20,6 +20,7 @@ import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger.LedgerEvent;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Fee;
@@ -125,20 +126,21 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
 
         @Override
         public Fee getBaselineFee(Transaction transaction) {
+            ChildChain childChain = (ChildChain)transaction.getChain();
             CurrencyIssuanceAttachment attachment = (CurrencyIssuanceAttachment) transaction.getAttachment();
             int minLength = Math.min(attachment.getCode().length(), attachment.getName().length());
             Currency oldCurrency;
             int oldMinLength = Integer.MAX_VALUE;
-            if ((oldCurrency = Currency.getCurrencyByCode(attachment.getCode())) != null) {
+            if ((oldCurrency = Currency.getCurrencyByCode(childChain, attachment.getCode())) != null) {
                 oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
             }
-            if ((oldCurrency = Currency.getCurrencyByCode(attachment.getName())) != null) {
+            if ((oldCurrency = Currency.getCurrencyByCode(childChain, attachment.getName())) != null) {
                 oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
             }
-            if ((oldCurrency = Currency.getCurrencyByName(attachment.getName())) != null) {
+            if ((oldCurrency = Currency.getCurrencyByName(childChain, attachment.getName())) != null) {
                 oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
             }
-            if ((oldCurrency = Currency.getCurrencyByName(attachment.getCode())) != null) {
+            if ((oldCurrency = Currency.getCurrencyByName(childChain, attachment.getCode())) != null) {
                 oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
             }
             if (minLength >= oldMinLength) {
@@ -207,7 +209,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
                 t <<= 1;
             }
             CurrencyType.validate(attachment.getType(), transaction);
-            CurrencyType.validateCurrencyNaming(transaction.getSenderId(), attachment);
+            CurrencyType.validateCurrencyNaming(transaction, attachment);
         }
 
 

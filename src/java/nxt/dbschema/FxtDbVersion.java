@@ -217,7 +217,7 @@ public class FxtDbVersion extends DbVersion {
             case 71:
                 apply("CREATE TABLE IF NOT EXISTS currency (db_id IDENTITY, id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
                         + "name VARCHAR NOT NULL, name_lower VARCHAR AS LOWER (name) NOT NULL, code VARCHAR NOT NULL, "
-                        + "description VARCHAR, type INT NOT NULL, initial_supply BIGINT NOT NULL DEFAULT 0, "
+                        + "description VARCHAR, type INT NOT NULL, chain INT NOT NULL, initial_supply BIGINT NOT NULL DEFAULT 0, "
                         + "reserve_supply BIGINT NOT NULL, max_supply BIGINT NOT NULL, creation_height INT NOT NULL, issuance_height INT NOT NULL, "
                         + "min_reserve_per_unit_nqt BIGINT NOT NULL, min_difficulty TINYINT NOT NULL, "
                         + "max_difficulty TINYINT NOT NULL, ruleset TINYINT NOT NULL, algorithm TINYINT NOT NULL, "
@@ -228,9 +228,9 @@ public class FxtDbVersion extends DbVersion {
             case 73:
                 apply("CREATE INDEX IF NOT EXISTS currency_account_id_idx ON currency (account_id)");
             case 74:
-                apply("CREATE INDEX IF NOT EXISTS currency_name_idx ON currency (name_lower, height DESC)");
+                apply("CREATE INDEX IF NOT EXISTS currency_name_idx ON currency (name_lower, chain, height DESC)");
             case 75:
-                apply("CREATE INDEX IF NOT EXISTS currency_code_idx ON currency (code, height DESC)");
+                apply("CREATE INDEX IF NOT EXISTS currency_code_idx ON currency (code, chain, height DESC)");
             case 76:
                 apply("CREATE INDEX IF NOT EXISTS currency_creation_height_idx ON currency (creation_height DESC)");
             case 77:

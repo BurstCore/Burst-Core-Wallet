@@ -18,6 +18,8 @@ package nxt.ms;
 
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.blockchain.ChildChain;
+import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.Transaction;
 import nxt.crypto.HashFunction;
 import nxt.shuffling.ShufflingTransactionType;
@@ -285,7 +287,9 @@ public enum CurrencyType {
         }
     }
 
-    static void validateCurrencyNaming(long issuerAccountId, CurrencyIssuanceAttachment attachment) throws NxtException.ValidationException {
+    static void validateCurrencyNaming(ChildTransaction transaction, CurrencyIssuanceAttachment attachment) throws NxtException.ValidationException {
+        long issuerAccountId = transaction.getSenderId();
+        ChildChain childChain = transaction.getChain();
         String name = attachment.getName();
         String code = attachment.getCode();
         String description = attachment.getDescription();
@@ -310,16 +314,16 @@ public enum CurrencyType {
             throw new NxtException.NotValidException("Currency name already used");
         }
         Currency currency;
-        if ((currency = Currency.getCurrencyByName(normalizedName)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = Currency.getCurrencyByName(childChain, normalizedName)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
             throw new NxtException.NotCurrentlyValidException("Currency name already used: " + normalizedName);
         }
-        if ((currency = Currency.getCurrencyByCode(name)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = Currency.getCurrencyByCode(childChain, name)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
             throw new NxtException.NotCurrentlyValidException("Currency name already used as code: " + normalizedName);
         }
-        if ((currency = Currency.getCurrencyByCode(code)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = Currency.getCurrencyByCode(childChain, code)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
             throw new NxtException.NotCurrentlyValidException("Currency code already used: " + code);
         }
-        if ((currency = Currency.getCurrencyByName(code)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = Currency.getCurrencyByName(childChain, code)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
             throw new NxtException.NotCurrentlyValidException("Currency code already used as name: " + code);
         }
     }
