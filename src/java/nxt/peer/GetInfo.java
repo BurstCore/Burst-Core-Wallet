@@ -85,18 +85,13 @@ final class GetInfo {
         peer.setApiSSLPort(message.getSslPort());
         peer.setDisabledAPIs(message.getDisabledAPIs());
         peer.setApiServerIdleTimeout(message.getApiServerIdleTimeout());
+        peer.setBlockchainState(message.getBlockchainState());
 
         long origServices = peer.getServices();
         peer.setServices(message.getServices());
         if (peer.getServices() != origServices) {
             Peers.notifyListeners(peer, Peers.Event.CHANGE_SERVICES);
         }
-
-        /*
-        //TODO: implement separately
-        peerImpl.setBlockchainState(request.get("blockchainState"));
-		*/
-
         //
         // Indicate the connection handshake is complete.  For an inbound connection, we need
         // to send our GetInfo message.  For an outbound connection, we have already sent our

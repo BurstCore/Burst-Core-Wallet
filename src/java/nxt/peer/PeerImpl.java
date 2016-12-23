@@ -455,10 +455,8 @@ final class PeerImpl implements Peer {
         return blockchainState;
     }
 
-    void setBlockchainState(int blockchainState) {
-        if (blockchainState >= 0 && blockchainState < BlockchainState.values().length) {
-            this.blockchainState = BlockchainState.values()[blockchainState];
-        } //TODO: else?
+    void setBlockchainState(BlockchainState blockchainState) {
+        this.blockchainState = blockchainState;
     }
 
     @Override
@@ -1061,7 +1059,7 @@ final class PeerImpl implements Peer {
             Logger.logErrorMessage("Request not found for '" + message.getMessageName() + "' message");
         }
     }
-    
+
     @Override
     public boolean isOpenAPI() {
         return providesService(Peer.Service.API) || providesService(Peer.Service.API_SSL);
@@ -1075,6 +1073,7 @@ final class PeerImpl implements Peer {
                 && blockchainState == Peer.BlockchainState.UP_TO_DATE;
     }
 
+    @Override
     public StringBuilder getPeerApiUri() {
         StringBuilder uri = new StringBuilder();
         if (providesService(Peer.Service.API_SSL)) {

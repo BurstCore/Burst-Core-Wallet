@@ -812,9 +812,12 @@ public final class Peers {
 
     public static Peer.BlockchainState getMyBlockchainState() {
         return Constants.isLightClient ? Peer.BlockchainState.LIGHT_CLIENT :
-                (Nxt.getBlockchainProcessor().isDownloading() || Nxt.getBlockchain().getLastBlockTimestamp() < Nxt.getEpochTime() - 600) ? Peer.BlockchainState.DOWNLOADING :
-                        (Nxt.getBlockchain().getLastBlock().getBaseTarget() / Constants.INITIAL_BASE_TARGET > 10 && !Constants.isTestnet) ? Peer.BlockchainState.FORK :
-                                Peer.BlockchainState.UP_TO_DATE;
+                (Nxt.getBlockchainProcessor().isDownloading() ||
+                        Nxt.getBlockchain().getLastBlockTimestamp() < Nxt.getEpochTime() - 600) ?
+                    Peer.BlockchainState.DOWNLOADING :
+                        (Nxt.getBlockchain().getLastBlock().getBaseTarget() / Constants.INITIAL_BASE_TARGET > 10 &&
+                                !Constants.isTestnet) ? Peer.BlockchainState.FORK :
+                        Peer.BlockchainState.UP_TO_DATE;
     }
 
     private Peers() {} // never

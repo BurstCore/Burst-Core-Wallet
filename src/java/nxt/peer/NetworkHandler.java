@@ -118,7 +118,7 @@ public final class NetworkHandler implements Runnable {
     private static final String listenAddress = Nxt.getStringProperty("nxt.peerServerHost", "0.0.0.0");
 
     /** GetInfo message which is sent each time an outbound connection is created */
-    private static final NetworkMessage getInfoMessage;
+    private static final NetworkMessage.GetInfoMessage getInfoMessage;
 
     /** My address */
     static String myAddress;
@@ -838,6 +838,7 @@ public final class NetworkHandler implements Runnable {
      * @param   peer                    Target peer
      */
     static void sendGetInfoMessage(PeerImpl peer) {
+        getInfoMessage.setBlockchainState(Peers.getMyBlockchainState());
         peer.sendMessage(getInfoMessage);
     }
 

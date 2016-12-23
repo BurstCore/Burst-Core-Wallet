@@ -378,8 +378,7 @@ public abstract class NetworkMessage {
         private final int apiServerIdleTimeout;
 
         /** Blockchain state */
-        //TODO: use a separate NetworkMessage to carry blockchainState
-        //private final int blockchainState;
+        private Peer.BlockchainState blockchainState;
 
         /**
          * Construct the message from the message bytes
@@ -422,6 +421,7 @@ public abstract class NetworkMessage {
             this.services = 0;
             this.disabledAPIsBytes = null;
             this.apiServerIdleTimeout = 0;
+            this.blockchainState = Peer.BlockchainState.UP_TO_DATE;
         }
 
         /**
@@ -435,6 +435,8 @@ public abstract class NetworkMessage {
          * @param   apiPort             API port
          * @param   sslPort             API SSL port
          * @param   services            Available application services
+         * @param   disabledAPIs        Disabled API names
+         * @param   apiServerIdleTimeout API server idle timeout
          */
         public GetInfoMessage(String appName, String appVersion, String appPlatform,
                               boolean shareAddress, String announcedAddress,
@@ -451,6 +453,7 @@ public abstract class NetworkMessage {
             this.services = services;
             this.disabledAPIsBytes = (disabledAPIs != null ? disabledAPIs.getBytes(UTF8) : Convert.EMPTY_BYTE);
             this.apiServerIdleTimeout = apiServerIdleTimeout;
+            this.blockchainState = Peer.BlockchainState.UP_TO_DATE;
         }
 
         /**
@@ -472,6 +475,15 @@ public abstract class NetworkMessage {
             this.services = bytes.getLong();
             this.disabledAPIsBytes = decodeArray(bytes);
             this.apiServerIdleTimeout = bytes.getInt();
+            if (bytes.remaining() > 0) {
+                int state = bytes.getInt();
+                if (state < 0 || state >= Peer.BlockchainState.values().length) {
+                    throw new NetworkException("Blockchain state '" + state + "' is not valid");
+                }
+                this.blockchainState = Peer.BlockchainState.values()[state];
+            } else {
+                this.blockchainState = Peer.BlockchainState.UP_TO_DATE;
+            }
         }
 
         /**
@@ -489,6 +501,7 @@ public abstract class NetworkMessage {
                     + getEncodedArrayLength(announcedAddressBytes)
                     + 2 + 2 + 8
                     + getEncodedArrayLength(disabledAPIsBytes)
+                    + 4
                     + 4;
         }
 
@@ -499,7 +512,7 @@ public abstract class NetworkMessage {
          * @throws  BufferOverflowException Message buffer is too small
          */
         @Override
-        void getBytes(ByteBuffer bytes) throws BufferOverflowException {
+        synchronized void getBytes(ByteBuffer bytes) throws BufferOverflowException {
             super.getBytes(bytes);
             encodeArray(bytes, appNameBytes);
             encodeArray(bytes, appVersionBytes);
@@ -509,6 +522,7 @@ public abstract class NetworkMessage {
             bytes.putShort((short)apiPort).putShort((short)sslPort).putLong(services);
             encodeArray(bytes, disabledAPIsBytes);
             bytes.putInt(apiServerIdleTimeout);
+            bytes.putInt(blockchainState.ordinal());
         }
 
         /**
@@ -599,6 +613,24 @@ public abstract class NetworkMessage {
          */
         public int getApiServerIdleTimeout() {
             return apiServerIdleTimeout;
+        }
+
+        /**
+         * Get the blockchain state
+         *
+         * @return                      Blockchain state
+         */
+        public synchronized Peer.BlockchainState getBlockchainState() {
+            return blockchainState;
+        }
+
+        /**
+         * Set the blockchain state
+         *
+         * @param   blockchainState     Blockchain state
+         */
+        public synchronized void setBlockchainState(Peer.BlockchainState blockchainState) {
+            this.blockchainState = blockchainState;
         }
     }
 
