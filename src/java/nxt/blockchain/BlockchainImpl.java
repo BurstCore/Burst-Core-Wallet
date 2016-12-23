@@ -520,6 +520,85 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    public DbIterator<? extends FxtTransaction> getTransactions(FxtChain chain, long accountId,
+                int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, int from, int to) {
+        int height = numberOfConfirmations > 0 ? getHeight() - numberOfConfirmations : Integer.MAX_VALUE;
+        if (height < 0) {
+            throw new IllegalArgumentException("Number of confirmations required " + numberOfConfirmations
+                    + " exceeds current blockchain height " + getHeight());
+        }
+        Connection con = null;
+        try {
+            StringBuilder buf = new StringBuilder();
+            buf.append("SELECT * FROM transaction_fxt WHERE recipient_id = ? AND sender_id <> ? ");
+            if (blockTimestamp > 0) {
+                buf.append("AND block_timestamp >= ? ");
+            }
+            if (type < 0) {
+                buf.append("AND type = ? ");
+                if (subtype >= 0) {
+                    buf.append("AND subtype = ? ");
+                }
+            }
+            if (height < Integer.MAX_VALUE) {
+                buf.append("AND height <= ? ");
+            }
+            buf.append("UNION ALL SELECT * FROM transaction_fxt WHERE sender_id = ? ");
+            if (blockTimestamp > 0) {
+                buf.append("AND block_timestamp >= ? ");
+            }
+            if (type < 0) {
+                buf.append("AND type = ? ");
+                if (subtype >= 0) {
+                    buf.append("AND subtype = ? ");
+                }
+            }
+            if (height < Integer.MAX_VALUE) {
+                buf.append("AND height <= ? ");
+            }
+
+            buf.append("ORDER BY block_timestamp DESC, transaction_index DESC");
+            buf.append(DbUtils.limitsClause(from, to));
+            con = Db.db.getConnection(FxtChain.FXT.getDbSchema());
+            PreparedStatement pstmt;
+            int i = 0;
+            pstmt = con.prepareStatement(buf.toString());
+            pstmt.setLong(++i, accountId);
+            pstmt.setLong(++i, accountId);
+            if (blockTimestamp > 0) {
+                pstmt.setInt(++i, blockTimestamp);
+            }
+            if (type < 0) {
+                pstmt.setByte(++i, type);
+                if (subtype >= 0) {
+                    pstmt.setByte(++i, subtype);
+                }
+            }
+            if (height < Integer.MAX_VALUE) {
+                pstmt.setInt(++i, height);
+            }
+            pstmt.setLong(++i, accountId);
+            if (blockTimestamp > 0) {
+                pstmt.setInt(++i, blockTimestamp);
+            }
+            if (type < 0) {
+                pstmt.setByte(++i, type);
+                if (subtype >= 0) {
+                    pstmt.setByte(++i, subtype);
+                }
+            }
+            if (height < Integer.MAX_VALUE) {
+                pstmt.setInt(++i, height);
+            }
+            DbUtils.setLimits(++i, pstmt, from, to);
+            return getTransactions(chain, con, pstmt);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
     public DbIterator<FxtTransactionImpl> getTransactions(FxtChain chain, Connection con, PreparedStatement pstmt) {
         return new DbIterator<>(con, pstmt, new DbIterator.ResultSetReader<FxtTransactionImpl>() {
             @Override

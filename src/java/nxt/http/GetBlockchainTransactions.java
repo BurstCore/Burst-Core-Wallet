@@ -18,7 +18,9 @@ package nxt.http;
 
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.FxtChain;
 import nxt.blockchain.Transaction;
 import nxt.db.DbIterator;
 import org.json.simple.JSONArray;
@@ -49,15 +51,18 @@ public final class GetBlockchainTransactions extends APIServlet.APIRequestHandle
         boolean includeExpiredPrunable = "true".equalsIgnoreCase(req.getParameter("includeExpiredPrunable"));
         boolean includePhasingResult = "true".equalsIgnoreCase(req.getParameter("includePhasingResult"));
         boolean executedOnly = "true".equalsIgnoreCase(req.getParameter("executedOnly"));
-        //TODO: support FXT chain transactions
-        ChildChain childChain = ParameterParser.getChildChain(req);
+        Chain chain = ParameterParser.getChain(req);
 
         byte type;
         byte subtype;
         try {
             type = Byte.parseByte(req.getParameter("type"));
         } catch (NumberFormatException e) {
-            type = -1;
+            if (chain instanceof ChildChain) {
+                type = -1;
+            } else {
+                type = 1;
+            }
         }
         try {
             subtype = Byte.parseByte(req.getParameter("subtype"));
@@ -69,19 +74,30 @@ public final class GetBlockchainTransactions extends APIServlet.APIRequestHandle
         int lastIndex = ParameterParser.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = Nxt.getBlockchain().getTransactions(childChain, accountId, numberOfConfirmations,
-                type, subtype, timestamp, withMessage, phasedOnly, nonPhasedOnly, firstIndex, lastIndex,
-                includeExpiredPrunable, executedOnly)) {
-            while (iterator.hasNext()) {
-                Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(transaction, includePhasingResult));
+        if (chain instanceof ChildChain) {
+            try (DbIterator<? extends Transaction> iterator =
+                    Nxt.getBlockchain().getTransactions((ChildChain)chain, accountId, numberOfConfirmations,
+                            type, subtype, timestamp, withMessage, phasedOnly, nonPhasedOnly, firstIndex, lastIndex,
+                            includeExpiredPrunable, executedOnly)) {
+                while (iterator.hasNext()) {
+                    Transaction transaction = iterator.next();
+                    transactions.add(JSONData.transaction(transaction, includePhasingResult));
+                }
+            }
+        } else {
+            try (DbIterator<? extends Transaction> iterator =
+                    Nxt.getBlockchain().getTransactions((FxtChain)chain, accountId, numberOfConfirmations,
+                            type, subtype, timestamp, firstIndex, lastIndex)) {
+                while (iterator.hasNext()) {
+                    Transaction transaction = iterator.next();
+                    transactions.add(JSONData.transaction(transaction));
+                }
             }
         }
 
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);
         return response;
-
     }
 
 }
