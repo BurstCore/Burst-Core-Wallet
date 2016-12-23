@@ -1246,6 +1246,10 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         return null;
     }
 
+    public void shutdown() {
+        ThreadPool.shutdownExecutor("networkService", networkService, 5);
+    }
+
     private void addBlock(BlockImpl block) {
         try (Connection con = BlockDb.getConnection()) {
             BlockDb.saveBlock(con, block);
