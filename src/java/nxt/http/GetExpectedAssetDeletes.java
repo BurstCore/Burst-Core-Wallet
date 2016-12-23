@@ -20,6 +20,7 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.ae.AssetDeleteAttachment;
 import nxt.ae.AssetExchangeTransactionType;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;
@@ -42,6 +43,7 @@ public final class GetExpectedAssetDeletes extends APIServlet.APIRequestHandler 
 
         long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
         long accountId = ParameterParser.getAccountId(req, "account", false);
+        ChildChain childChain = ParameterParser.getChildChain(req, false);
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
 
         Filter<Transaction> filter = transaction -> {
@@ -49,6 +51,9 @@ public final class GetExpectedAssetDeletes extends APIServlet.APIRequestHandler 
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId) {
+                return false;
+            }
+            if (childChain != null && transaction.getChain() != childChain) {
                 return false;
             }
             AssetDeleteAttachment attachment = (AssetDeleteAttachment)transaction.getAttachment();

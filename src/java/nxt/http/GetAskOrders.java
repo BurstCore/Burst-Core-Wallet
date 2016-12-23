@@ -52,7 +52,9 @@ public final class GetAskOrders extends APIServlet.APIRequestHandler {
 
         long[] cancellations = null;
         if (showExpectedCancellations) {
-            Filter<Transaction> filter = transaction -> transaction.getType() == AssetExchangeTransactionType.ASK_ORDER_CANCELLATION;
+            Filter<Transaction> filter = transaction ->
+                    transaction.getType() == AssetExchangeTransactionType.ASK_ORDER_CANCELLATION
+                    && transaction.getChain() == childChain;
             List<? extends Transaction> transactions = Nxt.getBlockchain().getExpectedTransactions(filter);
             cancellations = new long[transactions.size()];
             for (int i = 0; i < transactions.size(); i++) {

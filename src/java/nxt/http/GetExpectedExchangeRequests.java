@@ -18,6 +18,7 @@ package nxt.http;
 
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.ms.ExchangeAttachment;
 import nxt.ms.MonetarySystemTransactionType;
@@ -42,6 +43,7 @@ public final class GetExpectedExchangeRequests extends APIServlet.APIRequestHand
 
         long accountId = ParameterParser.getAccountId(req, "account", false);
         long currencyId = ParameterParser.getUnsignedLong(req, "currency", false);
+        ChildChain childChain = ParameterParser.getChildChain(req, false);
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
 
         Filter<Transaction> filter = transaction -> {
@@ -49,6 +51,9 @@ public final class GetExpectedExchangeRequests extends APIServlet.APIRequestHand
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId) {
+                return false;
+            }
+            if (childChain != null && transaction.getChain() != childChain) {
                 return false;
             }
             ExchangeAttachment attachment = (ExchangeAttachment)transaction.getAttachment();
