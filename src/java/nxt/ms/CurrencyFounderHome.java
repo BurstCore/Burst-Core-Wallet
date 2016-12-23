@@ -158,6 +158,11 @@ public final class CurrencyFounderHome {
         public long getAmountPerUnitNQT() {
             return amountPerUnitNQT;
         }
+
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
     }
 
 }

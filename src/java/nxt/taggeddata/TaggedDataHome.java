@@ -557,6 +557,11 @@ public final class TaggedDataHome {
         public int getBlockTimestamp() {
             return blockTimestamp;
         }
+
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
     }
 
 }

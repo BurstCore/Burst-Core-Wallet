@@ -279,6 +279,10 @@ public final class ShufflingParticipantHome {
             }
         }
 
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
         public long getShufflingId() {
             return shufflingId;
         }

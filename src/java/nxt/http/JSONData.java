@@ -369,8 +369,8 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("order", Long.toUnsignedString(order.getId()));
         json.put("orderFullHash", Convert.toHexString(order.getFullHash()));
-        json.put("chain", Chain.getChain(order.getChainId()).getId());
-        json.put("exchange", Chain.getChain(order.getExchangeId()).getId());
+        json.put("chain", order.getChainId());
+        json.put("exchange", order.getExchangeId());
         putAccount(json, "account", order.getAccountId());
         json.put("amountNQT", String.valueOf(order.getQuantity()));
         json.put("bidNQT", String.valueOf(order.getBidPrice()));
@@ -384,8 +384,8 @@ public final class JSONData {
         json.put("orderFullHash", Convert.toHexString(trade.getOrderFullHash()));
         json.put("match", Long.toUnsignedString(trade.getMatchId()));
         json.put("matchFullHash", Convert.toHexString(trade.getMatchFullHash()));
-        json.put("chain", Chain.getChain(trade.getChainId()).getId());
-        json.put("exchange", Chain.getChain(trade.getExchangeId()).getId());
+        json.put("chain", trade.getChainId());
+        json.put("exchange", trade.getExchangeId());
         putAccount(json, "account", trade.getAccountId());
         json.put("amountNQT", String.valueOf(trade.getExchangeQuantity()));
         json.put("priceNQT", String.valueOf(trade.getExchangePrice()));
@@ -456,6 +456,7 @@ public final class JSONData {
                 json.put("participantState", participant.getState().getCode());
             }
         }
+        json.put("chain", shuffler.getChildChain().getId());
         return json;
     }
 
@@ -1195,7 +1196,7 @@ public final class JSONData {
     static JSONObject bundler(Bundler bundler) {
         JSONObject json = new JSONObject();
         putAccount(json, "bundler", bundler.getAccountId());
-        json.put("chain", bundler.getChildChain().getName());
+        json.put("chain", bundler.getChildChain().getId());
         json.put("totalFeesLimitFQT", String.valueOf(bundler.getTotalFeesLimitFQT()));
         json.put("currentTotalFeesFQT", String.valueOf(bundler.getCurrentTotalFeesFQT()));
         json.put("minRateNQTPerFXT", String.valueOf(bundler.getMinRateNQTPerFXT()));
@@ -1254,6 +1255,7 @@ public final class JSONData {
             json.put("transactionHeight", transaction.getHeight());
             json.put("confirmations", Nxt.getBlockchain().getHeight() - transaction.getHeight());
         }
+        json.put("chain", transaction.getChain().getId());
     }
 
     static void ledgerEntry(JSONObject json, LedgerEntry entry, boolean includeTransactions, boolean includeHoldingInfo) {

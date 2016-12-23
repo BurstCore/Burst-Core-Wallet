@@ -311,6 +311,10 @@ public final class PrunableMessageHome {
             return height;
         }
 
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
         public byte[] decrypt(String secretPhrase) {
             if (encryptedData == null) {
                 return null;

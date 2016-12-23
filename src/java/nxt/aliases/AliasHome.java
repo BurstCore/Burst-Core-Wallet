@@ -209,6 +209,10 @@ public final class AliasHome {
             return buyerId;
         }
 
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
     }
 
     public final class Alias {
@@ -275,6 +279,10 @@ public final class AliasHome {
 
         public Offer getOffer() {
             return AliasHome.this.getOffer(this);
+        }
+
+        public ChildChain getChildChain() {
+            return childChain;
         }
 
     }

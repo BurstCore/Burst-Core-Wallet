@@ -293,6 +293,10 @@ public final class ExchangeHome {
             return height;
         }
 
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
         @Override
         public String toString() {
             return "Exchange currency: " + Long.toUnsignedString(currencyId) + " offer: " + Long.toUnsignedString(offerId)

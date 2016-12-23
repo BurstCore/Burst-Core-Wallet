@@ -368,6 +368,10 @@ public final class ExchangeOfferHome {
 
         public abstract ExchangeOffer getCounterOffer();
 
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
         long increaseSupply(long delta) {
             long excess = Math.max(Math.addExact(supply, Math.subtractExact(delta, limit)), 0);
             supply += delta - excess;

@@ -193,5 +193,10 @@ public final class ExchangeRequestHome {
         public int getHeight() {
             return height;
         }
+
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
     }
 }

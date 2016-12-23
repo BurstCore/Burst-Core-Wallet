@@ -501,6 +501,10 @@ public final class DigitalGoodsHome {
             return DigitalGoodsHome.this;
         }
 
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
     }
 
     private static class PurchasesClause extends DbClause {
@@ -858,6 +862,10 @@ public final class DigitalGoodsHome {
 
         public DigitalGoodsHome getDGSHome() {
             return DigitalGoodsHome.this;
+        }
+
+        public ChildChain getChildChain() {
+            return childChain;
         }
 
     }

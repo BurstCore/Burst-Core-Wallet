@@ -158,6 +158,11 @@ public final class VoteHome {
         public byte[] getVoteBytes() {
             return voteBytes;
         }
+
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
     }
 
 }

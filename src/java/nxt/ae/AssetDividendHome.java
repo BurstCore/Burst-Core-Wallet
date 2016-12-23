@@ -217,5 +217,9 @@ public final class AssetDividendHome {
         public int getHeight() {
             return height;
         }
+
+        public ChildChain getChildChain() {
+            return childChain;
+        }
     }
 }

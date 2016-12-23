@@ -87,14 +87,14 @@ public final class ChainTransactionId {
         if (json == null) {
             return null;
         }
-        int chainId = ((Long)json.get("chainId")).intValue();
+        int chainId = ((Long)json.get("chain")).intValue();
         byte[] hash = Convert.parseHexString((String)json.get("transactionFullHash"));
         return new ChainTransactionId(chainId, hash);
     }
 
     public JSONObject getJSON() {
         JSONObject json = new JSONObject();
-        json.put("chainId", chainId);
+        json.put("chain", chainId);
         json.put("transactionFullHash", Convert.toHexString(hash));
         return json;
     }

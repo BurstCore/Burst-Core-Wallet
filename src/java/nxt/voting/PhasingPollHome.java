@@ -322,6 +322,11 @@ public final class PhasingPollHome {
         public int getHeight() {
             return height;
         }
+
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
     }
 
 
@@ -505,7 +510,11 @@ public final class PhasingPollHome {
             this.algorithm = rs.getByte("algorithm");
         }
 
-        public void finish(long result) {
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
+        void finish(long result) {
             PhasingPollResult phasingPollResult = new PhasingPollResult(this, result);
             resultTable.insert(phasingPollResult);
         }
@@ -538,7 +547,7 @@ public final class PhasingPollHome {
             return PhasingPollHome.this;
         }
 
-        public boolean verifySecret(byte[] revealedSecret) {
+        boolean verifySecret(byte[] revealedSecret) {
             HashFunction hashFunction = getHashFunction(algorithm);
             return hashFunction != null && Arrays.equals(hashedSecret, hashFunction.hash(revealedSecret));
         }

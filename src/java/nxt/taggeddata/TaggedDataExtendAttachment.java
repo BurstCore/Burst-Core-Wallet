@@ -49,7 +49,7 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
 
     TaggedDataExtendAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        this.chainId = ((Long)attachmentData.get("chainId")).intValue();
+        this.chainId = ((Long)attachmentData.get("chain")).intValue();
         this.taggedDataTransactionFullHash = Convert.parseHexString((String)attachmentData.get("taggedDataTransactionFullHash"));
         this.jsonIsPruned = attachmentData.get("data") == null;
     }
@@ -76,7 +76,7 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
     @Override
     protected void putMyJSON(JSONObject attachment) {
         super.putMyJSON(attachment);
-        attachment.put("chainId", chainId);
+        attachment.put("chain", chainId);
         attachment.put("taggedDataTransactionFullHash", Convert.toHexString(taggedDataTransactionFullHash));
     }
 

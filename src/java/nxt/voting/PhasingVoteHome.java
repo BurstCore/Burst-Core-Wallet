@@ -113,6 +113,10 @@ public final class PhasingVoteHome {
             this.voteHash = rs.getBytes("vote_full_hash");
         }
 
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
         public long getPhasedTransactionId() {
             return phasedTransactionId;
         }
