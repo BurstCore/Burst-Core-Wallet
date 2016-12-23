@@ -257,6 +257,9 @@ public class DesktopApplication extends Application {
     private void download(String requestType, Map<String, String> params) {
         String chainName = params.get("chain");
         ChildChain childChain = ChildChain.getChildChain(chainName);
+        if (childChain == null) {
+            childChain = ChildChain.getChildChain(Integer.valueOf(chainName));
+        }
         byte[] transactionFullHash = Convert.parseHexString(params.get("transactionFullHash"));
         TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionFullHash);
         boolean retrieve = "true".equals(params.get("retrieve"));

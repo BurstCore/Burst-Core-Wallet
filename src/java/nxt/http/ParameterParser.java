@@ -805,6 +805,11 @@ public final class ParameterParser {
         if (chainName != null) {
             Chain chain = Chain.getChain(chainName.toUpperCase());
             if (chain == null) {
+                try {
+                    chain = Chain.getChain(Integer.valueOf(chainName));
+                } catch (NumberFormatException ignore) {}
+            }
+            if (chain == null) {
                 throw new ParameterException(UNKNOWN_CHAIN);
             }
             return chain;
@@ -819,6 +824,11 @@ public final class ParameterParser {
         String chainName = Convert.emptyToNull(request.getParameter(name));
         if (chainName != null) {
             Chain chain = Chain.getChain(chainName.toUpperCase());
+            if (chain == null) {
+                try {
+                    chain = Chain.getChain(Integer.valueOf(chainName));
+                } catch (NumberFormatException ignore) {}
+            }
             if (chain == null) {
                 throw new ParameterException(JSONResponses.unknown(name));
             }
@@ -837,6 +847,11 @@ public final class ParameterParser {
         String chainName = Convert.emptyToNull(request.getParameter("chain"));
         if (chainName != null) {
             ChildChain chain = ChildChain.getChildChain(chainName.toUpperCase());
+            if (chain == null) {
+                try {
+                    chain = ChildChain.getChildChain(Integer.valueOf(chainName));
+                } catch (NumberFormatException ignore) {}
+            }
             if (chain == null) {
                 throw new ParameterException(UNKNOWN_CHAIN);
             }
