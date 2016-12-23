@@ -59,7 +59,7 @@ public final class Peers {
         CHANGE_SERVICES,                // Peer changed services
         REMOVE_PEER,                    // Removed peer from peer list
         ADD_ACTIVE_PEER,                // Peer is now active
-        CHANGE_ACTIVE_PEER,             // Active peer state changed
+        CHANGE_ACTIVE_PEER              // Active peer state changed
     }
 
     /** Maximum application version length */
@@ -154,6 +154,9 @@ public final class Peers {
 
     /** Start time */
     private static final int startTime = Nxt.getEpochTime();
+
+    /** Broadcast blockchain state */
+    private static Peer.BlockchainState broadcastBlockchainState = Peer.BlockchainState.UP_TO_DATE;
 
     /**
      * Initialize peer processing
@@ -626,6 +629,17 @@ public final class Peers {
                     sortedPeers.poll().remove();
                 }
                 Logger.logDebugMessage("Reduced peer pool size from " + initialSize + " to " + peers.size());
+            }
+            //
+            // Notify connected peers if our blockchain state has changed
+            //
+            Peer.BlockchainState currentState = getMyBlockchainState();
+            if (currentState != broadcastBlockchainState) {
+                Logger.logDebugMessage("Broadcasting blockchain state change from "
+                        + broadcastBlockchainState.name() + " to " + currentState.name());
+                NetworkMessage blockchainStateMessage = new NetworkMessage.BlockchainStateMessage(currentState);
+                NetworkHandler.broadcastMessage(blockchainStateMessage);
+                broadcastBlockchainState = currentState;
             }
         } catch (Throwable t) {
             Logger.logErrorMessage("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS", t);

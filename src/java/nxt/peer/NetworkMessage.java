@@ -1,18 +1,18 @@
 /*
- * Copyright 2013-2016 The Nxt Core Developers.
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016 Jelurida IP B.V.
  *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at
- * the top-level directory of this distribution for the individual copyright
- * holder information and the developer policies on copyright and licensing.
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement, no part of the
- * Nxt software, including this file, may be copied, modified, propagated,
- * or distributed except according to the terms contained in the LICENSE.txt
- * file.
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
+ *
  */
-
 package nxt.peer;
 
 import nxt.Nxt;
@@ -90,6 +90,7 @@ public abstract class NetworkMessage {
         processors.put("AddPeers", new AddPeersMessage());
         processors.put("BlockIds", new BlockIdsMessage());
         processors.put("BlockInventory", new BlockInventoryMessage());
+        processors.put("BlockchainState", new BlockchainStateMessage());
         processors.put("Blocks", new BlocksMessage());
         processors.put("CumulativeDifficulty", new CumulativeDifficultyMessage());
         processors.put("Error", new ErrorMessage());
@@ -342,7 +343,8 @@ public abstract class NetworkMessage {
      * <li>SSL port (short)
      * <li>Available services (long)
      * <li>Disabled APIs (string)
-     * <li>APIServer idle timeout (int)
+     * <li>APIServer idle timeout (integer)
+     * <li>Blockchain state (integer)
      * </ul>
      */
     public static class GetInfoMessage extends NetworkMessage {
@@ -631,6 +633,110 @@ public abstract class NetworkMessage {
          */
         public synchronized void setBlockchainState(Peer.BlockchainState blockchainState) {
             this.blockchainState = blockchainState;
+        }
+    }
+
+    /**
+     * The BlockchainState message is sent when blockchain state changes.
+     * There is no response for this message.
+     * <ul>
+     * <li>Blockchain state (integer)
+     * </ul>
+     */
+    public static class BlockchainStateMessage extends NetworkMessage {
+
+        /** Blockchain state */
+        private final Peer.BlockchainState blockchainState;
+
+        /**
+         * Construct the message from the message bytes
+         *
+         * @param   bytes                       Message bytes following the message name
+         * @return                              Message
+         * @throws  BufferOverflowException     Message buffer is too small
+         * @throws  BufferUnderflowException    Message is too short
+         * @throws  NetworkException            Message is not valid
+         */
+        @Override
+        protected NetworkMessage constructMessage(ByteBuffer bytes)
+                                    throws BufferOverflowException, BufferUnderflowException, NetworkException {
+            return new BlockchainStateMessage(bytes);
+        }
+
+        /**
+         * Process the message
+         *
+         * @param   peer                        Peer
+         * @return                              Response message
+         */
+        @Override
+        NetworkMessage processMessage(PeerImpl peer) {
+            return BlockchainState.processRequest(peer, this);
+        }
+
+        /**
+         * Construct a BlockchainState message
+         */
+        private BlockchainStateMessage() {
+            super("BlockchainState");
+            blockchainState = Peer.BlockchainState.UP_TO_DATE;
+        }
+
+        /**
+         * Construct a BlockchainState message
+         *
+         * @param   blockchainState             Blockchain state
+         */
+        public BlockchainStateMessage(Peer.BlockchainState blockchainState) {
+            super("BlockchainState");
+            this.blockchainState = blockchainState;
+        }
+
+        /**
+         * Construct a BlockchainState message
+         *
+         * @param   bytes                       Message bytes
+         * @throws  BufferUnderflowException    Message is too small
+         * @throws  NetworkException            Message is not valid
+         */
+        private BlockchainStateMessage(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
+            super("BlockchainState", bytes);
+            int state = bytes.getInt();
+            if (state < 0 || state >= Peer.BlockchainState.values().length) {
+                throw new NetworkException("Blockchain state '" + state + "' is not valid");
+            }
+            this.blockchainState = Peer.BlockchainState.values()[state];
+        }
+
+        /**
+         * Get the message length
+         *
+         * @return                      Message length
+         */
+        @Override
+        int getLength() {
+            return super.getLength() + 4;
+        }
+
+        /**
+         * Get the message bytes
+         *
+         * @param   bytes                       Message buffer
+         * @throws  BufferOverflowException     Message buffer is too small
+         */
+        @Override
+        void getBytes(ByteBuffer bytes) throws BufferOverflowException {
+            super.getBytes(bytes);
+            bytes.putInt(blockchainState.ordinal());
+        }
+
+        /**
+         * Get the blockchain state
+         *
+         * @return                              Blockchain state
+         */
+        public Peer.BlockchainState getBlockchainState() {
+            return blockchainState;
         }
     }
 

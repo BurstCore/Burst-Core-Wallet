@@ -1008,6 +1008,9 @@ final class PeerImpl implements Peer {
                         sendMessage = true;
                     }
                 }
+            } else {
+                Logger.logDebugMessage("Flushing " + message.getMessageName() + " message because "
+                        + host + " is not connected");
             }
         }
         if (sendMessage) {

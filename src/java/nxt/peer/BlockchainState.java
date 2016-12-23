@@ -15,24 +15,19 @@
  */
 package nxt.peer;
 
-import nxt.Nxt;
-import nxt.blockchain.Block;
+final class BlockchainState {
 
-final class GetBlock {
-
-    private GetBlock() { }
+    private BlockchainState() {}
 
     /**
-     * Process the GetBlock message and return the BlocksMessage
+     * Process a BlockchainState message (there is no response message)
      *
      * @param   peer                    Peer
      * @param   request                 Request message
      * @return                          Response message
      */
-    static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetBlockMessage request) {
-        long blockId = request.getBlockId();
-        byte[] excludedTransactions = request.getExcludedTransactions();
-        Block block = Nxt.getBlockchain().getBlock(blockId, true);
-        return new NetworkMessage.BlocksMessage(request.getMessageId(), block, excludedTransactions);
+    static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.BlockchainStateMessage request) {
+        peer.setBlockchainState(request.getBlockchainState());
+        return null;
     }
 }
