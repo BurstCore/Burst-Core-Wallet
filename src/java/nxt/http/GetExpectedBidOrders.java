@@ -20,6 +20,7 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.ae.AssetExchangeTransactionType;
 import nxt.ae.OrderPlacementAttachment;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;
@@ -48,9 +49,13 @@ public final class GetExpectedBidOrders extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
         long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
+        ChildChain childChain = ParameterParser.getChildChain(req, false);
         boolean sortByPrice = "true".equalsIgnoreCase(req.getParameter("sortByPrice"));
         Filter<Transaction> filter = transaction -> {
             if (transaction.getType() != AssetExchangeTransactionType.BID_ORDER_PLACEMENT) {
+                return false;
+            }
+            if (childChain != null && transaction.getChain() != childChain) {
                 return false;
             }
             OrderPlacementAttachment attachment = (OrderPlacementAttachment)transaction.getAttachment();

@@ -17,6 +17,7 @@
 package nxt.http;
 
 import nxt.Nxt;
+import nxt.blockchain.Chain;
 import nxt.blockchain.Transaction;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
@@ -39,9 +40,17 @@ public final class GetUnconfirmedTransactionIds extends APIServlet.APIRequestHan
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
+        Chain chain = ParameterParser.getChain(req, false);
         Set<Long> accountIds = Convert.toSet(ParameterParser.getAccountIds(req, false));
-        Filter<Transaction> filter = accountIds.isEmpty() ? transaction -> true :
-                transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId());
+        Filter<Transaction> filter = accountIds.isEmpty() && chain == null ?
+                transaction -> true
+                :
+                transaction -> {
+                    if (chain != null && transaction.getChain() != chain) {
+                        return false;
+                    }
+                    return accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId());
+                };
 
         JSONArray transactionIds = new JSONArray();
         try (DbIterator<? extends Transaction> transactionsIterator = Nxt.getTransactionProcessor().getAllUnconfirmedTransactions()) {
