@@ -18,10 +18,11 @@ package nxt.http;
 
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.blockchain.ChildChain;
+import nxt.blockchain.Chain;
 import nxt.blockchain.Transaction;
-import nxt.ms.ExchangeAttachment;
-import nxt.ms.MonetarySystemTransactionType;
+import nxt.ce.CoinExchangeFxtTransactionType;
+import nxt.ce.CoinExchangeTransactionType;
+import nxt.ce.OrderIssueAttachment;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -30,42 +31,45 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-public final class GetExpectedExchangeRequests extends APIServlet.APIRequestHandler {
+public final class GetExpectedCoinExchangeOrders extends APIServlet.APIRequestHandler {
 
-    static final GetExpectedExchangeRequests instance = new GetExpectedExchangeRequests();
+    static final GetExpectedCoinExchangeOrders instance = new GetExpectedCoinExchangeOrders();
 
-    private GetExpectedExchangeRequests() {
-        super(new APITag[] {APITag.MS}, "account", "currency", "includeCurrencyInfo");
+    private GetExpectedCoinExchangeOrders() {
+        super(new APITag[] {APITag.CE}, "exchange", "account");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
+        Chain chain = ParameterParser.getChain(req, "chain", false);
+        Chain exchange = ParameterParser.getChain(req, "exchange", false);
         long accountId = ParameterParser.getAccountId(req, "account", false);
-        long currencyId = ParameterParser.getUnsignedLong(req, "currency", false);
-        ChildChain childChain = ParameterParser.getChildChain(req, false);
-        boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
 
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != MonetarySystemTransactionType.EXCHANGE_BUY && transaction.getType() != MonetarySystemTransactionType.EXCHANGE_SELL) {
+            if (transaction.getType() != CoinExchangeFxtTransactionType.ORDER_ISSUE
+                    && transaction.getType() != CoinExchangeTransactionType.ORDER_ISSUE) {
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId) {
                 return false;
             }
-            if (childChain != null && transaction.getChain() != childChain) {
+            OrderIssueAttachment orderIssueAttachment = (OrderIssueAttachment)transaction.getAttachment();
+            if (chain != null && chain != orderIssueAttachment.getChain()) {
                 return false;
             }
-            ExchangeAttachment attachment = (ExchangeAttachment)transaction.getAttachment();
-            return currencyId == 0 || attachment.getCurrencyId() == currencyId;
+            if (exchange != null && exchange != orderIssueAttachment.getExchangeChain()) {
+                return false;
+            }
+            return true;
         };
 
         List<? extends Transaction> transactions = Nxt.getBlockchain().getExpectedTransactions(filter);
 
-        JSONArray exchangeRequests = new JSONArray();
-        transactions.forEach(transaction -> exchangeRequests.add(JSONData.expectedExchangeRequest(transaction, includeCurrencyInfo)));
+        JSONArray orders = new JSONArray();
+        transactions.forEach(transaction -> orders.add(JSONData.expectedCoinExchangeOrder(transaction)));
         JSONObject response = new JSONObject();
-        response.put("exchangeRequests", exchangeRequests);
+        response.put("orders", orders);
         return response;
 
     }

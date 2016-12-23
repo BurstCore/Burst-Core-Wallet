@@ -39,7 +39,6 @@ import nxt.ae.TradeHome;
 import nxt.aliases.AliasHome;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Block;
-import nxt.blockchain.Chain;
 import nxt.blockchain.Bundler;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
@@ -48,6 +47,8 @@ import nxt.blockchain.FxtChain;
 import nxt.blockchain.Generator;
 import nxt.blockchain.Transaction;
 import nxt.ce.CoinExchange;
+import nxt.ce.OrderCancelAttachment;
+import nxt.ce.OrderIssueAttachment;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
 import nxt.dgs.DigitalGoodsHome;
@@ -392,6 +393,29 @@ public final class JSONData {
         json.put("block", Long.toUnsignedString(trade.getBlockId()));
         json.put("height", trade.getHeight());
         json.put("timestamp", trade.getTimestamp());
+        return json;
+    }
+
+    static JSONObject expectedCoinExchangeOrder(Transaction transaction) {
+        JSONObject json = new JSONObject();
+        json.put("order", transaction.getStringId());
+        json.put("orderFullHash", Convert.toHexString(transaction.getFullHash()));
+        OrderIssueAttachment orderIssueAttachment = (OrderIssueAttachment)transaction.getAttachment();
+        json.put("chain", orderIssueAttachment.getChain().getId());
+        json.put("exchange", orderIssueAttachment.getExchangeChain().getId());
+        putAccount(json, "account", transaction.getSenderId());
+        json.put("amountNQT", String.valueOf(orderIssueAttachment.getQuantityQNT()));
+        json.put("bidNQT", String.valueOf(orderIssueAttachment.getPriceNQT()));
+        putExpectedTransaction(json, transaction);
+        return json;
+    }
+
+    static JSONObject expectedCoinExchangeOrderCancellation(Transaction transaction) {
+        JSONObject json = new JSONObject();
+        OrderCancelAttachment attachment = (OrderCancelAttachment)transaction.getAttachment();
+        json.put("order", Long.toUnsignedString(attachment.getOrderId()));
+        putAccount(json, "account", transaction.getSenderId());
+        putExpectedTransaction(json, transaction);
         return json;
     }
 
@@ -1255,7 +1279,9 @@ public final class JSONData {
             json.put("transactionHeight", transaction.getHeight());
             json.put("confirmations", Nxt.getBlockchain().getHeight() - transaction.getHeight());
         }
-        json.put("chain", transaction.getChain().getId());
+        if (!json.containsKey("chain")) {
+            json.put("chain", transaction.getChain().getId());
+        }
     }
 
     static void ledgerEntry(JSONObject json, LedgerEntry entry, boolean includeTransactions, boolean includeHoldingInfo) {
