@@ -119,6 +119,9 @@ public abstract class CoinExchangeTransactionType extends ChildTransactionType {
                 throw new NxtException.NotValidException("Coin exchange order for chain " + attachment.getChain().getName()
                         + " was submitted on chain " + transaction.getChain().getName());
             }
+            if (attachment.getChain() == attachment.getExchangeChain()) {
+                throw new NxtException.NotValidException("Coin exchange order chain and exchange chain must be different: " + attachment.getJSONObject());
+            }
         }
 
         @Override

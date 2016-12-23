@@ -52,9 +52,6 @@ public class OrderIssueAttachment extends Attachment.AbstractAttachment {
         if (this.chain == null) {
             throw new NxtException.NotValidException("Exchange chain '" + chainId + "' not defined");
         }
-        if (chain == exchangeChain) {
-            throw new NxtException.NotValidException("Chain and exchange chain must be different");
-        }
         this.quantityQNT = buffer.getLong();
         this.priceNQT = buffer.getLong();
     }
@@ -70,9 +67,6 @@ public class OrderIssueAttachment extends Attachment.AbstractAttachment {
         this.exchangeChain = Chain.getChain(chainId);
         if (this.exchangeChain == null) {
             throw new NxtException.NotValidException("Exchange chain '" + chainId + "' not defined");
-        }
-        if (chain == exchangeChain) {
-            throw new NxtException.NotValidException("Chain and exchange chain must be different");
         }
         this.quantityQNT = Convert.parseLong(data.get("quantityQNT"));
         this.priceNQT = Convert.parseLong(data.get("priceNQT"));

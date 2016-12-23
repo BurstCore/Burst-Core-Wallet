@@ -127,6 +127,9 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
             if (attachment.getChain() != FxtChain.FXT && attachment.getExchangeChain() != FxtChain.FXT) {
                 throw new NxtException.NotValidException("Only exchange orders to/from Ardor may be submitted on the Fxt chain");
             }
+            if (attachment.getChain() == attachment.getExchangeChain()) {
+                throw new NxtException.NotValidException("Coin exchange order chain and exchange chain must be different: " + attachment.getJSONObject());
+            }
         }
 
         @Override
