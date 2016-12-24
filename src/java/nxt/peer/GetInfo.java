@@ -102,6 +102,10 @@ final class GetInfo {
             NetworkHandler.sendGetInfoMessage(peer);
         }
         //
+        // Send our bundler rates
+        //
+        Peers.sendBundlerRates(peer);
+        //
         // Get the unconfirmed transactions.  This is done when a connection is established
         // to synchronize the unconfirmed transaction pools of both peers.
         //

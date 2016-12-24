@@ -13,11 +13,12 @@
  * Removal or modification of this copyright notice is prohibited.
  *
  */
-
 package nxt.peer;
 
 import nxt.Constants;
 import nxt.Nxt;
+import nxt.blockchain.Bundler;
+import nxt.blockchain.ChildChain;
 import nxt.dbschema.Db;
 import nxt.http.API;
 import nxt.util.Filter;
@@ -36,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -76,8 +78,6 @@ public final class Peers {
 
     /** Peer blacklist period (seconds) */
     static final int blacklistingPeriod = Nxt.getIntProperty("nxt.blacklistingPeriod", 600);
-
-    private static volatile Peer.BlockchainState currentBlockchainState;
 
     /** Get more peers */
     private static final boolean getMorePeers = Nxt.getBooleanProperty("nxt.getMorePeers");
@@ -157,6 +157,15 @@ public final class Peers {
 
     /** Broadcast blockchain state */
     private static Peer.BlockchainState broadcastBlockchainState = Peer.BlockchainState.UP_TO_DATE;
+
+    /** Bundler rates broadcast time */
+    private static int ratesTime = startTime ;
+
+    /** Bundler status has changed */
+    private static volatile boolean bundlersChanged = false;
+
+    /** Current bundler rates */
+    private static final Map<String, NetworkMessage.BundlerRateMessage> bundlerRates = new ConcurrentHashMap<>();
 
     /**
      * Initialize peer processing
@@ -641,6 +650,21 @@ public final class Peers {
                 NetworkHandler.broadcastMessage(blockchainStateMessage);
                 broadcastBlockchainState = currentState;
             }
+            //
+            // Notify connected peers if we have active bundlers or if we have stopped all bundlers
+            //
+            if (now - ratesTime >= 60 * 60 || bundlersChanged) {
+                NetworkMessage.BundlerRateMessage msg = bundlerRates.get("localhost");
+                if (msg == null && bundlersChanged) {
+                    msg = new NetworkMessage.BundlerRateMessage("localhost", new ArrayList<>(0));
+                }
+                if (msg != null) {
+                    Logger.logDebugMessage("Broadcasting our bundler rates");
+                    NetworkHandler.broadcastMessage(msg);
+                }
+                ratesTime = now;
+                bundlersChanged = false;
+            }
         } catch (Throwable t) {
             Logger.logErrorMessage("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS", t);
             System.exit(1);
@@ -765,6 +789,13 @@ public final class Peers {
         }), Peers.Event.CHANGE_SERVICES);
     }
 
+    /**
+     * Check for an old NRS version
+     *
+     * @param   version         Peer version
+     * @param   minVersion      Minimum acceptable version
+     * @return                  TRUE if this is an old version
+     */
     static boolean isOldVersion(String version, int[] minVersion) {
         if (version == null) {
             return true;
@@ -801,6 +832,12 @@ public final class Peers {
         }
     }
 
+    /**
+     * Check for a new version
+     *
+     * @param   version         Peer version
+     * @return                  TRUE if this is a newer version
+     */
     static boolean isNewVersion(String version) {
         if (version == null) {
             return true;
@@ -824,6 +861,11 @@ public final class Peers {
         return versions.length > MAX_VERSION.length;
     }
 
+    /**
+     * Get the current blockchain state
+     *
+     * @return                  The blockchain state
+     */
     public static Peer.BlockchainState getMyBlockchainState() {
         return Constants.isLightClient ? Peer.BlockchainState.LIGHT_CLIENT :
                 (Nxt.getBlockchainProcessor().isDownloading() ||
@@ -832,6 +874,101 @@ public final class Peers {
                         (Nxt.getBlockchain().getLastBlock().getBaseTarget() / Constants.INITIAL_BASE_TARGET > 10 &&
                                 !Constants.isTestnet) ? Peer.BlockchainState.FORK :
                         Peer.BlockchainState.UP_TO_DATE;
+    }
+
+    /**
+     * Update a bundler rate
+     *
+     * @param   sender          Peer sending the message
+     * @param   rates           The bundler rates
+     */
+    static void updateBundlerRates(Peer sender, NetworkMessage.BundlerRateMessage msg) {
+        boolean relayMessage = false;
+        String address = msg.getAddress();
+        if (address.equals("localhost")) {
+            address = sender.getHost();
+            msg.setAddress(address);
+        }
+        if (msg.getRates().isEmpty()) {
+            if (bundlerRates.remove(address) != null) {
+                relayMessage = true;
+            }
+        } else {
+            NetworkMessage.BundlerRateMessage prevMsg = bundlerRates.get(address);
+            if (prevMsg == null || prevMsg.getTimestamp() < msg.getTimestamp()) {
+                bundlerRates.put(address, msg);
+                relayMessage = true;
+            }
+        }
+        if (relayMessage) {
+            Logger.logDebugMessage("Relaying bundler rates for " + address);
+            NetworkHandler.broadcastMessage(sender, msg);
+        }
+    }
+
+    /**
+     * Get the best bundler rates
+     *
+     * @return                  List of bundler rates
+     */
+    public static List<BundlerRate> getBestBundlerRates() {
+        List<BundlerRate> bestRates = new ArrayList<>();
+        int now = Nxt.getEpochTime();
+        Map<ChildChain, Long> rateMap = new HashMap<>();
+        Set<Map.Entry<String, NetworkMessage.BundlerRateMessage>> entries = bundlerRates.entrySet();
+        Iterator<Map.Entry<String, NetworkMessage.BundlerRateMessage>> it = entries.iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, NetworkMessage.BundlerRateMessage> entry = it.next();
+            NetworkMessage.BundlerRateMessage msg = entry.getValue();
+            if (msg.getTimestamp() < now - 65 * 60 && !entry.getKey().equals("localhost")) {
+                it.remove();
+                continue;
+            }
+            List<BundlerRate> rates = msg.getRates();
+            rates.forEach(rate -> {
+                Long prevRate = rateMap.get(rate.getChain());
+                if (prevRate == null || rate.getRate() < prevRate) {
+                    rateMap.put(rate.getChain(), rate.getRate());
+                }
+            });
+        }
+        rateMap.entrySet().forEach(entry -> bestRates.add(new BundlerRate(entry.getKey(), entry.getValue())));
+        return bestRates;
+    }
+
+    /**
+     * Broadcast bundler rates
+     */
+    public static void broadcastBundlerRates() {
+        List<Bundler> bundlers = Bundler.getAllBundlers();
+        if (bundlers.isEmpty()) {
+            bundlerRates.remove("localhost");
+        } else {
+            List<BundlerRate> rates = new ArrayList<>();
+            Map<ChildChain, Bundler> bundlerMap = new HashMap<>();
+            bundlers.forEach(bundler -> {
+                Bundler prevBundler = bundlerMap.get(bundler.getChildChain());
+                if (prevBundler == null || bundler.getMinRateNQTPerFXT() < prevBundler.getMinRateNQTPerFXT()) {
+                    bundlerMap.put(bundler.getChildChain(), bundler);
+                }
+            });
+            bundlerMap.values().forEach(bundler ->
+                rates.add(new BundlerRate(bundler.getChildChain(), bundler.getMinRateNQTPerFXT())));
+            bundlerRates.put("localhost", new NetworkMessage.BundlerRateMessage("localhost", rates));
+        }
+        bundlersChanged = true;
+    }
+
+    /**
+     * Send our bundler rates to a new peer
+     *
+     * @param   peer                Peer
+     */
+    public static void sendBundlerRates(Peer peer) {
+        NetworkMessage.BundlerRateMessage msg = bundlerRates.get("localhost");
+        if (msg != null) {
+            peer.sendMessage(msg);
+        }
     }
 
     private Peers() {} // never

@@ -843,15 +843,26 @@ public final class NetworkHandler implements Runnable {
     }
 
     /**
-     * Broadcast a message to all connected peers except light clients
+     * Broadcast a message to all connected peers
      *
      * @param   message                 Message to send
      */
     public static void broadcastMessage(NetworkMessage message) {
+        broadcastMessage(null, message);
+    }
+
+    /**
+     * Broadcast a message to all connected peers
+     *
+     * @param   sender                  Message sender or null if our message
+     * @param   message                 Message to send
+     */
+    public static void broadcastMessage(Peer sender, NetworkMessage message) {
         connectionMap.values().forEach(peer -> {
             if (peer.getState() == Peer.State.CONNECTED &&
+                    peer != sender &&
                     (peer.getBlockchainState() != Peer.BlockchainState.LIGHT_CLIENT ||
-                        (message instanceof NetworkMessage.BlockchainStateMessage))) {
+                     message.sendToLightClient())) {
                 peer.sendMessage(message);
             }
         });

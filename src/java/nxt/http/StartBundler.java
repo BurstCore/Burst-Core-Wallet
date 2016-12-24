@@ -22,6 +22,7 @@ import nxt.blockchain.Bundler;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.FxtChain;
 import nxt.crypto.Crypto;
+import nxt.peer.Peers;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,6 +47,7 @@ public final class StartBundler extends APIServlet.APIRequestHandler {
             return JSONResponses.NOT_ENOUGH_FUNDS;
         }
         Bundler bundler = Bundler.addOrChangeBundler(childChain, secretPhrase, minRateNQTPerFXT, totalFeesLimitFQT, overpayFQTPerFXT);
+        Peers.broadcastBundlerRates();
         return JSONData.bundler(bundler);
     }
 

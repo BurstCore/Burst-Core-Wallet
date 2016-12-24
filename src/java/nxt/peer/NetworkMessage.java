@@ -21,6 +21,7 @@ import nxt.blockchain.Block;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildBlockFxtTransaction;
 import nxt.blockchain.ChildBlockFxtTransactionType;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransaction;
@@ -92,6 +93,7 @@ public abstract class NetworkMessage {
         processors.put("BlockInventory", new BlockInventoryMessage());
         processors.put("BlockchainState", new BlockchainStateMessage());
         processors.put("Blocks", new BlocksMessage());
+        processors.put("BundlerRate", new BundlerRateMessage());
         processors.put("CumulativeDifficulty", new CumulativeDifficultyMessage());
         processors.put("Error", new ErrorMessage());
         processors.put("GetBlocks", new GetBlockMessage());
@@ -259,6 +261,15 @@ public abstract class NetworkMessage {
      * @return                              TRUE if blockchain download is not allowed
      */
     boolean downloadNotAllowed() {
+        return false;
+    }
+
+    /**
+     * Check if light client should receive this message
+     *
+     * @return                              TRUE if light client should receive message
+     */
+    boolean sendToLightClient() {
         return false;
     }
 
@@ -737,6 +748,190 @@ public abstract class NetworkMessage {
          */
         public Peer.BlockchainState getBlockchainState() {
             return blockchainState;
+        }
+
+        /**
+         * Check if light client should receive this message
+         *
+         * @return                              TRUE if light client should receive message
+         */
+        @Override
+        boolean sendToLightClient() {
+            return true;
+        }
+    }
+
+    /**
+     * The BundlerRate message is periodically broadcast when the
+     * peer has one or more active bundlers.
+     * There is no response for this message.
+     * <ul>
+     * <li>Peer address (string)
+     * <li>Timestamp (integer)
+     * <li>Number of rates (short)
+     * <ul>
+     * <li>Chain (integer)
+     * <li>Rate (long)
+     * </ul>
+     * </ul>
+     */
+    public static class BundlerRateMessage extends NetworkMessage {
+
+        /** Peer address */
+        private byte[] addressBytes;
+
+        /** Timestamp */
+        private final int timestamp;
+
+        /** Bundlers */
+        private List<BundlerRate> rates;
+
+        /**
+         * Construct the message from the message bytes
+         *
+         * @param   bytes                       Message bytes following the message name
+         * @return                              Message
+         * @throws  BufferOverflowException     Message buffer is too small
+         * @throws  BufferUnderflowException    Message is too short
+         * @throws  NetworkException            Message is not valid
+         */
+        @Override
+        protected NetworkMessage constructMessage(ByteBuffer bytes)
+                                    throws BufferOverflowException, BufferUnderflowException, NetworkException {
+            return new BundlerRateMessage(bytes);
+        }
+
+        /**
+         * Process the message
+         *
+         * @param   peer                        Peer
+         * @return                              Response message
+         */
+        @Override
+        NetworkMessage processMessage(PeerImpl peer) {
+            return BundlerRate.processRequest(peer, this);
+        }
+
+        /**
+         * Construct a BundlerRate message
+         */
+        private BundlerRateMessage() {
+            super("BundlerRate");
+            addressBytes = "localhost".getBytes(UTF8);
+            timestamp = 0;
+            rates = Collections.EMPTY_LIST;
+        }
+
+        /**
+         * Construct a BundlerRate message
+         *
+         * @param   address                     Peer address
+         * @param   rates                       Bundler rates
+         */
+        public BundlerRateMessage(String address, List<BundlerRate> rates) {
+            super("BundlerRate");
+            this.addressBytes = address.getBytes(UTF8);
+            this.timestamp = Nxt.getEpochTime();
+            this.rates = new ArrayList<>(rates);
+        }
+
+        /**
+         * Construct a BundlerRate message
+         *
+         * @param   bytes                       Message bytes
+         * @throws  BufferUnderflowException    Message is too small
+         * @throws  NetworkException            Message is not valid
+         */
+        private BundlerRateMessage(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
+            super("BundlerRate", bytes);
+            this.addressBytes = decodeArray(bytes);
+            this.timestamp = bytes.getInt();
+            int count = bytes.getShort();
+            if (count < 0) {
+                throw new NetworkException("Bundler rate count " + count + " is not valid");
+            }
+            this.rates = new ArrayList<>(count);
+            for (int i=0; i<count; i++) {
+                int chainId = bytes.getInt();
+                ChildChain chain = ChildChain.getChildChain(chainId);
+                if (chain == null) {
+                    throw new NetworkException("Child chain " + chainId + " is not valid");
+                }
+                this.rates.add(new BundlerRate(chain, bytes.getLong()));
+            }
+        }
+
+        /**
+         * Get the message length
+         *
+         * @return                      Message length
+         */
+        @Override
+        int getLength() {
+            return super.getLength()
+                    + getEncodedArrayLength(addressBytes) + 4
+                    + 2 + (rates.size() * (4 + 8));
+        }
+
+        /**
+         * Get the message bytes
+         *
+         * @param   bytes                       Message buffer
+         * @throws  BufferOverflowException     Message buffer is too small
+         */
+        @Override
+        void getBytes(ByteBuffer bytes) throws BufferOverflowException {
+            super.getBytes(bytes);
+            encodeArray(bytes, addressBytes);
+            bytes.putInt(timestamp);
+            bytes.putShort((short)rates.size());
+            rates.forEach(rate -> bytes.putInt(rate.getChain().getId()).putLong(rate.getRate()));
+        }
+
+        /**
+         * Get the peer address
+         *
+         * @return                              Peer address
+         */
+        public String getAddress() {
+            return new String(addressBytes, UTF8);
+        }
+
+        /**
+         * Set the peer address
+         *
+         * @param   address                     Peer address
+         */
+        public void setAddress(String address) {
+            addressBytes = address.getBytes(UTF8);
+        }
+
+        /**
+         * Get the timestamp
+         *
+         * @return                              Timestamp
+         */
+        public int getTimestamp() {
+            return timestamp;
+        }
+
+        /**
+         * Get the bundler rates
+         *
+         * @return                              Bundler rates
+         */
+        public List<BundlerRate> getRates() {
+            return rates;
+        }
+
+        /**
+         * Check if light client should receive this message
+         *
+         * @return                              TRUE if light client should receive message
+         */
+        @Override
+        boolean sendToLightClient() {
+            return true;
         }
     }
 
