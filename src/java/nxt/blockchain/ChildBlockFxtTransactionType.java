@@ -33,16 +33,13 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
 
     public static final ChildBlockFxtTransactionType INSTANCE = new ChildBlockFxtTransactionType();
 
-    private static final Fee CHILD_BLOCK_FEE = new Fee() {
-        @Override
-        public long getFee(TransactionImpl transaction, Appendix appendage) {
-            long totalFee = 0;
-            int blockchainHeight = Nxt.getBlockchain().getHeight();
-            for (ChildTransactionImpl childTransaction : ((FxtTransactionImpl)transaction).getChildTransactions()) {
-                totalFee += childTransaction.getMinimumFeeFQT(blockchainHeight);
-            }
-            return totalFee;
+    private static final Fee CHILD_BLOCK_FEE = (transaction, appendage) -> {
+        long totalFee = 0;
+        int blockchainHeight = Nxt.getBlockchain().getHeight();
+        for (ChildTransactionImpl childTransaction : ((FxtTransactionImpl)transaction).getChildTransactions()) {
+            totalFee += childTransaction.getMinimumFeeFQT(blockchainHeight);
         }
+        return totalFee;
     };
 
     @Override

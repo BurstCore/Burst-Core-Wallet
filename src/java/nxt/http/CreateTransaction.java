@@ -57,7 +57,7 @@ import static nxt.http.JSONResponses.UNKNOWN_CHAIN;
 
 abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
-    private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeNQT",
+    private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeNQT", "feeRateNQTPerFXT",
             "deadline", "referencedTransaction", "broadcast",
             "message", "messageIsText", "messageIsPrunable",
             "messageToEncrypt", "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "encryptedMessageIsPrunable", "compressMessageToEncrypt",
@@ -223,6 +223,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         if (ecBlockId == 0 && ecBlockHeight > 0) {
             ecBlockId = Nxt.getBlockchain().getBlockIdAtHeight(ecBlockHeight);
         }
+        long feeRateNQTPerFXT = ParameterParser.getLong(req, "feeRateNQTPerFXT", 0, Constants.MAX_BALANCE_NQT, false);
 
         JSONObject response = new JSONObject();
 
@@ -248,6 +249,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
                 }
                 builder = Nxt.newTransactionBuilder((ChildChain)chain, publicKey, amountNQT, feeNQT, deadline, attachment)
                         .referencedTransaction(referencedTransactionId)
+                        .feeRateNQTPerFXT(feeRateNQTPerFXT)
                         .appendix(encryptedMessage)
                         .appendix(message)
                         .appendix(publicKeyAnnouncement)

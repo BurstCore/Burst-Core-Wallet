@@ -31,6 +31,8 @@ public interface ChildTransaction extends Transaction {
 
         Builder referencedTransaction(ChainTransactionId referencedTransaction);
 
+        Builder feeRateNQTPerFXT(long feeRateNQTPerFXT);
+
         Builder appendix(MessageAppendix message);
 
         Builder appendix(EncryptedMessageAppendix encryptedMessage);

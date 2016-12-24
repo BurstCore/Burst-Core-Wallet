@@ -38,6 +38,7 @@ import nxt.voting.PhasingAppendix;
 import nxt.voting.PhasingPollHome;
 import org.json.simple.JSONObject;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Connection;
@@ -56,6 +57,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
 
         private ChainTransactionId referencedTransactionId;
         private long fxtTransactionId;
+        private long feeRateNQTPerFXT;
         private MessageAppendix message;
         private EncryptedMessageAppendix encryptedMessage;
         private EncryptToSelfMessageAppendix encryptToSelfMessage;
@@ -114,6 +116,12 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
 
         BuilderImpl fxtTransactionId(long fxtTransactionId) {
             this.fxtTransactionId = fxtTransactionId;
+            return this;
+        }
+
+        @Override
+        public BuilderImpl feeRateNQTPerFXT(long feeRateNQTPerFXT) {
+            this.feeRateNQTPerFXT = feeRateNQTPerFXT;
             return this;
         }
 
@@ -220,11 +228,17 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         this.prunablePlainMessage = builder.prunablePlainMessage;
         this.prunableEncryptedMessage = builder.prunableEncryptedMessage;
         if (builder.fee <= 0) {
-            long minFee = getMinimumFeeFQT(Nxt.getBlockchain().getHeight());
-            throw new NxtException.NotValidException(String.format("Please include fee in %s equivalent to %f %s",
-                    childChain.getName(), ((double)minFee)/Constants.ONE_NXT, FxtChain.FXT.getName()));
+            long minFeeFQT = getMinimumFeeFQT(Nxt.getBlockchain().getHeight());
+            if (builder.feeRateNQTPerFXT <= 0) {
+                throw new NxtException.NotValidException(String.format("Please include fee in %s equivalent to at least %f %s",
+                        childChain.getName(), ((double) minFeeFQT) / Constants.ONE_NXT, FxtChain.FXT.getName()));
+            }
+            BigInteger[] fee = BigInteger.valueOf(minFeeFQT).multiply(BigInteger.valueOf(builder.feeRateNQTPerFXT))
+                    .divideAndRemainder(BigInteger.valueOf(Constants.ONE_NXT));
+            this.fee = fee[1].equals(BigInteger.ZERO) ? fee[0].longValueExact() : fee[0].longValueExact() + 1;
+        } else {
+            this.fee = builder.fee;
         }
-        this.fee = builder.fee;
         if (builder.signature != null && secretPhrase != null) {
             throw new NxtException.NotValidException("Transaction is already signed");
         } else if (builder.signature != null) {
