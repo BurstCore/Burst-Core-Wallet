@@ -175,47 +175,44 @@ public final class Bundler {
         try (FilteringIterator<UnconfirmedTransaction> unconfirmedTransactions = new FilteringIterator<>(
                 TransactionProcessorImpl.getInstance().getUnconfirmedChildTransactions(childChain),
                 transaction -> transaction.getTransaction().hasAllReferencedTransactions(transaction.getTimestamp(), 0))) {
-            List<ChildTransaction> childTransactions = new ArrayList<>();
-            Set<ChildTransaction> childTransactionSet = new HashSet<>();
-            long totalMinFeeFQT = 0;
             while (unconfirmedTransactions.hasNext()) {
-                ChildTransactionImpl childTransaction = (ChildTransactionImpl) unconfirmedTransactions.next().getTransaction();
-                if (childTransaction.getExpiration() < now + 60 * defaultChildBlockDeadline || childTransaction.getTimestamp() > now) {
-                    continue;
-                }
-                long minChildFeeFQT = childTransaction.getMinimumFeeFQT(blockchainHeight);
-                long childFee = childTransaction.getFee();
-                if (BigInteger.valueOf(childFee).multiply(BigInteger.valueOf(Constants.ONE_NXT))
-                        .compareTo(BigInteger.valueOf(minRateNQTPerFXT).multiply(BigInteger.valueOf(minChildFeeFQT))) < 0) {
-                    continue;
-                }
-                if (currentTotalFeesFQT + overpay(totalMinFeeFQT + minChildFeeFQT) > totalFeesLimitFQT && totalFeesLimitFQT > 0) {
-                    Logger.logDebugMessage("Bundler " + Long.toUnsignedString(accountId) + " will exceed total fees limit, not bundling");
-                    continue;
-                }
-                childTransactions.add(childTransaction);
-                childTransactionSet.add(childTransaction);
-                totalMinFeeFQT += minChildFeeFQT;
+                List<ChildTransaction> childTransactions = new ArrayList<>();
+                Set<ChildTransaction> childTransactionSet = new HashSet<>();
+                long totalMinFeeFQT = 0;
                 //TODO: need to check block size limits in addition to transaction count
-                if (childTransactions.size() == Constants.MAX_NUMBER_OF_TRANSACTIONS || ! unconfirmedTransactions.hasNext()) {
-                    if (!hasChildBlockFxtTransaction(childTransactionSet)) {
-                        long totalFeeFQT = overpay(totalMinFeeFQT);
-                        if (totalFeeFQT <= FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()) {
-                            try {
-                                ChildBlockFxtTransaction childBlockFxtTransaction = bundle(childTransactions, totalFeeFQT, now);
-                                currentTotalFeesFQT += totalFeeFQT;
-                                childBlockFxtTransactions.add(childBlockFxtTransaction);
-                            } catch (NxtException.ValidationException e) {
-                                Logger.logInfoMessage(e.getMessage(), e);
-                            }
-                        } else {
-                            Logger.logInfoMessage("Bundler account " + Long.toUnsignedString(accountId)
-                                    + " does not have sufficient balance to cover total Ardor fees " + totalMinFeeFQT);
-                        }
+                while (unconfirmedTransactions.hasNext() && childTransactions.size() < Constants.MAX_NUMBER_OF_TRANSACTIONS) {
+                    ChildTransactionImpl childTransaction = (ChildTransactionImpl) unconfirmedTransactions.next().getTransaction();
+                    if (childTransaction.getExpiration() < now + 60 * defaultChildBlockDeadline || childTransaction.getTimestamp() > now) {
+                        continue;
                     }
-                    childTransactions = new ArrayList<>();
-                    childTransactionSet.clear();
-                    totalMinFeeFQT = 0;
+                    long minChildFeeFQT = childTransaction.getMinimumFeeFQT(blockchainHeight);
+                    long childFee = childTransaction.getFee();
+                    if (BigInteger.valueOf(childFee).multiply(BigInteger.valueOf(Constants.ONE_NXT))
+                            .compareTo(BigInteger.valueOf(minRateNQTPerFXT).multiply(BigInteger.valueOf(minChildFeeFQT))) < 0) {
+                        continue;
+                    }
+                    if (currentTotalFeesFQT + overpay(totalMinFeeFQT + minChildFeeFQT) > totalFeesLimitFQT && totalFeesLimitFQT > 0) {
+                        Logger.logDebugMessage("Bundler " + Long.toUnsignedString(accountId) + " will exceed total fees limit, not bundling");
+                        continue;
+                    }
+                    childTransactions.add(childTransaction);
+                    childTransactionSet.add(childTransaction);
+                    totalMinFeeFQT += minChildFeeFQT;
+                }
+                if (childTransactionSet.size() > 0 && !hasChildBlockFxtTransaction(childTransactionSet)) {
+                    long totalFeeFQT = overpay(totalMinFeeFQT);
+                    if (totalFeeFQT <= FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()) {
+                        try {
+                            ChildBlockFxtTransaction childBlockFxtTransaction = bundle(childTransactions, totalFeeFQT, now);
+                            currentTotalFeesFQT += totalFeeFQT;
+                            childBlockFxtTransactions.add(childBlockFxtTransaction);
+                        } catch (NxtException.ValidationException e) {
+                            Logger.logInfoMessage(e.getMessage(), e);
+                        }
+                    } else {
+                        Logger.logInfoMessage("Bundler account " + Long.toUnsignedString(accountId)
+                                + " does not have sufficient balance to cover total Ardor fees " + totalMinFeeFQT);
+                    }
                 }
             }
         }
