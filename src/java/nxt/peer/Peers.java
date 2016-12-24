@@ -178,11 +178,10 @@ public final class Peers {
 
                 @Override
                 public void run() {
-                    final int now = Nxt.getEpochTime();
-                    wellKnownPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, now)));
+                    wellKnownPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, startTime - 1)));
                     if (usePeersDb) {
                         Logger.logDebugMessage("Loading known peers from the database...");
-                        defaultPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, now)));
+                        defaultPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, startTime - 1)));
                         if (savePeers) {
                             List<PeerDb.Entry> dbPeers = PeerDb.loadPeers();
                             dbPeers.forEach(entry -> {
