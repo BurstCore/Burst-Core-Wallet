@@ -361,8 +361,8 @@ public final class Nxt {
         AddOns.shutdown();
         API.shutdown();
         FundingMonitor.shutdown();
-        BlockchainProcessorImpl.getInstance().shutdown();
         ThreadPool.shutdown();
+        BlockchainProcessorImpl.getInstance().shutdown();
         Peers.shutdown();
         NetworkHandler.shutdown();
         Db.shutdown();
