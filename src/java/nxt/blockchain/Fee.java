@@ -17,15 +17,10 @@
 package nxt.blockchain;
 
 import nxt.Constants;
-import nxt.util.Convert;
 
 public interface Fee {
 
     long getFee(TransactionImpl transaction, Appendix appendage);
-
-    default long[] getBackFees(long fee) {
-        return Convert.EMPTY_LONG;
-    }
 
     Fee DEFAULT_FEE = new Fee.ConstantFee(Constants.ONE_NXT);
 
