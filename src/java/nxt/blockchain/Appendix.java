@@ -123,7 +123,7 @@ public interface Appendix {
 
         @Override
         public int getBaselineFeeHeight() {
-            return 1;
+            return 0;
         }
 
         @Override

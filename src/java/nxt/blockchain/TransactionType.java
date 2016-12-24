@@ -126,7 +126,7 @@ public abstract class TransactionType {
     }
 
     public int getBaselineFeeHeight() {
-        return 1;
+        return 0;
     }
 
     public int getNextFeeHeight() {
