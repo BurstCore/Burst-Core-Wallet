@@ -95,19 +95,9 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
 
     public static final TransactionType CURRENCY_ISSUANCE = new MonetarySystemTransactionType() {
 
-        final class CurrencyIssuanceFee extends Fee.ConstantFee {
-            private CurrencyIssuanceFee(long fee) {
-                super(fee);
-            }
-            @Override
-            public long[] getBackFees(long fee) {
-                return new long[] {fee * 3 / 10, fee * 2 / 10, fee / 10};
-            }
-        }
-
-        private final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new CurrencyIssuanceFee(40 * Constants.ONE_NXT);
-        private final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new CurrencyIssuanceFee(1000 * Constants.ONE_NXT);
-        private final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new CurrencyIssuanceFee(25000 * Constants.ONE_NXT);
+        private final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(40 * Constants.ONE_NXT);
+        private final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(1000 * Constants.ONE_NXT);
+        private final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(25000 * Constants.ONE_NXT);
 
         @Override
         public byte getSubtype() {

@@ -83,16 +83,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             }
         };
 
-        private final Fee ASSET_ISSUANCE_FEE = new Fee() {
-            @Override
-            public long getFee(TransactionImpl transaction, Appendix appendage) {
-                return 1000 * Constants.ONE_NXT;
-            }
-            @Override
-            public long[] getBackFees(long fee) {
-                return new long[] {fee * 3 / 10, fee * 2 / 10, fee / 10};
-            }
-        };
+        private final Fee ASSET_ISSUANCE_FEE = (transaction, appendage) -> 1000 * Constants.ONE_NXT;
 
         @Override
         public final byte getSubtype() {
