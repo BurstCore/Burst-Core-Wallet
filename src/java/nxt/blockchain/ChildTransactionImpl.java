@@ -171,6 +171,14 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         @Override
         BuilderImpl prunableAttachments(JSONObject prunableAttachments) throws NxtException.NotValidException {
             if (prunableAttachments != null) {
+                PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
+                if (prunablePlainMessage != null) {
+                    appendix(prunablePlainMessage);
+                }
+                PrunableEncryptedMessageAppendix prunableEncryptedMessage = PrunableEncryptedMessageAppendix.parse(prunableAttachments);
+                if (prunableEncryptedMessage != null) {
+                    appendix(prunableEncryptedMessage);
+                }
                 ShufflingProcessingAttachment shufflingProcessing = ShufflingProcessingAttachment.parse(prunableAttachments);
                 if (shufflingProcessing != null) {
                     appendix(shufflingProcessing);
@@ -184,16 +192,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
                 TaggedDataExtendAttachment taggedDataExtend = TaggedDataExtendAttachment.parse(prunableAttachments);
                 if (taggedDataExtend != null) {
                     appendix(taggedDataExtend);
-                    return this;
-                }
-                PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
-                if (prunablePlainMessage != null) {
-                    appendix(prunablePlainMessage);
-                    return this;
-                }
-                PrunableEncryptedMessageAppendix prunableEncryptedMessage = PrunableEncryptedMessageAppendix.parse(prunableAttachments);
-                if (prunableEncryptedMessage != null) {
-                    appendix(prunableEncryptedMessage);
                     return this;
                 }
             }
