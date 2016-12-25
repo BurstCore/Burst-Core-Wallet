@@ -380,11 +380,9 @@ final class BlockDb {
                 stmt.executeUpdate("TRUNCATE TABLE transaction");
                 stmt.executeUpdate("TRUNCATE TABLE block");
                 BlockchainProcessorImpl.getInstance().getDerivedTables().forEach(table -> {
-                    if (table.isPersistent()) {
-                        try {
-                            stmt.executeUpdate("TRUNCATE TABLE " + table.toString());
-                        } catch (SQLException ignore) {}
-                    }
+                    try {
+                        stmt.executeUpdate("TRUNCATE TABLE " + table.toString());
+                    } catch (SQLException ignore) {}
                 });
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY TRUE");
                 Db.db.commitTransaction();
