@@ -268,7 +268,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         Account senderAccount = Account.getAccount(transaction.getSenderId());
         transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
         transaction.getChain().getBalanceHome().getBalance(transaction.getSenderId())
-                .addToUnconfirmedBalance(AccountLedger.LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
+                .addToUnconfirmedBalance(AccountLedger.LedgerEvent.REJECT_PHASED_TRANSACTION, AccountLedger.newEventId(transaction),
                                                  transaction.getAmount());
         TransactionProcessorImpl.getInstance()
                 .notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);

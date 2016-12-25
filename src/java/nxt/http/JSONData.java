@@ -1293,29 +1293,30 @@ public final class JSONData {
         json.put("timestamp", entry.getTimestamp());
         json.put("eventType", entry.getEvent().name());
         json.put("event", Long.toUnsignedString(entry.getEventId()));
+        byte[] eventHash = entry.getEventHash();
+        if (eventHash != null) {
+            json.put("eventHash", Convert.toHexString(eventHash));
+        }
+        json.put("chain", entry.getChainId());
         json.put("isTransactionEvent", entry.getEvent().isTransaction());
         json.put("change", String.valueOf(entry.getChange()));
         json.put("balance", String.valueOf(entry.getBalance()));
         AccountLedger.LedgerHolding ledgerHolding = entry.getHolding();
-        if (ledgerHolding != null) {
-            json.put("holdingType", ledgerHolding.name());
-            if (entry.getHoldingId() != null) {
-                json.put("holding", Long.toUnsignedString(entry.getHoldingId()));
+        json.put("holdingType", ledgerHolding.name());
+        json.put("holding", Long.toUnsignedString(entry.getHoldingId()));
+        if (includeHoldingInfo) {
+            JSONObject holdingJson = null;
+            if (ledgerHolding == AccountLedger.LedgerHolding.ASSET_BALANCE
+                    || ledgerHolding == AccountLedger.LedgerHolding.UNCONFIRMED_ASSET_BALANCE) {
+                holdingJson = new JSONObject();
+                putAssetInfo(holdingJson, entry.getHoldingId());
+            } else if (ledgerHolding == AccountLedger.LedgerHolding.CURRENCY_BALANCE
+                    || ledgerHolding == AccountLedger.LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE) {
+                holdingJson = new JSONObject();
+                putCurrencyInfo(holdingJson, entry.getHoldingId());
             }
-            if (includeHoldingInfo) {
-                JSONObject holdingJson = null;
-                if (ledgerHolding == AccountLedger.LedgerHolding.ASSET_BALANCE
-                        || ledgerHolding == AccountLedger.LedgerHolding.UNCONFIRMED_ASSET_BALANCE) {
-                    holdingJson = new JSONObject();
-                    putAssetInfo(holdingJson, entry.getHoldingId());
-                } else if (ledgerHolding == AccountLedger.LedgerHolding.CURRENCY_BALANCE
-                        || ledgerHolding == AccountLedger.LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE) {
-                    holdingJson = new JSONObject();
-                    putCurrencyInfo(holdingJson, entry.getHoldingId());
-                }
-                if (holdingJson != null) {
-                    json.put("holdingInfo", holdingJson);
-                }
+            if (holdingJson != null) {
+                json.put("holdingInfo", holdingJson);
             }
         }
         //TODO

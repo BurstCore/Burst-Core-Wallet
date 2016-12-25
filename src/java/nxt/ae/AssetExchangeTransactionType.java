@@ -123,9 +123,9 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         @Override
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             AssetIssuanceAttachment attachment = (AssetIssuanceAttachment) transaction.getAttachment();
-            long assetId = transaction.getId();
             Asset.addAsset(transaction, attachment);
-            senderAccount.addToAssetAndUnconfirmedAssetBalanceQNT(getLedgerEvent(), assetId, assetId, attachment.getQuantityQNT());
+            senderAccount.addToAssetAndUnconfirmedAssetBalanceQNT(getLedgerEvent(), AccountLedger.newEventId(transaction),
+                    transaction.getId(), attachment.getQuantityQNT());
         }
 
         @Override
@@ -214,7 +214,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             AssetTransferAttachment attachment = (AssetTransferAttachment) transaction.getAttachment();
             long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceQNT(attachment.getAssetId());
             if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityQNT()) {
-                senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), AccountLedger.newEventId(transaction),
                         attachment.getAssetId(), -attachment.getQuantityQNT());
                 return true;
             }
@@ -224,9 +224,10 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         @Override
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             AssetTransferAttachment attachment = (AssetTransferAttachment) transaction.getAttachment();
-            senderAccount.addToAssetBalanceQNT(getLedgerEvent(), transaction.getId(), attachment.getAssetId(),
+            AccountLedger.LedgerEventId ledgerEventId = AccountLedger.newEventId(transaction);
+            senderAccount.addToAssetBalanceQNT(getLedgerEvent(), ledgerEventId, attachment.getAssetId(),
                     -attachment.getQuantityQNT());
-            recipientAccount.addToAssetAndUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+            recipientAccount.addToAssetAndUnconfirmedAssetBalanceQNT(getLedgerEvent(), ledgerEventId,
                     attachment.getAssetId(), attachment.getQuantityQNT());
             AssetTransfer.addAssetTransfer(transaction, attachment);
         }
@@ -234,7 +235,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             AssetTransferAttachment attachment = (AssetTransferAttachment) transaction.getAttachment();
-            senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+            senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), AccountLedger.newEventId(transaction),
                     attachment.getAssetId(), attachment.getQuantityQNT());
         }
 
@@ -298,7 +299,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             AssetDeleteAttachment attachment = (AssetDeleteAttachment)transaction.getAttachment();
             long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceQNT(attachment.getAssetId());
             if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityQNT()) {
-                senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), AccountLedger.newEventId(transaction),
                         attachment.getAssetId(), -attachment.getQuantityQNT());
                 return true;
             }
@@ -308,7 +309,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         @Override
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             AssetDeleteAttachment attachment = (AssetDeleteAttachment)transaction.getAttachment();
-            senderAccount.addToAssetBalanceQNT(getLedgerEvent(), transaction.getId(), attachment.getAssetId(),
+            senderAccount.addToAssetBalanceQNT(getLedgerEvent(), AccountLedger.newEventId(transaction), attachment.getAssetId(),
                     -attachment.getQuantityQNT());
             Asset.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityQNT());
         }
@@ -316,7 +317,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             AssetDeleteAttachment attachment = (AssetDeleteAttachment)transaction.getAttachment();
-            senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+            senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), AccountLedger.newEventId(transaction),
                     attachment.getAssetId(), attachment.getQuantityQNT());
         }
 
@@ -411,7 +412,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             AskOrderPlacementAttachment attachment = (AskOrderPlacementAttachment) transaction.getAttachment();
             long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceQNT(attachment.getAssetId());
             if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityQNT()) {
-                senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), AccountLedger.newEventId(transaction),
                         attachment.getAssetId(), -attachment.getQuantityQNT());
                 return true;
             }
@@ -427,7 +428,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             AskOrderPlacementAttachment attachment = (AskOrderPlacementAttachment) transaction.getAttachment();
-            senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+            senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), AccountLedger.newEventId(transaction),
                     attachment.getAssetId(), attachment.getQuantityQNT());
         }
 
@@ -471,7 +472,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             BidOrderPlacementAttachment attachment = (BidOrderPlacementAttachment) transaction.getAttachment();
             if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT())) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
                         -Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT()));
                 return true;
             }
@@ -487,7 +488,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             BidOrderPlacementAttachment attachment = (BidOrderPlacementAttachment) transaction.getAttachment();
-            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
+            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
                     Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT()));
         }
 
@@ -563,7 +564,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             OrderHome.Order order = orderHome.getAskOrder(attachment.getOrderId());
             orderHome.removeAskOrder(attachment.getOrderId());
             if (order != null) {
-                senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), AccountLedger.newEventId(transaction),
                         order.getAssetId(), order.getQuantityQNT());
             }
         }
@@ -617,7 +618,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             OrderHome.Order order = orderHome.getBidOrder(attachment.getOrderId());
             orderHome.removeBidOrder(attachment.getOrderId());
             if (order != null) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
                         Math.multiplyExact(order.getQuantityQNT(), order.getPriceNQT()));
             }
         }
@@ -675,7 +676,8 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
             long totalDividendPayment = Math.multiplyExact(attachment.getAmountNQTPerQNT(), quantityQNT);
             if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= totalDividendPayment) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(), -totalDividendPayment);
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
+                        AccountLedger.newEventId(transaction), -totalDividendPayment);
                 return true;
             }
             return false;
@@ -697,7 +699,8 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             }
             long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
             long totalDividendPayment = Math.multiplyExact(attachment.getAmountNQTPerQNT(), quantityQNT);
-            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(), totalDividendPayment);
+            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
+                    AccountLedger.newEventId(transaction), totalDividendPayment);
         }
 
         @Override

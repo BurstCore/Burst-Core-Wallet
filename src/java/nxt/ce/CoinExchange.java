@@ -14,8 +14,9 @@
 package nxt.ce;
 
 import nxt.Nxt;
-import nxt.account.BalanceHome;
+import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEvent;
+import nxt.account.BalanceHome;
 import nxt.blockchain.Block;
 import nxt.blockchain.Chain;
 import nxt.blockchain.Transaction;
@@ -353,18 +354,20 @@ public final class CoinExchange {
             //
             bidOrder.updateQuantity(bidOrder.getQuantity() - askTrade.getExchangeQuantity());
             BalanceHome.Balance buyerBalance = chain.getBalanceHome().getBalance(bidOrder.getAccountId());
-            buyerBalance.addToBalance(LedgerEvent.COIN_EXCHANGE_TRADE, bidOrder.getId(), -askTrade.getExchangeQuantity());
+            AccountLedger.LedgerEventId bidEventId = AccountLedger.newEventId(bidOrder.getId(), bidOrder.getFullHash(), chain);
+            buyerBalance.addToBalance(LedgerEvent.COIN_EXCHANGE_TRADE, bidEventId, -askTrade.getExchangeQuantity());
             buyerBalance = exchangeChain.getBalanceHome().getBalance(bidOrder.getAccountId());
-            buyerBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.COIN_EXCHANGE_TRADE, bidOrder.getId(),
+            buyerBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.COIN_EXCHANGE_TRADE, bidEventId,
                     bidTrade.getExchangeQuantity());
             //
             // Update the seller balances
             //
             askOrder.updateQuantity(askOrder.getQuantity() - bidTrade.getExchangeQuantity());
             BalanceHome.Balance sellerBalance = exchangeChain.getBalanceHome().getBalance(askOrder.getAccountId());
-            sellerBalance.addToBalance(LedgerEvent.COIN_EXCHANGE_TRADE, askOrder.getId(), -bidTrade.getExchangeQuantity());
+            AccountLedger.LedgerEventId askEventId = AccountLedger.newEventId(askOrder.getId(), askOrder.getFullHash(), chain);
+            sellerBalance.addToBalance(LedgerEvent.COIN_EXCHANGE_TRADE, askEventId, -bidTrade.getExchangeQuantity());
             sellerBalance = chain.getBalanceHome().getBalance(askOrder.getAccountId());
-            sellerBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.COIN_EXCHANGE_TRADE, askOrder.getId(),
+            sellerBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.COIN_EXCHANGE_TRADE, askEventId,
                     askTrade.getExchangeQuantity());
         }
     }

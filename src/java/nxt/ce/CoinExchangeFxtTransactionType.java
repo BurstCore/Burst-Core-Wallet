@@ -98,7 +98,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
             BalanceHome.Balance balance = attachment.getChain().getBalanceHome().getBalance(senderAccount.getId());
             if (balance.getUnconfirmedBalance() >= attachment.getQuantityQNT()) {
-                balance.addToUnconfirmedBalance(getLedgerEvent(), transaction.getId(), -attachment.getQuantityQNT());
+                balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), -attachment.getQuantityQNT());
                 return true;
             }
             return false;
@@ -108,7 +108,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
         public void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
             BalanceHome.Balance balance = attachment.getChain().getBalanceHome().getBalance(senderAccount.getId());
-            balance.addToUnconfirmedBalance(getLedgerEvent(), transaction.getId(), attachment.getQuantityQNT());
+            balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), attachment.getQuantityQNT());
         }
 
         @Override
@@ -200,7 +200,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
             if (order != null) {
                 CoinExchange.removeOrder(attachment.getOrderId());
                 BalanceHome.Balance balance = Chain.getChain(order.getChainId()).getBalanceHome().getBalance(senderAccount.getId());
-                balance.addToUnconfirmedBalance(AccountLedger.LedgerEvent.COIN_EXCHANGE_ORDER_CANCEL, transaction.getId(),
+                balance.addToUnconfirmedBalance(AccountLedger.LedgerEvent.COIN_EXCHANGE_ORDER_CANCEL, AccountLedger.newEventId(transaction),
                         order.getQuantity());
             }
         }

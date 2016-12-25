@@ -20,6 +20,7 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
+import nxt.account.AccountLedger;
 import nxt.account.AccountRestrictions;
 import nxt.account.PublicKeyAnnouncementAppendix;
 import nxt.crypto.Crypto;
@@ -452,11 +453,12 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
                 recipientAccount = Account.addOrGetAccount(getRecipientId());
             }
         }
+        AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(this);
         if (referencedTransactionId != null) {
-            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getType().getLedgerEvent(), getId(), (long) 0, Constants.UNCONFIRMED_POOL_DEPOSIT_FQT);
+            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getType().getLedgerEvent(), eventId, (long) 0, Constants.UNCONFIRMED_POOL_DEPOSIT_FQT);
         }
         if (attachmentIsPhased()) {
-            childChain.getBalanceHome().getBalance(getSenderId()).addToBalance(getType().getLedgerEvent(), getId(), 0, -fee);
+            childChain.getBalanceHome().getBalance(getSenderId()).addToBalance(getType().getLedgerEvent(), eventId, 0, -fee);
         }
         for (Appendix.AbstractAppendix appendage : appendages()) {
             if (!appendage.isPhased(this)) {
