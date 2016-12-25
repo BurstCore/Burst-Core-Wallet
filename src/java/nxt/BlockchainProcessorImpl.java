@@ -889,9 +889,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private final Listener<Block> checksumListener = block -> {
-        if (block.getHeight() == Constants.CHECKSUM_BLOCK_1
-                && ! verifyChecksum(CHECKSUM_1, 0, Constants.CHECKSUM_BLOCK_1)) {
-            popOffTo(0);
+        if (block.getHeight() == Constants.CHECKSUM_BLOCK_1) {
+            if (! verifyChecksum(CHECKSUM_1, 0, Constants.CHECKSUM_BLOCK_1)) {
+                popOffTo(0);
+            }
         }
     };
 
@@ -1201,6 +1202,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             }
         }
         return null;
+    }
+
+    void shutdown() {
+        ThreadPool.shutdownExecutor("networkService", networkService, 5);
     }
 
     private void addBlock(BlockImpl block) {

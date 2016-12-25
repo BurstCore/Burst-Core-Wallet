@@ -155,15 +155,39 @@ var NRS = (function(NRS, $, undefined) {
     }
 
     NRS.init = function() {
-        initSpinner();
-        NRS.spinner.spin($("#center")[0]);
-        NRS.loadMobileSettings();
-        if (NRS.isMobileApp()) {
-            $('body').css('overflow-x', 'auto');
-            initMobile();
-        } else {
-            initImpl();
-        }
+        i18next.use(i18nextXHRBackend)
+            .use(i18nextLocalStorageCache)
+            .use(i18nextBrowserLanguageDetector)
+            .use(i18nextSprintfPostProcessor)
+            .init({
+                fallbackLng: "en",
+                fallbackOnEmpty: true,
+                lowerCaseLng: true,
+                detectLngFromLocalStorage: true,
+                resGetPath: "locales/__lng__/translation.json",
+                compatibilityJSON: 'v1',
+                compatibilityAPI: 'v1',
+                debug: true
+            }, function() {
+                NRS.initSettings();
+
+                jqueryI18next.init(i18next, $, {
+                    handleName: "i18n"
+                });
+
+                initSpinner();
+                NRS.spinner.spin($("#center")[0]);
+                NRS.loadMobileSettings();
+                if (NRS.isMobileApp()) {
+                    $('body').css('overflow-x', 'auto');
+                    initMobile();
+                } else {
+                    initImpl();
+                }
+
+                $("[data-i18n]").i18n();
+                NRS.initClipboard();
+            });
     };
 
     function initMobile() {
@@ -334,6 +358,32 @@ var NRS = (function(NRS, $, undefined) {
 			});
 		});
 	}
+
+    NRS.initClipboard = function() {
+        var clipboard = new Clipboard('#copy_account_id');
+        function onCopySuccess(e) {
+            NRS.logConsole('Action:' + e.action);
+            NRS.logConsole('Text:' + e.text);
+            NRS.logConsole('Trigger:' + e.trigger);
+
+            $.growl($.t("success_clipboard_copy"), {
+                "type": "success"
+            });
+
+            e.clearSelection();
+        }
+        clipboard.on('success', onCopySuccess);
+        clipboard.on('error', function(e) {
+            if (window.java) {
+                if (window.java.copyText(e.text)) {
+                    onCopySuccess(e);
+                    return;
+                }
+            }
+            NRS.logConsole('Copy failed. Action: ' + e.action + '; Text: ' + e.text);
+
+        });
+    };
 
 	function _fix() {
 		var height = $(window).height() - $("body > .header").height();
