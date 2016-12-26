@@ -25,6 +25,7 @@ import nxt.blockchain.Attachment;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.FxtTransactionType;
 import nxt.blockchain.Transaction;
@@ -240,14 +241,14 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         }
 
         try {
-            Transaction.Builder builder;
+            Transaction.Builder builder = chain.newTransactionBuilder(publicKey, amountNQT, feeNQT, deadline, attachment);
             if (chain instanceof ChildChain) {
                 if (!(attachment.getTransactionType() instanceof ChildTransactionType)) {
                     throw new ParameterException(JSONResponses.incorrect("chain",
                             attachment.getTransactionType().getName() + " attachment not allowed for "
                                     + chain.getName() + " chain"));
                 }
-                builder = Nxt.newTransactionBuilder((ChildChain)chain, publicKey, amountNQT, feeNQT, deadline, attachment)
+                builder = ((ChildTransaction.Builder)builder)
                         .referencedTransaction(referencedTransactionId)
                         .feeRateNQTPerFXT(feeRateNQTPerFXT)
                         .appendix(encryptedMessage)
@@ -263,7 +264,6 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
                             attachment.getTransactionType().getName() + " attachment not allowed for "
                                     + chain.getName() + " chain"));
                 }
-                builder = Nxt.newTransactionBuilder(publicKey, amountNQT, feeNQT, deadline, attachment);
             }
             if (attachment.getTransactionType().canHaveRecipient()) {
                 builder.recipientId(recipientId);

@@ -179,6 +179,11 @@ public final class ChildChain extends Chain {
     }
 
     @Override
+    public ChildTransactionImpl.BuilderImpl newTransactionBuilder(byte[] senderPublicKey, long amount, long fee, short deadline, Attachment attachment) throws NxtException.NotValidException {
+        return ChildTransactionImpl.newTransactionBuilder(this.getId(), (byte)1, senderPublicKey, amount, fee, deadline, (Attachment.AbstractAttachment)attachment);
+    }
+
+    @Override
     public ChildTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
                                                                   Attachment.AbstractAttachment attachment, JSONObject attachmentData, JSONObject transactionData) throws NxtException.NotValidException {
         return ChildTransactionImpl.newTransactionBuilder(this.getId(), version, senderPublicKey, amount, fee, deadline,

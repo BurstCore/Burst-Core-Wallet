@@ -25,6 +25,7 @@ import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.FxtChain;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.db.DbIterator;
@@ -45,7 +46,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
-//TODO: funding monitor must also specify a child chain
 /**
  * Monitor account balances based on account properties
  * <p>
@@ -92,6 +92,9 @@ public final class FundingMonitor {
     /** Holding identifier */
     private final long holdingId;
 
+    /** Chain on which to submit transactions */
+    private final Chain chain;
+
     /** Account property */
     private final String property;
 
@@ -119,6 +122,7 @@ public final class FundingMonitor {
     /**
      * Create a monitor
      *
+     * @param   chain               Chain
      * @param   holdingType         Holding type
      * @param   holdingId           Asset, Currency, or Coin (chain id) identifier
      * @param   property            Account property name
@@ -128,11 +132,12 @@ public final class FundingMonitor {
      * @param   accountId           Fund account identifier
      * @param   secretPhrase        Fund account secret phrase
      */
-    private FundingMonitor(HoldingType holdingType, long holdingId, String property,
+    private FundingMonitor(Chain chain, HoldingType holdingType, long holdingId, String property,
                                     long amount, long threshold, int interval,
                                     long accountId, String secretPhrase) {
         this.holdingType = holdingType;
         this.holdingId = holdingId;
+        this.chain = chain;
         this.property = property;
         this.amount = amount;
         this.threshold = threshold;
@@ -141,6 +146,12 @@ public final class FundingMonitor {
         this.accountName = Convert.rsAccount(accountId);
         this.secretPhrase = secretPhrase;
         this.publicKey = Crypto.getPublicKey(secretPhrase);
+        if (holdingType == HoldingType.COIN && holdingId != chain.getId()) {
+            throw new IllegalArgumentException("Funding monitor for holding type coin must be run on the chain of the coin.");
+        }
+        if (holdingType != HoldingType.COIN && holdingId == FxtChain.FXT.getId()) {
+            throw new IllegalArgumentException("Only funding monitors for Ardor can be run on the Ardor chain");
+        }
     }
 
     /**
@@ -159,6 +170,15 @@ public final class FundingMonitor {
      */
     public long getHoldingId() {
         return holdingId;
+    }
+
+    /**
+     * Return the transaction chain
+     *
+     * @return                      Chain
+     */
+    public Chain getChain() {
+        return chain;
     }
 
     /**
@@ -221,6 +241,7 @@ public final class FundingMonitor {
      * One or more funding parameters can be overridden in the account property value
      * string: {"amount":"long","threshold":"long","interval":integer}
      *
+     * @param   chain               Chain for transactions
      * @param   holdingType         Holding type
      * @param   holdingId           Asset, currency, or coin identifier
      * @param   property            Account property name
@@ -230,7 +251,7 @@ public final class FundingMonitor {
      * @param   secretPhrase        Fund account secret phrase
      * @return                      TRUE if the monitor was started
      */
-    public static boolean startMonitor(HoldingType holdingType, long holdingId, String property,
+    public static boolean startMonitor(Chain chain, HoldingType holdingType, long holdingId, String property,
                                     long amount, long threshold, int interval, String secretPhrase) {
         //
         // Initialize monitor processing if it hasn't been done yet.  We do this now
@@ -242,7 +263,7 @@ public final class FundingMonitor {
         //
         // Create the monitor
         //
-        FundingMonitor monitor = new FundingMonitor(holdingType, holdingId, property,
+        FundingMonitor monitor = new FundingMonitor(chain, holdingType, holdingId, property,
                 amount, threshold, interval, accountId, secretPhrase);
         Nxt.getBlockchain().readLock();
         try {
@@ -267,8 +288,8 @@ public final class FundingMonitor {
                     throw new RuntimeException("Maximum of " + MAX_MONITORS + " monitors already started");
                 }
                 if (monitors.contains(monitor)) {
-                    Logger.logDebugMessage(String.format("%s monitor already started for account %s, property '%s', holding %s",
-                            holdingType.name(), monitor.accountName, property, Long.toUnsignedString(holdingId)));
+                    Logger.logDebugMessage(String.format("%s monitor already started for account %s, property '%s', holding %s, chain %s",
+                            holdingType.name(), monitor.accountName, property, Long.toUnsignedString(holdingId), chain.getName()));
                     return false;
                 }
                 accountList.forEach(account -> {
@@ -280,13 +301,13 @@ public final class FundingMonitor {
                     activeList.add(account);
                     pendingEvents.add(account);
                     Logger.logDebugMessage(String.format("Created %s monitor for target account %s, property '%s', holding %s, "
-                                    + "amount %d, threshold %d, interval %d",
+                                    + "amount %d, threshold %d, interval %d, chain %s",
                             holdingType.name(), account.accountName, monitor.property, Long.toUnsignedString(monitor.holdingId),
-                            account.amount, account.threshold, account.interval));
+                            account.amount, account.threshold, account.interval, chain.getName()));
                 });
                 monitors.add(monitor);
-                Logger.logInfoMessage(String.format("%s monitor started for funding account %s, property '%s', holding %s",
-                        holdingType.name(), monitor.accountName, monitor.property, Long.toUnsignedString(monitor.holdingId)));
+                Logger.logInfoMessage(String.format("%s monitor started for funding account %s, property '%s', holding %s, chain %s",
+                        holdingType.name(), monitor.accountName, monitor.property, Long.toUnsignedString(monitor.holdingId), chain.getName()));
             }
         } finally {
             Nxt.getBlockchain().readUnlock();
@@ -365,13 +386,14 @@ public final class FundingMonitor {
      *
      * Pending fund transactions will still be processed
      *
+     * @param   chain               Monitor chain
      * @param   holdingType         Monitor holding type
-     * @param   holdingId           Asset or currency identifier, ignored for NXT monitor
+     * @param   holdingId           Asset, currency, or coin identifier
      * @param   property            Account property
      * @param   accountId           Fund account identifier
      * @return                      TRUE if the monitor was stopped
      */
-    public static boolean stopMonitor(HoldingType holdingType, long holdingId, String property, long accountId) {
+    public static boolean stopMonitor(Chain chain, HoldingType holdingType, long holdingId, String property, long accountId) {
         FundingMonitor monitor = null;
         boolean wasStopped = false;
         synchronized(monitors) {
@@ -383,6 +405,7 @@ public final class FundingMonitor {
                 monitor = monitorIt.next();
                 if (monitor.holdingType == holdingType && monitor.property.equals(property) &&
                         monitor.holdingId == holdingId &&
+                        monitor.chain == chain &&
                         monitor.accountId == accountId) {
                     monitorIt.remove();
                     wasStopped = true;
@@ -408,8 +431,8 @@ public final class FundingMonitor {
                         }
                     }
                 }
-                Logger.logInfoMessage(String.format("%s monitor stopped for fund account %s, property '%s', holding %d",
-                    holdingType.name(), monitor.accountName, monitor.property, monitor.holdingId));
+                Logger.logInfoMessage(String.format("%s monitor stopped for fund account %s, property '%s', holding %d, chain %s",
+                    holdingType.name(), monitor.accountName, monitor.property, monitor.holdingId, monitor.chain.getName()));
             }
         }
         return wasStopped;
@@ -531,7 +554,7 @@ public final class FundingMonitor {
         boolean isEqual = false;
         if (obj != null && (obj instanceof FundingMonitor)) {
             FundingMonitor monitor = (FundingMonitor)obj;
-            if (holdingType == monitor.holdingType && holdingId == monitor.holdingId &&
+            if (holdingType == monitor.holdingType && holdingId == monitor.holdingId && chain == monitor.chain &&
                     property.equals(monitor.property) && accountId == monitor.accountId) {
                 isEqual = true;
             }
@@ -619,11 +642,11 @@ public final class FundingMonitor {
     private static void processCoinEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws NxtException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        Chain chain = Chain.getChain(Math.toIntExact(monitor.holdingId));
+        Chain chain = monitor.chain;
         BalanceHome balanceHome = chain.getBalanceHome();
         if (balanceHome.getBalance(targetAccount.getId()).getBalance() < monitoredAccount.threshold) {
-            Transaction.Builder builder = Nxt.newTransactionBuilder(monitor.publicKey,
-                    monitoredAccount.amount, 0, (short)1440, PaymentAttachment.INSTANCE);
+            Attachment attachment = chain instanceof ChildChain ? PaymentAttachment.INSTANCE : PaymentFxtAttachment.INSTANCE;
+            Transaction.Builder builder = chain.newTransactionBuilder(monitor.publicKey, monitoredAccount.amount, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
@@ -651,6 +674,7 @@ public final class FundingMonitor {
     private static void processAssetEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws NxtException {
         FundingMonitor monitor = monitoredAccount.monitor;
+        Chain chain = monitor.chain;
         Account.AccountAsset targetAsset = Account.getAccountAsset(targetAccount.getId(), monitor.holdingId);
         Account.AccountAsset fundingAsset = Account.getAccountAsset(fundingAccount.getId(), monitor.holdingId);
         if (fundingAsset == null || fundingAsset.getUnconfirmedQuantityQNT() < monitoredAccount.amount) {
@@ -659,21 +683,19 @@ public final class FundingMonitor {
                             monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetAsset == null || targetAsset.getQuantityQNT() < monitoredAccount.threshold) {
             Attachment attachment = new AssetTransferAttachment(monitor.holdingId, monitoredAccount.amount);
-            Transaction.Builder builder = Nxt.newTransactionBuilder(monitor.publicKey,
-                    0, 0, (short)1440, attachment);
+            Transaction.Builder builder = chain.newTransactionBuilder(monitor.publicKey, 0, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
-            //TODO: specify chain on which to submit transaction and pay fees
-            if (transaction.getFee() > ChildChain.IGNIS.getBalanceHome().getBalance(fundingAccount.getId()).getUnconfirmedBalance()) {
-                Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
-                        monitor.accountName));
+            if (transaction.getFee() > chain.getBalanceHome().getBalance(fundingAccount.getId()).getUnconfirmedBalance()) {
+                Logger.logWarningMessage(String.format("Funding account %s has insufficient funds on chain %s; funding transaction discarded",
+                        monitor.accountName, chain.getName()));
             } else {
                 Nxt.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = Nxt.getBlockchain().getHeight();
-                Logger.logDebugMessage(String.format("ASSET funding transaction %s submitted for %d units from %s to %s",
+                Logger.logDebugMessage(String.format("ASSET funding transaction %s submitted for %d units from %s to %s on chain %s",
                         transaction.getStringId(), monitoredAccount.amount,
-                        monitor.accountName, monitoredAccount.accountName));
+                        monitor.accountName, monitoredAccount.accountName, chain.getName()));
             }
         }
     }
@@ -689,6 +711,7 @@ public final class FundingMonitor {
     private static void processCurrencyEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws NxtException {
         FundingMonitor monitor = monitoredAccount.monitor;
+        Chain chain = monitor.chain;
         Account.AccountCurrency targetCurrency = Account.getAccountCurrency(targetAccount.getId(), monitor.holdingId);
         Account.AccountCurrency fundingCurrency = Account.getAccountCurrency(fundingAccount.getId(), monitor.holdingId);
         if (fundingCurrency == null || fundingCurrency.getUnconfirmedUnits() < monitoredAccount.amount) {
@@ -697,21 +720,19 @@ public final class FundingMonitor {
                             monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.threshold) {
             Attachment attachment = new CurrencyTransferAttachment(monitor.holdingId, monitoredAccount.amount);
-            Transaction.Builder builder = Nxt.newTransactionBuilder(monitor.publicKey,
-                    0, 0, (short)1440, attachment);
+            Transaction.Builder builder = chain.newTransactionBuilder(monitor.publicKey, 0, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
-            //TODO: specify chain on which to submit transaction and pay fees
-            if (transaction.getFee() > ChildChain.IGNIS.getBalanceHome().getBalance(fundingAccount.getId()).getUnconfirmedBalance()) {
-                Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
-                        monitor.accountName));
+            if (transaction.getFee() > chain.getBalanceHome().getBalance(fundingAccount.getId()).getUnconfirmedBalance()) {
+                Logger.logWarningMessage(String.format("Funding account %s has insufficient funds on chain %s; funding transaction discarded",
+                        monitor.accountName, chain.getName()));
             } else {
                 Nxt.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = Nxt.getBlockchain().getHeight();
-                Logger.logDebugMessage(String.format("CURRENCY funding transaction %s submitted for %d units from %s to %s",
+                Logger.logDebugMessage(String.format("CURRENCY funding transaction %s submitted for %d units from %s to %s on chain %s",
                         transaction.getStringId(), monitoredAccount.amount,
-                        monitor.accountName, monitoredAccount.accountName));
+                        monitor.accountName, monitoredAccount.accountName, chain.getName()));
             }
         }
     }

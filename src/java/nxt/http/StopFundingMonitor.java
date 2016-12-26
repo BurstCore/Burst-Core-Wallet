@@ -19,6 +19,7 @@ package nxt.http;
 import nxt.account.Account;
 import nxt.account.FundingMonitor;
 import nxt.account.HoldingType;
+import nxt.blockchain.Chain;
 import nxt.crypto.Crypto;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -57,6 +58,7 @@ public class StopFundingMonitor extends APIServlet.APIRequestHandler {
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
+        Chain chain = ParameterParser.getChain(req);
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         long accountId = ParameterParser.getAccountId(req, false);
         JSONObject response = new JSONObject();
@@ -76,7 +78,7 @@ public class StopFundingMonitor extends APIServlet.APIRequestHandler {
             HoldingType holdingType = ParameterParser.getHoldingType(req);
             long holdingId = ParameterParser.getHoldingId(req);
             String property = ParameterParser.getAccountProperty(req, true);
-            boolean stopped = FundingMonitor.stopMonitor(holdingType, holdingId, property, accountId);
+            boolean stopped = FundingMonitor.stopMonitor(chain, holdingType, holdingId, property, accountId);
             response.put("stopped", stopped ? 1 : 0);
         } else {
             int count = FundingMonitor.stopAllMonitors();
@@ -98,11 +100,6 @@ public class StopFundingMonitor extends APIServlet.APIRequestHandler {
     @Override
     protected boolean requireFullClient() {
         return true;
-    }
-
-    @Override
-    protected boolean isChainSpecific() {
-        return false;
     }
 
 }

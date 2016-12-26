@@ -42,6 +42,11 @@ public final class FxtChain extends Chain {
     }
 
     @Override
+    public FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte[] senderPublicKey, long amount, long fee, short deadline, Attachment attachment) throws NxtException.NotValidException {
+        return FxtTransactionImpl.newTransactionBuilder((byte)1, senderPublicKey, amount, fee, deadline, (Attachment.AbstractAttachment)attachment);
+    }
+
+    @Override
     public FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
                                                                 Attachment.AbstractAttachment attachment, JSONObject attachmentData, JSONObject transactionData) throws NxtException.NotValidException {
         return FxtTransactionImpl.newTransactionBuilder(version, senderPublicKey, amount, fee, deadline,
