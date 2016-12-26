@@ -1037,6 +1037,10 @@ final class PeerImpl implements Peer {
         }
         NetworkMessage response = entry.responseWait();
         responseMap.remove(message.getMessageId());
+        if (response == null) {
+            disconnectPeer();
+            return null;
+        }
         if (response instanceof NetworkMessage.ErrorMessage) {
             NetworkMessage.ErrorMessage error = (NetworkMessage.ErrorMessage)response;
             if (error.isSevereError()) {
@@ -1044,7 +1048,7 @@ final class PeerImpl implements Peer {
                         "' message: " + error.getErrorMessage());
                 disconnectPeer();
             }
-            response = null;
+            return null;
         }
         return response;
     }

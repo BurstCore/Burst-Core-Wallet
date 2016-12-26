@@ -14,9 +14,25 @@
  */
 package nxt.peer;
 
+import nxt.Nxt;
+import nxt.account.Account;
 import nxt.blockchain.ChildChain;
+import nxt.crypto.Crypto;
+import nxt.util.Logger;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
+import java.util.Arrays;
 
 public final class BundlerRate {
+
+    /** Empty public key */
+    private static final byte[] emptyPublicKey = new byte[32];
+
+    /** Empty signature */
+    private static final byte[] emptySignature = new byte[64];
 
     /**
      * Process a BundlerRate message (there is no response message)
@@ -26,7 +42,23 @@ public final class BundlerRate {
      * @return                          Response message
      */
     static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.BundlerRateMessage request) {
-        Peers.updateBundlerRates(peer, request);
+        BundlerRate rate = request.getRate();
+        //
+        // Verify the bundler account
+        //
+        byte[] accountPublicKey = Account.getPublicKey(rate.getAccountId());
+        if (!Crypto.verify(rate.getSignature(), rate.getSignatureBytes(), rate.getPublicKey()) ||
+                    (accountPublicKey != null && !Arrays.equals(rate.getPublicKey(), accountPublicKey))) {
+            Logger.logDebugMessage("Bundler rate for account "
+                    + Long.toUnsignedString(rate.getAccountId()) + " failed signature verification");
+            return null;
+        }
+        //
+        // Update the rate and relay the message
+        //
+        if (rate.getRate() >= 0) {
+            Peers.updateBundlerRate(peer, request);
+        }
         return null;
     }
 
@@ -36,15 +68,108 @@ public final class BundlerRate {
     /** Bundler rate */
     private final long rate;
 
+    /** Bundler account */
+    private final long accountId;
+
+    /** Bundler public key */
+    private final byte[] publicKey;
+
+    /** Timestamp */
+    private final int timestamp;
+
+    /** Signature */
+    private final byte[] signature;
+
     /**
-     * Create a new bundler rate
+     * Create an unsigned bundler rate
      *
-     * @param   chain                   Child chain identifier
+     * @param   chain                   Child chain
      * @param   rate                    Bundler rate
      */
     public BundlerRate(ChildChain chain, long rate) {
         this.chain = chain;
+        this.publicKey = emptyPublicKey;
+        this.accountId = 0;
         this.rate = rate;
+        this.timestamp = 0;
+        this.signature = emptySignature;
+    }
+
+    /**
+     * Create a signed bundler rate
+     *
+     * @param   chain                   Child chain
+     * @param   rate                    Bundler rate
+     * @param   secretPhrase            Bundler account secret phrase
+     */
+    public BundlerRate(ChildChain chain, long rate, String secretPhrase) {
+        this.chain = chain;
+        this.publicKey = Crypto.getPublicKey(secretPhrase);
+        this.accountId = Account.getId(publicKey);
+        this.rate = rate;
+        this.timestamp = Nxt.getEpochTime();
+        this.signature = Crypto.sign(getSignatureBytes(), secretPhrase);
+    }
+
+    /**
+     * Create a signed bundler rate
+     *
+     * @param   buffer                      Encoded data
+     * @throws  BufferUnderflowException    Encoded data is too short
+     * @throws  NetworkException            Encoded data is not valid
+     */
+    public BundlerRate(ByteBuffer buffer) throws BufferUnderflowException, NetworkException {
+        int chainId = buffer.getInt();
+        this.chain = ChildChain.getChildChain(chainId);
+        if (this.chain == null) {
+            throw new NetworkException("Child chain '" + chainId + "' is not valid");
+        }
+        this.publicKey = new byte[32];
+        buffer.get(this.publicKey);
+        this.accountId = Account.getId(this.publicKey);
+        this.rate = buffer.getLong();
+        this.timestamp = buffer.getInt();
+        this.signature = new byte[64];
+        buffer.get(this.signature);
+    }
+
+    /**
+     * Get the encoded length
+     *
+     * @return                          Encoded length
+     */
+    public int getLength() {
+        return 4 + 32 + 8 + 4 + 64;
+    }
+
+    /**
+     * Get the encoded bytes
+     *
+     * @param   buffer                      Byte buffer
+     * @throws  BufferOverflowException     Allocated buffer is too small
+     */
+    public void getBytes(ByteBuffer buffer) {
+        buffer.putInt(chain.getId())
+              .put(publicKey)
+              .putLong(rate)
+              .putInt(timestamp)
+              .put(signature);
+    }
+
+    /**
+     * Get the encoded bytes without the signature
+     *
+     * @return                              Rate bytes
+     */
+    public byte[] getSignatureBytes() {
+        byte[] bytes = new byte[getLength() - 64];
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        buffer.putInt(chain.getId())
+              .put(publicKey)
+              .putLong(rate)
+              .putInt(timestamp);
+        return bytes;
     }
 
     /**
@@ -57,11 +182,47 @@ public final class BundlerRate {
     }
 
     /**
+     * Get the account identifier
+     *
+     * @return                          Account identifier
+     */
+    public long getAccountId() {
+        return accountId;
+    }
+
+    /**
+     * Get the account public key
+     *
+     * @return                          Account public key
+     */
+    public byte[] getPublicKey() {
+        return publicKey;
+    }
+
+    /**
      * Get the bundler rate
      *
      * @return                          Rate
      */
     public long getRate() {
         return rate;
+    }
+
+    /**
+     * Get the timestamp
+     *
+     * @return                          Timestamp
+     */
+    public int getTimestamp() {
+        return timestamp;
+    }
+
+    /**
+     * Get the signature
+     *
+     * @return                          Signature
+     */
+    public byte[] getSignature() {
+        return signature;
     }
 }

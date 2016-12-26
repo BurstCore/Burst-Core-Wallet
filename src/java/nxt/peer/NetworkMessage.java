@@ -21,7 +21,6 @@ import nxt.blockchain.Block;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildBlockFxtTransaction;
 import nxt.blockchain.ChildBlockFxtTransactionType;
-import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransaction;
@@ -488,15 +487,11 @@ public abstract class NetworkMessage {
             this.services = bytes.getLong();
             this.disabledAPIsBytes = decodeArray(bytes);
             this.apiServerIdleTimeout = bytes.getInt();
-            if (bytes.remaining() > 0) {
-                int state = bytes.getInt();
-                if (state < 0 || state >= Peer.BlockchainState.values().length) {
-                    throw new NetworkException("Blockchain state '" + state + "' is not valid");
-                }
-                this.blockchainState = Peer.BlockchainState.values()[state];
-            } else {
-                this.blockchainState = Peer.BlockchainState.UP_TO_DATE;
+            int state = bytes.getInt();
+            if (state < 0 || state >= Peer.BlockchainState.values().length) {
+                throw new NetworkException("Blockchain state '" + state + "' is not valid");
             }
+            this.blockchainState = Peer.BlockchainState.values()[state];
         }
 
         /**
@@ -766,25 +761,13 @@ public abstract class NetworkMessage {
      * peer has one or more active bundlers.
      * There is no response for this message.
      * <ul>
-     * <li>Peer address (string)
-     * <li>Timestamp (integer)
-     * <li>Number of rates (short)
-     * <ul>
-     * <li>Chain (integer)
-     * <li>Rate (long)
-     * </ul>
+     * <li>Bundler rate
      * </ul>
      */
     public static class BundlerRateMessage extends NetworkMessage {
 
-        /** Peer address */
-        private byte[] addressBytes;
-
-        /** Timestamp */
-        private final int timestamp;
-
-        /** Bundlers */
-        private List<BundlerRate> rates;
+        /** Bundler rate */
+        private BundlerRate rate;
 
         /**
          * Construct the message from the message bytes
@@ -813,26 +796,21 @@ public abstract class NetworkMessage {
         }
 
         /**
-         * Construct a BundlerRate message
+         * Construct an empty BundlerRate message
          */
         private BundlerRateMessage() {
             super("BundlerRate");
-            addressBytes = "localhost".getBytes(UTF8);
-            timestamp = 0;
-            rates = Collections.emptyList();
+            this.rate = null;
         }
 
         /**
          * Construct a BundlerRate message
          *
-         * @param   address                     Peer address
-         * @param   rates                       Bundler rates
+         * @param   rate                        Bundler rate
          */
-        public BundlerRateMessage(String address, List<BundlerRate> rates) {
+        public BundlerRateMessage(BundlerRate rate) {
             super("BundlerRate");
-            this.addressBytes = address.getBytes(UTF8);
-            this.timestamp = Nxt.getEpochTime();
-            this.rates = new ArrayList<>(rates);
+            this.rate = rate;
         }
 
         /**
@@ -844,21 +822,7 @@ public abstract class NetworkMessage {
          */
         private BundlerRateMessage(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
             super("BundlerRate", bytes);
-            this.addressBytes = decodeArray(bytes);
-            this.timestamp = bytes.getInt();
-            int count = bytes.getShort();
-            if (count < 0) {
-                throw new NetworkException("Bundler rate count " + count + " is not valid");
-            }
-            this.rates = new ArrayList<>(count);
-            for (int i=0; i<count; i++) {
-                int chainId = bytes.getInt();
-                ChildChain chain = ChildChain.getChildChain(chainId);
-                if (chain == null) {
-                    throw new NetworkException("Child chain " + chainId + " is not valid");
-                }
-                this.rates.add(new BundlerRate(chain, bytes.getLong()));
-            }
+            this.rate = new BundlerRate(bytes);
         }
 
         /**
@@ -868,9 +832,7 @@ public abstract class NetworkMessage {
          */
         @Override
         int getLength() {
-            return super.getLength()
-                    + getEncodedArrayLength(addressBytes) + 4
-                    + 2 + (rates.size() * (4 + 8));
+            return super.getLength() + rate.getLength();
         }
 
         /**
@@ -882,46 +844,16 @@ public abstract class NetworkMessage {
         @Override
         void getBytes(ByteBuffer bytes) throws BufferOverflowException {
             super.getBytes(bytes);
-            encodeArray(bytes, addressBytes);
-            bytes.putInt(timestamp);
-            bytes.putShort((short)rates.size());
-            rates.forEach(rate -> bytes.putInt(rate.getChain().getId()).putLong(rate.getRate()));
+            rate.getBytes(bytes);
         }
 
         /**
-         * Get the peer address
+         * Get the bundler rate
          *
-         * @return                              Peer address
+         * @return                              Bundler rate
          */
-        public String getAddress() {
-            return new String(addressBytes, UTF8);
-        }
-
-        /**
-         * Set the peer address
-         *
-         * @param   address                     Peer address
-         */
-        public void setAddress(String address) {
-            addressBytes = address.getBytes(UTF8);
-        }
-
-        /**
-         * Get the timestamp
-         *
-         * @return                              Timestamp
-         */
-        public int getTimestamp() {
-            return timestamp;
-        }
-
-        /**
-         * Get the bundler rates
-         *
-         * @return                              Bundler rates
-         */
-        public List<BundlerRate> getRates() {
-            return rates;
+        public BundlerRate getRate() {
+            return rate;
         }
 
         /**

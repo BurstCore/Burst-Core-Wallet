@@ -23,6 +23,7 @@ import nxt.account.Account;
 import nxt.crypto.Crypto;
 import nxt.db.DbIterator;
 import nxt.db.FilteringIterator;
+import nxt.peer.BundlerRate;
 import nxt.util.Logger;
 
 import java.math.BigInteger;
@@ -70,6 +71,12 @@ public final class Bundler {
             }
         });
         return accountBundlers;
+    }
+
+    public static List<BundlerRate> getBundlerRates() {
+        List<BundlerRate> rates = new ArrayList<>();
+        getAllBundlers().forEach(bundler -> rates.add(bundler.getBundlerRate()));
+        return rates;
     }
 
     public static Bundler stopBundler(ChildChain childChain, long accountId) {
@@ -166,6 +173,10 @@ public final class Bundler {
 
     public final long getOverpayFQTPerFXT() {
         return overpayFQTPerFXT;
+    }
+
+    public final BundlerRate getBundlerRate() {
+        return new BundlerRate(childChain, minRateNQTPerFXT, secretPhrase);
     }
 
     private List<ChildBlockFxtTransaction> bundle() {
