@@ -644,17 +644,8 @@ public final class JSONData {
         if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
             json.put("decimals", Asset.getAsset(voteWeighting.getHoldingId()).getDecimals());
         } else if(voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
-            Currency currency = Currency.getCurrency(voteWeighting.getHoldingId());
-            if (currency != null) {
-                json.put("decimals", currency.getDecimals());
-            } else {
-                //TODO: return error?
-                /*
-                Transaction currencyIssuance = Nxt.getBlockchain().getTransaction(poll.getChildChain(), voteWeighting.getHoldingId());
-                CurrencyIssuanceAttachment currencyIssuanceAttachment = (CurrencyIssuanceAttachment) currencyIssuance.getAttachment();
-                json.put("decimals", currencyIssuanceAttachment.getDecimals());
-                */
-            }
+            Currency currency = Currency.getCurrency(voteWeighting.getHoldingId(), true);
+            json.put("decimals", currency.getDecimals());
         }
         putVoteWeighting(json, voteWeighting);
         json.put("finished", poll.isFinished());
@@ -1256,10 +1247,7 @@ public final class JSONData {
     }
 
     private static void putCurrencyInfo(JSONObject json, long currencyId) {
-        Currency currency = Currency.getCurrency(currencyId);
-        if (currency == null) {
-            return;
-        }
+        Currency currency = Currency.getCurrency(currencyId, true);
         json.put("name", currency.getName());
         json.put("code", currency.getCode());
         json.put("type", currency.getType());
