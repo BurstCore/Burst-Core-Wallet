@@ -1513,7 +1513,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             transaction.validateId();
             transaction.validate(); // recursively validates child transactions for Fxt transactions
         } catch (NxtException.ValidationException e) {
-            throw new TransactionNotAcceptedException(e.getMessage(), transaction);
+            throw new TransactionNotAcceptedException(e, transaction);
         }
     }
 
@@ -1533,7 +1533,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             transaction.validateId();
         } catch (NxtException.ValidationException e) {
-            throw new TransactionNotAcceptedException(e.getMessage(), transaction);
+            throw new TransactionNotAcceptedException(e, transaction);
         }
     }
 

@@ -154,7 +154,6 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
             }
             childTransaction.save(con, childChainSchemaTable);
         }
-        childTransactions = null;
     }
 
     @Override
