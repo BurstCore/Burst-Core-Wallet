@@ -278,12 +278,11 @@ public class ChildDbVersion extends DbVersion {
             case 90:
                 apply("CREATE INDEX IF NOT EXISTS phasing_poll_voter_transaction_voter_idx ON phasing_poll_voter(transaction_id, voter_id)");
             case 91:
-                apply("CREATE TABLE IF NOT EXISTS phasing_poll_result (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
-                        + "result BIGINT NOT NULL, approved BOOLEAN NOT NULL, height INT NOT NULL)");
+                apply(null);
             case 92:
-                apply("CREATE INDEX IF NOT EXISTS phasing_poll_result_id_idx ON phasing_poll_result(id)");
+                apply(null);
             case 93:
-                apply("CREATE INDEX IF NOT EXISTS phasing_poll_result_height_idx ON phasing_poll_result(height)");
+                apply(null);
             case 94:
                 apply("CREATE INDEX IF NOT EXISTS currency_founder_account_id_idx ON currency_founder (account_id, height DESC)");
             case 95:

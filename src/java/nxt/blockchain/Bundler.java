@@ -220,7 +220,7 @@ public final class Bundler {
     }
 
     private ChildBlockFxtTransaction bundle(List<ChildTransaction> childTransactions, long feeFQT, int timestamp) throws NxtException.ValidationException {
-        FxtTransaction.Builder builder = Nxt.newTransactionBuilder(publicKey, 0, feeFQT, defaultChildBlockDeadline,
+        FxtTransaction.Builder builder = FxtChain.FXT.newTransactionBuilder(publicKey, 0, feeFQT, defaultChildBlockDeadline,
                 new ChildBlockAttachment(childTransactions));
         builder.timestamp(timestamp);
         ChildBlockFxtTransaction childBlockFxtTransaction = (ChildBlockFxtTransaction)builder.build(secretPhrase);

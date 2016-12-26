@@ -41,7 +41,7 @@ public class GetPhasingPoll extends APIServlet.APIRequestHandler {
         if (phasingPoll != null) {
             return JSONData.phasingPoll(phasingPoll, countVotes);
         }
-        PhasingPollHome.PhasingPollResult pollResult = childChain.getPhasingPollHome().getResult(transactionFullHash);
+        PhasingPollHome.PhasingPollResult pollResult = PhasingPollHome.getResult(transactionFullHash);
         if (pollResult != null) {
             return JSONData.phasingPollResult(pollResult);
         }

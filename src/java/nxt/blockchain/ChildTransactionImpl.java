@@ -67,7 +67,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         private PrunablePlainMessageAppendix prunablePlainMessage;
         private PrunableEncryptedMessageAppendix prunableEncryptedMessage;
 
-        public BuilderImpl(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+        private BuilderImpl(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
                     Attachment.AbstractAttachment attachment) {
             super(chainId, version, senderPublicKey, amount, fee, deadline, attachment);
         }
@@ -407,7 +407,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
                 throw new NxtException.NotValidException("Invalid referenced transaction chain " + referencedTransactionId.getChainId());
             }
         }
-        boolean validatingAtFinish = phasing != null && getSignature() != null && childChain.getPhasingPollHome().getPoll(getFullHash()) != null;
+        boolean validatingAtFinish = phasing != null && getSignature() != null && childChain.getPhasingPollHome().getPoll(this) != null;
         for (Appendix.AbstractAppendix appendage : appendages()) {
             appendage.loadPrunable(this);
             if (! appendage.verifyVersion()) {
@@ -652,6 +652,10 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             Logger.logDebugMessage("Failed to parse transaction bytes: " + Convert.toHexString(buffer.array()));
             throw e;
         }
+    }
+
+    public static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline, Attachment.AbstractAttachment attachment) throws NxtException.NotValidException {
+        return new BuilderImpl(chainId, version, senderPublicKey, amount, fee, deadline, attachment);
     }
 
     public static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,

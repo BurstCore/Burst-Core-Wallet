@@ -140,32 +140,46 @@ public final class Currency {
         return listeners.removeListener(listener, eventType);
     }
 
+    private static final DbClause excludeDeleted = new DbClause.BooleanClause("is_deleted", false);
+
     public static DbIterator<Currency> getAllCurrencies(int from, int to) {
-        return currencyTable.getAll(from, to);
+        return currencyTable.getManyBy(excludeDeleted, from, to);
     }
 
     public static int getCount() {
-        return currencyTable.getCount();
+        return currencyTable.getCount(excludeDeleted);
     }
 
     public static Currency getCurrency(long id) {
-        return currencyTable.get(currencyDbKeyFactory.newKey(id));
+        return getCurrency(id, false);
+    }
+
+    public static Currency getCurrency(long id, boolean includeDeleted) {
+        Currency currency = currencyTable.get(currencyDbKeyFactory.newKey(id));
+        if (currency != null && currency.isDeleted() && !includeDeleted) {
+            return null;
+        }
+        return currency;
     }
 
     public static Currency getCurrencyByName(ChildChain childChain, String name) {
-        return currencyTable.getBy(new DbClause.StringClause("name_lower", name.toLowerCase()).and(new DbClause.IntClause("chain", childChain.getId())));
+        return currencyTable.getBy(new DbClause.StringClause("name_lower", name.toLowerCase())
+                .and(new DbClause.IntClause("chain", childChain.getId()))
+                .and(excludeDeleted));
     }
 
     public static Currency getCurrencyByCode(ChildChain childChain, String code) {
-        return currencyTable.getBy(new DbClause.StringClause("code", code.toUpperCase()).and(new DbClause.IntClause("chain", childChain.getId())));
+        return currencyTable.getBy(new DbClause.StringClause("code", code.toUpperCase())
+                .and(new DbClause.IntClause("chain", childChain.getId()))
+                .and(excludeDeleted));
     }
 
     public static DbIterator<Currency> getCurrencyIssuedBy(long accountId, int from, int to) {
-        return currencyTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
+        return currencyTable.getManyBy(new DbClause.LongClause("account_id", accountId).and(excludeDeleted), from, to);
     }
 
     public static DbIterator<Currency> searchCurrencies(String query, int from, int to) {
-        return currencyTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC, currency.creation_height DESC ");
+        return currencyTable.search(query, excludeDeleted, from, to, " ORDER BY ft.score DESC, currency.creation_height DESC ");
     }
 
     static void addCurrency(LedgerEvent event, AccountLedger.LedgerEventId eventId, Transaction transaction, Account senderAccount,
@@ -221,6 +235,7 @@ public final class Currency {
     private final byte decimals;
     private final long initialSupply;
     private CurrencySupply currencySupply;
+    private boolean isDeleted;
 
     private Currency(Transaction transaction, CurrencyIssuanceAttachment attachment) {
         this.currencyId = transaction.getId();
@@ -242,6 +257,7 @@ public final class Currency {
         this.ruleset = attachment.getRuleset();
         this.algorithm = attachment.getAlgorithm();
         this.decimals = attachment.getDecimals();
+        this.isDeleted = false;
     }
 
     private Currency(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -264,13 +280,14 @@ public final class Currency {
         this.ruleset = rs.getByte("ruleset");
         this.algorithm = rs.getByte("algorithm");
         this.decimals = rs.getByte("decimals");
+        this.isDeleted = rs.getBoolean("is_deleted");
     }
 
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency (id, account_id, name, code, "
                 + "description, type, chain, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_nqt, "
-                + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, is_deleted, height, latest) "
+                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, this.currencyId);
             pstmt.setLong(++i, this.accountId);
@@ -290,6 +307,7 @@ public final class Currency {
             pstmt.setByte(++i, this.ruleset);
             pstmt.setByte(++i, this.algorithm);
             pstmt.setByte(++i, this.decimals);
+            pstmt.setBoolean(++i, this.isDeleted);
             pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
             pstmt.executeUpdate();
         }
@@ -375,6 +393,10 @@ public final class Currency {
 
     public byte getDecimals() {
         return decimals;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
     }
 
     public long getCurrentReservePerUnitNQT() {
@@ -508,14 +530,16 @@ public final class Currency {
         senderAccount.addToUnconfirmedCurrencyUnits(event, eventId, currencyId,
                 -senderAccount.getUnconfirmedCurrencyUnits(currencyId));
         senderAccount.addToCurrencyUnits(event, eventId, currencyId, -senderAccount.getCurrencyUnits(currencyId));
-        currencyTable.delete(this);
+        this.isDeleted = true;
+        currencyTable.insert(this);
     }
 
     private static final class CrowdFundingListener implements Listener<Block> {
 
         @Override
         public void notify(Block block) {
-            try (DbIterator<Currency> issuedCurrencies = currencyTable.getManyBy(new DbClause.IntClause("issuance_height", block.getHeight()), 0, -1)) {
+            try (DbIterator<Currency> issuedCurrencies = currencyTable.getManyBy(new DbClause.IntClause("issuance_height", block.getHeight())
+                    .and(excludeDeleted), 0, -1)) {
                 for (Currency currency : issuedCurrencies) {
                     if (currency.getCurrentReservePerUnitNQT() < currency.getMinReservePerUnitNQT()) {
                         listeners.notify(currency, Event.BEFORE_UNDO_CROWDFUNDING);
@@ -540,7 +564,8 @@ public final class Currency {
             }
             Account.getAccount(currency.getAccountId())
                     .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, eventId, currency.getId(), - currency.getInitialSupply());
-            currencyTable.delete(currency);
+            currency.isDeleted = true;
+            currencyTable.insert(currency);
             childChain.getCurrencyFounderHome().remove(currency.getId());
         }
 

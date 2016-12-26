@@ -858,6 +858,9 @@ public final class NetworkHandler implements Runnable {
      * @param   message                 Message to send
      */
     public static void broadcastMessage(Peer sender, NetworkMessage message) {
+        if (Constants.isOffline) {
+            return;
+        }
         connectionMap.values().forEach(peer -> {
             if (peer.getState() == Peer.State.CONNECTED &&
                     peer != sender &&

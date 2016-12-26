@@ -43,7 +43,7 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
 
     public static final class BuilderImpl extends TransactionImpl.BuilderImpl implements FxtTransaction.Builder {
 
-        public BuilderImpl(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+        private BuilderImpl(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
                     Attachment.AbstractAttachment attachment) {
             super(FxtChain.FXT.getId(), version, senderPublicKey, amount, fee, deadline, attachment);
         }
@@ -283,6 +283,10 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
             pstmt.setShort(++i, getIndex());
             pstmt.executeUpdate();
         }
+    }
+
+    public static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline, Attachment.AbstractAttachment attachment) {
+        return new BuilderImpl(version, senderPublicKey, amount, fee, deadline, attachment);
     }
 
     public static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,

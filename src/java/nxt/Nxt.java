@@ -25,7 +25,6 @@ import nxt.addons.DebugTrace;
 import nxt.ae.Asset;
 import nxt.ae.AssetDelete;
 import nxt.ae.AssetTransfer;
-import nxt.blockchain.Attachment;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockImpl;
 import nxt.blockchain.Blockchain;
@@ -34,11 +33,8 @@ import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.BlockchainProcessorImpl;
 import nxt.blockchain.Bundler;
 import nxt.blockchain.ChildChain;
-import nxt.blockchain.ChildTransaction;
-import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransaction;
-import nxt.blockchain.FxtTransactionImpl;
 import nxt.blockchain.Generator;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
@@ -301,14 +297,6 @@ public final class Nxt {
         return TransactionProcessorImpl.getInstance();
     }
 
-    public static ChildTransaction.Builder newTransactionBuilder(ChildChain childChain, byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline, Attachment attachment) {
-        return new ChildTransactionImpl.BuilderImpl(childChain.getId(), (byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
-    }
-
-    public static FxtTransaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountFQT, long feeFQT, short deadline, Attachment attachment) {
-        return new FxtTransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountFQT, feeFQT, deadline, (Attachment.AbstractAttachment)attachment);
-	}
-
     public static Block parseBlock(byte[] blockBytes, List<? extends FxtTransaction> blockTransactions) throws NxtException.NotValidException {
         return BlockImpl.parseBlock(blockBytes, blockTransactions);
     }
@@ -379,7 +367,6 @@ public final class Nxt {
             try {
                 long startTime = System.currentTimeMillis();
                 Logger.init();
-                setSystemProperties();
                 logSystemProperties();
                 runtimeMode.init();
                 Thread secureRandomInitThread = initSecureRandom();
@@ -451,22 +438,6 @@ public final class Nxt {
 
         private Init() {} // never
 
-    }
-
-    private static void setSystemProperties() {
-      // Override system settings that the user has define in nxt.properties file.
-        // TODO: no longer supported?
-      String[] systemProperties = new String[] {
-        "socksProxyHost",
-        "socksProxyPort",
-      };
-
-      for (String propertyName : systemProperties) {
-        String propertyValue;
-        if ((propertyValue = getStringProperty(propertyName)) != null) {
-          System.setProperty(propertyName, propertyValue);
-        }
-      }
     }
 
     private static void logSystemProperties() {

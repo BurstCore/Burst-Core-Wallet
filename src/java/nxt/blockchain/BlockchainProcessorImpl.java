@@ -1188,7 +1188,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public Transaction restorePrunedTransaction(Chain chain, byte[] transactionFullHash) {
-        TransactionImpl transaction = chain.getTransactionHome().findTransactionByFullHash(transactionFullHash);
+        TransactionImpl transaction = chain.getTransactionHome().findTransaction(transactionFullHash);
         if (transaction == null) {
             throw new IllegalArgumentException("Transaction not found");
         }
@@ -1360,7 +1360,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                             Map<TransactionType, Map<String, Integer>> duplicates) {
         for (ChildTransaction transaction : PhasingPollHome.getFinishingTransactions(height + 1)) {
             ChildTransactionImpl phasedTransaction = (ChildTransactionImpl) transaction;
-            if (phasedTransaction.getChain().getPhasingPollHome().getResult(phasedTransaction.getFullHash()) != null) {
+            if (PhasingPollHome.getResult(phasedTransaction) != null) {
                 continue;
             }
             try {
@@ -1513,13 +1513,13 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             transaction.validateId();
             transaction.validate(); // recursively validates child transactions for Fxt transactions
         } catch (NxtException.ValidationException e) {
-            throw new TransactionNotAcceptedException(e.getMessage(), transaction);
+            throw new TransactionNotAcceptedException(e, transaction);
         }
     }
 
     private void fullyValidateTransaction(ChildTransactionImpl transaction, BlockImpl block, BlockImpl previousLastBlock, int curTime)
             throws BlockNotAcceptedException {
-        if (transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash(), previousLastBlock.getHeight())) {
+        if (transaction.getChain().getTransactionHome().hasTransaction(transaction, previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
         }
         if (transaction.getReferencedTransactionId() != null && !transaction.hasAllReferencedTransactions(transaction.getTimestamp(), 0)) {
@@ -1533,7 +1533,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             transaction.validateId();
         } catch (NxtException.ValidationException e) {
-            throw new TransactionNotAcceptedException(e.getMessage(), transaction);
+            throw new TransactionNotAcceptedException(e, transaction);
         }
     }
 
@@ -1571,7 +1571,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             SortedSet<ChildTransactionImpl> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
             block.getFxtTransactions().forEach(fxtTransaction -> {
                 for (ChildTransactionImpl childTransaction : fxtTransaction.getChildTransactions()) {
-                    PhasingPollHome.getLinkedPhasedTransactions(childTransaction.getFullHash()).forEach(phasedTransaction -> {
+                    PhasingPollHome.getLinkedPhasedTransactions(childTransaction).forEach(phasedTransaction -> {
                         if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
                             possiblyApprovedTransactions.add((ChildTransactionImpl)phasedTransaction);
                         }
@@ -1583,14 +1583,14 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             });
             validPhasedTransactions.forEach(phasedTransaction -> {
                 if (phasedTransaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING) {
-                    PhasingPollHome.PhasingPollResult result = phasedTransaction.getChain().getPhasingPollHome().getResult(phasedTransaction.getFullHash());
+                    PhasingPollHome.PhasingPollResult result = PhasingPollHome.getResult(phasedTransaction);
                     if (result != null && result.isApproved()) {
                         addVotedTransactions(phasedTransaction, possiblyApprovedTransactions, block.getHeight());
                     }
                 }
             });
             possiblyApprovedTransactions.forEach(transaction -> {
-                if (transaction.getChain().getPhasingPollHome().getResult(transaction.getFullHash()) == null) {
+                if (PhasingPollHome.getResult(transaction) == null) {
                     try {
                         transaction.validate();
                         transaction.getPhasing().tryCountVotes(transaction, duplicates);

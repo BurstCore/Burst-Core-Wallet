@@ -48,7 +48,7 @@ public final class GetTaggedDataExtendTransactions extends APIServlet.APIRequest
         Blockchain blockchain = Nxt.getBlockchain();
         Filter<Appendix> filter = (appendix) -> ! (appendix instanceof TaggedDataExtendAttachment);
         extendTransactions.forEach(extendTransactionFullHash -> jsonArray.add(
-                JSONData.transaction(blockchain.getTransactionByFullHash(childChain, extendTransactionFullHash), filter)));
+                JSONData.transaction(blockchain.getTransaction(childChain, extendTransactionFullHash), filter)));
         response.put("extendTransactions", jsonArray);
         return response;
     }

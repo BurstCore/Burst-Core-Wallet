@@ -32,23 +32,24 @@ public final class GetCurrency extends APIServlet.APIRequestHandler {
     static final GetCurrency instance = new GetCurrency();
 
     private GetCurrency() {
-        super(new APITag[] {APITag.MS}, "currency", "code", "includeCounts");
+        super(new APITag[] {APITag.MS}, "currency", "code", "includeCounts", "includeDeleted");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         boolean includeCounts = "true".equalsIgnoreCase(req.getParameter("includeCounts"));
+        boolean includeDeleted = "true".equalsIgnoreCase(req.getParameter("includeDeleted"));
         long currencyId = ParameterParser.getUnsignedLong(req, "currency", false);
         Currency currency;
         if (currencyId == 0) {
             String currencyCode = Convert.emptyToNull(req.getParameter("code"));
-            if (currencyCode == null) {
+            if (currencyCode == null || includeDeleted) {
                 return MISSING_CURRENCY;
             }
             ChildChain childChain = ParameterParser.getChildChain(req);
             currency = Currency.getCurrencyByCode(childChain, currencyCode);
         } else {
-            currency = Currency.getCurrency(currencyId);
+            currency = Currency.getCurrency(currencyId, includeDeleted);
         }
         if (currency == null) {
             throw new ParameterException(UNKNOWN_CURRENCY);

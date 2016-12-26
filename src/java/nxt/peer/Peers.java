@@ -178,47 +178,45 @@ public final class Peers {
         final List<String> defaultPeers = Constants.isTestnet ?
                 Nxt.getStringListProperty("nxt.defaultTestnetPeers") : Nxt.getStringListProperty("nxt.defaultPeers");
         final List<Future<String>> unresolvedPeers = Collections.synchronizedList(new ArrayList<>());
-        if (!Constants.isOffline) {
-            //
-            // Build the peer list
-            //
-            ThreadPool.runBeforeStart(new Runnable() {
-                private final Set<PeerDb.Entry> entries = new HashSet<>();
+        //
+        // Build the peer list
+        //
+        ThreadPool.runBeforeStart(new Runnable() {
+            private final Set<PeerDb.Entry> entries = new HashSet<>();
 
-                @Override
-                public void run() {
-                    wellKnownPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, startTime - 1)));
-                    if (usePeersDb) {
-                        Logger.logDebugMessage("Loading known peers from the database...");
-                        defaultPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, startTime - 1)));
-                        if (savePeers) {
-                            List<PeerDb.Entry> dbPeers = PeerDb.loadPeers();
-                            dbPeers.forEach(entry -> {
-                                if (!entries.add(entry)) {
-                                    // Database entries override entries from nxt.properties
-                                    entries.remove(entry);
-                                    entries.add(entry);
-                                }
-                            });
-                        }
-                    }
-                    entries.forEach(entry -> {
-                        Future<String> unresolvedAddress = peersService.submit(() -> {
-                            PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(entry.getAddress(), true);
-                            if (peer != null) {
-                                peer.setShareAddress(true);
-                                peer.setLastUpdated(entry.getLastUpdated());
-                                peer.setServices(entry.getServices());
-                                Peers.addPeer(peer);
-                                return null;
+            @Override
+            public void run() {
+                wellKnownPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, startTime - 1)));
+                if (usePeersDb) {
+                    Logger.logDebugMessage("Loading known peers from the database...");
+                    defaultPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, startTime - 1)));
+                    if (savePeers) {
+                        List<PeerDb.Entry> dbPeers = PeerDb.loadPeers();
+                        dbPeers.forEach(entry -> {
+                            if (!entries.add(entry)) {
+                                // Database entries override entries from nxt.properties
+                                entries.remove(entry);
+                                entries.add(entry);
                             }
-                            return entry.getAddress();
                         });
-                        unresolvedPeers.add(unresolvedAddress);
-                    });
+                    }
                 }
-            }, false);
-        }
+                entries.forEach(entry -> {
+                    Future<String> unresolvedAddress = peersService.submit(() -> {
+                        PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(entry.getAddress(), true);
+                        if (peer != null) {
+                            peer.setShareAddress(true);
+                            peer.setLastUpdated(entry.getLastUpdated());
+                            peer.setServices(entry.getServices());
+                            Peers.addPeer(peer);
+                            return null;
+                        }
+                        return entry.getAddress();
+                    });
+                    unresolvedPeers.add(unresolvedAddress);
+                });
+            }
+        }, false);
         //
         // Check the results
         //

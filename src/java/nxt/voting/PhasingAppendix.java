@@ -187,7 +187,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
                 if (chain == null) {
                     throw new NxtException.NotValidException("Invalid chain id " + linkedTransactionId.getChainId());
                 }
-                TransactionImpl linkedTransaction = chain.getTransactionHome().findTransactionByFullHash(hash, currentHeight);
+                TransactionImpl linkedTransaction = chain.getTransactionHome().findTransaction(hash, currentHeight);
                 if (linkedTransaction != null) {
                     if (transaction.getTimestamp() - linkedTransaction.getTimestamp() > Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN) {
                         throw new NxtException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");
@@ -276,11 +276,11 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     }
 
     public void countVotes(ChildTransactionImpl transaction) {
-        PhasingPollHome phasingPollHome = transaction.getChain().getPhasingPollHome();
-        if (phasingPollHome.getResult(transaction.getFullHash()) != null) {
+        if (PhasingPollHome.getResult(transaction) != null) {
             return;
         }
-        PhasingPollHome.PhasingPoll poll = phasingPollHome.getPoll(transaction.getFullHash());
+        PhasingPollHome phasingPollHome = transaction.getChain().getPhasingPollHome();
+        PhasingPollHome.PhasingPoll poll = phasingPollHome.getPoll(transaction);
         long result = poll.countVotes();
         poll.finish(result);
         if (result >= poll.getQuorum()) {
@@ -296,7 +296,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     }
 
     public void tryCountVotes(ChildTransactionImpl transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        PhasingPollHome.PhasingPoll poll = transaction.getChain().getPhasingPollHome().getPoll(transaction.getFullHash());
+        PhasingPollHome.PhasingPoll poll = transaction.getChain().getPhasingPollHome().getPoll(transaction);
         long result = poll.countVotes();
         if (result >= poll.getQuorum()) {
             if (!transaction.attachmentIsDuplicate(duplicates, false)) {

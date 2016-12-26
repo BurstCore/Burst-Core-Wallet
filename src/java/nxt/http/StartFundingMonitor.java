@@ -22,6 +22,7 @@ import nxt.account.FundingMonitor;
 import nxt.account.HoldingType;
 import nxt.ae.Asset;
 import nxt.blockchain.Chain;
+import nxt.blockchain.FxtChain;
 import nxt.crypto.Crypto;
 import nxt.ms.Currency;
 import org.json.simple.JSONObject;
@@ -31,7 +32,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import static nxt.http.JSONResponses.MONITOR_ALREADY_STARTED;
 import static nxt.http.JSONResponses.UNKNOWN_ACCOUNT;
-import static nxt.http.JSONResponses.incorrect;
 
 /**
  * Start a funding monitor
@@ -77,43 +77,49 @@ public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
+        Chain chain = ParameterParser.getChain(req);
         HoldingType holdingType = ParameterParser.getHoldingType(req);
         long holdingId = ParameterParser.getHoldingId(req);
         String property = ParameterParser.getAccountProperty(req, true);
         long amount = ParameterParser.getLong(req, "amount", 0, Long.MAX_VALUE, true);
         if (amount < FundingMonitor.MIN_FUND_AMOUNT) {
-            throw new ParameterException(incorrect("amount", "Minimum funding amount is " + FundingMonitor.MIN_FUND_AMOUNT));
+            return JSONResponses.incorrect("amount", "Minimum funding amount is " + FundingMonitor.MIN_FUND_AMOUNT);
         }
         long threshold = ParameterParser.getLong(req, "threshold", 0, Long.MAX_VALUE, true);
         if (threshold < FundingMonitor.MIN_FUND_THRESHOLD) {
-            throw new ParameterException(incorrect("threshold", "Minimum funding threshold is " + FundingMonitor.MIN_FUND_THRESHOLD));
+            return JSONResponses.incorrect("threshold", "Minimum funding threshold is " + FundingMonitor.MIN_FUND_THRESHOLD);
         }
         int interval = ParameterParser.getInt(req, "interval", FundingMonitor.MIN_FUND_INTERVAL, Integer.MAX_VALUE, true);
         String secretPhrase = ParameterParser.getSecretPhrase(req, true);
         switch (holdingType) {
             case ASSET:
+                if (chain == FxtChain.FXT) {
+                    return JSONResponses.INCORRECT_CHAIN;
+                }
                 Asset asset = Asset.getAsset(holdingId);
                 if (asset == null) {
-                    throw new ParameterException(JSONResponses.UNKNOWN_ASSET);
+                    return JSONResponses.UNKNOWN_ASSET;
                 }
                 break;
             case CURRENCY:
+                if (chain == FxtChain.FXT) {
+                    return JSONResponses.INCORRECT_CHAIN;
+                }
                 Currency currency = Currency.getCurrency(holdingId);
                 if (currency == null) {
-                    throw new ParameterException(JSONResponses.UNKNOWN_CURRENCY);
+                    return JSONResponses.UNKNOWN_CURRENCY;
                 }
                 break;
             case COIN:
-                Chain chain = Chain.getChain(Math.toIntExact(holdingId));
-                if (chain == null) {
-                    throw new ParameterException(JSONResponses.UNKNOWN_CHAIN);
+                if (holdingId != chain.getId()) {
+                    return JSONResponses.INCORRECT_CHAIN;
                 }
         }
         Account account = Account.getAccount(Crypto.getPublicKey(secretPhrase));
         if (account == null) {
-            throw new ParameterException(UNKNOWN_ACCOUNT);
+            return UNKNOWN_ACCOUNT;
         }
-        if (FundingMonitor.startMonitor(holdingType, holdingId, property, amount, threshold, interval, secretPhrase)) {
+        if (FundingMonitor.startMonitor(chain, holdingType, holdingId, property, amount, threshold, interval, secretPhrase)) {
             JSONObject response = new JSONObject();
             response.put("started", true);
             return response;
@@ -135,11 +141,6 @@ public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
     @Override
     protected boolean requireFullClient() {
         return true;
-    }
-
-    @Override
-    protected boolean isChainSpecific() {
-        return false;
     }
 
 }

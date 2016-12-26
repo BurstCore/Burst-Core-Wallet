@@ -199,7 +199,7 @@ public abstract class TaggedDataTransactionType extends ChildTransactionType {
             if (attachment.getChainId() != childChain.getId()) {
                 throw new NxtException.NotValidException("Invalid chain id");
             }
-            TransactionImpl uploadTransaction = childChain.getTransactionHome().findTransactionByFullHash(
+            TransactionImpl uploadTransaction = childChain.getTransactionHome().findTransaction(
                     attachment.getTaggedDataTransactionFullHash(), Nxt.getBlockchain().getHeight());
             if (uploadTransaction == null) {
                 throw new NxtException.NotCurrentlyValidException("No such tagged data upload "

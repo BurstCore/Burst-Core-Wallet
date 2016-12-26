@@ -354,13 +354,13 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public TransactionImpl getTransactionByFullHash(Chain chain, byte[] fullHash) {
-        return chain.getTransactionHome().findTransactionByFullHash(fullHash);
+    public TransactionImpl getTransaction(Chain chain, byte[] fullHash) {
+        return chain.getTransactionHome().findTransaction(fullHash);
     }
 
     @Override
-    public boolean hasTransactionByFullHash(Chain chain, byte[] fullHash) {
-        return chain.getTransactionHome().hasTransactionByFullHash(fullHash);
+    public boolean hasTransaction(Chain chain, byte[] fullHash) {
+        return chain.getTransactionHome().hasTransaction(fullHash);
     }
 
     @Override
@@ -392,6 +392,7 @@ public final class BlockchainImpl implements Blockchain {
             buf.append("SELECT transaction.* FROM transaction ");
             if (executedOnly && !nonPhasedOnly) {
                 buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
+                buf.append(" AND transaction.full_hash = phasing_poll_result.full_hash ");
             }
             buf.append("WHERE recipient_id = ? AND sender_id <> ? ");
             if (blockTimestamp > 0) {
@@ -421,6 +422,7 @@ public final class BlockchainImpl implements Blockchain {
             buf.append("UNION ALL SELECT transaction.* FROM transaction ");
             if (executedOnly && !nonPhasedOnly) {
                 buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
+                buf.append(" AND transaction.full_hash = phasing_poll_result.full_hash ");
             }
             buf.append("WHERE sender_id = ? ");
             if (blockTimestamp > 0) {

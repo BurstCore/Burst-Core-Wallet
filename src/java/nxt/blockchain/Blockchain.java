@@ -71,9 +71,9 @@ public interface Blockchain {
 
     Block getECBlock(int timestamp);
 
-    Transaction getTransactionByFullHash(Chain chain, byte[] fullHash);
+    Transaction getTransaction(Chain chain, byte[] fullHash);
 
-    boolean hasTransactionByFullHash(Chain chain, byte[] fullHash);
+    boolean hasTransaction(Chain chain, byte[] fullHash);
 
     int getTransactionCount(Chain chain);
 

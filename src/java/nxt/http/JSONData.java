@@ -40,6 +40,7 @@ import nxt.aliases.AliasHome;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Block;
 import nxt.blockchain.Bundler;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
@@ -51,6 +52,7 @@ import nxt.ce.OrderCancelAttachment;
 import nxt.ce.OrderIssueAttachment;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
+import nxt.db.DbIterator;
 import nxt.dgs.DigitalGoodsHome;
 import nxt.messaging.PrunableMessageHome;
 import nxt.ms.Currency;
@@ -516,23 +518,20 @@ public final class JSONData {
             block.getFxtTransactions().forEach(transaction -> transactions.add(transaction.getStringId()));
         }
         json.put("transactions", transactions);
-        //TODO
-        /*
         if (includeExecutedPhased) {
             JSONArray phasedTransactions = new JSONArray();
             try (DbIterator<PhasingPollHome.PhasingPollResult> phasingPollResults = PhasingPollHome.getApproved(block.getHeight())) {
                 for (PhasingPollHome.PhasingPollResult phasingPollResult : phasingPollResults) {
-                    long phasedTransactionId = phasingPollResult.getId();
                     if (includeTransactions) {
-                        phasedTransactions.add(transaction(Nxt.getBlockchain().getTransaction(phasedTransactionId)));
+                        phasedTransactions.add(transaction(Nxt.getBlockchain().getTransaction(phasingPollResult.getChildChain(), phasingPollResult.getFullHash())));
                     } else {
-                        phasedTransactions.add(Long.toUnsignedString(phasedTransactionId));
+                        ChainTransactionId phasedTransactionId = new ChainTransactionId(phasingPollResult.getChildChain().getId(), phasingPollResult.getFullHash());
+                        phasedTransactions.add(phasedTransactionId.getJSON());
                     }
                 }
             }
             json.put("executedPhasedTransactions", phasedTransactions);
         }
-        */
         return json;
     }
 
@@ -643,17 +642,8 @@ public final class JSONData {
         if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
             json.put("decimals", Asset.getAsset(voteWeighting.getHoldingId()).getDecimals());
         } else if(voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
-            Currency currency = Currency.getCurrency(voteWeighting.getHoldingId());
-            if (currency != null) {
-                json.put("decimals", currency.getDecimals());
-            } else {
-                //TODO: return error?
-                /*
-                Transaction currencyIssuance = Nxt.getBlockchain().getTransaction(poll.getChildChain(), voteWeighting.getHoldingId());
-                CurrencyIssuanceAttachment currencyIssuanceAttachment = (CurrencyIssuanceAttachment) currencyIssuance.getAttachment();
-                json.put("decimals", currencyIssuanceAttachment.getDecimals());
-                */
-            }
+            Currency currency = Currency.getCurrency(voteWeighting.getHoldingId(), true);
+            json.put("decimals", currency.getDecimals());
         }
         putVoteWeighting(json, voteWeighting);
         json.put("finished", poll.isFinished());
@@ -726,7 +716,7 @@ public final class JSONData {
             json.put("hashedSecret", Convert.toHexString(poll.getHashedSecret()));
         }
         putVoteWeighting(json, poll.getVoteWeighting());
-        PhasingPollHome.PhasingPollResult phasingPollResult = poll.getPhasingPollHome().getResult(poll.getFullHash());
+        PhasingPollHome.PhasingPollResult phasingPollResult = PhasingPollHome.getResult(poll.getFullHash());
         json.put("finished", phasingPollResult != null);
         if (phasingPollResult != null) {
             json.put("approved", phasingPollResult.isApproved());
@@ -1077,8 +1067,7 @@ public final class JSONData {
     static JSONObject transaction(Transaction transaction, boolean includePhasingResult) {
         JSONObject json = transaction(transaction, null);
         if (includePhasingResult && transaction.isPhased()) {
-            ChildChain childChain = (ChildChain)transaction.getChain();
-            PhasingPollHome.PhasingPollResult phasingPollResult = childChain.getPhasingPollHome().getResult(transaction.getFullHash());
+            PhasingPollHome.PhasingPollResult phasingPollResult = PhasingPollHome.getResult(transaction);
             if (phasingPollResult != null) {
                 json.put("approved", phasingPollResult.isApproved());
                 json.put("result", String.valueOf(phasingPollResult.getResult()));
@@ -1255,10 +1244,7 @@ public final class JSONData {
     }
 
     private static void putCurrencyInfo(JSONObject json, long currencyId) {
-        Currency currency = Currency.getCurrency(currencyId);
-        if (currency == null) {
-            return;
-        }
+        Currency currency = Currency.getCurrency(currencyId, true);
         json.put("name", currency.getName());
         json.put("code", currency.getCode());
         json.put("type", currency.getType());
@@ -1319,13 +1305,11 @@ public final class JSONData {
                 json.put("holdingInfo", holdingJson);
             }
         }
-        //TODO
-        /*
         if (includeTransactions && entry.getEvent().isTransaction()) {
-            Transaction transaction = Nxt.getBlockchain().getTransaction(entry.getEventId());
+            Chain chain = Chain.getChain(entry.getChainId());
+            Transaction transaction = Nxt.getBlockchain().getTransaction(chain, entry.getEventHash());
             json.put("transaction", JSONData.transaction(transaction));
         }
-        */
     }
 
     private JSONData() {} // never

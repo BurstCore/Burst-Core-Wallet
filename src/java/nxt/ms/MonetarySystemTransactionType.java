@@ -221,10 +221,9 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             senderAccount.addToCurrencyAndUnconfirmedCurrencyUnits(getLedgerEvent(), eventId, transaction.getId(), attachment.getInitialSupply());
         }
 
-        //TODO: do collisions with deleted currencies ids matter?
         @Override
         protected void validateId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
-            if (Currency.getCurrency(transaction.getId()) != null) {
+            if (Currency.getCurrency(transaction.getId(), true) != null) {
                 throw new NxtException.NotCurrentlyValidException("Duplicate currency id " + transaction.getStringId());
             }
         }
@@ -287,16 +286,9 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             ReserveIncreaseAttachment attachment = (ReserveIncreaseAttachment) transaction.getAttachment();
-            long reserveSupply;
-            Currency currency = Currency.getCurrency(attachment.getCurrencyId());
-            if (currency != null) {
-                reserveSupply = currency.getReserveSupply();
-            } else { // currency must have been deleted, get reserve supply from the original issuance transaction
-                //TODO: can't rely on finding the original issuance transaction
-                throw new RuntimeException("FIXME");
-            }
+            Currency currency = Currency.getCurrency(attachment.getCurrencyId(), true);
             senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
-                    Math.multiplyExact(reserveSupply, attachment.getAmountPerUnitNQT()));
+                    Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitNQT()));
         }
 
         @Override
