@@ -392,6 +392,7 @@ public final class BlockchainImpl implements Blockchain {
             buf.append("SELECT transaction.* FROM transaction ");
             if (executedOnly && !nonPhasedOnly) {
                 buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
+                buf.append(" AND transaction.full_hash = phasing_poll_result.full_hash ");
             }
             buf.append("WHERE recipient_id = ? AND sender_id <> ? ");
             if (blockTimestamp > 0) {
@@ -421,6 +422,7 @@ public final class BlockchainImpl implements Blockchain {
             buf.append("UNION ALL SELECT transaction.* FROM transaction ");
             if (executedOnly && !nonPhasedOnly) {
                 buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
+                buf.append(" AND transaction.full_hash = phasing_poll_result.full_hash ");
             }
             buf.append("WHERE sender_id = ? ");
             if (blockTimestamp > 0) {

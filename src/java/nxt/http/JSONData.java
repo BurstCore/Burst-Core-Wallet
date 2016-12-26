@@ -52,6 +52,7 @@ import nxt.ce.OrderCancelAttachment;
 import nxt.ce.OrderIssueAttachment;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
+import nxt.db.DbIterator;
 import nxt.dgs.DigitalGoodsHome;
 import nxt.messaging.PrunableMessageHome;
 import nxt.ms.Currency;
@@ -517,23 +518,20 @@ public final class JSONData {
             block.getFxtTransactions().forEach(transaction -> transactions.add(transaction.getStringId()));
         }
         json.put("transactions", transactions);
-        //TODO
-        /*
         if (includeExecutedPhased) {
             JSONArray phasedTransactions = new JSONArray();
             try (DbIterator<PhasingPollHome.PhasingPollResult> phasingPollResults = PhasingPollHome.getApproved(block.getHeight())) {
                 for (PhasingPollHome.PhasingPollResult phasingPollResult : phasingPollResults) {
-                    long phasedTransactionId = phasingPollResult.getId();
                     if (includeTransactions) {
-                        phasedTransactions.add(transaction(Nxt.getBlockchain().getTransaction(phasedTransactionId)));
+                        phasedTransactions.add(transaction(Nxt.getBlockchain().getTransactionByFullHash(phasingPollResult.getChildChain(), phasingPollResult.getFullHash())));
                     } else {
-                        phasedTransactions.add(Long.toUnsignedString(phasedTransactionId));
+                        ChainTransactionId phasedTransactionId = new ChainTransactionId(phasingPollResult.getChildChain().getId(), phasingPollResult.getFullHash());
+                        phasedTransactions.add(phasedTransactionId.getJSON());
                     }
                 }
             }
             json.put("executedPhasedTransactions", phasedTransactions);
         }
-        */
         return json;
     }
 
@@ -718,7 +716,7 @@ public final class JSONData {
             json.put("hashedSecret", Convert.toHexString(poll.getHashedSecret()));
         }
         putVoteWeighting(json, poll.getVoteWeighting());
-        PhasingPollHome.PhasingPollResult phasingPollResult = poll.getPhasingPollHome().getResult(poll.getFullHash());
+        PhasingPollHome.PhasingPollResult phasingPollResult = PhasingPollHome.getResult(poll.getFullHash());
         json.put("finished", phasingPollResult != null);
         if (phasingPollResult != null) {
             json.put("approved", phasingPollResult.isApproved());
@@ -1069,8 +1067,7 @@ public final class JSONData {
     static JSONObject transaction(Transaction transaction, boolean includePhasingResult) {
         JSONObject json = transaction(transaction, null);
         if (includePhasingResult && transaction.isPhased()) {
-            ChildChain childChain = (ChildChain)transaction.getChain();
-            PhasingPollHome.PhasingPollResult phasingPollResult = childChain.getPhasingPollHome().getResult(transaction.getFullHash());
+            PhasingPollHome.PhasingPollResult phasingPollResult = PhasingPollHome.getResult(transaction);
             if (phasingPollResult != null) {
                 json.put("approved", phasingPollResult.isApproved());
                 json.put("result", String.valueOf(phasingPollResult.getResult()));

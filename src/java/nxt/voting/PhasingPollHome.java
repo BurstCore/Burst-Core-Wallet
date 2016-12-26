@@ -157,6 +157,107 @@ public final class PhasingPollHome {
         }
     }
 
+    private static final DbKey.HashKeyFactory<PhasingPollResult> resultDbKeyFactory = new DbKey.HashKeyFactory<PhasingPollResult>("full_hash", "id") {
+        @Override
+        public DbKey newKey(PhasingPollResult phasingPollResult) {
+            return phasingPollResult.dbKey;
+        }
+    };
+
+    private static final EntityDbTable<PhasingPollResult> resultTable = new EntityDbTable<PhasingPollResult>("public.phasing_poll_result", resultDbKeyFactory) {
+        @Override
+        protected PhasingPollResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            return new PhasingPollResult(rs, dbKey);
+        }
+        @Override
+        protected void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
+            phasingPollResult.save(con);
+        }
+    };
+
+    public static PhasingPollResult getResult(Transaction transaction) {
+        return resultTable.get(resultDbKeyFactory.newKey(transaction.getFullHash(), transaction.getId()));
+    }
+
+    public static PhasingPollResult getResult(byte[] fullHash) {
+        return resultTable.get(resultDbKeyFactory.newKey(fullHash));
+    }
+
+    public static DbIterator<PhasingPollResult> getApproved(int height) {
+        return resultTable.getManyBy(new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
+                0, -1, " ORDER BY db_id ASC ");
+    }
+
+    public static final class PhasingPollResult {
+
+        private final long id;
+        private final byte[] hash;
+        private final DbKey dbKey;
+        private final ChildChain childChain;
+        private final long result;
+        private final boolean approved;
+        private final int height;
+
+        private PhasingPollResult(PhasingPoll poll, long result) {
+            this.id = poll.getId();
+            this.hash = poll.getFullHash();
+            this.dbKey = resultDbKeyFactory.newKey(this.hash, this.id);
+            this.childChain = poll.getChildChain();
+            this.result = result;
+            this.approved = result >= poll.getQuorum();
+            this.height = Nxt.getBlockchain().getHeight();
+        }
+
+        private PhasingPollResult(ResultSet rs, DbKey dbKey) throws SQLException {
+            this.id = rs.getLong("id");
+            this.hash = rs.getBytes("full_hash");
+            this.dbKey = dbKey;
+            this.childChain = ChildChain.getChildChain(rs.getInt("chain_id"));
+            this.result = rs.getLong("result");
+            this.approved = rs.getBoolean("approved");
+            this.height = rs.getInt("height");
+        }
+
+        private void save(Connection con) throws SQLException {
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_result (id, full_hash, "
+                    + "chain_id, result, approved, height) VALUES (?, ?, ?, ?, ?, ?)")) {
+                int i = 0;
+                pstmt.setLong(++i, id);
+                pstmt.setBytes(++i, hash);
+                pstmt.setInt(++i, childChain.getId());
+                pstmt.setLong(++i, result);
+                pstmt.setBoolean(++i, approved);
+                pstmt.setInt(++i, height);
+                pstmt.executeUpdate();
+            }
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public byte[] getFullHash() {
+            return hash;
+        }
+
+        public long getResult() {
+            return result;
+        }
+
+        public boolean isApproved() {
+            return approved;
+        }
+
+        public int getHeight() {
+            return height;
+        }
+
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
+    }
+
 
     private final ChildChain childChain;
     private final PhasingVoteHome phasingVoteHome;
@@ -164,8 +265,6 @@ public final class PhasingPollHome {
     private final EntityDbTable<PhasingPoll> phasingPollTable;
     private final DbKey.HashKeyFactory<PhasingPoll> votersDbKeyFactory;
     private final ValuesDbTable<PhasingPoll, Long> votersTable;
-    private final DbKey.HashKeyFactory<PhasingPollResult> resultDbKeyFactory;
-    private final EntityDbTable<PhasingPollResult> resultTable;
 
     private PhasingPollHome(ChildChain childChain) {
         this.childChain = childChain;
@@ -188,7 +287,6 @@ public final class PhasingPollHome {
             @Override
             public void trim(int height) {
                 super.trim(height);
-                //TODO: investigate if old phasing_poll_result records can also be deleted
                 try (Connection con = getConnection();
                      DbIterator<PhasingPoll> pollsToTrim = phasingPollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), 0, -1);
                      PreparedStatement pstmt1 = con.prepareStatement("DELETE FROM phasing_poll WHERE id = ? AND full_hash = ?");
@@ -245,93 +343,10 @@ public final class PhasingPollHome {
                 }
             }
         };
-        this.resultDbKeyFactory = new DbKey.HashKeyFactory<PhasingPollResult>("full_hash", "id") {
-            @Override
-            public DbKey newKey(PhasingPollResult phasingPollResult) {
-                return phasingPollResult.dbKey;
-            }
-        };
-        this.resultTable = new EntityDbTable<PhasingPollResult>(childChain.getSchemaTable("phasing_poll_result"), resultDbKeyFactory) {
-            @Override
-            protected PhasingPollResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-                return new PhasingPollResult(rs, dbKey);
-            }
-            @Override
-            protected void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
-                phasingPollResult.save(con);
-            }
-        };
     }
 
-    public final class PhasingPollResult {
-
-        private final long id;
-        private final byte[] hash;
-        private final DbKey dbKey;
-        private final long result;
-        private final boolean approved;
-        private final int height;
-
-        private PhasingPollResult(PhasingPoll poll, long result) {
-            this.id = poll.getId();
-            this.hash = poll.getFullHash();
-            this.dbKey = resultDbKeyFactory.newKey(this.hash, this.id);
-            this.result = result;
-            this.approved = result >= poll.getQuorum();
-            this.height = Nxt.getBlockchain().getHeight();
-        }
-
-        private PhasingPollResult(ResultSet rs, DbKey dbKey) throws SQLException {
-            this.id = rs.getLong("id");
-            this.hash = rs.getBytes("full_hash");
-            this.dbKey = dbKey;
-            this.result = rs.getLong("result");
-            this.approved = rs.getBoolean("approved");
-            this.height = rs.getInt("height");
-        }
-
-        private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_result (id, full_hash, "
-                    + "result, approved, height) VALUES (?, ?, ?, ?, ?)")) {
-                int i = 0;
-                pstmt.setLong(++i, id);
-                pstmt.setBytes(++i, hash);
-                pstmt.setLong(++i, result);
-                pstmt.setBoolean(++i, approved);
-                pstmt.setInt(++i, height);
-                pstmt.executeUpdate();
-            }
-        }
-
-        public long getId() {
-            return id;
-        }
-
-        public byte[] getFullHash() {
-            return hash;
-        }
-
-        public long getResult() {
-            return result;
-        }
-
-        public boolean isApproved() {
-            return approved;
-        }
-
-        public int getHeight() {
-            return height;
-        }
-
-        public ChildChain getChildChain() {
-            return childChain;
-        }
-
-    }
-
-
-    public PhasingPollResult getResult(byte[] fullHash) {
-        return resultTable.get(resultDbKeyFactory.newKey(fullHash));
+    public PhasingPoll getPoll(Transaction transaction) {
+        return phasingPollTable.get(phasingPollDbKeyFactory.newKey(transaction.getFullHash(), transaction.getId()));
     }
 
     public PhasingPoll getPoll(byte[] fullHash) {

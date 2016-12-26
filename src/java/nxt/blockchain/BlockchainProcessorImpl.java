@@ -1360,7 +1360,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                             Map<TransactionType, Map<String, Integer>> duplicates) {
         for (ChildTransaction transaction : PhasingPollHome.getFinishingTransactions(height + 1)) {
             ChildTransactionImpl phasedTransaction = (ChildTransactionImpl) transaction;
-            if (phasedTransaction.getChain().getPhasingPollHome().getResult(phasedTransaction.getFullHash()) != null) {
+            if (PhasingPollHome.getResult(phasedTransaction) != null) {
                 continue;
             }
             try {
@@ -1583,14 +1583,14 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             });
             validPhasedTransactions.forEach(phasedTransaction -> {
                 if (phasedTransaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING) {
-                    PhasingPollHome.PhasingPollResult result = phasedTransaction.getChain().getPhasingPollHome().getResult(phasedTransaction.getFullHash());
+                    PhasingPollHome.PhasingPollResult result = PhasingPollHome.getResult(phasedTransaction);
                     if (result != null && result.isApproved()) {
                         addVotedTransactions(phasedTransaction, possiblyApprovedTransactions, block.getHeight());
                     }
                 }
             });
             possiblyApprovedTransactions.forEach(transaction -> {
-                if (transaction.getChain().getPhasingPollHome().getResult(transaction.getFullHash()) == null) {
+                if (PhasingPollHome.getResult(transaction) == null) {
                     try {
                         transaction.validate();
                         transaction.getPhasing().tryCountVotes(transaction, duplicates);

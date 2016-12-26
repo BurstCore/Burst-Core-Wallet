@@ -328,6 +328,13 @@ public class FxtDbVersion extends DbVersion {
             case 112:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS public_key_account_id_height_idx ON public_key (account_id, height DESC)");
             case 113:
+                apply("CREATE TABLE IF NOT EXISTS phasing_poll_result (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
+                        + "chain_id INT NOT NULL, result BIGINT NOT NULL, approved BOOLEAN NOT NULL, height INT NOT NULL)");
+            case 114:
+                apply("CREATE INDEX IF NOT EXISTS phasing_poll_result_id_idx ON phasing_poll_result(id)");
+            case 115:
+                apply("CREATE INDEX IF NOT EXISTS phasing_poll_result_height_idx ON phasing_poll_result(height)");
+            case 116:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate

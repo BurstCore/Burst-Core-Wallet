@@ -407,7 +407,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
                 throw new NxtException.NotValidException("Invalid referenced transaction chain " + referencedTransactionId.getChainId());
             }
         }
-        boolean validatingAtFinish = phasing != null && getSignature() != null && childChain.getPhasingPollHome().getPoll(getFullHash()) != null;
+        boolean validatingAtFinish = phasing != null && getSignature() != null && childChain.getPhasingPollHome().getPoll(this) != null;
         for (Appendix.AbstractAppendix appendage : appendages()) {
             appendage.loadPrunable(this);
             if (! appendage.verifyVersion()) {
