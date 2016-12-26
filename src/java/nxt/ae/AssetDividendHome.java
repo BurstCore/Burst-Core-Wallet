@@ -99,7 +99,7 @@ public final class AssetDividendHome {
     void payDividends(Transaction transaction, DividendPaymentAttachment attachment) {
         long totalDividend = 0;
         long issuerId = transaction.getSenderId();
-        long transactionId = transaction.getId();
+        AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
         List<Account.AccountAsset> accountAssets = new ArrayList<>();
         try (DbIterator<Account.AccountAsset> iterator = Account.getAssetAccounts(attachment.getAssetId(), attachment.getHeight(), 0, -1)) {
             while (iterator.hasNext()) {
@@ -113,12 +113,12 @@ public final class AssetDividendHome {
             if (accountAsset.getAccountId() != issuerId && accountAsset.getQuantityQNT() != 0) {
                 long dividend = Math.multiplyExact(accountAsset.getQuantityQNT(), amountNQTPerQNT);
                 balanceHome.getBalance(accountAsset.getAccountId())
-                        .addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, dividend);
+                        .addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, eventId, dividend);
                 totalDividend += dividend;
                 numAccounts += 1;
             }
         }
-        balanceHome.getBalance(issuerId).addToBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
+        balanceHome.getBalance(issuerId).addToBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, eventId, -totalDividend);
         AssetDividend assetDividend = new AssetDividend(transaction, attachment, totalDividend, numAccounts);
         assetDividendTable.insert(assetDividend);
         listeners.notify(assetDividend, Event.ASSET_DIVIDEND);

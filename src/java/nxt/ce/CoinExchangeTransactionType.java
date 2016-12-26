@@ -16,6 +16,7 @@ package nxt.ce;
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
+import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEvent;
 import nxt.account.BalanceHome;
 import nxt.blockchain.Chain;
@@ -89,7 +90,7 @@ public abstract class CoinExchangeTransactionType extends ChildTransactionType {
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
             BalanceHome.Balance balance = attachment.getChain().getBalanceHome().getBalance(senderAccount.getId());
             if (balance.getUnconfirmedBalance() >= attachment.getQuantityQNT()) {
-                balance.addToUnconfirmedBalance(getLedgerEvent(), transaction.getId(), -attachment.getQuantityQNT());
+                balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), -attachment.getQuantityQNT());
                 return true;
             }
             return false;
@@ -99,7 +100,7 @@ public abstract class CoinExchangeTransactionType extends ChildTransactionType {
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
             BalanceHome.Balance balance = attachment.getChain().getBalanceHome().getBalance(senderAccount.getId());
-            balance.addToUnconfirmedBalance(getLedgerEvent(), transaction.getId(), attachment.getQuantityQNT());
+            balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), attachment.getQuantityQNT());
         }
 
         @Override
@@ -197,7 +198,7 @@ public abstract class CoinExchangeTransactionType extends ChildTransactionType {
             if (order != null) {
                 CoinExchange.removeOrder(attachment.getOrderId());
                 BalanceHome.Balance balance = Chain.getChain(order.getChainId()).getBalanceHome().getBalance(senderAccount.getId());
-                balance.addToUnconfirmedBalance(LedgerEvent.COIN_EXCHANGE_ORDER_CANCEL, transaction.getId(),
+                balance.addToUnconfirmedBalance(LedgerEvent.COIN_EXCHANGE_ORDER_CANCEL, AccountLedger.newEventId(transaction),
                         order.getQuantity());
             }
         }

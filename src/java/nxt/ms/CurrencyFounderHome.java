@@ -106,7 +106,7 @@ public final class CurrencyFounderHome {
         founders.forEach(currencyFounderTable::delete);
     }
 
-    void increaseReserve(AccountLedger.LedgerEvent event, long eventId, Account account, long currencyId, long amountPerUnitNQT) {
+    void increaseReserve(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, Account account, long currencyId, long amountPerUnitNQT) {
         Currency currency = Currency.getCurrency(currencyId);
         account.addToBalance(childChain, event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitNQT));
         currency.increaseReserve(amountPerUnitNQT);

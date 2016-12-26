@@ -21,6 +21,9 @@ import nxt.Nxt;
 import nxt.blockchain.Block;
 import nxt.blockchain.Blockchain;
 import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.Chain;
+import nxt.blockchain.FxtChain;
+import nxt.blockchain.Transaction;
 import nxt.db.DbUtils;
 import nxt.db.DerivedDbTable;
 import nxt.dbschema.Db;
@@ -35,6 +38,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -250,8 +254,7 @@ public class AccountLedger {
                 existingEntry = pendingEntries.get(index);
                 if (existingEntry.getAccountId() == ledgerEntry.getAccountId() &&
                         existingEntry.getHolding() == ledgerEntry.getHolding() &&
-                        ((existingEntry.getHoldingId() == null && ledgerEntry.getHoldingId() == null) ||
-                        (existingEntry.getHoldingId() != null && existingEntry.getHoldingId().equals(ledgerEntry.getHoldingId())))) {
+                        existingEntry.getHoldingId() == ledgerEntry.getHoldingId()) {
                     adjustedBalance += existingEntry.getChange();
                     existingEntry.setBalance(adjustedBalance);
                 }
@@ -537,8 +540,8 @@ public class AccountLedger {
      * they are stored in the holding_type field of the account_ledger table.
      */
     public enum LedgerHolding {
-        UNCONFIRMED_NXT_BALANCE(1, true),
-        NXT_BALANCE(2, false),
+        UNCONFIRMED_COIN_BALANCE(1, true),
+        COIN_BALANCE(2, false),
         UNCONFIRMED_ASSET_BALANCE(3, true),
         ASSET_BALANCE(4, false),
         UNCONFIRMED_CURRENCY_BALANCE(5, true),
@@ -604,6 +607,53 @@ public class AccountLedger {
         }
     }
 
+    public interface LedgerEventId {
+
+        long getId();
+        byte[] getFullHash();
+        Chain getChain();
+
+    }
+
+    public static LedgerEventId newEventId(long eventId, byte[] eventHash, Chain chain) {
+        return new LedgerEventId() {
+            @Override
+            public long getId() {
+                return eventId;
+            }
+            @Override
+            public byte[] getFullHash() {
+                return eventHash;
+            }
+            @Override
+            public Chain getChain() {
+                return chain;
+            }
+        };
+    }
+
+    public static LedgerEventId newEventId(Transaction transaction) {
+        return transaction;
+    }
+
+    public static LedgerEventId newEventId(Block block) {
+        return new LedgerEventId() {
+            @Override
+            public long getId() {
+                return block.getId();
+            }
+            @Override
+            public byte[] getFullHash() {
+                return null;
+            }
+            @Override
+            public Chain getChain() {
+                return FxtChain.FXT;
+            }
+        };
+    }
+
+
     /**
      * Ledger entry
      */
@@ -618,6 +668,12 @@ public class AccountLedger {
         /** Associated event identifier */
         private final long eventId;
 
+        /** Transaction full hash for transaction events */
+        private final byte[] eventHash;
+
+        /** Chain identifier */
+        private final int chainId;
+
         /** Account identifier */
         private final long accountId;
 
@@ -625,7 +681,7 @@ public class AccountLedger {
         private final LedgerHolding holding;
 
         /** Holding identifier */
-        private final Long holdingId;
+        private final long holdingId;
 
         /** Change in balance */
         private long change;
@@ -646,17 +702,19 @@ public class AccountLedger {
          * Create a ledger entry
          *
          * @param   event                   Event
-         * @param   eventId                 Event identifier
+         * @param   ledgerEventId           Event identifier
          * @param   accountId               Account identifier
          * @param   holding                 Holding or null
          * @param   holdingId               Holding identifier or null
          * @param   change                  Change in balance
          * @param   balance                 New balance
          */
-        public LedgerEntry(LedgerEvent event, long eventId, long accountId, LedgerHolding holding, Long holdingId,
-                                            long change, long balance) {
+        public LedgerEntry(LedgerEvent event, LedgerEventId ledgerEventId, long accountId, LedgerHolding holding, long holdingId,
+                           long change, long balance) {
             this.event = event;
-            this.eventId = eventId;
+            this.eventId = ledgerEventId.getId();
+            this.eventHash = ledgerEventId.getFullHash();
+            this.chainId = ledgerEventId.getChain().getId();
             this.accountId = accountId;
             this.holding = holding;
             this.holdingId = holdingId;
@@ -669,19 +727,6 @@ public class AccountLedger {
         }
 
         /**
-         * Create a ledger entry
-         *
-         * @param   event                   Event
-         * @param   eventId                 Event identifier
-         * @param   accountId               Account identifier
-         * @param   change                  Change in balance
-         * @param   balance                 New balance
-         */
-        public LedgerEntry(LedgerEvent event, long eventId, long accountId, long change, long balance) {
-            this(event, eventId, accountId, null, null, change, balance);
-        }
-
-        /**
          * Create a ledger entry from a database entry
          *
          * @param   rs                      Result set
@@ -691,19 +736,11 @@ public class AccountLedger {
             ledgerId = rs.getLong("db_id");
             event = LedgerEvent.fromCode(rs.getByte("event_type"));
             eventId = rs.getLong("event_id");
+            eventHash = rs.getBytes("event_hash");
+            chainId = rs.getInt("chain_id");
             accountId = rs.getLong("account_id");
-            int holdingType = rs.getByte("holding_type");
-            if (holdingType >= 0) {
-                holding = LedgerHolding.fromCode(holdingType);
-            } else {
-                holding = null;
-            }
-            long id = rs.getLong("holding_id");
-            if (rs.wasNull()) {
-                holdingId = null;
-            } else {
-                holdingId = id;
-            }
+            holding = LedgerHolding.fromCode((int) rs.getByte("holding_type"));
+            holdingId = rs.getLong("holding_id");
             change = rs.getLong("change");
             balance = rs.getLong("balance");
             blockId = rs.getLong("block_id");
@@ -739,6 +776,24 @@ public class AccountLedger {
         }
 
         /**
+         * Return the associated event hash for transaction events
+         *
+         * @return                          Event full hash
+         */
+        public byte[] getEventHash() {
+            return eventHash;
+        }
+
+        /**
+         * Return the chain identifier
+         *
+         * @return                          Chain id
+         */
+        public int getChainId() {
+            return chainId;
+        }
+
+        /**
          * Return the account identifier
          *
          * @return                          Account identifier
@@ -750,7 +805,7 @@ public class AccountLedger {
         /**
          * Return the holding
          *
-         * @return                          Holding or null if there is no holding
+         * @return                          Holding
          */
         public LedgerHolding getHolding() {
             return holding;
@@ -759,9 +814,9 @@ public class AccountLedger {
         /**
          * Return the holding identifier
          *
-         * @return                          Holding identifier or null if there is no holding identifier
+         * @return                          Holding identifier
          */
-        public Long getHoldingId() {
+        public long getHoldingId() {
             return holdingId;
         }
 
@@ -835,8 +890,8 @@ public class AccountLedger {
          */
         @Override
         public int hashCode() {
-            return (Long.hashCode(accountId) ^ event.getCode() ^ Long.hashCode(eventId) ^
-                    (holding != null ? holding.getCode() : 0) ^ (holdingId != null ? Long.hashCode(holdingId) : 0));
+            return Long.hashCode(accountId) ^ event.getCode() ^ Long.hashCode(eventId) ^
+                    holding.getCode() ^ Long.hashCode(holdingId);
         }
 
         /**
@@ -849,8 +904,10 @@ public class AccountLedger {
         public boolean equals(Object obj) {
             return (obj != null && (obj instanceof LedgerEntry) && accountId == ((LedgerEntry)obj).accountId &&
                     event == ((LedgerEntry)obj).event && eventId == ((LedgerEntry)obj).eventId &&
+                    Arrays.equals(eventHash, ((LedgerEntry)obj).eventHash) &&
+                    chainId == ((LedgerEntry)obj).chainId &&
                     holding == ((LedgerEntry)obj).holding &&
-                    (holdingId != null ? holdingId.equals(((LedgerEntry)obj).holdingId) : ((LedgerEntry)obj).holdingId == null));
+                    holdingId == ((LedgerEntry) obj).holdingId);
         }
 
         /**
@@ -861,18 +918,16 @@ public class AccountLedger {
          */
         private void save(Connection con) throws SQLException {
             try (PreparedStatement stmt = con.prepareStatement("INSERT INTO account_ledger "
-                    + "(account_id, event_type, event_id, holding_type, holding_id, change, balance, "
+                    + "(account_id, event_type, event_id, event_hash, chain_id, holding_type, holding_id, change, balance, "
                     + "block_id, height, timestamp) "
-                    + "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+                    + "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
                 int i=0;
                 stmt.setLong(++i, accountId);
                 stmt.setByte(++i, (byte) event.getCode());
                 stmt.setLong(++i, eventId);
-                if (holding != null) {
-                    stmt.setByte(++i, (byte)holding.getCode());
-                } else {
-                    stmt.setByte(++i, (byte)-1);
-                }
+                DbUtils.setBytes(stmt, ++i, eventHash);
+                stmt.setInt(++i, chainId);
+                stmt.setByte(++i, (byte)holding.getCode());
                 DbUtils.setLong(stmt, ++i, holdingId);
                 stmt.setLong(++i, change);
                 stmt.setLong(++i, balance);

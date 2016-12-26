@@ -19,6 +19,7 @@ package nxt.blockchain;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountControlFxtTransactionType;
+import nxt.account.AccountLedger;
 import nxt.account.PaymentFxtTransactionType;
 import nxt.ce.CoinExchangeFxtTransactionType;
 
@@ -73,9 +74,10 @@ public abstract class FxtTransactionType extends TransactionType {
         if (FxtChain.FXT.getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() < totalAmount) {
             return false;
         }
-        senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), transaction.getId(), -amount, -fee);
+        AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
+        senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), eventId, -amount, -fee);
         if (!applyAttachmentUnconfirmed(transaction, senderAccount)) {
-            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), transaction.getId(), amount, fee);
+            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), eventId, amount, fee);
             return false;
         }
         return true;
@@ -84,16 +86,16 @@ public abstract class FxtTransactionType extends TransactionType {
     @Override
     public final void apply(TransactionImpl transaction, Account senderAccount, Account recipientAccount) {
         long amount = transaction.getAmount();
-        long transactionId = transaction.getId();
+        AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
         //if (!transaction.attachmentIsPhased()) {
-        senderAccount.addToBalance(FxtChain.FXT, getLedgerEvent(), transactionId, -amount, -transaction.getFee());
+        senderAccount.addToBalance(FxtChain.FXT, getLedgerEvent(), eventId, -amount, -transaction.getFee());
         /* never phased
         } else {
             senderAccount.addToBalanceFQT(getLedgerEvent(), transactionId, -amount);
         }
         */
         if (recipientAccount != null) {
-            recipientAccount.addToBalanceAndUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), transactionId, amount);
+            recipientAccount.addToBalanceAndUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), eventId, amount);
         }
         applyAttachment(transaction, senderAccount, recipientAccount);
     }
@@ -101,7 +103,8 @@ public abstract class FxtTransactionType extends TransactionType {
     @Override
     public final void undoUnconfirmed(TransactionImpl transaction, Account senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
-        senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), transaction.getId(), transaction.getAmount(), transaction.getFee());
+        senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), AccountLedger.newEventId(transaction),
+                transaction.getAmount(), transaction.getFee());
     }
 
     @Override

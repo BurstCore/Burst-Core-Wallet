@@ -120,7 +120,7 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
             totalFee = Math.addExact(totalFee, childTransaction.getFee());
         }
         senderAccount.addToBalanceAndUnconfirmedBalance(ChildChain.getChildChain(attachment.getChainId()),
-                getLedgerEvent(), transaction.getId(), totalFee);
+                getLedgerEvent(), AccountLedger.newEventId(transaction), totalFee);
     }
 
     @Override

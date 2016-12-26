@@ -209,7 +209,10 @@ var NRS = (function (NRS, $, undefined) {
         }
     };
 
-    function isVolatileRequest(doNotSign, type, requestType) {
+    function isVolatileRequest(doNotSign, type, requestType, secretPhrase) {
+        if (secretPhrase && NRS.isMobileApp()) {
+            return true;
+        }
         return (NRS.isPassphraseAtRisk() || doNotSign) && type == "POST" && !NRS.isSubmitPassphrase(requestType);
     }
 
@@ -257,7 +260,8 @@ var NRS = (function (NRS, $, undefined) {
             }
         }
 
-        if (type == "POST" && NRS.isRequireBlockchain(requestType) && NRS.accountInfo.errorCode && NRS.accountInfo.errorCode == 5) {
+        if ((NRS.isRequirePost(requestType) || "secretPhrase" in data) &&
+            NRS.isRequireBlockchain(requestType) && NRS.accountInfo.errorCode && NRS.accountInfo.errorCode == 5) {
             callback({
                 "errorCode": 2,
                 "errorDescription": $.t("error_new_account")
@@ -276,7 +280,7 @@ var NRS = (function (NRS, $, undefined) {
         }
 
         var secretPhrase = "";
-        var isVolatile = isVolatileRequest(data.doNotSign, type, requestType);
+        var isVolatile = isVolatileRequest(data.doNotSign, type, requestType, data.secretPhrase);
         if (isVolatile) {
             if (NRS.rememberPassword) {
                 secretPhrase = _password;

@@ -19,6 +19,7 @@ package nxt.blockchain;
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
+import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEvent;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
@@ -379,6 +380,7 @@ public final class BlockImpl implements Block {
     void apply() {
         Account generatorAccount = Account.addOrGetAccount(getGeneratorId());
         generatorAccount.apply(getGeneratorPublicKey());
+        AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(this);
         long totalBackFees = 0;
         if (this.height > 3) {
             long[] backFees = new long[3];
@@ -395,14 +397,14 @@ public final class BlockImpl implements Block {
                 totalBackFees += backFees[i];
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(this.height - i - 1).getGeneratorId());
                 Logger.logDebugMessage("Back fees %f FXT to forger at height %d", ((double)backFees[i])/Constants.ONE_NXT, this.height - i - 1);
-                previousGeneratorAccount.addToBalanceAndUnconfirmedBalance(FxtChain.FXT, LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
+                previousGeneratorAccount.addToBalanceAndUnconfirmedBalance(FxtChain.FXT, LedgerEvent.BLOCK_GENERATED, eventId, backFees[i]);
                 previousGeneratorAccount.addToForgedBalanceFQT(backFees[i]);
             }
         }
         if (totalBackFees != 0) {
             Logger.logDebugMessage("Fee reduced by %f FXT at height %d", ((double)totalBackFees)/Constants.ONE_NXT, this.height);
         }
-        generatorAccount.addToBalanceAndUnconfirmedBalance(FxtChain.FXT, LedgerEvent.BLOCK_GENERATED, getId(), totalFeeNQT - totalBackFees);
+        generatorAccount.addToBalanceAndUnconfirmedBalance(FxtChain.FXT, LedgerEvent.BLOCK_GENERATED, eventId, totalFeeNQT - totalBackFees);
         generatorAccount.addToForgedBalanceFQT(totalFeeNQT - totalBackFees);
     }
 

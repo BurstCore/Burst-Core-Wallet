@@ -19,6 +19,7 @@ package nxt.blockchain;
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
+import nxt.account.AccountLedger;
 import nxt.account.AccountPropertyTransactionType;
 import nxt.account.PaymentTransactionType;
 import nxt.ae.AssetExchangeTransactionType;
@@ -81,6 +82,7 @@ public abstract class ChildTransactionType extends TransactionType {
     @Override
     public final boolean applyUnconfirmed(TransactionImpl transaction, Account senderAccount) {
         ChildChain childChain = (ChildChain) transaction.getChain();
+        AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
         long amount = transaction.getAmount();
         long fee = transaction.getFee();
         long deposit = 0;
@@ -89,17 +91,17 @@ public abstract class ChildTransactionType extends TransactionType {
                 return false;
             }
             deposit = Constants.UNCONFIRMED_POOL_DEPOSIT_FQT;
-            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), transaction.getId(), (long) 0, -deposit);
+            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), eventId, (long) 0, -deposit);
         }
         long totalAmount = Math.addExact(amount, fee);
         if (childChain.getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() < totalAmount) {
-            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), transaction.getId(), (long) 0, deposit);
+            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), eventId, (long) 0, deposit);
             return false;
         }
-        senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), -amount, -fee);
+        senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, -amount, -fee);
         if (!applyAttachmentUnconfirmed(transaction, senderAccount)) {
-            senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(), amount, fee);
-            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), transaction.getId(), (long) 0, deposit);
+            senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, amount, fee);
+            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), eventId, (long) 0, deposit);
             return false;
         }
         return true;
@@ -109,14 +111,14 @@ public abstract class ChildTransactionType extends TransactionType {
     public final void apply(TransactionImpl transaction, Account senderAccount, Account recipientAccount) {
         ChildChain childChain = (ChildChain) transaction.getChain();
         long amount = transaction.getAmount();
-        long transactionId = transaction.getId();
+        AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
         if (!transaction.attachmentIsPhased()) {
-            senderAccount.addToBalance(childChain, getLedgerEvent(), transactionId, -amount, -transaction.getFee());
+            senderAccount.addToBalance(childChain, getLedgerEvent(), eventId, -amount, -transaction.getFee());
         } else {
-            senderAccount.addToBalance(childChain, getLedgerEvent(), transactionId, -amount);
+            senderAccount.addToBalance(childChain, getLedgerEvent(), eventId, -amount);
         }
         if (recipientAccount != null) {
-            recipientAccount.addToBalanceAndUnconfirmedBalance(childChain, getLedgerEvent(), transactionId, amount);
+            recipientAccount.addToBalanceAndUnconfirmedBalance(childChain, getLedgerEvent(), eventId, amount);
         }
         applyAttachment(transaction, senderAccount, recipientAccount);
     }
@@ -125,10 +127,11 @@ public abstract class ChildTransactionType extends TransactionType {
     public final void undoUnconfirmed(TransactionImpl transaction, Account senderAccount) {
         ChildChain childChain = (ChildChain) transaction.getChain();
         undoAttachmentUnconfirmed(transaction, senderAccount);
-        senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), transaction.getId(),
+        AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
+        senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId,
                 transaction.getAmount(), transaction.getFee());
         if (((ChildTransactionImpl)transaction).getReferencedTransactionId() != null) {
-            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), transaction.getId(), (long) 0, Constants.UNCONFIRMED_POOL_DEPOSIT_FQT);
+            senderAccount.addToUnconfirmedBalance(FxtChain.FXT, getLedgerEvent(), eventId, (long) 0, Constants.UNCONFIRMED_POOL_DEPOSIT_FQT);
         }
     }
 
