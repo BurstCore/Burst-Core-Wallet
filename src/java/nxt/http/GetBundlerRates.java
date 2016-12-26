@@ -15,13 +15,12 @@ package nxt.http;
 import nxt.NxtException;
 import nxt.peer.BundlerRate;
 import nxt.peer.Peers;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 public final class GetBundlerRates extends APIServlet.APIRequestHandler {
 
@@ -39,7 +38,7 @@ public final class GetBundlerRates extends APIServlet.APIRequestHandler {
         rates.forEach(rate -> {
             JSONObject rateJSON = new JSONObject();
             rateJSON.put("chain", rate.getChain().getId());
-            rateJSON.put("minRateNQTPerFXT", Long.toUnsignedString(rate.getRate()));
+            rateJSON.put("minRateNQTPerFXT", String.valueOf(rate.getRate()));
             ratesJSON.add(rateJSON);
         });
         response.put("rates", ratesJSON);
