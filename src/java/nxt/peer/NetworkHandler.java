@@ -848,6 +848,9 @@ public final class NetworkHandler implements Runnable {
      * @param   message                 Message to send
      */
     public static void broadcastMessage(NetworkMessage message) {
+        if (Constants.isOffline) {
+            return;
+        }
         connectionMap.values().forEach(peer -> {
             if (peer.getState() == Peer.State.CONNECTED &&
                     (peer.getBlockchainState() != Peer.BlockchainState.LIGHT_CLIENT ||
