@@ -367,7 +367,6 @@ public final class Nxt {
             try {
                 long startTime = System.currentTimeMillis();
                 Logger.init();
-                setSystemProperties();
                 logSystemProperties();
                 runtimeMode.init();
                 Thread secureRandomInitThread = initSecureRandom();
@@ -439,22 +438,6 @@ public final class Nxt {
 
         private Init() {} // never
 
-    }
-
-    private static void setSystemProperties() {
-      // Override system settings that the user has define in nxt.properties file.
-        // TODO: no longer supported?
-      String[] systemProperties = new String[] {
-        "socksProxyHost",
-        "socksProxyPort",
-      };
-
-      for (String propertyName : systemProperties) {
-        String propertyValue;
-        if ((propertyValue = getStringProperty(propertyName)) != null) {
-          System.setProperty(propertyName, propertyValue);
-        }
-      }
     }
 
     private static void logSystemProperties() {
