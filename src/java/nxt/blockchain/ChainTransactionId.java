@@ -57,11 +57,11 @@ public final class ChainTransactionId {
     }
 
     public Transaction getTransaction() {
-        return Chain.getChain(chainId).getTransactionHome().findTransactionByFullHash(hash);
+        return Chain.getChain(chainId).getTransactionHome().findTransaction(hash);
     }
 
     public ChildTransaction getChildTransaction() {
-        return (ChildTransaction)ChildChain.getChildChain(chainId).getTransactionHome().findTransactionByFullHash(hash);
+        return (ChildTransaction)ChildChain.getChildChain(chainId).getTransactionHome().findTransaction(hash);
     }
 
     public static ChainTransactionId getChainTransactionId(Transaction transaction) {

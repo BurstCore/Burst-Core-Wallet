@@ -53,7 +53,7 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
         ChildChain childChain = ParameterParser.getChildChain(req);
         //TODO: prunable messages on FXT chain?
-        ChildTransaction transaction = (ChildTransaction)Nxt.getBlockchain().getTransactionByFullHash(childChain, transactionFullHash);
+        ChildTransaction transaction = (ChildTransaction)Nxt.getBlockchain().getTransaction(childChain, transactionFullHash);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }

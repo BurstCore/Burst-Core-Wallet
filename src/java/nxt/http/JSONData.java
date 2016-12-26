@@ -523,7 +523,7 @@ public final class JSONData {
             try (DbIterator<PhasingPollHome.PhasingPollResult> phasingPollResults = PhasingPollHome.getApproved(block.getHeight())) {
                 for (PhasingPollHome.PhasingPollResult phasingPollResult : phasingPollResults) {
                     if (includeTransactions) {
-                        phasedTransactions.add(transaction(Nxt.getBlockchain().getTransactionByFullHash(phasingPollResult.getChildChain(), phasingPollResult.getFullHash())));
+                        phasedTransactions.add(transaction(Nxt.getBlockchain().getTransaction(phasingPollResult.getChildChain(), phasingPollResult.getFullHash())));
                     } else {
                         ChainTransactionId phasedTransactionId = new ChainTransactionId(phasingPollResult.getChildChain().getId(), phasingPollResult.getFullHash());
                         phasedTransactions.add(phasedTransactionId.getJSON());
@@ -1307,7 +1307,7 @@ public final class JSONData {
         }
         if (includeTransactions && entry.getEvent().isTransaction()) {
             Chain chain = Chain.getChain(entry.getChainId());
-            Transaction transaction = Nxt.getBlockchain().getTransactionByFullHash(chain, entry.getEventHash());
+            Transaction transaction = Nxt.getBlockchain().getTransaction(chain, entry.getEventHash());
             json.put("transaction", JSONData.transaction(transaction));
         }
     }

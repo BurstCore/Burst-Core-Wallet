@@ -100,7 +100,7 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
         }
         if (hash == null) {
             TaggedDataUploadAttachment taggedDataUpload = (TaggedDataUploadAttachment) ChildChain.getChain(chainId).getTransactionHome()
-                            .findTransactionByFullHash(taggedDataTransactionFullHash).getAttachment();
+                            .findTransaction(taggedDataTransactionFullHash).getAttachment();
             hash = taggedDataUpload.getHash();
         }
         return hash;

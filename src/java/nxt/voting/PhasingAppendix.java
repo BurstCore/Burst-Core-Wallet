@@ -187,7 +187,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
                 if (chain == null) {
                     throw new NxtException.NotValidException("Invalid chain id " + linkedTransactionId.getChainId());
                 }
-                TransactionImpl linkedTransaction = chain.getTransactionHome().findTransactionByFullHash(hash, currentHeight);
+                TransactionImpl linkedTransaction = chain.getTransactionHome().findTransaction(hash, currentHeight);
                 if (linkedTransaction != null) {
                     if (transaction.getTimestamp() - linkedTransaction.getTimestamp() > Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN) {
                         throw new NxtException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");

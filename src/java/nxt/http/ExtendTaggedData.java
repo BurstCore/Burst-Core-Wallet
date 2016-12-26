@@ -48,7 +48,7 @@ public final class ExtendTaggedData extends CreateTransaction {
         ChildChain childChain = ParameterParser.getChildChain(req);
         TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionFullHash);
         if (taggedData == null) {
-            Transaction transaction = Nxt.getBlockchain().getTransactionByFullHash(childChain, transactionFullHash);
+            Transaction transaction = Nxt.getBlockchain().getTransaction(childChain, transactionFullHash);
             if (transaction == null || transaction.getType() != TaggedDataTransactionType.TAGGED_DATA_UPLOAD) {
                 return UNKNOWN_TRANSACTION;
             }

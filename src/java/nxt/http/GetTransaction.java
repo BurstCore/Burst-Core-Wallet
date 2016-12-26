@@ -44,7 +44,7 @@ public final class GetTransaction extends APIServlet.APIRequestHandler {
 
         Transaction transaction;
         try {
-            transaction = Nxt.getBlockchain().getTransactionByFullHash(chain, transactionFullHash);
+            transaction = Nxt.getBlockchain().getTransaction(chain, transactionFullHash);
             if (transaction != null) {
                 return JSONData.transaction(transaction, includePhasingResult);
             }

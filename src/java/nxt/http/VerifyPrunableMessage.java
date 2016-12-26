@@ -64,7 +64,7 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
 
         byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         ChildChain childChain = ParameterParser.getChildChain(req);
-        ChildTransaction transaction = (ChildTransaction)Nxt.getBlockchain().getTransactionByFullHash(childChain, transactionFullHash);
+        ChildTransaction transaction = (ChildTransaction)Nxt.getBlockchain().getTransaction(childChain, transactionFullHash);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }

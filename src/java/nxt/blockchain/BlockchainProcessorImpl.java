@@ -1188,7 +1188,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public Transaction restorePrunedTransaction(Chain chain, byte[] transactionFullHash) {
-        TransactionImpl transaction = chain.getTransactionHome().findTransactionByFullHash(transactionFullHash);
+        TransactionImpl transaction = chain.getTransactionHome().findTransaction(transactionFullHash);
         if (transaction == null) {
             throw new IllegalArgumentException("Transaction not found");
         }
@@ -1519,7 +1519,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private void fullyValidateTransaction(ChildTransactionImpl transaction, BlockImpl block, BlockImpl previousLastBlock, int curTime)
             throws BlockNotAcceptedException {
-        if (transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash(), previousLastBlock.getHeight())) {
+        if (transaction.getChain().getTransactionHome().hasTransaction(transaction, previousLastBlock.getHeight())) {
             throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
         }
         if (transaction.getReferencedTransactionId() != null && !transaction.hasAllReferencedTransactions(transaction.getTimestamp(), 0)) {
@@ -1571,7 +1571,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             SortedSet<ChildTransactionImpl> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
             block.getFxtTransactions().forEach(fxtTransaction -> {
                 for (ChildTransactionImpl childTransaction : fxtTransaction.getChildTransactions()) {
-                    PhasingPollHome.getLinkedPhasedTransactions(childTransaction.getFullHash()).forEach(phasedTransaction -> {
+                    PhasingPollHome.getLinkedPhasedTransactions(childTransaction).forEach(phasedTransaction -> {
                         if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
                             possiblyApprovedTransactions.add((ChildTransactionImpl)phasedTransaction);
                         }

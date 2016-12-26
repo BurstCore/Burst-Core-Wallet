@@ -270,7 +270,7 @@ public final class TaggedDataHome {
 
     void add(TransactionImpl transaction, TaggedDataUploadAttachment attachment) {
         if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME && attachment.getData() != null) {
-            TaggedData taggedData = taggedDataTable.get(taggedDataKeyFactory.newKey(transaction.getFullHash()));
+            TaggedData taggedData = taggedDataTable.get(taggedDataKeyFactory.newKey(transaction.getFullHash(), transaction.getId()));
             if (taggedData == null) {
                 taggedData = new TaggedData(transaction, attachment);
                 taggedDataTable.insert(taggedData);
@@ -297,7 +297,7 @@ public final class TaggedDataHome {
         if (Nxt.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
-                TransactionImpl uploadTransaction = transaction.getChain().getTransactionHome().findTransactionByFullHash(taggedDataTransactionFullHash);
+                TransactionImpl uploadTransaction = transaction.getChain().getTransactionHome().findTransaction(taggedDataTransactionFullHash);
                 taggedData = new TaggedData(uploadTransaction, attachment);
                 addTags(taggedData);
             }
@@ -316,7 +316,7 @@ public final class TaggedDataHome {
         addTags(taggedData, height);
         int timestamp = transaction.getTimestamp();
         for (byte[] extendTransactionFullHash : getExtendTransactionIds(transaction.getFullHash())) {
-            Transaction extendTransaction = transaction.getChain().getTransactionHome().findTransactionByFullHash(extendTransactionFullHash);
+            Transaction extendTransaction = transaction.getChain().getTransactionHome().findTransaction(extendTransactionFullHash);
             if (extendTransaction.getTimestamp() - Constants.MIN_PRUNABLE_LIFETIME > timestamp) {
                 timestamp = extendTransaction.getTimestamp();
             } else {

@@ -81,7 +81,7 @@ public final class PhasingPollHome {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     ChildChain childChain = ChildChain.getChildChain(rs.getInt("chain_id"));
-                    Transaction childTransaction = childChain.getTransactionHome().findTransactionByFullHash(rs.getBytes("full_hash"));
+                    Transaction childTransaction = childChain.getTransactionHome().findTransaction(rs.getBytes("full_hash"));
                     childTransactions.add((ChildTransaction)childTransaction);
                 }
                 childTransactions.sort(finishingTransactionsComparator);
@@ -137,18 +137,26 @@ public final class PhasingPollHome {
         }
     };
 
+    public static List<? extends ChildTransaction> getLinkedPhasedTransactions(Transaction transaction) {
+        return getLinkedPhasedTransactions(transaction.getFullHash(), transaction.getId());
+    }
+
     public static List<? extends ChildTransaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
+        return getLinkedPhasedTransactions(linkedTransactionFullHash, Convert.fullHashToId(linkedTransactionFullHash));
+    }
+
+    private static List<? extends ChildTransaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash, long linkedTransactionId) {
         try (Connection con = linkedTransactionTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT chain_id, transaction_full_hash FROM phasing_poll_linked_transaction " +
                      "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
             int i = 0;
-            pstmt.setLong(++i, Convert.fullHashToId(linkedTransactionFullHash));
+            pstmt.setLong(++i, linkedTransactionId);
             pstmt.setBytes(++i, linkedTransactionFullHash);
             List<ChildTransaction> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     ChildChain childChain = ChildChain.getChildChain(rs.getInt("chain_id"));
-                    transactions.add((ChildTransaction)childChain.getTransactionHome().findTransactionByFullHash(rs.getBytes("transaction_full_hash")));
+                    transactions.add((ChildTransaction)childChain.getTransactionHome().findTransaction(rs.getBytes("transaction_full_hash")));
                 }
             }
             return transactions;
@@ -575,7 +583,7 @@ public final class PhasingPollHome {
             if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
                 int count = 0;
                 for (ChainTransactionId linkedTransaction : getLinkedTransactions()) {
-                    if (linkedTransaction.getChain().getTransactionHome().hasTransactionByFullHash(linkedTransaction.getFullHash(), height)) {
+                    if (linkedTransaction.getChain().getTransactionHome().hasTransaction(linkedTransaction.getFullHash(), linkedTransaction.getTransactionId(), height)) {
                         count += 1;
                     }
                 }

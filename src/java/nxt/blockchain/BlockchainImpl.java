@@ -354,13 +354,13 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public TransactionImpl getTransactionByFullHash(Chain chain, byte[] fullHash) {
-        return chain.getTransactionHome().findTransactionByFullHash(fullHash);
+    public TransactionImpl getTransaction(Chain chain, byte[] fullHash) {
+        return chain.getTransactionHome().findTransaction(fullHash);
     }
 
     @Override
-    public boolean hasTransactionByFullHash(Chain chain, byte[] fullHash) {
-        return chain.getTransactionHome().hasTransactionByFullHash(fullHash);
+    public boolean hasTransaction(Chain chain, byte[] fullHash) {
+        return chain.getTransactionHome().hasTransaction(fullHash);
     }
 
     @Override

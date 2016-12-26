@@ -42,7 +42,7 @@ public final class GetTransactionBytes extends APIServlet.APIRequestHandler {
         Transaction transaction;
         Chain chain = ParameterParser.getChain(req);
 
-        transaction = Nxt.getBlockchain().getTransactionByFullHash(chain, transactionFullHash);
+        transaction = Nxt.getBlockchain().getTransaction(chain, transactionFullHash);
         JSONObject response = new JSONObject();
         if (transaction == null) {
             transaction = Nxt.getTransactionProcessor().getUnconfirmedTransaction(Convert.fullHashToId(transactionFullHash));
