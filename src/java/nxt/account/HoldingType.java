@@ -33,17 +33,17 @@ public enum HoldingType {
         }
 
         @Override
-        public void addToBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToBalance(Account account, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long holdingId, long amount) {
             account.addToBalance(Chain.getChain(Math.toIntExact(holdingId)), event, eventId, amount);
         }
 
         @Override
-        public void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long holdingId, long amount) {
             account.addToUnconfirmedBalance(Chain.getChain(Math.toIntExact(holdingId)), event, eventId, amount);
         }
 
         @Override
-        public void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long holdingId, long amount) {
             account.addToBalanceAndUnconfirmedBalance(Chain.getChain(Math.toIntExact(holdingId)), event, eventId, amount);
         }
 
@@ -62,17 +62,17 @@ public enum HoldingType {
         }
 
         @Override
-        public void addToBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToBalance(Account account, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long holdingId, long amount) {
             account.addToAssetBalanceQNT(event, eventId, holdingId, amount);
         }
 
         @Override
-        public void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long holdingId, long amount) {
             account.addToUnconfirmedAssetBalanceQNT(event, eventId, holdingId, amount);
         }
 
         @Override
-        public void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long holdingId, long amount) {
             account.addToAssetAndUnconfirmedAssetBalanceQNT(event, eventId, holdingId, amount);
         }
 
@@ -91,17 +91,17 @@ public enum HoldingType {
         }
 
         @Override
-        public void addToBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToBalance(Account account, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long holdingId, long amount) {
             account.addToCurrencyUnits(event, eventId, holdingId, amount);
         }
 
         @Override
-        public void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long holdingId, long amount) {
             account.addToUnconfirmedCurrencyUnits(event, eventId, holdingId, amount);
         }
 
         @Override
-        public void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long holdingId, long amount) {
             account.addToCurrencyAndUnconfirmedCurrencyUnits(event, eventId, holdingId, amount);
         }
 
@@ -130,10 +130,10 @@ public enum HoldingType {
 
     public abstract long getUnconfirmedBalance(Account account, long holdingId);
 
-    public abstract void addToBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount);
+    public abstract void addToBalance(Account account, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long holdingId, long amount);
 
-    public abstract void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount);
+    public abstract void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long holdingId, long amount);
 
-    public abstract void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount);
+    public abstract void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long holdingId, long amount);
 
 }

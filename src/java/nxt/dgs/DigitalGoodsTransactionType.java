@@ -421,7 +421,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             PurchaseAttachment attachment = (PurchaseAttachment) transaction.getAttachment();
             if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT())) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
                         -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
                 return true;
             }
@@ -431,7 +431,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             PurchaseAttachment attachment = (PurchaseAttachment) transaction.getAttachment();
-            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
+            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
                     Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
         }
 
@@ -683,7 +683,8 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             RefundAttachment attachment = (RefundAttachment) transaction.getAttachment();
             if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= attachment.getRefundNQT()) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(), -attachment.getRefundNQT());
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
+                        AccountLedger.newEventId(transaction), -attachment.getRefundNQT());
                 return true;
             }
             return false;
@@ -692,13 +693,14 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             RefundAttachment attachment = (RefundAttachment) transaction.getAttachment();
-            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(), attachment.getRefundNQT());
+            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
+                    AccountLedger.newEventId(transaction), attachment.getRefundNQT());
         }
 
         @Override
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             RefundAttachment attachment = (RefundAttachment) transaction.getAttachment();
-            transaction.getChain().getDigitalGoodsHome().refund(getLedgerEvent(), transaction.getId(), transaction.getSenderId(),
+            transaction.getChain().getDigitalGoodsHome().refund(getLedgerEvent(), AccountLedger.newEventId(transaction), transaction.getSenderId(),
                     attachment.getPurchaseId(), attachment.getRefundNQT(), transaction.getEncryptedMessage());
         }
 

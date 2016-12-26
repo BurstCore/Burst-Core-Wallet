@@ -879,9 +879,10 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private final Listener<Block> checksumListener = block -> {
-        if (block.getHeight() == Constants.CHECKSUM_BLOCK_1
-                && ! verifyChecksum(CHECKSUM_1, 0, Constants.CHECKSUM_BLOCK_1)) {
-            popOffTo(0);
+        if (block.getHeight() == Constants.CHECKSUM_BLOCK_1) {
+            if (! verifyChecksum(CHECKSUM_1, 0, Constants.CHECKSUM_BLOCK_1)) {
+                popOffTo(0);
+            }
         }
     };
 

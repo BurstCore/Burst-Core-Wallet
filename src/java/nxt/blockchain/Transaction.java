@@ -17,12 +17,13 @@
 package nxt.blockchain;
 
 import nxt.NxtException;
+import nxt.account.AccountLedger;
 import nxt.util.Filter;
 import org.json.simple.JSONObject;
 
 import java.util.List;
 
-public interface Transaction {
+public interface Transaction extends AccountLedger.LedgerEventId {
 
     interface Builder {
 

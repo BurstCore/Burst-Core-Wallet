@@ -187,11 +187,11 @@ public final class BalanceHome {
             return unconfirmedBalance;
         }
 
-        public void addToBalance(AccountLedger.LedgerEvent event, long eventId, long amount) {
+        public void addToBalance(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long amount) {
             addToBalance(event, eventId, amount, 0);
         }
 
-        public void addToBalance(AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
+        public void addToBalance(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long amount, long fee) {
             if (amount == 0 && fee == 0) {
                 return;
             }
@@ -206,20 +206,20 @@ public final class BalanceHome {
             if (AccountLedger.mustLogEntry(event, this.accountId, false)) {
                 if (fee != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.accountId,
-                            AccountLedger.LedgerHolding.NXT_BALANCE, null, fee, this.balance - amount));
+                            AccountLedger.LedgerHolding.COIN_BALANCE, chain.getId(), fee, this.balance - amount));
                 }
                 if (amount != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(event, eventId, this.accountId,
-                            AccountLedger.LedgerHolding.NXT_BALANCE, null, amount, this.balance));
+                            AccountLedger.LedgerHolding.COIN_BALANCE, chain.getId(), amount, this.balance));
                 }
             }
         }
 
-        public void addToUnconfirmedBalance(AccountLedger.LedgerEvent event, long eventId, long amount) {
+        public void addToUnconfirmedBalance(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long amount) {
             addToUnconfirmedBalance(event, eventId, amount, 0);
         }
 
-        void addToUnconfirmedBalance(AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
+        void addToUnconfirmedBalance(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long amount, long fee) {
             if (amount == 0 && fee == 0) {
                 return;
             }
@@ -228,24 +228,23 @@ public final class BalanceHome {
             Account.checkBalance(this.accountId, this.balance, this.unconfirmedBalance);
             save();
             listeners.notify(this, Event.UNCONFIRMED_BALANCE);
-            //TODO: use chain holding id in account ledger
             if (AccountLedger.mustLogEntry(event, this.accountId, true)) {
                 if (fee != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.accountId,
-                            AccountLedger.LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, fee, this.unconfirmedBalance - amount));
+                            AccountLedger.LedgerHolding.UNCONFIRMED_COIN_BALANCE, chain.getId(), fee, this.unconfirmedBalance - amount));
                 }
                 if (amount != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(event, eventId, this.accountId,
-                            AccountLedger.LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, amount, this.unconfirmedBalance));
+                            AccountLedger.LedgerHolding.UNCONFIRMED_COIN_BALANCE, chain.getId(), amount, this.unconfirmedBalance));
                 }
             }
         }
 
-        public void addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent event, long eventId, long amount) {
+        public void addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long amount) {
             addToBalanceAndUnconfirmedBalance(event, eventId, amount, 0);
         }
 
-        void addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
+        void addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long amount, long fee) {
             if (amount == 0 && fee == 0) {
                 return;
             }
@@ -262,21 +261,21 @@ public final class BalanceHome {
             if (AccountLedger.mustLogEntry(event, this.accountId, true)) {
                 if (fee != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.accountId,
-                            AccountLedger.LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, fee, this.unconfirmedBalance - amount));
+                            AccountLedger.LedgerHolding.UNCONFIRMED_COIN_BALANCE, chain.getId(), fee, this.unconfirmedBalance - amount));
                 }
                 if (amount != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(event, eventId, this.accountId,
-                            AccountLedger.LedgerHolding.UNCONFIRMED_NXT_BALANCE, null, amount, this.unconfirmedBalance));
+                            AccountLedger.LedgerHolding.UNCONFIRMED_COIN_BALANCE, chain.getId(), amount, this.unconfirmedBalance));
                 }
             }
             if (AccountLedger.mustLogEntry(event, this.accountId, false)) {
                 if (fee != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(AccountLedger.LedgerEvent.TRANSACTION_FEE, eventId, this.accountId,
-                            AccountLedger.LedgerHolding.NXT_BALANCE, null, fee, this.balance - amount));
+                            AccountLedger.LedgerHolding.COIN_BALANCE, chain.getId(), fee, this.balance - amount));
                 }
                 if (amount != 0) {
                     AccountLedger.logEntry(new AccountLedger.LedgerEntry(event, eventId, this.accountId,
-                            AccountLedger.LedgerHolding.NXT_BALANCE, null, amount, this.balance));
+                            AccountLedger.LedgerHolding.COIN_BALANCE, chain.getId(), amount, this.balance));
                 }
             }
         }
