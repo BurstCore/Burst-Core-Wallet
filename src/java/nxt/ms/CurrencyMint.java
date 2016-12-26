@@ -24,6 +24,7 @@ import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;
 import nxt.db.VersionedEntityDbTable;
+import nxt.util.JSON;
 import nxt.util.Listener;
 import nxt.util.Listeners;
 import nxt.util.Logger;
@@ -156,7 +157,7 @@ public final class CurrencyMint {
             currency.increaseSupply(units);
             listeners.notify(new Mint(account.getId(), currency.getId(), units), Event.CURRENCY_MINT);
         } else {
-            Logger.logDebugMessage("Currency mint hash no longer meets target %s", attachment.getJSONObject().toJSONString());
+            Logger.logDebugMessage("Currency mint hash no longer meets target %s", JSON.toJSONString(attachment.getJSONObject()));
         }
     }
 

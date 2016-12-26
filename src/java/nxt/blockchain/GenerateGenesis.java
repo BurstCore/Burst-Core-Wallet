@@ -18,6 +18,7 @@ package nxt.blockchain;
 
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
+import nxt.util.JSON;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -92,7 +93,7 @@ public final class GenerateGenesis {
                         creatorPublicKey, testnetGenerationSignature, new byte[32], Collections.emptyList(), creatorSecretPhrase);
                 outputJSON.put("genesisTestnetBlockSignature", Convert.toHexString(genesisTestnetBlock.getBlockSignature()));
 
-                writer.write(outputJSON.toJSONString());
+                JSON.writeJSONString(outputJSON, writer);
                 writer.newLine();
             }
         } catch (Exception e) {

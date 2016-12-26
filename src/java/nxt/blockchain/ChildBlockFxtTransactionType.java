@@ -22,6 +22,8 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.util.Convert;
+import nxt.util.JSON;
+import nxt.util.Logger;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -94,7 +96,12 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
             }
         }
         for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
-            childTransaction.validate();
+            try {
+                childTransaction.validate();
+            } catch (NxtException.ValidationException e) {
+                Logger.logDebugMessage("Validation failed for transaction " + JSON.toJSONString(childTransaction.getJSONObject()));
+                throw e;
+            }
             if (transaction.getTimestamp() < childTransaction.getTimestamp()) {
                 throw new NxtException.NotValidException("ChildBlock transaction " + transaction.getStringId() + " timestamp " + transaction.getTimestamp()
                         + " is before child transaction " + childTransaction.getStringId() + " timestamp " + childTransaction.getTimestamp());

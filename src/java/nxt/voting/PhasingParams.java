@@ -22,6 +22,7 @@ import nxt.NxtException.ValidationException;
 import nxt.ae.Asset;
 import nxt.ms.Currency;
 import nxt.util.Convert;
+import nxt.util.JSON;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -242,6 +243,6 @@ public final class PhasingParams {
     public String toString() {
         JSONObject resultJson = new JSONObject();
         putMyJSON(resultJson);
-        return resultJson.toJSONString();
+        return JSON.toJSONString(resultJson);
     }
 }

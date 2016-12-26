@@ -24,6 +24,7 @@ import nxt.account.AccountRestrictions;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import nxt.util.Filter;
+import nxt.util.JSON;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;
 
@@ -424,7 +425,7 @@ public abstract class TransactionImpl implements Transaction {
                 bytes = generateBytes().array();
             } catch (RuntimeException e) {
                 if (getSignature() != null) {
-                    Logger.logDebugMessage("Failed to get transaction bytes for transaction: " + getJSONObject().toJSONString());
+                    Logger.logDebugMessage("Failed to get transaction bytes for transaction: " + JSON.toJSONString(getJSONObject()));
                 }
                 throw e;
             }
@@ -662,7 +663,7 @@ public abstract class TransactionImpl implements Transaction {
     public static TransactionImpl parseTransaction(byte[] transactionBytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
         TransactionImpl transaction = newTransactionBuilder(transactionBytes, prunableAttachments).build();
         if (transaction.getSignature() != null && !transaction.checkSignature()) {
-            throw new NxtException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
+            throw new NxtException.NotValidException("Invalid transaction signature for transaction " + JSON.toJSONString(transaction.getJSONObject()));
         }
         return transaction;
     }
@@ -802,7 +803,7 @@ public abstract class TransactionImpl implements Transaction {
             }
             return builder;
         } catch (NxtException.NotValidException|RuntimeException e) {
-            Logger.logDebugMessage("Failed to parse transaction: " + transactionData.toJSONString());
+            Logger.logDebugMessage("Failed to parse transaction: " + JSON.toJSONString(transactionData));
             throw e;
         }
     }

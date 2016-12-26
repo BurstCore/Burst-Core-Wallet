@@ -24,6 +24,7 @@ import nxt.account.AccountRestrictions;
 import nxt.crypto.Crypto;
 import nxt.db.DbUtils;
 import nxt.util.Convert;
+import nxt.util.JSON;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;
 
@@ -313,7 +314,7 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
             //TODO: support message and prunable message attachments?
             return new BuilderImpl(version, senderPublicKey, amount, fee, deadline, attachment);
         } catch (RuntimeException e) {
-            Logger.logDebugMessage("Failed to parse transaction: " + transactionData.toJSONString());
+            Logger.logDebugMessage("Failed to parse transaction: " + JSON.toJSONString(transactionData));
             throw e;
         }
     }

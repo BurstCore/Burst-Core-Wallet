@@ -20,6 +20,7 @@ import nxt.Nxt;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
+import nxt.util.JSON;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -74,7 +75,7 @@ public final class SignTransactionJSON {
                 }
                 Transaction.Builder builder = Nxt.newTransactionBuilder(json);
                 Transaction transaction = builder.build(secretPhrase);
-                writer.write(transaction.getJSONObject().toJSONString());
+                JSON.writeJSONString(transaction.getJSONObject(), writer);
                 writer.newLine();
                 System.out.println("Signed transaction JSON saved as: " + signed.getAbsolutePath());
             }

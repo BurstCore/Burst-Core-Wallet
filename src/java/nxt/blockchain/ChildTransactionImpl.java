@@ -34,6 +34,7 @@ import nxt.shuffling.ShufflingProcessingAttachment;
 import nxt.taggeddata.TaggedDataExtendAttachment;
 import nxt.taggeddata.TaggedDataUploadAttachment;
 import nxt.util.Convert;
+import nxt.util.JSON;
 import nxt.util.Logger;
 import nxt.voting.PhasingAppendix;
 import nxt.voting.PhasingPollHome;
@@ -682,7 +683,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             }
             return childBuilder;
         } catch (RuntimeException e) {
-            Logger.logDebugMessage("Failed to parse transaction: " + transactionData.toJSONString());
+            Logger.logDebugMessage("Failed to parse transaction: " + JSON.toJSONString(transactionData));
             throw e;
         }
     }
