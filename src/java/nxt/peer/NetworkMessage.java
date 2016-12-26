@@ -819,7 +819,7 @@ public abstract class NetworkMessage {
             super("BundlerRate");
             addressBytes = "localhost".getBytes(UTF8);
             timestamp = 0;
-            rates = Collections.EMPTY_LIST;
+            rates = Collections.emptyList();
         }
 
         /**

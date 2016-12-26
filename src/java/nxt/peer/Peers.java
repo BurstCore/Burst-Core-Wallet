@@ -879,7 +879,7 @@ public final class Peers {
      * Update a bundler rate
      *
      * @param   sender          Peer sending the message
-     * @param   rates           The bundler rates
+     * @param   msg           The bundler rates
      */
     static void updateBundlerRates(Peer sender, NetworkMessage.BundlerRateMessage msg) {
         boolean relayMessage = false;
