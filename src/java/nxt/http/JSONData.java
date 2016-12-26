@@ -40,6 +40,7 @@ import nxt.aliases.AliasHome;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Block;
 import nxt.blockchain.Bundler;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
@@ -1319,13 +1320,11 @@ public final class JSONData {
                 json.put("holdingInfo", holdingJson);
             }
         }
-        //TODO
-        /*
         if (includeTransactions && entry.getEvent().isTransaction()) {
-            Transaction transaction = Nxt.getBlockchain().getTransaction(entry.getEventId());
+            Chain chain = Chain.getChain(entry.getChainId());
+            Transaction transaction = Nxt.getBlockchain().getTransactionByFullHash(chain, entry.getEventHash());
             json.put("transaction", JSONData.transaction(transaction));
         }
-        */
     }
 
     private JSONData() {} // never
