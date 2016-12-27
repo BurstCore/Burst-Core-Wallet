@@ -82,14 +82,15 @@ import java.util.List;
  * <li>Transaction.ADDED_UNCONFIRMED_TRANSACTIONS
  * <li>Transaction.REJECT_PHASED_TRANSACTION
  * <li>Transaction.RELEASE_PHASED_TRANSACTION
- * <li>Transaction.REMOVE_UNCONFIRMED_TRANSACTIONS
+ * <li>Transaction.REMOVED_UNCONFIRMED_TRANSACTIONS
  * </ul>
  * <p>
  * Event object identifiers:
  * <ul>
  * <li>Block string identifier for a Block event
  * <li>Peer network address for a Peer event
- * <li>Transaction string identifier for a Transaction event
+ * <li>Transaction chain and full hash for a Transaction event
+ * as a string in the format 'chain:hash'
  * </ul>
  */
 public class EventWait extends APIServlet.APIRequestHandler {

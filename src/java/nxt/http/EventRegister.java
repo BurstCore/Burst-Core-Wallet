@@ -94,7 +94,7 @@ import java.util.List;
  * <li>Transaction.ADDED_UNCONFIRMED_TRANSACTIONS
  * <li>Transaction.REJECT_PHASED_TRANSACTION
  * <li>Transaction.RELEASE_PHASED_TRANSACTION
- * <li>Transaction.REMOVE_UNCONFIRMED_TRANSACTIONS
+ * <li>Transaction.REMOVED_UNCONFIRMED_TRANSACTIONS
  * </ul>
  */
 public class EventRegister extends APIServlet.APIRequestHandler {

@@ -931,7 +931,8 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
             @Override
             public void notify(List<? extends Transaction> txList) {
                 List<String> idList = new ArrayList<>();
-                txList.forEach((tx) -> idList.add(tx.getStringId()));
+                txList.forEach((tx) -> idList.add(String.format("%d:%s",
+                        tx.getChain().getId(), Convert.toHexString(tx.getFullHash()))));
                 dispatch(new PendingEvent("Transaction." + event.name(), idList));
             }
         }
