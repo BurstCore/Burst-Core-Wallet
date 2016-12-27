@@ -964,6 +964,9 @@ public final class Peers {
                         bestRateMap.put(rate.getChain(), rate.getRate());
                     }
                 }
+                if (rates.isEmpty()) {
+                    it.remove();
+                }
             }
         }
     }
