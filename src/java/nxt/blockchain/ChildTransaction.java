@@ -21,8 +21,6 @@ import nxt.account.PublicKeyAnnouncementAppendix;
 import nxt.messaging.EncryptToSelfMessageAppendix;
 import nxt.messaging.EncryptedMessageAppendix;
 import nxt.messaging.MessageAppendix;
-import nxt.messaging.PrunableEncryptedMessageAppendix;
-import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.voting.PhasingAppendix;
 
 public interface ChildTransaction extends Transaction {
@@ -40,10 +38,6 @@ public interface ChildTransaction extends Transaction {
         Builder appendix(EncryptToSelfMessageAppendix encryptToSelfMessage);
 
         Builder appendix(PublicKeyAnnouncementAppendix publicKeyAnnouncement);
-
-        Builder appendix(PrunablePlainMessageAppendix prunablePlainMessage);
-
-        Builder appendix(PrunableEncryptedMessageAppendix prunableEncryptedMessage);
 
         Builder appendix(PhasingAppendix phasing);
 
@@ -66,9 +60,5 @@ public interface ChildTransaction extends Transaction {
     EncryptToSelfMessageAppendix getEncryptToSelfMessage();
 
     PhasingAppendix getPhasing();
-
-    PrunablePlainMessageAppendix getPrunablePlainMessage();
-
-    PrunableEncryptedMessageAppendix getPrunableEncryptedMessage();
 
 }

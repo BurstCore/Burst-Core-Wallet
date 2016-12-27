@@ -255,16 +255,37 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
                         .appendix(message)
                         .appendix(publicKeyAnnouncement)
                         .appendix(encryptToSelfMessage)
-                        .appendix(phasing)
-                        .appendix(prunablePlainMessage)
-                        .appendix(prunableEncryptedMessage);
+                        .appendix(phasing);
             } else {
                 if (!(attachment.getTransactionType() instanceof FxtTransactionType)) {
                     throw new ParameterException(JSONResponses.incorrect("chain",
                             attachment.getTransactionType().getName() + " attachment not allowed for "
                                     + chain.getName() + " chain"));
                 }
+                if (referencedTransactionId != null) {
+                    return JSONResponses.error("Referenced transactions not allowed for Ardor transactions");
+                }
+                if (feeRateNQTPerFXT != 0) {
+                    return JSONResponses.error("feeRateNQTPerFXT parameter not supported for Ardor transactions");
+                }
+                if (encryptedMessage != null) {
+                    return JSONResponses.error("Permanent encrypted message attachments not allowed for Ardor transactions");
+                }
+                if (message != null) {
+                    return JSONResponses.error("Permanent message attachments not allowed for Ardor transactions");
+                }
+                if (publicKeyAnnouncement != null) {
+                    return JSONResponses.error("Public key announcement attachments not allowed for Ardor transactions");
+                }
+                if (encryptToSelfMessage != null) {
+                    return JSONResponses.error("Encrypted to self message attachments not allowed for Ardor transactions");
+                }
+                if (phasing != null) {
+                    return JSONResponses.error("Phasing attachments not allowed for Ardor transactions");
+                }
             }
+            builder.appendix(prunablePlainMessage)
+                    .appendix(prunableEncryptedMessage);
             if (attachment.getTransactionType().canHaveRecipient()) {
                 builder.recipientId(recipientId);
             }

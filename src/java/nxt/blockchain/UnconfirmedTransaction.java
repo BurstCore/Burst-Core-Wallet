@@ -19,6 +19,8 @@ package nxt.blockchain;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.db.DbKey;
+import nxt.messaging.PrunableEncryptedMessageAppendix;
+import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.util.Filter;
 import nxt.util.JSON;
 import org.json.simple.JSONObject;
@@ -286,6 +288,16 @@ public abstract class UnconfirmedTransaction implements Transaction {
 
     public ChainTransactionId getReferencedTransactionId() {
         return null;
+    }
+
+    @Override
+    public PrunablePlainMessageAppendix getPrunablePlainMessage() {
+        return getTransaction().getPrunablePlainMessage();
+    }
+
+    @Override
+    public PrunableEncryptedMessageAppendix getPrunableEncryptedMessage() {
+        return getTransaction().getPrunableEncryptedMessage();
     }
 
 }

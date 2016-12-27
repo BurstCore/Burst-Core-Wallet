@@ -45,6 +45,7 @@ public class FxtDbVersion extends DbVersion {
                         + "height INT NOT NULL, block_id BIGINT NOT NULL, FOREIGN KEY (block_id) REFERENCES block (id) ON DELETE CASCADE, "
                         + "signature BINARY(64) NOT NULL, timestamp INT NOT NULL, type TINYINT NOT NULL, subtype TINYINT NOT NULL, "
                         + "sender_id BIGINT NOT NULL, block_timestamp INT NOT NULL, has_prunable_attachment BOOLEAN NOT NULL DEFAULT FALSE, "
+                        + "has_prunable_message BOOLEAN NOT NULL DEFAULT FALSE, has_prunable_encrypted_message BOOLEAN NOT NULL DEFAULT FALSE, "
                         + "ec_block_height INT DEFAULT NULL, ec_block_id BIGINT DEFAULT NULL, attachment_bytes VARBINARY, version TINYINT NOT NULL)");
             case 4:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_fxt_id_idx ON transaction_fxt (id)");
@@ -335,6 +336,22 @@ public class FxtDbVersion extends DbVersion {
             case 115:
                 apply("CREATE INDEX IF NOT EXISTS phasing_poll_result_height_idx ON phasing_poll_result(height)");
             case 116:
+                apply("CREATE TABLE IF NOT EXISTS prunable_message (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, sender_id BIGINT NOT NULL, "
+                        + "recipient_id BIGINT, message VARBINARY, message_is_text BOOLEAN NOT NULL, is_compressed BOOLEAN NOT NULL, "
+                        + "encrypted_message VARBINARY, encrypted_is_text BOOLEAN DEFAULT FALSE, "
+                        + "block_timestamp INT NOT NULL, transaction_timestamp INT NOT NULL, height INT NOT NULL, "
+                        + "FOREIGN KEY (height) REFERENCES PUBLIC.block (height) ON DELETE CASCADE)");
+            case 117:
+                apply("CREATE INDEX IF NOT EXISTS prunable_message_id_idx ON prunable_message (id)");
+            case 118:
+                apply("CREATE INDEX IF NOT EXISTS prunable_message_transaction_timestamp_idx ON prunable_message (transaction_timestamp DESC)");
+            case 119:
+                apply("CREATE INDEX IF NOT EXISTS prunable_message_sender_idx ON prunable_message (sender_id)");
+            case 120:
+                apply("CREATE INDEX IF NOT EXISTS prunable_message_recipient_idx ON prunable_message (recipient_id)");
+            case 121:
+                apply("CREATE INDEX IF NOT EXISTS prunable_message_block_timestamp_dbid_idx ON prunable_message (block_timestamp DESC, db_id DESC)");
+            case 122:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate

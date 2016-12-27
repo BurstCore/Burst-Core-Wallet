@@ -48,9 +48,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public final class ChildTransactionImpl extends TransactionImpl implements ChildTransaction {
@@ -65,8 +63,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         private EncryptToSelfMessageAppendix encryptToSelfMessage;
         private PublicKeyAnnouncementAppendix publicKeyAnnouncement;
         private PhasingAppendix phasing;
-        private PrunablePlainMessageAppendix prunablePlainMessage;
-        private PrunableEncryptedMessageAppendix prunableEncryptedMessage;
 
         private BuilderImpl(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
                     Attachment.AbstractAttachment attachment) {
@@ -75,10 +71,18 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
 
         @Override
         public ChildTransactionImpl build(String secretPhrase) throws NxtException.NotValidException {
-            List<Appendix.AbstractAppendix> list = new ArrayList<>();
-            if (getAttachment() != null) {
-                list.add(getAttachment());
-            }
+            preBuild(secretPhrase);
+            return new ChildTransactionImpl(this, secretPhrase);
+        }
+
+        @Override
+        public ChildTransactionImpl build() throws NxtException.NotValidException {
+            return build(null);
+        }
+
+        @Override
+        List<Appendix.AbstractAppendix> buildAppendageList() {
+            List<Appendix.AbstractAppendix> list = super.buildAppendageList();
             if (this.message != null) {
                 list.add(this.message);
             }
@@ -94,20 +98,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             if (this.phasing != null) {
                 list.add(this.phasing);
             }
-            if (this.prunablePlainMessage != null) {
-                list.add(this.prunablePlainMessage);
-            }
-            if (this.prunableEncryptedMessage != null) {
-                list.add(this.prunableEncryptedMessage);
-            }
-            appendages(Collections.unmodifiableList(list));
-            preBuild(secretPhrase);
-            return new ChildTransactionImpl(this, secretPhrase);
-        }
-
-        @Override
-        public ChildTransactionImpl build() throws NxtException.NotValidException {
-            return build(null);
+            return list;
         }
 
         @Override
@@ -152,18 +143,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         }
 
         @Override
-        public BuilderImpl appendix(PrunablePlainMessageAppendix prunablePlainMessage) {
-            this.prunablePlainMessage = prunablePlainMessage;
-            return this;
-        }
-
-        @Override
-        public BuilderImpl appendix(PrunableEncryptedMessageAppendix prunableEncryptedMessage) {
-            this.prunableEncryptedMessage = prunableEncryptedMessage;
-            return this;
-        }
-
-        @Override
         public BuilderImpl appendix(PhasingAppendix phasing) {
             this.phasing = phasing;
             return this;
@@ -172,14 +151,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         @Override
         BuilderImpl prunableAttachments(JSONObject prunableAttachments) throws NxtException.NotValidException {
             if (prunableAttachments != null) {
-                PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
-                if (prunablePlainMessage != null) {
-                    appendix(prunablePlainMessage);
-                }
-                PrunableEncryptedMessageAppendix prunableEncryptedMessage = PrunableEncryptedMessageAppendix.parse(prunableAttachments);
-                if (prunableEncryptedMessage != null) {
-                    appendix(prunableEncryptedMessage);
-                }
+                super.prunableAttachments(prunableAttachments);
                 ShufflingProcessingAttachment shufflingProcessing = ShufflingProcessingAttachment.parse(prunableAttachments);
                 if (shufflingProcessing != null) {
                     appendix(shufflingProcessing);
@@ -210,8 +182,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     private final EncryptToSelfMessageAppendix encryptToSelfMessage;
     private final PublicKeyAnnouncementAppendix publicKeyAnnouncement;
     private final PhasingAppendix phasing;
-    private final PrunablePlainMessageAppendix prunablePlainMessage;
-    private final PrunableEncryptedMessageAppendix prunableEncryptedMessage;
 
     private volatile long fxtTransactionId;
 
@@ -225,8 +195,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         this.publicKeyAnnouncement = builder.publicKeyAnnouncement;
         this.encryptToSelfMessage = builder.encryptToSelfMessage;
         this.phasing = builder.phasing;
-        this.prunablePlainMessage = builder.prunablePlainMessage;
-        this.prunableEncryptedMessage = builder.prunableEncryptedMessage;
         if (builder.fee <= 0) {
             long minFeeFQT = getMinimumFeeFQT(Nxt.getBlockchain().getHeight());
             if (builder.feeRateNQTPerFXT <= 0) {
@@ -309,22 +277,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     @Override
     public boolean attachmentIsPhased() {
         return attachment.isPhased(this);
-    }
-
-    @Override
-    public PrunablePlainMessageAppendix getPrunablePlainMessage() {
-        if (prunablePlainMessage != null) {
-            prunablePlainMessage.loadPrunable(this);
-        }
-        return prunablePlainMessage;
-    }
-
-    @Override
-    public PrunableEncryptedMessageAppendix getPrunableEncryptedMessage() {
-        if (prunableEncryptedMessage != null) {
-            prunableEncryptedMessage.loadPrunable(this);
-        }
-        return prunableEncryptedMessage;
     }
 
     @Override
@@ -471,6 +423,14 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     int getFlags() {
         int flags = 0;
         int position = 1;
+        if (hasPrunablePlainMessage()) {
+            flags |= position;
+        }
+        position <<= 1;
+        if (hasPrunableEncryptedMessage()) {
+            flags |= position;
+        }
+        position <<= 1;
         if (message != null) {
             flags |= position;
         }
@@ -488,14 +448,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         }
         position <<= 1;
         if (phasing != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (prunablePlainMessage != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (prunableEncryptedMessage != null) {
             flags |= position;
         }
         return flags;
@@ -554,8 +506,8 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             pstmt.setBoolean(++i, publicKeyAnnouncement != null);
             pstmt.setBoolean(++i, encryptToSelfMessage != null);
             pstmt.setBoolean(++i, phasing != null);
-            pstmt.setBoolean(++i, prunablePlainMessage != null);
-            pstmt.setBoolean(++i, prunableEncryptedMessage != null);
+            pstmt.setBoolean(++i, hasPrunablePlainMessage());
+            pstmt.setBoolean(++i, hasPrunableEncryptedMessage());
             pstmt.setBoolean(++i, getAttachment() instanceof Appendix.Prunable);
             pstmt.setInt(++i, getECBlockHeight());
             DbUtils.setLongZeroToNull(pstmt, ++i, getECBlockId());
@@ -587,6 +539,12 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             }
             long fxtTransactionId = rs.getLong("fxt_transaction_id");
             builder.fxtTransactionId(fxtTransactionId);
+            if (rs.getBoolean("has_prunable_message")) {
+                builder.appendix(new PrunablePlainMessageAppendix(buffer));
+            }
+            if (rs.getBoolean("has_prunable_encrypted_message")) {
+                builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
+            }
             if (rs.getBoolean("has_message")) {
                 builder.appendix(new MessageAppendix(buffer));
             }
@@ -602,12 +560,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             if (rs.getBoolean("phased")) {
                 builder.appendix(new PhasingAppendix(buffer));
             }
-            if (rs.getBoolean("has_prunable_message")) {
-                builder.appendix(new PrunablePlainMessageAppendix(buffer));
-            }
-            if (rs.getBoolean("has_prunable_encrypted_message")) {
-                builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
-            }
             return builder;
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -619,6 +571,14 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         try {
             ChildTransactionImpl.BuilderImpl childBuilder = new BuilderImpl(chainId, version, senderPublicKey, amount, fee, deadline, attachment);
             int position = 1;
+            if ((flags & position) != 0) {
+                childBuilder.appendix(new PrunablePlainMessageAppendix(buffer));
+            }
+            position <<= 1;
+            if ((flags & position) != 0) {
+                childBuilder.appendix(new PrunableEncryptedMessageAppendix(buffer));
+            }
+            position <<= 1;
             if ((flags & position) != 0) {
                 childBuilder.appendix(new MessageAppendix(buffer));
             }
@@ -637,14 +597,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             position <<= 1;
             if ((flags & position) != 0) {
                 childBuilder.appendix(new PhasingAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                childBuilder.appendix(new PrunablePlainMessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                childBuilder.appendix(new PrunableEncryptedMessageAppendix(buffer));
             }
             ChainTransactionId referencedTransaction = ChainTransactionId.parse(buffer);
             childBuilder.referencedTransaction(referencedTransaction);

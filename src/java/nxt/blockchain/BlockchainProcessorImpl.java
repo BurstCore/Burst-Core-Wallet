@@ -1167,8 +1167,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             transactionList.forEach(prunableTransaction -> {
                 byte[] fullHash = prunableTransaction.getFullHash();
                 if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(chain, fullHash)) ||
-                        (chain instanceof ChildChain &&
-                        ((ChildChain) chain).getPrunableMessageHome().isPruned(fullHash, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage()))) {
+                        chain.getPrunableMessageHome().isPruned(fullHash, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
                     synchronized (prunableTransactions) {
                         prunableTransactions.add(new ChainTransactionId(chain.getId(), fullHash));
                     }

@@ -21,7 +21,6 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Appendix;
-import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
@@ -144,7 +143,7 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
 
     @Override
     public void validate(Transaction transaction) throws NxtException.ValidationException {
-        if (((ChildTransaction)transaction).getEncryptedMessage() != null) {
+        if (transaction instanceof ChildTransaction && ((ChildTransaction)transaction).getEncryptedMessage() != null) {
             throw new NxtException.NotValidException("Cannot have both encrypted and prunable encrypted message attachments");
         }
         EncryptedData ed = getEncryptedData();
@@ -169,7 +168,7 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
-            ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this);
+            transaction.getChain().getPrunableMessageHome().add((TransactionImpl)transaction, this);
         }
     }
 
@@ -218,7 +217,7 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            PrunableMessageHome.PrunableMessage prunableMessage = ((ChildChain) transaction.getChain()).getPrunableMessageHome()
+            PrunableMessageHome.PrunableMessage prunableMessage = transaction.getChain().getPrunableMessageHome()
                     .getPrunableMessage(transaction.getFullHash());
             if (prunableMessage != null && prunableMessage.getEncryptedData() != null) {
                 this.prunableMessage = prunableMessage;
@@ -238,6 +237,6 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this, blockTimestamp, height);
+        transaction.getChain().getPrunableMessageHome().add((TransactionImpl)transaction, this, blockTimestamp, height);
     }
 }
