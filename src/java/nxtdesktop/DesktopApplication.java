@@ -32,6 +32,7 @@ import netscape.javascript.JSObject;
 import nxt.Nxt;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionProcessor;
@@ -273,14 +274,15 @@ public class DesktopApplication extends Application {
 
     private void download(String requestType, Map<String, String> params) {
         String chainName = params.get("chain");
-        ChildChain childChain = ChildChain.getChildChain(chainName);
-        if (childChain == null) {
-            childChain = ChildChain.getChildChain(Integer.valueOf(chainName));
+        Chain chain = Chain.getChain(chainName);
+        if (chain == null) {
+            chain = Chain.getChain(Integer.valueOf(chainName));
         }
-        byte[] transactionFullHash = Convert.parseHexString(params.get("transactionFullHash"));
-        TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionFullHash);
         boolean retrieve = "true".equals(params.get("retrieve"));
+        byte[] transactionFullHash = Convert.parseHexString(params.get("transactionFullHash"));
         if (requestType.equals("downloadTaggedData")) {
+            ChildChain childChain = (ChildChain)chain;
+            TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionFullHash);
             if (taggedData == null && retrieve) {
                 try {
                     if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionFullHash) == null) {
@@ -304,10 +306,10 @@ public class DesktopApplication extends Application {
             }
             downloadFile(data, filename);
         } else if (requestType.equals("downloadPrunableMessage")) {
-            PrunableMessageHome.PrunableMessage prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionFullHash);
+            PrunableMessageHome.PrunableMessage prunableMessage = chain.getPrunableMessageHome().getPrunableMessage(transactionFullHash);
             if (prunableMessage == null && retrieve) {
                 try {
-                    if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionFullHash) == null) {
+                    if (Nxt.getBlockchainProcessor().restorePrunedTransaction(chain, transactionFullHash) == null) {
                         growl("Pruned message not currently available from any peer");
                         return;
                     }
@@ -315,7 +317,7 @@ public class DesktopApplication extends Application {
                     growl("Pruned message cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                     return;
                 }
-                prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionFullHash);
+                prunableMessage = chain.getPrunableMessageHome().getPrunableMessage(transactionFullHash);
             }
             String secretPhrase = params.get("secretPhrase");
             byte[] sharedKey = Convert.parseHexString(params.get("sharedKey"));

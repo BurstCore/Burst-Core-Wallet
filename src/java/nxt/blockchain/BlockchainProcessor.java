@@ -19,6 +19,7 @@ package nxt.blockchain;
 import nxt.NxtException;
 import nxt.db.DerivedDbTable;
 import nxt.peer.Peer;
+import nxt.util.JSON;
 import nxt.util.Observable;
 
 import java.util.List;
@@ -90,7 +91,7 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
 
         @Override
         public String getMessage() {
-            return block == null ? super.getMessage() : super.getMessage() + ", block " + block.getStringId() + " " + block.getJSONObject().toJSONString();
+            return block == null ? super.getMessage() : super.getMessage() + ", block " + block.getStringId() + " " + JSON.toJSONString(block.getJSONObject());
         }
 
     }
@@ -115,7 +116,7 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
 
         @Override
         public String getMessage() {
-            return super.getMessage() + ", transaction " + transaction.getStringId() + " " + transaction.getJSONObject().toJSONString();
+            return super.getMessage() + ", transaction " + transaction.getStringId() + " " + JSON.toJSONString(transaction.getJSONObject());
         }
     }
 

@@ -18,6 +18,8 @@ package nxt.blockchain;
 
 import nxt.NxtException;
 import nxt.account.AccountLedger;
+import nxt.messaging.PrunableEncryptedMessageAppendix;
+import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.util.Filter;
 import org.json.simple.JSONObject;
 
@@ -34,6 +36,10 @@ public interface Transaction extends AccountLedger.LedgerEventId {
         Builder ecBlockHeight(int height);
 
         Builder ecBlockId(long blockId);
+
+        Builder appendix(PrunablePlainMessageAppendix prunablePlainMessage);
+
+        Builder appendix(PrunableEncryptedMessageAppendix prunableEncryptedMessage);
 
         Transaction build() throws NxtException.NotValidException;
 
@@ -108,5 +114,9 @@ public interface Transaction extends AccountLedger.LedgerEventId {
     long getECBlockId();
 
     boolean isPhased();
+
+    PrunablePlainMessageAppendix getPrunablePlainMessage();
+
+    PrunableEncryptedMessageAppendix getPrunableEncryptedMessage();
 
 }

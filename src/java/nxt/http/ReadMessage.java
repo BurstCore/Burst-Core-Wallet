@@ -18,8 +18,9 @@ package nxt.http;
 
 import nxt.Nxt;
 import nxt.account.Account;
-import nxt.blockchain.ChildChain;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildTransaction;
+import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
 import nxt.messaging.EncryptToSelfMessageAppendix;
@@ -51,25 +52,24 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
 
         byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
-        ChildChain childChain = ParameterParser.getChildChain(req);
-        //TODO: prunable messages on FXT chain?
-        ChildTransaction transaction = (ChildTransaction)Nxt.getBlockchain().getTransaction(childChain, transactionFullHash);
+        Chain chain = ParameterParser.getChain(req);
+        Transaction transaction = Nxt.getBlockchain().getTransaction(chain, transactionFullHash);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
-        PrunableMessageHome prunableMessageHome = childChain.getPrunableMessageHome();
+        PrunableMessageHome prunableMessageHome = chain.getPrunableMessageHome();
         PrunableMessageHome.PrunableMessage prunableMessage = prunableMessageHome.getPrunableMessage(transactionFullHash);
         if (prunableMessage == null && (transaction.getPrunablePlainMessage() != null || transaction.getPrunableEncryptedMessage() != null) && retrieve) {
-            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionFullHash) == null) {
+            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(chain, transactionFullHash) == null) {
                 return PRUNED_TRANSACTION;
             }
             prunableMessage = prunableMessageHome.getPrunableMessage(transactionFullHash);
         }
 
         JSONObject response = new JSONObject();
-        MessageAppendix message = transaction.getMessage();
-        EncryptedMessageAppendix encryptedMessage = transaction.getEncryptedMessage();
-        EncryptToSelfMessageAppendix encryptToSelfMessage = transaction.getEncryptToSelfMessage();
+        MessageAppendix message = transaction instanceof ChildTransaction ? ((ChildTransaction)transaction).getMessage() : null;
+        EncryptedMessageAppendix encryptedMessage = transaction instanceof ChildTransaction ? ((ChildTransaction)transaction).getEncryptedMessage() : null;
+        EncryptToSelfMessageAppendix encryptToSelfMessage = transaction instanceof ChildTransaction ? ((ChildTransaction)transaction).getEncryptToSelfMessage() : null;
         if (message == null && encryptedMessage == null && encryptToSelfMessage == null && prunableMessage == null) {
             return NO_MESSAGE;
         }

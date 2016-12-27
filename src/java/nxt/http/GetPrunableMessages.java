@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.NxtException;
-import nxt.blockchain.ChildChain;
+import nxt.blockchain.Chain;
 import nxt.db.DbIterator;
 import nxt.messaging.PrunableMessageHome;
 import org.json.simple.JSONArray;
@@ -42,15 +42,15 @@ public final class GetPrunableMessages extends APIServlet.APIRequestHandler {
         int lastIndex = ParameterParser.getLastIndex(req);
         final int timestamp = ParameterParser.getTimestamp(req);
         long otherAccountId = ParameterParser.getAccountId(req, "otherAccount", false);
-        ChildChain childChain = ParameterParser.getChildChain(req);
+        Chain chain = ParameterParser.getChain(req);
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("prunableMessages", jsonArray);
 
         try (DbIterator<PrunableMessageHome.PrunableMessage> messages = otherAccountId == 0 ?
-                childChain.getPrunableMessageHome().getPrunableMessages(accountId, firstIndex, lastIndex)
-                : childChain.getPrunableMessageHome().getPrunableMessages(accountId, otherAccountId, firstIndex, lastIndex)) {
+                chain.getPrunableMessageHome().getPrunableMessages(accountId, firstIndex, lastIndex)
+                : chain.getPrunableMessageHome().getPrunableMessages(accountId, otherAccountId, firstIndex, lastIndex)) {
             while (messages.hasNext()) {
                 PrunableMessageHome.PrunableMessage prunableMessage = messages.next();
                 if (prunableMessage.getBlockTimestamp() < timestamp) {

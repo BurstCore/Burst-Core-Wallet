@@ -136,7 +136,7 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
 
     @Override
     public void validate(Transaction transaction) throws NxtException.ValidationException {
-        if (((ChildTransaction)transaction).getMessage() != null) {
+        if (transaction instanceof ChildTransaction && ((ChildTransaction)transaction).getMessage() != null) {
             throw new NxtException.NotValidException("Cannot have both message and prunable message attachments");
         }
         byte[] msg = getMessage();
@@ -151,7 +151,7 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
-            ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this);
+            transaction.getChain().getPrunableMessageHome().add((TransactionImpl)transaction, this);
         }
     }
 
@@ -183,7 +183,7 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
     @Override
     public final void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            PrunableMessageHome.PrunableMessage prunableMessage = ((ChildChain) transaction.getChain()).getPrunableMessageHome()
+            PrunableMessageHome.PrunableMessage prunableMessage = transaction.getChain().getPrunableMessageHome()
                     .getPrunableMessage(transaction.getFullHash());
             if (prunableMessage != null && prunableMessage.getMessage() != null) {
                 this.prunableMessage = prunableMessage;

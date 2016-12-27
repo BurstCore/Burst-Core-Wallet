@@ -31,6 +31,7 @@ import nxt.peer.NetworkHandler;
 import nxt.peer.NetworkMessage;
 import nxt.peer.Peer;
 import nxt.peer.Peers;
+import nxt.util.JSON;
 import nxt.util.Listener;
 import nxt.util.Listeners;
 import nxt.util.Logger;
@@ -569,7 +570,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     try {
                         pushBlock(block);
                     } catch (BlockNotAcceptedException e) {
-                        Logger.logErrorMessage("Popped off block no longer acceptable: " + block.getJSONObject().toJSONString(), e);
+                        Logger.logErrorMessage("Popped off block no longer acceptable: " + JSON.toJSONString(block.getJSONObject()), e);
                         break;
                     }
                 }
@@ -1166,8 +1167,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             transactionList.forEach(prunableTransaction -> {
                 byte[] fullHash = prunableTransaction.getFullHash();
                 if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(chain, fullHash)) ||
-                        (chain instanceof ChildChain &&
-                        ((ChildChain) chain).getPrunableMessageHome().isPruned(fullHash, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage()))) {
+                        chain.getPrunableMessageHome().isPruned(fullHash, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
                     synchronized (prunableTransactions) {
                         prunableTransactions.add(new ChainTransactionId(chain.getId(), fullHash));
                     }
@@ -1602,7 +1602,12 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             });
             blockListeners.notify(block, Event.AFTER_BLOCK_APPLY);
             if (block.getFxtTransactions().size() > 0) {
-                TransactionProcessorImpl.getInstance().notifyListeners(block.getFxtTransactions(), TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
+                List<Transaction> confirmedTransactions = new ArrayList<>();
+                block.getFxtTransactions().forEach(fxtTransaction -> {
+                    confirmedTransactions.add(fxtTransaction);
+                    confirmedTransactions.addAll(fxtTransaction.getChildTransactions());
+                });
+                TransactionProcessorImpl.getInstance().notifyListeners(confirmedTransactions, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
             }
             AccountLedger.commitEntries();
         } finally {
@@ -2011,12 +2016,12 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                         byte[] transactionBytes = transaction.bytes();
                                         if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionBytes).build().bytes())) {
                                             throw new NxtException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
-                                                    + transaction.getJSONObject().toJSONString());
+                                                    + JSON.toJSONString(transaction.getJSONObject()));
                                         }
-                                        JSONObject transactionJSON = (JSONObject) JSONValue.parse(transaction.getJSONObject().toJSONString());
+                                        JSONObject transactionJSON = (JSONObject) JSONValue.parse(JSON.toJSONString(transaction.getJSONObject()));
                                         if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionJSON).build().bytes())) {
                                             throw new NxtException.NotValidException("Transaction JSON cannot be parsed back to the same transaction: "
-                                                    + transaction.getJSONObject().toJSONString());
+                                                    + JSON.toJSONString(transaction.getJSONObject()));
                                         }
                                     }
                                 }

@@ -22,8 +22,11 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountRestrictions;
 import nxt.crypto.Crypto;
+import nxt.messaging.PrunableEncryptedMessageAppendix;
+import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.util.Convert;
 import nxt.util.Filter;
+import nxt.util.JSON;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;
 
@@ -36,6 +39,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +58,9 @@ public abstract class TransactionImpl implements Transaction {
         private Attachment.AbstractAttachment attachment;
         private List<Appendix.AbstractAppendix> appendages;
         private int appendagesSize;
+
+        private PrunablePlainMessageAppendix prunablePlainMessage;
+        private PrunableEncryptedMessageAppendix prunableEncryptedMessage;
 
         private long recipientId;
         byte[] signature;
@@ -81,7 +88,8 @@ public abstract class TransactionImpl implements Transaction {
             this.chainId = chainId;
         }
 
-        void preBuild(String secretPhrase) {
+        final void preBuild(String secretPhrase) {
+            this.appendages = Collections.unmodifiableList(buildAppendageList());
             if (timestamp == Integer.MAX_VALUE) {
                 timestamp = Nxt.getEpochTime();
             }
@@ -106,6 +114,20 @@ public abstract class TransactionImpl implements Transaction {
         @Override
         public abstract TransactionImpl build(String secretPhrase) throws NxtException.NotValidException;
 
+        List<Appendix.AbstractAppendix> buildAppendageList() {
+            List<Appendix.AbstractAppendix> list = new ArrayList<>();
+            if (attachment != null) {
+                list.add(attachment);
+            }
+            if (this.prunablePlainMessage != null) {
+                list.add(this.prunablePlainMessage);
+            }
+            if (this.prunableEncryptedMessage != null) {
+                list.add(this.prunableEncryptedMessage);
+            }
+            return list;
+        }
+
         @Override
         public final BuilderImpl recipientId(long recipientId) {
             this.recipientId = recipientId;
@@ -114,6 +136,18 @@ public abstract class TransactionImpl implements Transaction {
 
         final BuilderImpl appendix(Attachment.AbstractAttachment attachment) {
             this.attachment = attachment;
+            return this;
+        }
+
+        @Override
+        public BuilderImpl appendix(PrunablePlainMessageAppendix prunablePlainMessage) {
+            this.prunablePlainMessage = prunablePlainMessage;
+            return this;
+        }
+
+        @Override
+        public BuilderImpl appendix(PrunableEncryptedMessageAppendix prunableEncryptedMessage) {
+            this.prunableEncryptedMessage = prunableEncryptedMessage;
             return this;
         }
 
@@ -177,16 +211,23 @@ public abstract class TransactionImpl implements Transaction {
             return this;
         }
 
-        final BuilderImpl appendages(List<Appendix.AbstractAppendix> appendages) {
-            this.appendages = appendages;
+        final TransactionType getTransactionType() {
+            return type;
+        }
+
+        BuilderImpl prunableAttachments(JSONObject prunableAttachments) throws NxtException.NotValidException {
+            if (prunableAttachments != null) {
+                PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
+                if (prunablePlainMessage != null) {
+                    appendix(prunablePlainMessage);
+                }
+                PrunableEncryptedMessageAppendix prunableEncryptedMessage = PrunableEncryptedMessageAppendix.parse(prunableAttachments);
+                if (prunableEncryptedMessage != null) {
+                    appendix(prunableEncryptedMessage);
+                }
+            }
             return this;
         }
-
-        final Attachment.AbstractAttachment getAttachment() {
-            return attachment;
-        }
-
-        abstract BuilderImpl prunableAttachments(JSONObject prunableAttachments) throws NxtException.NotValidException;
 
     }
 
@@ -202,6 +243,9 @@ public abstract class TransactionImpl implements Transaction {
     final Attachment.AbstractAttachment attachment;
     private final List<Appendix.AbstractAppendix> appendages;
     private final int appendagesSize;
+
+    private final PrunablePlainMessageAppendix prunablePlainMessage;
+    private final PrunableEncryptedMessageAppendix prunableEncryptedMessage;
 
     private volatile int height = Integer.MAX_VALUE;
     private volatile long blockId;
@@ -235,6 +279,8 @@ public abstract class TransactionImpl implements Transaction {
         this.fullHash = builder.fullHash;
         this.ecBlockHeight = builder.ecBlockHeight;
         this.ecBlockId = builder.ecBlockId;
+        this.prunablePlainMessage = builder.prunablePlainMessage;
+        this.prunableEncryptedMessage = builder.prunableEncryptedMessage;
     }
 
     @Override
@@ -335,6 +381,30 @@ public abstract class TransactionImpl implements Transaction {
     }
 
     @Override
+    public PrunablePlainMessageAppendix getPrunablePlainMessage() {
+        if (prunablePlainMessage != null) {
+            prunablePlainMessage.loadPrunable(this);
+        }
+        return prunablePlainMessage;
+    }
+
+    boolean hasPrunablePlainMessage() {
+        return prunablePlainMessage != null;
+    }
+
+    @Override
+    public PrunableEncryptedMessageAppendix getPrunableEncryptedMessage() {
+        if (prunableEncryptedMessage != null) {
+            prunableEncryptedMessage.loadPrunable(this);
+        }
+        return prunableEncryptedMessage;
+    }
+
+    boolean hasPrunableEncryptedMessage() {
+        return prunableEncryptedMessage != null;
+    }
+
+    @Override
     public Attachment.AbstractAttachment getAttachment() {
         attachment.loadPrunable(this);
         return attachment;
@@ -424,7 +494,7 @@ public abstract class TransactionImpl implements Transaction {
                 bytes = generateBytes().array();
             } catch (RuntimeException e) {
                 if (getSignature() != null) {
-                    Logger.logDebugMessage("Failed to get transaction bytes for transaction: " + getJSONObject().toJSONString());
+                    Logger.logDebugMessage("Failed to get transaction bytes for transaction: " + JSON.toJSONString(getJSONObject()));
                 }
                 throw e;
             }
@@ -662,7 +732,7 @@ public abstract class TransactionImpl implements Transaction {
     public static TransactionImpl parseTransaction(byte[] transactionBytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
         TransactionImpl transaction = newTransactionBuilder(transactionBytes, prunableAttachments).build();
         if (transaction.getSignature() != null && !transaction.checkSignature()) {
-            throw new NxtException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
+            throw new NxtException.NotValidException("Invalid transaction signature for transaction " + JSON.toJSONString(transaction.getJSONObject()));
         }
         return transaction;
     }
@@ -802,7 +872,7 @@ public abstract class TransactionImpl implements Transaction {
             }
             return builder;
         } catch (NxtException.NotValidException|RuntimeException e) {
-            Logger.logDebugMessage("Failed to parse transaction: " + transactionData.toJSONString());
+            Logger.logDebugMessage("Failed to parse transaction: " + JSON.toJSONString(transactionData));
             throw e;
         }
     }

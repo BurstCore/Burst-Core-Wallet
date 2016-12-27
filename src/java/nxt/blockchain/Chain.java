@@ -18,6 +18,7 @@ package nxt.blockchain;
 
 import nxt.NxtException;
 import nxt.account.BalanceHome;
+import nxt.messaging.PrunableMessageHome;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -47,12 +48,14 @@ public abstract class Chain {
     private final int id;
     private final TransactionHome transactionHome;
     private final BalanceHome balanceHome;
+    private final PrunableMessageHome prunableMessageHome;
 
     Chain(int id, String name) {
         this.id = id;
         this.name = name;
         this.transactionHome = TransactionHome.forChain(this);
         this.balanceHome = BalanceHome.forChain(this);
+        this.prunableMessageHome = PrunableMessageHome.forChain(this);
     }
 
     public final String getName() {
@@ -80,6 +83,10 @@ public abstract class Chain {
 
     public final BalanceHome getBalanceHome() {
         return balanceHome;
+    }
+
+    public PrunableMessageHome getPrunableMessageHome() {
+        return prunableMessageHome;
     }
 
     public abstract TransactionImpl.BuilderImpl newTransactionBuilder(byte[] senderPublicKey, long amountFQT, long feeFQT, short deadline, Attachment attachment) throws NxtException.NotValidException;

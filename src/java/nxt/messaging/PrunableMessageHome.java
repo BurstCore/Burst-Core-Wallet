@@ -18,7 +18,7 @@ package nxt.messaging;
 
 import nxt.Nxt;
 import nxt.account.Account;
-import nxt.blockchain.ChildChain;
+import nxt.blockchain.Chain;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
 import nxt.crypto.Crypto;
@@ -36,26 +36,26 @@ import java.sql.SQLException;
 
 public final class PrunableMessageHome {
 
-    public static PrunableMessageHome forChain(ChildChain childChain) {
-        if (childChain.getPrunableMessageHome() != null) {
+    public static PrunableMessageHome forChain(Chain chain) {
+        if (chain.getPrunableMessageHome() != null) {
             throw new IllegalStateException("already set");
         }
-        return new PrunableMessageHome(childChain);
+        return new PrunableMessageHome(chain);
     }
 
     private final DbKey.HashKeyFactory<PrunableMessage> prunableMessageKeyFactory;
     private final PrunableDbTable<PrunableMessage> prunableMessageTable;
-    private final ChildChain childChain;
+    private final Chain chain;
 
-    private PrunableMessageHome(ChildChain childChain) {
-        this.childChain = childChain;
+    private PrunableMessageHome(Chain chain) {
+        this.chain = chain;
         this.prunableMessageKeyFactory = new DbKey.HashKeyFactory<PrunableMessage>("full_hash", "id") {
             @Override
             public DbKey newKey(PrunableMessage prunableMessage) {
                 return prunableMessage.dbKey;
             }
         };
-        this.prunableMessageTable = new PrunableDbTable<PrunableMessage>(childChain.getSchemaTable("prunable_message"), prunableMessageKeyFactory) {
+        this.prunableMessageTable = new PrunableDbTable<PrunableMessage>(chain.getSchemaTable("prunable_message"), prunableMessageKeyFactory) {
             @Override
             protected PrunableMessage load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new PrunableMessage(rs, dbKey);
@@ -311,8 +311,8 @@ public final class PrunableMessageHome {
             return height;
         }
 
-        public ChildChain getChildChain() {
-            return childChain;
+        public Chain getChain() {
+            return chain;
         }
 
         public byte[] decrypt(String secretPhrase) {

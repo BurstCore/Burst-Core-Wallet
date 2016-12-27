@@ -78,16 +78,6 @@ final class UnconfirmedChildTransaction extends UnconfirmedTransaction implement
     }
 
     @Override
-    public PrunablePlainMessageAppendix getPrunablePlainMessage() {
-        return getTransaction().getPrunablePlainMessage();
-    }
-
-    @Override
-    public PrunableEncryptedMessageAppendix getPrunableEncryptedMessage() {
-        return getTransaction().getPrunableEncryptedMessage();
-    }
-
-    @Override
     public ChainTransactionId getReferencedTransactionId() {
         return getTransaction().getReferencedTransactionId();
     }

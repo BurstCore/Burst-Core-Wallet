@@ -28,6 +28,7 @@ import nxt.http.API;
 import nxt.ms.CurrencyMinting;
 import nxt.ms.CurrencyMintingAttachment;
 import nxt.util.Convert;
+import nxt.util.JSON;
 import nxt.util.Logger;
 import nxt.util.TrustAllSSLProvider;
 import org.json.simple.JSONObject;
@@ -124,7 +125,7 @@ public class MintWorker {
             try {
                 JSONObject response = mintImpl(childChain, secretPhrase, accountId, units, currencyId, algorithm, counter, target,
                     initialNonce, threadPoolSize, executorService, difficulty, isSubmitted);
-                Logger.logInfoMessage("currency mint response:" + response.toJSONString());
+                Logger.logInfoMessage("currency mint response:" + JSON.toJSONString(response));
             } catch (Exception e) {
                 Logger.logInfoMessage("mint error", e);
                 if (isStopOnError) {

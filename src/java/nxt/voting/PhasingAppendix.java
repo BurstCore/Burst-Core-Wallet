@@ -34,6 +34,7 @@ import nxt.blockchain.TransactionProcessor;
 import nxt.blockchain.TransactionProcessorImpl;
 import nxt.blockchain.TransactionType;
 import nxt.util.Convert;
+import nxt.util.JSON;
 import nxt.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -287,7 +288,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
             try {
                 release(transaction);
             } catch (RuntimeException e) {
-                Logger.logErrorMessage("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
+                Logger.logErrorMessage("Failed to release phased transaction " + JSON.toJSONString(transaction.getJSONObject()), e);
                 reject(transaction);
             }
         } else {
@@ -305,7 +306,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
                     poll.finish(result);
                     Logger.logDebugMessage("Early finish of transaction " + transaction.getStringId() + " at height " + Nxt.getBlockchain().getHeight());
                 } catch (RuntimeException e) {
-                    Logger.logErrorMessage("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
+                    Logger.logErrorMessage("Failed to release phased transaction " + JSON.toJSONString(transaction.getJSONObject()), e);
                 }
             } else {
                 Logger.logDebugMessage("At height " + Nxt.getBlockchain().getHeight() + " phased transaction " + transaction.getStringId()

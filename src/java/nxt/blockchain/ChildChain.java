@@ -80,7 +80,6 @@ public final class ChildChain extends Chain {
     private final PhasingPollHome phasingPollHome;
     private final PhasingVoteHome phasingVoteHome;
     private final PollHome pollHome;
-    private final PrunableMessageHome prunableMessageHome;
     private final ShufflingHome shufflingHome;
     private final ShufflingParticipantHome shufflingParticipantHome;
     private final TaggedDataHome taggedDataHome;
@@ -100,7 +99,6 @@ public final class ChildChain extends Chain {
         this.phasingPollHome = PhasingPollHome.forChain(this);
         this.phasingVoteHome = PhasingVoteHome.forChain(this);
         this.pollHome = PollHome.forChain(this);
-        this.prunableMessageHome = PrunableMessageHome.forChain(this);
         this.shufflingHome = ShufflingHome.forChain(this);
         this.shufflingParticipantHome = ShufflingParticipantHome.forChain(this);
         this.taggedDataHome = TaggedDataHome.forChain(this);
@@ -152,10 +150,6 @@ public final class ChildChain extends Chain {
 
     public PollHome getPollHome() {
         return pollHome;
-    }
-
-    public PrunableMessageHome getPrunableMessageHome() {
-        return prunableMessageHome;
     }
 
     public ShufflingHome getShufflingHome() {

@@ -24,6 +24,7 @@ import nxt.crypto.Crypto;
 import nxt.db.DbIterator;
 import nxt.db.FilteringIterator;
 import nxt.peer.BundlerRate;
+import nxt.util.JSON;
 import nxt.util.Logger;
 
 import java.math.BigInteger;
@@ -236,7 +237,7 @@ public final class Bundler {
         builder.timestamp(timestamp);
         ChildBlockFxtTransaction childBlockFxtTransaction = (ChildBlockFxtTransaction)builder.build(secretPhrase);
         childBlockFxtTransaction.validate();
-        Logger.logDebugMessage("Created ChildBlockFxtTransaction: " + childBlockFxtTransaction.getJSONObject().toJSONString());
+        Logger.logDebugMessage("Created ChildBlockFxtTransaction: " + JSON.toJSONString(childBlockFxtTransaction.getJSONObject()));
         return childBlockFxtTransaction;
     }
 
