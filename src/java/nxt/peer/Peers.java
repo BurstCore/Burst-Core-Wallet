@@ -658,9 +658,10 @@ public final class Peers {
                     if (!myBundlerRates.isEmpty()) {
                         Logger.logDebugMessage("Broadcasting our bundler rates");
                         myBundlerRates.values().forEach(rateList -> {
-                            rateList.forEach(rate ->
-                                    NetworkHandler.broadcastMessage(
-                                            new NetworkMessage.BundlerRateMessage(rate)));
+                            rateList.forEach(rate -> {
+                                rate.setTimestamp(now);
+                                NetworkHandler.broadcastMessage(new NetworkMessage.BundlerRateMessage(rate));
+                            });
                         });
                     }
                 }

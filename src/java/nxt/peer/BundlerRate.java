@@ -47,7 +47,7 @@ public final class BundlerRate {
         // Verify the bundler account
         //
         byte[] accountPublicKey = Account.getPublicKey(rate.getAccountId());
-        if (!Crypto.verify(rate.getSignature(), rate.getSignatureBytes(), rate.getPublicKey()) ||
+        if (!Crypto.verify(rate.getSignature(), rate.getUnsignedBytes(), rate.getPublicKey()) ||
                     (accountPublicKey != null && !Arrays.equals(rate.getPublicKey(), accountPublicKey))) {
             Logger.logDebugMessage("Bundler rate for account "
                     + Long.toUnsignedString(rate.getAccountId()) + " failed signature verification");
@@ -75,7 +75,7 @@ public final class BundlerRate {
     private final byte[] publicKey;
 
     /** Timestamp */
-    private final int timestamp;
+    private int timestamp;
 
     /** Signature */
     private final byte[] signature;
@@ -108,7 +108,7 @@ public final class BundlerRate {
         this.accountId = Account.getId(publicKey);
         this.rate = rate;
         this.timestamp = Nxt.getEpochTime();
-        this.signature = Crypto.sign(getSignatureBytes(), secretPhrase);
+        this.signature = Crypto.sign(getUnsignedBytes(), secretPhrase);
     }
 
     /**
@@ -143,12 +143,12 @@ public final class BundlerRate {
     }
 
     /**
-     * Get the encoded bytes
+     * Get our bytes
      *
      * @param   buffer                      Byte buffer
      * @throws  BufferOverflowException     Allocated buffer is too small
      */
-    public void getBytes(ByteBuffer buffer) {
+    public synchronized void getBytes(ByteBuffer buffer) {
         buffer.putInt(chain.getId())
               .put(publicKey)
               .putLong(rate)
@@ -157,18 +157,17 @@ public final class BundlerRate {
     }
 
     /**
-     * Get the encoded bytes without the signature
+     * Get the unsigned bytes
      *
      * @return                              Rate bytes
      */
-    public byte[] getSignatureBytes() {
-        byte[] bytes = new byte[getLength() - 64];
+    public byte[] getUnsignedBytes() {
+        byte[] bytes = new byte[getLength() - 4 - 64];
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.putInt(chain.getId())
               .put(publicKey)
-              .putLong(rate)
-              .putInt(timestamp);
+              .putLong(rate);
         return bytes;
     }
 
@@ -213,8 +212,17 @@ public final class BundlerRate {
      *
      * @return                          Timestamp
      */
-    public int getTimestamp() {
+    public synchronized int getTimestamp() {
         return timestamp;
+    }
+
+    /**
+     * Set the timestamp
+     *
+     * @param   timestamp               New timestamp
+     */
+    public synchronized void setTimestamp(int timestamp) {
+        this.timestamp = timestamp;
     }
 
     /**
