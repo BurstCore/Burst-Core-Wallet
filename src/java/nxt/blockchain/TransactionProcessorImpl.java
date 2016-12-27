@@ -451,7 +451,9 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
             waitingTransactions.clear();
             broadcastedTransactions.clear();
             transactionCache.clear();
-            transactionListeners.notify(removed, Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
+            if (!removed.isEmpty()) {
+                transactionListeners.notify(removed, Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
+            }
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
         }
@@ -488,7 +490,9 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
             unconfirmedTransactionTable.truncate();
             unconfirmedDuplicates.clear();
             transactionCache.clear();
-            transactionListeners.notify(removed, Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
+            if (!removed.isEmpty()) {
+                transactionListeners.notify(removed, Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
+            }
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
         }
