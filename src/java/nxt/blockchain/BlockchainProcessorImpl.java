@@ -1602,7 +1602,12 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             });
             blockListeners.notify(block, Event.AFTER_BLOCK_APPLY);
             if (block.getFxtTransactions().size() > 0) {
-                TransactionProcessorImpl.getInstance().notifyListeners(block.getFxtTransactions(), TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
+                List<Transaction> confirmedTransactions = new ArrayList<>();
+                block.getFxtTransactions().forEach(fxtTransaction -> {
+                    confirmedTransactions.add(fxtTransaction);
+                    confirmedTransactions.addAll(fxtTransaction.getChildTransactions());
+                });
+                TransactionProcessorImpl.getInstance().notifyListeners(confirmedTransactions, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
             }
             AccountLedger.commitEntries();
         } finally {
