@@ -25,6 +25,7 @@ import java.nio.ByteOrder;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.util.Arrays;
+import java.util.List;
 
 public final class BundlerRate {
 
@@ -42,23 +43,23 @@ public final class BundlerRate {
      * @return                          Response message
      */
     static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.BundlerRateMessage request) {
-        BundlerRate rate = request.getRate();
+        List<BundlerRate> rates = request.getRates();
         //
-        // Verify the bundler account
+        // Verify the bundler accounts
         //
-        byte[] accountPublicKey = Account.getPublicKey(rate.getAccountId());
-        if (!Crypto.verify(rate.getSignature(), rate.getUnsignedBytes(), rate.getPublicKey()) ||
-                    (accountPublicKey != null && !Arrays.equals(rate.getPublicKey(), accountPublicKey))) {
-            Logger.logDebugMessage("Bundler rate for account "
-                    + Long.toUnsignedString(rate.getAccountId()) + " failed signature verification");
-            return null;
+        for (BundlerRate rate : rates) {
+            byte[] accountPublicKey = Account.getPublicKey(rate.getAccountId());
+            if (!Crypto.verify(rate.getSignature(), rate.getUnsignedBytes(), rate.getPublicKey()) ||
+                        (accountPublicKey != null && !Arrays.equals(rate.getPublicKey(), accountPublicKey))) {
+                Logger.logDebugMessage("Bundler rate for account "
+                        + Long.toUnsignedString(rate.getAccountId()) + " failed signature verification");
+                return null;
+            }
         }
         //
-        // Update the rate and relay the message
+        // Update the rates and relay the message
         //
-        if (rate.getRate() >= 0) {
-            Peers.updateBundlerRate(peer, request);
-        }
+        Peers.updateBundlerRates(peer, request);
         return null;
     }
 
@@ -232,5 +233,31 @@ public final class BundlerRate {
      */
     public byte[] getSignature() {
         return signature;
+    }
+
+    /**
+     * Get the hash code
+     *
+     * @return                          Hash code
+     */
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(chain.getId()) ^ Long.hashCode(accountId) ^ Long.hashCode(rate) ^
+                    Integer.hashCode(timestamp);
+    }
+
+    /**
+     * Check if two bundler rates are equal
+     *
+     * @param   obj                     Bundler rate to compare
+     * @return                          TRUE if the rates are equal
+     */
+    @Override
+    public boolean equals(Object obj) {
+        return ((obj instanceof BundlerRate) &&
+                chain == ((BundlerRate)obj).chain &&
+                accountId == ((BundlerRate)obj).accountId &&
+                rate == ((BundlerRate)obj).rate &&
+                timestamp == ((BundlerRate)obj).timestamp);
     }
 }

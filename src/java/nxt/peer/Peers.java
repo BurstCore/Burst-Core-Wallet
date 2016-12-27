@@ -76,6 +76,9 @@ public final class Peers {
     /** Maximum announced address length */
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 100;
 
+    /** Bundler rate broadcast interval */
+    static final int BUNDLER_RATE_BROADCAST_INTERVAL = 60 * 60;
+
     /** Peer blacklist period (seconds) */
     static final int blacklistingPeriod = Nxt.getIntProperty("nxt.blacklistingPeriod", 600);
 
@@ -653,16 +656,18 @@ public final class Peers {
             //
             // Notify connected peers if we have active bundlers
             //
-            if (now - ratesTime >= 60 * 60 || bundlersChanged) {
+            if (now - ratesTime >= BUNDLER_RATE_BROADCAST_INTERVAL || bundlersChanged) {
                 synchronized(myBundlerRates) {
                     if (!myBundlerRates.isEmpty()) {
                         Logger.logDebugMessage("Broadcasting our bundler rates");
+                        List<BundlerRate> rates = new ArrayList<>();
                         myBundlerRates.values().forEach(rateList -> {
                             rateList.forEach(rate -> {
                                 rate.setTimestamp(now);
-                                NetworkHandler.broadcastMessage(new NetworkMessage.BundlerRateMessage(rate));
+                                rates.add(rate);
                             });
                         });
+                        NetworkHandler.broadcastMessage(new NetworkMessage.BundlerRateMessage(rates));
                     }
                 }
                 ratesTime = now;
@@ -880,41 +885,45 @@ public final class Peers {
     }
 
     /**
-     * Update a bundler rate from a broadcast message
+     * Update the bundler rates received from a broadcast message
      *
      * @param   sender        Peer sending the message
      * @param   msg           The bundler rate message
      */
-    static void updateBundlerRate(Peer sender, NetworkMessage.BundlerRateMessage msg) {
+    static void updateBundlerRates(Peer sender, NetworkMessage.BundlerRateMessage msg) {
         boolean relayMessage = false;
-        BundlerRate rate = msg.getRate();
-        long accountId = rate.getAccountId();
+        List<BundlerRate> rates = msg.getRates();
         synchronized(bundlerRates) {
-            List<BundlerRate> listRates = bundlerRates.get(accountId);
-            BundlerRate prevRate = null;
-            if (listRates != null) {
-                for (BundlerRate listRate : listRates) {
-                    if (listRate.getChain() == rate.getChain()) {
-                        prevRate = listRate;
-                        break;
+            for (BundlerRate rate : rates) {
+                if (rate.getRate() < 0) {
+                    continue;
+                }
+                long accountId = rate.getAccountId();
+                List<BundlerRate> listRates = bundlerRates.get(accountId);
+                BundlerRate prevRate = null;
+                if (listRates != null) {
+                    for (BundlerRate listRate : listRates) {
+                        if (listRate.getChain() == rate.getChain()) {
+                            prevRate = listRate;
+                            break;
+                        }
                     }
                 }
-            }
-            if (listRates == null) {
-                listRates = new ArrayList<>();
-                bundlerRates.put(accountId, listRates);
-            }
-            if (prevRate == null || prevRate.getTimestamp() < rate.getTimestamp()) {
-                if (prevRate != null) {
-                    listRates.remove(prevRate);
+                if (listRates == null) {
+                    listRates = new ArrayList<>();
+                    bundlerRates.put(accountId, listRates);
                 }
-                listRates.add(rate);
-                relayMessage = true;
+                if (prevRate == null || prevRate.getTimestamp() < rate.getTimestamp()) {
+                    if (prevRate != null) {
+                        listRates.remove(prevRate);
+                    }
+                    listRates.add(rate);
+                    relayMessage = true;
+                }
             }
         }
         if (relayMessage) {
-            Logger.logDebugMessage("Relaying " + rate.getChain().getName() + " bundler rate for "
-                    + Long.toUnsignedString(rate.getAccountId()));
+            Logger.logDebugMessage("Relaying bundler rates from " + sender.getHost());
             NetworkHandler.broadcastMessage(sender, msg);
         }
     }
@@ -947,15 +956,15 @@ public final class Peers {
                                 Map<ChildChain, Long> bestRateMap,
                                 int now, boolean removeExpired) {
         synchronized(rateMap) {
-            Set<Map.Entry<Long, List<BundlerRate>>> entries = rateMap.entrySet();
-            Iterator<Map.Entry<Long, List<BundlerRate>>> it = entries.iterator();
+            Iterator<Map.Entry<Long, List<BundlerRate>>> it = rateMap.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<Long, List<BundlerRate>> entry = it.next();
                 List<BundlerRate> rates = entry.getValue();
                 Iterator<BundlerRate> rit = rates.iterator();
                 while (rit.hasNext()) {
                     BundlerRate rate = rit.next();
-                    if (removeExpired && rate.getTimestamp() < now - 65 * 60) {
+                    if (removeExpired &&
+                            rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + 5 * 60)) {
                         rit.remove();
                         continue;
                     }
@@ -1009,11 +1018,34 @@ public final class Peers {
      * @param   peer                Peer
      */
     public static void sendBundlerRates(Peer peer) {
+        List<BundlerRate> rates = new ArrayList<>();
+        int now = Nxt.getEpochTime();
         synchronized(myBundlerRates) {
             myBundlerRates.values().forEach(rateList -> {
-                rateList.forEach(rate ->
-                        peer.sendMessage(new NetworkMessage.BundlerRateMessage(rate)));
+                rateList.forEach(rate -> rates.add(rate));
             });
+        }
+        synchronized(bundlerRates) {
+            Iterator<Map.Entry<Long, List<BundlerRate>>> it = bundlerRates.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<Long, List<BundlerRate>> entryMap = it.next();
+                List<BundlerRate> entryRates = entryMap.getValue();
+                Iterator<BundlerRate> rit = entryRates.iterator();
+                while (rit.hasNext()) {
+                    BundlerRate rate = rit.next();
+                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + (5 * 60))) {
+                        rit.remove();
+                        continue;
+                    }
+                    rates.add(rate);
+                }
+                if (entryRates.isEmpty()) {
+                    it.remove();
+                }
+            }
+        }
+        if (!rates.isEmpty()) {
+            peer.sendMessage(new NetworkMessage.BundlerRateMessage(rates));
         }
     }
 

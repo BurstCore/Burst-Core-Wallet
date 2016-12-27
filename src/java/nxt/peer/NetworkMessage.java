@@ -761,13 +761,14 @@ public abstract class NetworkMessage {
      * peer has one or more active bundlers.
      * There is no response for this message.
      * <ul>
-     * <li>Bundler rate
+     * <li>Bundler rate count (short)
+     * <li>Bundler rates
      * </ul>
      */
     public static class BundlerRateMessage extends NetworkMessage {
 
         /** Bundler rate */
-        private BundlerRate rate;
+        private List<BundlerRate> rates;
 
         /**
          * Construct the message from the message bytes
@@ -800,17 +801,17 @@ public abstract class NetworkMessage {
          */
         private BundlerRateMessage() {
             super("BundlerRate");
-            this.rate = null;
+            this.rates = null;
         }
 
         /**
          * Construct a BundlerRate message
          *
-         * @param   rate                        Bundler rate
+         * @param   rates                       Bundler rates
          */
-        public BundlerRateMessage(BundlerRate rate) {
+        public BundlerRateMessage(List<BundlerRate> rates) {
             super("BundlerRate");
-            this.rate = rate;
+            this.rates = rates;
         }
 
         /**
@@ -822,7 +823,14 @@ public abstract class NetworkMessage {
          */
         private BundlerRateMessage(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
             super("BundlerRate", bytes);
-            this.rate = new BundlerRate(bytes);
+            int count = (int)bytes.getShort() & 0xffff;
+            if (count > MAX_LIST_SIZE) {
+                throw new NetworkException("Rate count " + count + " exceeds the maximum of " + MAX_LIST_SIZE);
+            }
+            this.rates = new ArrayList<>(count);
+            for (int i=0; i<count; i++) {
+                this.rates.add(new BundlerRate(bytes));
+            }
         }
 
         /**
@@ -832,7 +840,11 @@ public abstract class NetworkMessage {
          */
         @Override
         int getLength() {
-            return super.getLength() + rate.getLength();
+            int length = super.getLength() + 2;
+            for (BundlerRate rate : rates) {
+                length += rate.getLength();
+            }
+            return length;
         }
 
         /**
@@ -844,16 +856,17 @@ public abstract class NetworkMessage {
         @Override
         void getBytes(ByteBuffer bytes) throws BufferOverflowException {
             super.getBytes(bytes);
-            rate.getBytes(bytes);
+            bytes.putShort((short)rates.size());
+            rates.forEach(rate -> rate.getBytes(bytes));
         }
 
         /**
-         * Get the bundler rate
+         * Get the bundler rates
          *
-         * @return                              Bundler rate
+         * @return                              Bundler rates
          */
-        public BundlerRate getRate() {
-            return rate;
+        public List<BundlerRate> getRates() {
+            return rates;
         }
 
         /**
