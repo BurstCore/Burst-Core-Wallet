@@ -213,7 +213,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                 return;
             //
             // A listener with account identifier 0 accepts events for all accounts.
-            // This listener supersedes  listeners for a single account.
+            // This listener supersedes listeners for a single account.
             //
             for (EventRegistration event : eventRegistrations) {
                 boolean addListener = true;
@@ -932,9 +932,15 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
             public void notify(List<? extends Transaction> txList) {
                 if (!txList.isEmpty()) {
                     List<String> idList = new ArrayList<>();
-                    txList.forEach((tx) -> idList.add(String.format("%d:%s",
-                            tx.getChain().getId(), Convert.toHexString(tx.getFullHash()))));
-                    dispatch(new PendingEvent("Transaction." + event.name(), idList));
+                    txList.forEach((tx) -> {
+                        if (accountId == 0 || accountId == tx.getSenderId() || accountId == tx.getRecipientId()) {
+                            idList.add(String.format("%d:%s",
+                                       tx.getChain().getId(), Convert.toHexString(tx.getFullHash())));
+                        }
+                    });
+                    if (!idList.isEmpty()) {
+                        dispatch(new PendingEvent("Transaction." + event.name(), idList));
+                    }
                 }
             }
         }
