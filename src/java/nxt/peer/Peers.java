@@ -82,6 +82,9 @@ public final class Peers {
     /** Peer blacklist period (seconds) */
     static final int blacklistingPeriod = Nxt.getIntProperty("nxt.blacklistingPeriod", 600);
 
+    /** Communication logging (0=no logging, 1=log message names) */
+    static int communicationLogging = Nxt.getIntProperty("nxt.communicationLogging", 0);
+
     /** Get more peers */
     private static final boolean getMorePeers = Nxt.getBooleanProperty("nxt.getMorePeers");
 
@@ -1047,6 +1050,15 @@ public final class Peers {
         if (!rates.isEmpty()) {
             peer.sendMessage(new NetworkMessage.BundlerRateMessage(rates));
         }
+    }
+
+    /**
+     * Set communication logging
+     *
+     * @param   logging             Communication logging value
+     */
+    public static void setCommunicationLogging(int logging) {
+        communicationLogging = logging;
     }
 
     private Peers() {} // never

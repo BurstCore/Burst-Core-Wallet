@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.peer.Peers;
 import nxt.util.JSON;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;
@@ -25,36 +26,27 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * <p>The SetLogging API will set the NRS log level for all log messages.
- * It will also set the communication events that are logged.</p>
+ * It will also set the communication events that are logged.
  *
- * <p>Request parameters:</p>
+ * <p>Request parameters:
  * <ul>
- * <li>logLevel - Specifies the log message level and defaults to INFO if not specified.</li>
- * <li>communicationEvent - Specifies a communication event to be logged and defaults to
- * no communication logging if not specified.
- * This parameter can be specified multiple times to log multiple communication events.</li>
+ * <li>logLevel - Specifies the log message level and defaults to INFO if not specified.
+ * <li>communicationLogging - Specifies peer message logging and defaults to no
+ * communication logging if not specified.  Specify 1 to enable communication logging
+ * or 0 to disable communication logging.
  * </ul>
  *
- * <p>Response parameters:</p>
+ * <p>Response parameters:
  * <ul>
- * <li>loggingUpdated - Set to 'true' if the logging was updated.</li>
+ * <li>loggingUpdated - Set to 'true' if the logging was updated.
  * </ul>
  *
- * <p>The following log levels can be specified:</p>
+ * <p>The following log levels can be specified:
  * <ul>
- * <li>DEBUG - Debug, informational, warning and error messages will be logged.</li>
- * <li>INFO  - Informational, warning and error messages will be logged.</li>
- * <li>WARN  - Warning and error messages will be logged.</li>
- * <li>ERROR - Error messages will be logged.</li>
- * </ul>
- *
- * <p>The following communication events can be specified.  This is a bit mask
- * so multiple events can be enabled at the same time.  The log level must be
- * DEBUG or INFO for communication events to be logged.</p>
- * <ul>
- * <li>EXCEPTION  - Log HTTP exceptions.</li>
- * <li>HTTP-ERROR - Log non-200 HTTP responses.</li>
- * <li>HTTP-OK    - Log HTTP 200 responses.</li>
+ * <li>DEBUG - Debug, informational, warning and error messages will be logged.
+ * <li>INFO  - Informational, warning and error messages will be logged.
+ * <li>WARN  - Warning and error messages will be logged.
+ * <li>ERROR - Error messages will be logged.
  * </ul>
  */
 public class SetLogging extends APIServlet.APIRequestHandler {
@@ -78,7 +70,7 @@ public class SetLogging extends APIServlet.APIRequestHandler {
      * Create the SetLogging instance
      */
     private SetLogging() {
-        super(new APITag[] {APITag.DEBUG}, "logLevel");
+        super(new APITag[] {APITag.DEBUG}, "logLevel", "communicationLogging");
     }
 
     /**
@@ -86,12 +78,13 @@ public class SetLogging extends APIServlet.APIRequestHandler {
      *
      * @param   req                 API request
      * @return                      API response
+     * @throws  ParameterException  Invalid parameter value
      */
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         JSONStreamAware response = null;
         //
-        // Get the log level
+        // Set the log level
         //
         String value = req.getParameter("logLevel");
         if (value != null) {
@@ -114,6 +107,10 @@ public class SetLogging extends APIServlet.APIRequestHandler {
         } else {
             Logger.setLevel(Logger.Level.INFO);
         }
+        //
+        // Set communication logging
+        //
+        Peers.setCommunicationLogging(ParameterParser.getInt(req, "communicationLogging", 0, 1, false));
         //
         // Return the response
         //

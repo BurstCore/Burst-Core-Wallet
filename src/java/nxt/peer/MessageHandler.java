@@ -92,10 +92,14 @@ class MessageHandler implements Runnable {
                 NetworkMessage response;
                 try {
                     message = NetworkMessage.getMessage(entry.getBytes());
+                    if (Peers.communicationLogging == 1) {
+                        Logger.logDebugMessage(message.getMessageName()
+                                + " message received from " + peer.getHost());
+                    }
                     if (message.isResponse()) {
                         if (message.getMessageId() == 0) {
-                            Logger.logErrorMessage("'" + message.getMessageName()
-                                    + "' response message does not have a message identifier");
+                            Logger.logErrorMessage(message.getMessageName()
+                                    + " response message does not have a message identifier");
                         } else {
                             peer.completeRequest(message);
                         }
@@ -111,7 +115,7 @@ class MessageHandler implements Runnable {
                         response = message.processMessage(peer);
                         if (message.requiresResponse()) {
                             if (response == null) {
-                                Logger.logErrorMessage("No response for '" + message.getMessageName() + "' message");
+                                Logger.logErrorMessage("No response for " + message.getMessageName() + " message");
                             } else {
                                 peer.sendMessage(response);
                             }

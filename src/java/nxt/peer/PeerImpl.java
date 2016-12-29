@@ -1015,6 +1015,9 @@ final class PeerImpl implements Peer {
         }
         if (sendMessage) {
             keyEvent.update(SelectionKey.OP_WRITE, 0);
+            if (Peers.communicationLogging == 1) {
+                Logger.logDebugMessage(message.getMessageName() + " message sent to " + host);
+            }
         }
     }
 
