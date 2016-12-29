@@ -20,6 +20,8 @@ import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.Chain;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
@@ -142,6 +144,11 @@ abstract class AbstractEncryptedMessageAppendix extends Appendix.AbstractAppendi
     @Override
     public final boolean isPhasable() {
         return false;
+    }
+
+    @Override
+    public boolean isAllowed(Chain chain) {
+        return chain instanceof ChildChain;
     }
 
 }

@@ -28,11 +28,6 @@ import nxt.db.DbUtils;
 import nxt.messaging.EncryptToSelfMessageAppendix;
 import nxt.messaging.EncryptedMessageAppendix;
 import nxt.messaging.MessageAppendix;
-import nxt.messaging.PrunableEncryptedMessageAppendix;
-import nxt.messaging.PrunablePlainMessageAppendix;
-import nxt.shuffling.ShufflingProcessingAttachment;
-import nxt.taggeddata.TaggedDataExtendAttachment;
-import nxt.taggeddata.TaggedDataUploadAttachment;
 import nxt.util.Convert;
 import nxt.util.JSON;
 import nxt.util.Logger;
@@ -58,15 +53,15 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         private ChainTransactionId referencedTransactionId;
         private long fxtTransactionId;
         private long feeRateNQTPerFXT;
-        private MessageAppendix message;
-        private EncryptedMessageAppendix encryptedMessage;
-        private EncryptToSelfMessageAppendix encryptToSelfMessage;
-        private PublicKeyAnnouncementAppendix publicKeyAnnouncement;
-        private PhasingAppendix phasing;
 
         private BuilderImpl(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
                     Attachment.AbstractAttachment attachment) {
             super(chainId, version, senderPublicKey, amount, fee, deadline, attachment);
+        }
+
+        private BuilderImpl(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+                            List<Appendix.AbstractAppendix> appendages) {
+            super(chainId, version, senderPublicKey, amount, fee, deadline, appendages);
         }
 
         @Override
@@ -78,27 +73,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         @Override
         public ChildTransactionImpl build() throws NxtException.NotValidException {
             return build(null);
-        }
-
-        @Override
-        List<Appendix.AbstractAppendix> buildAppendageList() {
-            List<Appendix.AbstractAppendix> list = super.buildAppendageList();
-            if (this.message != null) {
-                list.add(this.message);
-            }
-            if (this.encryptedMessage != null) {
-                list.add(this.encryptedMessage);
-            }
-            if (this.publicKeyAnnouncement != null) {
-                list.add(this.publicKeyAnnouncement);
-            }
-            if (this.encryptToSelfMessage != null) {
-                list.add(this.encryptToSelfMessage);
-            }
-            if (this.phasing != null) {
-                list.add(this.phasing);
-            }
-            return list;
         }
 
         @Override
@@ -115,59 +89,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         @Override
         public BuilderImpl feeRateNQTPerFXT(long feeRateNQTPerFXT) {
             this.feeRateNQTPerFXT = feeRateNQTPerFXT;
-            return this;
-        }
-
-        @Override
-        public BuilderImpl appendix(MessageAppendix message) {
-            this.message = message;
-            return this;
-        }
-
-        @Override
-        public BuilderImpl appendix(EncryptedMessageAppendix encryptedMessage) {
-            this.encryptedMessage = encryptedMessage;
-            return this;
-        }
-
-        @Override
-        public BuilderImpl appendix(EncryptToSelfMessageAppendix encryptToSelfMessage) {
-            this.encryptToSelfMessage = encryptToSelfMessage;
-            return this;
-        }
-
-        @Override
-        public BuilderImpl appendix(PublicKeyAnnouncementAppendix publicKeyAnnouncement) {
-            this.publicKeyAnnouncement = publicKeyAnnouncement;
-            return this;
-        }
-
-        @Override
-        public BuilderImpl appendix(PhasingAppendix phasing) {
-            this.phasing = phasing;
-            return this;
-        }
-
-        @Override
-        BuilderImpl prunableAttachments(JSONObject prunableAttachments) throws NxtException.NotValidException {
-            if (prunableAttachments != null) {
-                super.prunableAttachments(prunableAttachments);
-                ShufflingProcessingAttachment shufflingProcessing = ShufflingProcessingAttachment.parse(prunableAttachments);
-                if (shufflingProcessing != null) {
-                    appendix(shufflingProcessing);
-                    return this;
-                }
-                TaggedDataUploadAttachment taggedDataUpload = TaggedDataUploadAttachment.parse(prunableAttachments);
-                if (taggedDataUpload != null) {
-                    appendix(taggedDataUpload);
-                    return this;
-                }
-                TaggedDataExtendAttachment taggedDataExtend = TaggedDataExtendAttachment.parse(prunableAttachments);
-                if (taggedDataExtend != null) {
-                    appendix(taggedDataExtend);
-                    return this;
-                }
-            }
             return this;
         }
 
@@ -190,11 +111,35 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         this.childChain = ChildChain.getChildChain(builder.chainId);
         this.referencedTransactionId = builder.referencedTransactionId;
         this.fxtTransactionId = builder.fxtTransactionId;
-        this.message  = builder.message;
-        this.encryptedMessage = builder.encryptedMessage;
-        this.publicKeyAnnouncement = builder.publicKeyAnnouncement;
-        this.encryptToSelfMessage = builder.encryptToSelfMessage;
-        this.phasing = builder.phasing;
+        MessageAppendix messageAppendix = null;
+        EncryptedMessageAppendix encryptedMessageAppendix = null;
+        PublicKeyAnnouncementAppendix publicKeyAnnouncementAppendix = null;
+        EncryptToSelfMessageAppendix encryptToSelfMessageAppendix = null;
+        PhasingAppendix phasingAppendix = null;
+        for (Appendix.AbstractAppendix appendix : appendages()) {
+            switch (appendix.getAppendixType()) {
+                case MessageAppendix.appendixType:
+                    messageAppendix = (MessageAppendix) appendix;
+                    break;
+                case EncryptedMessageAppendix.appendixType:
+                    encryptedMessageAppendix = (EncryptedMessageAppendix) appendix;
+                    break;
+                case PublicKeyAnnouncementAppendix.appendixType:
+                    publicKeyAnnouncementAppendix = (PublicKeyAnnouncementAppendix) appendix;
+                    break;
+                case EncryptToSelfMessageAppendix.appendixType:
+                    encryptToSelfMessageAppendix = (EncryptToSelfMessageAppendix) appendix;
+                    break;
+                case PhasingAppendix.appendixType:
+                    phasingAppendix = (PhasingAppendix) appendix;
+                    break;
+            }
+        }
+        this.message = messageAppendix;
+        this.encryptedMessage = encryptedMessageAppendix;
+        this.publicKeyAnnouncement = publicKeyAnnouncementAppendix;
+        this.encryptToSelfMessage = encryptToSelfMessageAppendix;
+        this.phasing = phasingAppendix;
         if (builder.fee <= 0) {
             long minFeeFQT = getMinimumFeeFQT(Nxt.getBlockchain().getHeight());
             if (builder.feeRateNQTPerFXT <= 0) {
@@ -361,7 +306,15 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             }
         }
         boolean validatingAtFinish = phasing != null && getSignature() != null && childChain.getPhasingPollHome().getPoll(this) != null;
+        int appendixType = -1;
         for (Appendix.AbstractAppendix appendage : appendages()) {
+            if (appendage.getAppendixType() <= appendixType) {
+                throw new NxtException.NotValidException("Duplicate or not in order appendix " + appendage.getAppendixName());
+            }
+            appendixType = appendage.getAppendixType();
+            if (!appendage.isAllowed(childChain)) {
+                throw new NxtException.NotValidException("Appendix not allowed on child chain " + appendage.getAppendixName());
+            }
             appendage.loadPrunable(this);
             if (! appendage.verifyVersion()) {
                 throw new NxtException.NotValidException("Invalid attachment version " + appendage.getVersion());
@@ -420,40 +373,6 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     }
 
     @Override
-    int getFlags() {
-        int flags = 0;
-        int position = 1;
-        if (hasPrunablePlainMessage()) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (hasPrunableEncryptedMessage()) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (message != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (encryptedMessage != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (publicKeyAnnouncement != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (encryptToSelfMessage != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (phasing != null) {
-            flags |= position;
-        }
-        return flags;
-    }
-
-    @Override
     void save(Connection con, String schemaTable) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + schemaTable
                 + " (id, deadline, recipient_id, amount, fee, referenced_transaction_chain_id, referenced_transaction_full_hash, referenced_transaction_id, "
@@ -491,11 +410,9 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             if (bytesLength == 0) {
                 pstmt.setNull(++i, Types.VARBINARY);
             } else {
-                ByteBuffer buffer = ByteBuffer.allocate(bytesLength);
+                ByteBuffer buffer = ByteBuffer.allocate(bytesLength + 4);
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
-                for (Appendix appendage : getAppendages()) {
-                    appendage.putBytes(buffer);
-                }
+                putAppendages(buffer);
                 pstmt.setBytes(++i, buffer.array());
             }
             pstmt.setInt(++i, getBlockTimestamp());
@@ -522,16 +439,11 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         return new UnconfirmedChildTransaction(this, arrivalTimestamp);
     }
 
-    static ChildTransactionImpl loadTransaction(ChildChain childChain, Connection con, ResultSet rs) throws NxtException.NotValidException {
-        BuilderImpl builder = (BuilderImpl)TransactionImpl.newTransactionBuilder(childChain, con, rs);
-        return builder.build();
-    }
-
-    public static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, long amount, long fee, short deadline,
-                                                                  Attachment.AbstractAttachment attachment, ByteBuffer buffer, Connection con, ResultSet rs) throws NxtException.NotValidException {
+    static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, long amount, long fee, short deadline,
+                                                                  List<Appendix.AbstractAppendix> appendages, ResultSet rs) throws NxtException.NotValidException {
         try {
             ChildTransactionImpl.BuilderImpl builder = new ChildTransactionImpl.BuilderImpl(chainId, version, null,
-                    amount, fee, deadline, attachment);
+                    amount, fee, deadline, appendages);
             byte[] referencedTransactionFullHash = rs.getBytes("referenced_transaction_full_hash");
             if (referencedTransactionFullHash != null) {
                 int referencedTransactionChainId = rs.getInt("referenced_transaction_chain_id");
@@ -539,100 +451,35 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             }
             long fxtTransactionId = rs.getLong("fxt_transaction_id");
             builder.fxtTransactionId(fxtTransactionId);
-            if (rs.getBoolean("has_prunable_message")) {
-                builder.appendix(new PrunablePlainMessageAppendix(buffer));
-            }
-            if (rs.getBoolean("has_prunable_encrypted_message")) {
-                builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
-            }
-            if (rs.getBoolean("has_message")) {
-                builder.appendix(new MessageAppendix(buffer));
-            }
-            if (rs.getBoolean("has_encrypted_message")) {
-                builder.appendix(new EncryptedMessageAppendix(buffer));
-            }
-            if (rs.getBoolean("has_public_key_announcement")) {
-                builder.appendix(new PublicKeyAnnouncementAppendix(buffer));
-            }
-            if (rs.getBoolean("has_encrypttoself_message")) {
-                builder.appendix(new EncryptToSelfMessageAppendix(buffer));
-            }
-            if (rs.getBoolean("phased")) {
-                builder.appendix(new PhasingAppendix(buffer));
-            }
             return builder;
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
-    public static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
-                                                                  Attachment.AbstractAttachment attachment, int flags, ByteBuffer buffer) throws NxtException.NotValidException {
+    static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+                                                                  List<Appendix.AbstractAppendix> appendages, ByteBuffer buffer) throws NxtException.NotValidException {
         try {
-            ChildTransactionImpl.BuilderImpl childBuilder = new BuilderImpl(chainId, version, senderPublicKey, amount, fee, deadline, attachment);
-            int position = 1;
-            if ((flags & position) != 0) {
-                childBuilder.appendix(new PrunablePlainMessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                childBuilder.appendix(new PrunableEncryptedMessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                childBuilder.appendix(new MessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                childBuilder.appendix(new EncryptedMessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                childBuilder.appendix(new PublicKeyAnnouncementAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                childBuilder.appendix(new EncryptToSelfMessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                childBuilder.appendix(new PhasingAppendix(buffer));
-            }
+            ChildTransactionImpl.BuilderImpl builder = new BuilderImpl(chainId, version, senderPublicKey, amount, fee, deadline, appendages);
             ChainTransactionId referencedTransaction = ChainTransactionId.parse(buffer);
-            childBuilder.referencedTransaction(referencedTransaction);
-            return childBuilder;
-        } catch (NxtException.NotValidException|RuntimeException e) {
+            builder.referencedTransaction(referencedTransaction);
+            return builder;
+        } catch (RuntimeException e) {
             Logger.logDebugMessage("Failed to parse transaction bytes: " + Convert.toHexString(buffer.array()));
             throw e;
         }
     }
 
-    public static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline, Attachment.AbstractAttachment attachment) throws NxtException.NotValidException {
+    static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline, Attachment.AbstractAttachment attachment) throws NxtException.NotValidException {
         return new BuilderImpl(chainId, version, senderPublicKey, amount, fee, deadline, attachment);
     }
 
-    public static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
-                                                                  Attachment.AbstractAttachment attachment, int flags, ByteBuffer buffer, JSONObject prunableAttachments) throws NxtException.NotValidException {
-        BuilderImpl builder = newTransactionBuilder(chainId, version, senderPublicKey, amount, fee, deadline, attachment, flags, buffer);
-        builder.prunableAttachments(prunableAttachments);
-        return builder;
-    }
-
-    public static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
-                                                                         Attachment.AbstractAttachment attachment, JSONObject attachmentData, JSONObject transactionData) {
+    static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+                                                                  List<Appendix.AbstractAppendix> appendages, JSONObject transactionData) {
         try {
-            ChildTransactionImpl.BuilderImpl childBuilder = new BuilderImpl(chainId, version, senderPublicKey, amount, fee, deadline, attachment);
+            ChildTransactionImpl.BuilderImpl childBuilder = new BuilderImpl(chainId, version, senderPublicKey, amount, fee, deadline, appendages);
             ChainTransactionId referencedTransaction = ChainTransactionId.parse((JSONObject)transactionData.get("referencedTransaction"));
             childBuilder.referencedTransaction(referencedTransaction);
-            if (attachmentData != null) {
-                childBuilder.appendix(MessageAppendix.parse(attachmentData));
-                childBuilder.appendix(EncryptedMessageAppendix.parse(attachmentData));
-                childBuilder.appendix(PublicKeyAnnouncementAppendix.parse(attachmentData));
-                childBuilder.appendix(EncryptToSelfMessageAppendix.parse(attachmentData));
-                childBuilder.appendix(PhasingAppendix.parse(attachmentData));
-                childBuilder.appendix(PrunablePlainMessageAppendix.parse(attachmentData));
-                childBuilder.appendix(PrunableEncryptedMessageAppendix.parse(attachmentData));
-            }
             return childBuilder;
         } catch (RuntimeException e) {
             Logger.logDebugMessage("Failed to parse transaction: " + JSON.toJSONString(transactionData));

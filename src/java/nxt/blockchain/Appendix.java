@@ -20,12 +20,29 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
+import nxt.account.PublicKeyAnnouncementAppendix;
+import nxt.messaging.EncryptToSelfMessageAppendix;
+import nxt.messaging.EncryptedMessageAppendix;
+import nxt.messaging.MessageAppendix;
+import nxt.messaging.PrunableEncryptedMessageAppendix;
+import nxt.messaging.PrunablePlainMessageAppendix;
+import nxt.shuffling.ShufflingProcessingAttachment;
+import nxt.taggeddata.TaggedDataExtendAttachment;
+import nxt.taggeddata.TaggedDataUploadAttachment;
+import nxt.voting.PhasingAppendix;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public interface Appendix {
 
+    int getAppendixType();
     int getSize();
     int getFullSize();
     void putBytes(ByteBuffer buffer);
@@ -37,6 +54,7 @@ public interface Appendix {
     Fee getNextFee(Transaction transaction);
     Fee getFee(Transaction transaction, int height);
     boolean isPhased(Transaction transaction);
+    boolean isAllowed(Chain chain);
 
     interface Prunable {
         byte[] getHash();
@@ -53,8 +71,49 @@ public interface Appendix {
         void encrypt(String secretPhrase);
     }
 
+    interface AppendixParser {
+        AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException;
+        AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException;
+    }
+
+    static Collection<AppendixParser> getParsers() {
+        return AbstractAppendix.parsersMap.values();
+    }
+
+    static AppendixParser getParser(int appendixType) {
+        return AbstractAppendix.parsersMap.get(appendixType);
+    }
+
+    static Collection<AppendixParser> getPrunableParsers() {
+        return AbstractAppendix.prunableParsers;
+    }
 
     abstract class AbstractAppendix implements Appendix {
+
+        private static final SortedMap<Integer,AppendixParser> parsersMap;
+        static {
+            SortedMap<Integer,AppendixParser> map = new TreeMap<>();
+            map.put(MessageAppendix.appendixType, MessageAppendix.appendixParser);
+            map.put(EncryptedMessageAppendix.appendixType, EncryptedMessageAppendix.appendixParser);
+            map.put(EncryptToSelfMessageAppendix.appendixType, EncryptToSelfMessageAppendix.appendixParser);
+            map.put(PrunablePlainMessageAppendix.appendixType, PrunablePlainMessageAppendix.appendixParser);
+            map.put(PrunableEncryptedMessageAppendix.appendixType, PrunableEncryptedMessageAppendix.appendixParser);
+            map.put(PublicKeyAnnouncementAppendix.appendixType, PublicKeyAnnouncementAppendix.appendixParser);
+            map.put(PhasingAppendix.appendixType, PhasingAppendix.appendixParser);
+            parsersMap = Collections.unmodifiableSortedMap(map);
+        }
+
+        private static final List<AppendixParser> prunableParsers;
+        static {
+            List<AppendixParser> list = new ArrayList<>();
+            list.add(PrunablePlainMessageAppendix.appendixParser);
+            list.add(PrunableEncryptedMessageAppendix.appendixParser);
+            list.add(ShufflingProcessingAttachment.appendixParser);
+            list.add(TaggedDataUploadAttachment.appendixParser);
+            list.add(TaggedDataExtendAttachment.appendixParser);
+            list.add(ChildBlockAttachment.appendixParser);
+            prunableParsers = Collections.unmodifiableList(list);
+        }
 
         private final byte version;
 
@@ -78,12 +137,12 @@ public interface Appendix {
 
         @Override
         public final int getSize() {
-            return getMySize() + (version > 0 ? 1 : 0);
+            return getMySize() + 1;
         }
 
         @Override
         public final int getFullSize() {
-            return getMyFullSize() + (version > 0 ? 1 : 0);
+            return getMyFullSize() + 1;
         }
 
         protected abstract int getMySize();
@@ -94,9 +153,7 @@ public interface Appendix {
 
         @Override
         public final void putBytes(ByteBuffer buffer) {
-            if (version > 0) {
-                buffer.put(version);
-            }
+            buffer.put(version);
             putMyBytes(buffer);
         }
 

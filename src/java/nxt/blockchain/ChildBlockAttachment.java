@@ -29,12 +29,20 @@ import java.util.List;
 
 public class ChildBlockAttachment extends Attachment.AbstractAttachment implements Appendix.Prunable {
 
-    public static ChildBlockAttachment parse(JSONObject attachmentData) throws NxtException.NotValidException {
-        if (!Appendix.hasAppendix(ChildBlockFxtTransactionType.INSTANCE.getName(), attachmentData)) {
-            return null;
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            throw new UnsupportedOperationException("Not implemented");
         }
-        return new ChildBlockAttachment(attachmentData);
-    }
+
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(ChildBlockFxtTransactionType.INSTANCE.getName(), attachmentData)) {
+                return null;
+            }
+            return new ChildBlockAttachment(attachmentData);
+        }
+    };
 
     private final int chainId;
     private volatile byte[][] childTransactionFullHashes;

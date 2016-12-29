@@ -16,6 +16,7 @@
 
 package nxt.shuffling;
 
+import nxt.NxtException;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
@@ -33,12 +34,20 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
 
     private static final byte[] emptyDataHash = Crypto.sha256().digest();
 
-    public static ShufflingProcessingAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(ShufflingTransactionType.SHUFFLING_PROCESSING.getName(), attachmentData)) {
-            return null;
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            throw new UnsupportedOperationException("Not implemented");
         }
-        return new ShufflingProcessingAttachment(attachmentData);
-    }
+
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(ShufflingTransactionType.SHUFFLING_PROCESSING.getName(), attachmentData)) {
+                return null;
+            }
+            return new ShufflingProcessingAttachment(attachmentData);
+        }
+    };
 
     private volatile byte[][] data;
     private final byte[] hash;

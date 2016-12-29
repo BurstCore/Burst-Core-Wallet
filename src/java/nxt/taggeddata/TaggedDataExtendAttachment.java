@@ -16,6 +16,7 @@
 
 package nxt.taggeddata;
 
+import nxt.NxtException;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
@@ -27,12 +28,20 @@ import java.nio.ByteBuffer;
 
 public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
 
-    public static TaggedDataExtendAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(TaggedDataTransactionType.TAGGED_DATA_EXTEND.getName(), attachmentData)) {
-            return null;
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            throw new UnsupportedOperationException("Not implemented");
         }
-        return new TaggedDataExtendAttachment(attachmentData);
-    }
+
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(TaggedDataTransactionType.TAGGED_DATA_EXTEND.getName(), attachmentData)) {
+                return null;
+            }
+            return new TaggedDataExtendAttachment(attachmentData);
+        }
+    };
 
     private volatile byte[] hash;
     private final byte[] taggedDataTransactionFullHash;

@@ -21,6 +21,7 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.Fee;
@@ -35,7 +36,23 @@ import java.security.MessageDigest;
 
 public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix implements Appendix.Prunable {
 
-    private static final String appendixName = "PrunablePlainMessage";
+    public static final int appendixType = 8;
+    public static final String appendixName = "PrunablePlainMessage";
+
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new PrunablePlainMessageAppendix(buffer);
+        }
+
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+                return null;
+            }
+            return new PrunablePlainMessageAppendix(attachmentData);
+        }
+    };
 
     private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT/10) {
         @Override
@@ -44,19 +61,12 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
         }
     };
 
-    public static PrunablePlainMessageAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
-        }
-        return new PrunablePlainMessageAppendix(attachmentData);
-    }
-
     private final byte[] hash;
     private final byte[] message;
     private final boolean isText;
     private volatile PrunableMessageHome.PrunableMessage prunableMessage;
 
-    public PrunablePlainMessageAppendix(ByteBuffer buffer) {
+    private PrunablePlainMessageAppendix(ByteBuffer buffer) {
         super(buffer);
         this.hash = new byte[32];
         buffer.get(this.hash);
@@ -95,6 +105,11 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
         this.message = message;
         this.isText = isText;
         this.hash = null;
+    }
+
+    @Override
+    public int getAppendixType() {
+        return appendixType;
     }
 
     @Override
@@ -194,6 +209,11 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
     @Override
     public boolean isPhasable() {
         return false;
+    }
+
+    @Override
+    public boolean isAllowed(Chain chain) {
+        return true;
     }
 
     @Override

@@ -49,7 +49,23 @@ import java.util.Set;
 
 public final class PhasingAppendix extends Appendix.AbstractAppendix {
 
-    private static final String appendixName = "Phasing";
+    public static final int appendixType = 64;
+    public static final String appendixName = "Phasing";
+
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new PhasingAppendix(buffer);
+        }
+
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+                return null;
+            }
+            return new PhasingAppendix(attachmentData);
+        }
+    };
 
     private static final Fee PHASING_FEE = (transaction, appendage) -> {
         long fee = 0;
@@ -66,20 +82,13 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         return fee;
     };
 
-    public static PhasingAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
-        }
-        return new PhasingAppendix(attachmentData);
-    }
-
     private final int finishHeight;
     private final PhasingParams params;
     private final List<ChainTransactionId> linkedTransactionsIds;
     private final byte[] hashedSecret;
     private final byte algorithm;
 
-    public PhasingAppendix(ByteBuffer buffer) {
+    private PhasingAppendix(ByteBuffer buffer) {
         super(buffer);
         finishHeight = buffer.getInt();
         params = new PhasingParams(buffer);
@@ -129,6 +138,11 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         this.linkedTransactionsIds = linkedTransactionsIds;
         this.hashedSecret = hashedSecret != null ? hashedSecret : Convert.EMPTY_BYTE;
         this.algorithm = algorithm;
+    }
+
+    @Override
+    public int getAppendixType() {
+        return appendixType;
     }
 
     @Override
@@ -246,6 +260,11 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     @Override
     public boolean isPhasable() {
         return false;
+    }
+
+    @Override
+    public boolean isAllowed(Chain chain) {
+        return chain instanceof ChildChain;
     }
 
     @Override

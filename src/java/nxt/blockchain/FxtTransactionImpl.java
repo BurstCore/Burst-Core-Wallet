@@ -23,11 +23,7 @@ import nxt.account.Account;
 import nxt.account.AccountRestrictions;
 import nxt.crypto.Crypto;
 import nxt.db.DbUtils;
-import nxt.messaging.PrunableEncryptedMessageAppendix;
-import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.util.Convert;
-import nxt.util.JSON;
-import nxt.util.Logger;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -50,6 +46,11 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
             super(FxtChain.FXT.getId(), version, senderPublicKey, amount, fee, deadline, attachment);
         }
 
+        private BuilderImpl(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+                            List<Appendix.AbstractAppendix> appendages) {
+            super(FxtChain.FXT.getId(), version, senderPublicKey, amount, fee, deadline, appendages);
+        }
+
         @Override
         public FxtTransactionImpl build(String secretPhrase) throws NxtException.NotValidException {
             preBuild(secretPhrase);
@@ -60,18 +61,6 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
         @Override
         public FxtTransactionImpl build() throws NxtException.NotValidException {
             return build(null);
-        }
-
-        @Override
-        BuilderImpl prunableAttachments(JSONObject prunableAttachments) throws NxtException.NotValidException {
-            if (prunableAttachments != null) {
-                super.prunableAttachments(prunableAttachments);
-                ChildBlockAttachment childBlockAttachment = ChildBlockAttachment.parse(prunableAttachments);
-                if (childBlockAttachment != null) {
-                    appendix(childBlockAttachment);
-                }
-            }
-            return this;
         }
 
     }
@@ -126,20 +115,6 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
     }
 
     @Override
-    int getFlags() {
-        int flags = 0;
-        int position = 1;
-        if (hasPrunablePlainMessage()) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (hasPrunableEncryptedMessage()) {
-            flags |= position;
-        }
-        return flags;
-    }
-
-    @Override
     public boolean attachmentIsPhased() {
         return false;
     }
@@ -155,7 +130,15 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
         if (FxtTransactionType.findTransactionType(getType().getType(), getType().getSubtype()) == null) {
             throw new NxtException.NotValidException("Invalid transaction type " + getType().getName() + " for FxtTransaction");
         }
+        int appendixType = -1;
         for (Appendix.AbstractAppendix appendage : appendages()) {
+            if (appendage.getAppendixType() <= appendixType) {
+                throw new NxtException.NotValidException("Duplicate or not in order appendix " + appendage.getAppendixName());
+            }
+            appendixType = appendage.getAppendixType();
+            if (!appendage.isAllowed(FxtChain.FXT)) {
+                throw new NxtException.NotValidException("Appendix not allowed on Fxt chain " + appendage.getAppendixName());
+            }
             appendage.loadPrunable(this);
             if (! appendage.verifyVersion()) {
                 throw new NxtException.NotValidException("Invalid attachment version " + appendage.getVersion());
@@ -262,11 +245,9 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
             if (bytesLength == 0) {
                 pstmt.setNull(++i, Types.VARBINARY);
             } else {
-                ByteBuffer buffer = ByteBuffer.allocate(bytesLength);
+                ByteBuffer buffer = ByteBuffer.allocate(bytesLength + 4);
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
-                for (Appendix appendage : getAppendages()) {
-                    appendage.putBytes(buffer);
-                }
+                putAppendages(buffer);
                 pstmt.setBytes(++i, buffer.array());
             }
             pstmt.setInt(++i, getBlockTimestamp());
@@ -282,70 +263,23 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
         }
     }
 
-    public static FxtTransactionImpl loadTransaction(Connection con, ResultSet rs) throws NxtException.NotValidException {
-        BuilderImpl builder = (BuilderImpl)TransactionImpl.newTransactionBuilder(FxtChain.FXT, con, rs);
-        return builder.build();
+    static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, long amount, long fee, short deadline,
+                                                                List<Appendix.AbstractAppendix> appendages, ResultSet rs) {
+        return new BuilderImpl(version, null, amount, fee, deadline, appendages);
     }
 
-    public static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, long amount, long fee, short deadline,
-                                                                       Attachment.AbstractAttachment attachment, ByteBuffer buffer, Connection con, ResultSet rs) {
-        try {
-            BuilderImpl builder = new BuilderImpl(version, null, amount, fee, deadline, attachment);
-            if (rs.getBoolean("has_prunable_message")) {
-                builder.appendix(new PrunablePlainMessageAppendix(buffer));
-            }
-            if (rs.getBoolean("has_prunable_encrypted_message")) {
-                builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
-            }
-            return builder;
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    public static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline, Attachment.AbstractAttachment attachment) {
+    static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline, Attachment.AbstractAttachment attachment) {
         return new BuilderImpl(version, senderPublicKey, amount, fee, deadline, attachment);
     }
 
-    public static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
-                                                                Attachment.AbstractAttachment attachment, int flags, ByteBuffer buffer) {
-        try {
-            BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amount, fee, deadline, attachment);
-            int position = 1;
-            if ((flags & position) != 0) {
-                builder.appendix(new PrunablePlainMessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
-            }
-            return builder;
-        } catch (RuntimeException e) {
-            Logger.logDebugMessage("Failed to parse transaction bytes: " + Convert.toHexString(buffer.array()));
-            throw e;
-        }
+    static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+                                                                List<Appendix.AbstractAppendix> appendages, ByteBuffer buffer) {
+            return new BuilderImpl(version, senderPublicKey, amount, fee, deadline, appendages);
     }
 
-    public static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
-                                                                Attachment.AbstractAttachment attachment, int flags, ByteBuffer buffer, JSONObject prunableAttachments) throws NxtException.NotValidException {
-        BuilderImpl builder = newTransactionBuilder(version, senderPublicKey, amount, fee, deadline, attachment, flags, buffer);
-        builder.prunableAttachments(prunableAttachments);
-        return builder;
-    }
-
-    public static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
-                                                                Attachment.AbstractAttachment attachment, JSONObject attachmentData, JSONObject transactionData) {
-        try {
-            BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amount, fee, deadline, attachment);
-            if (attachmentData != null) {
-                builder.appendix(PrunablePlainMessageAppendix.parse(attachmentData));
-                builder.appendix(PrunableEncryptedMessageAppendix.parse(attachmentData));
-            }
-            return builder;
-        } catch (RuntimeException e) {
-            Logger.logDebugMessage("Failed to parse transaction: " + JSON.toJSONString(transactionData));
-            throw e;
-        }
+    static FxtTransactionImpl.BuilderImpl newTransactionBuilder(byte version, byte[] senderPublicKey, long amount, long fee, short deadline,
+                                                                List<Appendix.AbstractAppendix> appendages, JSONObject transactionData) {
+        return new BuilderImpl(version, senderPublicKey, amount, fee, deadline, appendages);
     }
 
 }

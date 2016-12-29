@@ -61,7 +61,7 @@ public final class TransactionHome {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     if (rs.getInt("height") <= Integer.MAX_VALUE) {
-                        return FxtTransactionImpl.loadTransaction(con, rs);
+                        return (FxtTransactionImpl)TransactionImpl.loadTransaction(FxtChain.FXT, rs);
                     }
                 }
                 return null;
@@ -101,7 +101,7 @@ public final class TransactionHome {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     if (Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
-                        return TransactionImpl.newTransactionBuilder(chain, con, rs).build();
+                        return TransactionImpl.loadTransaction(chain, rs);
                     }
                 }
                 return null;
@@ -219,7 +219,7 @@ public final class TransactionHome {
             pstmt.setLong(1, fxtTransactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    list.add(ChildTransactionImpl.loadTransaction((ChildChain)chain, con, rs));
+                    list.add((ChildTransactionImpl) TransactionImpl.loadTransaction(chain, rs));
                 }
             }
         } catch (SQLException e) {
@@ -255,7 +255,7 @@ public final class TransactionHome {
             pstmt.setFetchSize(50);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    list.add(FxtTransactionImpl.loadTransaction(con, rs));
+                    list.add((FxtTransactionImpl)TransactionImpl.loadTransaction(FxtChain.FXT, rs));
                 }
             }
         } catch (SQLException e) {

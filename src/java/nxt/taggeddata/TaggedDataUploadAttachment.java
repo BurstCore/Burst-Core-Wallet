@@ -29,12 +29,20 @@ import java.util.Arrays;
 
 public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
 
-    public static TaggedDataUploadAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(TaggedDataTransactionType.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
-            return null;
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            throw new UnsupportedOperationException("Not implemented");
         }
-        return new TaggedDataUploadAttachment(attachmentData);
-    }
+
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(TaggedDataTransactionType.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
+                return null;
+            }
+            return new TaggedDataUploadAttachment(attachmentData);
+        }
+    };
 
     private final byte[] hash;
 

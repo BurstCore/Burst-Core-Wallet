@@ -18,6 +18,8 @@ package nxt.account;
 
 import nxt.NxtException;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.Chain;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
@@ -28,18 +30,27 @@ import java.util.Arrays;
 
 public final class PublicKeyAnnouncementAppendix extends Appendix.AbstractAppendix {
 
-    private static final String appendixName = "PublicKeyAnnouncement";
+    public static final int appendixType = 32;
+    public static final String appendixName = "PublicKeyAnnouncement";
 
-    public static PublicKeyAnnouncementAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new PublicKeyAnnouncementAppendix(buffer);
         }
-        return new PublicKeyAnnouncementAppendix(attachmentData);
-    }
+
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+                return null;
+            }
+            return new PublicKeyAnnouncementAppendix(attachmentData);
+        }
+    };
 
     private final byte[] publicKey;
 
-    public PublicKeyAnnouncementAppendix(ByteBuffer buffer) {
+    private PublicKeyAnnouncementAppendix(ByteBuffer buffer) {
         super(buffer);
         this.publicKey = new byte[32];
         buffer.get(this.publicKey);
@@ -52,6 +63,11 @@ public final class PublicKeyAnnouncementAppendix extends Appendix.AbstractAppend
 
     public PublicKeyAnnouncementAppendix(byte[] publicKey) {
         this.publicKey = publicKey;
+    }
+
+    @Override
+    public int getAppendixType() {
+        return appendixType;
     }
 
     @Override
@@ -106,6 +122,11 @@ public final class PublicKeyAnnouncementAppendix extends Appendix.AbstractAppend
 
     public byte[] getPublicKey() {
         return publicKey;
+    }
+
+    @Override
+    public boolean isAllowed(Chain chain) {
+        return chain instanceof ChildChain;
     }
 
 }
