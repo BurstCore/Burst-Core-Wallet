@@ -28,6 +28,7 @@ import nxt.util.Logger;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -180,6 +181,7 @@ public final class Bundler {
                 List<ChildTransaction> childTransactions = new ArrayList<>();
                 Set<ChildTransaction> childTransactionSet = new HashSet<>();
                 long totalMinFeeFQT = 0;
+                Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
                 //TODO: need to check block size limits in addition to transaction count
                 while (unconfirmedTransactions.hasNext() && childTransactions.size() < Constants.MAX_NUMBER_OF_TRANSACTIONS) {
                     ChildTransactionImpl childTransaction = (ChildTransactionImpl) unconfirmedTransactions.next().getTransaction();
@@ -194,6 +196,9 @@ public final class Bundler {
                     }
                     if (currentTotalFeesFQT + overpay(totalMinFeeFQT + minChildFeeFQT) > totalFeesLimitFQT && totalFeesLimitFQT > 0) {
                         Logger.logDebugMessage("Bundler " + Long.toUnsignedString(accountId) + " will exceed total fees limit, not bundling");
+                        continue;
+                    }
+                    if (childTransaction.attachmentIsDuplicate(duplicates, true)) {
                         continue;
                     }
                     childTransactions.add(childTransaction);
