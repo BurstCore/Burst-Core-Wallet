@@ -88,7 +88,7 @@ public class SetLogging extends APIServlet.APIRequestHandler {
         //
         String value = req.getParameter("logLevel");
         if (value != null) {
-            switch (value) {
+            switch (value.toUpperCase()) {
                 case "DEBUG":
                     Logger.setLevel(Logger.Level.DEBUG);
                     break;
