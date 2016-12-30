@@ -22,7 +22,6 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Chain;
-import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
@@ -223,6 +222,6 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this, blockTimestamp, height);
+        transaction.getChain().getPrunableMessageHome().add((TransactionImpl)transaction, this, blockTimestamp, height);
     }
 }
