@@ -65,6 +65,7 @@ public interface Appendix {
                     (includeExpiredPrunable && Constants.INCLUDE_EXPIRED_PRUNABLE ?
                             Constants.MAX_PRUNABLE_LIFETIME : Constants.MIN_PRUNABLE_LIFETIME);
         }
+        void putPrunableBytes(ByteBuffer buffer);
     }
 
     interface Encryptable {
@@ -74,6 +75,10 @@ public interface Appendix {
     interface AppendixParser {
         AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException;
         AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException;
+    }
+
+    interface PrunableAppendixParser extends AppendixParser {
+        AbstractAppendix parsePrunable(ByteBuffer buffer) throws NxtException.NotValidException;
     }
 
     static Collection<AppendixParser> getParsers() {
@@ -158,6 +163,14 @@ public interface Appendix {
         }
 
         protected abstract void putMyBytes(ByteBuffer buffer);
+
+        public final void putPrunableBytes(ByteBuffer buffer) {
+            buffer.put(version);
+            putMyPrunableBytes(buffer);
+        }
+
+        protected void putMyPrunableBytes(ByteBuffer buffer) {
+        }
 
         @Override
         public final JSONObject getJSONObject() {

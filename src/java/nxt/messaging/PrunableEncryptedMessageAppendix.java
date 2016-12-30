@@ -39,12 +39,15 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
     public static final int appendixType = 16;
     public static final String appendixName = "PrunableEncryptedMessage";
 
-    public static final AppendixParser appendixParser = new AppendixParser() {
+    public static final PrunableAppendixParser appendixParser = new PrunableAppendixParser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
             return new PrunableEncryptedMessageAppendix(buffer);
         }
-
+        @Override
+        public AbstractAppendix parsePrunable(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new PrunableEncryptedMessageAppendix(buffer, true);
+        }
         @Override
         public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
             if (!Appendix.hasAppendix(appendixName, attachmentData)) {
@@ -78,6 +81,16 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
         this.encryptedData = null;
         this.isText = false;
         this.isCompressed = false;
+    }
+
+    private PrunableEncryptedMessageAppendix(ByteBuffer buffer, boolean prunable) throws NxtException.NotValidException {
+        super(buffer);
+        byte flags = buffer.get();
+        this.isText = (flags & 1) != 0;
+        this.isCompressed = (flags & 2) != 0;
+        int length = buffer.getInt();
+        this.encryptedData = EncryptedData.readEncryptedData(buffer, length, Constants.MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH);
+        this.hash = null;
     }
 
     PrunableEncryptedMessageAppendix(JSONObject attachmentJSON) {
@@ -118,12 +131,30 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
 
     @Override
     protected final int getMyFullSize() {
-        return getEncryptedDataLength();
+        return getEncryptedData() == null ? 0 : 1 + 4 + encryptedData.getSize();
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
         buffer.put(getHash());
+    }
+
+    @Override
+    protected void putMyPrunableBytes(ByteBuffer buffer) {
+        if (getEncryptedData() == null) {
+            return;
+        }
+        byte flags = 0;
+        if (isText) {
+            flags |= 1;
+        }
+        if (isCompressed) {
+            flags |= 2;
+        }
+        buffer.put(flags);
+        buffer.putInt(getEncryptedDataLength());
+        buffer.put(encryptedData.getData());
+        buffer.put(encryptedData.getNonce());
     }
 
     @Override

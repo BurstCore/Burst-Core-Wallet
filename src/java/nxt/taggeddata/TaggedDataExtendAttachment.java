@@ -28,12 +28,15 @@ import java.nio.ByteBuffer;
 
 public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
 
-    public static final AppendixParser appendixParser = new AppendixParser() {
+    public static final PrunableAppendixParser appendixParser = new PrunableAppendixParser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
-            throw new UnsupportedOperationException("Not implemented");
+            return new TaggedDataExtendAttachment(buffer);
         }
-
+        @Override
+        public AbstractAppendix parsePrunable(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new TaggedDataExtendAttachment(buffer, true);
+        }
         @Override
         public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
             if (!Appendix.hasAppendix(TaggedDataTransactionType.TAGGED_DATA_EXTEND.getName(), attachmentData)) {
@@ -50,6 +53,14 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
 
     TaggedDataExtendAttachment(ByteBuffer buffer) {
         super(buffer);
+        this.chainId = buffer.getInt();
+        this.taggedDataTransactionFullHash = new byte[32];
+        buffer.get(taggedDataTransactionFullHash);
+        this.jsonIsPruned = false;
+    }
+
+    private TaggedDataExtendAttachment(ByteBuffer buffer, boolean prunable) throws NxtException.NotValidException {
+        super(buffer, prunable);
         this.chainId = buffer.getInt();
         this.taggedDataTransactionFullHash = new byte[32];
         buffer.get(taggedDataTransactionFullHash);
@@ -77,7 +88,19 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
     }
 
     @Override
+    protected int getMyFullSize() {
+        return super.getMyFullSize() + 4 + 32;
+    }
+
+    @Override
     protected void putMyBytes(ByteBuffer buffer) {
+        buffer.putInt(chainId);
+        buffer.put(taggedDataTransactionFullHash);
+    }
+
+    @Override
+    protected void putMyPrunableBytes(ByteBuffer buffer) {
+        super.putMyPrunableBytes(buffer);
         buffer.putInt(chainId);
         buffer.put(taggedDataTransactionFullHash);
     }

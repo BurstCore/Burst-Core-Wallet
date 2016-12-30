@@ -34,12 +34,15 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
 
     private static final byte[] emptyDataHash = Crypto.sha256().digest();
 
-    public static final AppendixParser appendixParser = new AppendixParser() {
+    public static final PrunableAppendixParser appendixParser = new PrunableAppendixParser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
-            throw new UnsupportedOperationException("Not implemented");
+            return new ShufflingProcessingAttachment(buffer);
         }
-
+        @Override
+        public AbstractAppendix parsePrunable(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new ShufflingProcessingAttachment(buffer, true);
+        }
         @Override
         public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
             if (!Appendix.hasAppendix(ShufflingTransactionType.SHUFFLING_PROCESSING.getName(), attachmentData)) {
@@ -57,6 +60,21 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
         this.hash = new byte[32];
         buffer.get(hash);
         this.data = Arrays.equals(hash, emptyDataHash) ? Convert.EMPTY_BYTES : null;
+    }
+
+    private ShufflingProcessingAttachment(ByteBuffer buffer, boolean prunable) throws NxtException.NotValidException {
+        super(buffer);
+        int count = buffer.get() & 0xFF;
+        this.data = new byte[count][];
+        for (int i = 0; i < count; i++) {
+            short length = (short)(buffer.getShort() & 0xFFFF);
+            if (length > 4096) {
+                throw new NxtException.NotValidException("Invalid shuffling processing data length " + length);
+            }
+            this.data[i] = new byte[length];
+            buffer.get(this.data[i]);
+        }
+        this.hash = null;
     }
 
     ShufflingProcessingAttachment(JSONObject attachmentData) {
@@ -86,11 +104,11 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
         if (data != null) {
             size += 1;
             for (byte[] bytes : data) {
-                size += 4;
+                size += 2;
                 size += bytes.length;
             }
         }
-        return size / 2; // just lie
+        return size;
     }
 
     @Override
@@ -102,6 +120,19 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     protected void putMyBytes(ByteBuffer buffer) {
         super.putMyBytes(buffer);
         buffer.put(getHash());
+    }
+
+    @Override
+    protected void putMyPrunableBytes(ByteBuffer buffer) {
+        super.putMyBytes(buffer);
+        if (data == null) {
+            return;
+        }
+        buffer.put((byte)data.length);
+        for (byte[] aData : data) {
+            buffer.putShort((short) aData.length);
+            buffer.put(aData);
+        }
     }
 
     @Override

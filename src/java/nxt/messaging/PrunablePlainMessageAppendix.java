@@ -39,12 +39,15 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
     public static final int appendixType = 8;
     public static final String appendixName = "PrunablePlainMessage";
 
-    public static final AppendixParser appendixParser = new AppendixParser() {
+    public static final PrunableAppendixParser appendixParser = new PrunableAppendixParser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
             return new PrunablePlainMessageAppendix(buffer);
         }
-
+        @Override
+        public AbstractAppendix parsePrunable(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new PrunablePlainMessageAppendix(buffer, true);
+        }
         @Override
         public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
             if (!Appendix.hasAppendix(appendixName, attachmentData)) {
@@ -72,6 +75,21 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
         buffer.get(this.hash);
         this.message = null;
         this.isText = false;
+    }
+
+    private PrunablePlainMessageAppendix(ByteBuffer buffer, boolean prunable) throws NxtException.NotValidException {
+        super(buffer);
+        int messageLength = buffer.getInt();
+        this.isText = messageLength < 0;
+        if (messageLength < 0) {
+            messageLength &= Integer.MAX_VALUE;
+        }
+        if (messageLength > Constants.MAX_PRUNABLE_MESSAGE_LENGTH) {
+            throw new NxtException.NotValidException("Invalid prunable message length: " + messageLength);
+        }
+        this.message = new byte[messageLength];
+        buffer.get(this.message);
+        this.hash = null;
     }
 
     private PrunablePlainMessageAppendix(JSONObject attachmentData) {
@@ -129,12 +147,21 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
 
     @Override
     protected int getMyFullSize() {
-        return getMessage() == null ? 0 : getMessage().length;
+        return getMessage() == null ? 0 : 32 + getMessage().length;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
         buffer.put(getHash());
+    }
+
+    @Override
+    protected void putMyPrunableBytes(ByteBuffer buffer) {
+        if (getMessage() == null) {
+            return;
+        }
+        buffer.putInt(isText ? (message.length | Integer.MIN_VALUE) : message.length);
+        buffer.put(message);
     }
 
     @Override

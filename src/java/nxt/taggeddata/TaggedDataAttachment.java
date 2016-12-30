@@ -16,6 +16,8 @@
 
 package nxt.taggeddata;
 
+import nxt.Constants;
+import nxt.NxtException;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
@@ -49,6 +51,23 @@ public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment
         this.isText = false;
         this.filename = null;
         this.data = null;
+    }
+
+    TaggedDataAttachment(ByteBuffer buffer, boolean prunable) throws NxtException.NotValidException {
+        super(buffer);
+        this.name = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_NAME_LENGTH);
+        this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_DESCRIPTION_LENGTH);
+        this.tags = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_TAGS_LENGTH);
+        this.type = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_TYPE_LENGTH);
+        this.channel = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_CHANNEL_LENGTH);
+        this.filename = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_FILENAME_LENGTH);
+        this.isText = buffer.get() == 1;
+        int length = buffer.getInt();
+        if (length > Constants.MAX_TAGGED_DATA_DATA_LENGTH) {
+            throw new NxtException.NotValidException("Invalid tagged data length " + length);
+        }
+        this.data = new byte[length];
+        buffer.get(this.data);
     }
 
     TaggedDataAttachment(JSONObject attachmentData) {
@@ -88,12 +107,46 @@ public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment
     }
 
     @Override
-    protected final int getMyFullSize() {
+    protected int getMyFullSize() {
         if (getData() == null) {
             return 0;
         }
-        return Convert.toBytes(getName()).length + Convert.toBytes(getDescription()).length + Convert.toBytes(getType()).length
-                + Convert.toBytes(getChannel()).length + Convert.toBytes(getTags()).length + Convert.toBytes(getFilename()).length + getData().length;
+        return 2 + Convert.toBytes(getName()).length + 2 + Convert.toBytes(getDescription()).length +
+                2 + Convert.toBytes(getType()).length + 2 + Convert.toBytes(getChannel()).length +
+                2 + Convert.toBytes(getTags()).length + 2 + Convert.toBytes(getFilename()).length +
+                1 + 4 + getData().length;
+    }
+
+    @Override
+    protected void putMyPrunableBytes(ByteBuffer buffer) {
+        if (getData() == null) {
+            return;
+        }
+        byte[] nameBytes = Convert.toBytes(getName());
+        buffer.putShort((short)nameBytes.length);
+        buffer.put(nameBytes);
+        byte[] desctiptionBytes = Convert.toBytes(getDescription());
+        buffer.putShort((short)desctiptionBytes.length);
+        buffer.put(desctiptionBytes);
+        byte[] tagsBytes = Convert.toBytes(getTags());
+        buffer.putShort((short)tagsBytes.length);
+        buffer.put(tagsBytes);
+        byte[] typeBytes = Convert.toBytes(getType());
+        buffer.putShort((short)typeBytes.length);
+        buffer.put(typeBytes);
+        byte[] channelBytes = Convert.toBytes(getChannel());
+        buffer.putShort((short)channelBytes.length);
+        buffer.put(channelBytes);
+        byte[] filenameBytes = Convert.toBytes(getFilename());
+        buffer.putShort((short)filenameBytes.length);
+        buffer.put(filenameBytes);
+        byte flags = 0;
+        if (isText) {
+            flags |= 1;
+        }
+        buffer.put(flags);
+        buffer.putInt(data.length);
+        buffer.put(data);
     }
 
     @Override

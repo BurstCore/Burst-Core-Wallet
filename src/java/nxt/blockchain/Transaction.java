@@ -97,6 +97,8 @@ public interface Transaction extends AccountLedger.LedgerEventId {
 
     JSONObject getPrunableAttachmentJSON();
 
+    byte[] getPrunableAttachmentBytes();
+
     byte getVersion();
 
     int getFullSize();

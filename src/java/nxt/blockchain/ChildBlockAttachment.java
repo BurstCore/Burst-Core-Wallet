@@ -29,12 +29,15 @@ import java.util.List;
 
 public class ChildBlockAttachment extends Attachment.AbstractAttachment implements Appendix.Prunable {
 
-    public static final AppendixParser appendixParser = new AppendixParser() {
+    public static final PrunableAppendixParser appendixParser = new PrunableAppendixParser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
-            throw new UnsupportedOperationException("Not implemented");
+            return new ChildBlockAttachment(buffer);
         }
-
+        @Override
+        public AbstractAppendix parsePrunable(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new ChildBlockAttachment(buffer, true);
+        }
         @Override
         public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
             if (!Appendix.hasAppendix(ChildBlockFxtTransactionType.INSTANCE.getName(), attachmentData)) {
@@ -54,6 +57,18 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         this.hash = new byte[32];
         buffer.get(hash);
         this.childTransactionFullHashes = null;
+    }
+
+    private ChildBlockAttachment(ByteBuffer buffer, boolean prunable) throws NxtException.NotValidException {
+        super(buffer);
+        this.chainId = buffer.getInt();
+        int count = buffer.getShort() & 0xFFFF;
+        this.childTransactionFullHashes = new byte[count][];
+        for (int i = 0; i < count; i++) {
+            this.childTransactionFullHashes[i] = new byte[32];
+            buffer.get(this.childTransactionFullHashes[i]);
+        }
+        this.hash = null;
     }
 
     ChildBlockAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
@@ -104,7 +119,7 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         if (childTransactionFullHashes == null) {
             return 4;
         }
-        return 4 + 32 * childTransactionFullHashes.length;
+        return 4 + 2 + 32 * childTransactionFullHashes.length;
     }
 
     @Override
@@ -116,6 +131,18 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
     protected void putMyBytes(ByteBuffer buffer) {
         buffer.putInt(chainId);
         buffer.put(getHash());
+    }
+
+    @Override
+    protected void putMyPrunableBytes(ByteBuffer buffer) {
+        buffer.putInt(chainId);
+        if (childTransactionFullHashes == null) {
+            return;
+        }
+        buffer.putShort((short)childTransactionFullHashes.length);
+        for (byte[] childTransactionFullHash : childTransactionFullHashes) {
+            buffer.put(childTransactionFullHash);
+        }
     }
 
     @Override

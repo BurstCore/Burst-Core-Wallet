@@ -237,6 +237,11 @@ public abstract class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
+    public byte[] getPrunableAttachmentBytes() {
+        return transaction.getPrunableAttachmentBytes();
+    }
+
+    @Override
     public byte getVersion() {
         return transaction.getVersion();
     }

@@ -29,12 +29,15 @@ import java.util.Arrays;
 
 public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
 
-    public static final AppendixParser appendixParser = new AppendixParser() {
+    public static final PrunableAppendixParser appendixParser = new PrunableAppendixParser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
-            throw new UnsupportedOperationException("Not implemented");
+            return new TaggedDataUploadAttachment(buffer);
         }
-
+        @Override
+        public AbstractAppendix parsePrunable(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new TaggedDataUploadAttachment(buffer, true);
+        }
         @Override
         public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
             if (!Appendix.hasAppendix(TaggedDataTransactionType.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
@@ -50,6 +53,11 @@ public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
         super(buffer);
         this.hash = new byte[32];
         buffer.get(hash);
+    }
+
+    private TaggedDataUploadAttachment(ByteBuffer buffer, boolean prunable) throws NxtException.NotValidException {
+        super(buffer, prunable);
+        this.hash = null;
     }
 
     TaggedDataUploadAttachment(JSONObject attachmentData) {

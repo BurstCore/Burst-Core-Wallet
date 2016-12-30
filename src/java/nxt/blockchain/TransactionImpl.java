@@ -574,6 +574,11 @@ public abstract class TransactionImpl implements Transaction {
     }
 
     @Override
+    public byte[] getPrunableAttachmentBytes() {
+
+    }
+
+    @Override
     public int getECBlockHeight() {
         return ecBlockHeight;
     }

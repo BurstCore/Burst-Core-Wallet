@@ -56,6 +56,14 @@ public final class UnencryptedPrunableEncryptedMessageAppendix extends PrunableE
     }
 
     @Override
+    protected void putMyPrunableBytes(ByteBuffer buffer) {
+        if (getEncryptedData() == null) {
+            throw new NxtException.NotYetEncryptedException("Prunable encrypted message not yet encrypted");
+        }
+        super.putMyPrunableBytes(buffer);
+    }
+
+    @Override
     protected void putMyJSON(JSONObject json) {
         if (getEncryptedData() == null) {
             JSONObject encryptedMessageJSON = new JSONObject();
