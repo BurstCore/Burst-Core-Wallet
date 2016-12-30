@@ -995,6 +995,7 @@ final class PeerImpl implements Peer {
     @Override
     public void sendMessage(NetworkMessage message) {
         boolean sendMessage = false;
+        boolean disconnect = false;
         synchronized(this) {
             if (state == State.CONNECTED) {
                 if (handshakePending && message instanceof NetworkMessage.GetInfoMessage) {
@@ -1002,6 +1003,7 @@ final class PeerImpl implements Peer {
                     sendMessage = true;
                 } else if (outputQueue.size() >= NetworkHandler.MAX_PENDING_MESSAGES) {
                     Logger.logErrorMessage("Too many pending messages for " + host);
+                    disconnect = true;
                 } else {
                     outputQueue.add(message);
                     if (!handshakePending) {
@@ -1018,6 +1020,8 @@ final class PeerImpl implements Peer {
             if (Peers.communicationLogging == 1) {
                 Logger.logDebugMessage(message.getMessageName() + " message sent to " + host);
             }
+        } else if (disconnect) {
+            disconnectPeer();
         }
     }
 
@@ -1036,6 +1040,7 @@ final class PeerImpl implements Peer {
         responseMap.put(message.getMessageId(), entry);
         sendMessage(message);
         if (state != State.CONNECTED) {
+            responseMap.remove(message.getMessageId());
             return null;
         }
         NetworkMessage response = entry.responseWait();
