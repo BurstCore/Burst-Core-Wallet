@@ -49,13 +49,18 @@ public final class Db {
         return db.getConnection("PUBLIC");
     }
 
-    public static void init() {}
+    public static void init() {
+        Init.init();
+    }
 
-    static {
-        List<DbVersion> dbVersions = new ArrayList<>();
-        dbVersions.add(new FxtDbVersion(db));
-        ChildChain.getAll().forEach(childchain -> dbVersions.add(new ChildDbVersion(db, childchain.getName())));
-        db.init(dbVersions);
+    private static class Init {
+        private static void init() {}
+        static {
+            List<DbVersion> dbVersions = new ArrayList<>();
+            dbVersions.add(new FxtDbVersion(db));
+            ChildChain.getAll().forEach(childchain -> dbVersions.add(new ChildDbVersion(db, childchain.getName())));
+            db.init(dbVersions);
+        }
     }
 
     public static void shutdown() {
