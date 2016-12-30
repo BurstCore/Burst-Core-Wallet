@@ -22,7 +22,6 @@ import nxt.ae.OrderHome;
 import nxt.ae.TradeHome;
 import nxt.aliases.AliasHome;
 import nxt.dgs.DigitalGoodsHome;
-import nxt.messaging.PrunableMessageHome;
 import nxt.ms.CurrencyFounderHome;
 import nxt.ms.ExchangeHome;
 import nxt.ms.ExchangeOfferHome;
@@ -95,6 +94,7 @@ public final class ChildChain extends Chain {
         this.exchangeHome = ExchangeHome.forChain(this);
         this.exchangeOfferHome = ExchangeOfferHome.forChain(this);
         this.exchangeRequestHome = ExchangeRequestHome.forChain(this);
+        this.tradeHome = TradeHome.forChain(this);
         this.orderHome = OrderHome.forChain(this);
         this.phasingPollHome = PhasingPollHome.forChain(this);
         this.phasingVoteHome = PhasingVoteHome.forChain(this);
@@ -102,7 +102,6 @@ public final class ChildChain extends Chain {
         this.shufflingHome = ShufflingHome.forChain(this);
         this.shufflingParticipantHome = ShufflingParticipantHome.forChain(this);
         this.taggedDataHome = TaggedDataHome.forChain(this);
-        this.tradeHome = TradeHome.forChain(this);
         this.voteHome = VoteHome.forChain(this);
         childChains.put(name, this);
         childChainsById.put(id, this);
