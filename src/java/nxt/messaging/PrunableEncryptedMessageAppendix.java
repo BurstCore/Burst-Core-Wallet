@@ -39,14 +39,10 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
     public static final int appendixType = 16;
     public static final String appendixName = "PrunableEncryptedMessage";
 
-    public static final PrunableAppendixParser appendixParser = new PrunableAppendixParser() {
+    public static final AppendixParser appendixParser = new AppendixParser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
             return new PrunableEncryptedMessageAppendix(buffer);
-        }
-        @Override
-        public AbstractAppendix parsePrunable(ByteBuffer buffer) throws NxtException.NotValidException {
-            return new PrunableEncryptedMessageAppendix(buffer, true);
         }
         @Override
         public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
@@ -74,23 +70,22 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
     private final boolean isCompressed;
     private volatile PrunableMessageHome.PrunableMessage prunableMessage;
 
-    private PrunableEncryptedMessageAppendix(ByteBuffer buffer) {
-        super(buffer);
-        this.hash = new byte[32];
-        buffer.get(this.hash);
-        this.encryptedData = null;
-        this.isText = false;
-        this.isCompressed = false;
-    }
-
-    private PrunableEncryptedMessageAppendix(ByteBuffer buffer, boolean prunable) throws NxtException.NotValidException {
+    private PrunableEncryptedMessageAppendix(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
         byte flags = buffer.get();
-        this.isText = (flags & 1) != 0;
-        this.isCompressed = (flags & 2) != 0;
-        int length = buffer.getInt();
-        this.encryptedData = EncryptedData.readEncryptedData(buffer, length, Constants.MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH);
-        this.hash = null;
+        if ((flags & 1) != 0) {
+            this.isText = (flags & 2) != 0;
+            this.isCompressed = (flags & 4) != 0;
+            int length = buffer.getInt();
+            this.encryptedData = EncryptedData.readEncryptedData(buffer, length, Constants.MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH);
+            this.hash = null;
+        } else {
+            this.hash = new byte[32];
+            buffer.get(this.hash);
+            this.encryptedData = null;
+            this.isText = false;
+            this.isCompressed = false;
+        }
     }
 
     PrunableEncryptedMessageAppendix(JSONObject attachmentJSON) {
@@ -126,35 +121,39 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
 
     @Override
     protected final int getMySize() {
-        return 32;
+        return 1 + 32;
     }
 
     @Override
-    protected final int getMyFullSize() {
-        return getEncryptedData() == null ? 0 : 1 + 4 + encryptedData.getSize();
+    public final int getMyFullSize() {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
+        }
+        return 1 + 4 + getEncryptedData().getSize();
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
+        buffer.put((byte)0);
         buffer.put(getHash());
     }
 
     @Override
-    protected void putMyPrunableBytes(ByteBuffer buffer) {
-        if (getEncryptedData() == null) {
-            return;
+    public void putMyPrunableBytes(ByteBuffer buffer) {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
         }
-        byte flags = 0;
-        if (isText) {
-            flags |= 1;
-        }
-        if (isCompressed) {
+        byte flags = 1;
+        if (isText()) {
             flags |= 2;
+        }
+        if (isCompressed()) {
+            flags |= 4;
         }
         buffer.put(flags);
         buffer.putInt(getEncryptedDataLength());
-        buffer.put(encryptedData.getData());
-        buffer.put(encryptedData.getNonce());
+        buffer.put(getEncryptedData().getData());
+        buffer.put(getEncryptedData().getNonce());
     }
 
     @Override

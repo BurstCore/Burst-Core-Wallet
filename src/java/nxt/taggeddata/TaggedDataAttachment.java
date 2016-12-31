@@ -22,15 +22,32 @@ import nxt.blockchain.Appendix;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
+import nxt.blockchain.TransactionType;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
+import java.util.Arrays;
 
-public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment implements Appendix.Prunable {
+public final class TaggedDataAttachment extends Attachment.AbstractAttachment implements Appendix.Prunable {
 
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new TaggedDataAttachment(buffer);
+        }
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(TaggedDataTransactionType.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
+                return null;
+            }
+            return new TaggedDataAttachment(attachmentData);
+        }
+    };
+
+    private final byte[] hash;
     private final String name;
     private final String description;
     private final String tags;
@@ -41,33 +58,36 @@ public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment
     private final byte[] data;
     private volatile TaggedDataHome.TaggedData taggedData;
 
-    TaggedDataAttachment(ByteBuffer buffer) {
+    TaggedDataAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
-        this.name = null;
-        this.description = null;
-        this.tags = null;
-        this.type = null;
-        this.channel = null;
-        this.isText = false;
-        this.filename = null;
-        this.data = null;
-    }
-
-    TaggedDataAttachment(ByteBuffer buffer, boolean prunable) throws NxtException.NotValidException {
-        super(buffer);
-        this.name = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_NAME_LENGTH);
-        this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_DESCRIPTION_LENGTH);
-        this.tags = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_TAGS_LENGTH);
-        this.type = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_TYPE_LENGTH);
-        this.channel = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_CHANNEL_LENGTH);
-        this.filename = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_FILENAME_LENGTH);
-        this.isText = buffer.get() == 1;
-        int length = buffer.getInt();
-        if (length > Constants.MAX_TAGGED_DATA_DATA_LENGTH) {
-            throw new NxtException.NotValidException("Invalid tagged data length " + length);
+        byte flags = buffer.get();
+        if ((flags & 1) != 0) {
+            this.name = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_NAME_LENGTH);
+            this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_DESCRIPTION_LENGTH);
+            this.tags = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_TAGS_LENGTH);
+            this.type = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_TYPE_LENGTH);
+            this.channel = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_CHANNEL_LENGTH);
+            this.filename = Convert.readString(buffer, buffer.getShort(), Constants.MAX_TAGGED_DATA_FILENAME_LENGTH);
+            this.isText = (flags & 2) != 0;
+            int length = buffer.getInt();
+            if (length > Constants.MAX_TAGGED_DATA_DATA_LENGTH) {
+                throw new NxtException.NotValidException("Invalid tagged data length " + length);
+            }
+            this.data = new byte[length];
+            buffer.get(this.data);
+            this.hash = null;
+        } else {
+            this.hash = new byte[32];
+            buffer.get(hash);
+            this.name = null;
+            this.description = null;
+            this.tags = null;
+            this.type = null;
+            this.channel = null;
+            this.isText = false;
+            this.filename = null;
+            this.data = null;
         }
-        this.data = new byte[length];
-        buffer.get(this.data);
     }
 
     TaggedDataAttachment(JSONObject attachmentData) {
@@ -82,7 +102,9 @@ public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment
             this.isText = Boolean.TRUE.equals(attachmentData.get("isText"));
             this.data = isText ? Convert.toBytes(dataJSON) : Convert.parseHexString(dataJSON);
             this.filename = (String) attachmentData.get("filename");
+            this.hash = null;
         } else {
+            this.hash = Convert.parseHexString(Convert.emptyToNull((String)attachmentData.get("hash")));
             this.name = null;
             this.description = null;
             this.tags = null;
@@ -92,10 +114,10 @@ public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment
             this.filename = null;
             this.data = null;
         }
-
     }
 
-    TaggedDataAttachment(String name, String description, String tags, String type, String channel, boolean isText, String filename, byte[] data) {
+    public TaggedDataAttachment(String name, String description, String tags, String type, String channel, boolean isText, String filename, byte[] data)
+            throws NxtException.NotValidException {
         this.name = name;
         this.description = description;
         this.tags = tags;
@@ -104,30 +126,55 @@ public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment
         this.isText = isText;
         this.data = data;
         this.filename = filename;
+        this.hash = null;
+        if (isText && !Arrays.equals(data, Convert.toBytes(Convert.toString(data)))) {
+            throw new NxtException.NotValidException("Data is not UTF-8 text");
+        }
     }
 
     @Override
-    protected int getMyFullSize() {
-        if (getData() == null) {
-            return 0;
+    public TransactionType getTransactionType() {
+        return TaggedDataTransactionType.TAGGED_DATA_UPLOAD;
+    }
+
+    @Override
+    protected int getMySize() {
+        return 1 + 32;
+    }
+
+    @Override
+    protected void putMyBytes(ByteBuffer buffer) {
+        buffer.put((byte)0);
+        buffer.put(getHash());
+    }
+
+    @Override
+    public int getMyFullSize() {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
         }
-        return 2 + Convert.toBytes(getName()).length + 2 + Convert.toBytes(getDescription()).length +
+        return 1 + 2 + Convert.toBytes(getName()).length + 2 + Convert.toBytes(getDescription()).length +
                 2 + Convert.toBytes(getType()).length + 2 + Convert.toBytes(getChannel()).length +
                 2 + Convert.toBytes(getTags()).length + 2 + Convert.toBytes(getFilename()).length +
-                1 + 4 + getData().length;
+                4 + getData().length;
     }
 
     @Override
-    protected void putMyPrunableBytes(ByteBuffer buffer) {
-        if (getData() == null) {
-            return;
+    public void putMyPrunableBytes(ByteBuffer buffer) {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
         }
+        byte flags = 1;
+        if (isText()) {
+            flags |= 2;
+        }
+        buffer.put(flags);
         byte[] nameBytes = Convert.toBytes(getName());
         buffer.putShort((short)nameBytes.length);
         buffer.put(nameBytes);
-        byte[] desctiptionBytes = Convert.toBytes(getDescription());
-        buffer.putShort((short)desctiptionBytes.length);
-        buffer.put(desctiptionBytes);
+        byte[] descriptionBytes = Convert.toBytes(getDescription());
+        buffer.putShort((short)descriptionBytes.length);
+        buffer.put(descriptionBytes);
         byte[] tagsBytes = Convert.toBytes(getTags());
         buffer.putShort((short)tagsBytes.length);
         buffer.put(tagsBytes);
@@ -140,13 +187,8 @@ public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment
         byte[] filenameBytes = Convert.toBytes(getFilename());
         buffer.putShort((short)filenameBytes.length);
         buffer.put(filenameBytes);
-        byte flags = 0;
-        if (isText) {
-            flags |= 1;
-        }
-        buffer.put(flags);
-        buffer.putInt(data.length);
-        buffer.put(data);
+        buffer.putInt(getData().length);
+        buffer.put(getData());
     }
 
     @Override
@@ -170,10 +212,14 @@ public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment
             attachment.put("filename", filename);
             attachment.put("data", isText ? Convert.toString(data) : Convert.toHexString(data));
         }
+        attachment.put("hash", Convert.toHexString(getHash()));
     }
 
     @Override
     public byte[] getHash() {
+        if (hash != null) {
+            return hash;
+        }
         if (data == null) {
             return null;
         }
@@ -248,7 +294,7 @@ public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (data == null && taggedData == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            taggedData = ((ChildChain) transaction.getChain()).getTaggedDataHome().getData(getTaggedDataTransactionFullHash(transaction));
+            taggedData = ((ChildChain) transaction.getChain()).getTaggedDataHome().getData(transaction.getFullHash());
         }
     }
 
@@ -257,6 +303,9 @@ public abstract class TaggedDataAttachment extends Attachment.AbstractAttachment
         return (taggedData != null || data != null);
     }
 
-    abstract byte[] getTaggedDataTransactionFullHash(Transaction transaction);
+    @Override
+    public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
+        ((ChildChain) transaction.getChain()).getTaggedDataHome().restore(transaction, this, blockTimestamp, height);
+    }
 
 }

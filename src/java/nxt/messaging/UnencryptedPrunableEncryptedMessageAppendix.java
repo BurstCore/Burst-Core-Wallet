@@ -56,7 +56,7 @@ public final class UnencryptedPrunableEncryptedMessageAppendix extends PrunableE
     }
 
     @Override
-    protected void putMyPrunableBytes(ByteBuffer buffer) {
+    public void putMyPrunableBytes(ByteBuffer buffer) {
         if (getEncryptedData() == null) {
             throw new NxtException.NotYetEncryptedException("Prunable encrypted message not yet encrypted");
         }

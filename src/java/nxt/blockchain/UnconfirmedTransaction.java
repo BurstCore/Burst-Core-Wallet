@@ -22,14 +22,12 @@ import nxt.db.DbKey;
 import nxt.messaging.PrunableEncryptedMessageAppendix;
 import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.util.Filter;
-import nxt.util.JSON;
 import org.json.simple.JSONObject;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.List;
 
 public abstract class UnconfirmedTransaction implements Transaction {
@@ -69,20 +67,14 @@ public abstract class UnconfirmedTransaction implements Transaction {
 
     void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO unconfirmed_transaction (id, transaction_height, "
-                + "fee_per_byte, expiration, transaction_bytes, prunable_json, arrival_timestamp, chain_id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "fee_per_byte, expiration, transaction_bytes, arrival_timestamp, chain_id, height) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, transaction.getId());
             pstmt.setInt(++i, transaction.getHeight());
             pstmt.setLong(++i, feePerByte);
             pstmt.setInt(++i, transaction.getExpiration());
-            pstmt.setBytes(++i, transaction.bytes());
-            JSONObject prunableJSON = transaction.getPrunableAttachmentJSON();
-            if (prunableJSON != null) {
-                pstmt.setString(++i, JSON.toJSONString(prunableJSON));
-            } else {
-                pstmt.setNull(++i, Types.VARCHAR);
-            }
+            pstmt.setBytes(++i, transaction.prunableBytes());
             pstmt.setLong(++i, arrivalTimestamp);
             pstmt.setInt(++i, transaction.getChain().getId());
             pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
@@ -227,6 +219,11 @@ public abstract class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
+    public byte[] getPrunableBytes() {
+        return transaction.getPrunableBytes();
+    }
+
+    @Override
     public JSONObject getJSONObject() {
         return transaction.getJSONObject();
     }
@@ -234,11 +231,6 @@ public abstract class UnconfirmedTransaction implements Transaction {
     @Override
     public JSONObject getPrunableAttachmentJSON() {
         return transaction.getPrunableAttachmentJSON();
-    }
-
-    @Override
-    public byte[] getPrunableAttachmentBytes() {
-        return transaction.getPrunableAttachmentBytes();
     }
 
     @Override

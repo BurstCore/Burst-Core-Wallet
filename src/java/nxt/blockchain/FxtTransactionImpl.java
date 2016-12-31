@@ -247,7 +247,7 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
             } else {
                 ByteBuffer buffer = ByteBuffer.allocate(bytesLength + 4);
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
-                putAppendages(buffer);
+                putAppendages(buffer, false);
                 pstmt.setBytes(++i, buffer.array());
             }
             pstmt.setInt(++i, getBlockTimestamp());

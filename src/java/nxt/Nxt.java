@@ -301,8 +301,8 @@ public final class Nxt {
         return BlockImpl.parseBlock(blockBytes, blockTransactions);
     }
 
-    public static Transaction parseTransaction(byte[] transactionBytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
-        return TransactionImpl.parseTransaction(transactionBytes, prunableAttachments);
+    public static Transaction parseTransaction(byte[] transactionBytes) throws NxtException.NotValidException {
+        return TransactionImpl.parseTransaction(transactionBytes);
     }
 
     public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws NxtException.NotValidException {

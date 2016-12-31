@@ -264,8 +264,8 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     }
 
     @Override
-    ByteBuffer generateBytes() {
-        ByteBuffer buffer = super.generateBytes();
+    ByteBuffer generateBytes(boolean includePrunable) {
+        ByteBuffer buffer = super.generateBytes(includePrunable);
         if (referencedTransactionId != null) {
             referencedTransactionId.put(buffer);
         } else {
@@ -412,7 +412,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             } else {
                 ByteBuffer buffer = ByteBuffer.allocate(bytesLength + 4);
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
-                putAppendages(buffer);
+                putAppendages(buffer, false);
                 pstmt.setBytes(++i, buffer.array());
             }
             pstmt.setInt(++i, getBlockTimestamp());

@@ -27,8 +27,7 @@ import nxt.messaging.MessageAppendix;
 import nxt.messaging.PrunableEncryptedMessageAppendix;
 import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.shuffling.ShufflingProcessingAttachment;
-import nxt.taggeddata.TaggedDataExtendAttachment;
-import nxt.taggeddata.TaggedDataUploadAttachment;
+import nxt.taggeddata.TaggedDataAttachment;
 import nxt.voting.PhasingAppendix;
 import org.json.simple.JSONObject;
 
@@ -65,7 +64,8 @@ public interface Appendix {
                     (includeExpiredPrunable && Constants.INCLUDE_EXPIRED_PRUNABLE ?
                             Constants.MAX_PRUNABLE_LIFETIME : Constants.MIN_PRUNABLE_LIFETIME);
         }
-        void putPrunableBytes(ByteBuffer buffer);
+        void putMyPrunableBytes(ByteBuffer buffer);
+        int getMyFullSize();
     }
 
     interface Encryptable {
@@ -75,10 +75,6 @@ public interface Appendix {
     interface AppendixParser {
         AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException;
         AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException;
-    }
-
-    interface PrunableAppendixParser extends AppendixParser {
-        AbstractAppendix parsePrunable(ByteBuffer buffer) throws NxtException.NotValidException;
     }
 
     static Collection<AppendixParser> getParsers() {
@@ -114,8 +110,7 @@ public interface Appendix {
             list.add(PrunablePlainMessageAppendix.appendixParser);
             list.add(PrunableEncryptedMessageAppendix.appendixParser);
             list.add(ShufflingProcessingAttachment.appendixParser);
-            list.add(TaggedDataUploadAttachment.appendixParser);
-            list.add(TaggedDataExtendAttachment.appendixParser);
+            list.add(TaggedDataAttachment.appendixParser);
             list.add(ChildBlockAttachment.appendixParser);
             prunableParsers = Collections.unmodifiableList(list);
         }
@@ -127,7 +122,7 @@ public interface Appendix {
         }
 
         protected AbstractAppendix(ByteBuffer buffer) {
-            version = buffer.get();
+            this.version = buffer.get();
         }
 
         protected AbstractAppendix(int version) {
@@ -142,34 +137,37 @@ public interface Appendix {
 
         @Override
         public final int getSize() {
-            return getMySize() + 1;
+            return getMySize() + (version > 0 ? 1 : 0);
         }
 
         @Override
         public final int getFullSize() {
-            return getMyFullSize() + 1;
+            if (this instanceof Prunable && ((Prunable)this).hasPrunableData()) {
+                return ((Prunable)this).getMyFullSize() + 1;
+            } else {
+                return getSize();
+            }
         }
 
         protected abstract int getMySize();
 
-        protected int getMyFullSize() {
-            return getMySize();
-        }
-
         @Override
         public final void putBytes(ByteBuffer buffer) {
-            buffer.put(version);
+            if (version > 0) {
+                buffer.put(version);
+            }
             putMyBytes(buffer);
         }
 
         protected abstract void putMyBytes(ByteBuffer buffer);
 
-        public final void putPrunableBytes(ByteBuffer buffer) {
-            buffer.put(version);
-            putMyPrunableBytes(buffer);
-        }
-
-        protected void putMyPrunableBytes(ByteBuffer buffer) {
+        final void putPrunableBytes(ByteBuffer buffer) {
+            if (this instanceof Prunable && ((Prunable)this).hasPrunableData()) {
+                buffer.put(version);
+                ((Prunable)this).putMyPrunableBytes(buffer);
+            } else {
+                putBytes(buffer);
+            }
         }
 
         @Override

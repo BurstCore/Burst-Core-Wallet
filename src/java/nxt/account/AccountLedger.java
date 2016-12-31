@@ -397,6 +397,7 @@ public class AccountLedger {
      * a new event, do not change the existing code assignments since these codes are stored in
      * the event_type field of the account_ledger table.
      */
+    //TODO: renumber
     public enum LedgerEvent {
         // Block and Transaction
             BLOCK_GENERATED(1, false),
@@ -459,7 +460,6 @@ public class AccountLedger {
             CURRENCY_UNDO_CROWDFUNDING(46, true),
         // TYPE_DATA
             TAGGED_DATA_UPLOAD(47, true),
-            TAGGED_DATA_EXTEND(48, true),
         // TYPE_SHUFFLING
             SHUFFLING_REGISTRATION(51, true),
             SHUFFLING_PROCESSING(52, true),

@@ -247,6 +247,7 @@ public abstract class TransactionImpl implements Transaction {
     private volatile long senderId;
     private volatile byte[] fullHash;
     volatile byte[] bytes = null;
+    volatile byte[] prunableBytes = null;
 
 
     TransactionImpl(BuilderImpl builder) {
@@ -490,10 +491,14 @@ public abstract class TransactionImpl implements Transaction {
         return Arrays.copyOf(bytes(), bytes.length);
     }
 
+    public final byte[] getPrunableBytes() {
+        return Arrays.copyOf(prunableBytes(), prunableBytes.length);
+    }
+
     public final byte[] bytes() {
         if (bytes == null) {
             try {
-                bytes = generateBytes().array();
+                bytes = generateBytes(false).array();
             } catch (RuntimeException e) {
                 if (getSignature() != null) {
                     Logger.logDebugMessage("Failed to get transaction bytes for transaction: " + JSON.toJSONString(getJSONObject()));
@@ -504,8 +509,23 @@ public abstract class TransactionImpl implements Transaction {
         return bytes;
     }
 
-    ByteBuffer generateBytes() {
-        ByteBuffer buffer = ByteBuffer.allocate(getSize());
+    public final byte[] prunableBytes() {
+        if (prunableBytes == null) {
+            try {
+                prunableBytes = generateBytes(true).array();
+            } catch (RuntimeException e) {
+                if (getSignature() != null) {
+                    Logger.logDebugMessage("Failed to get transaction bytes for transaction: " + JSON.toJSONString(getJSONObject()));
+                }
+                throw e;
+            }
+        }
+        return prunableBytes;
+    }
+
+
+    ByteBuffer generateBytes(boolean includePrunable) {
+        ByteBuffer buffer = ByteBuffer.allocate(includePrunable ? getFullSize() : getSize());
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.putInt(getChain().getId());
         buffer.put(getType().getType());
@@ -520,7 +540,7 @@ public abstract class TransactionImpl implements Transaction {
         buffer.put(getSignature() != null ? getSignature() : new byte[64]);
         buffer.putInt(getECBlockHeight());
         buffer.putLong(getECBlockId());
-        putAppendages(buffer);
+        putAppendages(buffer, includePrunable);
         return buffer;
     }
 
@@ -574,11 +594,6 @@ public abstract class TransactionImpl implements Transaction {
     }
 
     @Override
-    public byte[] getPrunableAttachmentBytes() {
-
-    }
-
-    @Override
     public int getECBlockHeight() {
         return ecBlockHeight;
     }
@@ -604,7 +619,7 @@ public abstract class TransactionImpl implements Transaction {
     private static final int SIGNATURE_OFFSET = 4 + 1 + 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8;
 
     protected int getSize() {
-        return SIGNATURE_OFFSET + 64 + 4 + 8 + (appendagesSize == 0 ? 0 : 4 + appendagesSize);
+        return SIGNATURE_OFFSET + 64 + 4 + 8 + 4 + appendagesSize;
     }
 
     @Override
@@ -730,6 +745,14 @@ public abstract class TransactionImpl implements Transaction {
     abstract void save(Connection con, String schemaTable) throws SQLException;
 
     abstract UnconfirmedTransaction newUnconfirmedTransaction(long arrivalTime);
+
+    public static TransactionImpl parseTransaction(byte[] transactionBytes) throws NxtException.NotValidException {
+        TransactionImpl transaction = newTransactionBuilder(transactionBytes).build();
+        if (transaction.getSignature() != null && !transaction.checkSignature()) {
+            throw new NxtException.NotValidException("Invalid transaction signature for transaction " + JSON.toJSONString(transaction.getJSONObject()));
+        }
+        return transaction;
+    }
 
     public static TransactionImpl parseTransaction(byte[] transactionBytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
         TransactionImpl transaction = newTransactionBuilder(transactionBytes, prunableAttachments).build();
@@ -865,7 +888,10 @@ public abstract class TransactionImpl implements Transaction {
             appendages.add(transactionType.parseAttachment(attachmentData));
             if (attachmentData != null) {
                 for (Appendix.AppendixParser parser : Appendix.getParsers()) {
-                    appendages.add(parser.parse(attachmentData));
+                    Appendix.AbstractAppendix appendix = parser.parse(attachmentData);
+                    if (appendix != null) {
+                        appendages.add(appendix);
+                    }
                 }
             }
             TransactionImpl.BuilderImpl builder = Chain.getChain(chainId).newTransactionBuilder(version, senderPublicKey, amount, fee, deadline,
@@ -907,14 +933,19 @@ public abstract class TransactionImpl implements Transaction {
         return list;
     }
 
-    void putAppendages(ByteBuffer buffer) {
+    void putAppendages(ByteBuffer buffer, boolean includePrunable) {
         int flags = 0;
-        for (Appendix appendage : appendages()) {
+        for (Appendix.AbstractAppendix appendage : appendages()) {
             flags |= appendage.getAppendixType();
         }
         buffer.putInt(flags);
-        for (Appendix appendage : appendages()) {
-            appendage.putBytes(buffer);
+        for (Appendix.AbstractAppendix appendage : appendages()) {
+            if (includePrunable) {
+                appendage.loadPrunable(this);
+                appendage.putPrunableBytes(buffer);
+            } else {
+                appendage.putBytes(buffer);
+            }
         }
     }
 

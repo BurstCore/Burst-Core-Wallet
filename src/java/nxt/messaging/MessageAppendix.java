@@ -63,11 +63,9 @@ public class MessageAppendix extends Appendix.AbstractAppendix {
 
     private MessageAppendix(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
-        int messageLength = buffer.getInt();
-        this.isText = messageLength < 0; // ugly hack
-        if (messageLength < 0) {
-            messageLength &= Integer.MAX_VALUE;
-        }
+        byte flags = buffer.get();
+        this.isText = (flags & 1) != 0;
+        int messageLength = buffer.getShort() & 0xFFFF;
         if (messageLength > 1000) {
             throw new NxtException.NotValidException("Invalid arbitrary message length: " + messageLength);
         }
@@ -114,12 +112,17 @@ public class MessageAppendix extends Appendix.AbstractAppendix {
 
     @Override
     protected int getMySize() {
-        return 4 + message.length;
+        return 1 + 2 + message.length;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
-        buffer.putInt(isText ? (message.length | Integer.MIN_VALUE) : message.length);
+        byte flags = 0;
+        if (isText) {
+            flags |= 1;
+        }
+        buffer.put(flags);
+        buffer.putShort((short)message.length);
         buffer.put(message);
     }
 

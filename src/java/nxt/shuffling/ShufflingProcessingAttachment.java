@@ -34,14 +34,10 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
 
     private static final byte[] emptyDataHash = Crypto.sha256().digest();
 
-    public static final PrunableAppendixParser appendixParser = new PrunableAppendixParser() {
+    public static final AppendixParser appendixParser = new AppendixParser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
             return new ShufflingProcessingAttachment(buffer);
-        }
-        @Override
-        public AbstractAppendix parsePrunable(ByteBuffer buffer) throws NxtException.NotValidException {
-            return new ShufflingProcessingAttachment(buffer, true);
         }
         @Override
         public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
@@ -55,26 +51,26 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     private volatile byte[][] data;
     private final byte[] hash;
 
-    ShufflingProcessingAttachment(ByteBuffer buffer) {
+    ShufflingProcessingAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
-        this.hash = new byte[32];
-        buffer.get(hash);
-        this.data = Arrays.equals(hash, emptyDataHash) ? Convert.EMPTY_BYTES : null;
-    }
-
-    private ShufflingProcessingAttachment(ByteBuffer buffer, boolean prunable) throws NxtException.NotValidException {
-        super(buffer);
-        int count = buffer.get() & 0xFF;
-        this.data = new byte[count][];
-        for (int i = 0; i < count; i++) {
-            short length = (short)(buffer.getShort() & 0xFFFF);
-            if (length > 4096) {
-                throw new NxtException.NotValidException("Invalid shuffling processing data length " + length);
+        byte flags = buffer.get();
+        if ((flags & 1) != 0) {
+            int count = buffer.get() & 0xFF;
+            this.data = new byte[count][];
+            for (int i = 0; i < count; i++) {
+                short length = (short)(buffer.getShort() & 0xFFFF);
+                if (length > 4096) {
+                    throw new NxtException.NotValidException("Invalid shuffling processing data length " + length);
+                }
+                this.data[i] = new byte[length];
+                buffer.get(this.data[i]);
             }
-            this.data[i] = new byte[length];
-            buffer.get(this.data[i]);
+            this.hash = null;
+        } else {
+            this.hash = new byte[32];
+            buffer.get(hash);
+            this.data = Arrays.equals(hash, emptyDataHash) ? Convert.EMPTY_BYTES : null;
         }
-        this.hash = null;
     }
 
     ShufflingProcessingAttachment(JSONObject attachmentData) {
@@ -99,35 +95,38 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    protected int getMyFullSize() {
-        int size = super.getMySize();
-        if (data != null) {
-            size += 1;
-            for (byte[] bytes : data) {
-                size += 2;
-                size += bytes.length;
-            }
+    public int getMyFullSize() {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
+        }
+        int size = super.getMySize() + 1;
+        size += 1;
+        for (byte[] bytes : data) {
+            size += 2;
+            size += bytes.length;
         }
         return size;
     }
 
     @Override
     protected int getMySize() {
-        return super.getMySize() + 32;
+        return super.getMySize() + 1 + 32;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
         super.putMyBytes(buffer);
+        buffer.put((byte)0);
         buffer.put(getHash());
     }
 
     @Override
-    protected void putMyPrunableBytes(ByteBuffer buffer) {
-        super.putMyBytes(buffer);
-        if (data == null) {
-            return;
+    public void putMyPrunableBytes(ByteBuffer buffer) {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
         }
+        super.putMyBytes(buffer);
+        buffer.put((byte)1);
         buffer.put((byte)data.length);
         for (byte[] aData : data) {
             buffer.putShort((short) aData.length);

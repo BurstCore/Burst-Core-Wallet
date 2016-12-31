@@ -25,10 +25,8 @@ import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;
 import nxt.db.DbUtils;
-import nxt.db.VersionedEntityDbTable;
 import nxt.db.VersionedPersistentDbTable;
 import nxt.db.VersionedPrunableDbTable;
-import nxt.db.VersionedValuesDbTable;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import nxt.util.Search;
@@ -38,7 +36,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public final class TaggedDataHome {
@@ -53,10 +50,6 @@ public final class TaggedDataHome {
     private final ChildChain childChain;
     private final DbKey.HashKeyFactory<TaggedData> taggedDataKeyFactory;
     private final VersionedPrunableDbTable<TaggedData> taggedDataTable;
-    private final DbKey.HashKeyFactory<Timestamp> timestampKeyFactory;
-    private final VersionedEntityDbTable<Timestamp> timestampTable;
-    private final DbKey.HashKeyFactory<byte[]> extendDbKeyFactory;
-    private final VersionedValuesDbTable<byte[], byte[]> extendTable;
     private final DbKey.StringKeyFactory<Tag> tagDbKeyFactory;
     private final VersionedPersistentDbTable<Tag> tagTable;
 
@@ -106,43 +99,6 @@ public final class TaggedDataHome {
                     }
                 }
                 super.prune();
-            }
-        };
-        this.timestampKeyFactory = new DbKey.HashKeyFactory<Timestamp>("full_hash", "id") {
-            @Override
-            public DbKey newKey(Timestamp timestamp) {
-                return timestamp.dbKey;
-            }
-        };
-        this.timestampTable = new VersionedEntityDbTable<Timestamp>(childChain.getSchemaTable("tagged_data_timestamp"), timestampKeyFactory) {
-            @Override
-            protected Timestamp load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-                return new Timestamp(rs, dbKey);
-            }
-            @Override
-            protected void save(Connection con, Timestamp timestamp) throws SQLException {
-                timestamp.save(con);
-            }
-        };
-        this.extendDbKeyFactory = new DbKey.HashKeyFactory<byte[]>("full_hash", "id") {
-        };
-        this.extendTable = new VersionedValuesDbTable<byte[], byte[]>(childChain.getSchemaTable("tagged_data_extend"), extendDbKeyFactory) {
-            @Override
-            protected byte[] load(Connection con, ResultSet rs) throws SQLException {
-                return rs.getBytes("extend_full_hash");
-            }
-            @Override
-            protected void save(Connection con, byte[] taggedDataTransactionFullHash, byte[] extendTransactionFullHash) throws SQLException {
-                try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO tagged_data_extend (id, full_hash, extend_id, extend_full_hash, "
-                        + "height, latest) VALUES (?, ?, ?, ?, ?, TRUE)")) {
-                    int i = 0;
-                    pstmt.setLong(++i, Convert.fullHashToId(taggedDataTransactionFullHash));
-                    pstmt.setBytes(++i, taggedDataTransactionFullHash);
-                    pstmt.setLong(++i, Convert.fullHashToId(extendTransactionFullHash));
-                    pstmt.setBytes(++i, extendTransactionFullHash);
-                    pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
-                    pstmt.executeUpdate();
-                }
             }
         };
         this.tagDbKeyFactory = new DbKey.StringKeyFactory<Tag>("tag") {
@@ -240,10 +196,6 @@ public final class TaggedDataHome {
         return taggedDataTable.get(taggedDataKeyFactory.newKey(transactionFullHash));
     }
 
-    public List<byte[]> getExtendTransactionIds(byte[] taggedDataTransactionFullHash) {
-        return extendTable.get(extendDbKeyFactory.newKey(taggedDataTransactionFullHash));
-    }
-
     public DbIterator<TaggedData> getData(String channel, long accountId, int from, int to) {
         if (channel == null && accountId == 0) {
             throw new IllegalArgumentException("Either channel, or accountId, or both, must be specified");
@@ -268,7 +220,7 @@ public final class TaggedDataHome {
         return dbClause;
     }
 
-    void add(TransactionImpl transaction, TaggedDataUploadAttachment attachment) {
+    void add(TransactionImpl transaction, TaggedDataAttachment attachment) {
         if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME && attachment.getData() != null) {
             TaggedData taggedData = taggedDataTable.get(taggedDataKeyFactory.newKey(transaction.getFullHash(), transaction.getId()));
             if (taggedData == null) {
@@ -277,56 +229,12 @@ public final class TaggedDataHome {
                 addTags(taggedData);
             }
         }
-        Timestamp timestamp = new Timestamp(transaction.getId(), transaction.getFullHash(), transaction.getTimestamp());
-        timestampTable.insert(timestamp);
     }
 
-    void extend(Transaction transaction, TaggedDataExtendAttachment attachment) {
-        byte[] taggedDataTransactionFullHash = attachment.getTaggedDataTransactionFullHash();
-        DbKey dbKey = taggedDataKeyFactory.newKey(taggedDataTransactionFullHash);
-        Timestamp timestamp = timestampTable.get(dbKey);
-        if (transaction.getTimestamp() - Constants.MIN_PRUNABLE_LIFETIME > timestamp.timestamp) {
-            timestamp.timestamp = transaction.getTimestamp();
-        } else {
-            timestamp.timestamp = timestamp.timestamp + Math.min(Constants.MIN_PRUNABLE_LIFETIME, Integer.MAX_VALUE - timestamp.timestamp);
-        }
-        timestampTable.insert(timestamp);
-        List<byte[]> extendTransactionIds = extendTable.get(dbKey);
-        extendTransactionIds.add(transaction.getFullHash());
-        extendTable.insert(taggedDataTransactionFullHash, extendTransactionIds);
-        if (Nxt.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME < timestamp.timestamp) {
-            TaggedData taggedData = taggedDataTable.get(dbKey);
-            if (taggedData == null && attachment.getData() != null) {
-                TransactionImpl uploadTransaction = transaction.getChain().getTransactionHome().findTransaction(taggedDataTransactionFullHash);
-                taggedData = new TaggedData(uploadTransaction, attachment);
-                addTags(taggedData);
-            }
-            if (taggedData != null) {
-                taggedData.transactionTimestamp = timestamp.timestamp;
-                taggedData.blockTimestamp = Nxt.getBlockchain().getLastBlockTimestamp();
-                taggedData.height = Nxt.getBlockchain().getHeight();
-                taggedDataTable.insert(taggedData);
-            }
-        }
-    }
-
-    void restore(Transaction transaction, TaggedDataUploadAttachment attachment, int blockTimestamp, int height) {
+    void restore(Transaction transaction, TaggedDataAttachment attachment, int blockTimestamp, int height) {
         TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
         taggedDataTable.insert(taggedData);
         addTags(taggedData, height);
-        int timestamp = transaction.getTimestamp();
-        for (byte[] extendTransactionFullHash : getExtendTransactionIds(transaction.getFullHash())) {
-            Transaction extendTransaction = transaction.getChain().getTransactionHome().findTransaction(extendTransactionFullHash);
-            if (extendTransaction.getTimestamp() - Constants.MIN_PRUNABLE_LIFETIME > timestamp) {
-                timestamp = extendTransaction.getTimestamp();
-            } else {
-                timestamp = timestamp + Math.min(Constants.MIN_PRUNABLE_LIFETIME, Integer.MAX_VALUE - timestamp);
-            }
-            taggedData.transactionTimestamp = timestamp;
-            taggedData.blockTimestamp = extendTransaction.getBlockTimestamp();
-            taggedData.height = extendTransaction.getHeight();
-            taggedDataTable.insert(taggedData);
-        }
     }
 
     public boolean isPruned(byte[] transactionFullHash) {
@@ -339,40 +247,6 @@ public final class TaggedDataHome {
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    private final class Timestamp {
-
-        private final long id;
-        private final byte[] hash;
-        private final DbKey dbKey;
-        private int timestamp;
-
-        private Timestamp(long id, byte[] hash, int timestamp) {
-            this.id = id;
-            this.hash = hash;
-            this.dbKey = timestampKeyFactory.newKey(this.hash, this.id);
-            this.timestamp = timestamp;
-        }
-
-        private Timestamp(ResultSet rs, DbKey dbKey) throws SQLException {
-            this.id = rs.getLong("id");
-            this.hash = rs.getBytes("full_hash");
-            this.dbKey = dbKey;
-            this.timestamp = rs.getInt("timestamp");
-        }
-
-        private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data_timestamp (id, full_hash, timestamp, height, latest) "
-                    + "KEY (id, full_hash, height) VALUES (?, ?, ?, ?, TRUE)")) {
-                int i = 0;
-                pstmt.setLong(++i, this.id);
-                pstmt.setBytes(++i, this.hash);
-                pstmt.setInt(++i, this.timestamp);
-                pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
-                pstmt.executeUpdate();
-            }
         }
     }
 
