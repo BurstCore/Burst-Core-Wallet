@@ -20,6 +20,8 @@ import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.Chain;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
@@ -31,14 +33,23 @@ import java.util.Arrays;
 
 public class MessageAppendix extends Appendix.AbstractAppendix {
 
-    private static final String appendixName = "Message";
+    public static final int appendixType = 1;
+    public static final String appendixName = "Message";
 
-    public static MessageAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new MessageAppendix(buffer);
         }
-        return new MessageAppendix(attachmentData);
-    }
+
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) {
+            if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+                return null;
+            }
+            return new MessageAppendix(attachmentData);
+        }
+    };
 
     private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_NXT, 32) {
         @Override
@@ -50,13 +61,11 @@ public class MessageAppendix extends Appendix.AbstractAppendix {
     private final byte[] message;
     private final boolean isText;
 
-    public MessageAppendix(ByteBuffer buffer) throws NxtException.NotValidException {
+    private MessageAppendix(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
-        int messageLength = buffer.getInt();
-        this.isText = messageLength < 0; // ugly hack
-        if (messageLength < 0) {
-            messageLength &= Integer.MAX_VALUE;
-        }
+        byte flags = buffer.get();
+        this.isText = (flags & 1) != 0;
+        int messageLength = buffer.getShort() & 0xFFFF;
         if (messageLength > 1000) {
             throw new NxtException.NotValidException("Invalid arbitrary message length: " + messageLength);
         }
@@ -92,18 +101,28 @@ public class MessageAppendix extends Appendix.AbstractAppendix {
     }
 
     @Override
+    public int getAppendixType() {
+        return appendixType;
+    }
+
+    @Override
     public String getAppendixName() {
         return appendixName;
     }
 
     @Override
     protected int getMySize() {
-        return 4 + message.length;
+        return 1 + 2 + message.length;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
-        buffer.putInt(isText ? (message.length | Integer.MIN_VALUE) : message.length);
+        byte flags = 0;
+        if (isText) {
+            flags |= 1;
+        }
+        buffer.put(flags);
+        buffer.putShort((short)message.length);
         buffer.put(message);
     }
 
@@ -139,6 +158,11 @@ public class MessageAppendix extends Appendix.AbstractAppendix {
     @Override
     public boolean isPhasable() {
         return false;
+    }
+
+    @Override
+    public boolean isAllowed(Chain chain) {
+        return chain instanceof ChildChain;
     }
 
 }

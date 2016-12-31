@@ -37,9 +37,7 @@ public interface Transaction extends AccountLedger.LedgerEventId {
 
         Builder ecBlockId(long blockId);
 
-        Builder appendix(PrunablePlainMessageAppendix prunablePlainMessage);
-
-        Builder appendix(PrunableEncryptedMessageAppendix prunableEncryptedMessage);
+        Builder appendix(Appendix appendix);
 
         Transaction build() throws NxtException.NotValidException;
 
@@ -94,6 +92,8 @@ public interface Transaction extends AccountLedger.LedgerEventId {
     byte[] getBytes();
 
     byte[] getUnsignedBytes();
+
+    byte[] getPrunableBytes();
 
     JSONObject getJSONObject();
 

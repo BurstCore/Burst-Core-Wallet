@@ -25,19 +25,28 @@ import java.nio.ByteBuffer;
 
 public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppendix {
 
-    private static final String appendixName = "EncryptToSelfMessage";
+    public static final int appendixType = 4;
+    public static final String appendixName = "EncryptToSelfMessage";
 
-    public static EncryptToSelfMessageAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new EncryptToSelfMessageAppendix(buffer);
         }
-        if (((JSONObject)attachmentData.get("encryptToSelfMessage")).get("data") == null) {
-            return new UnencryptedEncryptToSelfMessageAppendix(attachmentData);
-        }
-        return new EncryptToSelfMessageAppendix(attachmentData);
-    }
 
-    public EncryptToSelfMessageAppendix(ByteBuffer buffer) throws NxtException.NotValidException {
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+                return null;
+            }
+            if (((JSONObject)attachmentData.get("encryptToSelfMessage")).get("data") == null) {
+                return new UnencryptedEncryptToSelfMessageAppendix(attachmentData);
+            }
+            return new EncryptToSelfMessageAppendix(attachmentData);
+        }
+    };
+
+    EncryptToSelfMessageAppendix(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
     }
 
@@ -47,6 +56,11 @@ public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppend
 
     public EncryptToSelfMessageAppendix(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
         super(encryptedData, isText, isCompressed);
+    }
+
+    @Override
+    public int getAppendixType() {
+        return appendixType;
     }
 
     @Override

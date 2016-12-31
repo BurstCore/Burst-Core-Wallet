@@ -605,7 +605,7 @@ public final class BlockchainImpl implements Blockchain {
         return new DbIterator<>(con, pstmt, new DbIterator.ResultSetReader<FxtTransactionImpl>() {
             @Override
             public FxtTransactionImpl get(Connection con, ResultSet rs) throws Exception {
-                return FxtTransactionImpl.loadTransaction(con, rs);
+                return (FxtTransactionImpl)TransactionImpl.loadTransaction(chain, rs);
             }
         });
     }
@@ -614,7 +614,7 @@ public final class BlockchainImpl implements Blockchain {
         return new DbIterator<>(con, pstmt, new DbIterator.ResultSetReader<ChildTransactionImpl>() {
             @Override
             public ChildTransactionImpl get(Connection con, ResultSet rs) throws Exception {
-                return ChildTransactionImpl.loadTransaction(childChain, con, rs);
+                return (ChildTransactionImpl)TransactionImpl.loadTransaction(childChain, rs);
             }
         });
     }

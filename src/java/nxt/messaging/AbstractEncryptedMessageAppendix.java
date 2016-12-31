@@ -20,6 +20,8 @@ import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.Chain;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
@@ -44,13 +46,11 @@ abstract class AbstractEncryptedMessageAppendix extends Appendix.AbstractAppendi
 
     AbstractEncryptedMessageAppendix(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
-        int length = buffer.getInt();
-        this.isText = length < 0;
-        if (length < 0) {
-            length &= Integer.MAX_VALUE;
-        }
+        byte flags = buffer.get();
+        this.isText = (flags & 1) != 0;
+        this.isCompressed = (flags & 2) != 0;
+        int length = buffer.getShort() & 0xFFFF;
         this.encryptedData = EncryptedData.readEncryptedData(buffer, length, 1000);
-        this.isCompressed = getVersion() != 2;
     }
 
     AbstractEncryptedMessageAppendix(JSONObject attachmentJSON, JSONObject encryptedMessageJSON) {
@@ -64,7 +64,6 @@ abstract class AbstractEncryptedMessageAppendix extends Appendix.AbstractAppendi
     }
 
     AbstractEncryptedMessageAppendix(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
-        super(isCompressed ? 1 : 2);
         this.encryptedData = encryptedData;
         this.isText = isText;
         this.isCompressed = isCompressed;
@@ -72,12 +71,20 @@ abstract class AbstractEncryptedMessageAppendix extends Appendix.AbstractAppendi
 
     @Override
     protected int getMySize() {
-        return 4 + encryptedData.getSize();
+        return 1 + 2 + encryptedData.getSize();
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
-        buffer.putInt(isText ? (encryptedData.getData().length | Integer.MIN_VALUE) : encryptedData.getData().length);
+        byte flags = 0;
+        if (isText) {
+            flags |= 1;
+        }
+        if (isCompressed) {
+            flags |= 2;
+        }
+        buffer.put(flags);
+        buffer.putShort((short)encryptedData.getData().length);
         buffer.put(encryptedData.getData());
         buffer.put(encryptedData.getNonce());
     }
@@ -106,14 +113,6 @@ abstract class AbstractEncryptedMessageAppendix extends Appendix.AbstractAppendi
                 throw new NxtException.NotValidException("Invalid nonce length " + encryptedData.getNonce().length);
             }
         }
-        if ((getVersion() != 2 && !isCompressed) || (getVersion() == 2 && isCompressed)) {
-            throw new NxtException.NotValidException("Version mismatch - version " + getVersion() + ", isCompressed " + isCompressed);
-        }
-    }
-
-    @Override
-    public boolean verifyVersion() {
-        return getVersion() == 1 || getVersion() == 2;
     }
 
     @Override
@@ -142,6 +141,11 @@ abstract class AbstractEncryptedMessageAppendix extends Appendix.AbstractAppendi
     @Override
     public final boolean isPhasable() {
         return false;
+    }
+
+    @Override
+    public boolean isAllowed(Chain chain) {
+        return chain instanceof ChildChain;
     }
 
 }

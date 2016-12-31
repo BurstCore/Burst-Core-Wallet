@@ -21,7 +21,7 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Appendix;
-import nxt.blockchain.ChildChain;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
@@ -35,7 +35,22 @@ import java.security.MessageDigest;
 
 public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix implements Appendix.Prunable {
 
-    private static final String appendixName = "PrunablePlainMessage";
+    public static final int appendixType = 8;
+    public static final String appendixName = "PrunablePlainMessage";
+
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new PrunablePlainMessageAppendix(buffer);
+        }
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+                return null;
+            }
+            return new PrunablePlainMessageAppendix(attachmentData);
+        }
+    };
 
     private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT/10) {
         @Override
@@ -44,24 +59,29 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
         }
     };
 
-    public static PrunablePlainMessageAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
-        }
-        return new PrunablePlainMessageAppendix(attachmentData);
-    }
-
     private final byte[] hash;
     private final byte[] message;
     private final boolean isText;
     private volatile PrunableMessageHome.PrunableMessage prunableMessage;
 
-    public PrunablePlainMessageAppendix(ByteBuffer buffer) {
+    private PrunablePlainMessageAppendix(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
-        this.hash = new byte[32];
-        buffer.get(this.hash);
-        this.message = null;
-        this.isText = false;
+        byte flags = buffer.get();
+        if ((flags & 1) != 0) {
+            this.isText = (flags & 2) != 0;
+            int messageLength = buffer.getInt();
+            if (messageLength > Constants.MAX_PRUNABLE_MESSAGE_LENGTH) {
+                throw new NxtException.NotValidException("Invalid prunable message length: " + messageLength);
+            }
+            this.message = new byte[messageLength];
+            buffer.get(this.message);
+            this.hash = null;
+        } else {
+            this.hash = new byte[32];
+            buffer.get(this.hash);
+            this.message = null;
+            this.isText = false;
+        }
     }
 
     private PrunablePlainMessageAppendix(JSONObject attachmentData) {
@@ -98,6 +118,11 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
     }
 
     @Override
+    public int getAppendixType() {
+        return appendixType;
+    }
+
+    @Override
     public String getAppendixName() {
         return appendixName;
     }
@@ -109,17 +134,35 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
 
     @Override
     protected int getMySize() {
-        return 32;
+        return 1 + 32;
     }
 
     @Override
-    protected int getMyFullSize() {
-        return getMessage() == null ? 0 : getMessage().length;
+    public int getMyFullSize() {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
+        }
+        return 1 + 4 + getMessage().length;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
+        buffer.put((byte)0);
         buffer.put(getHash());
+    }
+
+    @Override
+    public void putMyPrunableBytes(ByteBuffer buffer) {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
+        }
+        byte flags = 1;
+        if (isText()) {
+            flags |= 2;
+        }
+        buffer.put(flags);
+        buffer.putInt(getMessage().length);
+        buffer.put(getMessage());
     }
 
     @Override
@@ -197,12 +240,17 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
     }
 
     @Override
+    public boolean isAllowed(Chain chain) {
+        return true;
+    }
+
+    @Override
     public final boolean hasPrunableData() {
         return (prunableMessage != null || message != null);
     }
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this, blockTimestamp, height);
+        transaction.getChain().getPrunableMessageHome().add((TransactionImpl)transaction, this, blockTimestamp, height);
     }
 }

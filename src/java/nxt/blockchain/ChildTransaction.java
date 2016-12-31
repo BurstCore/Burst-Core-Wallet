@@ -17,7 +17,6 @@
 package nxt.blockchain;
 
 import nxt.NxtException;
-import nxt.account.PublicKeyAnnouncementAppendix;
 import nxt.messaging.EncryptToSelfMessageAppendix;
 import nxt.messaging.EncryptedMessageAppendix;
 import nxt.messaging.MessageAppendix;
@@ -30,16 +29,6 @@ public interface ChildTransaction extends Transaction {
         Builder referencedTransaction(ChainTransactionId referencedTransaction);
 
         Builder feeRateNQTPerFXT(long feeRateNQTPerFXT);
-
-        Builder appendix(MessageAppendix message);
-
-        Builder appendix(EncryptedMessageAppendix encryptedMessage);
-
-        Builder appendix(EncryptToSelfMessageAppendix encryptToSelfMessage);
-
-        Builder appendix(PublicKeyAnnouncementAppendix publicKeyAnnouncement);
-
-        Builder appendix(PhasingAppendix phasing);
 
         ChildTransaction build() throws NxtException.NotValidException;
 

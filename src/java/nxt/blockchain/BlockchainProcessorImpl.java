@@ -1771,7 +1771,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 orderedUnconfirmedTransactions.add((UnconfirmedFxtTransaction)unconfirmedTransaction);
             }
         }
-        Set<Long> transactionIds = new HashSet<>();
         SortedSet<UnconfirmedFxtTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
         while (payloadLength <= Constants.MAX_PAYLOAD_LENGTH && sortedTransactions.size() <= Constants.MAX_NUMBER_OF_TRANSACTIONS) {
@@ -1797,16 +1796,10 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (unconfirmedTransaction.getTransaction().attachmentIsDuplicate(duplicates, true)) {
                     continue;
                 }
-                if (!transactionIds.add(unconfirmedTransaction.getId())) {
-                    continue;
-                }
                 for (ChildTransaction childTransaction : unconfirmedTransaction.getChildTransactions()) {
-                    if (transactionIds.contains(childTransaction.getId())) {
+                    if (((ChildTransactionImpl)childTransaction).attachmentIsDuplicate(duplicates, true)) {
                         continue outer;
                     }
-                }
-                for (ChildTransaction childTransaction : unconfirmedTransaction.getChildTransactions()) {
-                    transactionIds.add(childTransaction.getId());
                 }
                 sortedTransactions.add(unconfirmedTransaction);
                 payloadLength += transactionLength;

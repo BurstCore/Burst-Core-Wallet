@@ -51,7 +51,7 @@ public final class UnencryptedEncryptedMessageAppendix extends EncryptedMessageA
         if (getEncryptedData() != null) {
             return super.getMySize();
         }
-        return 4 + EncryptedData.getEncryptedSize(getPlaintext());
+        return 1 + 2 + EncryptedData.getEncryptedSize(getPlaintext());
     }
 
     @Override

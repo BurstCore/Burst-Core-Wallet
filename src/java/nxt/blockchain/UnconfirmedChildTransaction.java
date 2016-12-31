@@ -20,11 +20,7 @@ import nxt.NxtException;
 import nxt.messaging.EncryptToSelfMessageAppendix;
 import nxt.messaging.EncryptedMessageAppendix;
 import nxt.messaging.MessageAppendix;
-import nxt.messaging.PrunableEncryptedMessageAppendix;
-import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.voting.PhasingAppendix;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -36,10 +32,7 @@ final class UnconfirmedChildTransaction extends UnconfirmedTransaction implement
     }
 
     UnconfirmedChildTransaction(ResultSet rs) throws SQLException, NxtException.NotValidException {
-        super(ChildTransactionImpl.newTransactionBuilder(
-                rs.getBytes("transaction_bytes"),
-                rs.getString("prunable_json") != null ? (JSONObject) JSONValue.parse(rs.getString("prunable_json")) : null),
-                rs);
+        super(TransactionImpl.newTransactionBuilder(rs.getBytes("transaction_bytes")), rs);
     }
 
     @Override

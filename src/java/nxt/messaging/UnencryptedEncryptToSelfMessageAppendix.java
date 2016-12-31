@@ -49,7 +49,7 @@ public final class UnencryptedEncryptToSelfMessageAppendix extends EncryptToSelf
         if (getEncryptedData() != null) {
             return super.getMySize();
         }
-        return 4 + EncryptedData.getEncryptedSize(getPlaintext());
+        return 1 + 2 + EncryptedData.getEncryptedSize(getPlaintext());
     }
 
     @Override

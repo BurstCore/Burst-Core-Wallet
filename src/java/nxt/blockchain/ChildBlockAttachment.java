@@ -16,7 +16,6 @@
 
 package nxt.blockchain;
 
-import nxt.Nxt;
 import nxt.NxtException;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
@@ -29,12 +28,19 @@ import java.util.List;
 
 public class ChildBlockAttachment extends Attachment.AbstractAttachment implements Appendix.Prunable {
 
-    public static ChildBlockAttachment parse(JSONObject attachmentData) throws NxtException.NotValidException {
-        if (!Appendix.hasAppendix(ChildBlockFxtTransactionType.INSTANCE.getName(), attachmentData)) {
-            return null;
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new ChildBlockAttachment(buffer);
         }
-        return new ChildBlockAttachment(attachmentData);
-    }
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(ChildBlockFxtTransactionType.INSTANCE.getName(), attachmentData)) {
+                return null;
+            }
+            return new ChildBlockAttachment(attachmentData);
+        }
+    };
 
     private final int chainId;
     private volatile byte[][] childTransactionFullHashes;
@@ -42,10 +48,22 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     ChildBlockAttachment(ByteBuffer buffer) {
         super(buffer);
-        this.chainId = buffer.getInt();
-        this.hash = new byte[32];
-        buffer.get(hash);
-        this.childTransactionFullHashes = null;
+        byte flags = buffer.get();
+        if ((flags & 1) != 0) {
+            this.chainId = buffer.getInt();
+            int count = buffer.getShort() & 0xFFFF;
+            this.childTransactionFullHashes = new byte[count][];
+            for (int i = 0; i < count; i++) {
+                this.childTransactionFullHashes[i] = new byte[32];
+                buffer.get(this.childTransactionFullHashes[i]);
+            }
+            this.hash = null;
+        } else {
+            this.chainId = buffer.getInt();
+            this.hash = new byte[32];
+            buffer.get(hash);
+            this.childTransactionFullHashes = null;
+        }
     }
 
     ChildBlockAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
@@ -68,12 +86,6 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         }
     }
 
-    public ChildBlockAttachment(ChildChain childChain, byte[][] childTransactionFullHashes, long[] backFees) {
-        this.chainId = childChain.getId();
-        this.childTransactionFullHashes = childTransactionFullHashes;
-        this.hash = null;
-    }
-
     public ChildBlockAttachment(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
         if (childTransactions == null || childTransactions.isEmpty()) {
             throw new NxtException.NotValidException("Empty ChildBlockAttachment not allowed");
@@ -81,7 +93,6 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         this.chainId = childTransactions.get(0).getChain().getId();
         this.childTransactionFullHashes = new byte[childTransactions.size()][];
         this.hash = null;
-        int blockchainHeight = Nxt.getBlockchain().getHeight();
         for (int i = 0; i < childTransactionFullHashes.length; i++) {
             ChildTransactionImpl childTransaction = (ChildTransactionImpl)childTransactions.get(i);
             if (childTransaction.getChain().getId() != this.chainId) {
@@ -92,22 +103,36 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
     }
 
     @Override
-    protected int getMyFullSize() {
-        if (childTransactionFullHashes == null) {
-            return 4;
+    public int getMyFullSize() {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
         }
-        return 4 + 32 * childTransactionFullHashes.length;
+        return 1 + 4 + 2 + 32 * childTransactionFullHashes.length;
     }
 
     @Override
     protected int getMySize() {
-        return 4 + 32;
+        return 1 + 4 + 32;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
+        buffer.put((byte)0);
         buffer.putInt(chainId);
         buffer.put(getHash());
+    }
+
+    @Override
+    public void putMyPrunableBytes(ByteBuffer buffer) {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
+        }
+        buffer.put((byte)1);
+        buffer.putInt(chainId);
+        buffer.putShort((short)childTransactionFullHashes.length);
+        for (byte[] childTransactionFullHash : childTransactionFullHashes) {
+            buffer.put(childTransactionFullHash);
+        }
     }
 
     @Override

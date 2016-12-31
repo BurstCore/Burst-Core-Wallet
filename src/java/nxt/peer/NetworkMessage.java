@@ -26,10 +26,7 @@ import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.Transaction;
 import nxt.util.Convert;
-import nxt.util.JSON;
 import nxt.util.Logger;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import java.math.BigInteger;
 import java.nio.BufferOverflowException;
@@ -3517,27 +3514,22 @@ public abstract class NetworkMessage {
      * <p>
      * <ul>
      * <li>Transaction bytes (an excluded transaction consists of just the transaction identifier)
-     * <li>Prunable attachment bytes
      * </ul>
      */
     private static class TransactionBytes {
 
-        private static final TransactionBytes EXCLUDED = new TransactionBytes(Convert.EMPTY_BYTE, Convert.EMPTY_BYTE);
+        private static final TransactionBytes EXCLUDED = new TransactionBytes(Convert.EMPTY_BYTE);
 
         private static TransactionBytes parse(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
             byte[] transactionBytes = decodeArray(bytes);
             if (transactionBytes.length == 0) {
                 return EXCLUDED;
             }
-            byte[] prunableAttachmentBytes = decodeArray(bytes);
-            return new TransactionBytes(transactionBytes, prunableAttachmentBytes);
+            return new TransactionBytes(transactionBytes);
         }
 
         /** Transaction bytes */
         private final byte[] transactionBytes;
-
-        /** Prunable attachment bytes */
-        private final byte[] prunableAttachmentBytes;
 
         /**
          * Construct an encoded transaction
@@ -3545,25 +3537,16 @@ public abstract class NetworkMessage {
          * @param   transaction         Transaction
          */
         private TransactionBytes(Transaction transaction) {
-            transactionBytes = transaction.getBytes();
-            transaction.getAppendages(false);
-            JSONObject prunableAttachment = transaction.getPrunableAttachmentJSON();
-            if (prunableAttachment != null) {
-                prunableAttachmentBytes = JSON.toJSONString(prunableAttachment).getBytes(UTF8);
-            } else {
-                prunableAttachmentBytes = Convert.EMPTY_BYTE;
-            }
+            transactionBytes = transaction.getPrunableBytes();
         }
 
         /**
          * Construct an encoded transaction
          *
          * @param   transactionBytes
-         * @param   prunableAttachmentBytes
          */
-        private TransactionBytes(byte[] transactionBytes, byte[] prunableAttachmentBytes) {
+        private TransactionBytes(byte[] transactionBytes) {
             this.transactionBytes = transactionBytes;
-            this.prunableAttachmentBytes = prunableAttachmentBytes;
         }
 
         /**
@@ -3575,7 +3558,6 @@ public abstract class NetworkMessage {
          */
         private TransactionBytes(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
             transactionBytes = decodeArray(bytes);
-            prunableAttachmentBytes = transactionBytes.length > 0 ? decodeArray(bytes) : Convert.EMPTY_BYTE;
         }
 
         /**
@@ -3584,7 +3566,7 @@ public abstract class NetworkMessage {
          * @return                      Encoded transaction length
          */
         private int getLength() {
-            return getEncodedArrayLength(transactionBytes) + (transactionBytes.length > 0 ? getEncodedArrayLength(prunableAttachmentBytes) : 0);
+            return getEncodedArrayLength(transactionBytes);
         }
 
         /**
@@ -3595,9 +3577,6 @@ public abstract class NetworkMessage {
          */
         private void getBytes(ByteBuffer bytes) {
             encodeArray(bytes, transactionBytes);
-            if (transactionBytes.length > 0) {
-                encodeArray(bytes, prunableAttachmentBytes);
-            }
         }
 
         /**
@@ -3609,16 +3588,10 @@ public abstract class NetworkMessage {
          * @throws  NotValidException   Transaction is not valid
          */
         private Transaction getTransaction() throws NotValidException {
-            JSONObject prunableAttachment;
             if (transactionBytes.length == 0) {
                 throw new IllegalArgumentException("No excluded transactions provided");
             }
-            if (prunableAttachmentBytes.length > 0) {
-                prunableAttachment = (JSONObject)JSONValue.parse(new String(prunableAttachmentBytes));
-            } else {
-                prunableAttachment = null;
-            }
-            return Nxt.parseTransaction(transactionBytes, prunableAttachment);
+            return Nxt.parseTransaction(transactionBytes);
         }
 
         /**
