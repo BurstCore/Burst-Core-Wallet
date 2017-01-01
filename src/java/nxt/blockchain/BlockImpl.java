@@ -160,7 +160,11 @@ public final class BlockImpl implements Block {
     @Override
     public byte[] getGeneratorPublicKey() {
         if (generatorPublicKey == null) {
-            generatorPublicKey = Account.getPublicKey(generatorId);
+            if (generatorId != 0) {
+                generatorPublicKey = Account.getPublicKey(generatorId);
+            } else {
+                generatorPublicKey = new byte[32];
+            }
         }
         return generatorPublicKey;
     }
@@ -266,7 +270,7 @@ public final class BlockImpl implements Block {
 
     @Override
     public long getGeneratorId() {
-        if (generatorId == 0) {
+        if (generatorId == 0 && height != 0) {
             generatorId = Account.getId(getGeneratorPublicKey());
         }
         return generatorId;

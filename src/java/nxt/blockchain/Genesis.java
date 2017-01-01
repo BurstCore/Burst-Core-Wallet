@@ -45,7 +45,6 @@ final class Genesis {
             } : new byte[32];
 
     static byte[] apply() {
-        //Account.addOrGetAccount(Account.getId(new byte[32])).apply(new byte[32]);
         MessageDigest digest = Crypto.sha256();
         int count = 0;
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
