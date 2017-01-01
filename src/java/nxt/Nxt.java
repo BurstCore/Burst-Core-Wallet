@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -25,7 +25,6 @@ import nxt.addons.DebugTrace;
 import nxt.ae.Asset;
 import nxt.ae.AssetDelete;
 import nxt.ae.AssetTransfer;
-import nxt.blockchain.Attachment;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockImpl;
 import nxt.blockchain.Blockchain;
@@ -34,11 +33,8 @@ import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.BlockchainProcessorImpl;
 import nxt.blockchain.Bundler;
 import nxt.blockchain.ChildChain;
-import nxt.blockchain.ChildTransaction;
-import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransaction;
-import nxt.blockchain.FxtTransactionImpl;
 import nxt.blockchain.Generator;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
@@ -301,20 +297,12 @@ public final class Nxt {
         return TransactionProcessorImpl.getInstance();
     }
 
-    public static ChildTransaction.Builder newTransactionBuilder(ChildChain childChain, byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline, Attachment attachment) {
-        return new ChildTransactionImpl.BuilderImpl(childChain.getId(), (byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
-    }
-
-    public static FxtTransaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountFQT, long feeFQT, short deadline, Attachment attachment) {
-        return new FxtTransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountFQT, feeFQT, deadline, (Attachment.AbstractAttachment)attachment);
-	}
-
     public static Block parseBlock(byte[] blockBytes, List<? extends FxtTransaction> blockTransactions) throws NxtException.NotValidException {
         return BlockImpl.parseBlock(blockBytes, blockTransactions);
     }
 
-    public static Transaction parseTransaction(byte[] transactionBytes, JSONObject prunableAttachments) throws NxtException.NotValidException {
-        return TransactionImpl.parseTransaction(transactionBytes, prunableAttachments);
+    public static Transaction parseTransaction(byte[] transactionBytes) throws NxtException.NotValidException {
+        return TransactionImpl.parseTransaction(transactionBytes);
     }
 
     public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws NxtException.NotValidException {
@@ -362,6 +350,7 @@ public final class Nxt {
         API.shutdown();
         FundingMonitor.shutdown();
         ThreadPool.shutdown();
+        BlockchainProcessorImpl.getInstance().shutdown();
         Peers.shutdown();
         NetworkHandler.shutdown();
         Db.shutdown();
@@ -378,7 +367,6 @@ public final class Nxt {
             try {
                 long startTime = System.currentTimeMillis();
                 Logger.init();
-                setSystemProperties();
                 logSystemProperties();
                 runtimeMode.init();
                 Thread secureRandomInitThread = initSecureRandom();
@@ -421,7 +409,7 @@ public final class Nxt {
                 Logger.logMessage("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
                 Logger.logMessage("Nxt server " + VERSION + " started successfully.");
                 Logger.logMessage("Copyright © 2013-2016 The Nxt Core Developers.");
-                Logger.logMessage("Copyright © 2016 Jelurida IP B.V.");
+                Logger.logMessage("Copyright © 2016-2017 Jelurida IP B.V.");
                 Logger.logMessage("Distributed under GPLv2, with ABSOLUTELY NO WARRANTY.");
                 if (API.getWelcomePageUri() != null) {
                     Logger.logMessage("Client UI is at " + API.getWelcomePageUri());
@@ -450,22 +438,6 @@ public final class Nxt {
 
         private Init() {} // never
 
-    }
-
-    private static void setSystemProperties() {
-      // Override system settings that the user has define in nxt.properties file.
-        // TODO: no longer supported?
-      String[] systemProperties = new String[] {
-        "socksProxyHost",
-        "socksProxyPort",
-      };
-
-      for (String propertyName : systemProperties) {
-        String propertyValue;
-        if ((propertyValue = getStringProperty(propertyName)) != null) {
-          System.setProperty(propertyName, propertyValue);
-        }
-      }
     }
 
     private static void logSystemProperties() {

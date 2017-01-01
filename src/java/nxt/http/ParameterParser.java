@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -41,7 +41,7 @@ import nxt.messaging.UnencryptedPrunableEncryptedMessageAppendix;
 import nxt.ms.Currency;
 import nxt.ms.ExchangeOfferHome;
 import nxt.shuffling.ShufflingHome;
-import nxt.taggeddata.TaggedDataUploadAttachment;
+import nxt.taggeddata.TaggedDataAttachment;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import nxt.util.Search;
@@ -718,7 +718,7 @@ public final class ParameterParser {
         }
     }
 
-    public static TaggedDataUploadAttachment getTaggedData(HttpServletRequest req) throws ParameterException, NxtException.NotValidException {
+    public static TaggedDataAttachment getTaggedData(HttpServletRequest req) throws ParameterException, NxtException.NotValidException {
         String name = Convert.emptyToNull(req.getParameter("name"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
         String tags = Convert.nullToEmpty(req.getParameter("tags"));
@@ -793,7 +793,7 @@ public final class ParameterParser {
         if (filename.length() > Constants.MAX_TAGGED_DATA_FILENAME_LENGTH) {
             throw new ParameterException(INCORRECT_TAGGED_DATA_FILENAME);
         }
-        return new TaggedDataUploadAttachment(name, description, tags, type, channel, isText, filename, data);
+        return new TaggedDataAttachment(name, description, tags, type, channel, isText, filename, data);
     }
 
     public static Chain getChain(HttpServletRequest request) throws ParameterException {
@@ -804,6 +804,11 @@ public final class ParameterParser {
         String chainName = Convert.emptyToNull(request.getParameter("chain"));
         if (chainName != null) {
             Chain chain = Chain.getChain(chainName.toUpperCase());
+            if (chain == null) {
+                try {
+                    chain = Chain.getChain(Integer.valueOf(chainName));
+                } catch (NumberFormatException ignore) {}
+            }
             if (chain == null) {
                 throw new ParameterException(UNKNOWN_CHAIN);
             }
@@ -819,6 +824,11 @@ public final class ParameterParser {
         String chainName = Convert.emptyToNull(request.getParameter(name));
         if (chainName != null) {
             Chain chain = Chain.getChain(chainName.toUpperCase());
+            if (chain == null) {
+                try {
+                    chain = Chain.getChain(Integer.valueOf(chainName));
+                } catch (NumberFormatException ignore) {}
+            }
             if (chain == null) {
                 throw new ParameterException(JSONResponses.unknown(name));
             }
@@ -837,6 +847,11 @@ public final class ParameterParser {
         String chainName = Convert.emptyToNull(request.getParameter("chain"));
         if (chainName != null) {
             ChildChain chain = ChildChain.getChildChain(chainName.toUpperCase());
+            if (chain == null) {
+                try {
+                    chain = ChildChain.getChildChain(Integer.valueOf(chainName));
+                } catch (NumberFormatException ignore) {}
+            }
             if (chain == null) {
                 throw new ParameterException(UNKNOWN_CHAIN);
             }

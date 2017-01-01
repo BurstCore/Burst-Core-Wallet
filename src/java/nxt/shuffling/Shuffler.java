@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -464,8 +464,7 @@ public final class Shuffler {
             }
         }
         try {
-            ChildTransaction.Builder builder = Nxt.newTransactionBuilder(childChain, Crypto.getPublicKey(secretPhrase), 0, 0,
-                    (short) 1440, attachment);
+            ChildTransaction.Builder builder = childChain.newTransactionBuilder(Crypto.getPublicKey(secretPhrase), 0, 0, (short) 1440, attachment);
             builder.timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(secretPhrase);
             failedTransaction = null;

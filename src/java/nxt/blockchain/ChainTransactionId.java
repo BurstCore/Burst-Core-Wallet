@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -57,11 +57,11 @@ public final class ChainTransactionId {
     }
 
     public Transaction getTransaction() {
-        return Chain.getChain(chainId).getTransactionHome().findTransactionByFullHash(hash);
+        return Chain.getChain(chainId).getTransactionHome().findTransaction(hash);
     }
 
     public ChildTransaction getChildTransaction() {
-        return (ChildTransaction)ChildChain.getChildChain(chainId).getTransactionHome().findTransactionByFullHash(hash);
+        return (ChildTransaction)ChildChain.getChildChain(chainId).getTransactionHome().findTransaction(hash);
     }
 
     public static ChainTransactionId getChainTransactionId(Transaction transaction) {
@@ -87,14 +87,14 @@ public final class ChainTransactionId {
         if (json == null) {
             return null;
         }
-        int chainId = ((Long)json.get("chainId")).intValue();
+        int chainId = ((Long)json.get("chain")).intValue();
         byte[] hash = Convert.parseHexString((String)json.get("transactionFullHash"));
         return new ChainTransactionId(chainId, hash);
     }
 
     public JSONObject getJSON() {
         JSONObject json = new JSONObject();
-        json.put("chainId", chainId);
+        json.put("chain", chainId);
         json.put("transactionFullHash", Convert.toHexString(hash));
         return json;
     }

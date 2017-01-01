@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -278,12 +278,11 @@ public class ChildDbVersion extends DbVersion {
             case 90:
                 apply("CREATE INDEX IF NOT EXISTS phasing_poll_voter_transaction_voter_idx ON phasing_poll_voter(transaction_id, voter_id)");
             case 91:
-                apply("CREATE TABLE IF NOT EXISTS phasing_poll_result (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
-                        + "result BIGINT NOT NULL, approved BOOLEAN NOT NULL, height INT NOT NULL)");
+                apply(null);
             case 92:
-                apply("CREATE INDEX IF NOT EXISTS phasing_poll_result_id_idx ON phasing_poll_result(id)");
+                apply(null);
             case 93:
-                apply("CREATE INDEX IF NOT EXISTS phasing_poll_result_height_idx ON phasing_poll_result(height)");
+                apply(null);
             case 94:
                 apply("CREATE INDEX IF NOT EXISTS currency_founder_account_id_idx ON currency_founder (account_id, height DESC)");
             case 95:
@@ -331,10 +330,9 @@ public class ChildDbVersion extends DbVersion {
             case 112:
                 apply("CREATE INDEX IF NOT EXISTS data_tag_count_height_idx ON data_tag (tag_count DESC, height DESC)");
             case 113:
-                apply("CREATE TABLE IF NOT EXISTS tagged_data_timestamp (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, timestamp INT NOT NULL, "
-                        + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                apply(null);
             case 114:
-                apply("CREATE INDEX IF NOT EXISTS tagged_data_timestamp_id_height_idx ON tagged_data_timestamp (id, height DESC)");
+                apply(null);
             case 115:
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_channel_idx ON tagged_data (channel, height DESC)");
             case 116:
@@ -366,7 +364,7 @@ public class ChildDbVersion extends DbVersion {
             case 129:
                 apply("CREATE INDEX IF NOT EXISTS tag_height_tag_idx ON tag (height, tag)");
             case 130:
-                apply("CREATE INDEX IF NOT EXISTS tagged_data_timestamp_height_id_idx ON tagged_data_timestamp (height, id)");
+                apply(null);
             case 131:
                 apply("CREATE INDEX IF NOT EXISTS trade_height_db_id_idx ON trade (height DESC, db_id DESC)");
             case 132:
@@ -386,12 +384,11 @@ public class ChildDbVersion extends DbVersion {
             case 138:
                 apply("CREATE INDEX IF NOT EXISTS exchange_request_height_idx ON exchange_request (height)");
             case 139:
-                apply("CREATE TABLE IF NOT EXISTS tagged_data_extend (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
-                        + "extend_id BIGINT NOT NULL, extend_full_hash BINARY(32) NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                apply(null);
             case 140:
-                apply("CREATE INDEX IF NOT EXISTS tagged_data_extend_id_height_idx ON tagged_data_extend(id, height DESC)");
+                apply(null);
             case 141:
-                apply("CREATE INDEX IF NOT EXISTS tagged_data_extend_height_id_idx ON tagged_data_extend(height, id)");
+                apply(null);
             case 142:
                 nxt.db.FullTextTrigger.init(db);
                 apply(null);

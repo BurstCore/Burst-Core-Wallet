@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -1183,7 +1183,7 @@ public final class Account {
     public long getEffectiveBalanceFXT(int height) {
         if (height <= Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
             BalanceHome.Balance genesisRecipientBalance = FxtChain.FXT.getBalanceHome().getBalance(id, 0);
-            return genesisRecipientBalance.getBalance() / Constants.ONE_NXT;
+            return genesisRecipientBalance.getBalance() / Constants.ONE_FXT;
         }
         if (this.publicKey == null) {
             this.publicKey = publicKeyTable.get(accountDbKeyFactory.newKey(this));
@@ -1197,7 +1197,7 @@ public final class Account {
             if (activeLesseeId == 0) {
                 effectiveBalanceFQT += getGuaranteedBalanceFQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
             }
-	        return effectiveBalanceFQT < Constants.MIN_FORGING_BALANCE_FQT ? 0 : effectiveBalanceFQT / Constants.ONE_NXT;
+	        return effectiveBalanceFQT < Constants.MIN_FORGING_BALANCE_FQT ? 0 : effectiveBalanceFQT / Constants.ONE_FXT;
         } finally {
             Nxt.getBlockchain().readUnlock();
         }
@@ -1470,7 +1470,7 @@ public final class Account {
         this.publicKey = publicKey;
     }
 
-    public void addToAssetBalanceQNT(AccountLedger.LedgerEvent event, long eventId, long assetId, long quantityQNT) {
+    public void addToAssetBalanceQNT(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long assetId, long quantityQNT) {
         if (quantityQNT == 0) {
             return;
         }
@@ -1491,7 +1491,7 @@ public final class Account {
         }
     }
 
-    public void addToUnconfirmedAssetBalanceQNT(AccountLedger.LedgerEvent event, long eventId, long assetId, long quantityQNT) {
+    public void addToUnconfirmedAssetBalanceQNT(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long assetId, long quantityQNT) {
         if (quantityQNT == 0) {
             return;
         }
@@ -1513,7 +1513,8 @@ public final class Account {
         }
     }
 
-    public void addToAssetAndUnconfirmedAssetBalanceQNT(AccountLedger.LedgerEvent event, long eventId, long assetId, long quantityQNT) {
+    public void addToAssetAndUnconfirmedAssetBalanceQNT(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId,
+                                                        long assetId, long quantityQNT) {
         if (quantityQNT == 0) {
             return;
         }
@@ -1544,7 +1545,7 @@ public final class Account {
         }
     }
 
-    public void addToCurrencyUnits(AccountLedger.LedgerEvent event, long eventId, long currencyId, long units) {
+    public void addToCurrencyUnits(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long currencyId, long units) {
         if (units == 0) {
             return;
         }
@@ -1565,7 +1566,7 @@ public final class Account {
         }
     }
 
-    public void addToUnconfirmedCurrencyUnits(AccountLedger.LedgerEvent event, long eventId, long currencyId, long units) {
+    public void addToUnconfirmedCurrencyUnits(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long currencyId, long units) {
         if (units == 0) {
             return;
         }
@@ -1586,7 +1587,7 @@ public final class Account {
         }
     }
 
-    public void addToCurrencyAndUnconfirmedCurrencyUnits(AccountLedger.LedgerEvent event, long eventId, long currencyId, long units) {
+    public void addToCurrencyAndUnconfirmedCurrencyUnits(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long currencyId, long units) {
         if (units == 0) {
             return;
         }
@@ -1617,27 +1618,27 @@ public final class Account {
         }
     }
 
-    public void addToBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
+    public void addToBalance(Chain chain, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long amount, long fee) {
         chain.getBalanceHome().getBalance(id).addToBalance(event, eventId, amount, fee);
     }
 
-    public void addToUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
+    public void addToUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long amount, long fee) {
         chain.getBalanceHome().getBalance(id).addToUnconfirmedBalance(event, eventId, amount, fee);
     }
 
-    public void addToBalanceAndUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount, long fee) {
+    public void addToBalanceAndUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long amount, long fee) {
         chain.getBalanceHome().getBalance(id).addToBalanceAndUnconfirmedBalance(event, eventId, amount, fee);
     }
 
-    public void addToBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount) {
+    public void addToBalance(Chain chain, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long amount) {
         chain.getBalanceHome().getBalance(id).addToBalance(event, eventId, amount);
     }
 
-    public void addToUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount) {
+    public void addToUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long amount) {
         chain.getBalanceHome().getBalance(id).addToUnconfirmedBalance(event, eventId, amount);
     }
 
-    public void addToBalanceAndUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, long eventId, long amount) {
+    public void addToBalanceAndUnconfirmedBalance(Chain chain, AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, long amount) {
         chain.getBalanceHome().getBalance(id).addToBalanceAndUnconfirmedBalance(event, eventId, amount);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -10,6 +10,7 @@
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
+ *
  */
 package nxt.ce;
 
@@ -28,9 +29,7 @@ import java.nio.ByteBuffer;
  */
 public class OrderIssueAttachment extends Attachment.AbstractAttachment {
 
-    private final byte[] chainNameBytes;
     private final Chain chain;
-    private final byte[] exchangeNameBytes;
     private final Chain exchangeChain;
     private final long quantityQNT;
     private final long priceNQT;
@@ -40,36 +39,19 @@ public class OrderIssueAttachment extends Attachment.AbstractAttachment {
         this.exchangeChain = exchangeChain;
         this.quantityQNT = quantityQNT;
         this.priceNQT = priceNQT;
-        this.chainNameBytes = Convert.toBytes(chain.getName());
-        this.exchangeNameBytes = Convert.toBytes(exchangeChain.getName());
     }
 
     OrderIssueAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
-        int length = buffer.get();
-        if (length == 0) {
-            throw new NxtException.NotValidException("Chain name missing");
-        }
-        this.chainNameBytes = new byte[length];
-        buffer.get(chainNameBytes);
-        String name = Convert.toString(chainNameBytes);
-        this.chain = Chain.getChain(name);
+        int chainId = buffer.getInt();
+        this.chain = Chain.getChain(chainId);
         if (this.chain == null) {
-            throw new NxtException.NotValidException("Chain '" + name + "' not defined");
+            throw new NxtException.NotValidException("Chain '" + chainId + "' not defined");
         }
-        length = buffer.get();
-        if (length == 0) {
-            throw new NxtException.NotValidException("Exchange chain name missing");
-        }
-        this.exchangeNameBytes = new byte[length];
-        buffer.get(exchangeNameBytes);
-        name = Convert.toString(exchangeNameBytes);
-        this.exchangeChain = Chain.getChain(name);
-        if (this.exchangeChain == null) {
-            throw new NxtException.NotValidException("Exchange chain '" + name + "' not defined");
-        }
-        if (chain == exchangeChain) {
-            throw new NxtException.NotValidException("Chain and exchange chain must be different");
+        chainId = buffer.getInt();
+        this.exchangeChain = Chain.getChain(chainId);
+        if (this.chain == null) {
+            throw new NxtException.NotValidException("Exchange chain '" + chainId + "' not defined");
         }
         this.quantityQNT = buffer.getLong();
         this.priceNQT = buffer.getLong();
@@ -77,26 +59,15 @@ public class OrderIssueAttachment extends Attachment.AbstractAttachment {
 
     OrderIssueAttachment(JSONObject data) throws NxtException.NotValidException {
         super(data);
-        String name = Convert.emptyToNull((String)data.get("chain"));
-        if (name == null) {
-            throw new NxtException.NotValidException("Chain name missing");
-        }
-        this.chainNameBytes = Convert.toBytes(name);
-        this.chain = Chain.getChain(name);
+        int chainId = (int)Convert.parseLong(data.get("chain"));
+        this.chain = Chain.getChain(chainId);
         if (this.chain == null) {
-            throw new NxtException.NotValidException("Chain '" + name + "' not defined");
+            throw new NxtException.NotValidException("Chain '" + chainId + "' not defined");
         }
-        name = Convert.emptyToNull((String)data.get("exchangeChain"));
-        if (name == null) {
-            throw new NxtException.NotValidException("Exchange chain name missing");
-        }
-        this.exchangeNameBytes = Convert.toBytes(name);
-        this.exchangeChain = Chain.getChain(name);
+        chainId = (int)Convert.parseLong(data.get("exchangeChain"));
+        this.exchangeChain = Chain.getChain(chainId);
         if (this.exchangeChain == null) {
-            throw new NxtException.NotValidException("Exchange chain '" + name + "' not defined");
-        }
-        if (chain == exchangeChain) {
-            throw new NxtException.NotValidException("Chain and exchange chain must be different");
+            throw new NxtException.NotValidException("Exchange chain '" + chainId + "' not defined");
         }
         this.quantityQNT = Convert.parseLong(data.get("quantityQNT"));
         this.priceNQT = Convert.parseLong(data.get("priceNQT"));
@@ -104,26 +75,21 @@ public class OrderIssueAttachment extends Attachment.AbstractAttachment {
 
     @Override
     protected int getMySize() {
-        return 1 + chainNameBytes.length + 1 + exchangeNameBytes.length + 8 + 8;
+        return 4 + 4 + 8 + 8;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
-        buffer.put((byte)chainNameBytes.length);
-        if (chainNameBytes.length > 0) {
-            buffer.put(chainNameBytes);
-        }
-        buffer.put((byte)exchangeNameBytes.length);
-        if (exchangeNameBytes.length > 0) {
-            buffer.put(exchangeNameBytes);
-        }
-        buffer.putLong(quantityQNT).putLong(priceNQT);
+        buffer.putInt(chain.getId())
+              .putInt(exchangeChain.getId())
+              .putLong(quantityQNT)
+              .putLong(priceNQT);
     }
 
     @Override
     protected void putMyJSON(JSONObject attachment) {
-        attachment.put("chain", chain != null ? chain.getName() : "");
-        attachment.put("exchangeChain", exchangeChain != null ? exchangeChain.getName() : "");
+        attachment.put("chain", chain.getId());
+        attachment.put("exchangeChain", exchangeChain.getId());
         attachment.put("quantityQNT", quantityQNT);
         attachment.put("priceNQT", priceNQT);
     }
@@ -131,7 +97,7 @@ public class OrderIssueAttachment extends Attachment.AbstractAttachment {
     /**
      * Return the chain
      *
-     * @return                  Chain or null if the chain is not valid
+     * @return                  Chain
      */
     public Chain getChain() {
         return chain;
@@ -140,7 +106,7 @@ public class OrderIssueAttachment extends Attachment.AbstractAttachment {
     /**
      * Return the exchange chain
      *
-     * @return                  Exchange chain or null if the chain is not valid
+     * @return                  Exchange chain
      */
     public Chain getExchangeChain() {
         return exchangeChain;

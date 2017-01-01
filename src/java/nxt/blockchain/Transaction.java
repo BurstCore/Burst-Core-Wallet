@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -17,12 +17,15 @@
 package nxt.blockchain;
 
 import nxt.NxtException;
+import nxt.account.AccountLedger;
+import nxt.messaging.PrunableEncryptedMessageAppendix;
+import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.util.Filter;
 import org.json.simple.JSONObject;
 
 import java.util.List;
 
-public interface Transaction {
+public interface Transaction extends AccountLedger.LedgerEventId {
 
     interface Builder {
 
@@ -33,6 +36,8 @@ public interface Transaction {
         Builder ecBlockHeight(int height);
 
         Builder ecBlockId(long blockId);
+
+        Builder appendix(Appendix appendix);
 
         Transaction build() throws NxtException.NotValidException;
 
@@ -88,6 +93,8 @@ public interface Transaction {
 
     byte[] getUnsignedBytes();
 
+    byte[] getPrunableBytes();
+
     JSONObject getJSONObject();
 
     JSONObject getPrunableAttachmentJSON();
@@ -107,5 +114,9 @@ public interface Transaction {
     long getECBlockId();
 
     boolean isPhased();
+
+    PrunablePlainMessageAppendix getPrunablePlainMessage();
+
+    PrunableEncryptedMessageAppendix getPrunableEncryptedMessage();
 
 }

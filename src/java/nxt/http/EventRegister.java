@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -77,10 +77,11 @@ import java.util.List;
  * <li>Block.BLOCK_GENERATED
  * <li>Block.BLOCK_POPPED
  * <li>Block.BLOCK_PUSHED
- * <li>Ledger.ADD_ENTRY - Changes to all accounts will be reported.
- * <li>Ledger.ADD_ENTRY.account - Only changes to the specified account will be reported.  'account'
+ * <li>Ledger.ADD_ENTRY.account - Monitor changes to the specified account.  'account'
  * may be the numeric identifier or the Reed-Solomon identifier
- * of the account to monitor for updates.  Specifying an account identifier of 0 is the same as
+ * of the account to monitor for updates.  All accounts will be monitored if no
+ * account is specified.
+ * Specifying an account identifier of 0 is the same as
  * not specifying an account.
  * <li>Peer.ADD_ACTIVE_PEER
  * <li>Peer.ADD_PEER
@@ -90,11 +91,11 @@ import java.util.List;
  * <li>Peer.CHANGE_SERVICES
  * <li>Peer.REMOVE_PEER
  * <li>Peer.UNBLACKLIST
- * <li>Transaction.ADDED_CONFIRMED_TRANSACTIONS
- * <li>Transaction.ADDED_UNCONFIRMED_TRANSACTIONS
- * <li>Transaction.REJECT_PHASED_TRANSACTION
- * <li>Transaction.RELEASE_PHASED_TRANSACTION
- * <li>Transaction.REMOVE_UNCONFIRMED_TRANSACTIONS
+ * <li>Transaction.ADDED_CONFIRMED_TRANSACTIONS.account (omit account to monitor all accounts)
+ * <li>Transaction.ADDED_UNCONFIRMED_TRANSACTIONS.account (omit account to monitor all accounts)
+ * <li>Transaction.REJECT_PHASED_TRANSACTION.account (omit account to monitor all accounts)
+ * <li>Transaction.RELEASE_PHASED_TRANSACTION.account (omit account to monitor all accounts)
+ * <li>Transaction.REMOVED_UNCONFIRMED_TRANSACTIONS.account (omit account to monitor all accounts)
  * </ul>
  */
 public class EventRegister extends APIServlet.APIRequestHandler {
@@ -179,18 +180,23 @@ public class EventRegister extends APIServlet.APIRequestHandler {
                 //
                 long accountId = 0;
                 String[] parts = param.split("\\.");
-                if (parts[0].equals("Ledger")) {
-                    if (parts.length == 3) {
-                        try {
-                            accountId = Convert.parseAccountId(parts[2]);
-                        } catch (RuntimeException e) {
+                switch (parts[0]) {
+                    case "Ledger":
+                    case "Transaction":
+                        if (parts.length == 3) {
+                            try {
+                                accountId = Convert.parseAccountId(parts[2]);
+                            } catch (RuntimeException e) {
+                                return incorrectEvent;
+                            }
+                        } else if (parts.length != 2) {
                             return incorrectEvent;
                         }
-                    } else if (parts.length != 2) {
-                        return incorrectEvent;
-                    }
-                } else if (parts.length != 2) {
-                    return incorrectEvent;
+                        break;
+                    default:
+                        if (parts.length != 2) {
+                            return incorrectEvent;
+                        }
                 }
                 //
                 // Add the event
@@ -269,4 +275,10 @@ public class EventRegister extends APIServlet.APIRequestHandler {
     protected boolean allowRequiredBlockParameters() {
         return false;
     }
+
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
+
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -213,7 +213,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                 return;
             //
             // A listener with account identifier 0 accepts events for all accounts.
-            // This listener supersedes  listeners for a single account.
+            // This listener supersedes listeners for a single account.
             //
             for (EventRegistration event : eventRegistrations) {
                 boolean addListener = true;
@@ -930,9 +930,18 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
              */
             @Override
             public void notify(List<? extends Transaction> txList) {
-                List<String> idList = new ArrayList<>();
-                txList.forEach((tx) -> idList.add(tx.getStringId()));
-                dispatch(new PendingEvent("Transaction." + event.name(), idList));
+                if (!txList.isEmpty()) {
+                    List<String> idList = new ArrayList<>();
+                    txList.forEach((tx) -> {
+                        if (accountId == 0 || accountId == tx.getSenderId() || accountId == tx.getRecipientId()) {
+                            idList.add(String.format("%d:%s",
+                                       tx.getChain().getId(), Convert.toHexString(tx.getFullHash())));
+                        }
+                    });
+                    if (!idList.isEmpty()) {
+                        dispatch(new PendingEvent("Transaction." + event.name(), idList));
+                    }
+                }
             }
         }
 

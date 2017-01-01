@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -17,8 +17,8 @@
 package nxt.http.twophased;
 
 import nxt.BlockchainTest;
-import nxt.Constants;
 import nxt.Nxt;
+import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
 import nxt.http.twophased.TestCreateTwoPhased.TwoPhasedMoneyTransferBuilder;
 import nxt.util.Logger;
@@ -42,7 +42,7 @@ public class TestApproveTransaction extends BlockchainTest {
         apiCall = new APICall.Builder("approveTransaction")
                 .param("secretPhrase", CHUCK.getSecretPhrase())
                 .param("transactionFullHash", (String) transactionJSON.get("fullHash"))
-                .param("feeNQT", Constants.ONE_NXT)
+                .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
                 .build();
 
         JSONObject response = apiCall.invoke();
@@ -50,9 +50,9 @@ public class TestApproveTransaction extends BlockchainTest {
         Assert.assertNotNull(response.get("transaction"));
 
         generateBlocks(duration);
-        Assert.assertEquals(-50 * Constants.ONE_NXT - 2 * Constants.ONE_NXT, ALICE.getBalanceDiff());
-        Assert.assertEquals(50 * Constants.ONE_NXT, BOB.getBalanceDiff());
-        Assert.assertEquals(-Constants.ONE_NXT, CHUCK.getBalanceDiff());
+        Assert.assertEquals(-50 * ChildChain.IGNIS.ONE_COIN - 2 * ChildChain.IGNIS.ONE_COIN, ALICE.getBalanceDiff());
+        Assert.assertEquals(50 * ChildChain.IGNIS.ONE_COIN, BOB.getBalanceDiff());
+        Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN, CHUCK.getBalanceDiff());
     }
 
     @Test
@@ -68,20 +68,20 @@ public class TestApproveTransaction extends BlockchainTest {
         apiCall = new APICall.Builder("approveTransaction")
                 .param("secretPhrase", DAVE.getSecretPhrase())
                 .param("transactionFullHash", (String) transactionJSON.get("fullHash"))
-                .param("feeNQT", Constants.ONE_NXT)
+                .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
                 .build();
         JSONObject response = apiCall.invoke();
         Assert.assertNotNull(response.get("error"));
         generateBlock();
 
-        Assert.assertEquals("ALICE balance: ", -2 * Constants.ONE_NXT, ALICE.getBalanceDiff());
+        Assert.assertEquals("ALICE balance: ", -2 * ChildChain.IGNIS.ONE_COIN, ALICE.getBalanceDiff());
         Assert.assertEquals("BOB balance: ", 0, BOB.getBalanceDiff());
         Assert.assertEquals("CHUCK balance: ", 0, CHUCK.getBalanceDiff());
         Assert.assertEquals("DAVE balance: ", 0, DAVE.getBalanceDiff());
 
         generateBlocks(duration);
 
-        Assert.assertEquals("ALICE balance: ", -2 * Constants.ONE_NXT, ALICE.getBalanceDiff());
+        Assert.assertEquals("ALICE balance: ", -2 * ChildChain.IGNIS.ONE_COIN, ALICE.getBalanceDiff());
         Assert.assertEquals("BOB balance: ", 0, BOB.getBalanceDiff());
         Assert.assertEquals("CHUCK balance: ", 0, CHUCK.getBalanceDiff());
         Assert.assertEquals("DAVE balance: ", 0, DAVE.getBalanceDiff());
@@ -89,11 +89,11 @@ public class TestApproveTransaction extends BlockchainTest {
 
     @Test
     public void sendMoneyPhasedNoVoting() {
-        long fee = 2*Constants.ONE_NXT;
+        long fee = 2* ChildChain.IGNIS.ONE_COIN;
         JSONObject response = new APICall.Builder("sendMoney").
                 param("secretPhrase", ALICE.getSecretPhrase()).
                 param("recipient", BOB.getStrId()).
-                param("amountNQT", 100 * Constants.ONE_NXT).
+                param("amountNQT", 100 * ChildChain.IGNIS.ONE_COIN).
                 param("feeNQT", fee).
                 param("phased", "true").
                 param("phasingFinishHeight", baseHeight + 2).
@@ -108,7 +108,7 @@ public class TestApproveTransaction extends BlockchainTest {
         Assert.assertEquals(fee, FORGY.getUnconfirmedBalanceDiff());
         // Sender
         Assert.assertEquals(-fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
         Assert.assertEquals(0, BOB.getBalanceDiff());
         Assert.assertEquals(0, BOB.getUnconfirmedBalanceDiff());
@@ -116,11 +116,11 @@ public class TestApproveTransaction extends BlockchainTest {
         generateBlock();
         // Transaction is applied
         // Sender
-        Assert.assertEquals(-100 * Constants.ONE_NXT - fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(100 * Constants.ONE_NXT, BOB.getBalanceDiff());
-        Assert.assertEquals(100 * Constants.ONE_NXT, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getUnconfirmedBalanceDiff());
     }
 
     @Test
@@ -131,11 +131,11 @@ public class TestApproveTransaction extends BlockchainTest {
         Assert.assertEquals(64, fullHash.length());
         String approvalTransactionBytes = (String)response.get("transactionBytes");
 
-        long fee = 3 * Constants.ONE_NXT;
+        long fee = 3 * ChildChain.IGNIS.ONE_COIN;
         response = new APICall.Builder("sendMoney").
                 param("secretPhrase", ALICE.getSecretPhrase()).
                 param("recipient", BOB.getStrId()).
-                param("amountNQT", 100 * Constants.ONE_NXT).
+                param("amountNQT", 100 * ChildChain.IGNIS.ONE_COIN).
                 param("feeNQT", fee).
                 param("phased", "true").
                 param("phasingFinishHeight", baseHeight + 3).
@@ -149,7 +149,7 @@ public class TestApproveTransaction extends BlockchainTest {
         // Transaction is not applied yet
         // Sender
         Assert.assertEquals(-fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
         Assert.assertEquals(0, BOB.getBalanceDiff());
         Assert.assertEquals(0, BOB.getUnconfirmedBalanceDiff());
@@ -162,11 +162,11 @@ public class TestApproveTransaction extends BlockchainTest {
 
         // Transaction is applied before finish height
         // Sender
-        Assert.assertEquals(-100 * Constants.ONE_NXT - fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(100 * Constants.ONE_NXT, BOB.getBalanceDiff());
-        Assert.assertEquals(100 * Constants.ONE_NXT, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getUnconfirmedBalanceDiff());
     }
 
     @Test
@@ -186,11 +186,11 @@ public class TestApproveTransaction extends BlockchainTest {
         Assert.assertEquals(64, fullHash1.length());
         String approvalTransactionBytes3 = (String)response.get("transactionBytes");
 
-        long fee = 5 * Constants.ONE_NXT;
+        long fee = 5 * ChildChain.IGNIS.ONE_COIN;
         response = new APICall.Builder("sendMoney").
                 param("secretPhrase", ALICE.getSecretPhrase()).
                 param("recipient", BOB.getStrId()).
-                param("amountNQT", 100 * Constants.ONE_NXT).
+                param("amountNQT", 100 * ChildChain.IGNIS.ONE_COIN).
                 param("feeNQT", fee).
                 param("phased", "true").
                 param("phasingFinishHeight", baseHeight + 2).
@@ -204,7 +204,7 @@ public class TestApproveTransaction extends BlockchainTest {
         // Transaction is not applied yet
         // Sender
         Assert.assertEquals(-fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
         Assert.assertEquals(0, BOB.getBalanceDiff());
         Assert.assertEquals(0, BOB.getUnconfirmedBalanceDiff());
@@ -221,20 +221,20 @@ public class TestApproveTransaction extends BlockchainTest {
 
         // Transaction is applied since 2 out 3 hashes were provided
         // Sender
-        Assert.assertEquals(-100 * Constants.ONE_NXT - fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(100 * Constants.ONE_NXT, BOB.getBalanceDiff());
-        Assert.assertEquals(100 * Constants.ONE_NXT, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getUnconfirmedBalanceDiff());
     }
 
     @Test
     public void sendMoneyPhasedByTransactionHashNotApplied() {
-        long fee = 3 * Constants.ONE_NXT;
+        long fee = 3 * ChildChain.IGNIS.ONE_COIN;
         JSONObject response = new APICall.Builder("sendMoney").
                 param("secretPhrase", ALICE.getSecretPhrase()).
                 param("recipient", BOB.getStrId()).
-                param("amountNQT", 100 * Constants.ONE_NXT).
+                param("amountNQT", 100 * ChildChain.IGNIS.ONE_COIN).
                 param("feeNQT", fee).
                 param("phased", "true").
                 param("phasingFinishHeight", baseHeight + 2).
@@ -248,7 +248,7 @@ public class TestApproveTransaction extends BlockchainTest {
         // Transaction is not applied yet
         // Sender
         Assert.assertEquals(-fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
         Assert.assertEquals(0, BOB.getBalanceDiff());
         Assert.assertEquals(0, BOB.getUnconfirmedBalanceDiff());
@@ -271,7 +271,7 @@ public class TestApproveTransaction extends BlockchainTest {
         Assert.assertEquals(64, fullHash.length());
         String approvalTransactionBytes = (String)response.get("transactionBytes");
 
-        long fee = 2 * Constants.ONE_NXT;
+        long fee = 2 * ChildChain.IGNIS.ONE_COIN;
         String alias = "alias" + System.currentTimeMillis();
         response = new APICall.Builder("setAlias").
                 param("secretPhrase", ALICE.getSecretPhrase()).
@@ -326,7 +326,7 @@ public class TestApproveTransaction extends BlockchainTest {
                 param("publicKey", CHUCK.getPublicKeyStr()).
                 param("recipient", ALICE.getStrId()).
                 param("message", "approval notice").
-                param("feeNQT", Constants.ONE_NXT).
+                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
         Logger.logDebugMessage("sendMessage not broadcasted: " + response);
         response = new APICall.Builder("signTransaction").

@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -16,6 +16,7 @@
 
 package nxtdesktop;
 
+import com.sun.javafx.scene.web.Debugger;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -31,6 +32,7 @@ import netscape.javascript.JSObject;
 import nxt.Nxt;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionProcessor;
@@ -45,6 +47,8 @@ import javax.net.ssl.HttpsURLConnection;
 import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -63,6 +67,7 @@ import java.util.stream.Collectors;
 public class DesktopApplication extends Application {
 
     private static final Set DOWNLOAD_REQUEST_TYPES = new HashSet<>(Arrays.asList("downloadTaggedData", "downloadPrunableMessage"));
+    private static final boolean ENABLE_JAVASCRIPT_DEBUGGER = false;
     private static volatile boolean isLaunched;
     private static volatile Stage stage;
     private static volatile WebEngine webEngine;
@@ -138,6 +143,19 @@ public class DesktopApplication extends Application {
                                 updateClientState(BlockchainProcessor.Event.AFTER_BLOCK_APPLY, block), BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
                         Nxt.getTransactionProcessor().addListener((transaction) ->
                                 updateClientState(TransactionProcessor.Event.ADDED_UNCONFIRMED_TRANSACTIONS, transaction), TransactionProcessor.Event.ADDED_UNCONFIRMED_TRANSACTIONS);
+
+                        if (ENABLE_JAVASCRIPT_DEBUGGER) {
+                            try {
+                                // Add the javafx_webview_debugger lib to the classpath
+                                // For more details, check https://github.com/mohamnag/javafx_webview_debugger
+                                Class<?> aClass = Class.forName("com.mohamnag.fxwebview_debugger.DevToolsDebuggerServer");
+                                @SuppressWarnings("deprecation") Debugger debugger = webEngine.impl_getDebugger();
+                                Method startDebugServer = aClass.getMethod("startDebugServer", Debugger.class, int.class);
+                                startDebugServer.invoke(null, debugger, 51742);
+                            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                Logger.logInfoMessage("Cannot start JavaFx debugger", e);
+                            }
+                        }
                     }
                 });
 
@@ -256,11 +274,15 @@ public class DesktopApplication extends Application {
 
     private void download(String requestType, Map<String, String> params) {
         String chainName = params.get("chain");
-        ChildChain childChain = ChildChain.getChildChain(chainName);
-        byte[] transactionFullHash = Convert.parseHexString(params.get("transactionFullHash"));
-        TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionFullHash);
+        Chain chain = Chain.getChain(chainName);
+        if (chain == null) {
+            chain = Chain.getChain(Integer.valueOf(chainName));
+        }
         boolean retrieve = "true".equals(params.get("retrieve"));
+        byte[] transactionFullHash = Convert.parseHexString(params.get("transactionFullHash"));
         if (requestType.equals("downloadTaggedData")) {
+            ChildChain childChain = (ChildChain)chain;
+            TaggedDataHome.TaggedData taggedData = childChain.getTaggedDataHome().getData(transactionFullHash);
             if (taggedData == null && retrieve) {
                 try {
                     if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionFullHash) == null) {
@@ -284,10 +306,10 @@ public class DesktopApplication extends Application {
             }
             downloadFile(data, filename);
         } else if (requestType.equals("downloadPrunableMessage")) {
-            PrunableMessageHome.PrunableMessage prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionFullHash);
+            PrunableMessageHome.PrunableMessage prunableMessage = chain.getPrunableMessageHome().getPrunableMessage(transactionFullHash);
             if (prunableMessage == null && retrieve) {
                 try {
-                    if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionFullHash) == null) {
+                    if (Nxt.getBlockchainProcessor().restorePrunedTransaction(chain, transactionFullHash) == null) {
                         growl("Pruned message not currently available from any peer");
                         return;
                     }
@@ -295,7 +317,7 @@ public class DesktopApplication extends Application {
                     growl("Pruned message cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                     return;
                 }
-                prunableMessage = childChain.getPrunableMessageHome().getPrunableMessage(transactionFullHash);
+                prunableMessage = chain.getPrunableMessageHome().getPrunableMessage(transactionFullHash);
             }
             String secretPhrase = params.get("secretPhrase");
             byte[] sharedKey = Convert.parseHexString(params.get("sharedKey"));

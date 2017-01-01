@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -100,7 +100,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
 
     public static final TransactionType LISTING = new DigitalGoodsTransactionType() {
 
-        private final Fee DGS_LISTING_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_NXT, 2 * Constants.ONE_NXT, 32) {
+        private final Fee DGS_LISTING_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_FXT, 2 * Constants.ONE_FXT, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 ListingAttachment attachment = (ListingAttachment) transaction.getAttachment();
@@ -421,7 +421,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             PurchaseAttachment attachment = (PurchaseAttachment) transaction.getAttachment();
             if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT())) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
                         -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
                 return true;
             }
@@ -431,7 +431,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             PurchaseAttachment attachment = (PurchaseAttachment) transaction.getAttachment();
-            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(),
+            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
                     Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
         }
 
@@ -493,7 +493,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
 
     public static final TransactionType DELIVERY = new DigitalGoodsTransactionType() {
 
-        private final Fee DGS_DELIVERY_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT, 2 * Constants.ONE_NXT, 32) {
+        private final Fee DGS_DELIVERY_FEE = new Fee.SizeBasedFee(Constants.ONE_FXT, 2 * Constants.ONE_FXT, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 DeliveryAttachment attachment = (DeliveryAttachment) transaction.getAttachment();
@@ -683,7 +683,8 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             RefundAttachment attachment = (RefundAttachment) transaction.getAttachment();
             if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= attachment.getRefundNQT()) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(), -attachment.getRefundNQT());
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
+                        AccountLedger.newEventId(transaction), -attachment.getRefundNQT());
                 return true;
             }
             return false;
@@ -692,13 +693,14 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             RefundAttachment attachment = (RefundAttachment) transaction.getAttachment();
-            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), transaction.getId(), attachment.getRefundNQT());
+            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
+                    AccountLedger.newEventId(transaction), attachment.getRefundNQT());
         }
 
         @Override
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             RefundAttachment attachment = (RefundAttachment) transaction.getAttachment();
-            transaction.getChain().getDigitalGoodsHome().refund(getLedgerEvent(), transaction.getId(), transaction.getSenderId(),
+            transaction.getChain().getDigitalGoodsHome().refund(getLedgerEvent(), AccountLedger.newEventId(transaction), transaction.getSenderId(),
                     attachment.getPurchaseId(), attachment.getRefundNQT(), transaction.getEncryptedMessage());
         }
 

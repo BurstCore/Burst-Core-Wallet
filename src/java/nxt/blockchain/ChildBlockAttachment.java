@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -16,7 +16,6 @@
 
 package nxt.blockchain;
 
-import nxt.Nxt;
 import nxt.NxtException;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
@@ -29,47 +28,47 @@ import java.util.List;
 
 public class ChildBlockAttachment extends Attachment.AbstractAttachment implements Appendix.Prunable {
 
-    public static ChildBlockAttachment parse(JSONObject attachmentData) throws NxtException.NotValidException {
-        if (!Appendix.hasAppendix(ChildBlockFxtTransactionType.INSTANCE.getName(), attachmentData)) {
-            return null;
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new ChildBlockAttachment(buffer);
         }
-        return new ChildBlockAttachment(attachmentData);
-    }
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(ChildBlockFxtTransactionType.INSTANCE.getName(), attachmentData)) {
+                return null;
+            }
+            return new ChildBlockAttachment(attachmentData);
+        }
+    };
 
     private final int chainId;
     private volatile byte[][] childTransactionFullHashes;
     private final byte[] hash;
-    private final long[] backFees;
 
     ChildBlockAttachment(ByteBuffer buffer) {
         super(buffer);
-        this.chainId = buffer.getInt();
-        this.hash = new byte[32];
-        buffer.get(hash);
-        byte backFeesSize = buffer.get();
-        if (backFeesSize > 0) {
-            backFees = new long[backFeesSize];
-            for (int i = 0; i < backFeesSize; i++) {
-                backFees[i] = buffer.getLong();
+        byte flags = buffer.get();
+        if ((flags & 1) != 0) {
+            this.chainId = buffer.getInt();
+            int count = buffer.getShort() & 0xFFFF;
+            this.childTransactionFullHashes = new byte[count][];
+            for (int i = 0; i < count; i++) {
+                this.childTransactionFullHashes[i] = new byte[32];
+                buffer.get(this.childTransactionFullHashes[i]);
             }
+            this.hash = null;
         } else {
-            backFees = Convert.EMPTY_LONG;
+            this.chainId = buffer.getInt();
+            this.hash = new byte[32];
+            buffer.get(hash);
+            this.childTransactionFullHashes = null;
         }
-        this.childTransactionFullHashes = null;
     }
 
     ChildBlockAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
         super(attachmentData);
         this.chainId = ((Long)attachmentData.get("chain")).intValue();
-        JSONArray backFeesJson = (JSONArray)attachmentData.get("backFees");
-        if (backFeesJson != null) {
-            backFees = new long[backFeesJson.size()];
-            for (int i = 0 ; i < backFees.length; i++) {
-                backFees[i] = Convert.parseLong(backFeesJson.get(i));
-            }
-        } else {
-            backFees = Convert.EMPTY_LONG;
-        }
         JSONArray jsonArray = (JSONArray)attachmentData.get("childTransactionFullHashes");
         if (jsonArray != null) {
             this.childTransactionFullHashes = new byte[jsonArray.size()][];
@@ -87,55 +86,52 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         }
     }
 
-    public ChildBlockAttachment(ChildChain childChain, byte[][] childTransactionFullHashes, long[] backFees) {
-        this.chainId = childChain.getId();
-        this.childTransactionFullHashes = childTransactionFullHashes;
-        this.hash = null;
-        this.backFees = backFees;
-    }
-
     public ChildBlockAttachment(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
         if (childTransactions == null || childTransactions.isEmpty()) {
             throw new NxtException.NotValidException("Empty ChildBlockAttachment not allowed");
         }
         this.chainId = childTransactions.get(0).getChain().getId();
         this.childTransactionFullHashes = new byte[childTransactions.size()][];
-        this.backFees = new long[3];
         this.hash = null;
-        int blockchainHeight = Nxt.getBlockchain().getHeight();
         for (int i = 0; i < childTransactionFullHashes.length; i++) {
             ChildTransactionImpl childTransaction = (ChildTransactionImpl)childTransactions.get(i);
             if (childTransaction.getChain().getId() != this.chainId) {
                 throw new NxtException.NotValidException("Child transactions belong to different child chains");
             }
             childTransactionFullHashes[i] = childTransaction.getFullHash();
-            long[] childMinBackFees = childTransaction.getMinimumBackFeesFQT(blockchainHeight);
-            for (int j = 0; j < childMinBackFees.length; j++) {
-                backFees[j] += childMinBackFees[j];
-            }
         }
     }
 
     @Override
-    protected int getMyFullSize() {
-        if (childTransactionFullHashes == null) {
-            return 4 + 1 + backFees.length * 8;
+    public int getMyFullSize() {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
         }
-        return 4 + 1 + backFees.length * 8 + 32 * childTransactionFullHashes.length;
+        return 1 + 4 + 2 + 32 * childTransactionFullHashes.length;
     }
 
     @Override
     protected int getMySize() {
-        return 4 + 32 + 1 + backFees.length * 8;
+        return 1 + 4 + 32;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
+        buffer.put((byte)0);
         buffer.putInt(chainId);
         buffer.put(getHash());
-        buffer.put((byte)backFees.length);
-        for (long backFee : backFees) {
-            buffer.putLong(backFee);
+    }
+
+    @Override
+    public void putMyPrunableBytes(ByteBuffer buffer) {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
+        }
+        buffer.put((byte)1);
+        buffer.putInt(chainId);
+        buffer.putShort((short)childTransactionFullHashes.length);
+        for (byte[] childTransactionFullHash : childTransactionFullHashes) {
+            buffer.put(childTransactionFullHash);
         }
     }
 
@@ -150,13 +146,6 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
             }
         }
         json.put("hash", Convert.toHexString(getHash()));
-        if (backFees.length > 0) {
-            JSONArray backFeesJson = new JSONArray();
-            for (long backFee : backFees) {
-                backFeesJson.add(backFee);
-            }
-            json.put("backFees", backFeesJson);
-        }
     }
 
     @Override
@@ -166,10 +155,6 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     public int getChainId() {
         return chainId;
-    }
-
-    public long[] getBackFees() {
-        return backFees;
     }
 
     public byte[][] getChildTransactionFullHashes() {

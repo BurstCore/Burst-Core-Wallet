@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -85,18 +85,13 @@ final class GetInfo {
         peer.setApiSSLPort(message.getSslPort());
         peer.setDisabledAPIs(message.getDisabledAPIs());
         peer.setApiServerIdleTimeout(message.getApiServerIdleTimeout());
+        peer.setBlockchainState(message.getBlockchainState());
 
         long origServices = peer.getServices();
         peer.setServices(message.getServices());
         if (peer.getServices() != origServices) {
             Peers.notifyListeners(peer, Peers.Event.CHANGE_SERVICES);
         }
-
-        /*
-        //TODO: implement separately
-        peerImpl.setBlockchainState(request.get("blockchainState"));
-		*/
-
         //
         // Indicate the connection handshake is complete.  For an inbound connection, we need
         // to send our GetInfo message.  For an outbound connection, we have already sent our
@@ -106,6 +101,10 @@ final class GetInfo {
         if (peer.isInbound()) {
             NetworkHandler.sendGetInfoMessage(peer);
         }
+        //
+        // Send our bundler rates
+        //
+        Peers.sendBundlerRates(peer);
         //
         // Get the unconfirmed transactions.  This is done when a connection is established
         // to synchronize the unconfirmed transaction pools of both peers.

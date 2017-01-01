@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -17,6 +17,7 @@
 package nxt.http;
 
 import nxt.Nxt;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.ms.MonetarySystemTransactionType;
 import nxt.ms.PublishExchangeOfferAttachment;
@@ -48,6 +49,7 @@ public final class GetExpectedSellOffers extends APIServlet.APIRequestHandler {
 
         long currencyId = ParameterParser.getUnsignedLong(req, "currency", false);
         long accountId = ParameterParser.getAccountId(req, "account", false);
+        ChildChain childChain = ParameterParser.getChildChain(req, false);
         boolean sortByRate = "true".equalsIgnoreCase(req.getParameter("sortByRate"));
 
         Filter<Transaction> filter = transaction -> {
@@ -55,6 +57,9 @@ public final class GetExpectedSellOffers extends APIServlet.APIRequestHandler {
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId) {
+                return false;
+            }
+            if (childChain != null && transaction.getChain() != childChain) {
                 return false;
             }
             PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment)transaction.getAttachment();

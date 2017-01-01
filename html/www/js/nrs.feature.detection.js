@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright © 2013-2016 The Nxt Core Developers.                             *
- * Copyright © 2016 Jelurida IP B.V.                                          *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
@@ -45,6 +45,13 @@ var NRS = (function (NRS) {
 
     NRS.isExternalLinkVisible = function() {
         // When using JavaFX add a link to a web wallet except on Linux since on Ubuntu it sometimes hangs
+        if (NRS.isMobileApp()) {
+            return false;
+        }
+        return !(isDesktopApplication && navigator.userAgent.indexOf("Linux") >= 0);
+    };
+
+    NRS.isWebWalletLinkVisible = function() {
         if (NRS.isMobileApp()) {
             return false;
         }

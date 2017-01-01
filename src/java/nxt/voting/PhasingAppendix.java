@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -34,6 +34,7 @@ import nxt.blockchain.TransactionProcessor;
 import nxt.blockchain.TransactionProcessorImpl;
 import nxt.blockchain.TransactionType;
 import nxt.util.Convert;
+import nxt.util.JSON;
 import nxt.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -48,29 +49,38 @@ import java.util.Set;
 
 public final class PhasingAppendix extends Appendix.AbstractAppendix {
 
-    private static final String appendixName = "Phasing";
+    public static final int appendixType = 64;
+    public static final String appendixName = "Phasing";
+
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new PhasingAppendix(buffer);
+        }
+
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+                return null;
+            }
+            return new PhasingAppendix(attachmentData);
+        }
+    };
 
     private static final Fee PHASING_FEE = (transaction, appendage) -> {
         long fee = 0;
         PhasingAppendix phasing = (PhasingAppendix)appendage;
         if (!phasing.params.getVoteWeighting().isBalanceIndependent()) {
-            fee += 20 * Constants.ONE_NXT;
+            fee += 20 * Constants.ONE_FXT;
         } else {
-            fee += Constants.ONE_NXT;
+            fee += Constants.ONE_FXT;
         }
         if (phasing.hashedSecret.length > 0) {
-            fee += (1 + (phasing.hashedSecret.length - 1) / 32) * Constants.ONE_NXT;
+            fee += (1 + (phasing.hashedSecret.length - 1) / 32) * Constants.ONE_FXT;
         }
-        fee += Constants.ONE_NXT * phasing.linkedTransactionsIds.size();
+        fee += Constants.ONE_FXT * phasing.linkedTransactionsIds.size();
         return fee;
     };
-
-    public static PhasingAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
-        }
-        return new PhasingAppendix(attachmentData);
-    }
 
     private final int finishHeight;
     private final PhasingParams params;
@@ -78,7 +88,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     private final byte[] hashedSecret;
     private final byte algorithm;
 
-    public PhasingAppendix(ByteBuffer buffer) {
+    private PhasingAppendix(ByteBuffer buffer) {
         super(buffer);
         finishHeight = buffer.getInt();
         params = new PhasingParams(buffer);
@@ -128,6 +138,11 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         this.linkedTransactionsIds = linkedTransactionsIds;
         this.hashedSecret = hashedSecret != null ? hashedSecret : Convert.EMPTY_BYTE;
         this.algorithm = algorithm;
+    }
+
+    @Override
+    public int getAppendixType() {
+        return appendixType;
     }
 
     @Override
@@ -187,7 +202,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
                 if (chain == null) {
                     throw new NxtException.NotValidException("Invalid chain id " + linkedTransactionId.getChainId());
                 }
-                TransactionImpl linkedTransaction = chain.getTransactionHome().findTransactionByFullHash(hash, currentHeight);
+                TransactionImpl linkedTransaction = chain.getTransactionHome().findTransaction(hash, currentHeight);
                 if (linkedTransaction != null) {
                     if (transaction.getTimestamp() - linkedTransaction.getTimestamp() > Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN) {
                         throw new NxtException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");
@@ -248,6 +263,11 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     }
 
     @Override
+    public boolean isAllowed(Chain chain) {
+        return chain instanceof ChildChain;
+    }
+
+    @Override
     public Fee getBaselineFee(Transaction transaction) {
         return PHASING_FEE;
     }
@@ -268,7 +288,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         Account senderAccount = Account.getAccount(transaction.getSenderId());
         transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
         transaction.getChain().getBalanceHome().getBalance(transaction.getSenderId())
-                .addToUnconfirmedBalance(AccountLedger.LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
+                .addToUnconfirmedBalance(AccountLedger.LedgerEvent.REJECT_PHASED_TRANSACTION, AccountLedger.newEventId(transaction),
                                                  transaction.getAmount());
         TransactionProcessorImpl.getInstance()
                 .notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
@@ -276,18 +296,18 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     }
 
     public void countVotes(ChildTransactionImpl transaction) {
-        PhasingPollHome phasingPollHome = transaction.getChain().getPhasingPollHome();
-        if (phasingPollHome.getResult(transaction.getFullHash()) != null) {
+        if (PhasingPollHome.getResult(transaction) != null) {
             return;
         }
-        PhasingPollHome.PhasingPoll poll = phasingPollHome.getPoll(transaction.getFullHash());
+        PhasingPollHome phasingPollHome = transaction.getChain().getPhasingPollHome();
+        PhasingPollHome.PhasingPoll poll = phasingPollHome.getPoll(transaction);
         long result = poll.countVotes();
         poll.finish(result);
         if (result >= poll.getQuorum()) {
             try {
                 release(transaction);
             } catch (RuntimeException e) {
-                Logger.logErrorMessage("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
+                Logger.logErrorMessage("Failed to release phased transaction " + JSON.toJSONString(transaction.getJSONObject()), e);
                 reject(transaction);
             }
         } else {
@@ -296,7 +316,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     }
 
     public void tryCountVotes(ChildTransactionImpl transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        PhasingPollHome.PhasingPoll poll = transaction.getChain().getPhasingPollHome().getPoll(transaction.getFullHash());
+        PhasingPollHome.PhasingPoll poll = transaction.getChain().getPhasingPollHome().getPoll(transaction);
         long result = poll.countVotes();
         if (result >= poll.getQuorum()) {
             if (!transaction.attachmentIsDuplicate(duplicates, false)) {
@@ -305,7 +325,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
                     poll.finish(result);
                     Logger.logDebugMessage("Early finish of transaction " + transaction.getStringId() + " at height " + Nxt.getBlockchain().getHeight());
                 } catch (RuntimeException e) {
-                    Logger.logErrorMessage("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
+                    Logger.logErrorMessage("Failed to release phased transaction " + JSON.toJSONString(transaction.getJSONObject()), e);
                 }
             } else {
                 Logger.logDebugMessage("At height " + Nxt.getBlockchain().getHeight() + " phased transaction " + transaction.getStringId()

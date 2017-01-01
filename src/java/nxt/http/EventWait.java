@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -68,8 +68,12 @@ import java.util.List;
  * <li>Block.BLOCK_GENERATED
  * <li>Block.BLOCK_POPPED
  * <li>Block.BLOCK_PUSHED
- * <li>Ledger.ADD_ENTRY.account - The account suffix will be Reed-Solomon identifier
- * of the account associated with the ledger entry.
+ * <li>Ledger.ADD_ENTRY.account - Monitor changes to the specified account.  'account'
+ * may be the numeric identifier or the Reed-Solomon identifier
+ * of the account to monitor for updates.  All accounts will be monitored if no
+ * account is specified.
+ * Specifying an account identifier of 0 is the same as
+ * not specifying an account.
  * <li>Peer.ADD_ACTIVE_PEER
  * <li>Peer.ADD_PEER
  * <li>Peer.BLACKLIST
@@ -78,18 +82,19 @@ import java.util.List;
  * <li>Peer.CHANGE_SERVICES
  * <li>Peer.REMOVE_PEER
  * <li>Peer.UNBLACKLIST
- * <li>Transaction.ADDED_CONFIRMED_TRANSACTIONS
- * <li>Transaction.ADDED_UNCONFIRMED_TRANSACTIONS
- * <li>Transaction.REJECT_PHASED_TRANSACTION
- * <li>Transaction.RELEASE_PHASED_TRANSACTION
- * <li>Transaction.REMOVE_UNCONFIRMED_TRANSACTIONS
+ * <li>Transaction.ADDED_CONFIRMED_TRANSACTIONS.account (omit account to monitor all accounts)
+ * <li>Transaction.ADDED_UNCONFIRMED_TRANSACTIONS.account (omit account to monitor all accounts)
+ * <li>Transaction.REJECT_PHASED_TRANSACTION.account (omit account to monitor all accounts)
+ * <li>Transaction.RELEASE_PHASED_TRANSACTION.account (omit account to monitor all accounts)
+ * <li>Transaction.REMOVED_UNCONFIRMED_TRANSACTIONS.account (omit account to monitor all accounts)
  * </ul>
  * <p>
  * Event object identifiers:
  * <ul>
  * <li>Block string identifier for a Block event
  * <li>Peer network address for a Peer event
- * <li>Transaction string identifier for a Transaction event
+ * <li>Transaction chain and full hash for a Transaction event
+ * as a string in the format 'chain:hash'
  * </ul>
  */
 public class EventWait extends APIServlet.APIRequestHandler {
@@ -179,6 +184,11 @@ public class EventWait extends APIServlet.APIRequestHandler {
      */
     @Override
     protected boolean allowRequiredBlockParameters() {
+        return false;
+    }
+
+    @Override
+    protected boolean isChainSpecific() {
         return false;
     }
 

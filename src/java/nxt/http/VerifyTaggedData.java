@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -21,7 +21,7 @@ import nxt.NxtException;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
-import nxt.taggeddata.TaggedDataUploadAttachment;
+import nxt.taggeddata.TaggedDataAttachment;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -46,19 +46,19 @@ public final class VerifyTaggedData extends APIServlet.APIRequestHandler {
 
         byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         ChildChain childChain = ParameterParser.getChildChain(req);
-        Transaction transaction = Nxt.getBlockchain().getTransactionByFullHash(childChain, transactionFullHash);
+        Transaction transaction = Nxt.getBlockchain().getTransaction(childChain, transactionFullHash);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
 
-        TaggedDataUploadAttachment taggedData = ParameterParser.getTaggedData(req);
+        TaggedDataAttachment taggedData = ParameterParser.getTaggedData(req);
         Attachment attachment = transaction.getAttachment();
 
-        if (! (attachment instanceof TaggedDataUploadAttachment)) {
+        if (! (attachment instanceof TaggedDataAttachment)) {
             return INCORRECT_TRANSACTION;
         }
 
-        TaggedDataUploadAttachment myTaggedData = (TaggedDataUploadAttachment)attachment;
+        TaggedDataAttachment myTaggedData = (TaggedDataAttachment)attachment;
         if (!Arrays.equals(myTaggedData.getHash(), taggedData.getHash())) {
             return HASHES_MISMATCH;
         }

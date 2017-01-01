@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -68,7 +68,7 @@ public abstract class AccountPropertyTransactionType extends ChildTransactionTyp
 
     public static final TransactionType ACCOUNT_INFO = new AccountPropertyTransactionType() {
 
-        private final Fee ACCOUNT_INFO_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT, 2 * Constants.ONE_NXT, 32) {
+        private final Fee ACCOUNT_INFO_FEE = new Fee.SizeBasedFee(Constants.ONE_FXT, 2 * Constants.ONE_FXT, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 AccountInfoAttachment attachment = (AccountInfoAttachment) transaction.getAttachment();
@@ -140,7 +140,7 @@ public abstract class AccountPropertyTransactionType extends ChildTransactionTyp
 
     public static final TransactionType ACCOUNT_PROPERTY_SET = new AccountPropertyTransactionType() {
 
-        private final Fee ACCOUNT_PROPERTY_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT, Constants.ONE_NXT, 32) {
+        private final Fee ACCOUNT_PROPERTY_FEE = new Fee.SizeBasedFee(Constants.ONE_FXT, Constants.ONE_FXT, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 AccountPropertyAttachment attachment = (AccountPropertyAttachment) transaction.getAttachment();

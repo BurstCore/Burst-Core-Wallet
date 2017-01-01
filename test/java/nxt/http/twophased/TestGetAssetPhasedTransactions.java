@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -17,7 +17,7 @@
 package nxt.http.twophased;
 
 import nxt.BlockchainTest;
-import nxt.Constants;
+import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
 import nxt.util.Convert;
 import nxt.util.Logger;
@@ -43,7 +43,7 @@ public class TestGetAssetPhasedTransactions extends BlockchainTest {
                 .votingModel(VoteWeighting.VotingModel.ASSET.getCode())
                 .holding(Convert.parseUnsignedLong(asset))
                 .minBalance(1, VoteWeighting.MinBalanceModel.ASSET.getCode())
-                .fee(21 * Constants.ONE_NXT)
+                .fee(21 * ChildChain.IGNIS.ONE_COIN)
                 .build();
     }
 

@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -17,7 +17,7 @@
 package nxt.http.monetarysystem;
 
 import nxt.BlockchainTest;
-import nxt.Constants;
+import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
 import nxt.ms.CurrencyType;
 import org.json.simple.JSONObject;
@@ -36,9 +36,9 @@ public class TestCurrencyIssuance extends BlockchainTest {
     public void issueMultipleCurrencies() {
         APICall apiCall = new Builder().naming("axc", "AXC", "Currency A").build();
         issueCurrencyApi(apiCall);
-        apiCall = new Builder().naming("bXbx", "BXBX", "Currency B").feeNQT(1000 * Constants.ONE_NXT).build();
+        apiCall = new Builder().naming("bXbx", "BXBX", "Currency B").feeNQT(1000 * ChildChain.IGNIS.ONE_COIN).build();
         issueCurrencyApi(apiCall);
-        apiCall = new Builder().naming("ccXcc", "CCCXC", "Currency C").feeNQT(40 * Constants.ONE_NXT).build();
+        apiCall = new Builder().naming("ccXcc", "CCCXC", "Currency C").feeNQT(40 * ChildChain.IGNIS.ONE_COIN).build();
         issueCurrencyApi(apiCall);
         apiCall = new APICall.Builder("getCurrency").param("code", "BXBX").build();
         JSONObject response = apiCall.invoke();

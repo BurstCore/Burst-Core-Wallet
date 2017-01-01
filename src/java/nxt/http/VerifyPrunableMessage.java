@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -64,7 +64,7 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
 
         byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         ChildChain childChain = ParameterParser.getChildChain(req);
-        ChildTransaction transaction = (ChildTransaction)Nxt.getBlockchain().getTransactionByFullHash(childChain, transactionFullHash);
+        ChildTransaction transaction = (ChildTransaction)Nxt.getBlockchain().getTransaction(childChain, transactionFullHash);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }

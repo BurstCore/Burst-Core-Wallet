@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -16,10 +16,10 @@
 
 package nxt.account;
 
-import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.NxtException.AccountControlException;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.Transaction;
@@ -41,6 +41,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class AccountRestrictions {
@@ -85,11 +86,11 @@ public final class AccountRestrictions {
         private final DbKey dbKey;
         private final long accountId;
         private PhasingParams phasingParams;
-        private long maxFees;
+        private Map<Integer,Long> maxFees;
         private short minDuration;
         private short maxDuration;
 
-        private PhasingOnly(long accountId, PhasingParams params, long maxFees, short minDuration, short maxDuration) {
+        private PhasingOnly(long accountId, PhasingParams params, Map<Integer, Long> maxFees, short minDuration, short maxDuration) {
             this.accountId = accountId;
             dbKey = phasingControlDbKeyFactory.newKey(this.accountId);
             phasingParams = params;
@@ -108,7 +109,12 @@ public final class AccountRestrictions {
                     rs.getLong("min_balance"),
                     rs.getByte("min_balance_model"),
                     whitelist == null ? Convert.EMPTY_LONG : Convert.toArray(whitelist));
-            this.maxFees = rs.getLong("max_fees");
+            Integer[] chainIds = DbUtils.getArray(rs, "max_fees_chains", Integer[].class);
+            Long[] chainMaxFees = DbUtils.getArray(rs, "max_fees", Long[].class);
+            this.maxFees = new HashMap<>(chainIds.length);
+            for (int i = 0; i < chainIds.length; i++) {
+                this.maxFees.put(chainIds[i], chainMaxFees[i]);
+            }
             this.minDuration = rs.getShort("min_duration");
             this.maxDuration = rs.getShort("max_duration");
         }
@@ -121,7 +127,7 @@ public final class AccountRestrictions {
             return phasingParams;
         }
 
-        public long getMaxFees() {
+        public Map<Integer,Long> getMaxFees() {
             return maxFees;
         }
 
@@ -134,10 +140,12 @@ public final class AccountRestrictions {
         }
 
         private void checkTransaction(ChildTransaction transaction, boolean validatingAtFinish) throws AccountControlException {
-            //TODO: fix maxFees check
-            if (!validatingAtFinish && maxFees > 0 && Math.addExact(transaction.getFee(),
-                    transaction.getChain().getPhasingPollHome().getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
-                throw new AccountControlException(String.format("Maximum total fees limit of %f NXT exceeded", ((double)maxFees)/ Constants.ONE_NXT));
+            ChildChain childChain = transaction.getChain();
+            long maxFee = Convert.nullToZero(maxFees.get(childChain.getId()));
+            if (!validatingAtFinish && maxFee > 0 && Math.addExact(transaction.getFee(),
+                    childChain.getPhasingPollHome().getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFee) {
+                throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded",
+                        ((double)maxFee)/ childChain.ONE_COIN, childChain.getName()));
             }
             if (transaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING) {
                 return;
@@ -167,8 +175,8 @@ public final class AccountRestrictions {
         private void save(Connection con) throws SQLException {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO account_control_phasing "
                     + "(account_id, whitelist, voting_model, quorum, min_balance, holding_id, min_balance_model, "
-                    + "max_fees, min_duration, max_duration, height, latest) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                    + "max_fees_chains, max_fees, min_duration, max_duration, height, latest) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.accountId);
                 DbUtils.setArrayEmptyToNull(pstmt, ++i, Convert.toArray(phasingParams.getWhitelist()));
@@ -177,7 +185,16 @@ public final class AccountRestrictions {
                 DbUtils.setLongZeroToNull(pstmt, ++i, phasingParams.getVoteWeighting().getMinBalance());
                 DbUtils.setLongZeroToNull(pstmt, ++i, phasingParams.getVoteWeighting().getHoldingId());
                 pstmt.setByte(++i, phasingParams.getVoteWeighting().getMinBalanceModel().getCode());
-                pstmt.setLong(++i, this.maxFees);
+                Integer[] chainIds = new Integer[maxFees.size()];
+                Long[] chainMaxFees = new Long[maxFees.size()];
+                int j = 0;
+                for (Map.Entry<Integer,Long> entry : maxFees.entrySet()) {
+                    chainIds[j] = entry.getKey();
+                    chainMaxFees[j] = entry.getValue();
+                    j++;
+                }
+                DbUtils.setArray(pstmt, ++i, chainIds);
+                DbUtils.setArray(pstmt, ++i, chainMaxFees);
                 pstmt.setShort(++i, this.minDuration);
                 pstmt.setShort(++i, this.maxDuration);
                 pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
@@ -237,7 +254,7 @@ public final class AccountRestrictions {
         if (!senderAccount.getControls().contains(Account.ControlType.PHASING_ONLY)) {
             return false;
         }
-        if (PhasingOnly.get(transaction.getSenderId()).getMaxFees() == 0) {
+        if (PhasingOnly.get(transaction.getSenderId()).getMaxFees().get(transaction.getChain().getId()) == null) {
             return false;
         }
         return transaction.getType() != AccountControlTransactionType.SET_PHASING_ONLY &&

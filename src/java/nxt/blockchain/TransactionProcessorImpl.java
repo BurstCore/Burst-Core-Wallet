@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -227,7 +228,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 List<Transaction> transactionList = new ArrayList<>();
                 int curTime = Nxt.getEpochTime();
                 for (TransactionImpl transaction : broadcastedTransactions) {
-                    if (transaction.getExpiration() < curTime || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash())) {
+                    if (transaction.getExpiration() < curTime || transaction.getChain().getTransactionHome().hasTransaction(transaction)) {
                         broadcastedTransactions.remove(transaction);
                     } else if (transaction.getTimestamp() < curTime - 30) {
                         transactionList.add(transaction);
@@ -383,7 +384,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
     public void broadcast(Transaction transaction) throws NxtException.ValidationException {
         BlockchainImpl.getInstance().writeLock();
         try {
-            if (transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash())) {
+            if (transaction.getChain().getTransactionHome().hasTransaction(transaction)) {
                 Logger.logMessage("Transaction " + transaction.getStringId() + " already in blockchain, will not broadcast again");
                 return;
             }
@@ -405,8 +406,9 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 broadcastedTransactions.add((TransactionImpl) transaction);
                 Logger.logDebugMessage("Will broadcast new transaction later " + transaction.getStringId());
             } else {
-                processTransaction(unconfirmedTransaction);
+                Set<? extends TransactionImpl> displaced = processTransaction(unconfirmedTransaction);
                 Logger.logDebugMessage("Accepted new transaction " + transaction.getStringId());
+                removeUnconfirmedTransactions(displaced);
                 List<Transaction> acceptedTransactions = Collections.singletonList(transaction);
                 TransactionsInventory.cacheTransactions(acceptedTransactions);
                 NetworkHandler.broadcastMessage(new NetworkMessage.TransactionsInventoryMessage(acceptedTransactions));
@@ -451,7 +453,9 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
             waitingTransactions.clear();
             broadcastedTransactions.clear();
             transactionCache.clear();
-            transactionListeners.notify(removed, Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
+            if (!removed.isEmpty()) {
+                transactionListeners.notify(removed, Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
+            }
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
         }
@@ -488,7 +492,9 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
             unconfirmedTransactionTable.truncate();
             unconfirmedDuplicates.clear();
             transactionCache.clear();
-            transactionListeners.notify(removed, Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
+            if (!removed.isEmpty()) {
+                transactionListeners.notify(removed, Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
+            }
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
         }
@@ -507,6 +513,29 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                     }
                 }
             }
+        } finally {
+            BlockchainImpl.getInstance().writeUnlock();
+        }
+    }
+
+    void removeUnconfirmedTransactions(Collection<? extends TransactionImpl> transactions) {
+        BlockchainImpl.getInstance().writeLock();
+        try {
+            if (!Db.db.isInTransaction()) {
+                try {
+                    Db.db.beginTransaction();
+                    removeUnconfirmedTransactions(transactions);
+                    Db.db.commitTransaction();
+                } catch (Exception e) {
+                    Logger.logErrorMessage(e.toString(), e);
+                    Db.db.rollbackTransaction();
+                    throw e;
+                } finally {
+                    Db.db.endTransaction();
+                }
+                return;
+            }
+            transactions.forEach(transaction -> removeUnconfirmedTransaction(transaction));
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
         }
@@ -629,17 +658,18 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         List<TransactionImpl> sendToPeersTransactions = new ArrayList<>();
         List<TransactionImpl> addedUnconfirmedTransactions = new ArrayList<>();
         List<Exception> exceptions = new ArrayList<>();
+        Set<ChildBlockFxtTransactionImpl> displaced = new HashSet<>();
         for (Transaction inputTransaction : transactions) {
             try {
                 TransactionImpl transaction = (TransactionImpl)inputTransaction;
                 receivedTransactions.add(transaction);
                 DbKey dbKey = unconfirmedTransactionDbKeyFactory.newKey(transaction.getId());
-                if (getUnconfirmedTransaction(dbKey) != null || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash())) {
+                if (getUnconfirmedTransaction(dbKey) != null || transaction.getChain().getTransactionHome().hasTransaction(transaction)) {
                     continue;
                 }
                 transaction.validate();
                 UnconfirmedTransaction unconfirmedTransaction = transaction.newUnconfirmedTransaction(arrivalTimestamp);
-                processTransaction(unconfirmedTransaction);
+                displaced.addAll(processTransaction(unconfirmedTransaction));
                 if (broadcastedTransactions.contains(transaction)) {
                     Logger.logDebugMessage("Received back transaction " + transaction.getStringId()
                             + " that we broadcasted, will not forward again to peers");
@@ -654,6 +684,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 exceptions.add(e);
             }
         }
+        removeUnconfirmedTransactions(displaced);
         if (!sendToPeersTransactions.isEmpty()) {
             NetworkHandler.broadcastMessage(new NetworkMessage.TransactionsInventoryMessage(sendToPeersTransactions));
         }
@@ -667,7 +698,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         return addedUnconfirmedTransactions;
     }
 
-    private void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws NxtException.ValidationException {
+    private Set<ChildBlockFxtTransactionImpl> processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws NxtException.ValidationException {
         TransactionImpl transaction = unconfirmedTransaction.getTransaction();
         int curTime = Nxt.getEpochTime();
         if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT || transaction.getExpiration() < curTime) {
@@ -676,7 +707,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         if (transaction.getVersion() < 1) {
             throw new NxtException.NotValidException("Invalid transaction version");
         }
-
+        Set<ChildBlockFxtTransactionImpl> displacedTransactions = new HashSet<>();
         BlockchainImpl.getInstance().writeLock();
         try {
             try {
@@ -684,7 +715,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 if (Nxt.getBlockchain().getHeight() < Constants.LAST_KNOWN_BLOCK && !testUnconfirmedTransactions) {
                     throw new NxtException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
                 }
-                if (getUnconfirmedTransaction(unconfirmedTransaction.getDbKey()) != null || transaction.getChain().getTransactionHome().hasTransactionByFullHash(transaction.getFullHash())) {
+                if (getUnconfirmedTransaction(unconfirmedTransaction.getDbKey()) != null || transaction.getChain().getTransactionHome().hasTransaction(transaction)) {
                     throw new NxtException.ExistingTransactionException("Transaction already processed");
                 }
                 transaction.validateId();
@@ -694,6 +725,10 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                     } else {
                         throw new NxtException.NotCurrentlyValidException("Unknown transaction sender");
                     }
+                }
+
+                if (transaction.getType() == ChildBlockFxtTransactionType.INSTANCE) {
+                    displacedTransactions.addAll(findDisplacedChildBlockTransactions((ChildBlockFxtTransaction)transaction));
                 }
 
                 if (! transaction.applyUnconfirmed()) {
@@ -716,6 +751,35 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
         }
+        return displacedTransactions;
+    }
+
+    private List<ChildBlockFxtTransactionImpl> findDisplacedChildBlockTransactions(ChildBlockFxtTransaction transaction) throws NxtException.NotCurrentlyValidException {
+        List<ChildBlockFxtTransactionImpl> displaced = new ArrayList<>();
+        try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = getUnconfirmedFxtTransactions()) {
+            while (unconfirmedTransactions.hasNext()) {
+                FxtTransaction poolTransaction = (FxtTransaction)unconfirmedTransactions.next().getTransaction();
+                if (poolTransaction.getType() == ChildBlockFxtTransactionType.INSTANCE
+                        && ((ChildBlockFxtTransaction)poolTransaction).getChildChain() == transaction.getChildChain())  {
+                    if (poolTransaction.getFee() >= transaction.getFee()) { // transaction with same or higher fee already in the pool
+                        try {
+                            poolTransaction.validate();
+                        } catch (NxtException.ValidationException e) {
+                            continue;
+                        }
+                        if (poolTransaction.getChildTransactions().containsAll(transaction.getChildTransactions())) {
+                            throw new NxtException.NotCurrentlyValidException("A ChildBlockTransaction with same or higher fee "
+                                    + "and including the same child transactions is already in the pool");
+                        }
+                    } else { // offering higher fee for same or more child transactions, remove existing ChildBlockTransaction
+                        if (transaction.getChildTransactions().containsAll(poolTransaction.getChildTransactions())) {
+                            displaced.add((ChildBlockFxtTransactionImpl)poolTransaction);
+                        }
+                    }
+                }
+            }
+        }
+        return displaced;
     }
 
     private static final Comparator<UnconfirmedTransaction> cachedUnconfirmedTransactionComparator = (UnconfirmedTransaction t1, UnconfirmedTransaction t2) -> {
@@ -792,7 +856,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 //
                 for (Transaction inputTransaction : transactions) {
                     TransactionImpl transaction = (TransactionImpl)inputTransaction;
-                    TransactionImpl myTransaction = transaction.getChain().getTransactionHome().findTransactionByFullHash(transaction.getFullHash());
+                    TransactionImpl myTransaction = transaction.getChain().getTransactionHome().findTransaction(transaction.getFullHash());
                     if (myTransaction != null) {
                         boolean foundAllData = true;
                         //

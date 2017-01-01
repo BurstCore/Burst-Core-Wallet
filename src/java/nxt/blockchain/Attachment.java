@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -42,6 +42,11 @@ public interface Attachment extends Appendix {
         }
 
         protected AbstractAttachment() {}
+
+        @Override
+        public final int getAppendixType() {
+            return 0;
+        }
 
         @Override
         public final String getAppendixName() {
@@ -86,6 +91,11 @@ public interface Attachment extends Appendix {
         @Override
         public final boolean isPhasable() {
             return !(this instanceof Prunable) && getTransactionType().isPhasable();
+        }
+
+        @Override
+        public final boolean isAllowed(Chain chain) {
+            return getTransactionType().getType() < 0 ? chain instanceof FxtChain : chain instanceof ChildChain;
         }
 
         public final int getFinishValidationHeight(Transaction transaction) {

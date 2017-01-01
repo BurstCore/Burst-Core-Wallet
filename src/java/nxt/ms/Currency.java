@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -18,7 +18,9 @@ package nxt.ms;
 
 import nxt.Nxt;
 import nxt.account.Account;
+import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEvent;
+import nxt.account.BalanceHome;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;
@@ -138,47 +140,62 @@ public final class Currency {
         return listeners.removeListener(listener, eventType);
     }
 
+    private static final DbClause excludeDeleted = new DbClause.BooleanClause("is_deleted", false);
+
     public static DbIterator<Currency> getAllCurrencies(int from, int to) {
-        return currencyTable.getAll(from, to);
+        return currencyTable.getManyBy(excludeDeleted, from, to);
     }
 
     public static int getCount() {
-        return currencyTable.getCount();
+        return currencyTable.getCount(excludeDeleted);
     }
 
     public static Currency getCurrency(long id) {
-        return currencyTable.get(currencyDbKeyFactory.newKey(id));
+        return getCurrency(id, false);
     }
 
-    public static Currency getCurrencyByName(String name) {
-        return currencyTable.getBy(new DbClause.StringClause("name_lower", name.toLowerCase()));
+    public static Currency getCurrency(long id, boolean includeDeleted) {
+        Currency currency = currencyTable.get(currencyDbKeyFactory.newKey(id));
+        if (currency != null && currency.isDeleted() && !includeDeleted) {
+            return null;
+        }
+        return currency;
     }
 
-    public static Currency getCurrencyByCode(String code) {
-        return currencyTable.getBy(new DbClause.StringClause("code", code.toUpperCase()));
+    public static Currency getCurrencyByName(ChildChain childChain, String name) {
+        return currencyTable.getBy(new DbClause.StringClause("name_lower", name.toLowerCase())
+                .and(new DbClause.IntClause("chain", childChain.getId()))
+                .and(excludeDeleted));
+    }
+
+    public static Currency getCurrencyByCode(ChildChain childChain, String code) {
+        return currencyTable.getBy(new DbClause.StringClause("code", code.toUpperCase())
+                .and(new DbClause.IntClause("chain", childChain.getId()))
+                .and(excludeDeleted));
     }
 
     public static DbIterator<Currency> getCurrencyIssuedBy(long accountId, int from, int to) {
-        return currencyTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
+        return currencyTable.getManyBy(new DbClause.LongClause("account_id", accountId).and(excludeDeleted), from, to);
     }
 
     public static DbIterator<Currency> searchCurrencies(String query, int from, int to) {
-        return currencyTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC, currency.creation_height DESC ");
+        return currencyTable.search(query, excludeDeleted, from, to, " ORDER BY ft.score DESC, currency.creation_height DESC ");
     }
 
-    static void addCurrency(LedgerEvent event, long eventId, Transaction transaction, Account senderAccount,
+    static void addCurrency(LedgerEvent event, AccountLedger.LedgerEventId eventId, Transaction transaction, Account senderAccount,
                             CurrencyIssuanceAttachment attachment) {
+        ChildChain childChain = (ChildChain)transaction.getChain();
         Currency oldCurrency;
-        if ((oldCurrency = Currency.getCurrencyByCode(attachment.getCode())) != null) {
+        if ((oldCurrency = Currency.getCurrencyByCode(childChain, attachment.getCode())) != null) {
             oldCurrency.delete(event, eventId, senderAccount);
         }
-        if ((oldCurrency = Currency.getCurrencyByCode(attachment.getName())) != null) {
+        if ((oldCurrency = Currency.getCurrencyByCode(childChain, attachment.getName())) != null) {
             oldCurrency.delete(event, eventId, senderAccount);
         }
-        if ((oldCurrency = Currency.getCurrencyByName(attachment.getName())) != null) {
+        if ((oldCurrency = Currency.getCurrencyByName(childChain, attachment.getName())) != null) {
             oldCurrency.delete(event, eventId, senderAccount);
         }
-        if ((oldCurrency = Currency.getCurrencyByName(attachment.getCode())) != null) {
+        if ((oldCurrency = Currency.getCurrencyByName(childChain, attachment.getCode())) != null) {
             oldCurrency.delete(event, eventId, senderAccount);
         }
         Currency currency = new Currency(transaction, attachment);
@@ -205,6 +222,7 @@ public final class Currency {
     private final String code;
     private final String description;
     private final int type;
+    private final ChildChain childChain;
     private final long maxSupply;
     private final long reserveSupply;
     private final int creationHeight;
@@ -217,6 +235,7 @@ public final class Currency {
     private final byte decimals;
     private final long initialSupply;
     private CurrencySupply currencySupply;
+    private boolean isDeleted;
 
     private Currency(Transaction transaction, CurrencyIssuanceAttachment attachment) {
         this.currencyId = transaction.getId();
@@ -226,6 +245,7 @@ public final class Currency {
         this.code = attachment.getCode();
         this.description = attachment.getDescription();
         this.type = attachment.getType();
+        this.childChain = (ChildChain)transaction.getChain();
         this.initialSupply = attachment.getInitialSupply();
         this.reserveSupply = attachment.getReserveSupply();
         this.maxSupply = attachment.getMaxSupply();
@@ -237,6 +257,7 @@ public final class Currency {
         this.ruleset = attachment.getRuleset();
         this.algorithm = attachment.getAlgorithm();
         this.decimals = attachment.getDecimals();
+        this.isDeleted = false;
     }
 
     private Currency(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -247,6 +268,7 @@ public final class Currency {
         this.code = rs.getString("code");
         this.description = rs.getString("description");
         this.type = rs.getInt("type");
+        this.childChain = ChildChain.getChildChain(rs.getInt("chain"));
         this.initialSupply = rs.getLong("initial_supply");
         this.reserveSupply = rs.getLong("reserve_supply");
         this.maxSupply = rs.getLong("max_supply");
@@ -258,13 +280,14 @@ public final class Currency {
         this.ruleset = rs.getByte("ruleset");
         this.algorithm = rs.getByte("algorithm");
         this.decimals = rs.getByte("decimals");
+        this.isDeleted = rs.getBoolean("is_deleted");
     }
 
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency (id, account_id, name, code, "
-                + "description, type, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_nqt, "
-                + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "description, type, chain, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_nqt, "
+                + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, is_deleted, height, latest) "
+                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, this.currencyId);
             pstmt.setLong(++i, this.accountId);
@@ -272,6 +295,7 @@ public final class Currency {
             pstmt.setString(++i, this.code);
             pstmt.setString(++i, this.description);
             pstmt.setInt(++i, this.type);
+            pstmt.setInt(++i, this.childChain.getId());
             pstmt.setLong(++i, this.initialSupply);
             pstmt.setLong(++i, this.reserveSupply);
             pstmt.setLong(++i, this.maxSupply);
@@ -283,6 +307,7 @@ public final class Currency {
             pstmt.setByte(++i, this.ruleset);
             pstmt.setByte(++i, this.algorithm);
             pstmt.setByte(++i, this.decimals);
+            pstmt.setBoolean(++i, this.isDeleted);
             pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
             pstmt.executeUpdate();
         }
@@ -310,6 +335,10 @@ public final class Currency {
 
     public int getType() {
         return type;
+    }
+
+    public ChildChain getChildChain() {
+        return childChain;
     }
 
     public long getInitialSupply() {
@@ -366,6 +395,10 @@ public final class Currency {
         return decimals;
     }
 
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
     public long getCurrentReservePerUnitNQT() {
         if (!is(CurrencyType.RESERVABLE) || getSupplyData() == null) {
             return 0;
@@ -395,7 +428,7 @@ public final class Currency {
         currencySupplyTable.insert(currencySupply);
     }
 
-    static void claimReserve(ChildChain childChain, LedgerEvent event, long eventId, Account account, long currencyId, long units) {
+    static void claimReserve(ChildChain childChain, LedgerEvent event, AccountLedger.LedgerEventId eventId, Account account, long currencyId, long units) {
         account.addToCurrencyUnits(event, eventId, currencyId, -units);
         Currency currency = Currency.getCurrency(currencyId);
         currency.increaseSupply(- units);
@@ -403,7 +436,7 @@ public final class Currency {
                 Math.multiplyExact(units, currency.getCurrentReservePerUnitNQT()));
     }
 
-    static void transferCurrency(LedgerEvent event, long eventId, Account senderAccount, Account recipientAccount,
+    static void transferCurrency(LedgerEvent event, AccountLedger.LedgerEventId eventId, Account senderAccount, Account recipientAccount,
                                  long currencyId, long units) {
         senderAccount.addToCurrencyUnits(event, eventId, currencyId, -units);
         recipientAccount.addToCurrencyAndUnconfirmedCurrencyUnits(event, eventId, currencyId, units);
@@ -440,11 +473,6 @@ public final class Currency {
     }
 
     public boolean canBeDeletedBy(long senderAccountId) {
-        for (ChildChain chain : ChildChain.getAll()) {
-            if (!is(CurrencyType.NON_SHUFFLEABLE) && chain.getShufflingHome().getHoldingShufflingCount(currencyId, false) > 0) {
-                return false;
-            }
-        }
         if (!isActive()) {
             return senderAccountId == accountId;
         }
@@ -452,45 +480,38 @@ public final class Currency {
             return false;
         }
         try (DbIterator<Account.AccountCurrency> accountCurrencies = Account.getCurrencyAccounts(this.currencyId, 0, -1)) {
-            return ! accountCurrencies.hasNext() || accountCurrencies.next().getAccountId() == senderAccountId && ! accountCurrencies.hasNext();
+            if (!accountCurrencies.hasNext()) {
+                return true;
+            }
+            Account.AccountCurrency accountCurrency = accountCurrencies.next();
+            return !accountCurrencies.hasNext()
+                    && accountCurrency.getAccountId() == senderAccountId
+                    && accountCurrency.getUnconfirmedUnits() == accountCurrency.getUnits();
         }
     }
 
-    void delete(LedgerEvent event, long eventId, Account senderAccount) {
+    void delete(LedgerEvent event, AccountLedger.LedgerEventId eventId, Account senderAccount) {
         if (!canBeDeletedBy(senderAccount.getId())) {
             // shouldn't happen as ownership has already been checked in validate, but as a safety check
             throw new IllegalStateException("Currency " + Long.toUnsignedString(currencyId) + " not entirely owned by " + Long.toUnsignedString(senderAccount.getId()));
         }
         listeners.notify(this, Event.BEFORE_DELETE);
         if (is(CurrencyType.RESERVABLE)) {
-            ChildChain chain = ChildChain.IGNIS; // TODO: crowdfunding must define a chain
             if (is(CurrencyType.CLAIMABLE) && isActive()) {
                 senderAccount.addToUnconfirmedCurrencyUnits(event, eventId, currencyId,
                         -senderAccount.getCurrencyUnits(currencyId));
-                Currency.claimReserve(chain, event, eventId, senderAccount, currencyId, senderAccount.getCurrencyUnits(currencyId));
+                Currency.claimReserve(childChain, event, eventId, senderAccount, currencyId, senderAccount.getCurrencyUnits(currencyId));
             }
             if (!isActive()) {
-                try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = chain.getCurrencyFounderHome().getCurrencyFounders(currencyId, 0, Integer.MAX_VALUE)) {
+                BalanceHome balanceHome = childChain.getBalanceHome();
+                try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currencyId, 0, Integer.MAX_VALUE)) {
                     for (CurrencyFounderHome.CurrencyFounder founder : founders) {
-                        Account.getAccount(founder.getAccountId())
-                                .addToBalanceAndUnconfirmedBalance(chain, event, eventId, Math.multiplyExact(reserveSupply,
-                                        founder.getAmountPerUnitNQT()));
+                        balanceHome.getBalance(founder.getAccountId()).addToBalanceAndUnconfirmedBalance(event, eventId,
+                                Math.multiplyExact(reserveSupply, founder.getAmountPerUnitNQT()));
                     }
                 }
             }
-            chain.getCurrencyFounderHome().remove(currencyId);
-        }
-        if (is(CurrencyType.EXCHANGEABLE)) {
-            for (ChildChain chain : ChildChain.getAll()) {
-                ExchangeOfferHome exchangeOfferHome = chain.getExchangeOfferHome();
-                List<ExchangeOfferHome.BuyOffer> buyOffers = new ArrayList<>();
-                try (DbIterator<ExchangeOfferHome.BuyOffer> offers = exchangeOfferHome.getBuyOffers(this, 0, -1)) {
-                    while (offers.hasNext()) {
-                        buyOffers.add(offers.next());
-                    }
-                }
-                buyOffers.forEach((offer) -> exchangeOfferHome.removeOffer(event, offer));
-            }
+            childChain.getCurrencyFounderHome().remove(currencyId);
         }
         if (is(CurrencyType.MINTABLE)) {
             CurrencyMint.deleteCurrency(this);
@@ -498,14 +519,16 @@ public final class Currency {
         senderAccount.addToUnconfirmedCurrencyUnits(event, eventId, currencyId,
                 -senderAccount.getUnconfirmedCurrencyUnits(currencyId));
         senderAccount.addToCurrencyUnits(event, eventId, currencyId, -senderAccount.getCurrencyUnits(currencyId));
-        currencyTable.delete(this);
+        this.isDeleted = true;
+        currencyTable.insert(this);
     }
 
     private static final class CrowdFundingListener implements Listener<Block> {
 
         @Override
         public void notify(Block block) {
-            try (DbIterator<Currency> issuedCurrencies = currencyTable.getManyBy(new DbClause.IntClause("issuance_height", block.getHeight()), 0, -1)) {
+            try (DbIterator<Currency> issuedCurrencies = currencyTable.getManyBy(new DbClause.IntClause("issuance_height", block.getHeight())
+                    .and(excludeDeleted), 0, -1)) {
                 for (Currency currency : issuedCurrencies) {
                     if (currency.getCurrentReservePerUnitNQT() < currency.getMinReservePerUnitNQT()) {
                         listeners.notify(currency, Event.BEFORE_UNDO_CROWDFUNDING);
@@ -519,46 +542,47 @@ public final class Currency {
         }
 
         private void undoCrowdFunding(Currency currency) {
-            ChildChain chain = ChildChain.IGNIS; //TODO
-            try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = chain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+            ChildChain childChain = currency.getChildChain();
+            BalanceHome balanceHome = childChain.getBalanceHome();
+            AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(currency.getId(), null, childChain);
+            try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounderHome.CurrencyFounder founder : founders) {
-                    Account.getAccount(founder.getAccountId())
-                            .addToBalanceAndUnconfirmedBalance(chain, LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
-                                    Math.multiplyExact(currency.getReserveSupply(),
-                                            founder.getAmountPerUnitNQT()));
+                    balanceHome.getBalance(founder.getAccountId()).addToBalanceAndUnconfirmedBalance(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, eventId,
+                            Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitNQT()));
                 }
             }
             Account.getAccount(currency.getAccountId())
-                    .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
-                            currency.getId(), - currency.getInitialSupply());
-            currencyTable.delete(currency);
-            chain.getCurrencyFounderHome().remove(currency.getId());
+                    .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, eventId, currency.getId(), - currency.getInitialSupply());
+            currency.isDeleted = true;
+            currencyTable.insert(currency);
+            childChain.getCurrencyFounderHome().remove(currency.getId());
         }
 
         private void distributeCurrency(Currency currency) {
-            ChildChain chain = ChildChain.IGNIS; //TODO
+            ChildChain childChain = currency.getChildChain();
             long totalAmountPerUnit = 0;
             final long remainingSupply = currency.getReserveSupply() - currency.getInitialSupply();
             List<CurrencyFounderHome.CurrencyFounder> currencyFounders = new ArrayList<>();
-            try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = chain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+            try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                     totalAmountPerUnit += founder.getAmountPerUnitNQT();
                     currencyFounders.add(founder);
                 }
             }
+            AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(currency.getId(), null, childChain);
             CurrencySupply currencySupply = currency.getSupplyData();
             for (CurrencyFounderHome.CurrencyFounder founder : currencyFounders) {
                 long units = Math.multiplyExact(remainingSupply, founder.getAmountPerUnitNQT()) / totalAmountPerUnit;
                 currencySupply.currentSupply += units;
                 Account.getAccount(founder.getAccountId())
-                        .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+                        .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, eventId,
                                 currency.getId(), units);
             }
             Account issuerAccount = Account.getAccount(currency.getAccountId());
-            issuerAccount.addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+            issuerAccount.addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, eventId,
                     currency.getId(), currency.getReserveSupply() - currency.getCurrentSupply());
             if (!currency.is(CurrencyType.CLAIMABLE)) {
-                issuerAccount.addToBalanceAndUnconfirmedBalance(chain, LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+                issuerAccount.addToBalanceAndUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_DISTRIBUTION, eventId,
                         Math.multiplyExact(totalAmountPerUnit, currency.getReserveSupply()));
             }
             currencySupply.currentSupply = currency.getReserveSupply();

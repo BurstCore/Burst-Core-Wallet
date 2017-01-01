@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -17,7 +17,7 @@
 package nxt.http.monetarysystem;
 
 import nxt.BlockchainTest;
-import nxt.Constants;
+import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
 import nxt.util.Logger;
 import org.json.simple.JSONArray;
@@ -39,7 +39,7 @@ public class DeleteCurrencyTest extends BlockchainTest {
 
         // Delete the currency
         apiCall = new APICall.Builder("deleteCurrency").
-                secretPhrase(ALICE.getSecretPhrase()).feeNQT(Constants.ONE_NXT).
+                secretPhrase(ALICE.getSecretPhrase()).feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 build();
         response = apiCall.invoke();
@@ -76,7 +76,7 @@ public class DeleteCurrencyTest extends BlockchainTest {
 
         // Delete the currency
         apiCall = new APICall.Builder("deleteCurrency").
-                secretPhrase(BOB.getSecretPhrase()).feeNQT(Constants.ONE_NXT).
+                secretPhrase(BOB.getSecretPhrase()).feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 build();
         response = apiCall.invoke();
@@ -102,7 +102,7 @@ public class DeleteCurrencyTest extends BlockchainTest {
 
         // Transfer all units
         apiCall = new APICall.Builder("transferCurrency").
-                secretPhrase(ALICE.getSecretPhrase()).feeNQT(Constants.ONE_NXT).
+                secretPhrase(ALICE.getSecretPhrase()).feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("recipient", Long.toUnsignedString(BOB.getId())).
                 param("currency", currencyId).
                 param("code", code).
@@ -114,7 +114,7 @@ public class DeleteCurrencyTest extends BlockchainTest {
 
         // Delete the currency
         apiCall = new APICall.Builder("deleteCurrency").
-                secretPhrase(BOB.getSecretPhrase()).feeNQT(Constants.ONE_NXT).
+                secretPhrase(BOB.getSecretPhrase()).feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 build();
         response = apiCall.invoke();

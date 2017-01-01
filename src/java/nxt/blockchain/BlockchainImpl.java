@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -354,13 +354,13 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public TransactionImpl getTransactionByFullHash(Chain chain, byte[] fullHash) {
-        return chain.getTransactionHome().findTransactionByFullHash(fullHash);
+    public TransactionImpl getTransaction(Chain chain, byte[] fullHash) {
+        return chain.getTransactionHome().findTransaction(fullHash);
     }
 
     @Override
-    public boolean hasTransactionByFullHash(Chain chain, byte[] fullHash) {
-        return chain.getTransactionHome().hasTransactionByFullHash(fullHash);
+    public boolean hasTransaction(Chain chain, byte[] fullHash) {
+        return chain.getTransactionHome().hasTransaction(fullHash);
     }
 
     @Override
@@ -392,6 +392,7 @@ public final class BlockchainImpl implements Blockchain {
             buf.append("SELECT transaction.* FROM transaction ");
             if (executedOnly && !nonPhasedOnly) {
                 buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
+                buf.append(" AND transaction.full_hash = phasing_poll_result.full_hash ");
             }
             buf.append("WHERE recipient_id = ? AND sender_id <> ? ");
             if (blockTimestamp > 0) {
@@ -421,6 +422,7 @@ public final class BlockchainImpl implements Blockchain {
             buf.append("UNION ALL SELECT transaction.* FROM transaction ");
             if (executedOnly && !nonPhasedOnly) {
                 buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
+                buf.append(" AND transaction.full_hash = phasing_poll_result.full_hash ");
             }
             buf.append("WHERE sender_id = ? ");
             if (blockTimestamp > 0) {
@@ -520,11 +522,90 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    public DbIterator<? extends FxtTransaction> getTransactions(FxtChain chain, long accountId,
+                int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, int from, int to) {
+        int height = numberOfConfirmations > 0 ? getHeight() - numberOfConfirmations : Integer.MAX_VALUE;
+        if (height < 0) {
+            throw new IllegalArgumentException("Number of confirmations required " + numberOfConfirmations
+                    + " exceeds current blockchain height " + getHeight());
+        }
+        Connection con = null;
+        try {
+            StringBuilder buf = new StringBuilder();
+            buf.append("SELECT * FROM transaction_fxt WHERE recipient_id = ? AND sender_id <> ? ");
+            if (blockTimestamp > 0) {
+                buf.append("AND block_timestamp >= ? ");
+            }
+            if (type < 0) {
+                buf.append("AND type = ? ");
+                if (subtype >= 0) {
+                    buf.append("AND subtype = ? ");
+                }
+            }
+            if (height < Integer.MAX_VALUE) {
+                buf.append("AND height <= ? ");
+            }
+            buf.append("UNION ALL SELECT * FROM transaction_fxt WHERE sender_id = ? ");
+            if (blockTimestamp > 0) {
+                buf.append("AND block_timestamp >= ? ");
+            }
+            if (type < 0) {
+                buf.append("AND type = ? ");
+                if (subtype >= 0) {
+                    buf.append("AND subtype = ? ");
+                }
+            }
+            if (height < Integer.MAX_VALUE) {
+                buf.append("AND height <= ? ");
+            }
+
+            buf.append("ORDER BY block_timestamp DESC, transaction_index DESC");
+            buf.append(DbUtils.limitsClause(from, to));
+            con = Db.db.getConnection(FxtChain.FXT.getDbSchema());
+            PreparedStatement pstmt;
+            int i = 0;
+            pstmt = con.prepareStatement(buf.toString());
+            pstmt.setLong(++i, accountId);
+            pstmt.setLong(++i, accountId);
+            if (blockTimestamp > 0) {
+                pstmt.setInt(++i, blockTimestamp);
+            }
+            if (type < 0) {
+                pstmt.setByte(++i, type);
+                if (subtype >= 0) {
+                    pstmt.setByte(++i, subtype);
+                }
+            }
+            if (height < Integer.MAX_VALUE) {
+                pstmt.setInt(++i, height);
+            }
+            pstmt.setLong(++i, accountId);
+            if (blockTimestamp > 0) {
+                pstmt.setInt(++i, blockTimestamp);
+            }
+            if (type < 0) {
+                pstmt.setByte(++i, type);
+                if (subtype >= 0) {
+                    pstmt.setByte(++i, subtype);
+                }
+            }
+            if (height < Integer.MAX_VALUE) {
+                pstmt.setInt(++i, height);
+            }
+            DbUtils.setLimits(++i, pstmt, from, to);
+            return getTransactions(chain, con, pstmt);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
     public DbIterator<FxtTransactionImpl> getTransactions(FxtChain chain, Connection con, PreparedStatement pstmt) {
         return new DbIterator<>(con, pstmt, new DbIterator.ResultSetReader<FxtTransactionImpl>() {
             @Override
             public FxtTransactionImpl get(Connection con, ResultSet rs) throws Exception {
-                return FxtTransactionImpl.loadTransaction(con, rs);
+                return (FxtTransactionImpl)TransactionImpl.loadTransaction(chain, rs);
             }
         });
     }
@@ -533,7 +614,7 @@ public final class BlockchainImpl implements Blockchain {
         return new DbIterator<>(con, pstmt, new DbIterator.ResultSetReader<ChildTransactionImpl>() {
             @Override
             public ChildTransactionImpl get(Connection con, ResultSet rs) throws Exception {
-                return ChildTransactionImpl.loadTransaction(childChain, con, rs);
+                return (ChildTransactionImpl)TransactionImpl.loadTransaction(childChain, rs);
             }
         });
     }

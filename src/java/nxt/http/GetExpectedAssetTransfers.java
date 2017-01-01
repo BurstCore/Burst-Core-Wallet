@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -20,6 +20,7 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.ae.AssetExchangeTransactionType;
 import nxt.ae.AssetTransferAttachment;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;
@@ -42,6 +43,7 @@ public final class GetExpectedAssetTransfers extends APIServlet.APIRequestHandle
 
         long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
         long accountId = ParameterParser.getAccountId(req, "account", false);
+        ChildChain childChain = ParameterParser.getChildChain(req, false);
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
 
         Filter<Transaction> filter = transaction -> {
@@ -49,6 +51,9 @@ public final class GetExpectedAssetTransfers extends APIServlet.APIRequestHandle
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId) {
+                return false;
+            }
+            if (childChain != null && transaction.getChain() != childChain) {
                 return false;
             }
             AssetTransferAttachment attachment = (AssetTransferAttachment)transaction.getAttachment();

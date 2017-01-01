@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -17,12 +17,9 @@
 package nxt.blockchain;
 
 import nxt.NxtException;
-import nxt.account.PublicKeyAnnouncementAppendix;
 import nxt.messaging.EncryptToSelfMessageAppendix;
 import nxt.messaging.EncryptedMessageAppendix;
 import nxt.messaging.MessageAppendix;
-import nxt.messaging.PrunableEncryptedMessageAppendix;
-import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.voting.PhasingAppendix;
 
 public interface ChildTransaction extends Transaction {
@@ -31,19 +28,7 @@ public interface ChildTransaction extends Transaction {
 
         Builder referencedTransaction(ChainTransactionId referencedTransaction);
 
-        Builder appendix(MessageAppendix message);
-
-        Builder appendix(EncryptedMessageAppendix encryptedMessage);
-
-        Builder appendix(EncryptToSelfMessageAppendix encryptToSelfMessage);
-
-        Builder appendix(PublicKeyAnnouncementAppendix publicKeyAnnouncement);
-
-        Builder appendix(PrunablePlainMessageAppendix prunablePlainMessage);
-
-        Builder appendix(PrunableEncryptedMessageAppendix prunableEncryptedMessage);
-
-        Builder appendix(PhasingAppendix phasing);
+        Builder feeRateNQTPerFXT(long feeRateNQTPerFXT);
 
         ChildTransaction build() throws NxtException.NotValidException;
 
@@ -64,9 +49,5 @@ public interface ChildTransaction extends Transaction {
     EncryptToSelfMessageAppendix getEncryptToSelfMessage();
 
     PhasingAppendix getPhasing();
-
-    PrunablePlainMessageAppendix getPrunablePlainMessage();
-
-    PrunableEncryptedMessageAppendix getPrunableEncryptedMessage();
 
 }

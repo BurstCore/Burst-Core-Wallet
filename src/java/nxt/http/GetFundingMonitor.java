@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -19,6 +19,7 @@ package nxt.http;
 import nxt.account.Account;
 import nxt.account.FundingMonitor;
 import nxt.account.HoldingType;
+import nxt.blockchain.Chain;
 import nxt.crypto.Crypto;
 import nxt.util.Filter;
 import org.json.simple.JSONArray;
@@ -61,6 +62,7 @@ public class GetFundingMonitor extends APIServlet.APIRequestHandler {
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
+        Chain chain = ParameterParser.getChain(req, false);
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         long account = ParameterParser.getAccountId(req, false);
         boolean includeMonitoredAccounts = "true".equalsIgnoreCase(req.getParameter("includeMonitoredAccounts"));
@@ -91,7 +93,13 @@ public class GetFundingMonitor extends APIServlet.APIRequestHandler {
             } else {
                 filter = (monitor) -> monitor.getAccountId() == accountId;
             }
-            monitors = FundingMonitor.getMonitors(filter);
+            if (chain == null) {
+                monitors = FundingMonitor.getMonitors(filter);
+            } else {
+                monitors = FundingMonitor.getMonitors(monitor -> monitor.getChain() == chain && filter.ok(monitor));
+            }
+        } else if (chain != null) {
+            monitors = FundingMonitor.getMonitors(monitor -> monitor.getChain() == chain);
         } else {
             monitors = FundingMonitor.getAllMonitors();
         }

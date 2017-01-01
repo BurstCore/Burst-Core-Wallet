@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -154,20 +154,12 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
             }
             childTransaction.save(con, childChainSchemaTable);
         }
-        childTransactions = null;
     }
 
     @Override
     public long[] getBackFees() {
-        ChildBlockAttachment attachment = (ChildBlockAttachment)getAttachment();
-        long[] myBackFees = attachment.getFee(this, Nxt.getBlockchain().getHeight()).getBackFees(getFee());
-        long[] childBackFees = attachment.getBackFees();
-        long[] backFees = new long[Math.min(myBackFees.length, childBackFees.length)];
-        for (int i = 0; i < backFees.length; i++) {
-            backFees[i] = myBackFees[i];
-            backFees[i] += childBackFees[i];
-        }
-        return backFees;
+        long backFee = getFee() / 4;
+        return new long[] {backFee, backFee, backFee};
     }
 
     @Override

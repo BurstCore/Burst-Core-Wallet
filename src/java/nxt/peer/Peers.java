@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -18,6 +18,9 @@ package nxt.peer;
 
 import nxt.Constants;
 import nxt.Nxt;
+import nxt.account.Account;
+import nxt.blockchain.Bundler;
+import nxt.blockchain.ChildChain;
 import nxt.dbschema.Db;
 import nxt.http.API;
 import nxt.util.Filter;
@@ -34,8 +37,10 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -59,7 +64,7 @@ public final class Peers {
         CHANGE_SERVICES,                // Peer changed services
         REMOVE_PEER,                    // Removed peer from peer list
         ADD_ACTIVE_PEER,                // Peer is now active
-        CHANGE_ACTIVE_PEER,             // Active peer state changed
+        CHANGE_ACTIVE_PEER              // Active peer state changed
     }
 
     /** Maximum application version length */
@@ -74,10 +79,14 @@ public final class Peers {
     /** Maximum announced address length */
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 100;
 
+    /** Bundler rate broadcast interval */
+    static final int BUNDLER_RATE_BROADCAST_INTERVAL = 60 * 60;
+
     /** Peer blacklist period (seconds) */
     static final int blacklistingPeriod = Nxt.getIntProperty("nxt.blacklistingPeriod", 600);
 
-    private static volatile Peer.BlockchainState currentBlockchainState;
+    /** Communication logging (0=no logging, 1=log message names) */
+    static int communicationLogging = Nxt.getIntProperty("nxt.communicationLogging", 0);
 
     /** Get more peers */
     private static final boolean getMorePeers = Nxt.getBooleanProperty("nxt.getMorePeers");
@@ -101,6 +110,9 @@ public final class Peers {
 
     /** Ignore peer announced address */
     static final boolean ignorePeerAnnouncedAddress = Nxt.getBooleanProperty("nxt.ignorePeerAnnouncedAddress");
+
+    /** Minimum bundler effective balance */
+    static final int minBundlerBalanceFXT = Nxt.getIntProperty("nxt.minBundlerBalanceFXT");
 
     /** Local peer services */
     static final List<Peer.Service> myServices;
@@ -155,6 +167,18 @@ public final class Peers {
     /** Start time */
     private static final int startTime = Nxt.getEpochTime();
 
+    /** Broadcast blockchain state */
+    private static Peer.BlockchainState broadcastBlockchainState = Peer.BlockchainState.UP_TO_DATE;
+
+    /** Bundler rates broadcast time */
+    private static int ratesTime = startTime ;
+
+    /** Bundler status has changed */
+    private static volatile boolean bundlersChanged = false;
+
+    /** Broadcast bundler rates */
+    private static final Map<Long, List<BundlerRate>> bundlerRates = new HashMap<>();
+
     /**
      * Initialize peer processing
      */
@@ -166,48 +190,45 @@ public final class Peers {
         final List<String> defaultPeers = Constants.isTestnet ?
                 Nxt.getStringListProperty("nxt.defaultTestnetPeers") : Nxt.getStringListProperty("nxt.defaultPeers");
         final List<Future<String>> unresolvedPeers = Collections.synchronizedList(new ArrayList<>());
-        if (!Constants.isOffline) {
-            //
-            // Build the peer list
-            //
-            ThreadPool.runBeforeStart(new Runnable() {
-                private final Set<PeerDb.Entry> entries = new HashSet<>();
+        //
+        // Build the peer list
+        //
+        ThreadPool.runBeforeStart(new Runnable() {
+            private final Set<PeerDb.Entry> entries = new HashSet<>();
 
-                @Override
-                public void run() {
-                    final int now = Nxt.getEpochTime();
-                    wellKnownPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, now)));
-                    if (usePeersDb) {
-                        Logger.logDebugMessage("Loading known peers from the database...");
-                        defaultPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, now)));
-                        if (savePeers) {
-                            List<PeerDb.Entry> dbPeers = PeerDb.loadPeers();
-                            dbPeers.forEach(entry -> {
-                                if (!entries.add(entry)) {
-                                    // Database entries override entries from nxt.properties
-                                    entries.remove(entry);
-                                    entries.add(entry);
-                                }
-                            });
-                        }
-                    }
-                    entries.forEach(entry -> {
-                        Future<String> unresolvedAddress = peersService.submit(() -> {
-                            PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(entry.getAddress(), true);
-                            if (peer != null) {
-                                peer.setShareAddress(true);
-                                peer.setLastUpdated(entry.getLastUpdated());
-                                peer.setServices(entry.getServices());
-                                Peers.addPeer(peer);
-                                return null;
+            @Override
+            public void run() {
+                wellKnownPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, startTime - 1)));
+                if (usePeersDb) {
+                    Logger.logDebugMessage("Loading known peers from the database...");
+                    defaultPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, startTime - 1)));
+                    if (savePeers) {
+                        List<PeerDb.Entry> dbPeers = PeerDb.loadPeers();
+                        dbPeers.forEach(entry -> {
+                            if (!entries.add(entry)) {
+                                // Database entries override entries from nxt.properties
+                                entries.remove(entry);
+                                entries.add(entry);
                             }
-                            return entry.getAddress();
                         });
-                        unresolvedPeers.add(unresolvedAddress);
-                    });
+                    }
                 }
-            }, false);
-        }
+                entries.forEach(entry -> {
+                    Future<String> unresolvedAddress = peersService.submit(() -> {
+                        PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(entry.getAddress(), true);
+                        if (peer != null) {
+                            peer.setShareAddress(true);
+                            peer.setLastUpdated(entry.getLastUpdated());
+                            peer.setServices(entry.getServices());
+                            Peers.addPeer(peer);
+                            return null;
+                        }
+                        return entry.getAddress();
+                    });
+                    unresolvedPeers.add(unresolvedAddress);
+                });
+            }
+        }, false);
         //
         // Check the results
         //
@@ -627,6 +648,33 @@ public final class Peers {
                 }
                 Logger.logDebugMessage("Reduced peer pool size from " + initialSize + " to " + peers.size());
             }
+            //
+            // Notify connected peers if our blockchain state has changed
+            //
+            Peer.BlockchainState currentState = getMyBlockchainState();
+            if (currentState != broadcastBlockchainState) {
+                Logger.logDebugMessage("Broadcasting blockchain state change from "
+                        + broadcastBlockchainState.name() + " to " + currentState.name());
+                NetworkMessage blockchainStateMessage = new NetworkMessage.BlockchainStateMessage(currentState);
+                NetworkHandler.broadcastMessage(blockchainStateMessage);
+                broadcastBlockchainState = currentState;
+            }
+            //
+            // Notify connected peers if we have active bundlers
+            //
+            if (now - ratesTime >= BUNDLER_RATE_BROADCAST_INTERVAL || bundlersChanged) {
+                updateMyBundlerRates();
+                synchronized(bundlerRates) {
+                    if (!bundlerRates.isEmpty()) {
+                        Logger.logDebugMessage("Broadcasting our bundler rates");
+                        List<BundlerRate> rates = new ArrayList<>();
+                        bundlerRates.values().forEach(rateList -> rateList.forEach(rate -> rates.add(rate)));
+                        NetworkHandler.broadcastMessage(new NetworkMessage.BundlerRateMessage(rates));
+                    }
+                }
+                ratesTime = now;
+                bundlersChanged = false;
+            }
         } catch (Throwable t) {
             Logger.logErrorMessage("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS", t);
             System.exit(1);
@@ -751,6 +799,13 @@ public final class Peers {
         }), Peers.Event.CHANGE_SERVICES);
     }
 
+    /**
+     * Check for an old NRS version
+     *
+     * @param   version         Peer version
+     * @param   minVersion      Minimum acceptable version
+     * @return                  TRUE if this is an old version
+     */
     static boolean isOldVersion(String version, int[] minVersion) {
         if (version == null) {
             return true;
@@ -787,6 +842,12 @@ public final class Peers {
         }
     }
 
+    /**
+     * Check for a new version
+     *
+     * @param   version         Peer version
+     * @return                  TRUE if this is a newer version
+     */
     static boolean isNewVersion(String version) {
         if (version == null) {
             return true;
@@ -810,11 +871,211 @@ public final class Peers {
         return versions.length > MAX_VERSION.length;
     }
 
+    /**
+     * Get the current blockchain state
+     *
+     * @return                  The blockchain state
+     */
     public static Peer.BlockchainState getMyBlockchainState() {
         return Constants.isLightClient ? Peer.BlockchainState.LIGHT_CLIENT :
-                (Nxt.getBlockchainProcessor().isDownloading() || Nxt.getBlockchain().getLastBlockTimestamp() < Nxt.getEpochTime() - 600) ? Peer.BlockchainState.DOWNLOADING :
-                        (Nxt.getBlockchain().getLastBlock().getBaseTarget() / Constants.INITIAL_BASE_TARGET > 10 && !Constants.isTestnet) ? Peer.BlockchainState.FORK :
-                                Peer.BlockchainState.UP_TO_DATE;
+                (Nxt.getBlockchainProcessor().isDownloading() ||
+                        Nxt.getBlockchain().getLastBlockTimestamp() < Nxt.getEpochTime() - 600) ?
+                    Peer.BlockchainState.DOWNLOADING :
+                        (Nxt.getBlockchain().getLastBlock().getBaseTarget() / Constants.INITIAL_BASE_TARGET > 10 &&
+                                !Constants.isTestnet) ? Peer.BlockchainState.FORK :
+                        Peer.BlockchainState.UP_TO_DATE;
+    }
+
+    /**
+     * Update the bundler rates received from a broadcast message
+     *
+     * @param   sender          Peer sending the message
+     * @param   msg             The bundler rate message
+     * @param   rates           The bundler rates
+     */
+    static void updateBundlerRates(Peer sender, NetworkMessage.BundlerRateMessage msg, List<BundlerRate> rates) {
+        if (!rates.isEmpty()) {
+            if (updateAccountRates(rates)) {
+                Logger.logDebugMessage("Relaying bundler rates from " + sender.getHost());
+                NetworkHandler.broadcastMessage(sender, msg);
+            }
+        }
+    }
+
+    /**
+     * Update our bundler rates
+     */
+    private static void updateMyBundlerRates() {
+        int now = Nxt.getEpochTime();
+        //
+        // Remove expired bundler rates
+        //
+        synchronized(bundlerRates) {
+            Iterator<Map.Entry<Long, List<BundlerRate>>> it = bundlerRates.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<Long, List<BundlerRate>> entry = it.next();
+                List<BundlerRate> rates = entry.getValue();
+                Iterator<BundlerRate> rit = rates.iterator();
+                while (rit.hasNext()) {
+                    BundlerRate rate = rit.next();
+                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + 5 * 60)) {
+                        rit.remove();
+                    }
+                }
+                if (rates.isEmpty()) {
+                    it.remove();
+                }
+            }
+        }
+        //
+        // Update our bundler rates
+        //
+        List<BundlerRate> rates = Bundler.getBundlerRates();
+        if (!rates.isEmpty()) {
+            rates.sort(Comparator.comparingLong(BundlerRate::getAccountId));
+            long accountId = 0;
+            long balance = 0;
+            for (BundlerRate rate : rates) {
+                if (rate.getAccountId() != accountId) {
+                    Account account = Account.getAccount(rate.getAccountId());
+                    if (account == null) {
+                        Logger.logDebugMessage("Local bundler account "
+                                + Long.toUnsignedString(rate.getAccountId()) + " does not exist");
+                        continue;
+                    }
+                    balance = account.getEffectiveBalanceFXT();
+                    accountId = rate.getAccountId();
+                }
+                rate.setBalance(balance);
+            }
+            updateAccountRates(rates);
+        }
+    }
+
+    /**
+     * Keep the latest bundler rates for each account
+     *
+     * @param   rates               Bundler rate list
+     * @return                      TRUE if the account rates were updated
+     */
+    private static boolean updateAccountRates(List<BundlerRate> rates) {
+        boolean updated = false;
+        synchronized(bundlerRates) {
+            for (BundlerRate rate : rates) {
+                if (rate.getRate() < 0) {
+                    continue;
+                }
+                long accountId = rate.getAccountId();
+                List<BundlerRate> listRates = bundlerRates.get(accountId);
+                BundlerRate prevRate = null;
+                if (listRates != null) {
+                    for (BundlerRate listRate : listRates) {
+                        if (listRate.getChain() == rate.getChain()) {
+                            prevRate = listRate;
+                            break;
+                        }
+                    }
+                }
+                if (listRates == null) {
+                    listRates = new ArrayList<>();
+                    bundlerRates.put(accountId, listRates);
+                }
+                if (prevRate == null || prevRate.getTimestamp() < rate.getTimestamp()) {
+                    if (prevRate != null) {
+                        listRates.remove(prevRate);
+                    }
+                    listRates.add(rate);
+                    updated = true;
+                }
+            }
+        }
+        return updated;
+    }
+
+    /**
+     * Get the best bundler rates
+     *
+     * @param   minBalance      Minimum bundler account balance
+     * @return                  List of bundler rates
+     */
+    public static List<BundlerRate> getBestBundlerRates(long minBalance) {
+        int now = Nxt.getEpochTime();
+        Map<ChildChain, Long> rateMap = new HashMap<>();
+        synchronized(bundlerRates) {
+            Iterator<Map.Entry<Long, List<BundlerRate>>> it = bundlerRates.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<Long, List<BundlerRate>> entry = it.next();
+                List<BundlerRate> rates = entry.getValue();
+                Iterator<BundlerRate> rit = rates.iterator();
+                while (rit.hasNext()) {
+                    BundlerRate rate = rit.next();
+                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + 5 * 60)) {
+                        rit.remove();
+                        continue;
+                    }
+                    Long prevRate = rateMap.get(rate.getChain());
+                    if (rate.getBalance() >= minBalance &&
+                            (prevRate == null || rate.getRate() < prevRate)) {
+                        rateMap.put(rate.getChain(), rate.getRate());
+                    }
+                }
+                if (rates.isEmpty()) {
+                    it.remove();
+                }
+            }
+        }
+        List<BundlerRate> bestRates = new ArrayList<>();
+        rateMap.entrySet().forEach(entry ->
+                bestRates.add(new BundlerRate(entry.getKey(), entry.getValue())));
+        return bestRates;
+    }
+
+    /**
+     * Broadcast our current bundler rates
+     */
+    public static void broadcastBundlerRates() {
+        bundlersChanged = true;
+    }
+
+    /**
+     * Send our bundler rates to a new peer
+     *
+     * @param   peer                Peer
+     */
+    public static void sendBundlerRates(Peer peer) {
+        List<BundlerRate> rates = new ArrayList<>();
+        int now = Nxt.getEpochTime();
+        synchronized(bundlerRates) {
+            Iterator<Map.Entry<Long, List<BundlerRate>>> it = bundlerRates.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<Long, List<BundlerRate>> entryMap = it.next();
+                List<BundlerRate> entryRates = entryMap.getValue();
+                Iterator<BundlerRate> rit = entryRates.iterator();
+                while (rit.hasNext()) {
+                    BundlerRate rate = rit.next();
+                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + (5 * 60))) {
+                        rit.remove();
+                        continue;
+                    }
+                    rates.add(rate);
+                }
+                if (entryRates.isEmpty()) {
+                    it.remove();
+                }
+            }
+        }
+        if (!rates.isEmpty()) {
+            peer.sendMessage(new NetworkMessage.BundlerRateMessage(rates));
+        }
+    }
+
+    /**
+     * Set communication logging
+     *
+     * @param   logging             Communication logging value
+     */
+    public static void setCommunicationLogging(int logging) {
+        communicationLogging = logging;
     }
 
     private Peers() {} // never

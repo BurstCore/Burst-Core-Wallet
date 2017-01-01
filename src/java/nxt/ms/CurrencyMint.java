@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -18,11 +18,13 @@ package nxt.ms;
 
 import nxt.Nxt;
 import nxt.account.Account;
+import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEvent;
 import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;
 import nxt.db.VersionedEntityDbTable;
+import nxt.util.JSON;
 import nxt.util.Listener;
 import nxt.util.Listeners;
 import nxt.util.Logger;
@@ -136,7 +138,7 @@ public final class CurrencyMint {
         return counter;
     }
 
-    static void mintCurrency(LedgerEvent event, long eventId, final Account account,
+    static void mintCurrency(LedgerEvent event, AccountLedger.LedgerEventId eventId, final Account account,
                              final CurrencyMintingAttachment attachment) {
         CurrencyMint currencyMint = currencyMintTable.get(currencyMintDbKeyFactory.newKey(attachment.getCurrencyId(), account.getId()));
         if (currencyMint != null && attachment.getCounter() <= currencyMint.getCounter()) {
@@ -155,7 +157,7 @@ public final class CurrencyMint {
             currency.increaseSupply(units);
             listeners.notify(new Mint(account.getId(), currency.getId(), units), Event.CURRENCY_MINT);
         } else {
-            Logger.logDebugMessage("Currency mint hash no longer meets target %s", attachment.getJSONObject().toJSONString());
+            Logger.logDebugMessage("Currency mint hash no longer meets target %s", JSON.toJSONString(attachment.getJSONObject()));
         }
     }
 

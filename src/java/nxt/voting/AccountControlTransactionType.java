@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -22,10 +22,12 @@ import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.account.AccountRestrictions;
 import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;
+import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -74,12 +76,12 @@ public abstract class AccountControlTransactionType extends ChildTransactionType
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) {
+        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws NxtException.NotValidException {
             return new SetPhasingOnlyAttachment(buffer);
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
+        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
             return new SetPhasingOnlyAttachment(attachmentData);
         }
 
@@ -96,10 +98,17 @@ public abstract class AccountControlTransactionType extends ChildTransactionType
             } else if (votingModel == VoteWeighting.VotingModel.TRANSACTION || votingModel == VoteWeighting.VotingModel.HASH) {
                 throw new NxtException.NotValidException("Invalid voting model " + votingModel + " for account control");
             }
-            long maxFees = attachment.getMaxFees();
-            long maxFeesLimit = (attachment.getPhasingParams().getVoteWeighting().isBalanceIndependent() ? 3 : 22) * Constants.ONE_NXT;
-            if (maxFees < 0 || (maxFees > 0 && maxFees < maxFeesLimit) || maxFees > Constants.MAX_BALANCE_NQT) {
-                throw new NxtException.NotValidException(String.format("Invalid max fees %f NXT", ((double)maxFees)/Constants.ONE_NXT));
+            Map<Integer, Long> chainMaxFees = attachment.getMaxFees();
+            for (Map.Entry<Integer, Long> entry : chainMaxFees.entrySet()) {
+                ChildChain childChain = ChildChain.getChildChain(entry.getKey());
+                if (childChain == null) {
+                    throw new NxtException.NotValidException("Invalid child chain id " + entry.getKey());
+                }
+                long fees = Convert.nullToZero(entry.getValue());
+                if (fees <= 0 || fees > Constants.MAX_BALANCE_NQT) {
+                    throw new NxtException.NotValidException(String.format("Invalid max fees %f for chain %s", ((double) fees) / childChain.ONE_COIN,
+                            childChain.getName()));
+                }
             }
             short minDuration = attachment.getMinDuration();
             if (minDuration < 0 || (minDuration > 0 && minDuration < 3) || minDuration >= Constants.MAX_PHASING_DURATION) {

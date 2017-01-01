@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -22,6 +22,7 @@ import nxt.NxtException.ValidationException;
 import nxt.ae.Asset;
 import nxt.ms.Currency;
 import nxt.util.Convert;
+import nxt.util.JSON;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -120,10 +121,6 @@ public final class PhasingParams {
 
         long previousAccountId = 0;
         for (long accountId : whitelist) {
-            //TODO: allow accountId == 0 in whitelist, as a way to permanently lock an account instead of using Genesis.CREATOR_ID
-            if (accountId == 0) {
-                throw new NxtException.NotValidException("Invalid accountId 0 in whitelist");
-            }
             if (previousAccountId != 0 && accountId < previousAccountId) {
                 throw new NxtException.NotValidException("Whitelist not sorted " + Arrays.toString(whitelist));
             }
@@ -246,6 +243,6 @@ public final class PhasingParams {
     public String toString() {
         JSONObject resultJson = new JSONObject();
         putMyJSON(resultJson);
-        return resultJson.toJSONString();
+        return JSON.toJSONString(resultJson);
     }
 }

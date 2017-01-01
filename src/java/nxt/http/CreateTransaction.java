@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -25,6 +25,7 @@ import nxt.blockchain.Attachment;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.FxtTransactionType;
 import nxt.blockchain.Transaction;
@@ -57,7 +58,7 @@ import static nxt.http.JSONResponses.UNKNOWN_CHAIN;
 
 abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
-    private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeNQT",
+    private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeNQT", "feeRateNQTPerFXT",
             "deadline", "referencedTransaction", "broadcast",
             "message", "messageIsText", "messageIsPrunable",
             "messageToEncrypt", "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "encryptedMessageIsPrunable", "compressMessageToEncrypt",
@@ -223,6 +224,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         if (ecBlockId == 0 && ecBlockHeight > 0) {
             ecBlockId = Nxt.getBlockchain().getBlockIdAtHeight(ecBlockHeight);
         }
+        long feeRateNQTPerFXT = ParameterParser.getLong(req, "feeRateNQTPerFXT", 0, Constants.MAX_BALANCE_NQT, false);
 
         JSONObject response = new JSONObject();
 
@@ -239,30 +241,51 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         }
 
         try {
-            Transaction.Builder builder;
+            Transaction.Builder builder = chain.newTransactionBuilder(publicKey, amountNQT, feeNQT, deadline, attachment);
             if (chain instanceof ChildChain) {
                 if (!(attachment.getTransactionType() instanceof ChildTransactionType)) {
                     throw new ParameterException(JSONResponses.incorrect("chain",
                             attachment.getTransactionType().getName() + " attachment not allowed for "
                                     + chain.getName() + " chain"));
                 }
-                builder = Nxt.newTransactionBuilder((ChildChain)chain, publicKey, amountNQT, feeNQT, deadline, attachment)
+                builder = ((ChildTransaction.Builder)builder)
                         .referencedTransaction(referencedTransactionId)
+                        .feeRateNQTPerFXT(feeRateNQTPerFXT)
                         .appendix(encryptedMessage)
                         .appendix(message)
                         .appendix(publicKeyAnnouncement)
                         .appendix(encryptToSelfMessage)
-                        .appendix(phasing)
-                        .appendix(prunablePlainMessage)
-                        .appendix(prunableEncryptedMessage);
+                        .appendix(phasing);
             } else {
                 if (!(attachment.getTransactionType() instanceof FxtTransactionType)) {
                     throw new ParameterException(JSONResponses.incorrect("chain",
                             attachment.getTransactionType().getName() + " attachment not allowed for "
                                     + chain.getName() + " chain"));
                 }
-                builder = Nxt.newTransactionBuilder(publicKey, amountNQT, feeNQT, deadline, attachment);
+                if (referencedTransactionId != null) {
+                    return JSONResponses.error("Referenced transactions not allowed for Ardor transactions");
+                }
+                if (feeRateNQTPerFXT != 0) {
+                    return JSONResponses.error("feeRateNQTPerFXT parameter not supported for Ardor transactions");
+                }
+                if (encryptedMessage != null) {
+                    return JSONResponses.error("Permanent encrypted message attachments not allowed for Ardor transactions");
+                }
+                if (message != null) {
+                    return JSONResponses.error("Permanent message attachments not allowed for Ardor transactions");
+                }
+                if (publicKeyAnnouncement != null) {
+                    return JSONResponses.error("Public key announcement attachments not allowed for Ardor transactions");
+                }
+                if (encryptToSelfMessage != null) {
+                    return JSONResponses.error("Encrypted to self message attachments not allowed for Ardor transactions");
+                }
+                if (phasing != null) {
+                    return JSONResponses.error("Phasing attachments not allowed for Ardor transactions");
+                }
             }
+            builder.appendix(prunablePlainMessage)
+                    .appendix(prunableEncryptedMessage);
             if (attachment.getTransactionType().canHaveRecipient()) {
                 builder.recipientId(recipientId);
             }

@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -57,6 +57,11 @@ public final class GetPhasingOnlyControl extends APIServlet.APIRequestHandler {
         long accountId = ParameterParser.getAccountId(req, true);
         PhasingOnly phasingOnly = PhasingOnly.get(accountId);
         return phasingOnly == null ? JSON.emptyJSON : JSONData.phasingOnly(phasingOnly);
+    }
+
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
     }
 
 }

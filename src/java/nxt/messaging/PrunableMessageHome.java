@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -18,7 +18,7 @@ package nxt.messaging;
 
 import nxt.Nxt;
 import nxt.account.Account;
-import nxt.blockchain.ChildChain;
+import nxt.blockchain.Chain;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
 import nxt.crypto.Crypto;
@@ -36,26 +36,26 @@ import java.sql.SQLException;
 
 public final class PrunableMessageHome {
 
-    public static PrunableMessageHome forChain(ChildChain childChain) {
-        if (childChain.getPrunableMessageHome() != null) {
+    public static PrunableMessageHome forChain(Chain chain) {
+        if (chain.getPrunableMessageHome() != null) {
             throw new IllegalStateException("already set");
         }
-        return new PrunableMessageHome(childChain);
+        return new PrunableMessageHome(chain);
     }
 
     private final DbKey.HashKeyFactory<PrunableMessage> prunableMessageKeyFactory;
     private final PrunableDbTable<PrunableMessage> prunableMessageTable;
-    private final ChildChain childChain;
+    private final Chain chain;
 
-    private PrunableMessageHome(ChildChain childChain) {
-        this.childChain = childChain;
+    private PrunableMessageHome(Chain chain) {
+        this.chain = chain;
         this.prunableMessageKeyFactory = new DbKey.HashKeyFactory<PrunableMessage>("full_hash", "id") {
             @Override
             public DbKey newKey(PrunableMessage prunableMessage) {
                 return prunableMessage.dbKey;
             }
         };
-        this.prunableMessageTable = new PrunableDbTable<PrunableMessage>(childChain.getSchemaTable("prunable_message"), prunableMessageKeyFactory) {
+        this.prunableMessageTable = new PrunableDbTable<PrunableMessage>(chain.getSchemaTable("prunable_message"), prunableMessageKeyFactory) {
             @Override
             protected PrunableMessage load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new PrunableMessage(rs, dbKey);
@@ -129,7 +129,7 @@ public final class PrunableMessageHome {
 
     void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix, int blockTimestamp, int height) {
         if (appendix.getMessage() != null) {
-            PrunableMessage prunableMessage = prunableMessageTable.get(prunableMessageKeyFactory.newKey(transaction.getFullHash()));
+            PrunableMessage prunableMessage = prunableMessageTable.get(prunableMessageKeyFactory.newKey(transaction.getFullHash(), transaction.getId()));
             if (prunableMessage == null) {
                 prunableMessage = new PrunableMessage(transaction, blockTimestamp, height);
             } else if (prunableMessage.height != height) {
@@ -148,7 +148,7 @@ public final class PrunableMessageHome {
 
     public void add(TransactionImpl transaction, PrunableEncryptedMessageAppendix appendix, int blockTimestamp, int height) {
         if (appendix.getEncryptedData() != null) {
-            PrunableMessage prunableMessage = prunableMessageTable.get(prunableMessageKeyFactory.newKey(transaction.getFullHash()));
+            PrunableMessage prunableMessage = prunableMessageTable.get(prunableMessageKeyFactory.newKey(transaction.getFullHash(), transaction.getId()));
             if (prunableMessage == null) {
                 prunableMessage = new PrunableMessage(transaction, blockTimestamp, height);
             } else if (prunableMessage.height != height) {
@@ -309,6 +309,10 @@ public final class PrunableMessageHome {
 
         public int getHeight() {
             return height;
+        }
+
+        public Chain getChain() {
+            return chain;
         }
 
         public byte[] decrypt(String secretPhrase) {

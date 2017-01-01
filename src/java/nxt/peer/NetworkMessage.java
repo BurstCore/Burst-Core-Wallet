@@ -1,18 +1,18 @@
 /*
- * Copyright 2013-2016 The Nxt Core Developers.
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at
- * the top-level directory of this distribution for the individual copyright
- * holder information and the developer policies on copyright and licensing.
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement, no part of the
- * Nxt software, including this file, may be copied, modified, propagated,
- * or distributed except according to the terms contained in the LICENSE.txt
- * file.
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
+ *
  */
-
 package nxt.peer;
 
 import nxt.Nxt;
@@ -26,10 +26,7 @@ import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.Transaction;
 import nxt.util.Convert;
-import nxt.util.JSON;
 import nxt.util.Logger;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import java.math.BigInteger;
 import java.nio.BufferOverflowException;
@@ -39,6 +36,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -90,7 +88,9 @@ public abstract class NetworkMessage {
         processors.put("AddPeers", new AddPeersMessage());
         processors.put("BlockIds", new BlockIdsMessage());
         processors.put("BlockInventory", new BlockInventoryMessage());
+        processors.put("BlockchainState", new BlockchainStateMessage());
         processors.put("Blocks", new BlocksMessage());
+        processors.put("BundlerRate", new BundlerRateMessage());
         processors.put("CumulativeDifficulty", new CumulativeDifficultyMessage());
         processors.put("Error", new ErrorMessage());
         processors.put("GetBlocks", new GetBlockMessage());
@@ -262,6 +262,15 @@ public abstract class NetworkMessage {
     }
 
     /**
+     * Check if light client should receive this message
+     *
+     * @return                              TRUE if light client should receive message
+     */
+    boolean sendToLightClient() {
+        return false;
+    }
+
+    /**
      * Get the length of an encoded array
      *
      * @return                              Encoded array length
@@ -342,7 +351,8 @@ public abstract class NetworkMessage {
      * <li>SSL port (short)
      * <li>Available services (long)
      * <li>Disabled APIs (string)
-     * <li>APIServer idle timeout (int)
+     * <li>APIServer idle timeout (integer)
+     * <li>Blockchain state (integer)
      * </ul>
      */
     public static class GetInfoMessage extends NetworkMessage {
@@ -378,8 +388,7 @@ public abstract class NetworkMessage {
         private final int apiServerIdleTimeout;
 
         /** Blockchain state */
-        //TODO: use a separate NetworkMessage to carry blockchainState
-        //private final int blockchainState;
+        private Peer.BlockchainState blockchainState;
 
         /**
          * Construct the message from the message bytes
@@ -422,6 +431,7 @@ public abstract class NetworkMessage {
             this.services = 0;
             this.disabledAPIsBytes = null;
             this.apiServerIdleTimeout = 0;
+            this.blockchainState = Peer.BlockchainState.UP_TO_DATE;
         }
 
         /**
@@ -435,6 +445,8 @@ public abstract class NetworkMessage {
          * @param   apiPort             API port
          * @param   sslPort             API SSL port
          * @param   services            Available application services
+         * @param   disabledAPIs        Disabled API names
+         * @param   apiServerIdleTimeout API server idle timeout
          */
         public GetInfoMessage(String appName, String appVersion, String appPlatform,
                               boolean shareAddress, String announcedAddress,
@@ -451,6 +463,7 @@ public abstract class NetworkMessage {
             this.services = services;
             this.disabledAPIsBytes = (disabledAPIs != null ? disabledAPIs.getBytes(UTF8) : Convert.EMPTY_BYTE);
             this.apiServerIdleTimeout = apiServerIdleTimeout;
+            this.blockchainState = Peer.BlockchainState.UP_TO_DATE;
         }
 
         /**
@@ -472,6 +485,11 @@ public abstract class NetworkMessage {
             this.services = bytes.getLong();
             this.disabledAPIsBytes = decodeArray(bytes);
             this.apiServerIdleTimeout = bytes.getInt();
+            int state = bytes.getInt();
+            if (state < 0 || state >= Peer.BlockchainState.values().length) {
+                throw new NetworkException("Blockchain state '" + state + "' is not valid");
+            }
+            this.blockchainState = Peer.BlockchainState.values()[state];
         }
 
         /**
@@ -489,6 +507,7 @@ public abstract class NetworkMessage {
                     + getEncodedArrayLength(announcedAddressBytes)
                     + 2 + 2 + 8
                     + getEncodedArrayLength(disabledAPIsBytes)
+                    + 4
                     + 4;
         }
 
@@ -499,7 +518,7 @@ public abstract class NetworkMessage {
          * @throws  BufferOverflowException Message buffer is too small
          */
         @Override
-        void getBytes(ByteBuffer bytes) throws BufferOverflowException {
+        synchronized void getBytes(ByteBuffer bytes) throws BufferOverflowException {
             super.getBytes(bytes);
             encodeArray(bytes, appNameBytes);
             encodeArray(bytes, appVersionBytes);
@@ -509,6 +528,7 @@ public abstract class NetworkMessage {
             bytes.putShort((short)apiPort).putShort((short)sslPort).putLong(services);
             encodeArray(bytes, disabledAPIsBytes);
             bytes.putInt(apiServerIdleTimeout);
+            bytes.putInt(blockchainState.ordinal());
         }
 
         /**
@@ -599,6 +619,263 @@ public abstract class NetworkMessage {
          */
         public int getApiServerIdleTimeout() {
             return apiServerIdleTimeout;
+        }
+
+        /**
+         * Get the blockchain state
+         *
+         * @return                      Blockchain state
+         */
+        public synchronized Peer.BlockchainState getBlockchainState() {
+            return blockchainState;
+        }
+
+        /**
+         * Set the blockchain state
+         *
+         * @param   blockchainState     Blockchain state
+         */
+        public synchronized void setBlockchainState(Peer.BlockchainState blockchainState) {
+            this.blockchainState = blockchainState;
+        }
+    }
+
+    /**
+     * The BlockchainState message is sent when blockchain state changes.
+     * There is no response for this message.
+     * <ul>
+     * <li>Blockchain state (integer)
+     * </ul>
+     */
+    public static class BlockchainStateMessage extends NetworkMessage {
+
+        /** Blockchain state */
+        private final Peer.BlockchainState blockchainState;
+
+        /**
+         * Construct the message from the message bytes
+         *
+         * @param   bytes                       Message bytes following the message name
+         * @return                              Message
+         * @throws  BufferOverflowException     Message buffer is too small
+         * @throws  BufferUnderflowException    Message is too short
+         * @throws  NetworkException            Message is not valid
+         */
+        @Override
+        protected NetworkMessage constructMessage(ByteBuffer bytes)
+                                    throws BufferOverflowException, BufferUnderflowException, NetworkException {
+            return new BlockchainStateMessage(bytes);
+        }
+
+        /**
+         * Process the message
+         *
+         * @param   peer                        Peer
+         * @return                              Response message
+         */
+        @Override
+        NetworkMessage processMessage(PeerImpl peer) {
+            return BlockchainState.processRequest(peer, this);
+        }
+
+        /**
+         * Construct a BlockchainState message
+         */
+        private BlockchainStateMessage() {
+            super("BlockchainState");
+            blockchainState = Peer.BlockchainState.UP_TO_DATE;
+        }
+
+        /**
+         * Construct a BlockchainState message
+         *
+         * @param   blockchainState             Blockchain state
+         */
+        public BlockchainStateMessage(Peer.BlockchainState blockchainState) {
+            super("BlockchainState");
+            this.blockchainState = blockchainState;
+        }
+
+        /**
+         * Construct a BlockchainState message
+         *
+         * @param   bytes                       Message bytes
+         * @throws  BufferUnderflowException    Message is too small
+         * @throws  NetworkException            Message is not valid
+         */
+        private BlockchainStateMessage(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
+            super("BlockchainState", bytes);
+            int state = bytes.getInt();
+            if (state < 0 || state >= Peer.BlockchainState.values().length) {
+                throw new NetworkException("Blockchain state '" + state + "' is not valid");
+            }
+            this.blockchainState = Peer.BlockchainState.values()[state];
+        }
+
+        /**
+         * Get the message length
+         *
+         * @return                      Message length
+         */
+        @Override
+        int getLength() {
+            return super.getLength() + 4;
+        }
+
+        /**
+         * Get the message bytes
+         *
+         * @param   bytes                       Message buffer
+         * @throws  BufferOverflowException     Message buffer is too small
+         */
+        @Override
+        void getBytes(ByteBuffer bytes) throws BufferOverflowException {
+            super.getBytes(bytes);
+            bytes.putInt(blockchainState.ordinal());
+        }
+
+        /**
+         * Get the blockchain state
+         *
+         * @return                              Blockchain state
+         */
+        public Peer.BlockchainState getBlockchainState() {
+            return blockchainState;
+        }
+
+        /**
+         * Check if light client should receive this message
+         *
+         * @return                              TRUE if light client should receive message
+         */
+        @Override
+        boolean sendToLightClient() {
+            return true;
+        }
+    }
+
+    /**
+     * The BundlerRate message is periodically broadcast when the
+     * peer has one or more active bundlers.
+     * There is no response for this message.
+     * <ul>
+     * <li>Bundler rate count (short)
+     * <li>Bundler rates
+     * </ul>
+     */
+    public static class BundlerRateMessage extends NetworkMessage {
+
+        /** Bundler rate */
+        private List<BundlerRate> rates;
+
+        /**
+         * Construct the message from the message bytes
+         *
+         * @param   bytes                       Message bytes following the message name
+         * @return                              Message
+         * @throws  BufferOverflowException     Message buffer is too small
+         * @throws  BufferUnderflowException    Message is too short
+         * @throws  NetworkException            Message is not valid
+         */
+        @Override
+        protected NetworkMessage constructMessage(ByteBuffer bytes)
+                                    throws BufferOverflowException, BufferUnderflowException, NetworkException {
+            return new BundlerRateMessage(bytes);
+        }
+
+        /**
+         * Process the message
+         *
+         * @param   peer                        Peer
+         * @return                              Response message
+         */
+        @Override
+        NetworkMessage processMessage(PeerImpl peer) {
+            return BundlerRate.processRequest(peer, this);
+        }
+
+        /**
+         * Construct an empty BundlerRate message
+         */
+        private BundlerRateMessage() {
+            super("BundlerRate");
+            this.rates = null;
+        }
+
+        /**
+         * Construct a BundlerRate message
+         *
+         * @param   rates                       Bundler rates
+         */
+        public BundlerRateMessage(List<BundlerRate> rates) {
+            super("BundlerRate");
+            rates.sort(Comparator.comparingLong(BundlerRate::getAccountId));
+            this.rates = rates;
+        }
+
+        /**
+         * Construct a BundlerRate message
+         *
+         * @param   bytes                       Message bytes
+         * @throws  BufferUnderflowException    Message is too small
+         * @throws  NetworkException            Message is not valid
+         */
+        private BundlerRateMessage(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
+            super("BundlerRate", bytes);
+            int count = (int)bytes.getShort() & 0xffff;
+            if (count > MAX_LIST_SIZE) {
+                throw new NetworkException("Rate count " + count + " exceeds the maximum of " + MAX_LIST_SIZE);
+            }
+            this.rates = new ArrayList<>(count);
+            for (int i=0; i<count; i++) {
+                this.rates.add(new BundlerRate(bytes));
+            }
+        }
+
+        /**
+         * Get the message length
+         *
+         * @return                      Message length
+         */
+        @Override
+        int getLength() {
+            int length = super.getLength() + 2;
+            for (BundlerRate rate : rates) {
+                length += rate.getLength();
+            }
+            return length;
+        }
+
+        /**
+         * Get the message bytes
+         *
+         * @param   bytes                       Message buffer
+         * @throws  BufferOverflowException     Message buffer is too small
+         */
+        @Override
+        void getBytes(ByteBuffer bytes) throws BufferOverflowException {
+            super.getBytes(bytes);
+            bytes.putShort((short)rates.size());
+            rates.forEach(rate -> rate.getBytes(bytes));
+        }
+
+        /**
+         * Get the bundler rates
+         *
+         * @return                              Bundler rates
+         */
+        public List<BundlerRate> getRates() {
+            return rates;
+        }
+
+        /**
+         * Check if light client should receive this message
+         *
+         * @return                              TRUE if light client should receive message
+         */
+        @Override
+        boolean sendToLightClient() {
+            return true;
         }
     }
 
@@ -3239,27 +3516,22 @@ public abstract class NetworkMessage {
      * <p>
      * <ul>
      * <li>Transaction bytes (an excluded transaction consists of just the transaction identifier)
-     * <li>Prunable attachment bytes
      * </ul>
      */
     private static class TransactionBytes {
 
-        private static final TransactionBytes EXCLUDED = new TransactionBytes(Convert.EMPTY_BYTE, Convert.EMPTY_BYTE);
+        private static final TransactionBytes EXCLUDED = new TransactionBytes(Convert.EMPTY_BYTE);
 
         private static TransactionBytes parse(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
             byte[] transactionBytes = decodeArray(bytes);
             if (transactionBytes.length == 0) {
                 return EXCLUDED;
             }
-            byte[] prunableAttachmentBytes = decodeArray(bytes);
-            return new TransactionBytes(transactionBytes, prunableAttachmentBytes);
+            return new TransactionBytes(transactionBytes);
         }
 
         /** Transaction bytes */
         private final byte[] transactionBytes;
-
-        /** Prunable attachment bytes */
-        private final byte[] prunableAttachmentBytes;
 
         /**
          * Construct an encoded transaction
@@ -3267,25 +3539,16 @@ public abstract class NetworkMessage {
          * @param   transaction         Transaction
          */
         private TransactionBytes(Transaction transaction) {
-            transactionBytes = transaction.getBytes();
-            transaction.getAppendages(false);
-            JSONObject prunableAttachment = transaction.getPrunableAttachmentJSON();
-            if (prunableAttachment != null) {
-                prunableAttachmentBytes = JSON.toJSONString(prunableAttachment).getBytes(UTF8);
-            } else {
-                prunableAttachmentBytes = Convert.EMPTY_BYTE;
-            }
+            transactionBytes = transaction.getPrunableBytes();
         }
 
         /**
          * Construct an encoded transaction
          *
          * @param   transactionBytes
-         * @param   prunableAttachmentBytes
          */
-        private TransactionBytes(byte[] transactionBytes, byte[] prunableAttachmentBytes) {
+        private TransactionBytes(byte[] transactionBytes) {
             this.transactionBytes = transactionBytes;
-            this.prunableAttachmentBytes = prunableAttachmentBytes;
         }
 
         /**
@@ -3297,7 +3560,6 @@ public abstract class NetworkMessage {
          */
         private TransactionBytes(ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
             transactionBytes = decodeArray(bytes);
-            prunableAttachmentBytes = transactionBytes.length > 0 ? decodeArray(bytes) : Convert.EMPTY_BYTE;
         }
 
         /**
@@ -3306,7 +3568,7 @@ public abstract class NetworkMessage {
          * @return                      Encoded transaction length
          */
         private int getLength() {
-            return getEncodedArrayLength(transactionBytes) + (transactionBytes.length > 0 ? getEncodedArrayLength(prunableAttachmentBytes) : 0);
+            return getEncodedArrayLength(transactionBytes);
         }
 
         /**
@@ -3317,9 +3579,6 @@ public abstract class NetworkMessage {
          */
         private void getBytes(ByteBuffer bytes) {
             encodeArray(bytes, transactionBytes);
-            if (transactionBytes.length > 0) {
-                encodeArray(bytes, prunableAttachmentBytes);
-            }
         }
 
         /**
@@ -3331,16 +3590,10 @@ public abstract class NetworkMessage {
          * @throws  NotValidException   Transaction is not valid
          */
         private Transaction getTransaction() throws NotValidException {
-            JSONObject prunableAttachment;
             if (transactionBytes.length == 0) {
                 throw new IllegalArgumentException("No excluded transactions provided");
             }
-            if (prunableAttachmentBytes.length > 0) {
-                prunableAttachment = (JSONObject)JSONValue.parse(new String(prunableAttachmentBytes));
-            } else {
-                prunableAttachment = null;
-            }
-            return Nxt.parseTransaction(transactionBytes, prunableAttachment);
+            return Nxt.parseTransaction(transactionBytes);
         }
 
         /**

@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -45,6 +45,7 @@ public class FxtDbVersion extends DbVersion {
                         + "height INT NOT NULL, block_id BIGINT NOT NULL, FOREIGN KEY (block_id) REFERENCES block (id) ON DELETE CASCADE, "
                         + "signature BINARY(64) NOT NULL, timestamp INT NOT NULL, type TINYINT NOT NULL, subtype TINYINT NOT NULL, "
                         + "sender_id BIGINT NOT NULL, block_timestamp INT NOT NULL, has_prunable_attachment BOOLEAN NOT NULL DEFAULT FALSE, "
+                        + "has_prunable_message BOOLEAN NOT NULL DEFAULT FALSE, has_prunable_encrypted_message BOOLEAN NOT NULL DEFAULT FALSE, "
                         + "ec_block_height INT DEFAULT NULL, ec_block_id BIGINT DEFAULT NULL, attachment_bytes VARBINARY, version TINYINT NOT NULL)");
             case 4:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_fxt_id_idx ON transaction_fxt (id)");
@@ -82,7 +83,7 @@ public class FxtDbVersion extends DbVersion {
             case 17:
                 apply("CREATE TABLE IF NOT EXISTS unconfirmed_transaction (db_id IDENTITY, id BIGINT NOT NULL, expiration INT NOT NULL, "
                         + "transaction_height INT NOT NULL, fee_per_byte BIGINT NOT NULL, arrival_timestamp BIGINT NOT NULL, "
-                        + "transaction_bytes VARBINARY NOT NULL, prunable_json VARCHAR, chain_id INT NOT NULL, height INT NOT NULL)");
+                        + "transaction_bytes VARBINARY NOT NULL, chain_id INT NOT NULL, height INT NOT NULL)");
             case 18:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS unconfirmed_transaction_id_idx ON unconfirmed_transaction (id)");
             case 19:
@@ -147,8 +148,8 @@ public class FxtDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS account_info_height_id_idx ON account_info (height, account_id)");
             case 44:
                 apply("CREATE TABLE IF NOT EXISTS account_ledger (db_id IDENTITY, account_id BIGINT NOT NULL, "
-                        + "event_type TINYINT NOT NULL, event_id BIGINT NOT NULL, holding_type TINYINT NOT NULL, "
-                        + "holding_id BIGINT, change BIGINT NOT NULL, balance BIGINT NOT NULL, "
+                        + "event_type TINYINT NOT NULL, event_id BIGINT NOT NULL, event_hash BINARY(32), chain_id INT NOT NULL, "
+                        + "holding_type TINYINT NOT NULL, holding_id BIGINT, change BIGINT NOT NULL, balance BIGINT NOT NULL, "
                         + "block_id BIGINT NOT NULL, height INT NOT NULL, timestamp INT NOT NULL)");
             case 45:
                 apply("CREATE INDEX IF NOT EXISTS account_ledger_id_idx ON account_ledger(account_id, db_id)");
@@ -160,7 +161,7 @@ public class FxtDbVersion extends DbVersion {
             case 48:
                 apply("CREATE TABLE IF NOT EXISTS account_control_phasing (db_id IDENTITY, account_id BIGINT NOT NULL, "
                         + "whitelist ARRAY, voting_model TINYINT NOT NULL, quorum BIGINT, min_balance BIGINT, "
-                        + "holding_id BIGINT, min_balance_model TINYINT, max_fees BIGINT, min_duration SMALLINT, max_duration SMALLINT, "
+                        + "holding_id BIGINT, min_balance_model TINYINT, max_fees_chains ARRAY, max_fees ARRAY, min_duration SMALLINT, max_duration SMALLINT, "
                         + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 49:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS account_control_phasing_id_height_idx ON account_control_phasing (account_id, height DESC)");
@@ -217,20 +218,20 @@ public class FxtDbVersion extends DbVersion {
             case 71:
                 apply("CREATE TABLE IF NOT EXISTS currency (db_id IDENTITY, id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
                         + "name VARCHAR NOT NULL, name_lower VARCHAR AS LOWER (name) NOT NULL, code VARCHAR NOT NULL, "
-                        + "description VARCHAR, type INT NOT NULL, initial_supply BIGINT NOT NULL DEFAULT 0, "
+                        + "description VARCHAR, type INT NOT NULL, chain INT NOT NULL, initial_supply BIGINT NOT NULL DEFAULT 0, "
                         + "reserve_supply BIGINT NOT NULL, max_supply BIGINT NOT NULL, creation_height INT NOT NULL, issuance_height INT NOT NULL, "
                         + "min_reserve_per_unit_nqt BIGINT NOT NULL, min_difficulty TINYINT NOT NULL, "
                         + "max_difficulty TINYINT NOT NULL, ruleset TINYINT NOT NULL, algorithm TINYINT NOT NULL, "
-                        + "decimals TINYINT NOT NULL DEFAULT 0,"
+                        + "decimals TINYINT NOT NULL DEFAULT 0, is_deleted BOOLEAN NOT NULL DEFAULT FALSE, "
                         + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 72:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS currency_id_height_idx ON currency (id, height DESC)");
             case 73:
                 apply("CREATE INDEX IF NOT EXISTS currency_account_id_idx ON currency (account_id)");
             case 74:
-                apply("CREATE INDEX IF NOT EXISTS currency_name_idx ON currency (name_lower, height DESC)");
+                apply("CREATE INDEX IF NOT EXISTS currency_name_idx ON currency (name_lower, chain, height DESC)");
             case 75:
-                apply("CREATE INDEX IF NOT EXISTS currency_code_idx ON currency (code, height DESC)");
+                apply("CREATE INDEX IF NOT EXISTS currency_code_idx ON currency (code, chain, height DESC)");
             case 76:
                 apply("CREATE INDEX IF NOT EXISTS currency_creation_height_idx ON currency (creation_height DESC)");
             case 77:
@@ -328,6 +329,29 @@ public class FxtDbVersion extends DbVersion {
             case 112:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS public_key_account_id_height_idx ON public_key (account_id, height DESC)");
             case 113:
+                apply("CREATE TABLE IF NOT EXISTS phasing_poll_result (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
+                        + "chain_id INT NOT NULL, result BIGINT NOT NULL, approved BOOLEAN NOT NULL, height INT NOT NULL)");
+            case 114:
+                apply("CREATE INDEX IF NOT EXISTS phasing_poll_result_id_idx ON phasing_poll_result(id)");
+            case 115:
+                apply("CREATE INDEX IF NOT EXISTS phasing_poll_result_height_idx ON phasing_poll_result(height)");
+            case 116:
+                apply("CREATE TABLE IF NOT EXISTS prunable_message (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, sender_id BIGINT NOT NULL, "
+                        + "recipient_id BIGINT, message VARBINARY, message_is_text BOOLEAN NOT NULL, is_compressed BOOLEAN NOT NULL, "
+                        + "encrypted_message VARBINARY, encrypted_is_text BOOLEAN DEFAULT FALSE, "
+                        + "block_timestamp INT NOT NULL, transaction_timestamp INT NOT NULL, height INT NOT NULL, "
+                        + "FOREIGN KEY (height) REFERENCES PUBLIC.block (height) ON DELETE CASCADE)");
+            case 117:
+                apply("CREATE INDEX IF NOT EXISTS prunable_message_id_idx ON prunable_message (id)");
+            case 118:
+                apply("CREATE INDEX IF NOT EXISTS prunable_message_transaction_timestamp_idx ON prunable_message (transaction_timestamp DESC)");
+            case 119:
+                apply("CREATE INDEX IF NOT EXISTS prunable_message_sender_idx ON prunable_message (sender_id)");
+            case 120:
+                apply("CREATE INDEX IF NOT EXISTS prunable_message_recipient_idx ON prunable_message (recipient_id)");
+            case 121:
+                apply("CREATE INDEX IF NOT EXISTS prunable_message_block_timestamp_dbid_idx ON prunable_message (block_timestamp DESC, db_id DESC)");
+            case 122:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate

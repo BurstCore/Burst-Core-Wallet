@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -106,7 +106,7 @@ public final class CurrencyFounderHome {
         founders.forEach(currencyFounderTable::delete);
     }
 
-    void increaseReserve(AccountLedger.LedgerEvent event, long eventId, Account account, long currencyId, long amountPerUnitNQT) {
+    void increaseReserve(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, Account account, long currencyId, long amountPerUnitNQT) {
         Currency currency = Currency.getCurrency(currencyId);
         account.addToBalance(childChain, event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitNQT));
         currency.increaseReserve(amountPerUnitNQT);
@@ -158,6 +158,11 @@ public final class CurrencyFounderHome {
         public long getAmountPerUnitNQT() {
             return amountPerUnitNQT;
         }
+
+        public ChildChain getChildChain() {
+            return childChain;
+        }
+
     }
 
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -71,9 +71,9 @@ public interface Blockchain {
 
     Block getECBlock(int timestamp);
 
-    Transaction getTransactionByFullHash(Chain chain, byte[] fullHash);
+    Transaction getTransaction(Chain chain, byte[] fullHash);
 
-    boolean hasTransactionByFullHash(Chain chain, byte[] fullHash);
+    boolean hasTransaction(Chain chain, byte[] fullHash);
 
     int getTransactionCount(Chain chain);
 
@@ -83,6 +83,9 @@ public interface Blockchain {
     DbIterator<? extends ChildTransaction> getTransactions(ChildChain chain, long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly);
+
+    DbIterator<? extends FxtTransaction> getTransactions(FxtChain chain, long accountId, int numberOfConfirmations,
+            byte type, byte subtype, int blockTimestamp, int from, int to);
 
     DbIterator<? extends FxtTransaction> getTransactions(FxtChain chain, Connection con, PreparedStatement pstmt);
 

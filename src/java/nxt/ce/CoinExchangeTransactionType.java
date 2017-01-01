@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -10,12 +10,14 @@
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
+ *
  */
 package nxt.ce;
 
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
+import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEvent;
 import nxt.account.BalanceHome;
 import nxt.blockchain.Chain;
@@ -89,7 +91,7 @@ public abstract class CoinExchangeTransactionType extends ChildTransactionType {
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
             BalanceHome.Balance balance = attachment.getChain().getBalanceHome().getBalance(senderAccount.getId());
             if (balance.getUnconfirmedBalance() >= attachment.getQuantityQNT()) {
-                balance.addToUnconfirmedBalance(getLedgerEvent(), transaction.getId(), -attachment.getQuantityQNT());
+                balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), -attachment.getQuantityQNT());
                 return true;
             }
             return false;
@@ -99,7 +101,7 @@ public abstract class CoinExchangeTransactionType extends ChildTransactionType {
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
             BalanceHome.Balance balance = attachment.getChain().getBalanceHome().getBalance(senderAccount.getId());
-            balance.addToUnconfirmedBalance(getLedgerEvent(), transaction.getId(), attachment.getQuantityQNT());
+            balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), attachment.getQuantityQNT());
         }
 
         @Override
@@ -118,6 +120,9 @@ public abstract class CoinExchangeTransactionType extends ChildTransactionType {
             if (transaction.getChain() != attachment.getChain()) {
                 throw new NxtException.NotValidException("Coin exchange order for chain " + attachment.getChain().getName()
                         + " was submitted on chain " + transaction.getChain().getName());
+            }
+            if (attachment.getChain() == attachment.getExchangeChain()) {
+                throw new NxtException.NotValidException("Coin exchange order chain and exchange chain must be different: " + attachment.getJSONObject());
             }
         }
 
@@ -194,7 +199,7 @@ public abstract class CoinExchangeTransactionType extends ChildTransactionType {
             if (order != null) {
                 CoinExchange.removeOrder(attachment.getOrderId());
                 BalanceHome.Balance balance = Chain.getChain(order.getChainId()).getBalanceHome().getBalance(senderAccount.getId());
-                balance.addToUnconfirmedBalance(LedgerEvent.COIN_EXCHANGE_ORDER_CANCEL, transaction.getId(),
+                balance.addToUnconfirmedBalance(LedgerEvent.COIN_EXCHANGE_ORDER_CANCEL, AccountLedger.newEventId(transaction),
                         order.getQuantity());
             }
         }

@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -38,7 +38,7 @@ public class RetrievePrunedTransaction extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         byte[] transactionFullHash = ParameterParser.getBytes(req, "transactionFullHash", true);
         ChildChain childChain = ParameterParser.getChildChain(req);
-        Transaction transaction = Nxt.getBlockchain().getTransactionByFullHash(childChain, transactionFullHash);
+        Transaction transaction = Nxt.getBlockchain().getTransaction(childChain, transactionFullHash);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }

@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -20,6 +20,7 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
 import nxt.crypto.HashFunction;
@@ -27,6 +28,7 @@ import nxt.http.API;
 import nxt.ms.CurrencyMinting;
 import nxt.ms.CurrencyMintingAttachment;
 import nxt.util.Convert;
+import nxt.util.JSON;
 import nxt.util.Logger;
 import nxt.util.TrustAllSSLProvider;
 import org.json.simple.JSONObject;
@@ -71,14 +73,20 @@ public class MintWorker {
     private void mint() {
         String currencyCode = Convert.emptyToNull(Nxt.getStringProperty("nxt.mint.currencyCode"));
         if (currencyCode == null) {
-            throw new IllegalArgumentException("nxt.ms.mint.currencyCode not specified");
+            throw new IllegalArgumentException("nxt.mint.currencyCode not specified");
         }
         String secretPhrase = Convert.emptyToNull(Nxt.getStringProperty("nxt.mint.secretPhrase", null, true));
         if (secretPhrase == null) {
-            throw new IllegalArgumentException("nxt.ms.mint.secretPhrase not specified");
+            throw new IllegalArgumentException("nxt.mint.secretPhrase not specified");
         }
         boolean isSubmitted = Nxt.getBooleanProperty("nxt.mint.isSubmitted");
         boolean isStopOnError = Nxt.getBooleanProperty("nxt.mint.stopOnError");
+        String chainName = Nxt.getStringProperty("nxt.mint.chain");
+        ChildChain childChain = ChildChain.getChildChain(chainName);
+        if (childChain == null) {
+            throw new IllegalArgumentException("Invalid nxt.mint.chain childchain " + chainName);
+        }
+        long fee = Nxt.getIntProperty("nxt.mint.feeNQT");
         byte[] publicKeyHash = Crypto.sha256().digest(Crypto.getPublicKey(secretPhrase));
         long accountId = Convert.fullHashToId(publicKeyHash);
         String rsAccount = Convert.rsAccount(accountId);
@@ -116,9 +124,9 @@ public class MintWorker {
         while (true) {
             counter++;
             try {
-                JSONObject response = mintImpl(secretPhrase, accountId, units, currencyId, algorithm, counter, target,
+                JSONObject response = mintImpl(childChain, fee, secretPhrase, accountId, units, currencyId, algorithm, counter, target,
                     initialNonce, threadPoolSize, executorService, difficulty, isSubmitted);
-                Logger.logInfoMessage("currency mint response:" + response.toJSONString());
+                Logger.logInfoMessage("currency mint response:" + JSON.toJSONString(response));
             } catch (Exception e) {
                 Logger.logInfoMessage("mint error", e);
                 if (isStopOnError) {
@@ -134,7 +142,7 @@ public class MintWorker {
         }
     }
 
-    private JSONObject mintImpl(String secretPhrase, long accountId, long units, long currencyId, byte algorithm,
+    private JSONObject mintImpl(ChildChain childChain, long fee, String secretPhrase, long accountId, long units, long currencyId, byte algorithm,
                                 long counter, byte[] target, long initialNonce, int threadPoolSize, ExecutorService executorService, BigInteger difficulty, boolean isSubmitted) {
         long startTime = System.currentTimeMillis();
         List<Callable<Long>> workersList = new ArrayList<>();
@@ -153,7 +161,7 @@ public class MintWorker {
                 solution, units, counter, hashes, (float) computationTime / 1000, hashes / computationTime, hashesPerDifficulty, isSubmitted);
         JSONObject response;
         if (isSubmitted) {
-            response = currencyMint(secretPhrase, currencyId, solution, units, counter);
+            response = currencyMint(childChain, fee, secretPhrase, currencyId, solution, units, counter);
         } else {
             response = new JSONObject();
             response.put("message", "nxt.ms.mint.isSubmitted=false therefore currency mint transaction is not submitted");
@@ -176,15 +184,15 @@ public class MintWorker {
         }
     }
 
-    private JSONObject currencyMint(String secretPhrase, long currencyId, long nonce, long units, long counter) {
-        JSONObject ecBlock = getECBlock();
-        Attachment attachment = new CurrencyMintingAttachment(nonce, currencyId, units, counter);
-        Transaction.Builder builder = Nxt.newTransactionBuilder(Crypto.getPublicKey(secretPhrase), 0, Constants.ONE_NXT,
-                (short) 120, attachment)
-                .timestamp(((Long) ecBlock.get("timestamp")).intValue())
-                .ecBlockHeight(((Long) ecBlock.get("ecBlockHeight")).intValue())
-                .ecBlockId(Convert.parseUnsignedLong((String) ecBlock.get("ecBlockId")));
+    private JSONObject currencyMint(ChildChain childChain, long fee, String secretPhrase, long currencyId, long nonce, long units, long counter) {
         try {
+            JSONObject ecBlock = getECBlock();
+            Attachment attachment = new CurrencyMintingAttachment(nonce, currencyId, units, counter);
+            Transaction.Builder builder = childChain.newTransactionBuilder(Crypto.getPublicKey(secretPhrase), 0, fee,
+                    (short) 120, attachment)
+                    .timestamp(((Long) ecBlock.get("timestamp")).intValue())
+                    .ecBlockHeight(((Long) ecBlock.get("ecBlockHeight")).intValue())
+                    .ecBlockId(Convert.parseUnsignedLong((String) ecBlock.get("ecBlockId")));
             Transaction transaction = builder.build(secretPhrase);
             Map<String, String> params = new HashMap<>();
             params.put("requestType", "broadcastTransaction");

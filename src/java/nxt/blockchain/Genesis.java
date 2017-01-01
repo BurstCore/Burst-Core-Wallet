@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -70,7 +70,7 @@ final class Genesis {
                 long total = 0;
                 for (Map.Entry<String, Long> entry : ((Map<String, Long>)chainBalances).entrySet()) {
                     Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()));
-                    account.addToBalanceAndUnconfirmedBalance(chain, null, 0, entry.getValue());
+                    account.addToBalanceAndUnconfirmedBalance(chain, null, null, entry.getValue());
                     total += entry.getValue();
                 }
                 Logger.logDebugMessage("Total balance " + total + " " + chain.getName());

@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -39,7 +39,7 @@ public class GetPollVote extends APIServlet.APIRequestHandler  {
         PollHome.Poll poll = ParameterParser.getPoll(req);
         long accountId = ParameterParser.getAccountId(req, true);
         boolean includeWeights = "true".equalsIgnoreCase(req.getParameter("includeWeights"));
-        ChildChain childChain = ParameterParser.getChildChain(req);
+        ChildChain childChain = poll.getChildChain();
         VoteHome.Vote vote = childChain.getVoteHome().getVote(poll.getId(), accountId);
         if (vote != null) {
             int countHeight;

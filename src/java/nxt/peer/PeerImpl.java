@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -455,10 +455,8 @@ final class PeerImpl implements Peer {
         return blockchainState;
     }
 
-    void setBlockchainState(int blockchainState) {
-        if (blockchainState >= 0 && blockchainState < BlockchainState.values().length) {
-            this.blockchainState = BlockchainState.values()[blockchainState];
-        } //TODO: else?
+    void setBlockchainState(BlockchainState blockchainState) {
+        this.blockchainState = blockchainState;
     }
 
     @Override
@@ -997,6 +995,7 @@ final class PeerImpl implements Peer {
     @Override
     public void sendMessage(NetworkMessage message) {
         boolean sendMessage = false;
+        boolean disconnect = false;
         synchronized(this) {
             if (state == State.CONNECTED) {
                 if (handshakePending && message instanceof NetworkMessage.GetInfoMessage) {
@@ -1004,16 +1003,25 @@ final class PeerImpl implements Peer {
                     sendMessage = true;
                 } else if (outputQueue.size() >= NetworkHandler.MAX_PENDING_MESSAGES) {
                     Logger.logErrorMessage("Too many pending messages for " + host);
+                    disconnect = true;
                 } else {
                     outputQueue.add(message);
                     if (!handshakePending) {
                         sendMessage = true;
                     }
                 }
+            } else {
+                Logger.logDebugMessage("Flushing " + message.getMessageName() + " message because "
+                        + host + " is not connected");
             }
         }
         if (sendMessage) {
             keyEvent.update(SelectionKey.OP_WRITE, 0);
+            if (Peers.communicationLogging == 1) {
+                Logger.logDebugMessage(message.getMessageName() + " message sent to " + host);
+            }
+        } else if (disconnect) {
+            disconnectPeer();
         }
     }
 
@@ -1032,10 +1040,15 @@ final class PeerImpl implements Peer {
         responseMap.put(message.getMessageId(), entry);
         sendMessage(message);
         if (state != State.CONNECTED) {
+            responseMap.remove(message.getMessageId());
             return null;
         }
         NetworkMessage response = entry.responseWait();
         responseMap.remove(message.getMessageId());
+        if (response == null) {
+            disconnectPeer();
+            return null;
+        }
         if (response instanceof NetworkMessage.ErrorMessage) {
             NetworkMessage.ErrorMessage error = (NetworkMessage.ErrorMessage)response;
             if (error.isSevereError()) {
@@ -1043,7 +1056,7 @@ final class PeerImpl implements Peer {
                         "' message: " + error.getErrorMessage());
                 disconnectPeer();
             }
-            response = null;
+            return null;
         }
         return response;
     }
@@ -1061,7 +1074,7 @@ final class PeerImpl implements Peer {
             Logger.logErrorMessage("Request not found for '" + message.getMessageName() + "' message");
         }
     }
-    
+
     @Override
     public boolean isOpenAPI() {
         return providesService(Peer.Service.API) || providesService(Peer.Service.API_SSL);
@@ -1075,6 +1088,7 @@ final class PeerImpl implements Peer {
                 && blockchainState == Peer.BlockchainState.UP_TO_DATE;
     }
 
+    @Override
     public StringBuilder getPeerApiUri() {
         StringBuilder uri = new StringBuilder();
         if (providesService(Peer.Service.API_SSL)) {

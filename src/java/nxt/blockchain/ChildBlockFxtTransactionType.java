@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -22,6 +22,8 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.util.Convert;
+import nxt.util.JSON;
+import nxt.util.Logger;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -33,20 +35,13 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
 
     public static final ChildBlockFxtTransactionType INSTANCE = new ChildBlockFxtTransactionType();
 
-    private static final Fee CHILD_BLOCK_FEE = new Fee() {
-        @Override
-        public long getFee(TransactionImpl transaction, Appendix appendage) {
-            long totalFee = 0;
-            int blockchainHeight = Nxt.getBlockchain().getHeight();
-            for (ChildTransactionImpl childTransaction : ((FxtTransactionImpl)transaction).getChildTransactions()) {
-                totalFee += childTransaction.getMinimumFeeFQT(blockchainHeight);
-            }
-            return totalFee;
+    private static final Fee CHILD_BLOCK_FEE = (transaction, appendage) -> {
+        long totalFee = 0;
+        int blockchainHeight = Nxt.getBlockchain().getHeight();
+        for (ChildTransactionImpl childTransaction : ((FxtTransactionImpl)transaction).getChildTransactions()) {
+            totalFee += childTransaction.getMinimumFeeFQT(blockchainHeight);
         }
-        @Override
-        public long[] getBackFees(long fee) {
-            return new long[] {fee / 4, fee / 4, fee / 4};
-        }
+        return totalFee;
     };
 
     @Override
@@ -61,8 +56,7 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
 
     @Override
     public AccountLedger.LedgerEvent getLedgerEvent() {
-        //TODO
-        return null;
+        return AccountLedger.LedgerEvent.CHILD_BLOCK;
     }
 
     @Override
@@ -93,20 +87,21 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
         int blockchainHeight = Nxt.getBlockchain().getHeight();
         Set<Long> childIds = new HashSet<>();
         for (byte[] childTransactionHash : childTransactionHashes) {
-            if (!childIds.add(Convert.fullHashToId(childTransactionHash))) {
+            long childTransactionId = Convert.fullHashToId(childTransactionHash);
+            if (!childIds.add(childTransactionId)) {
                 throw new NxtException.NotValidException("Duplicate child transaction hash");
             }
-            if (childChain.getTransactionHome().hasTransactionByFullHash(childTransactionHash, blockchainHeight)) {
-                throw new NxtException.NotValidException("Child transaction already included at an earlier height");
+            if (childChain.getTransactionHome().hasTransaction(childTransactionHash, childTransactionId, blockchainHeight)) {
+                throw new NxtException.NotCurrentlyValidException("Child transaction already included at an earlier height");
             }
         }
-        long[] backFees = attachment.getBackFees();
-        if (backFees.length > 3) {
-            throw new NxtException.NotValidException("Invalid backFees length");
-        }
-        long[] minBackFees = new long[3];
         for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
-            childTransaction.validate();
+            try {
+                childTransaction.validate();
+            } catch (NxtException.ValidationException e) {
+                Logger.logDebugMessage("Validation failed for transaction " + JSON.toJSONString(childTransaction.getJSONObject()));
+                throw e;
+            }
             if (transaction.getTimestamp() < childTransaction.getTimestamp()) {
                 throw new NxtException.NotValidException("ChildBlock transaction " + transaction.getStringId() + " timestamp " + transaction.getTimestamp()
                         + " is before child transaction " + childTransaction.getStringId() + " timestamp " + childTransaction.getTimestamp());
@@ -114,15 +109,6 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
             if (transaction.getExpiration() > childTransaction.getExpiration()) {
                 throw new NxtException.NotValidException("ChildBlock transaction " + transaction.getStringId() + " expiration " + transaction.getExpiration()
                         + " is after child transaction " + childTransaction.getStringId() + " expiration " + childTransaction.getExpiration());
-            }
-            long[] childMinBackFees = childTransaction.getMinimumBackFeesFQT(blockchainHeight);
-            for (int i = 0; i < childMinBackFees.length; i++) {
-                minBackFees[i] += childMinBackFees[i];
-            }
-        }
-        for (int i = 0; i < minBackFees.length; i++) {
-            if (i >= backFees.length || backFees[i] < minBackFees[i]) {
-                throw new NxtException.NotValidException("Insufficient back fees");
             }
         }
     }
@@ -141,9 +127,8 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
             childTransaction.apply();
             totalFee = Math.addExact(totalFee, childTransaction.getFee());
         }
-        //TODO: new account ledger event type
         senderAccount.addToBalanceAndUnconfirmedBalance(ChildChain.getChildChain(attachment.getChainId()),
-                AccountLedger.LedgerEvent.BLOCK_GENERATED, transaction.getId(), totalFee);
+                getLedgerEvent(), AccountLedger.newEventId(transaction), totalFee);
     }
 
     @Override

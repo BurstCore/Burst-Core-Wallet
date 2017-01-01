@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -74,7 +74,7 @@ public abstract class VotingTransactionType extends ChildTransactionType {
 
     public final static TransactionType POLL_CREATION = new VotingTransactionType() {
 
-        private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(10 * Constants.ONE_NXT, Constants.ONE_NXT, 1) {
+        private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(10 * Constants.ONE_FXT, Constants.ONE_FXT, 1) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 int numOptions = ((PollCreationAttachment)appendage).getPollOptions().length;
@@ -82,7 +82,7 @@ public abstract class VotingTransactionType extends ChildTransactionType {
             }
         };
 
-        private final Fee POLL_SIZE_FEE = new Fee.SizeBasedFee(0, 2 * Constants.ONE_NXT, 32) {
+        private final Fee POLL_SIZE_FEE = new Fee.SizeBasedFee(0, 2 * Constants.ONE_FXT, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 PollCreationAttachment attachment = (PollCreationAttachment)appendage;
@@ -184,7 +184,6 @@ public abstract class VotingTransactionType extends ChildTransactionType {
 
         }
 
-        //TODO: if poll table and poll results tables become prunable, do not enforce id uniqueness beyond the prune limit
         @Override
         protected void validateId(ChildTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
             if (transaction.getChain().getPollHome().getPoll(transaction.getId()) != null) {
@@ -307,7 +306,7 @@ public abstract class VotingTransactionType extends ChildTransactionType {
 
         private final Fee PHASING_VOTE_FEE = (transaction, appendage) -> {
             PhasingVoteCastingAttachment attachment = (PhasingVoteCastingAttachment) transaction.getAttachment();
-            return attachment.getPhasedTransactionsIds().size() * Constants.ONE_NXT;
+            return attachment.getPhasedTransactionsIds().size() * Constants.ONE_FXT;
         };
 
         @Override

@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright © 2013-2016 The Nxt Core Developers.                             *
- * Copyright © 2016 Jelurida IP B.V.                                          *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
@@ -35,9 +35,11 @@ var NRS = (function(NRS, $) {
             $("#funding_monitor_menu_item").hide();
         }
         if (!NRS.isExternalLinkVisible()) {
-            $("#web_wallet_li").remove();
             $("#api_console_li").hide();
             $("#database_shell_li").hide();
+        }
+        if (!NRS.isWebWalletLinkVisible()) {
+            $("#web_wallet_li").remove();
         }
     });
 

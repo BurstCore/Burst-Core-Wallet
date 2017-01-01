@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -18,6 +18,7 @@ package nxt.ae;
 
 import nxt.Nxt;
 import nxt.account.Account;
+import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEvent;
 import nxt.account.BalanceHome;
 import nxt.blockchain.ChildChain;
@@ -388,19 +389,22 @@ public final class OrderHome {
 
             askOrder.updateQuantityQNT(Math.subtractExact(askOrder.getQuantityQNT(), trade.getQuantityQNT()));
             Account askAccount = Account.getAccount(askOrder.getAccountId());
+            AccountLedger.LedgerEventId askEventId = AccountLedger.newEventId(askOrder.getId(), askOrder.getFullHash(), childChain);
             BalanceHome.Balance askBalance = childChain.getBalanceHome().getBalance(askOrder.getAccountId());
-            askBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.ASSET_TRADE, askOrder.getId(),
+            askBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.ASSET_TRADE, askEventId,
                     Math.multiplyExact(trade.getQuantityQNT(), trade.getPriceNQT()));
-            askAccount.addToAssetBalanceQNT(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityQNT());
+            askAccount.addToAssetBalanceQNT(LedgerEvent.ASSET_TRADE, askEventId,
+                    assetId, -trade.getQuantityQNT());
 
             bidOrder.updateQuantityQNT(Math.subtractExact(bidOrder.getQuantityQNT(), trade.getQuantityQNT()));
             Account bidAccount = Account.getAccount(bidOrder.getAccountId());
-            bidAccount.addToAssetAndUnconfirmedAssetBalanceQNT(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            AccountLedger.LedgerEventId bidEventId = AccountLedger.newEventId(bidOrder.getId(), bidOrder.getFullHash(), childChain);
+            bidAccount.addToAssetAndUnconfirmedAssetBalanceQNT(LedgerEvent.ASSET_TRADE, bidEventId,
                     assetId, trade.getQuantityQNT());
             BalanceHome.Balance bidBalance = childChain.getBalanceHome().getBalance(bidOrder.getAccountId());
-            bidBalance.addToBalance(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            bidBalance.addToBalance(LedgerEvent.ASSET_TRADE, bidEventId,
                     -Math.multiplyExact(trade.getQuantityQNT(), trade.getPriceNQT()));
-            bidBalance.addToUnconfirmedBalance(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            bidBalance.addToUnconfirmedBalance(LedgerEvent.ASSET_TRADE, bidEventId,
                     Math.multiplyExact(trade.getQuantityQNT(), (bidOrder.getPriceNQT() - trade.getPriceNQT())));
         }
 

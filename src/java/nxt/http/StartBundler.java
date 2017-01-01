@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -11,6 +11,7 @@
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
+ *
  */
 
 package nxt.http;
@@ -22,6 +23,7 @@ import nxt.blockchain.Bundler;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.FxtChain;
 import nxt.crypto.Crypto;
+import nxt.peer.Peers;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,6 +48,7 @@ public final class StartBundler extends APIServlet.APIRequestHandler {
             return JSONResponses.NOT_ENOUGH_FUNDS;
         }
         Bundler bundler = Bundler.addOrChangeBundler(childChain, secretPhrase, minRateNQTPerFXT, totalFeesLimitFQT, overpayFQTPerFXT);
+        Peers.broadcastBundlerRates();
         return JSONData.bundler(bundler);
     }
 

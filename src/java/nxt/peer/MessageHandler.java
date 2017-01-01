@@ -1,15 +1,17 @@
 /*
- * Copyright 2013-2016 The Nxt Core Developers.
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at
- * the top-level directory of this distribution for the individual copyright
- * holder information and the developer policies on copyright and licensing.
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
- * Unless otherwise agreed in a custom licensing agreement, no part of the
- * Nxt software, including this file, may be copied, modified, propagated,
- * or distributed except according to the terms contained in the LICENSE.txt
- * file.
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
+ *
  */
 package nxt.peer;
 
@@ -90,10 +92,14 @@ class MessageHandler implements Runnable {
                 NetworkMessage response;
                 try {
                     message = NetworkMessage.getMessage(entry.getBytes());
+                    if (Peers.communicationLogging == 1) {
+                        Logger.logDebugMessage(message.getMessageName()
+                                + " message received from " + peer.getHost());
+                    }
                     if (message.isResponse()) {
                         if (message.getMessageId() == 0) {
-                            Logger.logErrorMessage("'" + message.getMessageName()
-                                    + "' response message does not have a message identifier");
+                            Logger.logErrorMessage(message.getMessageName()
+                                    + " response message does not have a message identifier");
                         } else {
                             peer.completeRequest(message);
                         }
@@ -109,7 +115,7 @@ class MessageHandler implements Runnable {
                         response = message.processMessage(peer);
                         if (message.requiresResponse()) {
                             if (response == null) {
-                                Logger.logErrorMessage("No response for '" + message.getMessageName() + "' message");
+                                Logger.logErrorMessage("No response for " + message.getMessageName() + " message");
                             } else {
                                 peer.sendMessage(response);
                             }

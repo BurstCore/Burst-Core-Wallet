@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -47,6 +47,11 @@ public final class GetCurrencyIds extends APIServlet.APIRequestHandler {
         JSONObject response = new JSONObject();
         response.put("currencyIds", currencyIds);
         return response;
+    }
+
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
     }
 
 }

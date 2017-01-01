@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -10,6 +10,7 @@
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
+ *
  */
 package nxt.ce;
 
@@ -38,7 +39,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
     private static final byte SUBTYPE_COIN_EXCHANGE_ORDER_ISSUE = 0;
     private static final byte SUBTYPE_COIN_EXCHANGE_ORDER_CANCEL = 1;
 
-    private static final Fee exchangeFee = new Fee.ConstantFee(Constants.ONE_NXT * 2);
+    private static final Fee exchangeFee = new Fee.ConstantFee(Constants.ONE_FXT * 2);
 
     public static TransactionType findTransactionType(byte subtype) {
         switch (subtype) {
@@ -98,7 +99,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
             BalanceHome.Balance balance = attachment.getChain().getBalanceHome().getBalance(senderAccount.getId());
             if (balance.getUnconfirmedBalance() >= attachment.getQuantityQNT()) {
-                balance.addToUnconfirmedBalance(getLedgerEvent(), transaction.getId(), -attachment.getQuantityQNT());
+                balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), -attachment.getQuantityQNT());
                 return true;
             }
             return false;
@@ -108,7 +109,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
         public void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
             BalanceHome.Balance balance = attachment.getChain().getBalanceHome().getBalance(senderAccount.getId());
-            balance.addToUnconfirmedBalance(getLedgerEvent(), transaction.getId(), attachment.getQuantityQNT());
+            balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), attachment.getQuantityQNT());
         }
 
         @Override
@@ -126,6 +127,9 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
             }
             if (attachment.getChain() != FxtChain.FXT && attachment.getExchangeChain() != FxtChain.FXT) {
                 throw new NxtException.NotValidException("Only exchange orders to/from Ardor may be submitted on the Fxt chain");
+            }
+            if (attachment.getChain() == attachment.getExchangeChain()) {
+                throw new NxtException.NotValidException("Coin exchange order chain and exchange chain must be different: " + attachment.getJSONObject());
             }
         }
 
@@ -197,7 +201,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
             if (order != null) {
                 CoinExchange.removeOrder(attachment.getOrderId());
                 BalanceHome.Balance balance = Chain.getChain(order.getChainId()).getBalanceHome().getBalance(senderAccount.getId());
-                balance.addToUnconfirmedBalance(AccountLedger.LedgerEvent.COIN_EXCHANGE_ORDER_CANCEL, transaction.getId(),
+                balance.addToUnconfirmedBalance(AccountLedger.LedgerEvent.COIN_EXCHANGE_ORDER_CANCEL, AccountLedger.newEventId(transaction),
                         order.getQuantity());
             }
         }

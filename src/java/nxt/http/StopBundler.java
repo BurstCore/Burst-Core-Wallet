@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -11,6 +11,7 @@
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
+ *
  */
 
 package nxt.http;
@@ -19,6 +20,7 @@ import nxt.account.Account;
 import nxt.blockchain.Bundler;
 import nxt.blockchain.ChildChain;
 import nxt.crypto.Crypto;
+import nxt.peer.Peers;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -35,6 +37,7 @@ public final class StopBundler extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
+        boolean bundlersChanged = false;
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         long accountId = ParameterParser.getAccountId(req, false);
         ChildChain childChain = ParameterParser.getChildChain(req, false);
@@ -47,9 +50,11 @@ public final class StopBundler extends APIServlet.APIRequestHandler {
             if (childChain == null) {
                 Bundler.stopAccountBundlers(accountId);
                 response.put("stoppedAccountBundlers", true);
+                bundlersChanged = true;
             } else {
                 Bundler bundler = Bundler.stopBundler(childChain, accountId);
                 response.put("stoppedBundler", bundler != null);
+                bundlersChanged = (bundler != null);
             }
         } else {
             API.verifyPassword(req);
@@ -57,19 +62,26 @@ public final class StopBundler extends APIServlet.APIRequestHandler {
                 if (childChain == null) {
                     Bundler.stopAccountBundlers(accountId);
                     response.put("stoppedAccountBundlers", true);
+                    bundlersChanged = true;
                 } else {
                     Bundler bundler = Bundler.stopBundler(childChain, accountId);
                     response.put("stoppedBundler", bundler != null);
+                    bundlersChanged = (bundler != null);
                 }
             } else {
                 if (childChain == null) {
                     Bundler.stopAllBundlers();
                     response.put("stoppedAllBundlers", true);
+                    bundlersChanged = true;
                 } else {
                     Bundler.stopChildChainBundlers(childChain);
                     response.put("stoppedChildChainBundlers", true);
+                    bundlersChanged = true;
                 }
             }
+        }
+        if (bundlersChanged) {
+            Peers.broadcastBundlerRates();
         }
         return response;
     }

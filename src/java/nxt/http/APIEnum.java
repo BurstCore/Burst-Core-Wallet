@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -232,7 +232,6 @@ public enum APIEnum {
     SEARCH_ACCOUNTS("searchAccounts", SearchAccounts.instance),
     SEARCH_TAGGED_DATA("searchTaggedData", SearchTaggedData.instance),
     UPLOAD_TAGGED_DATA("uploadTaggedData", UploadTaggedData.instance),
-    EXTEND_TAGGED_DATA("extendTaggedData", ExtendTaggedData.instance),
     GET_ACCOUNT_TAGGED_DATA("getAccountTaggedData", GetAccountTaggedData.instance),
     GET_ALL_TAGGED_DATA("getAllTaggedData", GetAllTaggedData.instance),
     GET_CHANNEL_TAGGED_DATA("getChannelTaggedData", GetChannelTaggedData.instance),
@@ -242,7 +241,6 @@ public enum APIEnum {
     GET_DATA_TAG_COUNT("getDataTagCount", GetDataTagCount.instance),
     GET_DATA_TAGS_LIKE("getDataTagsLike", GetDataTagsLike.instance),
     VERIFY_TAGGED_DATA("verifyTaggedData", VerifyTaggedData.instance),
-    GET_TAGGED_DATA_EXTEND_TRANSACTIONS("getTaggedDataExtendTransactions", GetTaggedDataExtendTransactions.instance),
     CLEAR_UNCONFIRMED_TRANSACTIONS("clearUnconfirmedTransactions", ClearUnconfirmedTransactions.instance),
     REQUEUE_UNCONFIRMED_TRANSACTIONS("requeueUnconfirmedTransactions", RequeueUnconfirmedTransactions.instance),
     REBROADCAST_UNCONFIRMED_TRANSACTIONS("rebroadcastUnconfirmedTransactions", RebroadcastUnconfirmedTransactions.instance),
@@ -289,7 +287,10 @@ public enum APIEnum {
     GET_COIN_EXCHANGE_ORDERS("getCoinExchangeOrders", GetCoinExchangeOrders.instance),
     GET_LAST_COIN_EXCHANGE_TRADE("getLastCoinExchangeTrade", GetLastCoinExchangeTrade.instance),
     GET_COIN_EXCHANGE_TRADES("getCoinExchangeTrades", GetCoinExchangeTrades.instance),
-    GET_COIN_EXCHANGE_TRADE("getCoinExchangeTrade", GetCoinExchangeTrade.instance);
+    GET_COIN_EXCHANGE_TRADE("getCoinExchangeTrade", GetCoinExchangeTrade.instance),
+    GET_EXPECTED_COIN_EXCHANGE_ORDERS("getExpectedCoinExchangeOrders", GetExpectedCoinExchangeOrders.instance),
+    GET_EXPECTED_COIN_EXCHANGE_ORDER_CANCELLATIONS("getExpectedCoinExchangeOrderCancellations", GetExpectedCoinExchangeOrderCancellations.instance),
+    GET_BUNDLER_RATES("getBundlerRates", GetBundlerRates.instance);
 
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 

@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -18,7 +18,7 @@ package nxt.http;
 
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.blockchain.ChildChain;
+import nxt.blockchain.Chain;
 import nxt.messaging.PrunableMessageHome;
 import nxt.util.JSON;
 import org.json.simple.JSONStreamAware;
@@ -44,11 +44,11 @@ public final class GetPrunableMessage extends APIServlet.APIRequestHandler {
             return JSONResponses.either("secretPhrase", "sharedKey");
         }
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
-        ChildChain childChain = ParameterParser.getChildChain(req);
-        PrunableMessageHome prunableMessageHome = childChain.getPrunableMessageHome();
+        Chain chain = ParameterParser.getChain(req);
+        PrunableMessageHome prunableMessageHome = chain.getPrunableMessageHome();
         PrunableMessageHome.PrunableMessage prunableMessage = prunableMessageHome.getPrunableMessage(transactionFullHash);
         if (prunableMessage == null && retrieve) {
-            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(childChain, transactionFullHash) == null) {
+            if (Nxt.getBlockchainProcessor().restorePrunedTransaction(chain, transactionFullHash) == null) {
                 return PRUNED_TRANSACTION;
             }
             prunableMessage = prunableMessageHome.getPrunableMessage(transactionFullHash);

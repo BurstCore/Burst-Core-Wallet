@@ -1,16 +1,17 @@
 /*
- * Copyright 2013-2016 The Nxt Core Developers.
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
- * See the AUTHORS.txt, DEVELOPER-AGREEMENT.txt and LICENSE.txt files at
- * the top-level directory of this distribution for the individual copyright
- * holder information and the developer policies on copyright and licensing.
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement, no part of the
- * Nxt software, including this file, may be copied, modified, propagated,
- * or distributed except according to the terms contained in the LICENSE.txt
- * file.
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
+ *
  */
 package nxt.peer;
 
@@ -118,7 +119,7 @@ public final class NetworkHandler implements Runnable {
     private static final String listenAddress = Nxt.getStringProperty("nxt.peerServerHost", "0.0.0.0");
 
     /** GetInfo message which is sent each time an outbound connection is created */
-    private static final NetworkMessage getInfoMessage;
+    private static final NetworkMessage.GetInfoMessage getInfoMessage;
 
     /** My address */
     static String myAddress;
@@ -278,7 +279,6 @@ public final class NetworkHandler implements Runnable {
                 });
                 disabledAPIs = APIEnum.enumSetToBase64String(disabledAPISet);
             }
-            //TODO: getInfoMessage does not contain current blockchain state, need a separate NetworkMessage to update this
             getInfoMessage = new NetworkMessage.GetInfoMessage(Nxt.APPLICATION, Nxt.VERSION, platform,
                     shareAddress, announcedAddress, API.openAPIPort, API.openAPISSLPort, services,
                     disabledAPIs, API.apiServerIdleTimeout);
@@ -838,6 +838,7 @@ public final class NetworkHandler implements Runnable {
      * @param   peer                    Target peer
      */
     static void sendGetInfoMessage(PeerImpl peer) {
+        getInfoMessage.setBlockchainState(Peers.getMyBlockchainState());
         peer.sendMessage(getInfoMessage);
     }
 
@@ -847,8 +848,27 @@ public final class NetworkHandler implements Runnable {
      * @param   message                 Message to send
      */
     public static void broadcastMessage(NetworkMessage message) {
-        //TODO: for peers that are light clients, do not send some types of messages
-        connectionMap.values().forEach(peer -> peer.sendMessage(message));
+        broadcastMessage(null, message);
+    }
+
+    /**
+     * Broadcast a message to all connected peers
+     *
+     * @param   sender                  Message sender or null if our message
+     * @param   message                 Message to send
+     */
+    public static void broadcastMessage(Peer sender, NetworkMessage message) {
+        if (Constants.isOffline) {
+            return;
+        }
+        connectionMap.values().forEach(peer -> {
+            if (peer.getState() == Peer.State.CONNECTED &&
+                    peer != sender &&
+                    (peer.getBlockchainState() != Peer.BlockchainState.LIGHT_CLIENT ||
+                     message.sendToLightClient())) {
+                peer.sendMessage(message);
+            }
+        });
         wakeup();
     }
 

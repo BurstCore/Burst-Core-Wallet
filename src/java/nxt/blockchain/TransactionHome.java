@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -61,7 +61,7 @@ public final class TransactionHome {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     if (rs.getInt("height") <= Integer.MAX_VALUE) {
-                        return FxtTransactionImpl.loadTransaction(con, rs);
+                        return (FxtTransactionImpl)TransactionImpl.loadTransaction(FxtChain.FXT, rs);
                     }
                 }
                 return null;
@@ -73,11 +73,11 @@ public final class TransactionHome {
         }
     }
 
-    public TransactionImpl findTransactionByFullHash(byte[] fullHash) {
-        return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
+    public TransactionImpl findTransaction(byte[] fullHash) {
+        return findTransaction(fullHash, Integer.MAX_VALUE);
     }
 
-    public TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
+    public TransactionImpl findTransaction(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
         synchronized(BlockDb.blockCache) {
@@ -101,7 +101,7 @@ public final class TransactionHome {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     if (Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
-                        return TransactionImpl.newTransactionBuilder(chain, con, rs).build();
+                        return TransactionImpl.loadTransaction(chain, rs);
                     }
                 }
                 return null;
@@ -139,12 +139,23 @@ public final class TransactionHome {
         }
     }
 
-    boolean hasTransactionByFullHash(byte[] fullHash) {
-        return hasTransactionByFullHash(fullHash, Integer.MAX_VALUE);
+    boolean hasTransaction(Transaction transaction) {
+        return hasTransaction(transaction.getFullHash(), transaction.getId(), Integer.MAX_VALUE);
     }
 
-    public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
-        long transactionId = Convert.fullHashToId(fullHash);
+    boolean hasTransaction(Transaction transaction, int height) {
+        return hasTransaction(transaction.getFullHash(), transaction.getId(), height);
+    }
+
+    boolean hasTransaction(byte[] fullHash) {
+        return hasTransaction(fullHash, Convert.fullHashToId(fullHash), Integer.MAX_VALUE);
+    }
+
+    public boolean hasTransaction(byte[] fullHash, int height) {
+        return hasTransaction(fullHash, Convert.fullHashToId(fullHash), height);
+    }
+
+    public boolean hasTransaction(byte[] fullHash, long transactionId, int height) {
         // Check the block cache
         synchronized(BlockDb.blockCache) {
             if (chain == FxtChain.FXT) {
@@ -208,7 +219,7 @@ public final class TransactionHome {
             pstmt.setLong(1, fxtTransactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    list.add(ChildTransactionImpl.loadTransaction((ChildChain)chain, con, rs));
+                    list.add((ChildTransactionImpl) TransactionImpl.loadTransaction(chain, rs));
                 }
             }
         } catch (SQLException e) {
@@ -244,7 +255,7 @@ public final class TransactionHome {
             pstmt.setFetchSize(50);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    list.add(FxtTransactionImpl.loadTransaction(con, rs));
+                    list.add((FxtTransactionImpl)TransactionImpl.loadTransaction(FxtChain.FXT, rs));
                 }
             }
         } catch (SQLException e) {
@@ -271,7 +282,7 @@ public final class TransactionHome {
                     byte[] fullHash = rs.getBytes("full_hash");
                     byte type = rs.getByte("type");
                     byte subtype = rs.getByte("subtype");
-                    TransactionType transactionType = ChildTransactionType.findTransactionType(type, subtype);
+                    TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
                     result.add(new PrunableTransaction(fullHash, transactionType,
                             rs.getBoolean("prunable_attachment"),
                             rs.getBoolean("prunable_plain_message"),

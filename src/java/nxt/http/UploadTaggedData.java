@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -18,7 +18,7 @@ package nxt.http;
 
 import nxt.NxtException;
 import nxt.account.Account;
-import nxt.taggeddata.TaggedDataUploadAttachment;
+import nxt.taggeddata.TaggedDataAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -36,7 +36,7 @@ public final class UploadTaggedData extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
         Account account = ParameterParser.getSenderAccount(req);
-        TaggedDataUploadAttachment taggedDataUpload = ParameterParser.getTaggedData(req);
+        TaggedDataAttachment taggedDataUpload = ParameterParser.getTaggedData(req);
         return createTransaction(req, account, taggedDataUpload);
 
     }

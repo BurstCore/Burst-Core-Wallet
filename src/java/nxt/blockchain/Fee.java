@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -17,17 +17,12 @@
 package nxt.blockchain;
 
 import nxt.Constants;
-import nxt.util.Convert;
 
 public interface Fee {
 
     long getFee(TransactionImpl transaction, Appendix appendage);
 
-    default long[] getBackFees(long fee) {
-        return Convert.EMPTY_LONG;
-    }
-
-    Fee DEFAULT_FEE = new Fee.ConstantFee(Constants.ONE_NXT);
+    Fee DEFAULT_FEE = new Fee.ConstantFee(Constants.ONE_FXT);
 
     Fee NONE = new Fee.ConstantFee(0L);
 

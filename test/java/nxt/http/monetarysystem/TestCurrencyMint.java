@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -17,7 +17,7 @@
 package nxt.http.monetarysystem;
 
 import nxt.BlockchainTest;
-import nxt.Constants;
+import nxt.blockchain.ChildChain;
 import nxt.crypto.HashFunction;
 import nxt.http.APICall;
 import nxt.ms.CurrencyMinting;
@@ -48,7 +48,7 @@ public class TestCurrencyMint extends BlockchainTest {
         // Failed attempt to mint
         APICall apiCall = new APICall.Builder("currencyMint").
                 secretPhrase(ALICE.getSecretPhrase()).
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 param("nonce", 123456).
                 param("units", 1000).
@@ -58,7 +58,7 @@ public class TestCurrencyMint extends BlockchainTest {
         Logger.logDebugMessage("mintResponse: " + mintResponse);
         generateBlock();
         apiCall = new APICall.Builder("getCurrency").
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 build();
         JSONObject getCurrencyResponse = apiCall.invoke();
@@ -78,7 +78,7 @@ public class TestCurrencyMint extends BlockchainTest {
         Logger.logDebugMessage("nonce: " + nonce);
         apiCall = new APICall.Builder("currencyMint").
                 secretPhrase(ALICE.getSecretPhrase()).
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 param("nonce", nonce).
                 param("units", units).
@@ -88,7 +88,7 @@ public class TestCurrencyMint extends BlockchainTest {
         Logger.logDebugMessage("mintResponse: " + mintResponse);
         generateBlock();
         apiCall = new APICall.Builder("getCurrency").
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 build();
         getCurrencyResponse = apiCall.invoke();

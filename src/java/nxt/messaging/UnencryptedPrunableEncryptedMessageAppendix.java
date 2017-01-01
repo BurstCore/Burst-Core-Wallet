@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -53,6 +53,14 @@ public final class UnencryptedPrunableEncryptedMessageAppendix extends PrunableE
             throw new NxtException.NotYetEncryptedException("Prunable encrypted message not yet encrypted");
         }
         super.putMyBytes(buffer);
+    }
+
+    @Override
+    public void putMyPrunableBytes(ByteBuffer buffer) {
+        if (getEncryptedData() == null) {
+            throw new NxtException.NotYetEncryptedException("Prunable encrypted message not yet encrypted");
+        }
+        super.putMyPrunableBytes(buffer);
     }
 
     @Override

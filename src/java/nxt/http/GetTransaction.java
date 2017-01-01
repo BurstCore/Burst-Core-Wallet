@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -44,7 +44,7 @@ public final class GetTransaction extends APIServlet.APIRequestHandler {
 
         Transaction transaction;
         try {
-            transaction = Nxt.getBlockchain().getTransactionByFullHash(chain, transactionFullHash);
+            transaction = Nxt.getBlockchain().getTransaction(chain, transactionFullHash);
             if (transaction != null) {
                 return JSONData.transaction(transaction, includePhasingResult);
             }

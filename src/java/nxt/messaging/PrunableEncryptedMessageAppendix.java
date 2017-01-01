@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -21,7 +21,7 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Appendix;
-import nxt.blockchain.ChildChain;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
@@ -36,25 +36,33 @@ import java.security.MessageDigest;
 
 public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix implements Appendix.Prunable {
 
-    private static final String appendixName = "PrunableEncryptedMessage";
+    public static final int appendixType = 16;
+    public static final String appendixName = "PrunableEncryptedMessage";
 
-    private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT/10) {
+    public static final AppendixParser appendixParser = new AppendixParser() {
+        @Override
+        public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
+            return new PrunableEncryptedMessageAppendix(buffer);
+        }
+        @Override
+        public AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException {
+            if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+                return null;
+            }
+            JSONObject encryptedMessageJSON = (JSONObject)attachmentData.get("encryptedMessage");
+            if (encryptedMessageJSON != null && encryptedMessageJSON.get("data") == null) {
+                return new UnencryptedPrunableEncryptedMessageAppendix(attachmentData);
+            }
+            return new PrunableEncryptedMessageAppendix(attachmentData);
+        }
+    };
+
+    private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_FXT/10) {
         @Override
         public int getSize(TransactionImpl transaction, Appendix appendix) {
             return appendix.getFullSize();
         }
     };
-
-    public static PrunableEncryptedMessageAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
-        }
-        JSONObject encryptedMessageJSON = (JSONObject)attachmentData.get("encryptedMessage");
-        if (encryptedMessageJSON != null && encryptedMessageJSON.get("data") == null) {
-            return new UnencryptedPrunableEncryptedMessageAppendix(attachmentData);
-        }
-        return new PrunableEncryptedMessageAppendix(attachmentData);
-    }
 
     private final byte[] hash;
     private EncryptedData encryptedData;
@@ -62,13 +70,22 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
     private final boolean isCompressed;
     private volatile PrunableMessageHome.PrunableMessage prunableMessage;
 
-    public PrunableEncryptedMessageAppendix(ByteBuffer buffer) {
+    private PrunableEncryptedMessageAppendix(ByteBuffer buffer) throws NxtException.NotValidException {
         super(buffer);
-        this.hash = new byte[32];
-        buffer.get(this.hash);
-        this.encryptedData = null;
-        this.isText = false;
-        this.isCompressed = false;
+        byte flags = buffer.get();
+        if ((flags & 1) != 0) {
+            this.isText = (flags & 2) != 0;
+            this.isCompressed = (flags & 4) != 0;
+            int length = buffer.getInt();
+            this.encryptedData = EncryptedData.readEncryptedData(buffer, length, Constants.MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH);
+            this.hash = null;
+        } else {
+            this.hash = new byte[32];
+            buffer.get(this.hash);
+            this.encryptedData = null;
+            this.isText = false;
+            this.isCompressed = false;
+        }
     }
 
     PrunableEncryptedMessageAppendix(JSONObject attachmentJSON) {
@@ -104,17 +121,39 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
 
     @Override
     protected final int getMySize() {
-        return 32;
+        return 1 + 32;
     }
 
     @Override
-    protected final int getMyFullSize() {
-        return getEncryptedDataLength();
+    public final int getMyFullSize() {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
+        }
+        return 1 + 4 + getEncryptedData().getSize();
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
+        buffer.put((byte)0);
         buffer.put(getHash());
+    }
+
+    @Override
+    public void putMyPrunableBytes(ByteBuffer buffer) {
+        if (!hasPrunableData()) {
+            throw new IllegalStateException("Prunable data not available");
+        }
+        byte flags = 1;
+        if (isText()) {
+            flags |= 2;
+        }
+        if (isCompressed()) {
+            flags |= 4;
+        }
+        buffer.put(flags);
+        buffer.putInt(getEncryptedDataLength());
+        buffer.put(getEncryptedData().getData());
+        buffer.put(getEncryptedData().getNonce());
     }
 
     @Override
@@ -138,13 +177,18 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
     }
 
     @Override
+    public int getAppendixType() {
+        return appendixType;
+    }
+
+    @Override
     public final String getAppendixName() {
         return appendixName;
     }
 
     @Override
     public void validate(Transaction transaction) throws NxtException.ValidationException {
-        if (((ChildTransaction)transaction).getEncryptedMessage() != null) {
+        if (transaction instanceof ChildTransaction && ((ChildTransaction)transaction).getEncryptedMessage() != null) {
             throw new NxtException.NotValidException("Cannot have both encrypted and prunable encrypted message attachments");
         }
         EncryptedData ed = getEncryptedData();
@@ -169,7 +213,7 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         if (Nxt.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
-            ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this);
+            transaction.getChain().getPrunableMessageHome().add((TransactionImpl)transaction, this);
         }
     }
 
@@ -218,7 +262,7 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            PrunableMessageHome.PrunableMessage prunableMessage = ((ChildChain) transaction.getChain()).getPrunableMessageHome()
+            PrunableMessageHome.PrunableMessage prunableMessage = transaction.getChain().getPrunableMessageHome()
                     .getPrunableMessage(transaction.getFullHash());
             if (prunableMessage != null && prunableMessage.getEncryptedData() != null) {
                 this.prunableMessage = prunableMessage;
@@ -232,12 +276,17 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
     }
 
     @Override
+    public boolean isAllowed(Chain chain) {
+        return true;
+    }
+
+    @Override
     public final boolean hasPrunableData() {
         return (prunableMessage != null || encryptedData != null);
     }
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        ((ChildChain) transaction.getChain()).getPrunableMessageHome().add((TransactionImpl)transaction, this, blockTimestamp, height);
+        transaction.getChain().getPrunableMessageHome().add((TransactionImpl)transaction, this, blockTimestamp, height);
     }
 }

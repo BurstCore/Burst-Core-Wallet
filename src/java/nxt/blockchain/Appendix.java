@@ -1,6 +1,6 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016 Jelurida IP B.V.
+ * Copyright © 2016-2017 Jelurida IP B.V.
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -20,12 +20,28 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
+import nxt.account.PublicKeyAnnouncementAppendix;
+import nxt.messaging.EncryptToSelfMessageAppendix;
+import nxt.messaging.EncryptedMessageAppendix;
+import nxt.messaging.MessageAppendix;
+import nxt.messaging.PrunableEncryptedMessageAppendix;
+import nxt.messaging.PrunablePlainMessageAppendix;
+import nxt.shuffling.ShufflingProcessingAttachment;
+import nxt.taggeddata.TaggedDataAttachment;
+import nxt.voting.PhasingAppendix;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public interface Appendix {
 
+    int getAppendixType();
     int getSize();
     int getFullSize();
     void putBytes(ByteBuffer buffer);
@@ -37,6 +53,7 @@ public interface Appendix {
     Fee getNextFee(Transaction transaction);
     Fee getFee(Transaction transaction, int height);
     boolean isPhased(Transaction transaction);
+    boolean isAllowed(Chain chain);
 
     interface Prunable {
         byte[] getHash();
@@ -47,14 +64,56 @@ public interface Appendix {
                     (includeExpiredPrunable && Constants.INCLUDE_EXPIRED_PRUNABLE ?
                             Constants.MAX_PRUNABLE_LIFETIME : Constants.MIN_PRUNABLE_LIFETIME);
         }
+        void putMyPrunableBytes(ByteBuffer buffer);
+        int getMyFullSize();
     }
 
     interface Encryptable {
         void encrypt(String secretPhrase);
     }
 
+    interface AppendixParser {
+        AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException;
+        AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException;
+    }
+
+    static Collection<AppendixParser> getParsers() {
+        return AbstractAppendix.parsersMap.values();
+    }
+
+    static AppendixParser getParser(int appendixType) {
+        return AbstractAppendix.parsersMap.get(appendixType);
+    }
+
+    static Collection<AppendixParser> getPrunableParsers() {
+        return AbstractAppendix.prunableParsers;
+    }
 
     abstract class AbstractAppendix implements Appendix {
+
+        private static final SortedMap<Integer,AppendixParser> parsersMap;
+        static {
+            SortedMap<Integer,AppendixParser> map = new TreeMap<>();
+            map.put(MessageAppendix.appendixType, MessageAppendix.appendixParser);
+            map.put(EncryptedMessageAppendix.appendixType, EncryptedMessageAppendix.appendixParser);
+            map.put(EncryptToSelfMessageAppendix.appendixType, EncryptToSelfMessageAppendix.appendixParser);
+            map.put(PrunablePlainMessageAppendix.appendixType, PrunablePlainMessageAppendix.appendixParser);
+            map.put(PrunableEncryptedMessageAppendix.appendixType, PrunableEncryptedMessageAppendix.appendixParser);
+            map.put(PublicKeyAnnouncementAppendix.appendixType, PublicKeyAnnouncementAppendix.appendixParser);
+            map.put(PhasingAppendix.appendixType, PhasingAppendix.appendixParser);
+            parsersMap = Collections.unmodifiableSortedMap(map);
+        }
+
+        private static final List<AppendixParser> prunableParsers;
+        static {
+            List<AppendixParser> list = new ArrayList<>();
+            list.add(PrunablePlainMessageAppendix.appendixParser);
+            list.add(PrunableEncryptedMessageAppendix.appendixParser);
+            list.add(ShufflingProcessingAttachment.appendixParser);
+            list.add(TaggedDataAttachment.appendixParser);
+            list.add(ChildBlockAttachment.appendixParser);
+            prunableParsers = Collections.unmodifiableList(list);
+        }
 
         private final byte version;
 
@@ -63,7 +122,7 @@ public interface Appendix {
         }
 
         protected AbstractAppendix(ByteBuffer buffer) {
-            version = buffer.get();
+            this.version = buffer.get();
         }
 
         protected AbstractAppendix(int version) {
@@ -83,14 +142,14 @@ public interface Appendix {
 
         @Override
         public final int getFullSize() {
-            return getMyFullSize() + (version > 0 ? 1 : 0);
+            if (this instanceof Prunable && ((Prunable)this).hasPrunableData()) {
+                return ((Prunable)this).getMyFullSize() + 1;
+            } else {
+                return getSize();
+            }
         }
 
         protected abstract int getMySize();
-
-        protected int getMyFullSize() {
-            return getMySize();
-        }
 
         @Override
         public final void putBytes(ByteBuffer buffer) {
@@ -101,6 +160,15 @@ public interface Appendix {
         }
 
         protected abstract void putMyBytes(ByteBuffer buffer);
+
+        final void putPrunableBytes(ByteBuffer buffer) {
+            if (this instanceof Prunable && ((Prunable)this).hasPrunableData()) {
+                buffer.put(version);
+                ((Prunable)this).putMyPrunableBytes(buffer);
+            } else {
+                putBytes(buffer);
+            }
+        }
 
         @Override
         public final JSONObject getJSONObject() {
@@ -123,7 +191,7 @@ public interface Appendix {
 
         @Override
         public int getBaselineFeeHeight() {
-            return 1;
+            return 0;
         }
 
         @Override
