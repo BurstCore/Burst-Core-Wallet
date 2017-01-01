@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -47,19 +48,52 @@ public final class BundlerRate {
         //
         // Verify the bundler accounts
         //
+        List<BundlerRate> validRates = new ArrayList<>();
+        long currentAccountId = 0;
+        byte[] publicKey = null;
+        long balance = 0;
         for (BundlerRate rate : rates) {
-            byte[] accountPublicKey = Account.getPublicKey(rate.getAccountId());
+            long accountId = rate.getAccountId();
+            if (currentAccountId != accountId) {
+                Account account = Account.getAccount(accountId);
+                if (account == null) {
+                    Logger.logDebugMessage("Bundler account "
+                            + Long.toUnsignedString(accountId) + " does not exist");
+                    publicKey = null;
+                } else {
+                    publicKey = Account.getPublicKey(accountId);
+                    if (publicKey == null) {
+                        Logger.logDebugMessage("Bundler account "
+                                + Long.toUnsignedString(accountId) + " does not have a public key");
+                    } else {
+                        balance = account.getEffectiveBalanceFXT();
+                        if (balance < Peers.minBundlerBalanceFXT) {
+                            Logger.logDebugMessage("Effective balance for bundler account "
+                                    + Long.toUnsignedString(accountId)
+                                    + " is less than the minimum of " + Peers.minBundlerBalanceFXT);
+                        }
+                    }
+                }
+                currentAccountId = accountId;
+            }
+            if (publicKey == null) {
+                continue;
+            }
             if (!Crypto.verify(rate.getSignature(), rate.getUnsignedBytes(), rate.getPublicKey()) ||
-                        (accountPublicKey != null && !Arrays.equals(rate.getPublicKey(), accountPublicKey))) {
+                        !Arrays.equals(rate.getPublicKey(), publicKey)) {
                 Logger.logDebugMessage("Bundler rate for account "
-                        + Long.toUnsignedString(rate.getAccountId()) + " failed signature verification");
-                return null;
+                        + Long.toUnsignedString(accountId) + " failed signature verification");
+            } else if (balance >= Peers.minBundlerBalanceFXT) {
+                rate.setBalance(balance);
+                validRates.add(rate);
             }
         }
         //
         // Update the rates and relay the message
         //
-        Peers.updateBundlerRates(peer, request);
+        if (!validRates.isEmpty()) {
+            Peers.updateBundlerRates(peer, request, validRates);
+        }
         return null;
     }
 
@@ -76,10 +110,13 @@ public final class BundlerRate {
     private final byte[] publicKey;
 
     /** Timestamp */
-    private int timestamp;
+    private final int timestamp;
 
     /** Signature */
     private final byte[] signature;
+
+    /** Account FXT balance (not sent to peers) */
+    private long accountBalance;
 
     /**
      * Create an unsigned bundler rate
@@ -149,7 +186,7 @@ public final class BundlerRate {
      * @param   buffer                      Byte buffer
      * @throws  BufferOverflowException     Allocated buffer is too small
      */
-    public synchronized void getBytes(ByteBuffer buffer) {
+    public void getBytes(ByteBuffer buffer) {
         buffer.putInt(chain.getId())
               .put(publicKey)
               .putLong(rate)
@@ -163,12 +200,13 @@ public final class BundlerRate {
      * @return                              Rate bytes
      */
     public byte[] getUnsignedBytes() {
-        byte[] bytes = new byte[getLength() - 4 - 64];
+        byte[] bytes = new byte[getLength() - 64];
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.putInt(chain.getId())
               .put(publicKey)
-              .putLong(rate);
+              .putLong(rate)
+              .putInt(timestamp);
         return bytes;
     }
 
@@ -213,17 +251,8 @@ public final class BundlerRate {
      *
      * @return                          Timestamp
      */
-    public synchronized int getTimestamp() {
+    public int getTimestamp() {
         return timestamp;
-    }
-
-    /**
-     * Set the timestamp
-     *
-     * @param   timestamp               New timestamp
-     */
-    public synchronized void setTimestamp(int timestamp) {
-        this.timestamp = timestamp;
     }
 
     /**
@@ -233,6 +262,24 @@ public final class BundlerRate {
      */
     public byte[] getSignature() {
         return signature;
+    }
+
+    /**
+     * Get the account balance
+     *
+     * @return                          Account balance
+     */
+    public long getBalance() {
+        return accountBalance;
+    }
+
+    /**
+     * Set the account balance
+     *
+     * @param   balance                 Account balance
+     */
+    public void setBalance(long balance) {
+        accountBalance = balance;
     }
 
     /**

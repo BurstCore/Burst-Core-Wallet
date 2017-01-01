@@ -12,6 +12,7 @@
  */
 package nxt.http;
 
+import nxt.Constants;
 import nxt.NxtException;
 import nxt.peer.BundlerRate;
 import nxt.peer.Peers;
@@ -27,14 +28,16 @@ public final class GetBundlerRates extends APIServlet.APIRequestHandler {
     static final GetBundlerRates instance = new GetBundlerRates();
 
     private GetBundlerRates() {
-        super(new APITag[]{APITag.FORGING});
+        super(new APITag[]{APITag.FORGING}, "minBundlerBalanceFXT");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
+        long minBalance = ParameterParser.getLong(req, "minBundlerBalanceFXT",
+                0, Constants.MAX_BALANCE_NXT, false);
         JSONObject response = new JSONObject();
         JSONArray ratesJSON = new JSONArray();
-        List<BundlerRate> rates = Peers.getBestBundlerRates();
+        List<BundlerRate> rates = Peers.getBestBundlerRates(minBalance);
         rates.forEach(rate -> {
             JSONObject rateJSON = new JSONObject();
             rateJSON.put("chain", rate.getChain().getId());
