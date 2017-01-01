@@ -27,7 +27,7 @@ public final class Constants {
     public static final long EPOCH_BEGINNING;
     static {
         try {
-            EPOCH_BEGINNING = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").parse("2016-12-22 15:20:00 +0000").getTime();
+            EPOCH_BEGINNING = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").parse("2017-01-01 00:00:00 +0000").getTime();
         } catch (Exception e) {
             throw new ExceptionInInitializerError(e);
         }
