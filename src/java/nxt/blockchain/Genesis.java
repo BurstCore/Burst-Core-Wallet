@@ -40,12 +40,12 @@ final class Genesis {
 
     static final byte[] generationSignature = Constants.isTestnet ?
             new byte[] {
-                    -41, -41, -30, -100, -63, -37, 62, 1, 56, -127, 84, 112, -8, 1, 96, -10,
-                    52, -33, -20, 94, -63, 58, -35, 110, -24, -46, -78, 38, -21, -82, -96, 42
+                    -59, 37, -67, -124, 87, 37, -7, 45, 5, -5, -117, 93, 98, -103, 46, 18,
+                    -77, 14, 98, -52, -23, -91, 3, 79, 37, -6, 23, -90, 62, 8, 82, -1
             } : new byte[32];
 
     static byte[] apply() {
-        Account.addOrGetAccount(Account.getId(new byte[32])).apply(new byte[32]);
+        //Account.addOrGetAccount(Account.getId(new byte[32])).apply(new byte[32]);
         MessageDigest digest = Crypto.sha256();
         int count = 0;
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
@@ -87,6 +87,7 @@ final class Genesis {
                 throw new RuntimeException("Failed to process genesis recipients accounts for " + chain.getName(), e);
             }
         }
+        digest.update(Convert.toBytes(Constants.EPOCH_BEGINNING));
         return digest.digest();
     }
 

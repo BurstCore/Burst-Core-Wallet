@@ -1275,8 +1275,9 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             BlockImpl genesisBlock = new BlockImpl(Genesis.generationSignature);
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
-            if (!Arrays.equals(Genesis.apply(), genesisBlock.getGenerationSignature())) {
-                Db.db.rollbackTransaction();
+            byte[] generationSignature = Genesis.apply();
+            if (!Arrays.equals(generationSignature, genesisBlock.getGenerationSignature())) {
+                throw new RuntimeException("Invalid generation signature " + Arrays.toString(generationSignature));
             } else {
                 Db.db.commitTransaction();
                 for (DerivedDbTable table : derivedTables) {
