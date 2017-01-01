@@ -2003,9 +2003,9 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                             byte[] transactionBytes = transaction.bytes();
                                             if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionBytes).build().bytes())) {
                                                 throw new NxtException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
-                                                        + JSON.toJSONString(transaction.getJSONObject());
+                                                        + JSON.toJSONString(transaction.getJSONObject()));
                                             }
-                                            JSONObject transactionJSON = (JSONObject) JSONValue.parse(JSON.toJSONString(transaction.getJSONObject());
+                                            JSONObject transactionJSON = (JSONObject) JSONValue.parse(JSON.toJSONString(transaction.getJSONObject()));
                                             if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionJSON).build().bytes())) {
                                                 throw new NxtException.NotValidException("Transaction JSON cannot be parsed back to the same transaction: "
                                                         + JSON.toJSONString(transaction.getJSONObject()));

@@ -16,6 +16,7 @@
 
 package nxt.util;
 
+import nxt.Constants;
 import nxt.NxtException;
 import nxt.crypto.Crypto;
 
