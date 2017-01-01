@@ -250,7 +250,9 @@ public final class Bundler {
         try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = transactionProcessor.getUnconfirmedFxtTransactions()) {
             while (unconfirmedTransactions.hasNext()) {
                 FxtTransaction fxtTransaction = (FxtTransaction)unconfirmedTransactions.next().getTransaction();
-                if (fxtTransaction.getType() == ChildBlockFxtTransactionType.INSTANCE && fxtTransaction.getSenderId() == accountId) {
+                if (fxtTransaction.getType() == ChildBlockFxtTransactionType.INSTANCE
+                        && ((ChildBlockFxtTransaction)fxtTransaction).getChildChain() == childChain
+                        && fxtTransaction.getSenderId() == accountId) {
                     try {
                         fxtTransaction.validate();
                     } catch (NxtException.ValidationException e) {
