@@ -473,11 +473,6 @@ public final class Currency {
     }
 
     public boolean canBeDeletedBy(long senderAccountId) {
-        for (ChildChain chain : ChildChain.getAll()) {
-            if (!is(CurrencyType.NON_SHUFFLEABLE) && chain.getShufflingHome().getHoldingShufflingCount(currencyId, false) > 0) {
-                return false;
-            }
-        }
         if (!isActive()) {
             return senderAccountId == accountId;
         }
@@ -485,7 +480,13 @@ public final class Currency {
             return false;
         }
         try (DbIterator<Account.AccountCurrency> accountCurrencies = Account.getCurrencyAccounts(this.currencyId, 0, -1)) {
-            return ! accountCurrencies.hasNext() || accountCurrencies.next().getAccountId() == senderAccountId && ! accountCurrencies.hasNext();
+            if (!accountCurrencies.hasNext()) {
+                return true;
+            }
+            Account.AccountCurrency accountCurrency = accountCurrencies.next();
+            return !accountCurrencies.hasNext()
+                    && accountCurrency.getAccountId() == senderAccountId
+                    && accountCurrency.getUnconfirmedUnits() == accountCurrency.getUnits();
         }
     }
 
@@ -511,18 +512,6 @@ public final class Currency {
                 }
             }
             childChain.getCurrencyFounderHome().remove(currencyId);
-        }
-        if (is(CurrencyType.EXCHANGEABLE)) {
-            for (ChildChain chain : ChildChain.getAll()) {
-                ExchangeOfferHome exchangeOfferHome = chain.getExchangeOfferHome();
-                List<ExchangeOfferHome.BuyOffer> buyOffers = new ArrayList<>();
-                try (DbIterator<ExchangeOfferHome.BuyOffer> offers = exchangeOfferHome.getBuyOffers(this, 0, -1)) {
-                    while (offers.hasNext()) {
-                        buyOffers.add(offers.next());
-                    }
-                }
-                buyOffers.forEach((offer) -> exchangeOfferHome.removeOffer(event, offer));
-            }
         }
         if (is(CurrencyType.MINTABLE)) {
             CurrencyMint.deleteCurrency(this);
