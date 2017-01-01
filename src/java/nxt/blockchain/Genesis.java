@@ -19,6 +19,7 @@ package nxt.blockchain;
 import nxt.Constants;
 import nxt.account.Account;
 import nxt.crypto.Crypto;
+import nxt.dbschema.Db;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import org.json.simple.JSONArray;
@@ -46,15 +47,19 @@ final class Genesis {
     static byte[] apply() {
         Account.addOrGetAccount(Account.getId(new byte[32])).apply(new byte[32]);
         MessageDigest digest = Crypto.sha256();
+        int count = 0;
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                 ClassLoader.getSystemResourceAsStream("PUBLIC_KEY" + (Constants.isTestnet ? "-testnet.json" : ".json")), digest))) {
             JSONArray json = (JSONArray) JSONValue.parseWithException(is);
             Logger.logDebugMessage("Loading public keys");
-            json.forEach(jsonPublicKey -> {
+            for (Object jsonPublicKey : json) {
                 byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
                 Account account = Account.addOrGetAccount(Account.getId(publicKey));
                 account.apply(publicKey);
-            });
+                if (count++ % 100 == 0) {
+                    Db.db.commitTransaction();
+                }
+            }
             Logger.logDebugMessage("Loaded " + json.size() + " public keys");
         } catch (IOException|ParseException e) {
             throw new RuntimeException("Failed to process genesis recipients public keys", e);
@@ -63,6 +68,7 @@ final class Genesis {
         chains.add(FxtChain.FXT);
         chains.sort(Comparator.comparingInt(Chain::getId));
         for (Chain chain : chains) {
+            count = 0;
             try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                     ClassLoader.getSystemResourceAsStream(chain.getName() + (Constants.isTestnet ? "-testnet.json" : ".json")), digest))) {
                 JSONObject chainBalances = (JSONObject) JSONValue.parseWithException(is);
@@ -72,8 +78,11 @@ final class Genesis {
                     Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()));
                     account.addToBalanceAndUnconfirmedBalance(chain, null, null, entry.getValue());
                     total += entry.getValue();
+                    if (count++ % 100 == 0) {
+                        Db.db.commitTransaction();
+                    }
                 }
-                Logger.logDebugMessage("Total balance " + total + " " + chain.getName());
+                Logger.logDebugMessage("Total balance %f %s", (double)total / chain.ONE_COIN, chain.getName());
             } catch (IOException|ParseException e) {
                 throw new RuntimeException("Failed to process genesis recipients accounts for " + chain.getName(), e);
             }
