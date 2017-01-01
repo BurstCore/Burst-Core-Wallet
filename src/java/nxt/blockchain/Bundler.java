@@ -30,10 +30,8 @@ import nxt.util.Logger;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class Bundler {
@@ -190,7 +188,6 @@ public final class Bundler {
                 transaction -> transaction.getTransaction().hasAllReferencedTransactions(transaction.getTimestamp(), 0))) {
             while (unconfirmedTransactions.hasNext()) {
                 List<ChildTransaction> childTransactions = new ArrayList<>();
-                Set<ChildTransaction> childTransactionSet = new HashSet<>();
                 long totalMinFeeFQT = 0;
                 Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
                 //TODO: need to check block size limits in addition to transaction count
@@ -213,12 +210,14 @@ public final class Bundler {
                         continue;
                     }
                     childTransactions.add(childTransaction);
-                    childTransactionSet.add(childTransaction);
                     totalMinFeeFQT += minChildFeeFQT;
                 }
-                if (childTransactionSet.size() > 0 && !hasChildBlockFxtTransaction(childTransactionSet)) {
+                if (childTransactions.size() > 0) {
                     long totalFeeFQT = overpay(totalMinFeeFQT);
-                    if (totalFeeFQT <= FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()) {
+                    if (totalFeeFQT > FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()) {
+                        Logger.logInfoMessage("Bundler account " + Long.toUnsignedString(accountId)
+                                + " does not have sufficient balance to cover total Ardor fees " + totalFeeFQT);
+                    } else if (!hasBetterChildBlockFxtTransaction(childTransactions, totalFeeFQT)) {
                         try {
                             ChildBlockFxtTransaction childBlockFxtTransaction = bundle(childTransactions, totalFeeFQT, now);
                             currentTotalFeesFQT += totalFeeFQT;
@@ -226,9 +225,6 @@ public final class Bundler {
                         } catch (NxtException.ValidationException e) {
                             Logger.logInfoMessage(e.getMessage(), e);
                         }
-                    } else {
-                        Logger.logInfoMessage("Bundler account " + Long.toUnsignedString(accountId)
-                                + " does not have sufficient balance to cover total Ardor fees " + totalMinFeeFQT);
                     }
                 }
             }
@@ -246,21 +242,21 @@ public final class Bundler {
         return childBlockFxtTransaction;
     }
 
-    private boolean hasChildBlockFxtTransaction(Set<ChildTransaction> childTransactions) {
+    private boolean hasBetterChildBlockFxtTransaction(List<ChildTransaction> childTransactions, long fee) {
         try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = transactionProcessor.getUnconfirmedFxtTransactions()) {
             while (unconfirmedTransactions.hasNext()) {
                 FxtTransaction fxtTransaction = (FxtTransaction)unconfirmedTransactions.next().getTransaction();
                 if (fxtTransaction.getType() == ChildBlockFxtTransactionType.INSTANCE
-                        && ((ChildBlockFxtTransaction)fxtTransaction).getChildChain() == childChain
-                        && fxtTransaction.getSenderId() == accountId) {
-                    try {
-                        fxtTransaction.validate();
-                    } catch (NxtException.ValidationException e) {
-                        continue; // skip not currently valid
-                    }
-                    List<? extends ChildTransaction> bundledChildTransactions = fxtTransaction.getChildTransactions();
-                    if (childTransactions.size() == bundledChildTransactions.size() && childTransactions.containsAll(bundledChildTransactions)) {
-                        return true;
+                        && ((ChildBlockFxtTransaction)fxtTransaction).getChildChain() == childChain) {
+                    if (fxtTransaction.getFee() >= fee) {
+                        try {
+                            fxtTransaction.validate();
+                        } catch (NxtException.ValidationException e) {
+                            continue;
+                        }
+                        if (fxtTransaction.getChildTransactions().containsAll(childTransactions)) {
+                            return true;
+                        }
                     }
                 }
             }
