@@ -92,7 +92,7 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
                 throw new NxtException.NotValidException("Duplicate child transaction hash");
             }
             if (childChain.getTransactionHome().hasTransaction(childTransactionHash, childTransactionId, blockchainHeight)) {
-                throw new NxtException.NotValidException("Child transaction already included at an earlier height");
+                throw new NxtException.NotCurrentlyValidException("Child transaction already included at an earlier height");
             }
         }
         for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
