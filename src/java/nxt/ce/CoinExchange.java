@@ -58,7 +58,6 @@ public final class CoinExchange {
     }
 
     private static final BigDecimal askConstant = new BigDecimal(1L, MathContext.DECIMAL128);
-    private static final BigDecimal minAsk = new BigDecimal("0.00000001", MathContext.DECIMAL128);
     private static final DbKey.LongKeyFactory<Order> orderDbKeyFactory =
             new DbKey.LongKeyFactory<Order>("id") {
         @Override
@@ -307,13 +306,23 @@ public final class CoinExchange {
         Order askOrder;
         Order bidOrder;
         Chain chain = attachment.getChain();
+        int bidDecimals = chain.getDecimals();
         Chain exchangeChain = attachment.getExchangeChain();
+        int askDecimals = exchangeChain.getDecimals();
         //
         // Match orders until the ask price is greater than the bid price
         //
         while ((askOrder = getNextAskOrder(exchangeChain.getId(), chain.getId())) != null &&
                     (bidOrder = getNextBidOrder(chain.getId(), exchangeChain.getId())) != null) {
-            if (askOrder.getAskPrice() > bidOrder.getBidPrice()) {
+            BigDecimal bidOrderBid = new BigDecimal(bidOrder.getBidPrice(), MathContext.DECIMAL128)
+                    .movePointLeft(bidDecimals);
+            BigDecimal bidOrderAsk = new BigDecimal(bidOrder.getAskPrice(), MathContext.DECIMAL128)
+                    .movePointLeft(askDecimals);
+            BigDecimal askOrderBid = new BigDecimal(askOrder.getBidPrice(), MathContext.DECIMAL128)
+                    .movePointLeft(askDecimals);
+            BigDecimal askOrderAsk = new BigDecimal(askOrder.getAskPrice(), MathContext.DECIMAL128)
+                    .movePointLeft(bidDecimals);
+            if (askOrderAsk.compareTo(bidOrderBid) > 0) {
                 break;
             }
             //
@@ -323,26 +332,27 @@ public final class CoinExchange {
             // The bid order exchange Coin A for Coin B while the ask order exchanges
             // Coin B for Coin A.
             //
+            BigDecimal bidPrice;            // Coin A / Coin B
+            BigDecimal askPrice;            // Coin B / Coin A
+            long bidQuantity;               // Amount of Coin B to exchange
+            long askQuantity;               // Amount of Coin A to exchange
             boolean isBuy = (askOrder.getHeight() < bidOrder.getHeight()) ||
                     (askOrder.getHeight() == bidOrder.getHeight() &&
                         (askOrder.getTransactionHeight() < bidOrder.getTransactionHeight() ||
                             (askOrder.getTransactionHeight() == bidOrder.getTransactionHeight() &&
                                 askOrder.getTransactionIndex() < bidOrder.getTransactionIndex())));
-            BigDecimal bidPrice;            // Coin A / Coin B
-            BigDecimal askPrice;            // Coin B / Coin A
-            long bidQuantity;               // Amount of Coin B to exchange
-            long askQuantity;               // Amount of Coin A to exchange
+
             if (isBuy) {
-                bidPrice = new BigDecimal(askOrder.getAskPrice(), MathContext.DECIMAL128).movePointLeft(8);
-                askPrice = new BigDecimal(askOrder.getBidPrice(), MathContext.DECIMAL128).movePointLeft(8);
+                bidPrice = askOrderAsk;
+                askPrice = askOrderBid;
             } else {
-                bidPrice = new BigDecimal(bidOrder.getBidPrice(), MathContext.DECIMAL128).movePointLeft(8);
-                askPrice = new BigDecimal(bidOrder.getAskPrice(), MathContext.DECIMAL128).movePointLeft(8);
+                bidPrice = bidOrderBid;
+                askPrice = bidOrderAsk;
             }
             bidQuantity = new BigDecimal(bidOrder.getQuantity(), MathContext.DECIMAL128)
-                    .movePointLeft(8)
+                    .movePointLeft(bidDecimals)
                     .multiply(askPrice)
-                    .movePointRight(8)
+                    .movePointRight(askDecimals)
                     .longValue();
             if (bidQuantity == 0) {
                 bidQuantity = 1;
@@ -351,9 +361,9 @@ public final class CoinExchange {
                 bidQuantity = askOrder.getQuantity();
             }
             askQuantity = new BigDecimal(askOrder.getQuantity(), MathContext.DECIMAL128)
-                    .movePointLeft(8)
+                    .movePointLeft(askDecimals)
                     .multiply(bidPrice)
-                    .movePointRight(8)
+                    .movePointRight(bidDecimals)
                     .longValue();
             if (askQuantity == 0) {
                 askQuantity = 1;
@@ -364,11 +374,11 @@ public final class CoinExchange {
             //
             // Create the trade for bid order
             //
-            addTrade(bidQuantity, bidPrice.movePointRight(8).longValue(), bidOrder, askOrder);
+            addTrade(bidQuantity, bidPrice.movePointRight(bidDecimals).longValue(), bidOrder, askOrder);
             //
             // Create the trade for the ask order
             //
-            addTrade(askQuantity, askPrice.movePointRight(8).longValue(), askOrder, bidOrder);
+            addTrade(askQuantity, askPrice.movePointRight(askDecimals).longValue(), askOrder, bidOrder);
             //
             // Update the buyer balances
             //
@@ -385,7 +395,8 @@ public final class CoinExchange {
             //
             askOrder.updateQuantity(askOrder.getQuantity() - bidQuantity);
             BalanceHome.Balance sellerBalance = exchangeChain.getBalanceHome().getBalance(askOrder.getAccountId());
-            AccountLedger.LedgerEventId askEventId = AccountLedger.newEventId(askOrder.getId(), askOrder.getFullHash(), chain);
+            AccountLedger.LedgerEventId askEventId = AccountLedger.newEventId(askOrder.getId(),
+                    askOrder.getFullHash(), exchangeChain);
             sellerBalance.addToBalance(LedgerEvent.COIN_EXCHANGE_TRADE, askEventId, -bidQuantity);
             sellerBalance = chain.getBalanceHome().getBalance(askOrder.getAccountId());
             sellerBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.COIN_EXCHANGE_TRADE, askEventId,
@@ -428,13 +439,13 @@ public final class CoinExchange {
             this.exchangeId = attachment.getExchangeChain().getId();
             this.quantity = attachment.getQuantityQNT();
             this.bidPrice = attachment.getPriceNQT();
-            BigDecimal bidValue = new BigDecimal(this.bidPrice, MathContext.DECIMAL128).movePointLeft(8);
-            BigDecimal askValue = askConstant.divide(bidValue, MathContext.DECIMAL128).movePointRight(8);
-            if (askValue.compareTo(minAsk) < 0) {
-                this.askPrice = 1L;
-            } else {
-                this.askPrice = askValue.longValue();
-            }
+            Chain chain = Chain.getChain(chainId);
+            Chain exchange = Chain.getChain(exchangeId);
+            BigDecimal bidValue = new BigDecimal(this.bidPrice, MathContext.DECIMAL128)
+                    .movePointLeft(chain.getDecimals());
+            long askValue = askConstant.divide(bidValue, MathContext.DECIMAL128)
+                    .movePointRight(exchange.getDecimals()).longValue();
+            this.askPrice = (askValue > 0 ? askValue : 1);
             this.dbKey = orderDbKeyFactory.newKey(this.id);
         }
 
