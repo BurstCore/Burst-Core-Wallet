@@ -320,56 +320,76 @@ public final class CoinExchange {
             // We will use the exchange price from the older order.  The number of coins
             // that can be exchanged is limited by the order quantities.
             //
+            // The bid order exchange Coin A for Coin B while the ask order exchanges
+            // Coin B for Coin A.
+            //
             boolean isBuy = (askOrder.getHeight() < bidOrder.getHeight()) ||
                     (askOrder.getHeight() == bidOrder.getHeight() &&
                         (askOrder.getTransactionHeight() < bidOrder.getTransactionHeight() ||
                             (askOrder.getTransactionHeight() == bidOrder.getTransactionHeight() &&
                                 askOrder.getTransactionIndex() < bidOrder.getTransactionIndex())));
-            BigDecimal price = new BigDecimal((isBuy ? askOrder.getAskPrice() : bidOrder.getBidPrice()),
-                    MathContext.DECIMAL128).movePointLeft(8);
-            BigDecimal cost = askConstant.divide(price, MathContext.DECIMAL128);
-            if (cost.compareTo(minAsk) < 0) {
-                cost = minAsk;
+            BigDecimal bidPrice;            // Coin A / Coin B
+            BigDecimal askPrice;            // Coin B / Coin A
+            long bidQuantity;               // Amount of Coin B to exchange
+            long askQuantity;               // Amount of Coin A to exchange
+            if (isBuy) {
+                bidPrice = new BigDecimal(askOrder.getAskPrice(), MathContext.DECIMAL128).movePointLeft(8);
+                askPrice = new BigDecimal(askOrder.getBidPrice(), MathContext.DECIMAL128).movePointLeft(8);
+            } else {
+                bidPrice = new BigDecimal(bidOrder.getBidPrice(), MathContext.DECIMAL128).movePointLeft(8);
+                askPrice = new BigDecimal(bidOrder.getAskPrice(), MathContext.DECIMAL128).movePointLeft(8);
             }
-            long bidQuantity = new BigDecimal(bidOrder.getQuantity(), MathContext.DECIMAL128)
-                    .movePointLeft(8).multiply(cost).movePointRight(8).longValue();
-            long askQuantity = askOrder.getQuantity();
-            //
-            // Create the trade for our coin
-            //
-            long exchangeQuantity = bidQuantity < askQuantity ? bidQuantity : askQuantity;
-            long exchangePrice = price.movePointRight(8).longValue();
-            Trade bidTrade = addTrade(exchangeQuantity, exchangePrice, bidOrder, askOrder);
-            //
-            // Create the trade for the exchange coin
-            //
-            exchangeQuantity = new BigDecimal(exchangeQuantity, MathContext.DECIMAL128)
-                    .movePointLeft(8).multiply(price).movePointRight(8).longValue();
-            if (exchangeQuantity >= bidOrder.getQuantity() - 1) {
-                exchangeQuantity = bidOrder.getQuantity();
+            bidQuantity = new BigDecimal(bidOrder.getQuantity(), MathContext.DECIMAL128)
+                    .movePointLeft(8)
+                    .multiply(askPrice)
+                    .movePointRight(8)
+                    .longValue();
+            if (bidQuantity == 0) {
+                bidQuantity = 1;
             }
-            exchangePrice = cost.movePointRight(8).longValue();
-            Trade askTrade = addTrade(exchangeQuantity, exchangePrice, askOrder, bidOrder);
+            if (bidQuantity >= askOrder.getQuantity() - 1) {
+                bidQuantity = askOrder.getQuantity();
+            }
+            askQuantity = new BigDecimal(askOrder.getQuantity(), MathContext.DECIMAL128)
+                    .movePointLeft(8)
+                    .multiply(bidPrice)
+                    .movePointRight(8)
+                    .longValue();
+            if (askQuantity == 0) {
+                askQuantity = 1;
+            }
+            if (askQuantity >= bidOrder.getQuantity() - 1) {
+                askQuantity = bidOrder.getQuantity();
+            }
+            //
+            // Create the trade for bid order
+            //
+            addTrade(bidQuantity, bidPrice.movePointRight(8).longValue(), bidOrder, askOrder);
+            //
+            // Create the trade for the ask order
+            //
+            addTrade(askQuantity, askPrice.movePointRight(8).longValue(), askOrder, bidOrder);
             //
             // Update the buyer balances
             //
-            bidOrder.updateQuantity(bidOrder.getQuantity() - askTrade.getExchangeQuantity());
+            bidOrder.updateQuantity(bidOrder.getQuantity() - askQuantity);
             BalanceHome.Balance buyerBalance = chain.getBalanceHome().getBalance(bidOrder.getAccountId());
-            AccountLedger.LedgerEventId bidEventId = AccountLedger.newEventId(bidOrder.getId(), bidOrder.getFullHash(), chain);
-            buyerBalance.addToBalance(LedgerEvent.COIN_EXCHANGE_TRADE, bidEventId, -askTrade.getExchangeQuantity());
+            AccountLedger.LedgerEventId bidEventId =
+                    AccountLedger.newEventId(bidOrder.getId(), bidOrder.getFullHash(), chain);
+            buyerBalance.addToBalance(LedgerEvent.COIN_EXCHANGE_TRADE, bidEventId, -askQuantity);
             buyerBalance = exchangeChain.getBalanceHome().getBalance(bidOrder.getAccountId());
             buyerBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.COIN_EXCHANGE_TRADE, bidEventId,
-                    bidTrade.getExchangeQuantity());
+                    bidQuantity);
             //
             // Update the seller balances
             //
-            askOrder.updateQuantity(askOrder.getQuantity() - bidTrade.getExchangeQuantity());
+            askOrder.updateQuantity(askOrder.getQuantity() - bidQuantity);
             BalanceHome.Balance sellerBalance = exchangeChain.getBalanceHome().getBalance(askOrder.getAccountId());
             AccountLedger.LedgerEventId askEventId = AccountLedger.newEventId(askOrder.getId(), askOrder.getFullHash(), chain);
-            sellerBalance.addToBalance(LedgerEvent.COIN_EXCHANGE_TRADE, askEventId, -bidTrade.getExchangeQuantity());
+            sellerBalance.addToBalance(LedgerEvent.COIN_EXCHANGE_TRADE, askEventId, -bidQuantity);
             sellerBalance = chain.getBalanceHome().getBalance(askOrder.getAccountId());
             sellerBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.COIN_EXCHANGE_TRADE, askEventId,
-                    askTrade.getExchangeQuantity());
+                    askQuantity);
         }
     }
 
