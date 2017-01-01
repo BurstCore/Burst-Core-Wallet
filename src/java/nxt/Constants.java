@@ -25,11 +25,11 @@ public final class Constants {
     public static final int MAX_NUMBER_OF_TRANSACTIONS = 255;
     public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int MAX_PAYLOAD_LENGTH = MAX_NUMBER_OF_TRANSACTIONS * MIN_TRANSACTION_SIZE;
-    public static final long MAX_BALANCE_NXT = 1000000000;
-    public static final long ONE_NXT = 100000000;
-    public static final long MAX_BALANCE_NQT = MAX_BALANCE_NXT * ONE_NXT;
+    public static final long MAX_BALANCE_FXT = 1000000000;
+    public static final long ONE_FXT = 100000000;
+    public static final long MAX_BALANCE_NQT = MAX_BALANCE_FXT * ONE_FXT;
     public static final long INITIAL_BASE_TARGET = 153722867;
-    public static final long MAX_BASE_TARGET = MAX_BALANCE_NXT * INITIAL_BASE_TARGET;
+    public static final long MAX_BASE_TARGET = MAX_BALANCE_FXT * INITIAL_BASE_TARGET;
     public static final long MAX_BASE_TARGET_2 = isTestnet ? MAX_BASE_TARGET : INITIAL_BASE_TARGET * 50;
     public static final long MIN_BASE_TARGET = INITIAL_BASE_TARGET * 9 / 10;
     public static final int MIN_BLOCKTIME_LIMIT = 53;
@@ -38,7 +38,7 @@ public final class Constants {
     public static final int MAX_ROLLBACK = Math.max(Nxt.getIntProperty("nxt.maxRollback"), 720);
     public static final int GUARANTEED_BALANCE_CONFIRMATIONS = isTestnet ? Nxt.getIntProperty("nxt.testnetGuaranteedBalanceConfirmations", 1440) : 1440;
     public static final int LEASING_DELAY = isTestnet ? Nxt.getIntProperty("nxt.testnetLeasingDelay", 1440) : 1440;
-    public static final long MIN_FORGING_BALANCE_FQT = 1000 * ONE_NXT;
+    public static final long MIN_FORGING_BALANCE_FQT = 1000 * ONE_FXT;
 
     public static final int MAX_TIMEDRIFT = 15; // allow up to 15 s clock difference
     public static final int FORGING_DELAY = Nxt.getIntProperty("nxt.forgingDelay");
@@ -129,8 +129,7 @@ public final class Constants {
     public static final int[] MIN_VERSION = new int[] {2, 0};
     public static final int[] MIN_PROXY_VERSION = new int[] {2, 0};
 
-    public static final long UNCONFIRMED_POOL_DEPOSIT_FQT = (isTestnet ? 50 : 100) * ONE_NXT;
-    public static final long SHUFFLING_DEPOSIT_NQT = (isTestnet ? 7 : 1000) * ONE_NXT;
+    public static final long UNCONFIRMED_POOL_DEPOSIT_FQT = (isTestnet ? 50 : 100) * ONE_FXT;
 
     public static final boolean correctInvalidFees = Nxt.getBooleanProperty("nxt.correctInvalidFees");
 

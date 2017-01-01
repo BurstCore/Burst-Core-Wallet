@@ -33,7 +33,7 @@ import java.nio.ByteBuffer;
 
 abstract class AbstractEncryptedMessageAppendix extends Appendix.AbstractAppendix {
 
-    private static final Fee ENCRYPTED_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT, Constants.ONE_NXT, 32) {
+    private static final Fee ENCRYPTED_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_FXT, Constants.ONE_FXT, 32) {
         @Override
         public int getSize(TransactionImpl transaction, Appendix appendage) {
             return ((AbstractEncryptedMessageAppendix)appendage).getEncryptedDataLength() - 16;

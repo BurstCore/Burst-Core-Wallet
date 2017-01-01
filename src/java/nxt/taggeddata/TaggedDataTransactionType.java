@@ -47,7 +47,7 @@ public abstract class TaggedDataTransactionType extends ChildTransactionType {
         }
     }
 
-    private static final Fee TAGGED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT, Constants.ONE_NXT/10) {
+    private static final Fee TAGGED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_FXT, Constants.ONE_FXT/10) {
         @Override
         public int getSize(TransactionImpl transaction, Appendix appendix) {
             return appendix.getFullSize();

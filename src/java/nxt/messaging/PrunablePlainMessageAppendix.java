@@ -52,7 +52,7 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
         }
     };
 
-    private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT/10) {
+    private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_FXT/10) {
         @Override
         public int getSize(TransactionImpl transaction, Appendix appendix) {
             return appendix.getFullSize();

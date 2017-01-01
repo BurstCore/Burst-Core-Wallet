@@ -74,7 +74,7 @@ public abstract class AliasTransactionType extends ChildTransactionType {
 
     public static final TransactionType ALIAS_ASSIGNMENT = new AliasTransactionType() {
 
-        private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_NXT, 2 * Constants.ONE_NXT, 32) {
+        private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_FXT, 2 * Constants.ONE_FXT, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 AliasAssignmentAttachment attachment = (AliasAssignmentAttachment) transaction.getAttachment();

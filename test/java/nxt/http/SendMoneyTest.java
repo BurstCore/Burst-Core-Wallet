@@ -17,7 +17,7 @@
 package nxt.http;
 
 import nxt.BlockchainTest;
-import nxt.Constants;
+import nxt.blockchain.ChildChain;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;
 import org.junit.Assert;
@@ -30,8 +30,8 @@ public class SendMoneyTest extends BlockchainTest {
         JSONObject response = new APICall.Builder("sendMoney").
                 param("secretPhrase", ALICE.getSecretPhrase()).
                 param("recipient", BOB.getStrId()).
-                param("amountNQT", 100 * Constants.ONE_NXT).
-                param("feeNQT", Constants.ONE_NXT).
+                param("amountNQT", 100 * ChildChain.IGNIS.ONE_COIN).
+                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
         Logger.logDebugMessage("sendMoney: " + response);
         // Forger
@@ -39,20 +39,20 @@ public class SendMoneyTest extends BlockchainTest {
         Assert.assertEquals(0, FORGY.getUnconfirmedBalanceDiff());
         // Sender
         Assert.assertEquals(0, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - Constants.ONE_NXT, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - ChildChain.IGNIS.ONE_COIN, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
         Assert.assertEquals(0, BOB.getBalanceDiff());
         Assert.assertEquals(0, BOB.getUnconfirmedBalanceDiff());
         generateBlock();
         // Forger
-        Assert.assertEquals(Constants.ONE_NXT, FORGY.getBalanceDiff());
-        Assert.assertEquals(Constants.ONE_NXT, FORGY.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(ChildChain.IGNIS.ONE_COIN, FORGY.getBalanceDiff());
+        Assert.assertEquals(ChildChain.IGNIS.ONE_COIN, FORGY.getUnconfirmedBalanceDiff());
         // Sender
-        Assert.assertEquals(-100 * Constants.ONE_NXT - Constants.ONE_NXT, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - Constants.ONE_NXT, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - ChildChain.IGNIS.ONE_COIN, ALICE.getBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - ChildChain.IGNIS.ONE_COIN, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(100 * Constants.ONE_NXT, BOB.getBalanceDiff());
-        Assert.assertEquals(100 * Constants.ONE_NXT, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getUnconfirmedBalanceDiff());
     }
 
     @Test
@@ -61,7 +61,7 @@ public class SendMoneyTest extends BlockchainTest {
                 param("secretPhrase", ALICE.getSecretPhrase()).
                 param("recipient", BOB.getStrId()).
                 param("amountNQT", ALICE.getInitialBalance()).
-                param("feeNQT", Constants.ONE_NXT).
+                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
         Logger.logDebugMessage("sendMoney: " + response);
         Assert.assertEquals((long)6, response.get("errorCode"));
@@ -72,15 +72,15 @@ public class SendMoneyTest extends BlockchainTest {
         JSONObject response = new APICall.Builder("sendMoney").
                 param("secretPhrase", ALICE.getSecretPhrase()).
                 param("recipient", BOB.getStrId()).
-                param("amountNQT", 100 * Constants.ONE_NXT).
-                param("feeNQT", Constants.ONE_NXT).
+                param("amountNQT", 100 * ChildChain.IGNIS.ONE_COIN).
+                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
         Logger.logDebugMessage("sendMoney1: " + response);
         response = new APICall.Builder("sendMoney").
                 param("secretPhrase", BOB.getSecretPhrase()).
                 param("recipient", ALICE.getStrId()).
-                param("amountNQT", 100 * Constants.ONE_NXT).
-                param("feeNQT", Constants.ONE_NXT).
+                param("amountNQT", 100 * ChildChain.IGNIS.ONE_COIN).
+                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
         Logger.logDebugMessage("sendMoney2: " + response);
         // Forger
@@ -88,20 +88,20 @@ public class SendMoneyTest extends BlockchainTest {
         Assert.assertEquals(0, FORGY.getUnconfirmedBalanceDiff());
         // Sender
         Assert.assertEquals(0, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - Constants.ONE_NXT, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - ChildChain.IGNIS.ONE_COIN, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
         Assert.assertEquals(0, BOB.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - Constants.ONE_NXT, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - ChildChain.IGNIS.ONE_COIN, BOB.getUnconfirmedBalanceDiff());
         generateBlock();
         // Forger
-        Assert.assertEquals(2*Constants.ONE_NXT, FORGY.getBalanceDiff());
-        Assert.assertEquals(2*Constants.ONE_NXT, FORGY.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(2* ChildChain.IGNIS.ONE_COIN, FORGY.getBalanceDiff());
+        Assert.assertEquals(2* ChildChain.IGNIS.ONE_COIN, FORGY.getUnconfirmedBalanceDiff());
         // Sender
-        Assert.assertEquals(-Constants.ONE_NXT, ALICE.getBalanceDiff());
-        Assert.assertEquals(-Constants.ONE_NXT, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN, ALICE.getBalanceDiff());
+        Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(-Constants.ONE_NXT, BOB.getBalanceDiff());
-        Assert.assertEquals(-Constants.ONE_NXT, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN, BOB.getBalanceDiff());
+        Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN, BOB.getUnconfirmedBalanceDiff());
     }
 
     @Test
@@ -109,8 +109,8 @@ public class SendMoneyTest extends BlockchainTest {
         JSONObject response = new APICall.Builder("sendMoney").
                 param("publicKey", ALICE.getPublicKeyStr()).
                 param("recipient", BOB.getStrId()).
-                param("amountNQT", 100 * Constants.ONE_NXT).
-                param("feeNQT", Constants.ONE_NXT).
+                param("amountNQT", 100 * ChildChain.IGNIS.ONE_COIN).
+                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
         Logger.logDebugMessage("sendMoney: " + response);
         generateBlock();
@@ -133,11 +133,11 @@ public class SendMoneyTest extends BlockchainTest {
         generateBlock();
 
         // Sender
-        Assert.assertEquals(-100 * Constants.ONE_NXT - Constants.ONE_NXT, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - Constants.ONE_NXT, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - ChildChain.IGNIS.ONE_COIN, ALICE.getBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - ChildChain.IGNIS.ONE_COIN, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(100 * Constants.ONE_NXT, BOB.getBalanceDiff());
-        Assert.assertEquals(100 * Constants.ONE_NXT, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getUnconfirmedBalanceDiff());
     }
 
     @Test
@@ -145,8 +145,8 @@ public class SendMoneyTest extends BlockchainTest {
         JSONObject response = new APICall.Builder("sendMoney").
                 param("publicKey", ALICE.getPublicKeyStr()).
                 param("recipient", BOB.getStrId()).
-                param("amountNQT", 100 * Constants.ONE_NXT).
-                param("feeNQT", Constants.ONE_NXT).
+                param("amountNQT", 100 * ChildChain.IGNIS.ONE_COIN).
+                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
         Logger.logDebugMessage("sendMoney: " + response);
         generateBlock();
@@ -169,10 +169,10 @@ public class SendMoneyTest extends BlockchainTest {
         generateBlock();
 
         // Sender
-        Assert.assertEquals(-100 * Constants.ONE_NXT - Constants.ONE_NXT, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * Constants.ONE_NXT - Constants.ONE_NXT, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - ChildChain.IGNIS.ONE_COIN, ALICE.getBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - ChildChain.IGNIS.ONE_COIN, ALICE.getUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(100 * Constants.ONE_NXT, BOB.getBalanceDiff());
-        Assert.assertEquals(100 * Constants.ONE_NXT, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getUnconfirmedBalanceDiff());
     }
 }

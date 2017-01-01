@@ -151,7 +151,7 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
         long minimumFeeFQT = getMinimumFeeFQT(Nxt.getBlockchain().getHeight());
         if (feeFQT < minimumFeeFQT) {
             throw new NxtException.NotCurrentlyValidException(String.format("Transaction fee %f FXT less than minimum fee %f FXT at height %d",
-                    ((double) feeFQT) / Constants.ONE_NXT, ((double) minimumFeeFQT) / Constants.ONE_NXT, Nxt.getBlockchain().getHeight()));
+                    ((double) feeFQT) / Constants.ONE_FXT, ((double) minimumFeeFQT) / Constants.ONE_FXT, Nxt.getBlockchain().getHeight()));
         }
         validateEcBlock();
         AccountRestrictions.checkTransaction(this);

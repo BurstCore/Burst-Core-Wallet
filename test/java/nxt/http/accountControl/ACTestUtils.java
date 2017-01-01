@@ -16,7 +16,7 @@
 
 package nxt.http.accountControl;
 
-import nxt.Constants;
+import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
 import nxt.http.monetarysystem.TestCurrencyIssuance;
 import nxt.util.Logger;
@@ -48,8 +48,8 @@ public class ACTestUtils {
         public CurrencyExchangeBuilder(String currencyId, String secretPhrase, int height) {
             super("publishExchangeOffer");
             param("currency", currencyId);
-            param("buyRateNQT", 10 * Constants.ONE_NXT);
-            param("sellRateNQT", 10 * Constants.ONE_NXT);
+            param("buyRateNQT", 10 * ChildChain.IGNIS.ONE_COIN);
+            param("sellRateNQT", 10 * ChildChain.IGNIS.ONE_COIN);
             param("totalBuyLimit", 0);
             param("totalSellLimit", 50);
             param("initialBuySupply", 0);

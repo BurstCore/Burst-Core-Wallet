@@ -21,6 +21,7 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.HoldingType;
 import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildChain;
 import nxt.shuffling.ShufflingCreationAttachment;
 import org.json.simple.JSONStreamAware;
 
@@ -38,10 +39,12 @@ public final class ShufflingCreate extends CreateTransaction {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         HoldingType holdingType = ParameterParser.getHoldingType(req);
-        long holdingId = holdingType != HoldingType.COIN ? ParameterParser.getHoldingId(req) : ParameterParser.getChain(req).getId();
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        long holdingId = holdingType != HoldingType.COIN ? ParameterParser.getHoldingId(req) : childChain.getId();
         long amount = ParameterParser.getLong(req, "amount", 0L, Long.MAX_VALUE, true);
-        if (holdingType == HoldingType.COIN && amount < Constants.SHUFFLING_DEPOSIT_NQT) {
-            return JSONResponses.incorrect("amount", "Minimum shuffling amount is " + Constants.SHUFFLING_DEPOSIT_NQT / Constants.ONE_NXT + " NXT");
+        if (holdingType == HoldingType.COIN && amount < childChain.SHUFFLING_DEPOSIT_NQT) {
+            return JSONResponses.incorrect("amount", String.format("Minimum shuffling amount is %f %s",
+                    ((double) childChain.SHUFFLING_DEPOSIT_NQT) / childChain.ONE_COIN, childChain.getName()));
         }
         byte participantCount = ParameterParser.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
                 Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, true);

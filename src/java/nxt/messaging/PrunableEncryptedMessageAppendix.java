@@ -57,7 +57,7 @@ public class PrunableEncryptedMessageAppendix extends Appendix.AbstractAppendix 
         }
     };
 
-    private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT/10) {
+    private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_FXT/10) {
         @Override
         public int getSize(TransactionImpl transaction, Appendix appendix) {
             return appendix.getFullSize();

@@ -17,7 +17,7 @@
 package nxt.http.twophased;
 
 import nxt.BlockchainTest;
-import nxt.Constants;
+import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
 import nxt.util.Convert;
 import nxt.util.Logger;
@@ -43,7 +43,7 @@ public class TestGetCurrencyPhasedTransactions extends BlockchainTest {
                 .votingModel(VoteWeighting.VotingModel.CURRENCY.getCode())
                 .holding(Convert.parseUnsignedLong(currency))
                 .minBalance(1, VoteWeighting.MinBalanceModel.CURRENCY.getCode())
-                .fee(21 * Constants.ONE_NXT)
+                .fee(21 * ChildChain.IGNIS.ONE_COIN)
                 .build();
     }
 

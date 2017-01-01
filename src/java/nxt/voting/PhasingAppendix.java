@@ -71,14 +71,14 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
         long fee = 0;
         PhasingAppendix phasing = (PhasingAppendix)appendage;
         if (!phasing.params.getVoteWeighting().isBalanceIndependent()) {
-            fee += 20 * Constants.ONE_NXT;
+            fee += 20 * Constants.ONE_FXT;
         } else {
-            fee += Constants.ONE_NXT;
+            fee += Constants.ONE_FXT;
         }
         if (phasing.hashedSecret.length > 0) {
-            fee += (1 + (phasing.hashedSecret.length - 1) / 32) * Constants.ONE_NXT;
+            fee += (1 + (phasing.hashedSecret.length - 1) / 32) * Constants.ONE_FXT;
         }
-        fee += Constants.ONE_NXT * phasing.linkedTransactionsIds.size();
+        fee += Constants.ONE_FXT * phasing.linkedTransactionsIds.size();
         return fee;
     };
 

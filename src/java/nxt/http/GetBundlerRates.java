@@ -34,7 +34,7 @@ public final class GetBundlerRates extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         long minBalance = ParameterParser.getLong(req, "minBundlerBalanceFXT",
-                0, Constants.MAX_BALANCE_NXT, false);
+                0, Constants.MAX_BALANCE_FXT, false);
         JSONObject response = new JSONObject();
         JSONArray ratesJSON = new JSONArray();
         List<BundlerRate> rates = Peers.getBestBundlerRates(minBalance);

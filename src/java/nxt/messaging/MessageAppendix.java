@@ -51,7 +51,7 @@ public class MessageAppendix extends Appendix.AbstractAppendix {
         }
     };
 
-    private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_NXT, 32) {
+    private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_FXT, 32) {
         @Override
         public int getSize(TransactionImpl transaction, Appendix appendage) {
             return ((MessageAppendix)appendage).getMessage().length;

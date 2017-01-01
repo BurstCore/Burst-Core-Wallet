@@ -33,7 +33,7 @@ public final class FxtChain extends Chain {
     public static void init() {}
 
     private FxtChain() {
-        super(1, FXT_NAME);
+        super(1, FXT_NAME, 8);
     }
 
     @Override

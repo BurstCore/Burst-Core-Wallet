@@ -1183,7 +1183,7 @@ public final class Account {
     public long getEffectiveBalanceFXT(int height) {
         if (height <= Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
             BalanceHome.Balance genesisRecipientBalance = FxtChain.FXT.getBalanceHome().getBalance(id, 0);
-            return genesisRecipientBalance.getBalance() / Constants.ONE_NXT;
+            return genesisRecipientBalance.getBalance() / Constants.ONE_FXT;
         }
         if (this.publicKey == null) {
             this.publicKey = publicKeyTable.get(accountDbKeyFactory.newKey(this));
@@ -1197,7 +1197,7 @@ public final class Account {
             if (activeLesseeId == 0) {
                 effectiveBalanceFQT += getGuaranteedBalanceFQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
             }
-	        return effectiveBalanceFQT < Constants.MIN_FORGING_BALANCE_FQT ? 0 : effectiveBalanceFQT / Constants.ONE_NXT;
+	        return effectiveBalanceFQT < Constants.MIN_FORGING_BALANCE_FQT ? 0 : effectiveBalanceFQT / Constants.ONE_FXT;
         } finally {
             Nxt.getBlockchain().readUnlock();
         }

@@ -19,6 +19,7 @@ package nxt.blockchain;
 import nxt.NxtException;
 import nxt.account.BalanceHome;
 import nxt.messaging.PrunableMessageHome;
+import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -44,15 +45,20 @@ public abstract class Chain {
         }
     }
 
+    public final long ONE_COIN;
+
     private final String name;
     private final int id;
+    private final int decimals;
     private final TransactionHome transactionHome;
     private final BalanceHome balanceHome;
     private final PrunableMessageHome prunableMessageHome;
 
-    Chain(int id, String name) {
+    Chain(int id, String name, int decimals) {
         this.id = id;
         this.name = name;
+        this.decimals = decimals;
+        this.ONE_COIN = Convert.decimalMultiplier(decimals);
         this.transactionHome = TransactionHome.forChain(this);
         this.balanceHome = BalanceHome.forChain(this);
         this.prunableMessageHome = PrunableMessageHome.forChain(this);
@@ -64,6 +70,10 @@ public abstract class Chain {
 
     public final int getId() {
         return id;
+    }
+
+    public final int getDecimals() {
+        return decimals;
     }
 
     public String getDbSchema() {

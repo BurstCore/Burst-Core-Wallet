@@ -144,10 +144,10 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             long minFeeFQT = getMinimumFeeFQT(Nxt.getBlockchain().getHeight());
             if (builder.feeRateNQTPerFXT <= 0) {
                 throw new NxtException.NotValidException(String.format("Please include fee in %s equivalent to at least %f %s",
-                        childChain.getName(), ((double) minFeeFQT) / Constants.ONE_NXT, FxtChain.FXT.getName()));
+                        childChain.getName(), ((double) minFeeFQT) / Constants.ONE_FXT, FxtChain.FXT.getName()));
             }
             BigInteger[] fee = BigInteger.valueOf(minFeeFQT).multiply(BigInteger.valueOf(builder.feeRateNQTPerFXT))
-                    .divideAndRemainder(BigInteger.valueOf(Constants.ONE_NXT));
+                    .divideAndRemainder(BigInteger.valueOf(Constants.ONE_FXT));
             this.fee = fee[1].equals(BigInteger.ZERO) ? fee[0].longValueExact() : fee[0].longValueExact() + 1;
         } else {
             this.fee = builder.fee;
@@ -247,7 +247,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     public long getMinimumFeeFQT(int blockchainHeight) {
         long totalFee = super.getMinimumFeeFQT(blockchainHeight);
         if (referencedTransactionId != null) {
-            totalFee = Math.addExact(totalFee, Constants.ONE_NXT);
+            totalFee = Math.addExact(totalFee, Constants.ONE_FXT);
         }
         return totalFee;
     }

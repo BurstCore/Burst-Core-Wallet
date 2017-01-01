@@ -16,9 +16,9 @@
 
 package nxt.http.shuffling;
 
-import nxt.Constants;
 import nxt.Tester;
 import nxt.account.HoldingType;
+import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
 import nxt.util.Convert;
 import nxt.util.Logger;
@@ -43,7 +43,7 @@ class ShufflingUtil {
     static JSONObject create(Tester creator, int participantCount) {
         APICall apiCall = new APICall.Builder("shufflingCreate").
                 secretPhrase(creator.getSecretPhrase()).
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("amount", String.valueOf(defaultShufflingAmount)).
                 param("participantCount", String.valueOf(participantCount)).
                 param("registrationPeriod", 10).
@@ -56,7 +56,7 @@ class ShufflingUtil {
     static JSONObject createAssetShuffling(Tester creator) {
         APICall apiCall = new APICall.Builder("shufflingCreate").
                 secretPhrase(creator.getSecretPhrase()).
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("amount", String.valueOf(defaultHoldingShufflingAmount)).
                 param("participantCount", "4").
                 param("registrationPeriod", 10).
@@ -71,7 +71,7 @@ class ShufflingUtil {
     static JSONObject createCurrencyShuffling(Tester creator) {
         APICall apiCall = new APICall.Builder("shufflingCreate").
                 secretPhrase(creator.getSecretPhrase()).
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("amount", String.valueOf(defaultHoldingShufflingAmount)).
                 param("participantCount", "4").
                 param("registrationPeriod", 10).
@@ -86,7 +86,7 @@ class ShufflingUtil {
     static JSONObject register(String shufflingFullHash, Tester tester) {
         APICall apiCall = new APICall.Builder("shufflingRegister").
                 secretPhrase(tester.getSecretPhrase()).
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("shufflingFullHash", shufflingFullHash).
                 build();
         JSONObject response = apiCall.invoke();
@@ -136,7 +136,7 @@ class ShufflingUtil {
                 param("shuffling", shufflingId).
                 param("secretPhrase", tester.getSecretPhrase()).
                 param("shufflingStateHash", shufflingStateHash).
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 build();
         JSONObject response = apiCall.invoke();
         Logger.logDebugMessage("shufflingVerifyResponse:" + response);
@@ -152,7 +152,7 @@ class ShufflingUtil {
                 param("shuffling", shufflingId).
                 param("secretPhrase", tester.getSecretPhrase()).
                 param("shufflingStateHash", shufflingStateHash).
-                feeNQT(10 * Constants.ONE_NXT);
+                feeNQT(10 * ChildChain.IGNIS.ONE_COIN);
         if (cancellingAccountId != 0) {
             builder.param("cancellingAccount", Long.toUnsignedString(cancellingAccountId));
         }
@@ -209,8 +209,8 @@ class ShufflingUtil {
         JSONObject response = new APICall.Builder("sendMoney").
                 param("secretPhrase", sender.getSecretPhrase()).
                 param("recipient", recipient.getStrId()).
-                param("amountNQT", amountNXT * Constants.ONE_NXT).
-                param("feeNQT", Constants.ONE_NXT).
+                param("amountNQT", amountNXT * ChildChain.IGNIS.ONE_COIN).
+                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
         Logger.logMessage("sendMoneyReponse: " + response.toJSONString());
         return response;

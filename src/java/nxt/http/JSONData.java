@@ -147,7 +147,7 @@ public final class JSONData {
             json.put("currentHeightFrom", String.valueOf(accountLease.getCurrentLeasingHeightFrom()));
             json.put("currentHeightTo", String.valueOf(accountLease.getCurrentLeasingHeightTo()));
             if (includeEffectiveBalance) {
-                json.put("effectiveBalanceNXT", String.valueOf(account.getGuaranteedBalanceFQT() / Constants.ONE_NXT));
+                json.put("effectiveBalanceNXT", String.valueOf(account.getGuaranteedBalanceFQT() / Constants.ONE_FXT));
             }
         }
         if (accountLease.getNextLesseeId() != 0) {

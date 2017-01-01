@@ -17,8 +17,8 @@
 package nxt.http;
 
 import nxt.BlockchainTest;
-import nxt.Constants;
 import nxt.account.Account;
+import nxt.blockchain.ChildChain;
 import nxt.crypto.Crypto;
 import nxt.crypto.EncryptedData;
 import nxt.util.Convert;
@@ -35,7 +35,7 @@ public class SendMessageTest extends BlockchainTest {
                 param("secretPhrase", ALICE.getSecretPhrase()).
                 param("recipient", BOB.getStrId()).
                 param("message", "hello world").
-                param("feeNQT", Constants.ONE_NXT).
+                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
         Logger.logDebugMessage("sendMessage: " + response);
         String transaction = (String) response.get("transaction");
@@ -163,7 +163,7 @@ public class SendMessageTest extends BlockchainTest {
                 param("secretPhrase", ALICE.getSecretPhrase()).
                 param("recipient", rsAccount).
                 param("recipientPublicKey", publicKeyStr).
-                param("feeNQT", Constants.ONE_NXT).
+                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
         Logger.logDebugMessage("sendMessage: " + response);
         generateBlock();

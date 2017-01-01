@@ -17,7 +17,7 @@
 package nxt.http.twophased;
 
 import nxt.BlockchainTest;
-import nxt.Constants;
+import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
 import nxt.http.twophased.TestCreateTwoPhased.TwoPhasedMoneyTransferBuilder;
 import nxt.util.Logger;
@@ -60,7 +60,7 @@ public class TestGetVoterPhasedTransactions extends BlockchainTest {
 
         generateBlock();
 
-        long fee = Constants.ONE_NXT;
+        long fee = ChildChain.IGNIS.ONE_COIN;
         apiCall = new APICall.Builder("approveTransaction")
                 .param("secretPhrase", CHUCK.getSecretPhrase())
                 .param("transactionFullHash", transactionFullHash)

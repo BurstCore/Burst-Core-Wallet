@@ -16,7 +16,6 @@
 
 package nxt.account;
 
-import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.ae.AssetTransferAttachment;
@@ -657,7 +656,7 @@ public final class FundingMonitor {
                 Nxt.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = Nxt.getBlockchain().getHeight();
                 Logger.logDebugMessage(String.format("Coin funding transaction %s for %f %s submitted from %s to %s",
-                        transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_NXT,
+                        transaction.getStringId(), (double)monitoredAccount.amount / chain.ONE_COIN,
                         chain.getName(), monitor.accountName, monitoredAccount.accountName));
             }
         }

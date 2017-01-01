@@ -17,8 +17,8 @@
 package nxt.http.monetarysystem;
 
 import nxt.BlockchainTest;
-import nxt.Constants;
 import nxt.account.Account;
+import nxt.blockchain.ChildChain;
 import nxt.crypto.Crypto;
 import nxt.http.APICall;
 import nxt.ms.CurrencyType;
@@ -59,14 +59,14 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
         reserveIncreaseImpl(currencyId, ALICE.getSecretPhrase(), BOB.getSecretPhrase());
         generateBlock(); // cancellation of crowd funding because of insufficient funds
         APICall apiCall = new APICall.Builder("getCurrencyFounders").
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 build();
         JSONObject getFoundersResponse = apiCall.invoke();
         Logger.logMessage("getFoundersResponse: " + getFoundersResponse);
         Assert.assertTrue(((JSONArray)getFoundersResponse.get("founders")).size() == 0);
-        Assert.assertEquals(balanceNQT1 - Constants.ONE_NXT, ALICE.getBalance());
-        Assert.assertEquals(balanceNQT2 - 2*Constants.ONE_NXT, BOB.getBalance());
+        Assert.assertEquals(balanceNQT1 - ChildChain.IGNIS.ONE_COIN, ALICE.getBalance());
+        Assert.assertEquals(balanceNQT2 - 2* ChildChain.IGNIS.ONE_COIN, BOB.getBalance());
     }
 
     @Test
@@ -86,8 +86,8 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
         generateBlock(); // distribution of currency to founders
         Assert.assertEquals(20000, ALICE.getCurrencyUnits(Convert.parseAccountId(currencyId)));
         Assert.assertEquals(80000, BOB.getCurrencyUnits(Convert.parseAccountId(currencyId)));
-        Assert.assertEquals(balanceNQT1 - Constants.ONE_NXT - 200000 + (100000*10), ALICE.getBalance());
-        Assert.assertEquals(balanceNQT2 - 2*Constants.ONE_NXT - 800000, BOB.getBalance());
+        Assert.assertEquals(balanceNQT1 - ChildChain.IGNIS.ONE_COIN - 200000 + (100000*10), ALICE.getBalance());
+        Assert.assertEquals(balanceNQT2 - 2* ChildChain.IGNIS.ONE_COIN - 800000, BOB.getBalance());
     }
 
     @Test
@@ -115,8 +115,8 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
         Assert.assertEquals(19, CHUCK.getCurrencyUnits(Convert.parseAccountId(currencyId)));
         Assert.assertEquals(1, ALICE.getCurrencyUnits(Convert.parseAccountId(currencyId)));
         Assert.assertEquals(balanceNQT1 + 24 * 10, ALICE.getBalance());
-        Assert.assertEquals(balanceNQT2 - Constants.ONE_NXT - 24 * 2, BOB.getBalance());
-        Assert.assertEquals(balanceNQT3 - 2 * Constants.ONE_NXT - 24 * 8, CHUCK.getBalance());
+        Assert.assertEquals(balanceNQT2 - ChildChain.IGNIS.ONE_COIN - 24 * 2, BOB.getBalance());
+        Assert.assertEquals(balanceNQT3 - 2 * ChildChain.IGNIS.ONE_COIN - 24 * 8, CHUCK.getBalance());
 
         apiCall = new APICall.Builder("getCurrency").
                 param("currency", currencyId).
@@ -128,7 +128,7 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
     public void reserveIncreaseImpl(String currencyId, String secret1, String secret2) {
         APICall apiCall = new APICall.Builder("currencyReserveIncrease").
                 secretPhrase(secret1).
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 param("amountPerUnitNQT", "" + 2).
                 build();
@@ -139,7 +139,7 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
         // Two increase reserve transactions in the same block
         apiCall = new APICall.Builder("currencyReserveIncrease").
                 secretPhrase(secret2).
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 param("amountPerUnitNQT", "" + 3).
                 build();
@@ -148,7 +148,7 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
 
         apiCall = new APICall.Builder("currencyReserveIncrease").
                 secretPhrase(secret2).
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 param("amountPerUnitNQT", "" + 5).
                 build();
@@ -158,7 +158,7 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
         generateBlock();
 
         apiCall = new APICall.Builder("getCurrencyFounders").
-                feeNQT(Constants.ONE_NXT).
+                feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 build();
         JSONObject getFoundersResponse = apiCall.invoke();

@@ -19,6 +19,7 @@ package nxt.http;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.account.HoldingType;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.FxtChain;
@@ -40,7 +41,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public final class GetConstants extends APIServlet.APIRequestHandler {
@@ -216,10 +219,25 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 notForwardedRequests.addAll(APIProxy.NOT_FORWARDED_REQUESTS);
                 response.put("proxyNotForwardedRequests", notForwardedRequests);
 
+                List<Chain> chains = new ArrayList<>(ChildChain.getAll());
+                chains.add(FxtChain.FXT);
                 JSONObject chainsJSON = new JSONObject();
-                chainsJSON.put(FxtChain.FXT.getName(), FxtChain.FXT.getId());
-                ChildChain.getAll().forEach(chain -> chainsJSON.put(chain.getName(), chain.getId()));
+                chains.forEach(chain -> chainsJSON.put(chain.getName(), chain.getId()));
                 response.put("chains", chainsJSON);
+
+                JSONObject chainPropertiesJSON = new JSONObject();
+                chains.forEach(chain -> {
+                    JSONObject json = new JSONObject();
+                    json.put("name", chain.getName());
+                    json.put("id", chain.getId());
+                    json.put("decimals", chain.getDecimals());
+                    json.put("ONE_COIN", String.valueOf(chain.ONE_COIN));
+                    if (chain instanceof ChildChain) {
+                        json.put("SHUFFLING_DEPOSIT_NQT", String.valueOf(((ChildChain) chain).SHUFFLING_DEPOSIT_NQT));
+                    }
+                    chainPropertiesJSON.put(chain.getId(), json);
+                });
+                response.put("chainProperties", chainPropertiesJSON);
 
                 CONSTANTS = JSON.prepare(response);
             } catch (Exception e) {

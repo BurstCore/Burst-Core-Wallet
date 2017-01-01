@@ -76,14 +76,14 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
 
     public static final TransactionType ASSET_ISSUANCE = new AssetExchangeTransactionType() {
 
-        private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT, Constants.ONE_NXT, 32) {
+        private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(Constants.ONE_FXT, Constants.ONE_FXT, 32) {
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 AssetIssuanceAttachment attachment = (AssetIssuanceAttachment) transaction.getAttachment();
                 return attachment.getDescription().length();
             }
         };
 
-        private final Fee ASSET_ISSUANCE_FEE = (transaction, appendage) -> 1000 * Constants.ONE_NXT;
+        private final Fee ASSET_ISSUANCE_FEE = (transaction, appendage) -> 1000 * Constants.ONE_FXT;
 
         @Override
         public final byte getSubtype() {

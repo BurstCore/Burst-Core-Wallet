@@ -16,7 +16,6 @@
 
 package nxt.util;
 
-import nxt.Constants;
 import nxt.NxtException;
 import nxt.blockchain.Genesis;
 import nxt.crypto.Crypto;
@@ -252,8 +251,8 @@ public final class Convert {
         return s == null ? replaceNull : s.length() > limit ? (s.substring(0, dots ? limit - 3 : limit) + (dots ? "..." : "")) : s;
     }
 
-    public static long parseNXT(String nxt) {
-        return parseStringFraction(nxt, 8, Constants.MAX_BALANCE_NXT);
+    public static long decimalMultiplier(int decimals) {
+        return multipliers[decimals];
     }
 
     private static long parseStringFraction(String value, int decimals, long maxValue) {

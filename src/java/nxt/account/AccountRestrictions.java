@@ -16,7 +16,6 @@
 
 package nxt.account;
 
-import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.NxtException.AccountControlException;
@@ -146,7 +145,7 @@ public final class AccountRestrictions {
             if (!validatingAtFinish && maxFee > 0 && Math.addExact(transaction.getFee(),
                     childChain.getPhasingPollHome().getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFee) {
                 throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded",
-                        ((double)maxFee)/ Constants.ONE_NXT, childChain.getName()));
+                        ((double)maxFee)/ childChain.ONE_COIN, childChain.getName()));
             }
             if (transaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING) {
                 return;

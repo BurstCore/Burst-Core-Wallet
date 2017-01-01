@@ -16,6 +16,7 @@
 
 package nxt.blockchain;
 
+import nxt.Constants;
 import nxt.NxtException;
 import nxt.ae.AssetDividendHome;
 import nxt.ae.OrderHome;
@@ -51,8 +52,10 @@ public final class ChildChain extends Chain {
 
     private static final Collection<ChildChain> allChildChains = Collections.unmodifiableCollection(childChains.values());
 
-    public static final ChildChain IGNIS = new ChildChain(2, "IGNIS");
-    public static final ChildChain BTC = new ChildChain(3, "BTC");
+    public static final ChildChain IGNIS = new ChildChain(2, "IGNIS", 8, (Constants.isTestnet ? 7 : 1000) * 100000000);
+    public static final ChildChain BTC = new ChildChain(3, "BTC", 8, 600000);
+    public static final ChildChain USD = new ChildChain(4, "USD", 2, 600);
+    public static final ChildChain EUR = new ChildChain(5, "EUR", 2, 600);
 
     public static ChildChain getChildChain(String name) {
         return childChains.get(name);
@@ -67,6 +70,8 @@ public final class ChildChain extends Chain {
     }
 
     public static void init() {}
+
+    public final long SHUFFLING_DEPOSIT_NQT;
 
     private final AliasHome aliasHome;
     private final AssetDividendHome assetDividendHome;
@@ -85,8 +90,9 @@ public final class ChildChain extends Chain {
     private final TradeHome tradeHome;
     private final VoteHome voteHome;
 
-    private ChildChain(int id, String name) {
-        super(id, name);
+    private ChildChain(int id, String name, int decimals, long shufflingDepositNQT) {
+        super(id, name, decimals);
+        this.SHUFFLING_DEPOSIT_NQT = shufflingDepositNQT;
         this.aliasHome = AliasHome.forChain(this);
         this.assetDividendHome = AssetDividendHome.forChain(this);
         this.currencyFounderHome = CurrencyFounderHome.forChain(this);

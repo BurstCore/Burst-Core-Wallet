@@ -100,7 +100,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
 
     public static final TransactionType LISTING = new DigitalGoodsTransactionType() {
 
-        private final Fee DGS_LISTING_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_NXT, 2 * Constants.ONE_NXT, 32) {
+        private final Fee DGS_LISTING_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_FXT, 2 * Constants.ONE_FXT, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 ListingAttachment attachment = (ListingAttachment) transaction.getAttachment();
@@ -493,7 +493,7 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
 
     public static final TransactionType DELIVERY = new DigitalGoodsTransactionType() {
 
-        private final Fee DGS_DELIVERY_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT, 2 * Constants.ONE_NXT, 32) {
+        private final Fee DGS_DELIVERY_FEE = new Fee.SizeBasedFee(Constants.ONE_FXT, 2 * Constants.ONE_FXT, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 DeliveryAttachment attachment = (DeliveryAttachment) transaction.getAttachment();

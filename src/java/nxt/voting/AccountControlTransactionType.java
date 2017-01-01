@@ -106,7 +106,7 @@ public abstract class AccountControlTransactionType extends ChildTransactionType
                 }
                 long fees = Convert.nullToZero(entry.getValue());
                 if (fees <= 0 || fees > Constants.MAX_BALANCE_NQT) {
-                    throw new NxtException.NotValidException(String.format("Invalid max fees %f for chain %s", ((double) fees) / Constants.ONE_NXT,
+                    throw new NxtException.NotValidException(String.format("Invalid max fees %f for chain %s", ((double) fees) / childChain.ONE_COIN,
                             childChain.getName()));
                 }
             }

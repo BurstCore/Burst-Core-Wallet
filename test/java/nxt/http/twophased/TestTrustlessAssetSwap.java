@@ -17,8 +17,8 @@
 package nxt.http.twophased;
 
 import nxt.BlockchainTest;
-import nxt.Constants;
 import nxt.account.Account;
+import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
@@ -36,7 +36,7 @@ public class TestTrustlessAssetSwap extends BlockchainTest {
                 param("description", "AliceAssetDescription").
                 param("quantityQNT", 1000).
                 param("decimals", 0).
-                param("feeNQT", 1000 * Constants.ONE_NXT).
+                param("feeNQT", 1000 * ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
         generateBlock();
         JSONObject bobAsset = new APICall.Builder("issueAsset").
@@ -45,7 +45,7 @@ public class TestTrustlessAssetSwap extends BlockchainTest {
                 param("description", "BobAssetDescription").
                 param("quantityQNT", 1000).
                 param("decimals", 0).
-                param("feeNQT", 2000 * Constants.ONE_NXT).
+                param("feeNQT", 2000 * ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
         generateBlock();
 
@@ -58,7 +58,7 @@ public class TestTrustlessAssetSwap extends BlockchainTest {
                 param("recipient", BOB.getStrId()).
                 param("asset", aliceAssetId).
                 param("quantityQNT", 100).
-                param("feeNQT", Constants.ONE_NXT).
+                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
 
         JSONObject aliceSignedTransfer = new APICall.Builder("signTransaction").
@@ -78,7 +78,7 @@ public class TestTrustlessAssetSwap extends BlockchainTest {
                 param("recipient", ALICE.getStrId()).
                 param("asset", bobAssetId).
                 param("quantityQNT", 200).
-                param("feeNQT", 3 * Constants.ONE_NXT).
+                param("feeNQT", 3 * ChildChain.IGNIS.ONE_COIN).
                 param("phased", "true").
                 param("phasingFinishHeight", baseHeight + 5).
                 param("phasingVotingModel", 4).

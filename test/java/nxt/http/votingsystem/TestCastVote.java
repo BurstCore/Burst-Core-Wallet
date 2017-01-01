@@ -17,7 +17,7 @@
 package nxt.http.votingsystem;
 
 import nxt.BlockchainTest;
-import nxt.Constants;
+import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
 import nxt.http.votingsystem.TestCreatePoll.CreatePollBuilder;
 import nxt.util.Logger;
@@ -41,7 +41,7 @@ public class TestCastVote extends BlockchainTest {
                 .param("poll", poll)
                 .param("vote00", 1)
                 .param("vote01", 0)
-                .param("feeNQT", Constants.ONE_NXT)
+                .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
                 .build();
 
         JSONObject response = apiCall.invoke();
@@ -76,7 +76,7 @@ public class TestCastVote extends BlockchainTest {
                 .param("vote1", 1)
                 .param("vote2", 1)
                 .param("vote3", 1)
-                .param("feeNQT", Constants.ONE_NXT)
+                .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
                 .build();
 
         JSONObject response = apiCall.invoke();

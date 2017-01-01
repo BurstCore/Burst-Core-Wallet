@@ -198,7 +198,7 @@ public final class Bundler {
                     }
                     long minChildFeeFQT = childTransaction.getMinimumFeeFQT(blockchainHeight);
                     long childFee = childTransaction.getFee();
-                    if (BigInteger.valueOf(childFee).multiply(BigInteger.valueOf(Constants.ONE_NXT))
+                    if (BigInteger.valueOf(childFee).multiply(BigInteger.valueOf(Constants.ONE_FXT))
                             .compareTo(BigInteger.valueOf(minRateNQTPerFXT).multiply(BigInteger.valueOf(minChildFeeFQT))) < 0) {
                         continue;
                     }
@@ -265,7 +265,7 @@ public final class Bundler {
     }
 
     private long overpay(long feeFQT) {
-        return Math.addExact(feeFQT, Math.multiplyExact(overpayFQTPerFXT, feeFQT) / Constants.ONE_NXT);
+        return Math.addExact(feeFQT, Math.multiplyExact(overpayFQTPerFXT, feeFQT) / Constants.ONE_FXT);
     }
 
 }
