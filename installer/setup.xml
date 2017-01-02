@@ -161,8 +161,6 @@
             <description>Unix Specific Resources</description>
             <file src="run.sh" targetdir="${INSTALL_PATH}" override="true"/>
             <executable targetfile="${INSTALL_PATH}/run.sh"/>
-            <file src="run-tor.sh" targetdir="${INSTALL_PATH}" override="true"/>
-            <executable targetfile="${INSTALL_PATH}/run-tor.sh"/>
             <file src="run-desktop.sh" targetdir="${INSTALL_PATH}" override="true"/>
             <executable targetfile="${INSTALL_PATH}/run-desktop.sh"/>
             <file src="start.sh" targetdir="${INSTALL_PATH}" override="true"/>

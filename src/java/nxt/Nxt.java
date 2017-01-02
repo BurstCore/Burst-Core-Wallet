@@ -79,7 +79,7 @@ import java.util.Properties;
 
 public final class Nxt {
 
-    public static final String VERSION = "2.0.0";
+    public static final String VERSION = "2.0.0e";
     public static final String APPLICATION = "NRS";
 
     private static volatile Time time = new Time.EpochTime();
@@ -327,6 +327,9 @@ public final class Nxt {
 
     public static void main(String[] args) {
         try {
+            if (!Constants.isTestnet) {
+                throw new RuntimeException("This release can only run on testnet");
+            }
             Runtime.getRuntime().addShutdownHook(new Thread(Nxt::shutdown));
             init();
         } catch (Throwable t) {
@@ -410,7 +413,7 @@ public final class Nxt {
                 Logger.logMessage("Nxt server " + VERSION + " started successfully.");
                 Logger.logMessage("Copyright © 2013-2016 The Nxt Core Developers.");
                 Logger.logMessage("Copyright © 2016-2017 Jelurida IP B.V.");
-                Logger.logMessage("Distributed under GPLv2, with ABSOLUTELY NO WARRANTY.");
+                Logger.logMessage("THIS IS AN EVALUATION VERSION FOR TESTING ONLY.");
                 if (API.getWelcomePageUri() != null) {
                     Logger.logMessage("Client UI is at " + API.getWelcomePageUri());
                 }

@@ -1,25 +1,12 @@
 Copyright © 2013-2016 The Nxt Core Developers.
 Copyright © 2016-2017 Jelurida IP B.V.
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License version 2,
-as published by the Free Software Foundation.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License version 2 for more details.
-
-You should have received a copy of the GNU General Public License version 2
-along with this program in the file COPYING.txt. If not, see
-<https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt>.
-
-
-Please contact Jelurida B.V. at info@jelurida.com for commercial licensing
-options if the GPLv2 license does not fit your private blockchain needs.
-
-The client UI component of this software, located under /html/www, is distributed
-under the MIT license, a copy of which is available under /html/www/LICENSE.txt.
+This is an experimental version for evaluation only. A temporary permission is
+granted to use this software only for testing purposes, and only until 14 days
+after the release of the next non-experimental NRS version, or until March 31,
+2017, whichever is earlier. Any type of use of this software, or works derived
+from it, after this deadline, is not allowed. Production use, sub-licensing,
+and redistribution is prohibited.
 
 This software uses third party libraries, distributed under licenses described
 in 3RD-PARTY-LICENSES.txt.
