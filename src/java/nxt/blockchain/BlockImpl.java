@@ -420,8 +420,9 @@ public final class BlockImpl implements Block {
         }
         short index = 0;
         for (FxtTransactionImpl transaction : getFxtTransactions()) {
-            transaction.setBlock(this);
             transaction.setIndex(index++);
+            transaction.setBlock(this);
+            index += transaction.getChildTransactions().size();
         }
     }
 

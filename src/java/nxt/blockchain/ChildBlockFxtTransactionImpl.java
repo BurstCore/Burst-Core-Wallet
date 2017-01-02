@@ -55,10 +55,10 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
     synchronized void setBlock(BlockImpl block) {
         super.setBlock(block);
         if (childTransactions != null) {
-            short index = 0;
+            short index = this.getIndex();
             for (ChildTransactionImpl childTransaction : getSortedChildTransactions()) {
                 childTransaction.setFxtTransaction(this);
-                childTransaction.setIndex(index++);
+                childTransaction.setIndex(++index);
             }
         }
     }
@@ -174,15 +174,10 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
         if (childTransactions == null) {
             throw new IllegalStateException("Child transactions must be loaded first");
         }
-        short index = 0;
         for (ChildTransactionImpl childTransaction : getSortedChildTransactions()) {
             if (childTransaction.getFxtTransactionId() != this.getId()) {
                 throw new IllegalStateException(String.format("Child transaction fxtTransactionId set to %s, must be %s",
                         Long.toUnsignedString(childTransaction.getFxtTransactionId()), this.getStringId()));
-            }
-            if (childTransaction.getIndex() != index++) {
-                throw new IllegalStateException(String.format("Child transaction index set to %d, must be %d",
-                        childTransaction.getIndex(), --index));
             }
             childTransaction.save(con, childChainSchemaTable);
         }
