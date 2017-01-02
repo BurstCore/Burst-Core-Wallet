@@ -24,6 +24,7 @@ import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.List;
 
 public class ChildBlockAttachment extends Attachment.AbstractAttachment implements Appendix.Prunable {
@@ -100,6 +101,7 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
             }
             childTransactionFullHashes[i] = childTransaction.getFullHash();
         }
+        Arrays.sort(this.childTransactionFullHashes, Convert.byteArrayComparator);
     }
 
     @Override
@@ -180,10 +182,12 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
 
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-        if (childTransactionFullHashes == null) {
+        if (this.childTransactionFullHashes == null) {
             TransactionHome transactionHome = ChildChain.getChildChain(chainId).getTransactionHome();
             List<byte[]> hashes = transactionHome.findChildTransactionFullHashes(transaction.getId());
-            childTransactionFullHashes = hashes.toArray(new byte[hashes.size()][]);
+            byte[][] childTransactionFullHashes = hashes.toArray(new byte[hashes.size()][]);
+            Arrays.sort(childTransactionFullHashes, Convert.byteArrayComparator);
+            this.childTransactionFullHashes = childTransactionFullHashes;
         }
     }
 

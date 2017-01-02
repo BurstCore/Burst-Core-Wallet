@@ -1545,7 +1545,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (! transaction.applyUnconfirmed()) {
                     throw new TransactionNotAcceptedException("Double spending", transaction);
                 }
-                for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
+                for (ChildTransactionImpl childTransaction : transaction.getSortedChildTransactions()) {
                     if (!childTransaction.applyUnconfirmed()) {
                         throw new TransactionNotAcceptedException("Double spending in child transaction", childTransaction);
                     }
@@ -1560,7 +1560,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 try {
                     transaction.apply();
                     checkMissingPrunable(transaction, fromTimestamp);
-                    for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
+                    for (ChildTransactionImpl childTransaction : transaction.getSortedChildTransactions()) {
                         checkMissingPrunable(childTransaction, fromTimestamp);
                     }
                 } catch (RuntimeException e) {
@@ -1568,9 +1568,9 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new BlockchainProcessor.TransactionNotAcceptedException(e, transaction);
                 }
             }
-            SortedSet<ChildTransactionImpl> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
+            SortedSet<ChildTransactionImpl> possiblyApprovedTransactions = new TreeSet<>(PhasingPollHome.finishingTransactionsComparator);
             block.getFxtTransactions().forEach(fxtTransaction -> {
-                for (ChildTransactionImpl childTransaction : fxtTransaction.getChildTransactions()) {
+                for (ChildTransactionImpl childTransaction : fxtTransaction.getSortedChildTransactions()) {
                     PhasingPollHome.getLinkedPhasedTransactions(childTransaction).forEach(phasedTransaction -> {
                         if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
                             possiblyApprovedTransactions.add((ChildTransactionImpl)phasedTransaction);
@@ -1605,7 +1605,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 List<Transaction> confirmedTransactions = new ArrayList<>();
                 block.getFxtTransactions().forEach(fxtTransaction -> {
                     confirmedTransactions.add(fxtTransaction);
-                    confirmedTransactions.addAll(fxtTransaction.getChildTransactions());
+                    confirmedTransactions.addAll(fxtTransaction.getSortedChildTransactions());
                 });
                 TransactionProcessorImpl.getInstance().notifyListeners(confirmedTransactions, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
             }
@@ -1643,13 +1643,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    //TODO: sorting of child transactions
-    private static final Comparator<Transaction> finishingTransactionsComparator = Comparator
-            .comparingInt(Transaction::getHeight)
-            .thenComparingInt(Transaction::getIndex)
-            .thenComparingLong(Transaction::getId);
-
-    public List<BlockImpl> popOffTo(Block commonBlock) {
+    List<BlockImpl> popOffTo(Block commonBlock) {
         blockchain.writeLock();
         try {
             if (!Db.db.isInTransaction()) {
@@ -2003,7 +1997,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                     List<TransactionImpl> transactions = new ArrayList<>();
                                     for (FxtTransactionImpl fxtTransaction : currentBlock.getFxtTransactions()) {
                                         transactions.add(fxtTransaction);
-                                        transactions.addAll(fxtTransaction.getChildTransactions());
+                                        transactions.addAll(fxtTransaction.getSortedChildTransactions());
                                     }
                                     for (TransactionImpl transaction : transactions) {
                                         byte[] transactionBytes = transaction.bytes();

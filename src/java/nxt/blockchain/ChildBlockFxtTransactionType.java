@@ -86,7 +86,11 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
         }
         int blockchainHeight = Nxt.getBlockchain().getHeight();
         Set<Long> childIds = new HashSet<>();
+        byte[] previousChildTransactionHash = Convert.EMPTY_BYTE;
         for (byte[] childTransactionHash : childTransactionHashes) {
+            if (Convert.byteArrayComparator.compare(previousChildTransactionHash, childTransactionHash) >= 0) {
+                throw new NxtException.NotValidException("Child transaction hashes are not sorted");
+            }
             long childTransactionId = Convert.fullHashToId(childTransactionHash);
             if (!childIds.add(childTransactionId)) {
                 throw new NxtException.NotValidException("Duplicate child transaction hash");
@@ -94,6 +98,7 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
             if (childChain.getTransactionHome().hasTransaction(childTransactionHash, childTransactionId, blockchainHeight)) {
                 throw new NxtException.NotCurrentlyValidException("Child transaction already included at an earlier height");
             }
+            previousChildTransactionHash = childTransactionHash;
         }
         for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
             try {
@@ -123,7 +128,7 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
     protected void applyAttachment(FxtTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
         ChildBlockAttachment attachment = (ChildBlockAttachment) transaction.getAttachment();
         long totalFee = 0;
-        for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
+        for (ChildTransactionImpl childTransaction : transaction.getSortedChildTransactions()) {
             childTransaction.apply();
             totalFee = Math.addExact(totalFee, childTransaction.getFee());
         }

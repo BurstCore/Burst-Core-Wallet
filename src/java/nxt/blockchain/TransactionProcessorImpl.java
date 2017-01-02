@@ -728,7 +728,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 }
 
                 if (transaction.getType() == ChildBlockFxtTransactionType.INSTANCE) {
-                    displacedTransactions.addAll(findDisplacedChildBlockTransactions((ChildBlockFxtTransaction)transaction));
+                    displacedTransactions.addAll(findDisplacedChildBlockTransactions((ChildBlockFxtTransactionImpl)transaction));
                 }
 
                 if (! transaction.applyUnconfirmed()) {
@@ -754,7 +754,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         return displacedTransactions;
     }
 
-    private List<ChildBlockFxtTransactionImpl> findDisplacedChildBlockTransactions(ChildBlockFxtTransaction transaction) throws NxtException.NotCurrentlyValidException {
+    private List<ChildBlockFxtTransactionImpl> findDisplacedChildBlockTransactions(ChildBlockFxtTransactionImpl transaction) throws NxtException.NotCurrentlyValidException {
         List<ChildBlockFxtTransactionImpl> displaced = new ArrayList<>();
         try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = getUnconfirmedFxtTransactions()) {
             while (unconfirmedTransactions.hasNext()) {
@@ -767,12 +767,12 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                         } catch (NxtException.ValidationException e) {
                             continue;
                         }
-                        if (poolTransaction.getChildTransactions().containsAll(transaction.getChildTransactions())) {
+                        if (((ChildBlockFxtTransactionImpl)poolTransaction).containsAll(transaction.getChildTransactions())) {
                             throw new NxtException.NotCurrentlyValidException("A ChildBlockTransaction with same or higher fee "
                                     + "and including the same child transactions is already in the pool");
                         }
                     } else { // offering higher fee for same or more child transactions, remove existing ChildBlockTransaction
-                        if (transaction.getChildTransactions().containsAll(poolTransaction.getChildTransactions())) {
+                        if (transaction.containsAll(poolTransaction.getChildTransactions())) {
                             displaced.add((ChildBlockFxtTransactionImpl)poolTransaction);
                         }
                     }

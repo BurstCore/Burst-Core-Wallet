@@ -18,18 +18,24 @@ package nxt.blockchain;
 
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.crypto.Crypto;
 import nxt.util.Convert;
 
+import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements ChildBlockFxtTransaction {
 
     private List<ChildTransactionImpl> childTransactions;
+    private List<ChildTransactionImpl> sortedChildTransactions;
 
     ChildBlockFxtTransactionImpl(FxtTransactionImpl.BuilderImpl builder, String secretPhrase) throws NxtException.NotValidException {
         super(builder, secretPhrase);
@@ -50,7 +56,7 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
         super.setBlock(block);
         if (childTransactions != null) {
             short index = 0;
-            for (ChildTransactionImpl childTransaction : getChildTransactions()) {
+            for (ChildTransactionImpl childTransaction : getSortedChildTransactions()) {
                 childTransaction.setFxtTransaction(this);
                 childTransaction.setIndex(index++);
             }
@@ -62,6 +68,7 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
         super.unsetBlock();
         getChildTransactions().forEach(childTransaction -> childTransaction.unsetFxtTransaction());
         childTransactions = null;
+        sortedChildTransactions = null;
     }
 
     @Override
@@ -77,27 +84,19 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
     @Override
     public synchronized List<ChildTransactionImpl> getChildTransactions() {
         ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)getAttachment();
-        if (childTransactions == null) {
-            List<ChildTransactionImpl> list;
+        if (this.childTransactions == null) {
             byte[][] hashes = childBlockAttachment.getChildTransactionFullHashes();
             if (TransactionHome.hasFxtTransaction(this.getId(), Nxt.getBlockchain().getHeight() + 1)) {
                 TransactionHome transactionHome = ChildChain.getChildChain(childBlockAttachment.getChainId()).getTransactionHome();
-                list = transactionHome.findChildTransactions(this.getId());
-                if (list.size() != hashes.length) {
-                    throw new IllegalStateException("Not all child transactions found");
-                }
-                for (int i = 0; i < hashes.length; i++) {
-                    if (!Arrays.equals(hashes[i], list.get(i).getFullHash())) {
-                        throw new IllegalStateException(String.format("Child transaction hash mismatch %s %s",
-                                Convert.toHexString(hashes[i]), Convert.toHexString(list.get(i).getFullHash())));
-                    }
-                }
+                List<ChildTransactionImpl> list = transactionHome.findChildTransactions(this.getId());
                 for (ChildTransactionImpl childTransaction : list) {
                     childTransaction.setBlock(this.getBlock());
                 }
+                this.sortedChildTransactions = Collections.unmodifiableList(list);
+                this.childTransactions = this.sortedChildTransactions;
             } else {
                 TransactionProcessorImpl transactionProcessor = TransactionProcessorImpl.getInstance();
-                list = new ArrayList<>(hashes.length);
+                List<ChildTransactionImpl> list = new ArrayList<>(hashes.length);
                 for (byte[] fullHash : hashes) {
                     UnconfirmedTransaction unconfirmedTransaction = transactionProcessor.getUnconfirmedTransaction(Convert.fullHashToId(fullHash));
                     if (unconfirmedTransaction == null) {
@@ -109,29 +108,62 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
                     }
                     list.add((ChildTransactionImpl)unconfirmedTransaction.getTransaction());
                 }
+                this.childTransactions = Collections.unmodifiableList(list);
+                this.sortedChildTransactions = null;
             }
-            childTransactions = Collections.unmodifiableList(list);
         }
-        return childTransactions;
+        return this.childTransactions;
     }
 
     @Override
-    public synchronized void setChildTransactions(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
+    public synchronized List<ChildTransactionImpl> getSortedChildTransactions() {
+        getChildTransactions();
+        if (this.sortedChildTransactions == null) {
+            BlockImpl block = getBlock();
+            if (block == null || block.getBlockSignature() == null) {
+                throw new IllegalStateException("Can't sort child transactions if not in a signed block yet");
+            }
+            byte[] blockHash = Crypto.sha256().digest(block.bytes());
+            SortedMap<byte[], ChildTransactionImpl> sortedMap = new TreeMap<>(Convert.byteArrayComparator);
+            this.childTransactions.forEach(childTransaction -> {
+                MessageDigest digest = Crypto.sha256();
+                digest.update(childTransaction.getFullHash());
+                digest.update(blockHash);
+                sortedMap.put(digest.digest(), childTransaction);
+            });
+            this.sortedChildTransactions = Collections.unmodifiableList(new ArrayList<>(sortedMap.values()));
+            this.childTransactions = this.sortedChildTransactions;
+        }
+        return this.sortedChildTransactions;
+    }
+
+    @Override
+    public synchronized void setChildTransactions(List<? extends ChildTransaction> childTransactions, byte[] blockHash) throws NxtException.NotValidException {
         byte[][] childTransactionHashes = getChildTransactionFullHashes();
         if (childTransactions.size() != childTransactionHashes.length) {
             throw new NxtException.NotValidException(String.format("Child transactions size %d does not match child hashes count %d",
                     childTransactions.size(), childTransactionHashes.length));
         }
         List<ChildTransactionImpl> list = new ArrayList<>();
+        byte[] previousHash = Convert.EMPTY_BYTE;
         for (int i = 0; i < childTransactionHashes.length; i++) {
             ChildTransactionImpl childTransaction = (ChildTransactionImpl)childTransactions.get(i);
-            if (!Arrays.equals(childTransactionHashes[i], childTransaction.getFullHash())) {
-                throw new NxtException.NotValidException(String.format("Child transaction full hash mismatch: %s, %s",
-                        Convert.toHexString(childTransactionHashes[i]), Convert.toHexString(childTransaction.getFullHash())));
+            if (Arrays.binarySearch(childTransactionHashes, childTransaction.getFullHash(), Convert.byteArrayComparator) < 0) {
+                throw new NxtException.NotValidException(String.format("Child transaction full hash is not present in the childTransactionFullHashes: %s",
+                        Convert.toHexString(childTransaction.getFullHash())));
             }
+            MessageDigest digest = Crypto.sha256();
+            digest.update(childTransaction.getFullHash());
+            digest.update(blockHash);
+            byte[] hash = digest.digest();
+            if (Convert.byteArrayComparator.compare(previousHash, hash) >= 0) {
+                throw new NxtException.NotValidException("Child transactions are not correctly sorted");
+            }
+            previousHash = hash;
             list.add(childTransaction);
         }
-        this.childTransactions = list;
+        this.sortedChildTransactions = Collections.unmodifiableList(list);
+        this.childTransactions = this.sortedChildTransactions;
     }
 
     @Override
@@ -143,7 +175,7 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
             throw new IllegalStateException("Child transactions must be loaded first");
         }
         short index = 0;
-        for (ChildTransactionImpl childTransaction : getChildTransactions()) {
+        for (ChildTransactionImpl childTransaction : getSortedChildTransactions()) {
             if (childTransaction.getFxtTransactionId() != this.getId()) {
                 throw new IllegalStateException(String.format("Child transaction fxtTransactionId set to %s, must be %s",
                         Long.toUnsignedString(childTransaction.getFxtTransactionId()), this.getStringId()));
@@ -174,6 +206,16 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
         } catch (IllegalStateException e) {
             return false;
         }
+    }
+
+    boolean containsAll(Collection<? extends ChildTransaction> childTransactions) {
+        byte[][] childTransactionFullHashes = getChildTransactionFullHashes();
+        for (ChildTransaction childTransaction : childTransactions) {
+            if (Arrays.binarySearch(childTransactionFullHashes, childTransaction.getFullHash(), Convert.byteArrayComparator) < 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }

@@ -68,8 +68,9 @@ public final class PhasingPollHome {
 
     private static final DerivedDbTable phasingPollFinishTable = new DerivedDbTable("public.phasing_poll_finish") {};
 
-    private static final Comparator<ChildTransaction> finishingTransactionsComparator =
-            Comparator.comparingInt(ChildTransaction::getHeight) //TODO: also sort by transaction.index?
+    public static final Comparator<ChildTransaction> finishingTransactionsComparator =
+            Comparator.comparingInt(ChildTransaction::getHeight)
+                    .thenComparingInt(ChildTransaction::getIndex)
                     .thenComparingLong(ChildTransaction::getId);
 
     public static List<? extends ChildTransaction> getFinishingTransactions(int height) {

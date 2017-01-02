@@ -43,8 +43,13 @@ final class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements 
     }
 
     @Override
-    public void setChildTransactions(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
-        getTransaction().setChildTransactions(childTransactions);
+    public List<? extends ChildTransaction> getSortedChildTransactions() {
+        return getTransaction().getSortedChildTransactions();
+    }
+
+    @Override
+    public void setChildTransactions(List<? extends ChildTransaction> childTransactions, byte[] blockHash) throws NxtException.NotValidException {
+        getTransaction().setChildTransactions(childTransactions, blockHash);
     }
 
 }

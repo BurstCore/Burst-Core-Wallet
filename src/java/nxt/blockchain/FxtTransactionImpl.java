@@ -194,7 +194,12 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
     }
 
     @Override
-    public void setChildTransactions(List<? extends ChildTransaction> childTransactions) throws NxtException.NotValidException {
+    public List<ChildTransactionImpl> getSortedChildTransactions() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void setChildTransactions(List<? extends ChildTransaction> childTransactions, byte[] blockHash) throws NxtException.NotValidException {
         throw new UnsupportedOperationException("Only allowed for ChildBlockFxtTransactions");
     }
 

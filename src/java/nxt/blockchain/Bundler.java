@@ -254,7 +254,7 @@ public final class Bundler {
                         } catch (NxtException.ValidationException e) {
                             continue;
                         }
-                        if (fxtTransaction.getChildTransactions().containsAll(childTransactions)) {
+                        if (((ChildBlockFxtTransactionImpl)fxtTransaction).containsAll(childTransactions)) {
                             return true;
                         }
                     }

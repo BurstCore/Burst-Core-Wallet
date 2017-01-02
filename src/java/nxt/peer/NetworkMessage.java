@@ -25,6 +25,7 @@ import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.Transaction;
+import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import nxt.util.Logger;
 
@@ -2889,13 +2890,13 @@ public abstract class NetworkMessage {
                 FxtTransaction fxtTransaction = transactions.get(i);
                 transactionIds.add(ChainTransactionId.getChainTransactionId(fxtTransaction));
                 totalLength += 32; // fxtTransactionHash
-                int childCount = fxtTransaction.getChildTransactions().size();
+                int childCount = fxtTransaction.getSortedChildTransactions().size();
                 totalLength += 2; // childCount
                 if (childCount > 0) {
                     totalLength += 4 + childCount * 32; // childChainId and childTransactionHashes
                 }
                 childCounts[i] = childCount;
-                fxtTransaction.getChildTransactions().forEach(childTransaction -> transactionIds.add(ChainTransactionId.getChainTransactionId(childTransaction)));
+                fxtTransaction.getSortedChildTransactions().forEach(childTransaction -> transactionIds.add(ChainTransactionId.getChainTransactionId(childTransaction)));
             }
         }
 
@@ -3347,8 +3348,8 @@ public abstract class NetworkMessage {
                 TransactionBytes transactionBytes = new TransactionBytes(fxtTransaction);
                 blockTransactions.add(transactionBytes);
                 length += transactionBytes.getLength() + 2; // childTransactions count (short)
-                childCounts[i] = fxtTransaction.getChildTransactions().size();
-                fxtTransaction.getChildTransactions().forEach(childTransaction -> {
+                childCounts[i] = fxtTransaction.getSortedChildTransactions().size();
+                fxtTransaction.getSortedChildTransactions().forEach(childTransaction -> {
                     TransactionBytes childTransactionBytes = new TransactionBytes(childTransaction);
                     blockTransactions.add(childTransactionBytes);
                     length += childTransactionBytes.getLength();
@@ -3380,8 +3381,8 @@ public abstract class NetworkMessage {
                     length += TransactionBytes.EXCLUDED.getLength();
                 }
                 length += 2; // childTransactions count (short) always included
-                childCounts[i] = fxtTransaction.getChildTransactions().size();
-                for (ChildTransaction childTransaction : fxtTransaction.getChildTransactions()) {
+                childCounts[i] = fxtTransaction.getSortedChildTransactions().size();
+                for (ChildTransaction childTransaction : fxtTransaction.getSortedChildTransactions()) {
                     if (!excludedTransactions.get(index++)) {
                         TransactionBytes childTransactionBytes = new TransactionBytes(childTransaction);
                         blockTransactions.add(childTransactionBytes);
@@ -3465,6 +3466,7 @@ public abstract class NetworkMessage {
          * @throws  NotValidException   Block is not valid
          */
         private Block getBlock() throws NotValidException {
+            byte[] blockHash = Crypto.sha256().digest(blockBytes);
             List<FxtTransaction> fxtTransactions = new ArrayList<>(childCounts.length);
             Iterator<TransactionBytes> iterator = blockTransactions.iterator();
             for (int childCount : childCounts) {
@@ -3474,7 +3476,7 @@ public abstract class NetworkMessage {
                     while (childCount-- > 0) {
                         childTransactions.add((ChildTransaction) iterator.next().getTransaction());
                     }
-                    fxtTransaction.setChildTransactions(childTransactions);
+                    fxtTransaction.setChildTransactions(childTransactions, blockHash);
                 }
                 fxtTransactions.add(fxtTransaction);
             }
@@ -3493,6 +3495,7 @@ public abstract class NetworkMessage {
             if (excludedTransactions.isEmpty()) {
                 return getBlock();
             }
+            byte[] blockHash = Crypto.sha256().digest(blockBytes);
             List<FxtTransaction> fxtTransactions = new ArrayList<>(childCounts.length);
             Iterator<TransactionBytes> iterator = blockTransactions.iterator();
             Iterator<Transaction> excluded = excludedTransactions.iterator();
@@ -3503,7 +3506,7 @@ public abstract class NetworkMessage {
                     while (childCount-- > 0) {
                         childTransactions.add((ChildTransaction)iterator.next().getTransaction(excluded));
                     }
-                    fxtTransaction.setChildTransactions(childTransactions);
+                    fxtTransaction.setChildTransactions(childTransactions, blockHash);
                 }
                 fxtTransactions.add(fxtTransaction);
             }
