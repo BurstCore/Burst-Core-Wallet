@@ -90,7 +90,7 @@ public class MintWorker {
         byte[] publicKeyHash = Crypto.sha256().digest(Crypto.getPublicKey(secretPhrase));
         long accountId = Convert.fullHashToId(publicKeyHash);
         String rsAccount = Convert.rsAccount(accountId);
-        JSONObject currency = getCurrency(currencyCode);
+        JSONObject currency = getCurrency(currencyCode, childChain);
         if (currency.get("currency") == null) {
             throw new IllegalArgumentException("Invalid currency code " + currencyCode);
         }
@@ -206,10 +206,11 @@ public class MintWorker {
         }
     }
 
-    private JSONObject getCurrency(String currencyCode) {
+    private JSONObject getCurrency(String currencyCode, ChildChain childChain) {
         Map<String, String> params = new HashMap<>();
         params.put("requestType", "getCurrency");
         params.put("code", currencyCode);
+        params.put("chain", childChain.getName());
         return getJsonResponse(params);
     }
 
