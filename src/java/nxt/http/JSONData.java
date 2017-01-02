@@ -1250,6 +1250,7 @@ public final class JSONData {
         json.put("type", currency.getType());
         json.put("decimals", currency.getDecimals());
         json.put("issuanceHeight", currency.getIssuanceHeight());
+        json.put("chain", currency.getChildChain().getId());
         putAccount(json, "issuerAccount", currency.getAccountId());
     }
 
