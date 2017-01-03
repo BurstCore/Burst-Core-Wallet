@@ -23,7 +23,10 @@ import nxt.account.AccountLedger;
 import nxt.account.HoldingType;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.ChildBlockFxtTransaction;
+import nxt.blockchain.ChildBlockFxtTransactionType;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.Transaction;
 import nxt.crypto.AnonymouslyEncryptedData;
 import nxt.crypto.Crypto;
@@ -96,10 +99,6 @@ public final class ShufflingHome {
             }
         };
         Nxt.getBlockchainProcessor().addListener(block -> {
-            if (block.getFxtTransactions().size() == Constants.MAX_NUMBER_OF_TRANSACTIONS
-                    || block.getPayloadLength() > Constants.MAX_PAYLOAD_LENGTH - Constants.MIN_TRANSACTION_SIZE) {
-                return;
-            }
             List<Shuffling> shufflings = new ArrayList<>();
             try (DbIterator<Shuffling> iterator = getActiveShufflings(0, -1)) {
                 for (Shuffling shuffling : iterator) {
@@ -794,7 +793,6 @@ public final class ShufflingHome {
             shufflingTable.delete(this);
         }
 
-        //TODO: revise to use child block capacity
         private boolean isFull(Block block) {
             int transactionSize = Constants.MIN_TRANSACTION_SIZE; // min transaction size with no attachment
             if (stage == ShufflingStage.REGISTRATION) {
@@ -802,7 +800,19 @@ public final class ShufflingHome {
             } else { // must use same for PROCESSING/VERIFICATION/BLAME
                 transactionSize = 16384; // max observed was 15647 for 30 participants
             }
-            return block.getPayloadLength() + transactionSize > Constants.MAX_PAYLOAD_LENGTH;
+            ChildBlockFxtTransaction childBlockFxtTransaction = null;
+            for (FxtTransaction fxtTransaction : block.getFxtTransactions()) {
+                if (fxtTransaction.getType() == ChildBlockFxtTransactionType.INSTANCE && ((ChildBlockFxtTransaction)fxtTransaction).getChildChain() == childChain) {
+                    childBlockFxtTransaction = (ChildBlockFxtTransaction)fxtTransaction;
+                    break;
+                }
+            }
+            if (childBlockFxtTransaction == null) {
+                return true;
+            }
+            return false;
+            //TODO: revise to use child block capacity
+            //return childBlockFxtTransaction.getPayloadLength() + transactionSize > Constants.MAX_PAYLOAD_LENGTH;
         }
     }
 

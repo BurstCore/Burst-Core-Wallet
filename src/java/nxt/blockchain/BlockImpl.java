@@ -45,7 +45,6 @@ public final class BlockImpl implements Block {
     private volatile byte[] generatorPublicKey;
     private final byte[] previousBlockHash;
     private final long totalFeeFQT;
-    private final int payloadLength;
     private final byte[] generationSignature;
     private final byte[] payloadHash;
     private volatile List<FxtTransactionImpl> blockTransactions;
@@ -61,21 +60,20 @@ public final class BlockImpl implements Block {
     private volatile byte[] bytes = null;
 
     //for forging new blocks only
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeFQT, int payloadLength, byte[] payloadHash,
+    BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeFQT, byte[] payloadHash,
               byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions, String secretPhrase) {
-        this(version, timestamp, previousBlockId, totalFeeFQT, payloadLength, payloadHash,
+        this(version, timestamp, previousBlockId, totalFeeFQT, payloadHash,
                 generatorPublicKey, generationSignature, null, previousBlockHash, transactions);
         blockSignature = Crypto.sign(bytes(), secretPhrase);
         bytes = null;
     }
 
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeFQT, int payloadLength, byte[] payloadHash,
+    BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeFQT, byte[] payloadHash,
               byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions) {
         this.version = version;
         this.timestamp = timestamp;
         this.previousBlockId = previousBlockId;
         this.totalFeeFQT = totalFeeFQT;
-        this.payloadLength = payloadLength;
         this.payloadHash = payloadHash;
         this.generatorPublicKey = generatorPublicKey;
         this.generationSignature = generationSignature;
@@ -87,11 +85,11 @@ public final class BlockImpl implements Block {
     }
 
     //for loading from db only
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeFQT, int payloadLength,
+    BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeFQT,
               byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
               byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id,
               List<FxtTransactionImpl> blockTransactions) {
-        this(version, timestamp, previousBlockId, totalFeeFQT, payloadLength, payloadHash,
+        this(version, timestamp, previousBlockId, totalFeeFQT, payloadHash,
                 null, generationSignature, blockSignature, previousBlockHash, blockTransactions);
         this.cumulativeDifficulty = cumulativeDifficulty;
         this.baseTarget = baseTarget;
@@ -109,7 +107,6 @@ public final class BlockImpl implements Block {
         previousBlockId = buffer.getLong();
         int transactionCount = buffer.getInt();
         totalFeeFQT = buffer.getLong();
-        payloadLength = buffer.getInt();
         payloadHash = new byte[32];
         buffer.get(payloadHash);
         generatorPublicKey = new byte[32];
@@ -161,11 +158,6 @@ public final class BlockImpl implements Block {
     @Override
     public long getTotalFeeFQT() {
         return totalFeeFQT;
-    }
-
-    @Override
-    public int getPayloadLength() {
-        return payloadLength;
     }
 
     @Override
@@ -272,7 +264,6 @@ public final class BlockImpl implements Block {
         json.put("timestamp", timestamp);
         json.put("previousBlock", Long.toUnsignedString(previousBlockId));
         json.put("totalFeeFQT", totalFeeFQT);
-        json.put("payloadLength", payloadLength);
         json.put("payloadHash", Convert.toHexString(payloadHash));
         json.put("generatorPublicKey", Convert.toHexString(getGeneratorPublicKey()));
         json.put("generationSignature", Convert.toHexString(generationSignature));
@@ -291,14 +282,13 @@ public final class BlockImpl implements Block {
 
     byte[] bytes() {
         if (bytes == null) {
-            ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 8 + 4 + 8 + 4 + 32 + 32 + 32 + 32 + (blockSignature != null ? 64 : 0));
+            ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 8 + 4 + 8 + 32 + 32 + 32 + 32 + (blockSignature != null ? 64 : 0));
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.putInt(version);
             buffer.putInt(timestamp);
             buffer.putLong(previousBlockId);
             buffer.putInt(getFxtTransactions().size());
             buffer.putLong(totalFeeFQT);
-            buffer.putInt(payloadLength);
             buffer.put(payloadHash);
             buffer.put(getGeneratorPublicKey());
             buffer.put(generationSignature);

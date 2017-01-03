@@ -496,7 +496,6 @@ public final class JSONData {
         json.put("timestamp", block.getTimestamp());
         json.put("numberOfTransactions", block.getFxtTransactions().size());
         json.put("totalFeeFQT", String.valueOf(block.getTotalFeeFQT()));
-        json.put("payloadLength", block.getPayloadLength());
         json.put("version", block.getVersion());
         json.put("baseTarget", Long.toUnsignedString(block.getBaseTarget()));
         json.put("cumulativeDifficulty", block.getCumulativeDifficulty().toString());

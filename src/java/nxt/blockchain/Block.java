@@ -43,8 +43,6 @@ public interface Block {
 
     long getTotalFeeFQT();
 
-    int getPayloadLength();
-
     byte[] getPayloadHash();
 
     List<? extends FxtTransaction> getFxtTransactions();

@@ -85,11 +85,11 @@ public final class GenerateGenesis {
                 byte[] testnetGenerationSignature = new byte[32];
                 Arrays.fill(testnetGenerationSignature, (byte)1);
 
-                BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, 0, payloadHash,
+                BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, payloadHash,
                         creatorPublicKey, generationSignature, new byte[32], Collections.emptyList(), creatorSecretPhrase);
                 outputJSON.put("genesisBlockSignature", Convert.toHexString(genesisBlock.getBlockSignature()));
 
-                BlockImpl genesisTestnetBlock = new BlockImpl(-1, 0, 0, 0, 0, payloadHash,
+                BlockImpl genesisTestnetBlock = new BlockImpl(-1, 0, 0, 0, payloadHash,
                         creatorPublicKey, testnetGenerationSignature, new byte[32], Collections.emptyList(), creatorSecretPhrase);
                 outputJSON.put("genesisTestnetBlockSignature", Convert.toHexString(genesisTestnetBlock.getBlockSignature()));
 

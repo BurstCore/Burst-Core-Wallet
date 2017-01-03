@@ -252,7 +252,6 @@ public final class BlockDb {
             int timestamp = rs.getInt("timestamp");
             long previousBlockId = rs.getLong("previous_block_id");
             long totalFeeNQT = rs.getLong("total_fee");
-            int payloadLength = rs.getInt("payload_length");
             long generatorId = rs.getLong("generator_id");
             byte[] previousBlockHash = rs.getBytes("previous_block_hash");
             BigInteger cumulativeDifficulty = new BigInteger(rs.getBytes("cumulative_difficulty"));
@@ -263,7 +262,7 @@ public final class BlockDb {
             byte[] blockSignature = rs.getBytes("block_signature");
             byte[] payloadHash = rs.getBytes("payload_hash");
             long id = rs.getLong("id");
-            return new BlockImpl(version, timestamp, previousBlockId, totalFeeNQT, payloadLength, payloadHash,
+            return new BlockImpl(version, timestamp, previousBlockId, totalFeeNQT, payloadHash,
                     generatorId, generationSignature, blockSignature, previousBlockHash,
                     cumulativeDifficulty, baseTarget, nextBlockId, height, id, loadTransactions ? TransactionHome.findBlockTransactions(con, id) : null);
         } catch (SQLException e) {
@@ -274,16 +273,15 @@ public final class BlockDb {
     static void saveBlock(Connection con, BlockImpl block) {
         try {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, timestamp, previous_block_id, "
-                    + "total_fee, payload_length, previous_block_hash, cumulative_difficulty, "
+                    + "total_fee, previous_block_hash, cumulative_difficulty, "
                     + "base_target, height, generation_signature, block_signature, payload_hash, generator_id) "
-                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, block.getId());
                 pstmt.setInt(++i, block.getVersion());
                 pstmt.setInt(++i, block.getTimestamp());
                 DbUtils.setLongZeroToNull(pstmt, ++i, block.getPreviousBlockId());
                 pstmt.setLong(++i, block.getTotalFeeFQT());
-                pstmt.setInt(++i, block.getPayloadLength());
                 pstmt.setBytes(++i, block.getPreviousBlockHash());
                 pstmt.setBytes(++i, block.getCumulativeDifficulty().toByteArray());
                 pstmt.setLong(++i, block.getBaseTarget());

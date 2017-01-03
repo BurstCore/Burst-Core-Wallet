@@ -1277,16 +1277,13 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             if (Constants.isTestnet) {
                 Arrays.fill(generationSignature, (byte)1);
             }
-            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, 0, digest.digest(),
+            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, digest.digest(),
                     Genesis.CREATOR_PUBLIC_KEY, generationSignature, Genesis.GENESIS_BLOCK_SIGNATURE, new byte[32], Collections.emptyList());
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
             Genesis.apply();
             accept(genesisBlock, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
-            if (!genesisBlock.verifyBlockSignature()) {
-                throw new RuntimeException("Invalid genesis block signature");
-            }
             for (DerivedDbTable table : derivedTables) {
                 table.createSearchIndex(con);
             }
@@ -1413,17 +1410,12 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         if (block.getFxtTransactions().size() > Constants.MAX_NUMBER_OF_TRANSACTIONS) {
             throw new BlockNotAcceptedException("Invalid block transaction count " + block.getFxtTransactions().size(), block);
         }
-        if (block.getPayloadLength() > Constants.MAX_PAYLOAD_LENGTH || block.getPayloadLength() < 0) {
-            throw new BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);
-        }
     }
 
     private void validateTransactions(BlockImpl block, BlockImpl previousLastBlock, int curTime, Map<TransactionType, Map<String, Integer>> duplicates,
                                       boolean fullValidation) throws BlockNotAcceptedException {
-        long payloadLength = 0;
         long calculatedTotalFee = 0;
         MessageDigest digest = Crypto.sha256();
-        boolean hasPrunedTransactions = false;
         Set<Long> transactionIds = fullValidation ? new HashSet<>() : null;
         for (FxtTransactionImpl fxtTransaction : block.getFxtTransactions()) {
             validateTransaction(fxtTransaction, block, previousLastBlock, curTime);
@@ -1433,14 +1425,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 fullyValidateTransaction(fxtTransaction, block, previousLastBlock, curTime);
             }
-            if (!hasPrunedTransactions) {
-                for (Appendix.AbstractAppendix appendage : fxtTransaction.getAppendages()) {
-                    if ((appendage instanceof Appendix.Prunable) && !((Appendix.Prunable)appendage).hasPrunableData()) {
-                        hasPrunedTransactions = true;
-                        break;
-                    }
-                }
-            }
             for (ChildTransactionImpl childTransaction : fxtTransaction.getChildTransactions()) {
                 validateTransaction(childTransaction, block, previousLastBlock, curTime);
                 if (fullValidation) {
@@ -1448,14 +1432,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                         throw new TransactionNotAcceptedException("Duplicate transaction id", childTransaction);
                     }
                     fullyValidateTransaction(childTransaction, block, previousLastBlock, curTime);
-                }
-                if (!hasPrunedTransactions) {
-                    for (Appendix.AbstractAppendix appendage : childTransaction.getAppendages()) {
-                        if ((appendage instanceof Appendix.Prunable) && !((Appendix.Prunable)appendage).hasPrunableData()) {
-                            hasPrunedTransactions = true;
-                            break;
-                        }
-                    }
                 }
                 if (childTransaction.attachmentIsDuplicate(duplicates, true)) {
                     throw new TransactionNotAcceptedException("Transaction is a duplicate", childTransaction);
@@ -1465,7 +1441,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 throw new TransactionNotAcceptedException("Transaction is a duplicate", fxtTransaction);
             }
             calculatedTotalFee += fxtTransaction.getFee();
-            payloadLength += fxtTransaction.getFullSize();
             digest.update(fxtTransaction.bytes());
         }
         if (calculatedTotalFee != block.getTotalFeeFQT()) {
@@ -1473,11 +1448,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         if (!Arrays.equals(digest.digest(), block.getPayloadHash())) {
             throw new BlockNotAcceptedException("Payload hash doesn't match", block);
-        }
-        //TODO: enforce max transaction deadline to be < min prunable lifetime, then replace hasPrunedTransaction with min prunable check on block timestamp
-        if (hasPrunedTransactions ? payloadLength > block.getPayloadLength() : payloadLength != block.getPayloadLength()) {
-            throw new BlockNotAcceptedException("Transaction payload length " + payloadLength + " does not match block payload length "
-                    + block.getPayloadLength(), block);
         }
     }
 
@@ -1824,13 +1794,11 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         List<FxtTransactionImpl> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
         long totalFeeFQT = 0;
-        int payloadLength = 0;
         for (UnconfirmedFxtTransaction unconfirmedTransaction : sortedTransactions) {
             FxtTransactionImpl transaction = unconfirmedTransaction.getTransaction();
             blockTransactions.add(transaction);
             digest.update(transaction.bytes());
             totalFeeFQT += transaction.getFee();
-            payloadLength += transaction.getFullSize();
         }
         byte[] payloadHash = digest.digest();
         digest.update(previousBlock.getGenerationSignature());
@@ -1838,7 +1806,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         byte[] generationSignature = digest.digest(publicKey);
         byte[] previousBlockHash = Crypto.sha256().digest(previousBlock.bytes());
 
-        BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalFeeFQT, payloadLength,
+        BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalFeeFQT,
                 payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase);
 
         try {
