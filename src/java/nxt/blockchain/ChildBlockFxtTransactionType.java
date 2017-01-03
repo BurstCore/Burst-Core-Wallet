@@ -41,7 +41,7 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
         for (ChildTransactionImpl childTransaction : ((FxtTransactionImpl)transaction).getChildTransactions()) {
             totalFee += childTransaction.getMinimumFeeFQT(blockchainHeight);
         }
-        return Math.max(totalFee, 10 * Constants.ONE_FXT);
+        return totalFee;
     };
 
     @Override
