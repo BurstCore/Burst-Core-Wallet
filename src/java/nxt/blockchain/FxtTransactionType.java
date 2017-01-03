@@ -16,6 +16,7 @@
 
 package nxt.blockchain;
 
+import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountControlFxtTransactionType;
@@ -64,6 +65,10 @@ public abstract class FxtTransactionType extends TransactionType {
             default:
                 return null;
         }
+    }
+
+    public Fee getBaselineFee(Transaction transaction) {
+        return new Fee.ConstantFee(Constants.ONE_FXT * 10);
     }
 
     @Override
