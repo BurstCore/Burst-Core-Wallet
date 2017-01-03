@@ -34,12 +34,9 @@ import java.util.List;
  * The events remain registered so successive calls to EventWait can
  * be made without another call to EventRegister.
  * <p>
- * Only one EventWait can be outstanding for the same network address.
- * If a second EventWait is issued, the current EventWait will be replaced
- * by the new EventWait.
- * <p>
  * Request parameters:
  * <ul>
+ * <li>token - Event registration token returned by the EventRegister API.
  * <li>timeout - Number of seconds to wait for an event.  The EventWait
  * will complete normally if no event is received within the timeout interval.
  * nxt.apiEventTimeout will be used if no timeout value is specified or
@@ -102,13 +99,6 @@ public class EventWait extends APIServlet.APIRequestHandler {
     /** EventWait instance */
     static final EventWait instance = new EventWait();
 
-    /** Incorrect timeout */
-    private static final JSONObject incorrectTimeout = new JSONObject();
-    static {
-        incorrectTimeout.put("errorCode", 4);
-        incorrectTimeout.put("errorDescription", "Wait timeout is not valid");
-    }
-
     /** No events registered */
     private static final JSONObject noEventsRegistered = new JSONObject();
     static {
@@ -120,7 +110,7 @@ public class EventWait extends APIServlet.APIRequestHandler {
      * Create the EventWait instance
      */
     private EventWait() {
-        super(new APITag[] {APITag.INFO}, "timeout");
+        super(new APITag[] {APITag.INFO}, "token", "timeout");
     }
 
     /**
@@ -134,38 +124,35 @@ public class EventWait extends APIServlet.APIRequestHandler {
      *
      * @param   req                 API request
      * @return                      API response or null
+     * @throws  ParameterException  Invalid parameter specified
      */
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) {
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         JSONObject response = null;
         //
-        // Get the timeout value
+        // Get the parameters
         //
-        long timeout = EventListener.eventTimeout;
-        String value = req.getParameter("timeout");
-        if (value != null) {
-            try {
-                timeout = Math.min(Long.valueOf(value), timeout);
-            } catch (NumberFormatException exc) {
-                response = incorrectTimeout;
-            }
-        }
+        long token = ParameterParser.getLong(req, "token", 1, Long.MAX_VALUE, true);
+        long timeout = ParameterParser.getLong(req, "timeout", 1, Long.MAX_VALUE, false);
+        timeout = (timeout == 0 ? EventListener.eventTimeout : Math.min(timeout, EventListener.eventTimeout));
         //
         // Wait for an event
         //
         if (response == null) {
-            EventListener listener = EventListener.eventListeners.get(req.getRemoteAddr());
+            String userAddress = req.getRemoteAddr() + ";" + token;
+            EventListener listener = EventListener.eventListeners.get(userAddress);
             if (listener == null) {
                 response = noEventsRegistered;
             } else {
                 try {
                     List<PendingEvent> events = listener.eventWait(req, timeout);
-                    if (events != null)
+                    if (events != null) {
                         response = formatResponse(events);
+                    }
                 } catch (EventListenerException exc) {
                     response = new JSONObject();
                     response.put("errorCode", 7);
-                    response.put("errorDescription", "Unable to wait for an event: "+exc.getMessage());
+                    response.put("errorDescription", "Unable to wait for an event: " + exc.getMessage());
                 }
             }
         }
@@ -177,11 +164,6 @@ public class EventWait extends APIServlet.APIRequestHandler {
         return true;
     }
 
-    /**
-     * No required block parameters
-     *
-     * @return                      FALSE to disable the required block parameters
-     */
     @Override
     protected boolean allowRequiredBlockParameters() {
         return false;

@@ -25,6 +25,7 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * <p>The EventRegister API will create an event listener and register
@@ -50,20 +51,29 @@ import java.util.List;
  * expires.  The timer is reset each time an EventWait is processed.
  * <p>
  * An application cannot register events if the maximum number of event users
- * specified by nxt.apiMaxEventUsers has been reached.
+ * specified by nxt.apiMaxEventUsers has been reached or if the maximum number
+ * of user registrations specified by nxt.api.MaxUserEventRegistrations has been
+ * reached.
  * <p>
  * Request parameters:
  * <ul>
+ * <li>token - Registration token.  Omit this parameter or set it to 0 to
+ * create a new event registration.  Set this parameter to the value returned
+ * by a previous event registration to modify an existing registration.
  * <li>event - Event name.  The 'event' parameter can be
  * repeated to specify multiple events.  All events will be included
  * if the 'event' parameter is not specified.
- * <li>add - Specify 'true' to add the events to an existing event list.
- * <li>remove - Specify 'true' to remove the events from an existing event list.
+ * <li>add - Specify 'true' to add the events to an existing event list.  Ignored
+ * if creating a new event registration.
+ * <li>remove - Specify 'true' to remove the events from an existing event list.  Ignored
+ * if creating a new event registration.
  * </ul>
  * <p>
  * Response parameters:
  * <ul>
  * <li>registered - Set to 'true' if the events were processed.
+ * <li>token - Set to the event registration token.  This token must be
+ * used to wait for events and to modify or cancel the registration.
  * </ul>
  * <p>
  * Error Response parameters:
@@ -103,12 +113,6 @@ public class EventRegister extends APIServlet.APIRequestHandler {
     /** EventRegister instance */
     static final EventRegister instance = new EventRegister();
 
-    /** Events registers */
-    private static final JSONObject eventsRegistered = new JSONObject();
-    static {
-        eventsRegistered.put("registered", true);
-    }
-
     /** Mutually exclusive parameters */
     private static final JSONObject exclusiveParams = new JSONObject();
     static {
@@ -137,11 +141,14 @@ public class EventRegister extends APIServlet.APIRequestHandler {
         noEventsRegistered.put("errorDescription", "No events registered");
     }
 
+    /** Event registration token counter */
+    private static final AtomicLong nextToken = new AtomicLong();
+
     /**
      * Create the EventRegister instance
      */
     private EventRegister() {
-        super(new APITag[] {APITag.INFO}, "event", "event", "event", "add", "remove");
+        super(new APITag[] {APITag.INFO}, "event", "event", "event", "token", "add", "remove");
     }
 
     /**
@@ -149,17 +156,20 @@ public class EventRegister extends APIServlet.APIRequestHandler {
      *
      * @param   req                 API request
      * @return                      API response
+     * @throws  ParameterException  Invalid parameter specified
      */
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) {
-        JSONObject response;
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
+        JSONObject response = null;
         //
-        // Get 'add' and 'remove' parameters
+        // Get 'token', 'add' and 'remove' parameters
         //
+        long token = ParameterParser.getLong(req, "token", 0, Long.MAX_VALUE, false);
         boolean addEvents = Boolean.valueOf(req.getParameter("add"));
         boolean removeEvents = Boolean.valueOf(req.getParameter("remove"));
-        if (addEvents && removeEvents)
+        if (addEvents && removeEvents) {
             return exclusiveParams;
+        }
         //
         // Build the event list from the 'event' parameters
         //
@@ -176,7 +186,7 @@ public class EventRegister extends APIServlet.APIRequestHandler {
         } else {
             for (String param : params) {
                 //
-                // The Ledger event can have 2 or 3 parts.  All other events have 2 parts.
+                // The Ledger and Transaction events can have 2 or 3 parts.  All other events have 2 parts.
                 //
                 long accountId = 0;
                 String[] parts = param.split("\\.");
@@ -226,38 +236,50 @@ public class EventRegister extends APIServlet.APIRequestHandler {
                         break;
                     }
                 }
-                if (!eventAdded)
+                if (!eventAdded) {
                     return unknownEvent;
+                }
             }
         }
         //
         // Register the event listener
         //
         try {
-            if (addEvents || removeEvents) {
-                EventListener listener = EventListener.eventListeners.get(req.getRemoteAddr());
-                if (listener != null) {
-                    if (addEvents)
-                        listener.addEvents(events);
-                    else
-                        listener.removeEvents(events);
-                    response = eventsRegistered;
-                } else {
-                    response = noEventsRegistered;
-                }
-            } else {
-                EventListener listener = new EventListener(req.getRemoteAddr());
+            if (token == 0) {
+                token = nextToken.incrementAndGet();
+                String userAddress = req.getRemoteAddr() + ";" + token;
+                EventListener listener = new EventListener(userAddress);
                 listener.activateListener(events);
-                response = eventsRegistered;
+            } else {
+                String userAddress = req.getRemoteAddr() + ";" + token;
+                EventListener listener = EventListener.eventListeners.get(userAddress);
+                if (listener == null) {
+                    return noEventsRegistered;
+                }
+                if (addEvents || removeEvents) {
+                    if (addEvents) {
+                        listener.addEvents(events);
+                    } else {
+                        listener.removeEvents(events);
+                    }
+                } else {
+                    listener = new EventListener(userAddress);
+                    listener.activateListener(events);
+                }
             }
         } catch (EventListenerException exc) {
             response = new JSONObject();
             response.put("errorCode", 7);
-            response.put("errorDescription", "Unable to register events: "+exc.getMessage());
+            response.put("errorDescription", "Unable to register events: " + exc.getMessage());
         }
         //
         // Return the response
         //
+        if (response == null) {
+            response = new JSONObject();
+            response.put("registered", true);
+            response.put("token", Long.toUnsignedString(token));
+        }
         return response;
     }
 
@@ -266,11 +288,6 @@ public class EventRegister extends APIServlet.APIRequestHandler {
         return true;
     }
 
-    /**
-     * No required block parameters
-     *
-     * @return                      FALSE to disable the required block parameters
-     */
     @Override
     protected boolean allowRequiredBlockParameters() {
         return false;

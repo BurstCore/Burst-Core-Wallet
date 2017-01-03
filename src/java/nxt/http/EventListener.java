@@ -60,12 +60,16 @@ import java.util.concurrent.locks.ReentrantLock;
  * Event registrations are discarded if an EventWait API request
  * has not been received within nxt.apiEventTimeout seconds.
  *
- * The maximum number of event users is specified by nxt.apiMaxEventUsers.
+ * The maximum number of event users is specified by nxt.apiMaxEventUsers and
+ * the maximum number of registrations per user is specified by nxt.apiMaxUserEventRegistrations.
  */
 class EventListener implements Runnable, AsyncListener, TransactionalDb.TransactionCallback {
 
     /** Maximum event users */
-    static final int maxEventUsers = Nxt.getIntProperty("nxt.apiMaxEventUsers");
+    static final int maxEventUsers = Nxt.getIntProperty("nxt.apiMaxEventUsers", 32);
+
+    /** Maximum user registrations */
+    static final int maxUserEventRegistrations = Nxt.getIntProperty("nxt.apiMaxUserEventRegistrations", 2);
 
     /** Event registration timeout (seconds) */
     static final int eventTimeout = Math.max(Nxt.getIntProperty("nxt.apiEventTimeout"), 15);
@@ -135,7 +139,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
         ledgerEvents.add(AccountLedger.Event.ADD_ENTRY);
     }
 
-    /** Application IP address */
+    /** Application IP address and registration token */
     private final String address;
 
     /** Activity timestamp */
@@ -168,7 +172,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     /**
      * Create an event listener
      *
-     * @param   address             Application IP address
+     * @param   address             Application IP address and registration token
      */
     EventListener(String address) {
         this.address = address;
@@ -183,10 +187,26 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
      * @throws  EventListenerException  Unable to activate event listeners
      */
     void activateListener(List<EventRegistration> eventRegistrations) throws EventListenerException {
-        if (deactivated)
+        if (deactivated) {
             throw new EventListenerException("Event listener deactivated");
-        if (eventListeners.size() >= maxEventUsers && eventListeners.get(address) == null)
-            throw new EventListenerException(String.format("Too many API event users: Maximum %d", maxEventUsers));
+        }
+        if (eventListeners.get(address) == null) {
+            if (eventListeners.size() >= maxEventUsers) {
+                throw new EventListenerException(
+                        String.format("Too many API event users: Maximum %d", maxEventUsers));
+            }
+            String reqAddress = address.split(";")[0];
+            int userCount = 0;
+            for (String key : eventListeners.keySet()) {
+                if (key.split(";")[0].equals(reqAddress)) {
+                    userCount++;
+                }
+            }
+            if (userCount >= maxUserEventRegistrations) {
+                throw new EventListenerException(
+                        String.format("Too many user event registrations: Maximum %d", maxUserEventRegistrations));
+            }
+        }
         //
         // Start listening for events
         //
@@ -195,8 +215,9 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
         // Add this event listener to the active list
         //
         EventListener oldListener = eventListeners.put(address, this);
-        if (oldListener != null)
+        if (oldListener != null) {
             oldListener.deactivateListener();
+        }
         Logger.logDebugMessage(String.format("Event listener activated for %s", address));
     }
 
@@ -209,8 +230,9 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     void addEvents(List<EventRegistration> eventRegistrations) throws EventListenerException {
         lock.lock();
         try {
-            if (deactivated)
+            if (deactivated) {
                 return;
+            }
             //
             // A listener with account identifier 0 accepts events for all accounts.
             // This listener supersedes listeners for a single account.
@@ -251,8 +273,9 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     void removeEvents(List<EventRegistration> eventRegistrations) {
         lock.lock();
         try {
-            if (deactivated)
+            if (deactivated) {
                 return;
+            }
             //
             // Specifying an account identifier of 0 results in removing all
             // listeners for the specified event.  Otherwise, only the listener
@@ -272,8 +295,9 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
             //
             // Deactivate the listeners if there are no events remaining
             //
-            if (nxtEventListeners.isEmpty())
+            if (nxtEventListeners.isEmpty()) {
                 deactivateListener();
+            }
         } finally {
             lock.unlock();
         }
@@ -285,8 +309,9 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     void deactivateListener() {
         lock.lock();
         try {
-            if (deactivated)
+            if (deactivated) {
                 return;
+            }
             deactivated = true;
             //
             // Cancel all pending wait requests
@@ -321,8 +346,9 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
         List<PendingEvent> events = null;
         lock.lock();
         try {
-            if (deactivated)
+            if (deactivated) {
                 throw new EventListenerException("Event listener deactivated");
+            }
             if (!pendingWaits.isEmpty()) {
                 //
                 // We want only one waiter at a time.  This can happen if the
