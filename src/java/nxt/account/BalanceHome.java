@@ -81,14 +81,14 @@ public final class BalanceHome {
                 }
                 @Override
                 public void trim(int height) {
-                    if (height + Constants.MAX_ROLLBACK <= Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
+                    if (height <= Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
                         return;
                     }
                     super.trim(height);
                 }
                 @Override
                 public void checkAvailable(int height) {
-                    if (Nxt.getBlockchain().getHeight() > Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
+                    if (height > Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
                         super.checkAvailable(height);
                         return;
                     }
