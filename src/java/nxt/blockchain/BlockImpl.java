@@ -23,6 +23,7 @@ import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEvent;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
+import nxt.util.JSON;
 import nxt.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -43,8 +44,7 @@ public final class BlockImpl implements Block {
     private final long previousBlockId;
     private volatile byte[] generatorPublicKey;
     private final byte[] previousBlockHash;
-    private final long totalAmountNQT;
-    private final long totalFeeNQT;
+    private final long totalFeeFQT;
     private final int payloadLength;
     private final byte[] generationSignature;
     private final byte[] payloadHash;
@@ -61,21 +61,20 @@ public final class BlockImpl implements Block {
     private volatile byte[] bytes = null;
 
     //for forging new blocks only
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
-                     byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions, String secretPhrase) {
-        this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
+    BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeFQT, int payloadLength, byte[] payloadHash,
+              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions, String secretPhrase) {
+        this(version, timestamp, previousBlockId, totalFeeFQT, payloadLength, payloadHash,
                 generatorPublicKey, generationSignature, null, previousBlockHash, transactions);
         blockSignature = Crypto.sign(bytes(), secretPhrase);
         bytes = null;
     }
 
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
+    BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeFQT, int payloadLength, byte[] payloadHash,
               byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions) {
         this.version = version;
         this.timestamp = timestamp;
         this.previousBlockId = previousBlockId;
-        this.totalAmountNQT = totalAmountNQT;
-        this.totalFeeNQT = totalFeeNQT;
+        this.totalFeeFQT = totalFeeFQT;
         this.payloadLength = payloadLength;
         this.payloadHash = payloadHash;
         this.generatorPublicKey = generatorPublicKey;
@@ -88,11 +87,11 @@ public final class BlockImpl implements Block {
     }
 
     //for loading from db only
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength,
+    BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeFQT, int payloadLength,
               byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
               byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id,
               List<FxtTransactionImpl> blockTransactions) {
-        this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
+        this(version, timestamp, previousBlockId, totalFeeFQT, payloadLength, payloadHash,
                 null, generationSignature, blockSignature, previousBlockHash, blockTransactions);
         this.cumulativeDifficulty = cumulativeDifficulty;
         this.baseTarget = baseTarget;
@@ -109,8 +108,7 @@ public final class BlockImpl implements Block {
         timestamp = buffer.getInt();
         previousBlockId = buffer.getLong();
         int transactionCount = buffer.getInt();
-        totalAmountNQT = buffer.getLong();
-        totalFeeNQT = buffer.getLong();
+        totalFeeFQT = buffer.getLong();
         payloadLength = buffer.getInt();
         payloadHash = new byte[32];
         buffer.get(payloadHash);
@@ -161,13 +159,8 @@ public final class BlockImpl implements Block {
     }
 
     @Override
-    public long getTotalAmountNQT() {
-        return totalAmountNQT;
-    }
-
-    @Override
-    public long getTotalFeeNQT() {
-        return totalFeeNQT;
+    public long getTotalFeeFQT() {
+        return totalFeeFQT;
     }
 
     @Override
@@ -273,13 +266,12 @@ public final class BlockImpl implements Block {
     }
 
     @Override
-    public JSONObject getJSONObject() {
+    public String toString() {
         JSONObject json = new JSONObject();
         json.put("version", version);
         json.put("timestamp", timestamp);
         json.put("previousBlock", Long.toUnsignedString(previousBlockId));
-        json.put("totalAmountNQT", totalAmountNQT);
-        json.put("totalFeeNQT", totalFeeNQT);
+        json.put("totalFeeFQT", totalFeeFQT);
         json.put("payloadLength", payloadLength);
         json.put("payloadHash", Convert.toHexString(payloadHash));
         json.put("generatorPublicKey", Convert.toHexString(getGeneratorPublicKey()));
@@ -289,7 +281,7 @@ public final class BlockImpl implements Block {
         JSONArray transactionsData = new JSONArray();
         getFxtTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
         json.put("transactions", transactionsData);
-        return json;
+        return JSON.toJSONString(json);
     }
 
     @Override
@@ -299,14 +291,13 @@ public final class BlockImpl implements Block {
 
     byte[] bytes() {
         if (bytes == null) {
-            ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 8 + 4 + 8 + 8 + 4 + 32 + 32 + 32 + 32 + (blockSignature != null ? 64 : 0));
+            ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 8 + 4 + 8 + 4 + 32 + 32 + 32 + 32 + (blockSignature != null ? 64 : 0));
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.putInt(version);
             buffer.putInt(timestamp);
             buffer.putLong(previousBlockId);
             buffer.putInt(getFxtTransactions().size());
-            buffer.putLong(totalAmountNQT);
-            buffer.putLong(totalFeeNQT);
+            buffer.putLong(totalFeeFQT);
             buffer.putInt(payloadLength);
             buffer.put(payloadHash);
             buffer.put(getGeneratorPublicKey());
@@ -404,8 +395,8 @@ public final class BlockImpl implements Block {
         if (totalBackFees != 0) {
             Logger.logDebugMessage("Fee reduced by %f FXT at height %d", ((double)totalBackFees)/Constants.ONE_FXT, this.height);
         }
-        generatorAccount.addToBalanceAndUnconfirmedBalance(FxtChain.FXT, LedgerEvent.BLOCK_GENERATED, eventId, totalFeeNQT - totalBackFees);
-        generatorAccount.addToForgedBalanceFQT(totalFeeNQT - totalBackFees);
+        generatorAccount.addToBalanceAndUnconfirmedBalance(FxtChain.FXT, LedgerEvent.BLOCK_GENERATED, eventId, totalFeeFQT - totalBackFees);
+        generatorAccount.addToForgedBalanceFQT(totalFeeFQT - totalBackFees);
     }
 
     void setPrevious(BlockImpl block) {

@@ -495,8 +495,7 @@ public final class JSONData {
         json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
         json.put("timestamp", block.getTimestamp());
         json.put("numberOfTransactions", block.getFxtTransactions().size());
-        json.put("totalAmountNQT", String.valueOf(block.getTotalAmountNQT()));
-        json.put("totalFeeNQT", String.valueOf(block.getTotalFeeNQT()));
+        json.put("totalFeeFQT", String.valueOf(block.getTotalFeeFQT()));
         json.put("payloadLength", block.getPayloadLength());
         json.put("version", block.getVersion());
         json.put("baseTarget", Long.toUnsignedString(block.getBaseTarget()));

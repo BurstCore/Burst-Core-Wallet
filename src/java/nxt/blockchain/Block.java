@@ -16,8 +16,6 @@
 
 package nxt.blockchain;
 
-import org.json.simple.JSONObject;
-
 import java.math.BigInteger;
 import java.util.List;
 
@@ -43,9 +41,7 @@ public interface Block {
 
     long getNextBlockId();
 
-    long getTotalAmountNQT();
-
-    long getTotalFeeNQT();
+    long getTotalFeeFQT();
 
     int getPayloadLength();
 
@@ -62,7 +58,5 @@ public interface Block {
     BigInteger getCumulativeDifficulty();
 
     byte[] getBytes();
-
-    JSONObject getJSONObject();
 
 }

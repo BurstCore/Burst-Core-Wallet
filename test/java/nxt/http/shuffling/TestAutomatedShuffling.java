@@ -1661,7 +1661,6 @@ public class TestAutomatedShuffling extends BlockchainTest {
         JSONObject getShufflingResponse = getShuffling(shufflingId);
         Assert.assertEquals((long) ShufflingStage.PROCESSING.getCode(), getShufflingResponse.get("stage"));
 
-        int maxBlockJsonSize = 0;
         int maxBlockPayload = 0;
         int maxProcessTransactionFullSize = 0;
         int maxCancelTransactionFullSize = 0;
@@ -1670,11 +1669,7 @@ public class TestAutomatedShuffling extends BlockchainTest {
         for (int i = 0; i < n + 5; i++) {
             generateBlock();
             Block block = Nxt.getBlockchain().getLastBlock();
-            int blockJsonSize = block.getJSONObject().toJSONString().length();
-            Logger.logMessage("Block size " + blockJsonSize + " block payload " + block.getPayloadLength() + " tx count " + block.getFxtTransactions().size());
-            if (blockJsonSize > maxBlockJsonSize) {
-                maxBlockJsonSize = blockJsonSize;
-            }
+            Logger.logMessage("Block payload " + block.getPayloadLength() + " tx count " + block.getFxtTransactions().size());
             if (block.getPayloadLength() > maxBlockPayload) {
                 maxBlockPayload = block.getPayloadLength();
             }
@@ -1717,11 +1712,7 @@ public class TestAutomatedShuffling extends BlockchainTest {
         for (int i = 0; i < n + 20; i++) {
             generateBlock();
             Block block = Nxt.getBlockchain().getLastBlock();
-            int blockJsonSize = block.getJSONObject().toJSONString().length();
-            Logger.logMessage("Block size " + blockJsonSize + " block payload " + block.getPayloadLength() + " tx count " + block.getFxtTransactions().size());
-            if (blockJsonSize > maxBlockJsonSize) {
-                maxBlockJsonSize = blockJsonSize;
-            }
+            Logger.logMessage("Block payload " + block.getPayloadLength() + " tx count " + block.getFxtTransactions().size());
             if (block.getPayloadLength() > maxBlockPayload) {
                 maxBlockPayload = block.getPayloadLength();
             }
@@ -1755,7 +1746,6 @@ public class TestAutomatedShuffling extends BlockchainTest {
 
         Assert.assertEquals(-(ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 12 * ChildChain.IGNIS.ONE_COIN) + 100 * ChildChain.IGNIS.ONE_COIN, participants[n - 1].getBalanceDiff());
         Assert.assertEquals(-(ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 12 * ChildChain.IGNIS.ONE_COIN) + 100 * ChildChain.IGNIS.ONE_COIN, participants[n - 1].getUnconfirmedBalanceDiff());
-        Logger.logMessage("Max block json size " + maxBlockJsonSize);
         Logger.logMessage("Max block payload " + maxBlockPayload);
         Logger.logMessage("Max process transaction full size " + maxProcessTransactionFullSize);
         Logger.logMessage("Max cancel transaction full size " + maxCancelTransactionFullSize);

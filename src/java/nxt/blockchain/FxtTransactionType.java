@@ -143,7 +143,6 @@ public abstract class FxtTransactionType extends TransactionType {
 
     protected abstract void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount);
 
-    //TODO: remove?
     @Override
     public final boolean isPhasingSafe() {
         return true;

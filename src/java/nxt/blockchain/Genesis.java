@@ -33,7 +33,6 @@ import java.util.Map;
 
 public final class Genesis {
 
-    //TODO: remove completely?
     public static final byte[] CREATOR_PUBLIC_KEY;
     public static final long CREATOR_ID;
     public static final byte[] GENESIS_BLOCK_SIGNATURE;

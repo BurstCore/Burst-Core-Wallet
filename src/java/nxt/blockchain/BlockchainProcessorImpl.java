@@ -570,7 +570,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     try {
                         pushBlock(block);
                     } catch (BlockNotAcceptedException e) {
-                        Logger.logErrorMessage("Popped off block no longer acceptable: " + JSON.toJSONString(block.getJSONObject()), e);
+                        Logger.logErrorMessage("Popped off block no longer acceptable: " + block.toString(), e);
                         break;
                     }
                 }
@@ -1277,7 +1277,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             if (Constants.isTestnet) {
                 Arrays.fill(generationSignature, (byte)1);
             }
-            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, 0, 0, digest.digest(),
+            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, 0, digest.digest(),
                     Genesis.CREATOR_PUBLIC_KEY, generationSignature, Genesis.GENESIS_BLOCK_SIGNATURE, new byte[32], Collections.emptyList());
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
@@ -1421,7 +1421,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
     private void validateTransactions(BlockImpl block, BlockImpl previousLastBlock, int curTime, Map<TransactionType, Map<String, Integer>> duplicates,
                                       boolean fullValidation) throws BlockNotAcceptedException {
         long payloadLength = 0;
-        long calculatedTotalAmount = 0;
         long calculatedTotalFee = 0;
         MessageDigest digest = Crypto.sha256();
         boolean hasPrunedTransactions = false;
@@ -1465,14 +1464,12 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             if (fxtTransaction.attachmentIsDuplicate(duplicates, true)) {
                 throw new TransactionNotAcceptedException("Transaction is a duplicate", fxtTransaction);
             }
-            calculatedTotalAmount += fxtTransaction.getAmount();
             calculatedTotalFee += fxtTransaction.getFee();
             payloadLength += fxtTransaction.getFullSize();
             digest.update(fxtTransaction.bytes());
         }
-        //TODO: remove block total amount field completely
-        if (calculatedTotalAmount != block.getTotalAmountNQT() || calculatedTotalFee != block.getTotalFeeNQT()) {
-            throw new BlockNotAcceptedException("Total amount or fee don't match transaction totals", block);
+        if (calculatedTotalFee != block.getTotalFeeFQT()) {
+            throw new BlockNotAcceptedException("Total fee doesn't match transaction total", block);
         }
         if (!Arrays.equals(digest.digest(), block.getPayloadHash())) {
             throw new BlockNotAcceptedException("Payload hash doesn't match", block);
@@ -1826,14 +1823,12 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         SortedSet<UnconfirmedFxtTransaction> sortedTransactions = selectUnconfirmedFxtTransactions(duplicates, previousBlock, blockTimestamp);
         List<FxtTransactionImpl> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
-        long totalAmountFQT = 0;
         long totalFeeFQT = 0;
         int payloadLength = 0;
         for (UnconfirmedFxtTransaction unconfirmedTransaction : sortedTransactions) {
             FxtTransactionImpl transaction = unconfirmedTransaction.getTransaction();
             blockTransactions.add(transaction);
             digest.update(transaction.bytes());
-            totalAmountFQT += transaction.getAmount();
             totalFeeFQT += transaction.getFee();
             payloadLength += transaction.getFullSize();
         }
@@ -1843,14 +1838,14 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         byte[] generationSignature = digest.digest(publicKey);
         byte[] previousBlockHash = Crypto.sha256().digest(previousBlock.bytes());
 
-        BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountFQT, totalFeeFQT, payloadLength,
+        BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalFeeFQT, payloadLength,
                 payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase);
 
         try {
             pushBlock(block);
             blockListeners.notify(block, Event.BLOCK_GENERATED);
             Logger.logDebugMessage("Account " + Long.toUnsignedString(block.getGeneratorId()) + " generated block " + block.getStringId()
-                    + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float)block.getTotalFeeNQT())/Constants.ONE_FXT);
+                    + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float)block.getTotalFeeFQT())/Constants.ONE_FXT);
         } catch (TransactionNotAcceptedException e) {
             Logger.logDebugMessage("Generate block failed: " + e.getMessage());
             TransactionProcessorImpl.getInstance().processWaitingTransactions();
