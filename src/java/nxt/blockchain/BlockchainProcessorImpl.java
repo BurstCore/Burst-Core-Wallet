@@ -845,7 +845,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                 break;
                         }
                     }
-                    //TODO: limit on response size?
                     NetworkMessage.TransactionsMessage response = (NetworkMessage.TransactionsMessage)peer.sendRequest(
                             new NetworkMessage.GetTransactionsMessage(requestList));
                     if (response == null) {
@@ -1407,7 +1406,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         if (!block.verifyBlockSignature()) {
             throw new BlockNotAcceptedException("Block signature verification failed", block);
         }
-        if (block.getFxtTransactions().size() > Constants.MAX_NUMBER_OF_TRANSACTIONS) {
+        if (block.getFxtTransactions().size() > Constants.MAX_NUMBER_OF_FXT_TRANSACTIONS) {
             throw new BlockNotAcceptedException("Invalid block transaction count " + block.getFxtTransactions().size(), block);
         }
     }
@@ -1733,39 +1732,33 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             }
         }
         SortedSet<UnconfirmedFxtTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
-        int payloadLength = 0;
-        while (payloadLength <= Constants.MAX_PAYLOAD_LENGTH && sortedTransactions.size() <= Constants.MAX_NUMBER_OF_TRANSACTIONS) {
-            int prevNumberOfNewTransactions = sortedTransactions.size();
-            outer:
-            for (UnconfirmedFxtTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
-                int transactionLength = unconfirmedTransaction.getTransaction().getFullSize();
-                if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > Constants.MAX_PAYLOAD_LENGTH) {
-                    continue;
-                }
-                if (unconfirmedTransaction.getVersion() != getTransactionVersion(previousBlock.getHeight())) {
-                    continue;
-                }
-                if (blockTimestamp > 0 && (unconfirmedTransaction.getTimestamp() > blockTimestamp + Constants.MAX_TIMEDRIFT
-                        || unconfirmedTransaction.getExpiration() < blockTimestamp)) {
-                    continue;
-                }
-                try {
-                    unconfirmedTransaction.getTransaction().validate();
-                } catch (NxtException.ValidationException e) {
-                    continue;
-                }
-                if (unconfirmedTransaction.getTransaction().attachmentIsDuplicate(duplicates, true)) {
-                    continue;
-                }
-                for (ChildTransaction childTransaction : unconfirmedTransaction.getChildTransactions()) {
-                    if (((ChildTransactionImpl)childTransaction).attachmentIsDuplicate(duplicates, true)) {
-                        continue outer;
-                    }
-                }
-                sortedTransactions.add(unconfirmedTransaction);
-                payloadLength += transactionLength;
+        outer:
+        for (UnconfirmedFxtTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
+            if (sortedTransactions.contains(unconfirmedTransaction)) {
+                continue;
             }
-            if (sortedTransactions.size() == prevNumberOfNewTransactions) {
+            if (unconfirmedTransaction.getVersion() != getTransactionVersion(previousBlock.getHeight())) {
+                continue;
+            }
+            if (blockTimestamp > 0 && (unconfirmedTransaction.getTimestamp() > blockTimestamp + Constants.MAX_TIMEDRIFT
+                    || unconfirmedTransaction.getExpiration() < blockTimestamp)) {
+                continue;
+            }
+            try {
+                unconfirmedTransaction.getTransaction().validate();
+            } catch (NxtException.ValidationException e) {
+                continue;
+            }
+            if (unconfirmedTransaction.getTransaction().attachmentIsDuplicate(duplicates, true)) {
+                continue;
+            }
+            for (ChildTransaction childTransaction : unconfirmedTransaction.getChildTransactions()) {
+                if (((ChildTransactionImpl)childTransaction).attachmentIsDuplicate(duplicates, true)) {
+                    continue outer;
+                }
+            }
+            sortedTransactions.add(unconfirmedTransaction);
+            if (sortedTransactions.size() == Constants.MAX_NUMBER_OF_FXT_TRANSACTIONS) {
                 break;
             }
         }

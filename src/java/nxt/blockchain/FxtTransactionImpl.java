@@ -145,7 +145,7 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
             }
             appendage.validate(this);
         }
-        if (getFullSize() > Constants.MAX_PAYLOAD_LENGTH) {
+        if (getFullSize() > Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH) {
             throw new NxtException.NotValidException("Transaction size " + getFullSize() + " exceeds maximum payload size");
         }
         long minimumFeeFQT = getMinimumFeeFQT(Nxt.getBlockchain().getHeight());

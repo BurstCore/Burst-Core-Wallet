@@ -189,9 +189,11 @@ public final class Bundler {
             while (unconfirmedTransactions.hasNext()) {
                 List<ChildTransaction> childTransactions = new ArrayList<>();
                 long totalMinFeeFQT = 0;
+                int payloadLength = 0;
                 Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
-                //TODO: need to check block size limits in addition to transaction count
-                while (unconfirmedTransactions.hasNext() && childTransactions.size() < Constants.MAX_NUMBER_OF_TRANSACTIONS) {
+                while (unconfirmedTransactions.hasNext()
+                        && childTransactions.size() < Constants.MAX_NUMBER_OF_CHILD_TRANSACTIONS
+                        && payloadLength < Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH) {
                     ChildTransactionImpl childTransaction = (ChildTransactionImpl) unconfirmedTransactions.next().getTransaction();
                     if (childTransaction.getExpiration() < now + 60 * defaultChildBlockDeadline || childTransaction.getTimestamp() > now) {
                         continue;
@@ -206,11 +208,16 @@ public final class Bundler {
                         Logger.logDebugMessage("Bundler " + Long.toUnsignedString(accountId) + " will exceed total fees limit, not bundling");
                         continue;
                     }
+                    int childFullSize = childTransaction.getFullSize();
+                    if (payloadLength + childFullSize > Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH) {
+                        continue;
+                    }
                     if (childTransaction.attachmentIsDuplicate(duplicates, true)) {
                         continue;
                     }
                     childTransactions.add(childTransaction);
                     totalMinFeeFQT += minChildFeeFQT;
+                    payloadLength += childFullSize;
                 }
                 if (childTransactions.size() > 0) {
                     long totalFeeFQT = overpay(totalMinFeeFQT);

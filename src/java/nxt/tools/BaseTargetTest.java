@@ -31,7 +31,8 @@ import java.util.List;
 public final class BaseTargetTest {
 
     private static final long MIN_BASE_TARGET = Constants.INITIAL_BASE_TARGET * 9 / 10;
-    private static final long MAX_BASE_TARGET = Constants.isTestnet ? Constants.MAX_BASE_TARGET : Constants.INITIAL_BASE_TARGET * 50;
+    private static final long MAX_BASE_TARGET = Constants.isTestnet ? Constants.INITIAL_BASE_TARGET * Constants.MAX_BALANCE_FXT
+            : Constants.INITIAL_BASE_TARGET * 50;
 
     private static final int MIN_BLOCKTIME_LIMIT = 53;
     private static final int MAX_BLOCKTIME_LIMIT = 67;

@@ -22,15 +22,14 @@ public final class Constants {
     public static final boolean isOffline = Nxt.getBooleanProperty("nxt.isOffline");
     public static final boolean isLightClient = Nxt.getBooleanProperty("nxt.isLightClient");
 
-    public static final int MAX_NUMBER_OF_TRANSACTIONS = 255;
-    public static final int MIN_TRANSACTION_SIZE = 176;
-    public static final int MAX_PAYLOAD_LENGTH = MAX_NUMBER_OF_TRANSACTIONS * MIN_TRANSACTION_SIZE;
+    public static final int MAX_NUMBER_OF_FXT_TRANSACTIONS = 10;
+    public static final int MAX_NUMBER_OF_CHILD_TRANSACTIONS = 1024;
+    public static final int MAX_CHILDBLOCK_PAYLOAD_LENGTH = 512 * 1024;
     public static final long MAX_BALANCE_FXT = 1000000000;
     public static final long ONE_FXT = 100000000;
     public static final long MAX_BALANCE_NQT = MAX_BALANCE_FXT * ONE_FXT;
     public static final long INITIAL_BASE_TARGET = 153722867;
-    public static final long MAX_BASE_TARGET = MAX_BALANCE_FXT * INITIAL_BASE_TARGET;
-    public static final long MAX_BASE_TARGET_2 = isTestnet ? MAX_BASE_TARGET : INITIAL_BASE_TARGET * 50;
+    public static final long MAX_BASE_TARGET = INITIAL_BASE_TARGET * (isTestnet ? MAX_BALANCE_FXT : 50);
     public static final long MIN_BASE_TARGET = INITIAL_BASE_TARGET * 9 / 10;
     public static final int MIN_BLOCKTIME_LIMIT = 53;
     public static final int MAX_BLOCKTIME_LIMIT = 67;

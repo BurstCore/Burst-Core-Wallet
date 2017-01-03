@@ -794,7 +794,7 @@ public final class ShufflingHome {
         }
 
         private boolean isFull(Block block) {
-            int transactionSize = Constants.MIN_TRANSACTION_SIZE; // min transaction size with no attachment
+            int transactionSize = 4 + 1 + 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 64 + 4 + 8 + 4 + 4 + 32;
             if (stage == ShufflingStage.REGISTRATION) {
                 transactionSize += 1 + 32;
             } else { // must use same for PROCESSING/VERIFICATION/BLAME
@@ -810,9 +810,7 @@ public final class ShufflingHome {
             if (childBlockFxtTransaction == null) {
                 return true;
             }
-            return false;
-            //TODO: revise to use child block capacity
-            //return childBlockFxtTransaction.getPayloadLength() + transactionSize > Constants.MAX_PAYLOAD_LENGTH;
+            return childBlockFxtTransaction.getFullSize() + transactionSize > Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH;
         }
     }
 
