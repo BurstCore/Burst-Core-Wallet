@@ -16,6 +16,8 @@
 
 package nxt;
 
+import java.text.SimpleDateFormat;
+
 public final class Constants {
 
     public static final boolean isTestnet = Nxt.getBooleanProperty("nxt.isTestnet");
@@ -25,6 +27,15 @@ public final class Constants {
     public static final int MAX_NUMBER_OF_FXT_TRANSACTIONS = 10;
     public static final int MAX_NUMBER_OF_CHILD_TRANSACTIONS = 1024;
     public static final int MAX_CHILDBLOCK_PAYLOAD_LENGTH = 512 * 1024;
+    public static final long EPOCH_BEGINNING;
+    static {
+        try {
+            EPOCH_BEGINNING = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").parse("2017-01-01 00:00:00 +0000").getTime();
+        } catch (Exception e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
     public static final long MAX_BALANCE_FXT = 1000000000;
     public static final long ONE_FXT = 100000000;
     public static final long MAX_BALANCE_NQT = MAX_BALANCE_FXT * ONE_FXT;

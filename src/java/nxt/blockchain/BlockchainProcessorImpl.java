@@ -1271,23 +1271,20 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         Logger.logMessage("Genesis block not in database, starting from scratch");
         try (Connection con = Db.db.beginTransaction()) {
-            MessageDigest digest = Crypto.sha256();
-            byte[] generationSignature = new byte[32];
-            if (Constants.isTestnet) {
-                Arrays.fill(generationSignature, (byte)1);
-            }
-            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, digest.digest(),
-                    Genesis.CREATOR_PUBLIC_KEY, generationSignature, Genesis.GENESIS_BLOCK_SIGNATURE, new byte[32], Collections.emptyList());
-            genesisBlock.setPrevious(null);
+            BlockImpl genesisBlock = new BlockImpl(Genesis.generationSignature);
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
-            Genesis.apply();
-            accept(genesisBlock, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
-            for (DerivedDbTable table : derivedTables) {
-                table.createSearchIndex(con);
+            byte[] generationSignature = Genesis.apply();
+            if (!Arrays.equals(generationSignature, genesisBlock.getGenerationSignature())) {
+                throw new RuntimeException("Invalid generation signature " + Arrays.toString(generationSignature));
+            } else {
+                Db.db.commitTransaction();
+                for (DerivedDbTable table : derivedTables) {
+                    table.createSearchIndex(con);
+                }
             }
             Db.db.commitTransaction();
-        } catch (SQLException|NxtException e) {
+        } catch (SQLException e) {
             Db.db.rollbackTransaction();
             Logger.logMessage(e.getMessage());
             throw new RuntimeException(e.toString(), e);
@@ -1934,47 +1931,49 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                             try {
                                 dbId = rs.getLong("db_id");
                                 currentBlock = BlockDb.loadBlock(con, rs, true);
-                                currentBlock.loadTransactions();
-                                if (currentBlock.getId() != currentBlockId || currentBlock.getHeight() > blockchain.getHeight() + 1) {
-                                    throw new NxtException.NotValidException("Database blocks in the wrong order!");
-                                }
-                                Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
-                                List<ChildTransactionImpl> validPhasedTransactions = new ArrayList<>();
-                                List<ChildTransactionImpl> invalidPhasedTransactions = new ArrayList<>();
-                                validatePhasedTransactions(blockchain.getHeight(), validPhasedTransactions, invalidPhasedTransactions, duplicates);
-                                if (validate && currentBlock.getHeight() > 0) {
-                                    int curTime = Nxt.getEpochTime();
-                                    validate(currentBlock, blockchain.getLastBlock(), curTime);
-                                    byte[] blockBytes = currentBlock.bytes();
-                                    if (!Arrays.equals(blockBytes, BlockImpl.parseBlock(blockBytes, currentBlock.getFxtTransactions()).bytes())) {
-                                        throw new NxtException.NotValidException("Block bytes cannot be parsed back to the same block");
+                                if (currentBlock.getHeight() > 0) {
+                                    currentBlock.loadTransactions();
+                                    if (currentBlock.getId() != currentBlockId || currentBlock.getHeight() > blockchain.getHeight() + 1) {
+                                        throw new NxtException.NotValidException("Database blocks in the wrong order!");
                                     }
-                                    validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
-                                    List<TransactionImpl> transactions = new ArrayList<>();
-                                    for (FxtTransactionImpl fxtTransaction : currentBlock.getFxtTransactions()) {
-                                        transactions.add(fxtTransaction);
-                                        transactions.addAll(fxtTransaction.getSortedChildTransactions());
-                                    }
-                                    for (TransactionImpl transaction : transactions) {
-                                        byte[] transactionBytes = transaction.bytes();
-                                        if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionBytes).build().bytes())) {
-                                            throw new NxtException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
-                                                    + JSON.toJSONString(transaction.getJSONObject()));
+                                    Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+                                    List<ChildTransactionImpl> validPhasedTransactions = new ArrayList<>();
+                                    List<ChildTransactionImpl> invalidPhasedTransactions = new ArrayList<>();
+                                    validatePhasedTransactions(blockchain.getHeight(), validPhasedTransactions, invalidPhasedTransactions, duplicates);
+                                    if (validate) {
+                                        int curTime = Nxt.getEpochTime();
+                                        validate(currentBlock, blockchain.getLastBlock(), curTime);
+                                        byte[] blockBytes = currentBlock.bytes();
+                                        if (!Arrays.equals(blockBytes, BlockImpl.parseBlock(blockBytes, currentBlock.getFxtTransactions()).bytes())) {
+                                            throw new NxtException.NotValidException("Block bytes cannot be parsed back to the same block");
                                         }
-                                        JSONObject transactionJSON = (JSONObject) JSONValue.parse(JSON.toJSONString(transaction.getJSONObject()));
-                                        if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionJSON).build().bytes())) {
-                                            throw new NxtException.NotValidException("Transaction JSON cannot be parsed back to the same transaction: "
-                                                    + JSON.toJSONString(transaction.getJSONObject()));
+                                        validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
+                                        List<TransactionImpl> transactions = new ArrayList<>();
+                                        for (FxtTransactionImpl fxtTransaction : currentBlock.getFxtTransactions()) {
+                                            transactions.add(fxtTransaction);
+                                            transactions.addAll(fxtTransaction.getSortedChildTransactions());
+                                        }
+                                        for (TransactionImpl transaction : transactions) {
+                                            byte[] transactionBytes = transaction.bytes();
+                                            if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionBytes).build().bytes())) {
+                                                throw new NxtException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
+                                                        + JSON.toJSONString(transaction.getJSONObject()));
+                                            }
+                                            JSONObject transactionJSON = (JSONObject) JSONValue.parse(JSON.toJSONString(transaction.getJSONObject()));
+                                            if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionJSON).build().bytes())) {
+                                                throw new NxtException.NotValidException("Transaction JSON cannot be parsed back to the same transaction: "
+                                                        + JSON.toJSONString(transaction.getJSONObject()));
+                                            }
                                         }
                                     }
+                                    blockListeners.notify(currentBlock, Event.BEFORE_BLOCK_ACCEPT);
+                                    blockchain.setLastBlock(currentBlock);
+                                    accept(currentBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
+                                    Db.db.clearCache();
+                                    Db.db.commitTransaction();
+                                    blockListeners.notify(currentBlock, Event.AFTER_BLOCK_ACCEPT);
                                 }
-                                blockListeners.notify(currentBlock, Event.BEFORE_BLOCK_ACCEPT);
-                                blockchain.setLastBlock(currentBlock);
-                                accept(currentBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                                 currentBlockId = currentBlock.getNextBlockId();
-                                Db.db.clearCache();
-                                Db.db.commitTransaction();
-                                blockListeners.notify(currentBlock, Event.AFTER_BLOCK_ACCEPT);
                             } catch(NxtException | RuntimeException e){
                                 Db.db.rollbackTransaction();
                                 Logger.logDebugMessage(e.toString(), e);

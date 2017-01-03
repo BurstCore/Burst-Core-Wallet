@@ -59,17 +59,8 @@ public final class BlockImpl implements Block {
     private volatile long generatorId;
     private volatile byte[] bytes = null;
 
-    //for forging new blocks only
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeFQT, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions, String secretPhrase) {
-        this(version, timestamp, previousBlockId, totalFeeFQT, payloadHash,
-                generatorPublicKey, generationSignature, null, previousBlockHash, transactions);
-        blockSignature = Crypto.sign(bytes(), secretPhrase);
-        bytes = null;
-    }
-
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeFQT, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions) {
+    private BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeFQT, byte[] payloadHash,
+                      byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions) {
         this.version = version;
         this.timestamp = timestamp;
         this.previousBlockId = previousBlockId;
@@ -82,6 +73,25 @@ public final class BlockImpl implements Block {
         if (transactions != null) {
             this.blockTransactions = Collections.unmodifiableList(transactions);
         }
+    }
+
+    //genesis block only
+    BlockImpl(byte[] generationSignature) {
+        this(-1, 0, 0, 0, new byte[32],
+                new byte[32], generationSignature, new byte[64], new byte[32], Collections.emptyList());
+        this.height = 0;
+        if (Constants.isTestnet) {
+            this.baseTarget = Constants.INITIAL_BASE_TARGET * 10;
+        }
+    }
+
+    //for forging new blocks only
+    BlockImpl(int version, int timestamp, long previousBlockId, long totalFeeNQT, byte[] payloadHash,
+                     byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<FxtTransactionImpl> transactions, String secretPhrase) {
+        this(version, timestamp, previousBlockId, totalFeeNQT, payloadHash,
+                generatorPublicKey, generationSignature, null, previousBlockHash, transactions);
+        blockSignature = Crypto.sign(bytes(), secretPhrase);
+        bytes = null;
     }
 
     //for loading from db only
@@ -145,7 +155,11 @@ public final class BlockImpl implements Block {
     @Override
     public byte[] getGeneratorPublicKey() {
         if (generatorPublicKey == null) {
-            generatorPublicKey = Account.getPublicKey(generatorId);
+            if (generatorId != 0) {
+                generatorPublicKey = Account.getPublicKey(generatorId);
+            } else {
+                generatorPublicKey = new byte[32];
+            }
         }
         return generatorPublicKey;
     }
@@ -241,7 +255,7 @@ public final class BlockImpl implements Block {
 
     @Override
     public long getGeneratorId() {
-        if (generatorId == 0) {
+        if (generatorId == 0 && height != 0) {
             generatorId = Account.getId(getGeneratorPublicKey());
         }
         return generatorId;
