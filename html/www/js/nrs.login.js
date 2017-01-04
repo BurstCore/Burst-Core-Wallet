@@ -297,9 +297,8 @@ var NRS = (function(NRS, $, undefined) {
 			$("#login_password, #registration_password, #registration_password_repeat").val("");
 			loginCheckPasswordLength.val(1);
 		}
-        var chain = $('select[name="chain"]').val();
-        NRS.setActiveChain(chain);
-		console.log("login calling getBlockchainStatus, active chain is " + NRS.constants.CHAIN_PROPERTIES[chain].name);
+        NRS.setActiveChain($('select[name="chain"]').val());
+		console.log("login calling getBlockchainStatus, active chain is " + NRS.getActiveChainName());
 		NRS.sendRequest("getBlockchainStatus", {}, function(response) {
 			if (response.errorCode) {
 			    NRS.connectionError(response.errorDescription);
@@ -375,7 +374,8 @@ var NRS = (function(NRS, $, undefined) {
                         $(".hide_secret_phrase").hide();
                     }
 					NRS.disablePluginsDuringSession = $("#disable_all_plugins").is(":checked");
-					$("#sidebar_account_id").html(String(NRS.accountRS).escapeHTML());
+                    $("#chain_name").html(NRS.getActiveChainName());
+                    $("#sidebar_account_id").html(String(NRS.accountRS).escapeHTML());
 					$("#sidebar_account_link").html(NRS.getAccountLink(NRS, "account", NRS.accountRS, "details", false, "btn btn-default btn-xs"));
 					if (NRS.lastBlockHeight == 0 && NRS.state.numberOfBlocks) {
 						NRS.checkBlockHeight(NRS.state.numberOfBlocks - 1);

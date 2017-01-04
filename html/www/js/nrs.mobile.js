@@ -109,6 +109,10 @@ var NRS = (function(NRS, $) {
         return NRS.mobileSettings.chain;
     };
 
+    NRS.getActiveChainName = function() {
+        return String(NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain].name).escapeHTML();
+    };
+
     NRS.createChainSelect = function() {
         // Build chain select box for login page
         var chains = $('select[name="chain"]');
