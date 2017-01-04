@@ -371,7 +371,7 @@ public final class PhasingPollHome {
                     + "LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id "
                     + "AND phasing_poll.full_hash = phasing_poll_result.full_hash "
                     + "WHERE transaction.id = phasing_poll.id AND "
-                    + "transaction.full_hash = phasing_poll.full_hash AND"
+                    + "transaction.full_hash = phasing_poll.full_hash AND "
                     + "phasing_poll.finish_height > ? AND "
                     + "phasing_poll.id = phasing_poll_voter.transaction_id "
                     + "AND phasing_poll.full_hash = phasing_poll_voter.transaction_full_hash "
