@@ -118,7 +118,7 @@ var NRS = (function(NRS, $) {
     };
 
     NRS.getActiveChainOneCoin = function() {
-        return parseInt(NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain].ONE_COIN);
+        return NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain].ONE_COIN;
     };
 
     NRS.createChainSelect = function() {
