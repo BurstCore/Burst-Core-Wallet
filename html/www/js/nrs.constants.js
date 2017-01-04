@@ -89,7 +89,8 @@ var NRS = (function (NRS, $) {
 
     NRS.loadServerConstants = function(resolve) {
         function processConstants(response) {
-            if (response.genesisAccountId) {
+            if (response.genesisBlockId) {
+                NRS.constants.GENESIS_BLOCK_ID = response.genesisBlockId;
                 NRS.constants.SERVER = response;
                 NRS.constants.VOTING_MODELS = response.votingModels;
                 NRS.constants.MIN_BALANCE_MODELS = response.minBalanceModels;
