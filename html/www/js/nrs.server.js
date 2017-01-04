@@ -192,6 +192,10 @@ var NRS = (function (NRS, $, undefined) {
             return;
         }
 
+        if (!data.chain) {
+            data.chain = NRS.getActiveChain();
+        }
+
         //check to see if secretPhrase supplied matches logged in account, if not - show error.
         if ("secretPhrase" in data) {
             accountId = NRS.getAccountId(NRS.rememberPassword ? _password : data.secretPhrase);
