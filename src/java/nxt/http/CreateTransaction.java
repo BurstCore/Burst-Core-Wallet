@@ -307,7 +307,6 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
                 response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
             } catch (NxtException.NotYetEncryptedException ignore) {}
             if (secretPhrase != null) {
-                response.put("transaction", transaction.getStringId());
                 response.put("fullHash", transactionJSON.get("fullHash"));
                 response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
                 response.put("signatureHash", transactionJSON.get("signatureHash"));
