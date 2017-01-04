@@ -78,7 +78,6 @@ public final class SendTransaction extends APIServlet.APIRequestHandler {
             TransactionsInventory.cacheTransactions(transactions);
             NetworkHandler.broadcastMessage(new NetworkMessage.TransactionsInventoryMessage(transactions));
             Nxt.getTransactionProcessor().broadcastLater(transaction);
-            response.put("transaction", transaction.getStringId());
             response.put("fullHash", Convert.toHexString(transaction.getFullHash()));
         } catch (NxtException.ValidationException|RuntimeException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");

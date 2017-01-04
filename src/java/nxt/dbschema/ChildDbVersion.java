@@ -167,288 +167,242 @@ public class ChildDbVersion extends DbVersion {
             case 46:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS currency_founder_currency_id_idx ON currency_founder (currency_id, account_id, height DESC)");
             case 47:
-                apply(null);
-            case 48:
-                apply(null);
-            case 49:
                 apply("CREATE TABLE IF NOT EXISTS buy_offer (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, currency_id BIGINT NOT NULL, account_id BIGINT NOT NULL,"
                         + "rate BIGINT NOT NULL, unit_limit BIGINT NOT NULL, supply BIGINT NOT NULL, expiration_height INT NOT NULL,"
                         + "creation_height INT NOT NULL, transaction_index SMALLINT NOT NULL, transaction_height INT NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 50:
+            case 48:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS buy_offer_id_idx ON buy_offer (id, height DESC)");
-            case 51:
+            case 49:
                 apply("CREATE INDEX IF NOT EXISTS buy_offer_currency_id_account_id_idx ON buy_offer (currency_id, account_id, height DESC)");
-            case 52:
+            case 50:
                 apply("CREATE TABLE IF NOT EXISTS sell_offer (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, currency_id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
                         + "rate BIGINT NOT NULL, unit_limit BIGINT NOT NULL, supply BIGINT NOT NULL, expiration_height INT NOT NULL, "
                         + "creation_height INT NOT NULL, transaction_index SMALLINT NOT NULL, transaction_height INT NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 53:
+            case 51:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS sell_offer_id_idx ON sell_offer (id, height DESC)");
-            case 54:
+            case 52:
                 apply("CREATE INDEX IF NOT EXISTS sell_offer_currency_id_account_id_idx ON sell_offer (currency_id, account_id, height DESC)");
-            case 55:
+            case 53:
                 apply("CREATE TABLE IF NOT EXISTS exchange (db_id IDENTITY, transaction_id BIGINT NOT NULL, transaction_full_hash BINARY(32) NOT NULL, "
                         + "currency_id BIGINT NOT NULL, block_id BIGINT NOT NULL, "
                         + "offer_id BIGINT NOT NULL, offer_full_hash BINARY(32) NOT NULL, seller_id BIGINT NOT NULL, "
                         + "buyer_id BIGINT NOT NULL, units BIGINT NOT NULL, "
                         + "rate BIGINT NOT NULL, timestamp INT NOT NULL, height INT NOT NULL)");
-            case 56:
+            case 54:
                 apply("CREATE INDEX IF NOT EXISTS exchange_offer_idx ON exchange (transaction_id, offer_id)");
-            case 57:
+            case 55:
                 apply("CREATE INDEX IF NOT EXISTS exchange_currency_id_idx ON exchange (currency_id, height DESC)");
-            case 58:
+            case 56:
                 apply("CREATE INDEX IF NOT EXISTS exchange_seller_id_idx ON exchange (seller_id, height DESC)");
-            case 59:
+            case 57:
                 apply("CREATE INDEX IF NOT EXISTS exchange_buyer_id_idx ON exchange (buyer_id, height DESC)");
-            case 60:
-                apply(null);
-            case 61:
-                apply(null);
-            case 62:
-                apply(null);
-            case 63:
-                apply(null);
-            case 64:
-                apply(null);
-            case 65:
+            case 58:
                 apply("CREATE INDEX IF NOT EXISTS buy_offer_rate_height_idx ON buy_offer (rate DESC, creation_height ASC)");
-            case 66:
+            case 59:
                 apply("CREATE INDEX IF NOT EXISTS sell_offer_rate_height_idx ON sell_offer (rate ASC, creation_height ASC)");
-            case 67:
-                apply(null);
-            case 68:
+            case 60:
                 apply("CREATE INDEX IF NOT EXISTS exchange_height_idx ON exchange(height)");
-            case 69:
+            case 61:
                 apply("CREATE INDEX IF NOT EXISTS trade_height_idx ON trade(height)");
-            case 70:
+            case 62:
                 apply("CREATE TABLE IF NOT EXISTS vote (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
                         + "poll_id BIGINT NOT NULL, voter_id BIGINT NOT NULL, vote_bytes VARBINARY NOT NULL, height INT NOT NULL)");
-            case 71:
+            case 63:
                 apply("CREATE INDEX IF NOT EXISTS vote_id_idx ON vote (id)");
-            case 72:
+            case 64:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS vote_poll_id_idx ON vote (poll_id, voter_id)");
-            case 73:
+            case 65:
                 apply("CREATE TABLE IF NOT EXISTS poll (db_id IDENTITY, id BIGINT NOT NULL, "
                         + "account_id BIGINT NOT NULL, name VARCHAR NOT NULL, "
                         + "description VARCHAR, options ARRAY NOT NULL, min_num_options TINYINT, max_num_options TINYINT, "
                         + "min_range_value TINYINT, max_range_value TINYINT, timestamp INT NOT NULL, "
                         + "finish_height INT NOT NULL, voting_model TINYINT NOT NULL, min_balance BIGINT, "
                         + "min_balance_model TINYINT, holding_id BIGINT, height INT NOT NULL)");
-            case 74:
+            case 66:
                 apply("CREATE TABLE IF NOT EXISTS poll_result (db_id IDENTITY, poll_id BIGINT NOT NULL, "
                         + "result BIGINT, weight BIGINT NOT NULL, height INT NOT NULL)");
-            case 75:
+            case 67:
                 apply("CREATE TABLE IF NOT EXISTS phasing_poll (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
                         + "account_id BIGINT NOT NULL, whitelist_size TINYINT NOT NULL DEFAULT 0, "
                         + "finish_height INT NOT NULL, voting_model TINYINT NOT NULL, quorum BIGINT, "
                         + "min_balance BIGINT, holding_id BIGINT, min_balance_model TINYINT, "
                         + "hashed_secret VARBINARY, algorithm TINYINT, height INT NOT NULL)");
-            case 76:
+            case 68:
                 apply("CREATE TABLE IF NOT EXISTS phasing_vote (db_id IDENTITY, vote_id BIGINT NOT NULL, vote_full_hash BINARY(32) NOT NULL, "
                         + "transaction_id BIGINT NOT NULL, transaction_full_hash BINARY(32) NOT NULL, voter_id BIGINT NOT NULL, "
                         + "height INT NOT NULL)");
-            case 77:
+            case 69:
                 apply("CREATE TABLE IF NOT EXISTS phasing_poll_voter (db_id IDENTITY, "
                         + "transaction_id BIGINT NOT NULL, transaction_full_hash BINARY(32) NOT NULL, voter_id BIGINT NOT NULL, "
                         + "height INT NOT NULL)");
-            case 78:
+            case 70:
                 apply("CREATE INDEX IF NOT EXISTS vote_height_idx ON vote(height)");
-            case 79:
+            case 71:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS poll_id_idx ON poll(id)");
-            case 80:
+            case 72:
                 apply("CREATE INDEX IF NOT EXISTS poll_height_idx ON poll(height)");
-            case 81:
+            case 73:
                 apply("CREATE INDEX IF NOT EXISTS poll_account_idx ON poll(account_id)");
-            case 82:
+            case 74:
                 apply("CREATE INDEX IF NOT EXISTS poll_finish_height_idx ON poll(finish_height DESC)");
-            case 83:
+            case 75:
                 apply("CREATE INDEX IF NOT EXISTS poll_result_poll_id_idx ON poll_result(poll_id)");
-            case 84:
+            case 76:
                 apply("CREATE INDEX IF NOT EXISTS poll_result_height_idx ON poll_result(height)");
-            case 85:
+            case 77:
                 apply("CREATE INDEX IF NOT EXISTS phasing_poll_id_idx ON phasing_poll(id)");
-            case 86:
+            case 78:
                 apply("CREATE INDEX IF NOT EXISTS phasing_poll_height_idx ON phasing_poll(height)");
-            case 87:
+            case 79:
                 apply("CREATE INDEX IF NOT EXISTS phasing_poll_account_id_idx ON phasing_poll(account_id, height DESC)");
-            case 88:
+            case 80:
                 apply("CREATE INDEX IF NOT EXISTS phasing_poll_holding_id_idx ON phasing_poll(holding_id, height DESC)");
-            case 89:
+            case 81:
                 apply("CREATE INDEX IF NOT EXISTS phasing_vote_transaction_voter_idx ON phasing_vote(transaction_id, voter_id)");
-            case 90:
+            case 82:
                 apply("CREATE INDEX IF NOT EXISTS phasing_poll_voter_transaction_voter_idx ON phasing_poll_voter(transaction_id, voter_id)");
-            case 91:
-                apply(null);
-            case 92:
-                apply(null);
-            case 93:
-                apply(null);
-            case 94:
+            case 83:
                 apply("CREATE INDEX IF NOT EXISTS currency_founder_account_id_idx ON currency_founder (account_id, height DESC)");
-            case 95:
+            case 84:
                 apply("CREATE INDEX IF NOT EXISTS phasing_poll_voter_height_idx ON phasing_poll_voter(height)");
-            case 96:
+            case 85:
                 apply("CREATE INDEX IF NOT EXISTS phasing_vote_height_idx ON phasing_vote(height)");
-            case 97:
+            case 86:
                 apply("CREATE INDEX IF NOT EXISTS trade_ask_idx ON trade (ask_order_id, height DESC)");
-            case 98:
+            case 87:
                 apply("CREATE INDEX IF NOT EXISTS trade_bid_idx ON trade (bid_order_id, height DESC)");
-            case 99:
+            case 88:
                 apply("CREATE TABLE IF NOT EXISTS prunable_message (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, sender_id BIGINT NOT NULL, "
                         + "recipient_id BIGINT, message VARBINARY, message_is_text BOOLEAN NOT NULL, is_compressed BOOLEAN NOT NULL, "
                         + "encrypted_message VARBINARY, encrypted_is_text BOOLEAN DEFAULT FALSE, "
                         + "block_timestamp INT NOT NULL, transaction_timestamp INT NOT NULL, height INT NOT NULL, "
                         + "FOREIGN KEY (height) REFERENCES PUBLIC.block (height) ON DELETE CASCADE)");
-            case 100:
+            case 89:
                 apply("CREATE INDEX IF NOT EXISTS prunable_message_id_idx ON prunable_message (id)");
-            case 101:
+            case 90:
                 apply("CREATE INDEX IF NOT EXISTS prunable_message_transaction_timestamp_idx ON prunable_message (transaction_timestamp DESC)");
-            case 102:
+            case 91:
                 apply("CREATE INDEX IF NOT EXISTS prunable_message_sender_idx ON prunable_message (sender_id)");
-            case 103:
+            case 92:
                 apply("CREATE INDEX IF NOT EXISTS prunable_message_recipient_idx ON prunable_message (recipient_id)");
-            case 104:
+            case 93:
                 apply("CREATE INDEX IF NOT EXISTS prunable_message_block_timestamp_dbid_idx ON prunable_message (block_timestamp DESC, db_id DESC)");
-            case 105:
+            case 94:
                 apply("CREATE TABLE IF NOT EXISTS tagged_data (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, account_id BIGINT NOT NULL, "
                         + "name VARCHAR NOT NULL, description VARCHAR, tags VARCHAR, parsed_tags ARRAY, type VARCHAR, data VARBINARY NOT NULL, "
                         + "is_text BOOLEAN NOT NULL, channel VARCHAR, filename VARCHAR, block_timestamp INT NOT NULL, transaction_timestamp INT NOT NULL, "
                         + "height INT NOT NULL, FOREIGN KEY (height) REFERENCES PUBLIC.block (height) ON DELETE CASCADE, latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 106:
+            case 95:
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_id_height_idx ON tagged_data (id, height DESC)");
-            case 107:
+            case 96:
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_expiration_idx ON tagged_data (transaction_timestamp DESC)");
-            case 108:
+            case 97:
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_account_id_height_idx ON tagged_data (account_id, height DESC)");
-            case 109:
+            case 98:
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_block_timestamp_height_db_id_idx ON tagged_data (block_timestamp DESC, height DESC, db_id DESC)");
-            case 110:
+            case 99:
                 apply("CREATE TABLE IF NOT EXISTS data_tag (db_id IDENTITY, tag VARCHAR NOT NULL, tag_count INT NOT NULL, "
                         + "height INT NOT NULL, FOREIGN KEY (height) REFERENCES PUBLIC.block (height) ON DELETE CASCADE, latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 111:
+            case 100:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS data_tag_tag_height_idx ON data_tag (tag, height DESC)");
-            case 112:
+            case 101:
                 apply("CREATE INDEX IF NOT EXISTS data_tag_count_height_idx ON data_tag (tag_count DESC, height DESC)");
-            case 113:
-                apply(null);
-            case 114:
-                apply(null);
-            case 115:
+            case 102:
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_channel_idx ON tagged_data (channel, height DESC)");
-            case 116:
+            case 103:
                 apply("CREATE INDEX IF NOT EXISTS balance_height_id_idx ON balance (height, account_id)");
-            case 117:
+            case 104:
                 apply("CREATE INDEX IF NOT EXISTS alias_height_id_idx ON alias (height, id)");
-            case 118:
+            case 105:
                 apply("CREATE INDEX IF NOT EXISTS alias_offer_height_id_idx ON alias_offer (height, id)");
-            case 119:
+            case 106:
                 apply("CREATE INDEX IF NOT EXISTS ask_order_height_id_idx ON ask_order (height, id)");
-            case 120:
+            case 107:
                 apply("CREATE INDEX IF NOT EXISTS bid_order_height_id_idx ON bid_order (height, id)");
-            case 121:
+            case 108:
                 apply("CREATE INDEX IF NOT EXISTS buy_offer_height_id_idx ON buy_offer (height, id)");
-            case 122:
+            case 109:
                 apply("CREATE INDEX IF NOT EXISTS currency_founder_height_id_idx ON currency_founder (height, currency_id, account_id)");
-            case 123:
-                apply(null);
-            case 124:
+            case 110:
                 apply("CREATE INDEX IF NOT EXISTS goods_height_id_idx ON goods (height, id)");
-            case 125:
+            case 111:
                 apply("CREATE INDEX IF NOT EXISTS purchase_height_id_idx ON purchase (height, id)");
-            case 126:
+            case 112:
                 apply("CREATE INDEX IF NOT EXISTS purchase_feedback_height_id_idx ON purchase_feedback (height, id)");
-            case 127:
+            case 113:
                 apply("CREATE INDEX IF NOT EXISTS purchase_public_feedback_height_id_idx ON purchase_public_feedback (height, id)");
-            case 128:
+            case 114:
                 apply("CREATE INDEX IF NOT EXISTS sell_offer_height_id_idx ON sell_offer (height, id)");
-            case 129:
+            case 115:
                 apply("CREATE INDEX IF NOT EXISTS tag_height_tag_idx ON tag (height, tag)");
-            case 130:
-                apply(null);
-            case 131:
+            case 116:
                 apply("CREATE INDEX IF NOT EXISTS trade_height_db_id_idx ON trade (height DESC, db_id DESC)");
-            case 132:
+            case 117:
                 apply("CREATE INDEX IF NOT EXISTS exchange_height_db_id_idx ON exchange (height DESC, db_id DESC)");
-            case 133:
+            case 118:
                 apply("CREATE TABLE IF NOT EXISTS exchange_request (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, account_id BIGINT NOT NULL, "
                         + "currency_id BIGINT NOT NULL, units BIGINT NOT NULL, rate BIGINT NOT NULL, is_buy BOOLEAN NOT NULL, "
                         + "timestamp INT NOT NULL, height INT NOT NULL)");
-            case 134:
+            case 119:
                 apply("CREATE INDEX IF NOT EXISTS exchange_request_id_idx ON exchange_request (id)");
-            case 135:
+            case 120:
                 apply("CREATE INDEX IF NOT EXISTS exchange_request_account_currency_idx ON exchange_request (account_id, currency_id, height DESC)");
-            case 136:
+            case 121:
                 apply("CREATE INDEX IF NOT EXISTS exchange_request_currency_idx ON exchange_request (currency_id, height DESC)");
-            case 137:
+            case 122:
                 apply("CREATE INDEX IF NOT EXISTS exchange_request_height_db_id_idx ON exchange_request (height DESC, db_id DESC)");
-            case 138:
+            case 123:
                 apply("CREATE INDEX IF NOT EXISTS exchange_request_height_idx ON exchange_request (height)");
-            case 139:
-                apply(null);
-            case 140:
-                apply(null);
-            case 141:
-                apply(null);
-            case 142:
+            case 124:
                 nxt.db.FullTextTrigger.init(db);
                 apply(null);
-            case 143:
+            case 125:
                 apply("CREATE TABLE IF NOT EXISTS shuffling (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, holding_id BIGINT NULL, holding_type TINYINT NOT NULL, "
                         + "issuer_id BIGINT NOT NULL, amount BIGINT NOT NULL, participant_count TINYINT NOT NULL, blocks_remaining SMALLINT NULL, "
                         + "stage TINYINT NOT NULL, assignee_account_id BIGINT NULL, registrant_count TINYINT NOT NULL, "
                         + "recipient_public_keys ARRAY, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 144:
+            case 126:
                 apply("CREATE INDEX IF NOT EXISTS shuffling_id_height_idx ON shuffling (id, height DESC)");
-            case 145:
+            case 127:
                 apply("CREATE INDEX IF NOT EXISTS shuffling_holding_id_height_idx ON shuffling (holding_id, height DESC)");
-            case 146:
+            case 128:
                 apply("CREATE INDEX IF NOT EXISTS shuffling_assignee_account_id_height_idx ON shuffling (assignee_account_id, height DESC)");
-            case 147:
+            case 129:
                 apply("CREATE INDEX IF NOT EXISTS shuffling_height_id_idx ON shuffling (height, id)");
-            case 148:
+            case 130:
                 apply("CREATE TABLE IF NOT EXISTS shuffling_participant (db_id IDENTITY, shuffling_id BIGINT NOT NULL, "
                         + "shuffling_full_hash BINARY(32) NOT NULL, account_id BIGINT NOT NULL, next_account_id BIGINT NULL, participant_index TINYINT NOT NULL, "
                         + "state TINYINT NOT NULL, blame_data ARRAY, key_seeds ARRAY, data_transaction_full_hash BINARY(32), "
                         + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 149:
+            case 131:
                 apply("CREATE INDEX IF NOT EXISTS shuffling_participant_shuffling_id_account_id_idx ON shuffling_participant "
                         + "(shuffling_id, account_id, height DESC)");
-            case 150:
+            case 132:
                 apply("CREATE INDEX IF NOT EXISTS shuffling_participant_height_idx ON shuffling_participant (height, shuffling_id, account_id)");
-            case 151:
+            case 133:
                 apply("CREATE TABLE IF NOT EXISTS shuffling_data (db_id IDENTITY, shuffling_id BIGINT NOT NULL, shuffling_full_hash BINARY(32) NOT NULL, account_id BIGINT NOT NULL, "
                         + "data ARRAY, transaction_timestamp INT NOT NULL, height INT NOT NULL, "
                         + "FOREIGN KEY (height) REFERENCES PUBLIC.block (height) ON DELETE CASCADE)");
-            case 152:
+            case 134:
                 apply("CREATE INDEX IF NOT EXISTS shuffling_data_id_height_idx ON shuffling_data (shuffling_id, height DESC)");
-            case 153:
+            case 135:
                 apply("CREATE INDEX shuffling_data_transaction_timestamp_idx ON shuffling_data (transaction_timestamp DESC)");
-            case 154:
-                apply(null);
-            case 155:
-                apply(null);
-            case 156:
-                apply(null);
-            case 157:
-                apply(null);
-            case 158:
-                apply(null);
-            case 159:
+            case 136:
                 apply("CREATE INDEX IF NOT EXISTS transaction_referenced_transaction_id_idx ON transaction (referenced_transaction_id)");
-            case 160:
+            case 137:
                 apply("CREATE INDEX IF NOT EXISTS shuffling_blocks_remaining_height_idx ON shuffling (blocks_remaining, height DESC)");
-            case 161:
+            case 138:
                 apply("CREATE TABLE IF NOT EXISTS asset_dividend (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
                         + "asset_id BIGINT NOT NULL, "
                         + "amount BIGINT NOT NULL, dividend_height INT NOT NULL, total_dividend BIGINT NOT NULL, "
                         + "num_accounts BIGINT NOT NULL, timestamp INT NOT NULL, height INT NOT NULL)");
-            case 162:
+            case 139:
                 apply("CREATE INDEX IF NOT EXISTS asset_dividend_id_idx ON asset_dividend (id)");
-            case 163:
+            case 140:
                 apply("CREATE INDEX IF NOT EXISTS asset_dividend_asset_id_idx ON asset_dividend (asset_id, height DESC)");
-            case 164:
+            case 141:
                 apply("CREATE INDEX IF NOT EXISTS asset_dividend_height_idx ON asset_dividend (height)");
-            case 165:
+            case 142:
                 return;
             default:
                 throw new RuntimeException("Child chain " + schema + " database inconsistent with code, at update " + nextUpdate

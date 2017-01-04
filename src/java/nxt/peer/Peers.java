@@ -918,7 +918,7 @@ public final class Peers {
                 Iterator<BundlerRate> rit = rates.iterator();
                 while (rit.hasNext()) {
                     BundlerRate rate = rit.next();
-                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + 5 * 60)) {
+                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + 15 * 60)) {
                         rit.remove();
                     }
                 }
@@ -1009,7 +1009,7 @@ public final class Peers {
                 Iterator<BundlerRate> rit = rates.iterator();
                 while (rit.hasNext()) {
                     BundlerRate rate = rit.next();
-                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + 5 * 60)) {
+                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + 15 * 60)) {
                         rit.remove();
                         continue;
                     }
@@ -1053,7 +1053,7 @@ public final class Peers {
                 Iterator<BundlerRate> rit = entryRates.iterator();
                 while (rit.hasNext()) {
                     BundlerRate rate = rit.next();
-                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + (5 * 60))) {
+                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + (15 * 60))) {
                         rit.remove();
                         continue;
                     }

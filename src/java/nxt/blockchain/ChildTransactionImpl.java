@@ -326,7 +326,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
             }
         }
 
-        if (getFullSize() > Constants.MAX_PAYLOAD_LENGTH) {
+        if (getFullSize() > Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH) {
             throw new NxtException.NotValidException("Transaction size " + getFullSize() + " exceeds maximum payload size");
         }
         if (!validatingAtFinish) {

@@ -42,7 +42,7 @@ public final class ShufflingCancellationAttachment extends AbstractShufflingAtta
         this.blameData = new byte[count][];
         for (int i = 0; i < count; i++) {
             int size = buffer.getInt();
-            if (size > Constants.MAX_PAYLOAD_LENGTH) {
+            if (size > Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH) {
                 throw new NxtException.NotValidException("Invalid data size " + size);
             }
             this.blameData[i] = new byte[size];

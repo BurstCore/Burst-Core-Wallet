@@ -24,7 +24,6 @@ import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransactionType;
-import nxt.blockchain.Genesis;
 import nxt.blockchain.TransactionType;
 import nxt.crypto.HashFunction;
 import nxt.ms.CurrencyMinting;
@@ -58,11 +57,10 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
             try {
                 JSONObject response = new JSONObject();
                 response.put("genesisBlockId", Long.toUnsignedString(Nxt.getBlockchainProcessor().getGenesisBlockId()));
-                response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
-                response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
-                response.put("maxBlockPayloadLength", Constants.MAX_PAYLOAD_LENGTH);
-                response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
-                response.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);
+                response.put("epochBeginning", Constants.EPOCH_BEGINNING);
+                response.put("maxChildBlockPayloadLength", Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH);
+                response.put("maxNumberOfFxtTransactions", Constants.MAX_NUMBER_OF_FXT_TRANSACTIONS);
+                response.put("maxNumberOfChildTransaction", Constants.MAX_NUMBER_OF_CHILD_TRANSACTIONS);
 
                 JSONObject transactionJSON = new JSONObject();
                 JSONObject transactionSubTypesJSON = new JSONObject();

@@ -66,6 +66,10 @@ public abstract class FxtTransactionType extends TransactionType {
         }
     }
 
+    public Fee getBaselineFee(Transaction transaction) {
+        return Fee.DEFAULT_FXT_FEE;
+    }
+
     @Override
     public final boolean applyUnconfirmed(TransactionImpl transaction, Account senderAccount) {
         long amount = transaction.getAmount();
@@ -143,7 +147,6 @@ public abstract class FxtTransactionType extends TransactionType {
 
     protected abstract void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount);
 
-    //TODO: remove?
     @Override
     public final boolean isPhasingSafe() {
         return true;

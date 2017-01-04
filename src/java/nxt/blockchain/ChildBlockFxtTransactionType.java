@@ -80,8 +80,7 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
         if (childTransactionHashes.length == 0) {
             throw new NxtException.NotValidException("Empty ChildBlock transaction");
         }
-        //TODO: define child block transaction count and size limits
-        if (childTransactionHashes.length > Constants.MAX_NUMBER_OF_TRANSACTIONS) {
+        if (childTransactionHashes.length > Constants.MAX_NUMBER_OF_CHILD_TRANSACTIONS) {
             throw new NxtException.NotValidException("Too many child transactions: " + childTransactionHashes.length);
         }
         int blockchainHeight = Nxt.getBlockchain().getHeight();
@@ -100,6 +99,7 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
             }
             previousChildTransactionHash = childTransactionHash;
         }
+        int payloadLength = 0;
         for (ChildTransactionImpl childTransaction : transaction.getChildTransactions()) {
             try {
                 childTransaction.validate();
@@ -114,6 +114,10 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
             if (transaction.getExpiration() > childTransaction.getExpiration()) {
                 throw new NxtException.NotValidException("ChildBlock transaction " + transaction.getStringId() + " expiration " + transaction.getExpiration()
                         + " is after child transaction " + childTransaction.getStringId() + " expiration " + childTransaction.getExpiration());
+            }
+            payloadLength += childTransaction.getFullSize();
+            if (payloadLength > Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH) {
+                throw new NxtException.NotValidException("Child block transaction payload exceeds maximum: " + payloadLength);
             }
         }
     }

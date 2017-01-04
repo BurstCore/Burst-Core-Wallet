@@ -117,9 +117,7 @@ public abstract class TransactionType {
         return true;
     }
 
-    public Fee getBaselineFee(Transaction transaction) {
-        return Fee.DEFAULT_FEE;
-    }
+    public abstract Fee getBaselineFee(Transaction transaction);
 
     public Fee getNextFee(Transaction transaction) {
         return getBaselineFee(transaction);

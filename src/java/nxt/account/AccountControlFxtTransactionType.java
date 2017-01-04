@@ -18,8 +18,10 @@ package nxt.account;
 
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.blockchain.Fee;
 import nxt.blockchain.FxtTransactionImpl;
 import nxt.blockchain.FxtTransactionType;
+import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;
 import org.json.simple.JSONObject;
 
@@ -45,6 +47,10 @@ public abstract class AccountControlFxtTransactionType extends FxtTransactionTyp
     }
 
     public static final TransactionType EFFECTIVE_BALANCE_LEASING = new AccountControlFxtTransactionType() {
+
+        public Fee getBaselineFee(Transaction transaction) {
+            return new Fee.ConstantFee(Constants.ONE_FXT * 2);
+        }
 
         @Override
         public final byte getSubtype() {

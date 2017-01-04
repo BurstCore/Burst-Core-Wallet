@@ -77,12 +77,13 @@ public final class BundlerRate {
                 currentAccountId = accountId;
             }
             if (publicKey == null) {
-                continue;
+                return null;
             }
             if (!Crypto.verify(rate.getSignature(), rate.getUnsignedBytes(), rate.getPublicKey()) ||
                         !Arrays.equals(rate.getPublicKey(), publicKey)) {
                 Logger.logDebugMessage("Bundler rate for account "
                         + Long.toUnsignedString(accountId) + " failed signature verification");
+                return null;
             } else if (balance >= Peers.minBundlerBalanceFXT) {
                 rate.setBalance(balance);
                 validRates.add(rate);
@@ -91,9 +92,7 @@ public final class BundlerRate {
         //
         // Update the rates and relay the message
         //
-        if (!validRates.isEmpty()) {
-            Peers.updateBundlerRates(peer, request, validRates);
-        }
+        Peers.updateBundlerRates(peer, request, validRates);
         return null;
     }
 
@@ -145,7 +144,7 @@ public final class BundlerRate {
         this.publicKey = Crypto.getPublicKey(secretPhrase);
         this.accountId = Account.getId(publicKey);
         this.rate = rate;
-        this.timestamp = Nxt.getEpochTime();
+        this.timestamp = (Nxt.getEpochTime() / 600) * 600;
         this.signature = Crypto.sign(getUnsignedBytes(), secretPhrase);
     }
 

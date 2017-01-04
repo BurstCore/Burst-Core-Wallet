@@ -65,7 +65,6 @@ public final class BroadcastTransaction extends APIServlet.APIRequestHandler {
             Transaction.Builder builder = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
             Nxt.getTransactionProcessor().broadcast(transaction);
-            response.put("transaction", transaction.getStringId());
             response.put("fullHash", Convert.toHexString(transaction.getFullHash()));
         } catch (NxtException.ValidationException|RuntimeException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");

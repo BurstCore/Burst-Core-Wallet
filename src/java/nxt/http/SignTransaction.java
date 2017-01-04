@@ -55,7 +55,6 @@ public final class SignTransaction extends APIServlet.APIRequestHandler {
             response.put("transactionJSON", signedTransactionJSON);
             response.put("fullHash", signedTransactionJSON.get("fullHash"));
             response.put("signatureHash", signedTransactionJSON.get("signatureHash"));
-            response.put("transaction", transaction.getStringId());
             response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
             JSONData.putPrunableAttachment(response, transaction);
         } catch (NxtException.ValidationException|RuntimeException e) {

@@ -39,7 +39,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
     private static final byte SUBTYPE_COIN_EXCHANGE_ORDER_ISSUE = 0;
     private static final byte SUBTYPE_COIN_EXCHANGE_ORDER_CANCEL = 1;
 
-    private static final Fee exchangeFee = new Fee.ConstantFee(Constants.ONE_FXT * 2);
+    private static final Fee exchangeFee = new Fee.ConstantFee(Constants.ONE_FXT * 5);
 
     public static TransactionType findTransactionType(byte subtype) {
         switch (subtype) {
