@@ -1,0 +1,65 @@
+/******************************************************************************
+ * Copyright © 2013-2016 The Nxt Core Developers.                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ *                                                                            *
+ * See the LICENSE.txt file at the top-level directory of this distribution   *
+ * for licensing information.                                                 *
+ *                                                                            *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,*
+ * no part of the Nxt software, including this file, may be copied, modified, *
+ * propagated, or distributed except according to the terms contained in the  *
+ * LICENSE.txt file.                                                          *
+ *                                                                            *
+ * Removal or modification of this copyright notice is prohibited.            *
+ *                                                                            *
+ ******************************************************************************/
+
+/**
+ * @depends {nrs.js}
+ * @depends {nrs.modals.js}
+ */
+var NRS = (function(NRS, $) {
+	$("body").on("click", ".show_chain_modal_action", function(event) {
+		event.preventDefault();
+		if (NRS.fetchingModalData) {
+			return;
+		}
+		NRS.fetchingModalData = true;
+        var chainId;
+        if (!$(this).data("chain")) {
+            chainId = NRS.getActiveChain();
+        } else if (typeof $(this).data("chain") == "object") {
+            var dataObject = $(this).data("chain");
+            chainId = dataObject["chain"];
+        } else {
+            chainId = $(this).data("chain");
+        }
+        if ($(this).data("back") == "true") {
+            NRS.modalStack.pop(); // The forward modal
+            NRS.modalStack.pop(); // The current modal
+        }
+        NRS.showChainDetailsModal(NRS.constants.CHAIN_PROPERTIES[chainId]);
+	});
+
+	NRS.showChainDetailsModal = function(chain) {
+        try {
+            // TODO test the back link
+            NRS.setBackLink();
+    		NRS.modalStack.push({ class: "show_chain_modal_action", key: "chain", value: { chain: chain.id }});
+            var chainDetails = $.extend({}, chain);
+            delete chainDetails.ONE_COIN;
+            chainDetails.shuffling_deposit_formatted_html = NRS.convertToNXT(chainDetails.SHUFFLING_DEPOSIT_NQT);
+            delete chainDetails.SHUFFLING_DEPOSIT_NQT;
+            chainDetails.chain_id = chainDetails.id;
+            delete chainDetails.id;
+            var detailsTable = $("#chain_details_table");
+            detailsTable.find("tbody").empty().append(NRS.createInfoTable(chainDetails));
+            detailsTable.show();
+            $("#chain_details_modal").modal("show");
+        } finally {
+            NRS.fetchingModalData = false;
+        }
+	};
+
+	return NRS;
+}(NRS || {}, jQuery));

@@ -1865,5 +1865,8 @@
   "offline_actions": "Offline Actions",
   "success_clipboard_copy": "Copied to the clipboard successfully.",
   "chain": "Chain",
-  "active_chain": "Active Chain"
+  "active_chain": "Active Chain",
+  "chain_details": "Chain Details",
+  "shuffling_deposit": "Shuffling Deposit",
+  "chain_id": "Chain Id"
 }
