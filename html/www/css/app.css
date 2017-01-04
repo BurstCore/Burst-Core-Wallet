@@ -2998,6 +2998,13 @@ label .popover-content {
 #remember_me_container label {
 	font-weight:normal;
 }
+
+.chain-selector label {
+    color: #fff;
+    opacity: 0.5;
+    font-weight: normal;
+}
+
 .popover {
 	z-index:9999999999;
 }

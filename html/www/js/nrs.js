@@ -66,7 +66,8 @@ var NRS = (function(NRS, $, undefined) {
         remote_node_port: 7876,
         is_remote_node_ssl: false,
         validators_count: 3,
-        bootstrap_nodes_count: 5
+        bootstrap_nodes_count: 5,
+		chain: "1"
     };
 	NRS.contacts = {};
 
@@ -219,7 +220,8 @@ var NRS = (function(NRS, $, undefined) {
 			NRS.loadServerConstants(resolve);
 		});
 		loadConstantsPromise.then(function() {
-			var getStatePromise = new Promise(function(resolve) {
+            NRS.createChainSelect();
+            var getStatePromise = new Promise(function(resolve) {
 				console.log("calling getState");
 				NRS.sendRequest("getState", {
 					"includeCounts": "false"

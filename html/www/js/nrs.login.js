@@ -297,8 +297,9 @@ var NRS = (function(NRS, $, undefined) {
 			$("#login_password, #registration_password, #registration_password_repeat").val("");
 			loginCheckPasswordLength.val(1);
 		}
-
-		console.log("login calling getBlockchainStatus");
+        var chain = $('select[name="chain"]').val();
+        NRS.setActiveChain(chain);
+		console.log("login calling getBlockchainStatus, active chain is " + NRS.constants.CHAIN_PROPERTIES[chain].name);
 		NRS.sendRequest("getBlockchainStatus", {}, function(response) {
 			if (response.errorCode) {
 			    NRS.connectionError(response.errorDescription);

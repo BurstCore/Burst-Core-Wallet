@@ -100,6 +100,25 @@ var NRS = (function(NRS, $) {
         return { reload: true, forceGet: false };
     };
 
+    NRS.setActiveChain = function(chain) {
+        NRS.mobileSettings.chain = chain;
+        NRS.setJSONItem("mobile_settings", NRS.mobileSettings);
+    };
+
+    NRS.getActiveChain = function() {
+        return NRS.mobileSettings.chain;
+    };
+
+    NRS.createChainSelect = function() {
+        // Build chain select box for login page
+        var chains = $('select[name="chain"]');
+        chains.empty();
+        $.each(NRS.constants.CHAIN_PROPERTIES, function(id, chain) {
+            chains.append('<option value="' + id + '">' + chain.name + '</option>');
+        });
+        chains.val(NRS.getActiveChain());
+    };
+
     return NRS;
 
 }(NRS || {}, jQuery));

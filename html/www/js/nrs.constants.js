@@ -111,6 +111,8 @@ var NRS = (function (NRS, $) {
                 NRS.constants.LAST_KNOWN_BLOCK.id = response.genesisBlockId;
                 NRS.loadTransactionTypeConstants(response);
                 NRS.constants.PROXY_NOT_FORWARDED_REQUESTS = response.proxyNotForwardedRequests;
+                NRS.constants.CHAINS = response.chains;
+                NRS.constants.CHAIN_PROPERTIES = response.chainProperties;
                 console.log("done loading server constants");
                 resolve();
             }
