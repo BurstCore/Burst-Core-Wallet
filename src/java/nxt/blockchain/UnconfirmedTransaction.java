@@ -67,11 +67,12 @@ public abstract class UnconfirmedTransaction implements Transaction {
 
     void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO unconfirmed_transaction (id, transaction_height, "
-                + "fee_per_byte, expiration, transaction_bytes, arrival_timestamp, chain_id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "fee, fee_per_byte, expiration, transaction_bytes, arrival_timestamp, chain_id, height) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, transaction.getId());
             pstmt.setInt(++i, transaction.getHeight());
+            pstmt.setLong(++i, transaction.getFee());
             pstmt.setLong(++i, feePerByte);
             pstmt.setInt(++i, transaction.getExpiration());
             pstmt.setBytes(++i, transaction.prunableBytes());

@@ -306,7 +306,8 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public DbIterator<UnconfirmedTransaction> getUnconfirmedFxtTransactions() {
-        return unconfirmedTransactionTable.getManyBy(new DbClause.IntClause("chain_id", FxtChain.FXT.getId()), 0, -1);
+        return unconfirmedTransactionTable.getManyBy(new DbClause.IntClause("chain_id", FxtChain.FXT.getId()), 0, -1,
+                " ORDER BY transaction_height ASC, fee DESC, arrival_timestamp ASC, id ASC ");
     }
 
     @Override
@@ -316,7 +317,8 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public DbIterator<UnconfirmedTransaction> getUnconfirmedChildTransactions(ChildChain childChain) {
-        return unconfirmedTransactionTable.getManyBy(new DbClause.IntClause("chain_id", childChain.getId()), 0, -1);
+        return unconfirmedTransactionTable.getManyBy(new DbClause.IntClause("chain_id", childChain.getId()), 0, -1,
+                " ORDER BY transaction_height ASC, fee_per_byte DESC, arrival_timestamp ASC, id ASC ");
     }
 
     @Override

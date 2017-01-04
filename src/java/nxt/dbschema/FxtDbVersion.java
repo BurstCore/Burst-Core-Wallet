@@ -80,7 +80,7 @@ public class FxtDbVersion extends DbVersion {
                         + "(account_id, height DESC)");
             case 17:
                 apply("CREATE TABLE IF NOT EXISTS unconfirmed_transaction (db_id IDENTITY, id BIGINT NOT NULL, expiration INT NOT NULL, "
-                        + "transaction_height INT NOT NULL, fee_per_byte BIGINT NOT NULL, arrival_timestamp BIGINT NOT NULL, "
+                        + "transaction_height INT NOT NULL, fee BIGINT NOT NULL, fee_per_byte BIGINT NOT NULL, arrival_timestamp BIGINT NOT NULL, "
                         + "transaction_bytes VARBINARY NOT NULL, chain_id INT NOT NULL, height INT NOT NULL)");
             case 18:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS unconfirmed_transaction_id_idx ON unconfirmed_transaction (id)");
@@ -97,8 +97,7 @@ public class FxtDbVersion extends DbVersion {
             case 23:
                 apply("CREATE INDEX IF NOT EXISTS account_currency_units_idx ON account_currency (units DESC)");
             case 24:
-                apply("CREATE INDEX IF NOT EXISTS unconfirmed_transaction_height_fee_timestamp_idx ON unconfirmed_transaction "
-                        + "(transaction_height ASC, fee_per_byte DESC, arrival_timestamp ASC)");
+                apply("CREATE INDEX IF NOT EXISTS unconfirmed_transaction_chain_id_idx ON unconfirmed_transaction (chain_id)");
             case 25:
                 apply("CREATE TABLE IF NOT EXISTS scan (rescan BOOLEAN NOT NULL DEFAULT FALSE, height INT NOT NULL DEFAULT 0, "
                         + "validate BOOLEAN NOT NULL DEFAULT FALSE)");
