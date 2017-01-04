@@ -113,6 +113,14 @@ var NRS = (function(NRS, $) {
         return String(NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain].name).escapeHTML();
     };
 
+    NRS.getActiveChainDecimals = function() {
+        return parseInt(NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain].decimals);
+    };
+
+    NRS.getActiveChainOneCoin = function() {
+        return parseInt(NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain].ONE_COIN);
+    };
+
     NRS.createChainSelect = function() {
         // Build chain select box for login page
         var chains = $('select[name="chain"]');
