@@ -22,7 +22,8 @@ public interface Fee {
 
     long getFee(TransactionImpl transaction, Appendix appendage);
 
-    Fee DEFAULT_FEE = new Fee.ConstantFee(Constants.ONE_FXT);
+    Fee DEFAULT_CHILD_FEE = new Fee.ConstantFee(Constants.ONE_FXT / 10);
+    Fee DEFAULT_FXT_FEE = new Fee.ConstantFee(Constants.ONE_FXT * 10);
 
     Fee NONE = new Fee.ConstantFee(0L);
 

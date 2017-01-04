@@ -79,6 +79,10 @@ public abstract class ChildTransactionType extends TransactionType {
         }
     }
 
+    public Fee getBaselineFee(Transaction transaction) {
+        return Fee.DEFAULT_CHILD_FEE;
+    }
+
     @Override
     public final boolean applyUnconfirmed(TransactionImpl transaction, Account senderAccount) {
         ChildChain childChain = (ChildChain) transaction.getChain();

@@ -93,6 +93,10 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
         return false;
     }
 
+    @Override
+    public Fee getBaselineFee(Transaction transaction) {
+        return new Fee.ConstantFee(Constants.ONE_FXT);
+    }
 
     public static final TransactionType SHUFFLING_CREATION = new ShufflingTransactionType() {
 
