@@ -656,7 +656,7 @@ var NRS = (function (NRS, $, undefined) {
         if (!text) {
             text = id;
         }
-        return "<a href='#' class='show_transaction_modal_action' data-transaction='" + String(id).escapeHTML() + "'>"
+        return "<a href='#' class='show_transaction_modal_action' data-fullhash='" + String(id).escapeHTML() + "'>"
             + (isEscapedText ? text : String(text).escapeHTML()) + "</a>";
     };
 

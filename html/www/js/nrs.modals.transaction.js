@@ -22,7 +22,7 @@ var NRS = (function (NRS, $, undefined) {
     $('body').on("click", ".show_transaction_modal_action", function (e) {
         e.preventDefault();
 
-        var transactionId = $(this).data("transaction");
+        var transactionFullHash = $(this).data("fullhash");
         var sharedKey = $(this).data("sharedkey");
         var infoModal = $('#transaction_info_modal');
         var isModalVisible = false;
@@ -33,10 +33,10 @@ var NRS = (function (NRS, $, undefined) {
             NRS.modalStack.pop(); // The forward modal
             NRS.modalStack.pop(); // the current modal
         }
-        NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
+        NRS.showTransactionModal(transactionFullHash, isModalVisible, sharedKey);
     });
 
-    NRS.showTransactionModal = function (transaction, isModalVisible, sharedKey) {
+    NRS.showTransactionModal = function(transaction, isModalVisible, sharedKey) {
         if (NRS.fetchingModalData) {
             return;
         }
@@ -52,7 +52,7 @@ var NRS = (function (NRS, $, undefined) {
         try {
             if (typeof transaction != "object") {
                 NRS.sendRequest("getTransaction", {
-                    "transaction": transaction
+                    "fullHash": transaction
                 }, function (response, input) {
                     response.transaction = input.transaction;
                     NRS.processTransactionModalData(response, isModalVisible, sharedKey);
@@ -135,7 +135,6 @@ var NRS = (function (NRS, $, undefined) {
             if (transactionDetails.referencedTransaction == "0") {
                 delete transactionDetails.referencedTransaction;
             }
-            delete transactionDetails.transaction;
 
             if (!transactionDetails.confirmations) {
                 transactionDetails.confirmations = "/";
@@ -155,8 +154,6 @@ var NRS = (function (NRS, $, undefined) {
                 transactionDetails.height_formatted_html = NRS.getBlockLink(transactionDetails.height);
                 delete transactionDetails.height;
             }
-            $("#transaction_info_modal_transaction").html(NRS.escapeRespStr(transaction.transaction));
-
             $("#transaction_info_tab_link").tab("show");
 
             $("#transaction_info_details_table").find("tbody").empty().append(NRS.createInfoTable(transactionDetails, true));
@@ -221,7 +218,7 @@ var NRS = (function (NRS, $, undefined) {
             var message;
             var fieldsToDecrypt = {};
             var i;
-            if (transaction.type == 0) {
+            if (transaction.type == 0 || transaction.type == -2) {
                 switch (transaction.subtype) {
                     case 0:
                         data = {
@@ -979,7 +976,7 @@ var NRS = (function (NRS, $, undefined) {
                         incorrect = true;
                         break
                 }
-            } else if (transaction.type == 4) {
+            } else if (transaction.type == 4 || transaction.type == -3) {
                 switch (transaction.subtype) {
                     case 0:
                         data = {

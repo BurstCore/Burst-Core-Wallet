@@ -544,9 +544,7 @@ var NRS = (function(NRS, $, undefined) {
 		var html = "";
 		html += "<tr class='tr_transaction_" + t.transaction + "'>";
 		html += "<td style='vertical-align:middle;'>";
-  		html += "<a class='show_transaction_modal_action' href='#' data-timestamp='" + NRS.escapeRespStr(t.timestamp) + "' ";
-  		html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "'>";
-  		html += NRS.formatTimestamp(t.timestamp) + "</a>";
+		html += NRS.getTransactionLink(NRS.escapeRespStr(t.fullHash), NRS.formatTimestamp(t.timestamp));
   		html += "</td>";
   		html += "<td style='vertical-align:middle;text-align:center;'>" + (hasMessage ? "&nbsp; <i class='fa fa-envelope-o'></i>&nbsp;" : "&nbsp;") + "</td>";
 		html += '<td style="vertical-align:middle;">';
@@ -582,7 +580,7 @@ var NRS = (function(NRS, $, undefined) {
         var dataToken;
         if (entry.isTransactionEvent) {
             linkClass = "show_transaction_modal_action";
-            dataToken = "data-transaction='" + NRS.escapeRespStr(entry.event) + "'";
+            dataToken = "data-fullhash='" + NRS.escapeRespStr(entry.eventHash) + "'";
         } else {
             linkClass = "show_block_modal_action";
             dataToken = "data-id='1' data-block='" + NRS.escapeRespStr(entry.event)+ "'";

@@ -233,7 +233,7 @@ var NRS = (function(NRS, $) {
 
     var getTransactionLink = function (transaction, coin) {
         if (coin == "NXT") {
-            return "<a href='#' class='show_transaction_modal_action' data-transaction='" + transaction + "'>" + transaction + "</a>";
+            return NRS.getTransactionLink(transaction);
         }
         if (coin == "BTC") {
             return "<a target='_blank' href='https://blockchain.info/tx/" + transaction + "'>" + transaction + "</a>";
