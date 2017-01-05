@@ -109,18 +109,18 @@ public final class JSONData {
         if (account == null) {
             json.put("balanceNQT", "0");
             json.put("unconfirmedBalanceNQT", "0");
-            json.put("forgedBalanceNQT", "0");
+            json.put("forgedBalanceFQT", "0");
             if (includeEffectiveBalance) {
-                json.put("effectiveBalanceNXT", "0");
-                json.put("guaranteedBalanceNQT", "0");
+                json.put("effectiveBalanceFXT", "0");
+                json.put("guaranteedBalanceFQT", "0");
             }
         } else {
             json.put("balanceNQT", String.valueOf(FxtChain.FXT.getBalanceHome().getBalance(account.getId(), height).getBalance()));
             json.put("unconfirmedBalanceNQT", String.valueOf(FxtChain.FXT.getBalanceHome().getBalance(account.getId(), height).getUnconfirmedBalance()));
-            json.put("forgedBalanceNQT", String.valueOf(account.getForgedBalanceFQT()));
+            json.put("forgedBalanceFQT", String.valueOf(account.getForgedBalanceFQT()));
             if (includeEffectiveBalance) {
-                json.put("effectiveBalanceNXT", account.getEffectiveBalanceFXT(height));
-                json.put("guaranteedBalanceNQT", String.valueOf(account.getGuaranteedBalanceFQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height)));
+                json.put("effectiveBalanceFXT", account.getEffectiveBalanceFXT(height));
+                json.put("guaranteedBalanceFQT", String.valueOf(account.getGuaranteedBalanceFQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height)));
             }
         }
         return json;
@@ -147,7 +147,7 @@ public final class JSONData {
             json.put("currentHeightFrom", String.valueOf(accountLease.getCurrentLeasingHeightFrom()));
             json.put("currentHeightTo", String.valueOf(accountLease.getCurrentLeasingHeightTo()));
             if (includeEffectiveBalance) {
-                json.put("effectiveBalanceNXT", String.valueOf(account.getGuaranteedBalanceFQT() / Constants.ONE_FXT));
+                json.put("effectiveBalanceFXT", String.valueOf(account.getGuaranteedBalanceFQT() / Constants.ONE_FXT));
             }
         }
         if (accountLease.getNextLesseeId() != 0) {
