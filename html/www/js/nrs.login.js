@@ -534,8 +534,8 @@ var NRS = (function(NRS, $, undefined) {
 			html += "</p>";
 			html += "<p data-i18n='plugin_security_notice_trusted_sources'>";
 			html += "Make sure to only run plugins downloaded from trusted sources, otherwise ";
-			html += "you can loose your NXT! In doubt don't run plugins with accounts ";
-			html += "used to store larger amounts of NXT now or in the future.";
+			html += "you can loose your funds! In doubt don't run plugins with accounts ";
+			html += "used to store larger amounts of funds now or in the future.";
 			html += "</p>";
 			html += "</div>";
 

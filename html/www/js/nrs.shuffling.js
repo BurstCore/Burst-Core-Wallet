@@ -117,7 +117,7 @@ var NRS = (function(NRS, $) {
             })(),
             holdingFormatted: (function () {
                 switch (response.holdingType) {
-                    case 0: return 'NXT';
+                    case 0: return NRS.getActiveChainName();
                     case 1: return NRS.getEntityLink(response.holding, response.holdingType) + " (" + $.t('asset') + ")";
                     case 2: return NRS.getEntityLink(response.holding, response.holdingType, response.holdingInfo.code)  + " (" + $.t('currency') + ")";
                 }

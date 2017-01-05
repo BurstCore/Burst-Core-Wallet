@@ -578,7 +578,7 @@ var NRS = (function(NRS, $) {
                 modal.find(".error_message").html("").hide();
                 rate.val(data.success.quotedRate);
                 fee.val(data.success.minerFee);
-                // add 1 NXT fee to make sure the net amount is what requested by shape shift
+                // add 1 to fee to make sure the net amount is what requested by shape shift
                 depositAmount.val(parseFloat(data.success.depositAmount) + 1);
                 depositAddress.val(data.success.deposit);
                 expiration.val(NRS.formatTimestamp(data.success.expiration, false, true));
