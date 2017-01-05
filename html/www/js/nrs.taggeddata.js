@@ -26,7 +26,7 @@ var NRS = (function(NRS, $) {
 
     NRS.jsondata.data = function(response) {
         return {
-            nameFormatted: NRS.getTransactionLink(response.transaction, NRS.addEllipsis(NRS.unescapeRespStr(response.name), 20)),
+            nameFormatted: NRS.getTransactionLink(response.transactionFullHash, NRS.addEllipsis(NRS.unescapeRespStr(response.name), 20)),
             accountFormatted: NRS.getAccountLink(response, "account"),
             type: NRS.addEllipsis(NRS.unescapeRespStr(response.type), 20),
             channel: NRS.addEllipsis(NRS.unescapeRespStr(response.channel), 20),
