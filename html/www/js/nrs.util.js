@@ -722,8 +722,6 @@ var NRS = (function (NRS, $, undefined) {
 
         if (formattedAcc == NRS.account || formattedAcc == NRS.accountRS) {
             return $.t("you");
-        } else if (formattedAcc == NRS.constants.GENESIS || formattedAcc == NRS.constants.GENESIS_RS) {
-            return $.t("genesis");
         } else if (formattedAcc in NRS.contacts) {
             return NRS.contacts[formattedAcc].name.escapeHTML();
         } else {

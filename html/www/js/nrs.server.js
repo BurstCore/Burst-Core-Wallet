@@ -566,7 +566,7 @@ var NRS = (function (NRS, $, undefined) {
         }
 
         if (transaction.recipient !== data.recipient) {
-            if ((data.recipient == NRS.constants.GENESIS || data.recipient == "") && transaction.recipient == "0") {
+            if (data.recipient == "" && transaction.recipient == "0") {
                 //ok
             } else {
                 return false;
@@ -1606,8 +1606,7 @@ var NRS = (function (NRS, $, undefined) {
             data.amountNQT = "0";
         }
         if (!("recipient" in data)) {
-            data.recipient = NRS.constants.GENESIS;
-            data.recipientRS = NRS.constants.GENESIS_RS;
+            NRS.logConsole("No recipient in data");
         }
     }
 

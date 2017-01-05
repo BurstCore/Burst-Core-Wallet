@@ -79,8 +79,7 @@ var NRS = (function(NRS, $, undefined) {
                     var accountAssets = response.accountAssets;
                     var qualifiedDividendRecipients = accountAssets.filter(
                         function(accountAsset) {
-                            return accountAsset.accountRS !== NRS.getCurrentAsset().accountRS
-                                && accountAsset.accountRS !== NRS.constants.GENESIS_RS;
+                            return accountAsset.accountRS !== NRS.getCurrentAsset().accountRS;
                         });
                     var totalQuantityQNT = new BigInteger("0");
                     qualifiedDividendRecipients.forEach(
