@@ -665,6 +665,11 @@ var NRS = (function (NRS, $, undefined) {
             + (isEscapedText ? text : String(text).escapeHTML()) + "</a>";
     };
 
+    NRS.getChainLink = function(chain) {
+        return "<a href='#' class='show_chain_modal_action' data-chain='" + String(chain).escapeHTML() + "'>"
+            + NRS.constants.CHAIN_PROPERTIES[chain].name + "</a>";
+    };
+
     NRS.getEntityLink = function(id, type, text, isEscapedText) {
         // type: 1 - asset, 2 - currency, 3 - data, 4 - poll, 5 - property, 6 - shuffling
         if (!text) {

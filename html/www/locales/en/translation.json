@@ -1868,5 +1868,15 @@
   "active_chain": "Active Chain",
   "chain_details": "Chain Details",
   "shuffling_deposit": "Shuffling Deposit",
-  "chain_id": "Chain Id"
+  "chain_id": "Chain Id",
+  "bundlers": "Bundlers",
+  "start_bundler": "Start Bundler",
+  "fee_limit": "Fee Limit",
+  "current_fee": "Current Fee",
+  "min_rate": "Minimum Rate",
+  "overpay": "Overpay",
+  "no_bundlers": "There are no bundlers",
+  "stop_bundler": "Stop Bundler",
+  "bundler_started": "Bundler Started",
+  "bundler_stopped": "Bundler Stopped"
 }
