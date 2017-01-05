@@ -1748,7 +1748,7 @@ NRS.addPagination = function () {
 				return;
 			}
 			NRS.sendRequest("getTransaction", {
-				"transaction": id
+				"fullHash": id
 			}, function(response, input) {
 				if (!response.errorCode) {
 					response.transaction = input.transaction;
