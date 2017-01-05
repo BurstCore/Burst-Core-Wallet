@@ -163,7 +163,7 @@
                     <th data-i18n="percentage" class="numeric">Percentage</th>
                     <th data-i18n="lowest_ask" class="numeric">Lowest Ask</th>
                     <th data-i18n="highest_bid" class="numeric">Highest Bid</th>
-                    <th data-i18n="value_in_nxt" class="numeric">Value in NXT</th>
+                    <th data-i18n="value_in_nxt" class="numeric">Value in Coin</th>
                     <th data-i18n="action">Action</th>
                 </tr>
                 </thead>
@@ -246,7 +246,9 @@
                                             </div>
                                         </div>
                                         <div class="box-body no-padding" style="display:none">
-                                            <div style="background-color:#DFF0D9;color: #666;padding-left:10px;padding-right: 10px;padding-top: 0;padding-bottom:3px;" id="buy_automatic_price"><strong data-i18n="balance">Balance</strong>: <span id="your_nxt_balance"></span> NXT</div>
+                                            <div style="background-color:#DFF0D9;color: #666;padding-left:10px;padding-right: 10px;padding-top: 0;padding-bottom:3px;" id="buy_automatic_price">
+                                                <strong data-i18n="balance">Balance</strong>: <span id="your_nxt_balance"></span> <span class="coin-symbol"></span>
+                                            </div>
                                         
                                             <form role="form" class="form-horizontal" style="padding: 10px;;max-width:350px;margin-left:auto;margin-right:auto;" autocomplete="off">
                                                 <div style="margin-left:-20px">
@@ -264,7 +266,7 @@
                                                         <div class="col-sm-9">
                                                             <div class="input-group">
                                                                 <input id="buy_asset_price" type="text" value="0" name="buy_asset_price" class="form-control" data-type="buy" />
-                                                                <span class="input-group-addon">NXT / <span class="asset_name"></span></span>
+                                                                <span class="input-group-addon"><span class="coin-symbol"></span> / <span class="asset_name"></span></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -273,14 +275,15 @@
                                                         <div class="col-sm-9">
                                                             <div class="input-group">
                                                                 <input type="text" name="buy_asset_total" id="buy_asset_total" readonly value="0" class="form-control disabled" />
-                                                                <span class="input-group-addon">NXT</span>
+                                                                <span class="input-group-addon coin-symbol"></span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="form-group form-group-last">
                                                         <div class="col-sm-3"></div>
                                                         <div class="col-sm-9">
-                                                            <button type="button" class="btn btn-primary btn-lg btn-block" id="buy_asset_button" data-toggle="modal" data-target="#asset_order_modal" data-asset="" data-type="Buy"><span data-i18n="buy">Buy</span> (NXT → <span class="asset_name"></span>)</button>
+                                                            <button type="button" class="btn btn-primary btn-lg btn-block" id="buy_asset_button" data-toggle="modal" data-target="#asset_order_modal" data-asset="" data-type="Buy">
+                                                                <span data-i18n="buy">Buy</span> (<span class="coin-symbol"></span> → <span class="asset_name"></span>)</button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -341,7 +344,7 @@
                                                         <div class="col-sm-9">
                                                             <div class="input-group">
                                                                 <input id="sell_asset_price" type="text" value="0" name="sell_asset_price" class="form-control" data-type="sell" />
-                                                                <span class="input-group-addon">NXT / <span class="asset_name"></span></span>
+                                                                <span class="input-group-addon"><span class="coin-symbol"></span> / <span class="asset_name"></span></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -350,14 +353,15 @@
                                                         <div class="col-sm-9">
                                                             <div class="input-group">
                                                                 <input type="text" name="sell_asset_total" id="sell_asset_total" readonly value="0" class="form-control disabled" />
-                                                                <span class="input-group-addon">NXT</span>
+                                                                <span class="input-group-addon coin-symbol"></span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="form-group form-group-last">
                                                         <div class="col-sm-3"></div>
                                                         <div class="col-sm-9">
-                                                            <button type="button" class="btn btn-primary btn-lg btn-block" id="sell_asset_button" data-toggle="modal" data-target="#asset_order_modal" data-asset="" data-type="Sell"><span data-i18n="sell">Sell</span> (<span class="asset_name"></span> → NXT)</button>
+                                                            <button type="button" class="btn btn-primary btn-lg btn-block" id="sell_asset_button" data-toggle="modal" data-target="#asset_order_modal" data-asset="" data-type="Sell">
+                                                                <span data-i18n="sell">Sell</span> (<span class="asset_name"></span> → <span class="coin-symbol"></span>)</button>
                                                         </div>
                                                     </div>
                                                 </div>
