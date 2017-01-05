@@ -283,7 +283,7 @@ var NRS = (function(NRS, $) {
                         row += "<td>" + getAddressLink(data.withdraw, depositAddresses[i].pair.split('_')[1]) + "</td>";
                         row += "<td>" + data.outgoingCoin + "</td>";
                         row += "<td>" + data.outgoingType + "</td>";
-                        row += "<td>" + getTransactionLink(data.transaction, depositAddresses[i].pair.split('_')[1]) + "</td>";
+                        row += "<td>" + data.transaction + "</td>"; // TODO fix link
                         NRS.logConsole(row);
                         callback(null, row);
                     }, true);
