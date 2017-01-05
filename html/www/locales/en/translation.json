@@ -924,8 +924,6 @@
   "send_message": "Send Message",
   "send_message_button": "Send Message",
   "send_message_to_sender": "Send Message to Sender",
-  "send_nxt": "Send NXT",
-  "send_nxt_to_sender": "Send NXT to Sender",
   "sender": "Sender",
   "server_error_unknown": "An unknown error occurred.",
   "set_account_info": "Set Account Info",
@@ -1877,5 +1875,6 @@
   "no_bundlers": "There are no bundlers",
   "stop_bundler": "Stop Bundler",
   "bundler_started": "Bundler Started",
-  "bundler_stopped": "Bundler Stopped"
+  "bundler_stopped": "Bundler Stopped",
+  "send_money": "Send Money"
 }

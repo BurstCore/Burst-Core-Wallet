@@ -103,6 +103,7 @@ var NRS = (function(NRS, $) {
     NRS.setActiveChain = function(chain) {
         NRS.mobileSettings.chain = chain;
         NRS.setJSONItem("mobile_settings", NRS.mobileSettings);
+        $(".coin-symbol").html(NRS.getActiveChainName());
     };
 
     NRS.getActiveChain = function() {
