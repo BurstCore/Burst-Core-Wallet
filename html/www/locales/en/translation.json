@@ -1139,7 +1139,6 @@
   "alias_name": "Alias Name",
   "vote_x": "vote __x__",
   "payload_hash": "Payload Hash",
-  "payload_length": "Payload Length",
   "error_decimals_plural": "Only __count__ digits after the decimal mark are allowed.",
   "alias_uri": "Alias URI",
   "x_lessor_lease_plural": "__count__ lessors have leased their effective balance to your account.",
