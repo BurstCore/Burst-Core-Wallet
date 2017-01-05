@@ -608,6 +608,11 @@ var NRS = (function (NRS, $, undefined) {
         }
     };
 
+    NRS.fullHashToId = function(fullHash) {
+        var transactionBytes = converters.hexStringToByteArray(fullHash);
+        return converters.byteArrayToBigInteger(transactionBytes, 0).toString().escapeHTML();
+    };
+
     NRS.convertNumericToRSAccountFormat = function (account) {
 		if (/^NXT\-/i.test(account)) {
 			return String(account).escapeHTML();
@@ -656,7 +661,16 @@ var NRS = (function (NRS, $, undefined) {
         if (!text) {
             text = id;
         }
-        return "<a href='#' class='show_transaction_modal_action' data-fullhash='" + String(id).escapeHTML() + "'>"
+        return "<a href='#' class='show_transaction_modal_action' data-fullHash='" + String(id).escapeHTML() + "'>"
+            + (isEscapedText ? text : String(text).escapeHTML()) + "</a>";
+    };
+
+    NRS.getEntityLink = function(id, type, text, isEscapedText) {
+        // type: 1 - asset, 2 - currency, 3 - data, 4 - poll, 5 - property, 6 - shuffling
+        if (!text) {
+            text = id;
+        }
+        return "<a href='#' class='show_entity_modal_action' data-id='" + String(id).escapeHTML() + " data-type=" + type + "'>"
             + (isEscapedText ? text : String(text).escapeHTML()) + "</a>";
     };
 

@@ -92,7 +92,7 @@ var NRS = (function (NRS, $, undefined) {
                         $("#MScode").show();
                         $("#currency_account").html(NRS.getAccountLink(response, "account"));
                         currencyId = response.currency;
-                        $("#currency_id").html(NRS.getTransactionLink(currencyId));
+                        $("#currency_id").html(NRS.getEntityLink(currencyId, 2));
                         $("#currency_name").html(NRS.escapeRespStr(response.name));
                         $("#currency_code").html(NRS.escapeRespStr(response.code));
                         $("#currency_current_supply").html(NRS.convertToQNTf(response.currentSupply, response.decimals).escapeHTML());
@@ -197,7 +197,7 @@ var NRS = (function (NRS, $, undefined) {
             var minReserve = NRS.escapeRespStr(currency.minReservePerUnitNQT);
             var typeIcons = NRS.getTypeIcons(currency.type);
             rows += "<tr>" +
-            "<td>" + NRS.getTransactionLink(currencyId, code) + "</td>" +
+            "<td>" + NRS.getEntityLink(currencyId, 2, code) + "</td>" +
             "<td>" + name + "</td>" +
             "<td>" + typeIcons + "</td>" +
             "<td class = 'numeric'>" + NRS.formatQuantity(currency.currentSupply, currency.decimals, false, currentSupplyDecimals) + "</td>" +
@@ -264,7 +264,7 @@ var NRS = (function (NRS, $, undefined) {
                     $("#" + (type == "sell" ? "buy" : "sell") + "_currency_rate").val(NRS.calculateOrderPricePerWholeQNT(rateNQT, decimals));
                 }
                 rows += "<tr>" +
-                    "<td>" + NRS.getTransactionLink(offer.offer, NRS.getTransactionStatusIcon(offer), true) + "</td>" +
+                    "<td>" + NRS.getTransactionLink(offer.offerFullHash, NRS.getTransactionStatusIcon(offer), true) + "</td>" +
                     "<td>" + NRS.getAccountLink(offer, "account") + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(offer.supply, decimals, false, supplyDecimals) + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(offer.limit, decimals, false, limitDecimals) + "</td>" +
@@ -422,7 +422,7 @@ var NRS = (function (NRS, $, undefined) {
                     for (var i = 0; i < response.exchanges.length; i++) {
                         var exchange = response.exchanges[i];
                         rows += "<tr>" +
-                        "<td>" + NRS.getTransactionLink(exchange.transaction, NRS.formatTimestamp(exchange.timestamp)) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(exchange.transactionFullHash, NRS.formatTimestamp(exchange.timestamp)) + "</td>" +
                         "<td>" + NRS.getAccountLink(exchange, "seller") + "</td>" +
                         "<td>" + NRS.getAccountLink(exchange, "buyer") + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(exchange.units, exchange.decimals, false, quantityDecimals) + "</td>" +
@@ -463,7 +463,7 @@ var NRS = (function (NRS, $, undefined) {
                     for (var i = 0; i < response.exchanges.length; i++) {
                         var exchange = response.exchanges[i];
                         rows += "<tr>" +
-                        "<td>" + NRS.getTransactionLink(exchange.transaction, NRS.formatTimestamp(exchange.timestamp)) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(exchange.transactionFullHash, NRS.formatTimestamp(exchange.timestamp)) + "</td>" +
                         "<td>" + NRS.getAccountLink(exchange, "seller") + "</td>" +
                         "<td>" + NRS.getAccountLink(exchange, "buyer") + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(exchange.units, exchange.decimals, false, quantityDecimals) + "</td>" +
@@ -502,7 +502,7 @@ var NRS = (function (NRS, $, undefined) {
                 var exchangeRequest = exchangeRequests[i];
                 var type = exchangeRequest.subtype == 5 ? "buy" : "sell";
                 rows += "<tr class=confirmed>" +
-                    "<td>" + NRS.getTransactionLink(exchangeRequest.transaction, NRS.getTransactionStatusIcon(exchangeRequest), true) + "</td>" +
+                    "<td>" + NRS.getTransactionLink(exchangeRequest.transactionFullHash, NRS.getTransactionStatusIcon(exchangeRequest), true) + "</td>" +
                     "<td>" + NRS.getBlockLink(exchangeRequest.height) + "</td>" +
                     "<td>" + type + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(exchangeRequest.units, decimals, false, quantityDecimals) + "</td>" +
@@ -750,7 +750,7 @@ var NRS = (function (NRS, $, undefined) {
                         var isOfferEnabled = NRS.isExchangeable(currency.type) && (!NRS.isControllable(currency.type) || NRS.account == currency.issuerAccount);
                         //noinspection HtmlUnknownAttribute,BadExpressionStatementJS
                         rows += "<tr>" +
-                        "<td>" + NRS.getTransactionLink(currencyId, code) + "</td>" +
+                        "<td>" + NRS.getEntityLink(currencyId, 2, code) + "</td>" +
                         "<td>" + currency.name + "</td>" +
                         "<td>" + typeIcons + "</td>" +
                         "<td class = 'numeric'>" + NRS.formatQuantity(currency.unconfirmedUnits, currency.decimals, false, unitsDecimals) + "</td>" +
@@ -955,9 +955,9 @@ var NRS = (function (NRS, $, undefined) {
                     var exchange = response.exchanges[i];
                     rows += "<tr>" +
                     "<td>" + NRS.formatTimestamp(exchange.timestamp) + "</td>" +
-                    "<td>" + NRS.getTransactionLink(exchange.transaction) + "</td>" +
-                    "<td>" + NRS.getTransactionLink(exchange.offer) + "</td>" +
-                    "<td>" + NRS.getTransactionLink(exchange.currency, exchange.code) + "</td>" +
+                    "<td>" + NRS.getTransactionLink(exchange.transactionFullHash) + "</td>" +
+                    "<td>" + NRS.getTransactionLink(exchange.offerFullHash) + "</td>" +
+                    "<td>" + NRS.getEntityLink(exchange.currency, 2, exchange.code) + "</td>" +
                     "<td>" + NRS.getAccountLink(exchange, "seller") + "</td>" +
                     "<td>" + NRS.getAccountLink(exchange, "buyer") + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(exchange.units, exchange.decimals, false, quantityDecimals) + "</td>" +
@@ -993,7 +993,7 @@ var NRS = (function (NRS, $, undefined) {
                     transfers[i].units = new BigInteger(transfers[i].units);
                     var type = (transfers[i].recipientRS == NRS.accountRS ? "receive" : "send");
                     rows += "<tr>" +
-                    "<td>" + NRS.getTransactionLink(transfers[i].transfer) + "</td>" +
+                    "<td>" + NRS.getTransactionLink(transfers[i].transferFullHash) + "</td>" +
                     "<td><a href='#' data-goto-currency='" + NRS.escapeRespStr(transfers[i].code) + "'>" + NRS.escapeRespStr(transfers[i].name) + "</a></td>" +
                     "<td>" + NRS.formatTimestamp(transfers[i].timestamp) + "</td>" +
                     "<td style='" + (type == "receive" ? "color:green" : "color:red") + "' class='numeric'>" + NRS.formatQuantity(transfers[i].units, transfers[i].decimals, false, quantityDecimals) + "</td>" +

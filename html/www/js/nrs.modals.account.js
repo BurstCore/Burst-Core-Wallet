@@ -191,7 +191,7 @@ var NRS = (function(NRS, $) {
 					}
 					var account = (receiving ? "sender" : "recipient");
 					rows += "<tr>" +
-						"<td>" + NRS.getTransactionLink(transaction.transaction, NRS.formatTimestamp(transaction.timestamp)) + "</td>" +
+						"<td>" + NRS.getTransactionLink(transaction.fullHash, NRS.formatTimestamp(transaction.timestamp)) + "</td>" +
 						"<td>" + NRS.getTransactionIconHTML(transaction.type, transaction.subtype) + "&nbsp" + transactionType + "</td>" +
 						"<td class='numeric'  " + (transaction.type == 0 && receiving ? " style='color:#006400;'" : (!receiving && transaction.amount > 0 ? " style='color:red'" : "")) + ">" + (!receiving && transaction.amount > 0 ? "-" : "")  + "" + NRS.formatAmount(transaction.amount, false, false, amountDecimals) + "</td>" +
 						"<td class='numeric' " + (!receiving ? " style='color:red'" : "") + ">" + NRS.formatAmount(transaction.fee, false, false, feeDecimals) + "</td>" +
@@ -303,7 +303,7 @@ var NRS = (function(NRS, $) {
 					var currency = response.accountCurrencies[i];
 					var code = NRS.escapeRespStr(currency.code);
 					rows += "<tr>" +
-						"<td>" + NRS.getTransactionLink(NRS.escapeRespStr(currency.currency), code) + "</td>" +
+						"<td>" + NRS.getEntityLink(NRS.escapeRespStr(currency.currency), 2, code) + "</td>" +
 						"<td>" + currency.name + "</td>" +
 						"<td class='numeric'>" + NRS.formatQuantity(currency.unconfirmedUnits, currency.decimals, false, unitsDecimals) + "</td>" +
 					"</tr>";

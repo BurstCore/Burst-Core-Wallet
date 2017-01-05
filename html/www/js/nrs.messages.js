@@ -91,7 +91,7 @@ var NRS = (function(NRS, $) {
 
     NRS.jsondata.messages = function (response) {
         _messages[NRS.account].push(response);
-		var transaction = NRS.getTransactionLink(response.transaction, NRS.formatTimestamp(response.timestamp));
+		var transaction = NRS.getTransactionLink(response.fullHash, NRS.formatTimestamp(response.timestamp));
 		var from = NRS.getAccountLink(response, "sender");
 		var to = NRS.getAccountLink(response, "recipient");
 		var decoded = getMessage(response);
@@ -105,7 +105,7 @@ var NRS = (function(NRS, $) {
         }
         var shareAction = "";
         if (decoded.extra == "decrypted") {
-            shareAction = "<a href='#' class='btn btn-xs' data-toggle='modal' data-transaction='" + response.transaction + "' data-sharedkey='" + decoded.sharedKey + "' data-target='#shared_key_modal'>" + $.t("share") + "</a>";
+            shareAction = "<a href='#' class='btn btn-xs' data-toggle='modal' data-fullHash='" + response.fullHash + "' data-sharedkey='" + decoded.sharedKey + "' data-target='#shared_key_modal'>" + $.t("share") + "</a>";
         }
         var downloadAction = "";
         if (!decryptAction && !retrieveAction && decoded.hash && decoded.message == $.t("binary_data")) {
@@ -350,7 +350,7 @@ var NRS = (function(NRS, $) {
                 if (decoded.sharedKey) {
                     var inverseIcon = messages[i].recipient == NRS.account ? "" : " fa-inverse";
 					sharedKeyTag = "<a href='#' class='btn btn-xs' data-toggle='modal' data-target='#shared_key_modal' " +
-						"data-sharedkey='" + decoded.sharedKey + "' data-transaction='" + messages[i].transaction +"'>" +
+						"data-sharedkey='" + decoded.sharedKey + "' data-fullHash='" + messages[i].fullHash +"'>" +
 						"<i class='fa fa-link" + inverseIcon + "'></i>" +
 					"</a>";
 				}
@@ -567,8 +567,8 @@ var NRS = (function(NRS, $) {
         var $invoker = $(e.relatedTarget);
 		var sharedKey = $invoker.data("sharedkey");
         $("#shared_key_text").val(sharedKey);
-		var transaction = $invoker.data("transaction");
-        $("#shared_key_transaction").html(NRS.getTransactionLink(transaction));
+		var fullHash = $invoker.data("fullHash");
+        $("#shared_key_transaction").html(NRS.getTransactionLink(fullHash));
 		if (NRS.state.apiProxy) {
 			$("#shared_key_link_container").hide();
 		} else {
@@ -577,7 +577,7 @@ var NRS = (function(NRS, $) {
 				url = url.substr(0, url.length - 1);
 			}
 			url += "?account=" + NRS.accountRS + "&modal=transaction_info_modal" +
-				"&transaction=" + transaction +
+				"&fullHash=" + fullHash +
 				"&sharedKey=" + sharedKey;
 			var sharedKeyLink = $("#shared_key_link");
 	        sharedKeyLink.attr("href", url);

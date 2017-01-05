@@ -57,14 +57,14 @@ var NRS = (function(NRS, $) {
                 entryDetails.entryTime = NRS.formatTimestamp(entryDetails.timestamp);
             }
             if (entryDetails.holding) {
-                entryDetails.holding_formatted_html = NRS.getTransactionLink(entry.holding);
+                entryDetails.holding_formatted_html = NRS.getEntityLink(entry.holding, entryDetails.holdingType);
                 delete entryDetails.holding;
             }
             entryDetails.height_formatted_html = NRS.getBlockLink(entry.height);
             delete entryDetails.block;
             delete entryDetails.height;
             if (entryDetails.isTransactionEvent) {
-                entryDetails.transaction_formatted_html = NRS.getTransactionLink(entry.event);
+                entryDetails.transaction_formatted_html = NRS.getTransactionLink(entry.eventHash, NRS.formatTimestamp(entry.timestamp));
             }
             delete entryDetails.event;
             delete entryDetails.isTransactionEvent;

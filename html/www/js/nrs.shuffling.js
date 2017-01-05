@@ -99,7 +99,7 @@ var NRS = (function(NRS, $) {
                     }
                     return "<span>" + $.t("already_joined") + "</span>";
                 })(),
-            shufflingFormatted: NRS.getTransactionLink(response.shuffling),
+            shufflingFormatted: NRS.getTransactionLink(response.shufflingFullHash),
             stageLabel: shufflerStage,
             shufflerStatus: shufflerStatus,
             shufflerIndicatorFormatted: shufflerIndicatorFormatted,
@@ -118,8 +118,8 @@ var NRS = (function(NRS, $) {
             holdingFormatted: (function () {
                 switch (response.holdingType) {
                     case 0: return 'NXT';
-                    case 1: return NRS.getTransactionLink(response.holding) + " (" + $.t('asset') + ")"; // TODO need to get the 32 byte holding hash
-                    case 2: return NRS.getTransactionLink(response.holding, response.holdingInfo.code)  + " (" + $.t('currency') + ")";
+                    case 1: return NRS.getEntityLink(response.holding, response.holdingType) + " (" + $.t('asset') + ")";
+                    case 2: return NRS.getEntityLink(response.holding, response.holdingType, response.holdingInfo.code)  + " (" + $.t('currency') + ")";
                 }
             })(),
             participants: NRS.escapeRespStr(response.registrantCount) + " / " + NRS.escapeRespStr(response.participantCount),
