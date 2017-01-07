@@ -1018,7 +1018,8 @@ final class PeerImpl implements Peer {
         if (sendMessage) {
             keyEvent.update(SelectionKey.OP_WRITE, 0);
             if (Peers.communicationLogging == 1) {
-                Logger.logDebugMessage(message.getMessageName() + " message sent to " + host);
+                Logger.logDebugMessage(String.format("%s[%d] message sent to %s",
+                        message.getMessageName(), message.getMessageId(), host));
             }
         } else if (disconnect) {
             disconnectPeer();
@@ -1052,8 +1053,8 @@ final class PeerImpl implements Peer {
         if (response instanceof NetworkMessage.ErrorMessage) {
             NetworkMessage.ErrorMessage error = (NetworkMessage.ErrorMessage)response;
             if (error.isSevereError()) {
-                Logger.logDebugMessage("Error returned by " + host + " for '" + error.getErrorName() +
-                        "' message: " + error.getErrorMessage());
+                Logger.logDebugMessage(String.format("Error returned by %s for %s[%d] message",
+                        host, error.getErrorName(), error.getMessageId()));
                 disconnectPeer();
             }
             return null;

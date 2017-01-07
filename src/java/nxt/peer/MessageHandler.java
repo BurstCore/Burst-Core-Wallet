@@ -93,8 +93,8 @@ class MessageHandler implements Runnable {
                 try {
                     message = NetworkMessage.getMessage(entry.getBytes());
                     if (Peers.communicationLogging == 1) {
-                        Logger.logDebugMessage(message.getMessageName()
-                                + " message received from " + peer.getHost());
+                        Logger.logDebugMessage(String.format("%s[%d] message received from %s",
+                                message.getMessageName(), message.getMessageId(), peer.getHost()));
                     }
                     if (message.isResponse()) {
                         if (message.getMessageId() == 0) {
