@@ -89,6 +89,15 @@ var NRS = (function(NRS, $) {
         )
     };
 
+    NRS.forms.startBundler = function($modal) {
+        var data = NRS.getFormData($modal.find("form:first"));
+        data.totalFeesLimitFQT = NRS.convertToFXT(data.totalFeesLimitFXT);
+        delete data.totalFeesLimitFXT;
+        data.overpayFQTPerFXT = NRS.convertToFXT(data.overpayFXTPerFXT);
+        delete data.overpayFXTPerFXT;
+        return data;
+    };
+
     NRS.forms.startBundlerComplete = function() {
         $.growl($.t("bundler_started"));
         NRS.loadPage("bundlers");

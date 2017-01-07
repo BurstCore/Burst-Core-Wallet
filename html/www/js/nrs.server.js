@@ -74,7 +74,8 @@ var NRS = (function (NRS, $, undefined) {
                 ["minBalanceNXT", "minBalance"],
                 ["shufflingAmountNXT", "amount"],
                 ["monitorAmountNXT", "amount"],
-                ["monitorThresholdNXT", "threshold"]
+                ["monitorThresholdNXT", "threshold"],
+                ["minRateNXTPerFXT", "minRateNQTPerFXT"]
             ];
 
             for (i = 0; i < nxtFields.length; i++) {

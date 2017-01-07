@@ -120,9 +120,17 @@ var NRS = (function (NRS, $, undefined) {
 		return NRS.format(result.toString());
 	};
 
-    NRS.convertToNXT = function (amount, returnAsObject) {
+    NRS.convertToNXT = function(amount, returnAsObject) {
         var oneCoin = NRS.getActiveChainOneCoin();
         var decimals = NRS.getActiveChainDecimals();
+        return convertDecimalToWholeNumber(amount, returnAsObject, oneCoin, decimals);
+    };
+
+    NRS.convertToFXT = function(amount, returnAsObject) {
+        return convertDecimalToWholeNumber(amount, returnAsObject, "100000000", 8);
+    };
+
+    function convertDecimalToWholeNumber(amount, returnAsObject, oneCoin, decimals) {
         if (typeof amount != "object") {
             amount = new BigInteger(String(amount));
         }
@@ -151,7 +159,7 @@ var NRS = (function (NRS, $, undefined) {
         } else {
             return negative + amount + mantissa;
         }
-    };
+    }
 
     NRS.amountToPrecision = function (amount, decimals) {
 		amount = String(amount);

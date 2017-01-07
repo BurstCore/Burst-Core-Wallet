@@ -104,6 +104,7 @@ var NRS = (function(NRS, $) {
         NRS.mobileSettings.chain = chain;
         NRS.setJSONItem("mobile_settings", NRS.mobileSettings);
         $(".coin-symbol").html(NRS.getActiveChainName());
+        $(".parent-coin-symbol").html(NRS.getParentChainName());
     };
 
     NRS.getActiveChain = function() {
@@ -112,6 +113,10 @@ var NRS = (function(NRS, $) {
 
     NRS.getActiveChainName = function() {
         return String(NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain].name).escapeHTML();
+    };
+
+    NRS.getParentChainName = function() {
+        return String(NRS.constants.CHAIN_PROPERTIES[1].name).escapeHTML();
     };
 
     NRS.getActiveChainDecimals = function() {
