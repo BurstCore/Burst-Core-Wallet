@@ -428,7 +428,7 @@ var NRS = (function(NRS, $) {
     NRS.forms.shufflingCreateComplete = function(response) {
         $.growl($.t("shuffling_created"));
         // After shuffling created we show the start shuffler modal
-        $("#shuffler_start_shuffling_id").html(response.transaction);
+        $("#shuffler_start_shuffling_id").html(NRS.fullHashToId(response.fullHash));
         $("#shuffler_start_shuffling_full_hash").val(response.fullHash);
         $('#m_shuffler_start_modal').modal("show");
     };

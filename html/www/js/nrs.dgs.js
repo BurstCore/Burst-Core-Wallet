@@ -584,21 +584,28 @@ var NRS = (function(NRS, $) {
 		};
 	};
 
-	NRS.forms.dgsListingComplete = function(response, data) {
-		if (response.alreadyProcessed) {
-			return;
-		}
-		if (NRS.currentPage == "my_dgs_listings") {
-         var rowToAdd = "<tr class='tentative' data-goods='" + NRS.escapeRespStr(response.transaction) + "'><td><a href='#' data-toggle='modal' data-target='#dgs_listing_modal' data-goods='" + NRS.escapeRespStr(response.transaction) + "'>" + NRS.escapeRespStr(data.name) + "</a></td><td class='quantity'>" + NRS.format(data.quantity) + "</td>" +
-				 "<td class='price'>" + NRS.formatAmount(data.priceNQT) + " " + NRS.getActiveChainName() + "</td><td style='white-space:nowrap'><a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_price_change_modal' data-goods='" + NRS.escapeRespStr(response.transaction) + "'>" + $.t("change_price") + "</a> <a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_quantity_change_modal' data-goods='" + NRS.escapeRespStr(response.transaction) + "'>" + $.t("change_qty") + "</a> <a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_delisting_modal' data-goods='" + NRS.escapeRespStr(response.transaction) + "'>" + $.t("delete") + "</a></td>" +
-			 "</tr>";
-         var listingsTable = $("#my_dgs_listings_table");
-         listingsTable.find("tbody").prepend(rowToAdd);
-			if (listingsTable.parent().hasClass("data-empty")) {
-				listingsTable.parent().removeClass("data-empty");
-			}
-		}
-	};
+    NRS.forms.dgsListingComplete = function (response, data) {
+        if (response.alreadyProcessed) {
+            return;
+        }
+        if (NRS.currentPage == "my_dgs_listings") {
+            var rowToAdd = "<tr class='tentative' data-goods='" + NRS.fullHashToId(response.fullHash) + "'>" +
+				"<td><a href='#' data-toggle='modal' data-target='#dgs_listing_modal' data-goods='" + NRS.fullHashToId(response.fullHash) + "'>" + NRS.escapeRespStr(data.name) + "</a></td>" +
+				"<td class='quantity'>" + NRS.format(data.quantity) + "</td>" +
+                "<td class='price'>" + NRS.formatAmount(data.priceNQT) + " " + NRS.getActiveChainName() + "</td>" +
+				"<td style='white-space:nowrap'>" +
+				"<a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_price_change_modal' data-goods='" + NRS.fullHashToId(response.fullHash) + "'>" + $.t("change_price") + "</a> " +
+				"<a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_quantity_change_modal' data-goods='" + NRS.fullHashToId(response.fullHash) + "'>" + $.t("change_qty") + "</a> " +
+				"<a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_delisting_modal' data-goods='" + NRS.fullHashToId(response.fullHash) + "'>" + $.t("delete") + "</a>" +
+				"</td>" +
+                "</tr>";
+            var listingsTable = $("#my_dgs_listings_table");
+            listingsTable.find("tbody").prepend(rowToAdd);
+            if (listingsTable.parent().hasClass("data-empty")) {
+                listingsTable.parent().removeClass("data-empty");
+            }
+        }
+    };
 
 	NRS.forms.dgsDelistingComplete = function(response, data) {
 		if (response.alreadyProcessed) {

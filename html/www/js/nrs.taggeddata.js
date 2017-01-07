@@ -290,18 +290,5 @@ var NRS = (function(NRS, $) {
 		NRS.getDownloadLink(NRS.getRequestPath() + "?requestType=downloadTaggedData&transaction=" + transaction + "&retrieve=true", $("#tagged_data_download"));
     });
 
-    $("#extend_data_modal").on("show.bs.modal", function (e) {
-        var $invoker = $(e.relatedTarget);
-        var transaction = $invoker.data("transaction");
-        $("#extend_data_transaction").val(transaction);
-        NRS.sendRequest("getTransaction", {
-            "transaction": transaction
-        }, function (response) {
-            var fee = NRS.convertToNXT(NRS.escapeRespStr(response.feeNQT));
-            $('#extend_data_fee').val(fee);
-            $('#extend_data_fee_label').html(String(fee) + " " + NRS.getActiveChainName());
-        })
-    });
-
 	return NRS;
 }(NRS || {}, jQuery));

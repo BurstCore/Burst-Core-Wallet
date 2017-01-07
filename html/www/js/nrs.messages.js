@@ -291,8 +291,8 @@ var NRS = (function(NRS, $) {
             }
         } else if (message.attachment.messageHash || message.attachment.encryptedMessageHash) {
 			// Try to read prunable message but do not retrieve it from other nodes
-            NRS.sendRequest("getPrunableMessage", { transaction: message.transaction, retrieve: "false"}, function(response) {
-				if (response.errorCode || !response.transaction) {
+            NRS.sendRequest("getPrunableMessage", { transactionFullHash: message.fullHash, retrieve: "false"}, function(response) {
+				if (response.errorCode || !response.transactionFullHash) {
 					decoded.message = $.t("message_pruned");
 					decoded.extra = "pruned";
 				} else {
@@ -467,7 +467,7 @@ var NRS = (function(NRS, $) {
 					type: "success"
 				});
 				$("#inline_message_text").val("");
-                NRS.addUnconfirmedTransaction(response.transaction, function (alreadyProcessed) {
+                NRS.addUnconfirmedTransaction(response.fullHash, function (alreadyProcessed) {
                     if (!alreadyProcessed) {
                         $("#message_details").find("dl.chat").append("<dd class='to tentative" + (data.encryptedMessageData ? " decrypted" : "") + "'><p>" + (data.encryptedMessageData ? "<i class='fa fa-lock'></i> " : "") + (!data["_extra"].message ? $.t("message_empty") : String(data["_extra"].message).escapeHTML()) + "</p></dd>");
                         var splitter = $('#messages_page').find('.content-splitter-right-inner');

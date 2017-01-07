@@ -185,7 +185,6 @@ var NRS = (function (NRS, $, undefined) {
                 approveTransactionButton.attr('disabled', 'disabled');
             } else {
                 approveTransactionButton.removeAttr('disabled');
-                approveTransactionButton.data("transaction", transaction.transaction);
                 approveTransactionButton.data("fullhash", transaction.fullHash);
                 approveTransactionButton.data("timestamp", transaction.timestamp);
                 approveTransactionButton.data("minBalanceFormatted", "");
@@ -194,7 +193,7 @@ var NRS = (function (NRS, $, undefined) {
             var extendDataButton = $("#transaction_info_modal_extend_data");
             if (transaction.type == NRS.subtype.TaggedDataUpload.type && transaction.subtype == NRS.subtype.TaggedDataUpload.subtype) {
                 extendDataButton.removeAttr('disabled');
-                extendDataButton.data("transaction", transaction.transaction);
+                extendDataButton.data("fullHash", transaction.fullHash);
             } else {
                 extendDataButton.attr('disabled','disabled');
             }
@@ -554,7 +553,7 @@ var NRS = (function (NRS, $, undefined) {
                                 data["quantity"] = [asset.quantityQNT, transaction.attachment.decimals];
                             }
                             data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                            $("#transaction_info_callout").html("<a href='#' data-goto-asset='" + NRS.escapeRespStr(transaction.transaction) + "'>Click here</a> to view this asset in the Asset Exchange.").show();
+                            $("#transaction_info_callout").html("<a href='#' data-goto-asset='" + NRS.fullHashToId(transaction.fullHash) + "'>Click here</a> to view this asset in the Asset Exchange.").show();
 
                             infoTable.find("tbody").append(NRS.createInfoTable(data));
                             infoTable.show();
@@ -813,7 +812,7 @@ var NRS = (function (NRS, $, undefined) {
                                     if (NRS.account == transaction.recipient || NRS.account == transaction.sender) {
                                         if (purchase.pending) {
                                             if (NRS.account == transaction.recipient) {
-                                                callout = "<a href='#' data-toggle='modal' data-target='#dgs_delivery_modal' data-purchase='" + NRS.escapeRespStr(transaction.transaction) + "'>" + $.t("deliver_goods_q") + "</a>";
+                                                callout = "<a href='#' data-toggle='modal' data-target='#dgs_delivery_modal' data-purchase='" + NRS.fullHashToId(transaction.fullHash) + "'>" + $.t("deliver_goods_q") + "</a>";
                                             } else {
                                                 callout = $.t("waiting_on_seller");
                                             }

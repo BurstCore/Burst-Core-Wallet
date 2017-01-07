@@ -121,6 +121,8 @@ var NRS = (function (NRS, $, undefined) {
 	};
 
     NRS.convertToNXT = function (amount, returnAsObject) {
+        var oneCoin = NRS.getActiveChainOneCoin();
+        var decimals = NRS.getActiveChainDecimals();
         if (typeof amount != "object") {
             amount = new BigInteger(String(amount));
         }
@@ -129,12 +131,12 @@ var NRS = (function (NRS, $, undefined) {
             amount = amount.abs();
             negative = "-";
         }
-        var fractionalPart = amount.mod(new BigInteger(NRS.getActiveChainOneCoin())).toString();
-        amount = amount.divide(new BigInteger(NRS.getActiveChainOneCoin()));
+        var fractionalPart = amount.mod(new BigInteger(oneCoin)).toString();
+        amount = amount.divide(new BigInteger(oneCoin));
         var mantissa = "";
         if (fractionalPart && fractionalPart != "0") {
             mantissa = ".";
-            for (var i = fractionalPart.length; i < NRS.getActiveChainDecimals(); i++) {
+            for (var i = fractionalPart.length; i < decimals; i++) {
                 mantissa += "0";
             }
             mantissa += fractionalPart.replace(/0+$/, "");
@@ -657,6 +659,10 @@ var NRS = (function (NRS, $, undefined) {
             "' class='show_account_modal_action user-info" + clazz + "'>" + accountTitle + "</a>";
     };
 
+    NRS.formatFullHash = function(fullHash) {
+        return NRS.escapeRespStr(fullHash).substring(8); // Present the first 8 letters like GIT
+    };
+
     NRS.getTransactionLink = function(id, text, isEscapedText) {
         if (!text) {
             text = id;
@@ -853,7 +859,7 @@ var NRS = (function (NRS, $, undefined) {
                     value = NRS.formatQuantity(value, 0);
                 }
             } else if (key == "price" || key == "total" || key == "amount" || key == "fee" || key == "refund" || key == "discount") {
-                value = NRS.formatAmount(new BigInteger(String(value))) + " NXT";
+                value = NRS.formatAmount(new BigInteger(String(value))) + " " + NRS.getActiveChainName();
             } else if (key == "sender" || key == "recipient" || key == "account" || key == "seller" || key == "buyer" || key == "lessee") {
                 value = "<a href='#' data-user='" + NRS.escapeRespStr(value) + "' class='show_account_modal_action'>" + NRS.getAccountTitle(value) + "</a>";
             } else if (key == "request_processing_time") { /* Skip from displaying request processing time */

@@ -1250,7 +1250,7 @@ var NRS = (function (NRS, $, undefined) {
                     return false;
                 }
                 break;
-            case "extendTaggedData":
+            case "extendTaggedData": // TODO remove from the UI
                 if (transaction.type !== 6 && transaction.subtype !== 1) {
                     return false;
                 }

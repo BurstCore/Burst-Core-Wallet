@@ -98,7 +98,7 @@ var NRS = (function(NRS, $, undefined) {
 						}
 					}
 					unconfirmedTransactions.push(unconfirmedTransaction);
-					unconfirmedTransactionIds.push(unconfirmedTransaction.transaction);
+					unconfirmedTransactionIds.push(unconfirmedTransaction.fullHash);
 				}
 				NRS.unconfirmedTransactions = unconfirmedTransactions;
 				var unconfirmedTransactionIdString = unconfirmedTransactionIds.toString();
@@ -144,7 +144,7 @@ var NRS = (function(NRS, $, undefined) {
 					var transaction = response.transactions[i];
 					transaction.confirmed = true;
 					transactions.push(transaction);
-					transactionIds.push(transaction.transaction);
+					transactionIds.push(transaction.fullHash);
 				}
 				NRS.getUnconfirmedTransactions(function() {
 					NRS.loadPage('dashboard');
@@ -179,7 +179,7 @@ var NRS = (function(NRS, $, undefined) {
 						var transactionIds = [];
 
 						$.each(response.transactions, function(key, transaction) {
-							transactionIds.push(transaction.transaction);
+							transactionIds.push(transaction.fullHash);
 							response.transactions[key].confirmed = true;
 						});
 
@@ -200,12 +200,12 @@ var NRS = (function(NRS, $, undefined) {
 		});
 	};
 
-	NRS.addUnconfirmedTransaction = function(transactionId, callback) {
+	NRS.addUnconfirmedTransaction = function(fullHash, callback) {
 		NRS.sendRequest("getTransaction", {
-			"transaction": transactionId
+			"fullHash": fullHash
 		}, function(response) {
 			if (!response.errorCode) {
-				response.transaction = transactionId;
+				response.fullHash = fullHash; // TODO check if necessary
 				response.confirmations = "/";
 				response.confirmed = false;
 				response.unconfirmed = true;
@@ -222,12 +222,12 @@ var NRS = (function(NRS, $, undefined) {
 				}
 				var alreadyProcessed = false;
 				try {
-					var regex = new RegExp("(^|,)" + transactionId + "(,|$)");
+					var regex = new RegExp("(^|,)" + fullHash + "(,|$)");
 					if (regex.exec(NRS.lastTransactions)) {
 						alreadyProcessed = true;
 					} else {
 						$.each(NRS.unconfirmedTransactions, function(key, unconfirmedTransaction) {
-							if (unconfirmedTransaction.transaction == transactionId) {
+							if (unconfirmedTransaction.fullHash == fullHash) {
 								alreadyProcessed = true;
 								return false;
 							}
@@ -267,18 +267,18 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
 	NRS.addPhasedTransactionHTML = function(t) {
-		var $tr = $('.tr_transaction_' + t.transaction + ':visible');
+		var $tr = $('.tr_transaction_' + t.fullHash + ':visible');
 		var $tdPhasing = $tr.find('.td_transaction_phasing');
 		var $approveBtn = $tr.find('.td_transaction_actions .approve_transaction_btn');
 
 		if (t.attachment && t.attachment["version.Phasing"] && t.attachment.phasingVotingModel != undefined) {
 			NRS.sendRequest("getPhasingPoll", {
-				"transaction": t.transaction,
+				"transactionFullHash": t.fullHash,
 				"countVotes": true
 			}, function(responsePoll) {
-				if (responsePoll.transaction) {
+				if (responsePoll.transactionFullHash) {
 					NRS.sendRequest("getPhasingPollVote", {
-						"transaction": t.transaction,
+						"transactionFullHash": t.fullHash,
 						"account": NRS.accountRS
 					}, function(responseVote) {
 						var attachment = t.attachment;
@@ -301,7 +301,7 @@ var NRS = (function(NRS, $, undefined) {
 								}
 							}
 							if (!disabled) {
-								if (responseVote.transaction) {
+								if (responseVote.transactionFullHash) {
 									$approveBtn.attr('disabled', true);
 								} else {
 									$approveBtn.attr('disabled', false);
@@ -542,7 +542,7 @@ var NRS = (function(NRS, $, undefined) {
 			}
 		}
 		var html = "";
-		html += "<tr class='tr_transaction_" + t.transaction + "'>";
+		html += "<tr class='tr_transaction_" + t.fullHash + "'>";
 		html += "<td style='vertical-align:middle;'>";
 		html += NRS.getTransactionLink(NRS.escapeRespStr(t.fullHash), NRS.formatTimestamp(t.timestamp));
   		html += "</td>";
@@ -565,7 +565,7 @@ var NRS = (function(NRS, $, undefined) {
 			html += '<td class="td_transaction_actions" style="vertical-align:middle;text-align:right;">';
 			if (actions.indexOf('approve') > -1) {
                 html += "<a class='btn btn-xs btn-default approve_transaction_btn' href='#' data-toggle='modal' data-target='#approve_transaction_modal' ";
-				html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "' data-fullhash='" + NRS.escapeRespStr(t.fullHash) + "' ";
+				html += "data-fullhash='" + NRS.escapeRespStr(t.fullHash) + "' ";
 				html += "data-timestamp='" + t.timestamp + "' " + "data-votingmodel='" + t.attachment.phasingVotingModel + "' ";
 				html += "data-fee='1' data-min-balance-formatted=''>" + $.t('approve') + "</a>";
 			}

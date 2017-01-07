@@ -18,7 +18,7 @@
  * @depends {nrs.js}
  * @depends {nrs.modals.js}
  */
-var NRS = (function(NRS, $, undefined) {
+var NRS = (function(NRS, $) {
 
     NRS.forms.dividendPayment = function($modal) {
         var data = NRS.getFormData($modal.find("form:first"));
@@ -36,17 +36,6 @@ var NRS = (function(NRS, $, undefined) {
             return {
                 "error": $.t("error_invalid_dividend_height")
             }
-        }
-        var isDividendHeightBeforeAssetHeight;
-        NRS.sendRequest("getTransaction", { transaction: data.asset }, function(response) {
-            if (response.height > data.height) {
-                isDividendHeightBeforeAssetHeight = true;
-            }
-        }, { isAsync: false });
-        if (isDividendHeightBeforeAssetHeight) {
-            return {
-                "error": $.t("dividend_height_asset_height")
-            };
         }
         delete data.amountNXTPerShare;
         return {
