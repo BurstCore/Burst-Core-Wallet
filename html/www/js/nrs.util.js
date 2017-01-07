@@ -689,7 +689,7 @@ var NRS = (function (NRS, $, undefined) {
         if (!text) {
             text = id;
         }
-        return "<a href='#' class='show_entity_modal_action' data-id='" + String(id).escapeHTML() + " data-type=" + type + "'>"
+        return "<a href='#' class='show_entity_modal_action' data-id='" + String(id).escapeHTML() + "' data-type='" + type + "'>"
             + (isEscapedText ? text : String(text).escapeHTML()) + "</a>";
     };
 
