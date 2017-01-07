@@ -217,7 +217,7 @@ var NRS = (function (NRS, $, undefined) {
             var message;
             var fieldsToDecrypt = {};
             var i;
-            if (transaction.type == 0 || transaction.type == -2) {
+            if (NRS.isOfType(transaction, "FxtPayment") || NRS.isOfType(transaction, "OrdinaryPayment")) {
                 switch (transaction.subtype) {
                     case 0:
                         data = {

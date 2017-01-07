@@ -510,7 +510,7 @@ var NRS = (function (NRS, $, undefined) {
             }, data);
             return;
         }
-        var payload = transactionBytes.substr(0, 192) + signature + transactionBytes.substr(320);
+        var payload = transactionBytes.substr(0, 192) + signature + transactionBytes.substr(320); // todo fix offsets
         if (data.broadcast == "false") {
             response.transactionBytes = payload;
             response.transactionJSON.signature = signature;
@@ -525,35 +525,42 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.verifyTransactionBytes = function (byteArray, requestType, data, attachment, isVerifyECBlock) {
         var transaction = {};
-        transaction.type = byteArray[0];
-        transaction.version = (byteArray[1] & 0xF0) >> 4;
-        transaction.subtype = byteArray[1] & 0x0F;
-        transaction.timestamp = String(converters.byteArrayToSignedInt32(byteArray, 2));
-        transaction.deadline = String(converters.byteArrayToSignedShort(byteArray, 6));
-        transaction.publicKey = converters.byteArrayToHexString(byteArray.slice(8, 40));
-        transaction.recipient = String(converters.byteArrayToBigInteger(byteArray, 40));
-        transaction.amountNQT = String(converters.byteArrayToBigInteger(byteArray, 48));
-        transaction.feeNQT = String(converters.byteArrayToBigInteger(byteArray, 56));
-
-        var refHash = byteArray.slice(64, 96);
-        transaction.referencedTransactionFullHash = converters.byteArrayToHexString(refHash);
-        if (transaction.referencedTransactionFullHash == "0000000000000000000000000000000000000000000000000000000000000000") {
-            transaction.referencedTransactionFullHash = "";
+        var pos = 0;
+        transaction.chain = String(converters.byteArrayToSignedInt32(byteArray, pos));
+        pos += 4;
+        transaction.type = byteArray[pos++];
+        // Patch until I find the official way of converting JS byte to signed byte
+        if (transaction.type >= 128) {
+            transaction.type -= 256;
         }
-        transaction.flags = 0;
-        if (transaction.version > 0) {
-            transaction.flags = converters.byteArrayToSignedInt32(byteArray, 160);
-            transaction.ecBlockHeight = String(converters.byteArrayToSignedInt32(byteArray, 164));
-            transaction.ecBlockId = String(converters.byteArrayToBigInteger(byteArray, 168));
-            if (isVerifyECBlock) {
-                var ecBlock = NRS.constants.LAST_KNOWN_BLOCK;
-                if (ecBlock.id != "0") {
-                    if (transaction.ecBlockHeight != ecBlock.height) {
-                        return false;
-                    }
-                    if (transaction.ecBlockId != ecBlock.id) {
-                        return false;
-                    }
+        transaction.subtype = byteArray[pos++];
+        transaction.version = byteArray[pos++];
+        transaction.timestamp = String(converters.byteArrayToSignedInt32(byteArray, pos));
+        pos += 4;
+        transaction.deadline = String(converters.byteArrayToSignedShort(byteArray, pos));
+        pos += 2;
+        transaction.publicKey = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+        pos += 32;
+        transaction.recipient = String(converters.byteArrayToBigInteger(byteArray, pos));
+        pos += 8;
+        transaction.amountNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+        pos += 8;
+        transaction.feeNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+        pos += 8;
+        transaction.signature = byteArray.slice(pos, pos + 64);
+        pos += 64;
+        transaction.ecBlockHeight = String(converters.byteArrayToSignedInt32(byteArray, pos));
+        pos += 4;
+        transaction.ecBlockId = String(converters.byteArrayToBigInteger(byteArray, pos));
+        pos += 8;
+        if (isVerifyECBlock) {
+            var ecBlock = NRS.constants.LAST_KNOWN_BLOCK;
+            if (ecBlock.id != "0") {
+                if (transaction.ecBlockHeight != ecBlock.height) {
+                    return false;
+                }
+                if (transaction.ecBlockId != ecBlock.id) {
+                    return false;
                 }
             }
         }
@@ -567,9 +574,7 @@ var NRS = (function (NRS, $, undefined) {
         }
 
         if (transaction.recipient !== data.recipient) {
-            if (data.recipient == "" && transaction.recipient == "0") {
-                //ok
-            } else {
+            if (!(data.recipient == "" && transaction.recipient == "0")) {
                 return false;
             }
         }
@@ -582,19 +587,12 @@ var NRS = (function (NRS, $, undefined) {
             if (transaction.referencedTransactionFullHash !== data.referencedTransactionFullHash) {
                 return false;
             }
-        } else if (transaction.referencedTransactionFullHash !== "") {
+        } else if (transaction.referencedTransactionFullHash && transaction.referencedTransactionFullHash !== "") {
             return false;
         }
-        var pos;
-        if (transaction.version > 0) {
-            //has empty attachment, so no attachmentVersion byte...
-            if (requestType == "sendMoney" || requestType == "sendMessage") {
-                pos = 176;
-            } else {
-                pos = 177;
-            }
-        } else {
-            pos = 160;
+        //has empty attachment, so no attachmentVersion byte...
+        if (!(requestType == "sendMoney" || requestType == "sendMessage")) {
+            pos++;
         }
         return NRS.verifyTransactionTypes(byteArray, transaction, requestType, data, pos, attachment);
     };
@@ -605,7 +603,7 @@ var NRS = (function (NRS, $, undefined) {
         var serverHash, sha256, utfBytes, isText, hashWords, calculatedHash;
         switch (requestType) {
             case "sendMoney":
-                if (transaction.type !== 0 || transaction.subtype !== 0) {
+                if (!(NRS.isOfType(transaction, "FxtPayment") || NRS.isOfType(transaction, "OrdinaryPayment"))) {
                     return false;
                 }
                 break;
