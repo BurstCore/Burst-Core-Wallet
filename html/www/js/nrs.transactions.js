@@ -662,13 +662,18 @@ var NRS = (function(NRS, $, undefined) {
         var typeNavi = $('#transactions_type_navi');
         typeNavi.append(html);
 
-		$.each(NRS.transactionTypes, function(typeIndex, typeDict) {
+		for (var typeIndex in NRS.transactionTypes) {
+			var typeDict = NRS.transactionTypes[typeIndex];
+			if (NRS.isParentChain() && typeDict.chainType == "child" ||
+                !NRS.isParentChain() && typeDict.chainType == "parent") {
+				continue;
+			}
 			var titleString = $.t(typeDict.i18nKeyTitle);
 			html = '<li role="presentation"><a href="#" data-transaction-type="' + typeIndex + '" ';
 			html += 'data-toggle="popover" data-placement="top" data-content="' + titleString + '" data-container="body">';
 			html += typeDict.iconHTML + '</a></li>';
 			$('#transactions_type_navi').append(html);
-		});
+		};
 
 		html  = '<li role="presentation"><a href="#" data-transaction-type="unconfirmed" ';
 		html += 'data-toggle="popover" data-placement="top" data-content="Unconfirmed (Account)" data-container="body" data-i18n="[data-content]unconfirmed_account">';

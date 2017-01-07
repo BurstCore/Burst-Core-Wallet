@@ -111,6 +111,10 @@ var NRS = (function(NRS, $) {
         return NRS.mobileSettings.chain;
     };
 
+    NRS.isParentChain = function() {
+        return NRS.mobileSettings.chain == 1;
+    };
+
     NRS.getActiveChainName = function() {
         return String(NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain].name).escapeHTML();
     };

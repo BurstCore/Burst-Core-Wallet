@@ -1195,7 +1195,6 @@
   "marketplace_quantity_change": "Marketplace Quantity Change",
   "message_is_encrypted": "This message is encrypted.",
   "payment": "Payment",
-  "messaging_voting_aliases": "Messaging/Voting/Aliases",
   "placeholder]deadline": "Deadline",
   "polls": "Polls",
   "toAccount": "To",
@@ -1876,5 +1875,10 @@
   "stop_bundler": "Stop Bundler",
   "bundler_started": "Bundler Started",
   "bundler_stopped": "Bundler Stopped",
-  "send_money": "Send Money"
+  "send_money": "Send Money",
+  "issue_order": "Issue Order",
+  "cancel_order": "Cancel Order",
+  "child_chain_block": "Child Chain Block",
+  "messaging": "Messaging",
+  "voting": "Voting",
 }
