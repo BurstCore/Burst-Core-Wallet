@@ -36,7 +36,9 @@ var NRS = (function(NRS, $) {
             totalFeesLimitFQT: NRS.formatAmount(response.totalFeesLimitFQT),
             currentTotalFeesFQT: NRS.formatAmount(response.currentTotalFeesFQT),
             minRateNQTPerFXT: NRS.formatAmount(response.minRateNQTPerFXT),
-            overpayFQTPerFXT: NRS.formatAmount(response.overpayFQTPerFXT)
+            overpayFQTPerFXT: NRS.formatAmount(response.overpayFQTPerFXT),
+            stopLinkFormatted: "<a href='#' class='btn btn-xs' data-toggle='modal' data-target='#stop_bundler_modal' " +
+                "data-account='" + NRS.escapeRespStr(response.bundlerRS) + "'>" + $.t("stop") + "</a>"
         };
     };
 
