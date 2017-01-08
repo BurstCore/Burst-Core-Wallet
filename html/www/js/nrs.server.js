@@ -510,7 +510,9 @@ var NRS = (function (NRS, $, undefined) {
             }, data);
             return;
         }
-        var payload = transactionBytes.substr(0, 192) + signature + transactionBytes.substr(320); // todo fix offsets
+        var sigPos = 2 * 69; // 2 * (bytes before signature from TransactionImpl newTransactionBuilder())
+        var sigLen = 2 * 64;
+        var payload = transactionBytes.substr(0, sigPos) + signature + transactionBytes.substr(sigPos + sigLen);
         if (data.broadcast == "false") {
             response.transactionBytes = payload;
             response.transactionJSON.signature = signature;
