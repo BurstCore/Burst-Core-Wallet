@@ -190,13 +190,6 @@ var NRS = (function (NRS, $, undefined) {
                 approveTransactionButton.data("minBalanceFormatted", "");
                 approveTransactionButton.data("votingmodel", transaction.attachment.phasingVotingModel);
             }
-            var extendDataButton = $("#transaction_info_modal_extend_data");
-            if (transaction.type == NRS.subtype.TaggedDataUpload.type && transaction.subtype == NRS.subtype.TaggedDataUpload.subtype) {
-                extendDataButton.removeAttr('disabled');
-                extendDataButton.data("fullHash", transaction.fullHash);
-            } else {
-                extendDataButton.attr('disabled','disabled');
-            }
 
             $("#transaction_info_actions").show();
             $("#transaction_info_actions_tab").find("button").data("account", accountButton);
