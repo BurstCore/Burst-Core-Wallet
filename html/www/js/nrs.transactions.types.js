@@ -467,13 +467,19 @@ var NRS = (function(NRS, $) {
         NRS.subtype = response.transactionSubTypes;
     };
 
-    NRS.isOfType = function(transaction, type_str) {
-        if (!NRS.subtype[type_str]) {
-            $.growl($.t("unsupported_transaction_type"));
-            return;
+    NRS.isOfType = function(transaction, typeStr) {
+        if (!NRS.subtype[typeStr]) {
+            var msg = $.t("unsupported_transaction_type", { type: typeStr });
+            $.growl(msg);
+            NRS.logConsole(msg);
+            return false;
         }
-        return transaction.type == NRS.subtype[type_str].type && transaction.subtype == NRS.subtype[type_str].subtype;
+        return transaction.type == NRS.subtype[typeStr].type && transaction.subtype == NRS.subtype[typeStr].subtype;
     };
-    
+
+    NRS.notOfType = function(transaction, typeStr) {
+        return !NRS.isOfType(transaction, typeStr);
+    };
+
     return NRS;
 }(NRS || {}, jQuery));
