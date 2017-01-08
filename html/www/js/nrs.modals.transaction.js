@@ -126,7 +126,7 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.processTransactionModalData = function (transaction, isModalVisible, sharedKey) {
         NRS.setBackLink();
-        NRS.modalStack.push({ class: "show_transaction_modal_action", key: "transaction", value: transaction.transaction });
+        NRS.modalStack.push({ class: "show_transaction_modal_action", key: "fullhash", value: transaction.fullHash });
         try {
             var async = false;
 
