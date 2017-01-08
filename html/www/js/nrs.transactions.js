@@ -897,15 +897,13 @@ var NRS = (function(NRS, $, undefined) {
 		if (selectedType) {
 			params.type = selectedType;
 			params.subtype = selectedSubType;
-			unconfirmedTransactions = NRS.getUnconfirmedTransactionsFromCache(params.type, (params.subtype ? params.subtype : []));
+			unconfirmedTransactions = NRS.getUnconfirmedTransactionsFromCache(params.type, (params.subtype ? params.subtype : -1));
 		} else {
 			unconfirmedTransactions = NRS.unconfirmedTransactions;
 		}
 		var decimals = NRS.getTransactionsAmountDecimals(unconfirmedTransactions);
-		if (unconfirmedTransactions) {
-			for (var i = 0; i < unconfirmedTransactions.length; i++) {
-				rows += NRS.getTransactionRowHTML(unconfirmedTransactions[i], false, decimals);
-			}
+		for (var i = 0; i < unconfirmedTransactions.length; i++) {
+			rows += NRS.getTransactionRowHTML(unconfirmedTransactions[i], false, decimals);
 		}
 
 		NRS.sendRequest("getBlockchainTransactions+", params, function(response) {

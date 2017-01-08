@@ -907,77 +907,18 @@ var NRS = (function (NRS, $, undefined) {
 		}
 	};
 
-    NRS.getUnconfirmedTransactionsFromCache = function (type, subtype, fields, single) {
+    NRS.getUnconfirmedTransactionsFromCache = function(type, subtype) {
 		if (!NRS.unconfirmedTransactions.length) {
 			return false;
 		}
-
-		if (typeof type == "number") {
-			type = [type];
-		}
-
-		if (typeof subtype == "number") {
-			subtype = [subtype];
-		}
-
 		var unconfirmedTransactions = [];
-
 		for (var i = 0; i < NRS.unconfirmedTransactions.length; i++) {
 			var unconfirmedTransaction = NRS.unconfirmedTransactions[i];
-
-			if (type.indexOf(unconfirmedTransaction.type) == -1 || (subtype.length > 0 && subtype.indexOf(unconfirmedTransaction.subtype) == -1)) {
-				continue;
-			}
-
-			if (fields) {
-				for (var key in fields) {
-                    if (!fields.hasOwnProperty(key)) {
-                        continue;
-                    }
-					if (unconfirmedTransaction[key] == fields[key]) {
-						if (single) {
-							return NRS.completeUnconfirmedTransactionDetails(unconfirmedTransaction);
-						} else {
-							unconfirmedTransactions.push(unconfirmedTransaction);
-						}
-					}
-				}
-			} else {
-				if (single) {
-					return NRS.completeUnconfirmedTransactionDetails(unconfirmedTransaction);
-				} else {
-					unconfirmedTransactions.push(unconfirmedTransaction);
-				}
-			}
+            if (type == unconfirmedTransaction.type && (subtype == unconfirmedTransaction.subtype || subtype == -1)) {
+                unconfirmedTransactions.push(unconfirmedTransaction);
+            }
 		}
-
-		if (single || unconfirmedTransactions.length == 0) {
-			return false;
-		} else {
-            $.each(unconfirmedTransactions, function (key, val) {
-				unconfirmedTransactions[key] = NRS.completeUnconfirmedTransactionDetails(val);
-			});
-
-			return unconfirmedTransactions;
-		}
-	};
-
-    NRS.completeUnconfirmedTransactionDetails = function (unconfirmedTransaction) {
-		if (unconfirmedTransaction.type == 3 && unconfirmedTransaction.subtype == 4 && !unconfirmedTransaction.name) {
-			NRS.sendRequest("getDGSGood", {
-				"goods": unconfirmedTransaction.attachment.goods
-            }, function (response) {
-				unconfirmedTransaction.name = response.name;
-				unconfirmedTransaction.buyer = unconfirmedTransaction.sender;
-				unconfirmedTransaction.buyerRS = unconfirmedTransaction.senderRS;
-				unconfirmedTransaction.seller = response.seller;
-				unconfirmedTransaction.sellerRS = response.sellerRS;
-			}, { isAsync: false });
-		} else if (unconfirmedTransaction.type == 3 && unconfirmedTransaction.subtype == 0) {
-			unconfirmedTransaction.goods = unconfirmedTransaction.transaction;
-		}
-
-		return unconfirmedTransaction;
+        return unconfirmedTransactions;
 	};
 
     NRS.hasTransactionUpdates = function (transactions) {
