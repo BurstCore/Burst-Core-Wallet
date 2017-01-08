@@ -50,7 +50,7 @@ public class OrderIssueAttachment extends Attachment.AbstractAttachment {
         }
         chainId = buffer.getInt();
         this.exchangeChain = Chain.getChain(chainId);
-        if (this.chain == null) {
+        if (this.exchangeChain == null) {
             throw new NxtException.NotValidException("Exchange chain '" + chainId + "' not defined");
         }
         this.quantityQNT = buffer.getLong();
