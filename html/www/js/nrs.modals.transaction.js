@@ -1157,7 +1157,7 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "ChildChainBlock")) {
                 data = {
                     "type": $.t("child_chain_block"),
-                    "chain": transaction.attachment.chain,
+                    "chain": NRS.constants.CHAIN_PROPERTIES[transaction.attachment.chain].name,
                     "hash": transaction.attachment.hash
                 };
                 var childTransactions = "";
@@ -1251,9 +1251,9 @@ var NRS = (function (NRS, $, undefined) {
         var rows = "";
         var params;
         if (NRS.isOfType(transaction, "AskOrderPlacement")) {
-            params = {"askOrder": transaction.transaction};
+            params = {"askOrderFullHash": transaction.fullHash};
         } else {
-            params = {"bidOrder": transaction.transaction};
+            params = {"bidOrderFullHash": transaction.fullHash};
         }
         var transactionField = (NRS.isOfType(transaction, "AskOrderPlacement") ? "bidOrderFullHash" : "askOrderFullHash");
         NRS.sendRequest("getOrderTrades", params, function (response) {
