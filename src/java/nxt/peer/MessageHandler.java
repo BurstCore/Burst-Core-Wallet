@@ -93,8 +93,8 @@ class MessageHandler implements Runnable {
                 try {
                     message = NetworkMessage.getMessage(entry.getBytes());
                     if (Peers.communicationLogging == 1) {
-                        Logger.logDebugMessage(message.getMessageName()
-                                + " message received from " + peer.getHost());
+                        Logger.logDebugMessage(String.format("%s[%d] message received from %s",
+                                message.getMessageName(), message.getMessageId(), peer.getHost()));
                     }
                     if (message.isResponse()) {
                         if (message.getMessageId() == 0) {
@@ -143,10 +143,14 @@ class MessageHandler implements Runnable {
                 if (peer.getState() == Peer.State.CONNECTED) {
                     int count = peer.decrementInputCount();
                     if (count == 0) {
-                        NetworkHandler.KeyEvent event = peer.getKeyEvent();
-                        if ((event.getKey().interestOps() & SelectionKey.OP_READ) == 0) {
-                            event.update(SelectionKey.OP_READ, 0);
-                            NetworkHandler.wakeup();
+                        try {
+                            NetworkHandler.KeyEvent event = peer.getKeyEvent();
+                            if ((event.getKey().interestOps() & SelectionKey.OP_READ) == 0) {
+                                event.update(SelectionKey.OP_READ, 0);
+                                NetworkHandler.wakeup();
+                            }
+                        } catch (IllegalStateException exc) {
+                            Logger.logErrorMessage("Unable to update network selection key", exc);
                         }
                     }
                 }

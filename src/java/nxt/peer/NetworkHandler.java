@@ -38,6 +38,7 @@ import java.net.UnknownHostException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
@@ -54,6 +55,8 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -403,7 +406,7 @@ public final class NetworkHandler implements Runnable {
                 while (keyIterator.hasNext() && !networkShutdown) {
                     SelectionKey key = keyIterator.next();
                     SelectableChannel channel = key.channel();
-                    if (channel.isOpen()) {
+                    if (channel.isOpen() && key.isValid()) {
                         if (key.isAcceptable())
                             processAccept(key);
                         else if (key.isConnectable())
@@ -416,6 +419,8 @@ public final class NetworkHandler implements Runnable {
                     keyIterator.remove();
                 }
             }
+        } catch (CancelledKeyException exc) {
+            Logger.logDebugMessage("Network selector key cancelled - retrying", exc);
         } catch (ClosedSelectorException exc) {
             Logger.logErrorMessage("Network selector closed unexpectedly", exc);
             networkShutdown = true;
@@ -474,9 +479,9 @@ public final class NetworkHandler implements Runnable {
             keyEventQueue.add(this);
             networkSelector.wakeup();
             try {
-                cyclicBarrier.await();
-            } catch (BrokenBarrierException | InterruptedException exc) {
-                Logger.logErrorMessage("Thread interrupted while waiting for key event completion");
+                cyclicBarrier.await(5, TimeUnit.SECONDS);
+            } catch (BrokenBarrierException | InterruptedException | TimeoutException exc) {
+                throw new IllegalStateException("Thread interrupted while waiting for key event completion");
             }
             cyclicBarrier.reset();
             return key;
@@ -490,7 +495,9 @@ public final class NetworkHandler implements Runnable {
          */
         void update(int addOps, int removeOps) {
             if (Thread.currentThread() == listenerThread) {
-                key.interestOps((key.interestOps() | addOps) & (~removeOps));
+                if (key.isValid()) {
+                    key.interestOps((key.interestOps() | addOps) & (~removeOps));
+                }
             } else {
                 synchronized(this) {
                     this.addOps = addOps;
@@ -498,9 +505,9 @@ public final class NetworkHandler implements Runnable {
                     keyEventQueue.add(this);
                     networkSelector.wakeup();
                     try {
-                        cyclicBarrier.await();
-                    } catch (BrokenBarrierException | InterruptedException exc) {
-                        Logger.logErrorMessage("Thread interrupted while waiting for key event completion");
+                        cyclicBarrier.await(5, TimeUnit.SECONDS);
+                    } catch (BrokenBarrierException | InterruptedException | TimeoutException exc) {
+                        throw new IllegalStateException("Thread interrupted while waiting for key event completion");
                     }
                     cyclicBarrier.reset();
                 }
@@ -514,12 +521,12 @@ public final class NetworkHandler implements Runnable {
             try {
                 if (key == null) {
                     registerChannel();
-                } else {
+                } else if (key.isValid()) {
                     key.interestOps((key.interestOps() | addOps) & (~removeOps));
                 }
-                cyclicBarrier.await();
-            } catch (BrokenBarrierException | InterruptedException exc) {
-                Logger.logErrorMessage("Thread interrupted while waiting for key event completion");
+                cyclicBarrier.await(100, TimeUnit.MILLISECONDS);
+            } catch (BrokenBarrierException | InterruptedException | TimeoutException exc) {
+                Logger.logErrorMessage("Listener thread interrupted while waiting for key event completion");
             }
         }
 
