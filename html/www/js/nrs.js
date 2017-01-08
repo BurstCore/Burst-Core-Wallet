@@ -1752,7 +1752,7 @@ NRS.addPagination = function () {
 			}, function(response, input) {
 				if (!response.errorCode) {
 					response.transaction = input.transaction;
-					NRS.showTransactionModal(response);
+					NRS.showTransactionModal(response, response.chain);
 				} else {
 					NRS.sendRequest("getAccount", {
 						"account": id

@@ -671,11 +671,14 @@ var NRS = (function (NRS, $, undefined) {
         return NRS.escapeRespStr(fullHash).substring(8); // Present the first 8 letters like GIT
     };
 
-    NRS.getTransactionLink = function(id, text, isEscapedText) {
+    NRS.getTransactionLink = function(id, text, isEscapedText, chain) {
         if (!text) {
-            text = id;
+            text = NRS.fullHashToId(id);
         }
-        return "<a href='#' class='show_transaction_modal_action' data-fullHash='" + String(id).escapeHTML() + "'>"
+        if (!chain) {
+            chain = NRS.getActiveChain();
+        }
+        return "<a href='#' class='show_transaction_modal_action' data-fullHash='" + String(id).escapeHTML() + "' data-chain='" + chain +"'>"
             + (isEscapedText ? text : String(text).escapeHTML()) + "</a>";
     };
 

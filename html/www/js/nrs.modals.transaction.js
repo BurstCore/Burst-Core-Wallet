@@ -21,9 +21,17 @@
 var NRS = (function (NRS, $, undefined) {
     $('body').on("click", ".show_transaction_modal_action", function (e) {
         e.preventDefault();
-
-        var transactionFullHash = $(this).data("fullhash");
-        var sharedKey = $(this).data("sharedkey");
+        var transactionFullHash, chain, sharedKey;
+        if (typeof $(this).data("fullhash") == "object") {
+            var dataObject = $(this).data("fullhash");
+            transactionFullHash = dataObject["fullhash"];
+            chain = dataObject["chain"];
+            sharedKey = dataObject["sharedkey"];
+        } else {
+            transactionFullHash = $(this).data("fullhash");
+            chain = $(this).data("chain");
+            sharedKey = $(this).data("sharedkey");
+        }
         var infoModal = $('#transaction_info_modal');
         var isModalVisible = false;
         if (infoModal && infoModal.data('bs.modal')) {
@@ -33,10 +41,10 @@ var NRS = (function (NRS, $, undefined) {
             NRS.modalStack.pop(); // The forward modal
             NRS.modalStack.pop(); // the current modal
         }
-        NRS.showTransactionModal(transactionFullHash, isModalVisible, sharedKey);
+        NRS.showTransactionModal(transactionFullHash, chain, sharedKey, isModalVisible);
     });
 
-    NRS.showTransactionModal = function(transaction, isModalVisible, sharedKey) {
+    NRS.showTransactionModal = function (transaction, chain, sharedKey, isModalVisible) {
         if (NRS.fetchingModalData) {
             return;
         }
@@ -52,7 +60,8 @@ var NRS = (function (NRS, $, undefined) {
         try {
             if (typeof transaction != "object") {
                 NRS.sendRequest("getTransaction", {
-                    "fullHash": transaction
+                    "fullHash": transaction,
+                    "chain": chain
                 }, function (response, input) {
                     response.transaction = input.transaction;
                     NRS.processTransactionModalData(response, isModalVisible, sharedKey);
@@ -126,7 +135,8 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.processTransactionModalData = function (transaction, isModalVisible, sharedKey) {
         NRS.setBackLink();
-        NRS.modalStack.push({ class: "show_transaction_modal_action", key: "fullhash", value: transaction.fullHash });
+        NRS.modalStack.push({ class: "show_transaction_modal_action", key: "fullhash",
+            value: { fullhash: transaction.fullHash, chain: transaction.chain, "sharedkey": sharedKey }});
         try {
             var async = false;
 
@@ -1142,6 +1152,19 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "ShufflingCancellation")) {
                 data = { "type": $.t("shuffling_cancellation") };
                 NRS.mergeMaps(transaction.attachment, data, { "version.ShufflingCancellation": true });
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "ChildChainBlock")) {
+                data = {
+                    "type": $.t("child_chain_block"),
+                    "chain": transaction.attachment.chain,
+                    "hash": transaction.attachment.hash
+                };
+                var childTransactions = "";
+                for (i = 0; i < transaction.attachment.childTransactionFullHashes.length; i++) {
+                    childTransactions = NRS.getTransactionLink(transaction.attachment.childTransactionFullHashes[i], null, false, transaction.attachment.chain) + "<p>";
+                }
+                data.transactions_formatted_html = childTransactions;
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();
             }
