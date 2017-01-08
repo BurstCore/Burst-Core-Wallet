@@ -211,481 +211,394 @@ var NRS = (function (NRS, $, undefined) {
             var fieldsToDecrypt = {};
             var i;
             if (NRS.isOfType(transaction, "FxtPayment") || NRS.isOfType(transaction, "OrdinaryPayment")) {
-                switch (transaction.subtype) {
-                    case 0:
-                        data = {
-                            "type": $.t("ordinary_payment"),
-                            "amount": transaction.amountNQT,
-                            "fee": transaction.feeNQT,
-                            "recipient": transaction.recipientRS ? transaction.recipientRS : transaction.recipient,
-                            "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
-                        };
+                data = {
+                    "type": $.t("ordinary_payment"),
+                    "amount": transaction.amountNQT,
+                    "fee": transaction.feeNQT,
+                    "recipient": transaction.recipientRS ? transaction.recipientRS : transaction.recipient,
+                    "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
+                };
 
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    default:
-                        incorrect = true;
-                        break;
-                }
-            } else if (transaction.type == 1) {
-                switch (transaction.subtype) {
-                    case 0:
-                        var $output = $("#transaction_info_output_top");
-                        if (transaction.attachment) {
-                            if (transaction.attachment.message) {
-                                if (!transaction.attachment["version.Message"] && !transaction.attachment["version.PrunablePlainMessage"]) {
-                                    try {
-                                        message = converters.hexStringToString(transaction.attachment.message);
-                                    } catch (err) {
-                                        //legacy
-                                        if (transaction.attachment.message.indexOf("feff") === 0) {
-                                            message = NRS.convertFromHex16(transaction.attachment.message);
-                                        } else {
-                                            message = NRS.convertFromHex8(transaction.attachment.message);
-                                        }
-                                    }
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "ArbitraryMessage")) {
+                var $output = $("#transaction_info_output_top");
+                if (transaction.attachment) {
+                    if (transaction.attachment.message) {
+                        if (!transaction.attachment["version.Message"] && !transaction.attachment["version.PrunablePlainMessage"]) {
+                            try {
+                                message = converters.hexStringToString(transaction.attachment.message);
+                            } catch (err) {
+                                //legacy
+                                if (transaction.attachment.message.indexOf("feff") === 0) {
+                                    message = NRS.convertFromHex16(transaction.attachment.message);
                                 } else {
-                                    if (transaction.attachment.messageIsText) {
-                                        message = String(transaction.attachment.message);
-                                    } else {
-                                        message = $.t("binary_data");
-                                    }
+                                    message = NRS.convertFromHex8(transaction.attachment.message);
                                 }
-                                $output.html("<div style='color:#999999;padding-bottom:10px'><i class='fa fa-unlock'></i> " + $.t("public_message") + "</div><div style='padding-bottom:10px'>" + NRS.escapeRespStr(message).nl2br() + "</div>");
-                            }
-
-                            if (transaction.attachment.encryptedMessage || (transaction.attachment.encryptToSelfMessage && NRS.account == transaction.sender)) {
-                                $output.append("" +
-                                    "<div id='transaction_info_decryption_form'></div>" +
-                                    "<div id='transaction_info_decryption_output' style='display:none;padding-bottom:10px;'></div>"
-                                );
-                                if (transaction.attachment.encryptedMessage) {
-                                    fieldsToDecrypt.encryptedMessage = $.t("encrypted_message");
-                                }
-                                if (transaction.attachment.encryptToSelfMessage && NRS.account == transaction.sender) {
-                                    fieldsToDecrypt.encryptToSelfMessage = $.t("note_to_self");
-                                }
-                                var options = {
-                                    "noPadding": true,
-                                    "formEl": "#transaction_info_decryption_form",
-                                    "outputEl": "#transaction_info_decryption_output"
-                                };
-                                if (sharedKey) {
-                                    options["sharedKey"] = sharedKey;
-                                }
-                                NRS.tryToDecrypt(transaction, fieldsToDecrypt, NRS.getAccountForDecryption(transaction), options);
                             }
                         } else {
-                            $output.append("<div style='padding-bottom:10px'>" + $.t("message_empty") + "</div>");
+                            if (transaction.attachment.messageIsText) {
+                                message = String(transaction.attachment.message);
+                            } else {
+                                message = $.t("binary_data");
+                            }
                         }
-                        var isCompressed = false;
+                        $output.html("<div style='color:#999999;padding-bottom:10px'><i class='fa fa-unlock'></i> " + $.t("public_message") + "</div><div style='padding-bottom:10px'>" + NRS.escapeRespStr(message).nl2br() + "</div>");
+                    }
+
+                    if (transaction.attachment.encryptedMessage || (transaction.attachment.encryptToSelfMessage && NRS.account == transaction.sender)) {
+                        $output.append("" +
+                            "<div id='transaction_info_decryption_form'></div>" +
+                            "<div id='transaction_info_decryption_output' style='display:none;padding-bottom:10px;'></div>"
+                        );
                         if (transaction.attachment.encryptedMessage) {
-                            isCompressed = transaction.attachment.encryptedMessage.isCompressed;
-                        } else if (transaction.attachment.encryptToSelfMessage) {
-                            isCompressed = transaction.attachment.encryptToSelfMessage.isCompressed;
+                            fieldsToDecrypt.encryptedMessage = $.t("encrypted_message");
                         }
-                        var hash = transaction.attachment.messageHash || transaction.attachment.encryptedMessageHash;
-                        var hashRow = hash ? ("<tr><td><strong>" + $.t("hash") + "</strong>:&nbsp;</td><td>" + hash + "</td></tr>") : "";
-                        var downloadLink = "";
-                        if (transaction.attachment.messageHash && !NRS.isTextMessage(transaction) && transaction.block) {
-                            downloadLink = "<tr><td>" + NRS.getMessageDownloadLink(transaction.transaction, sharedKey) + "</td></tr>";
+                        if (transaction.attachment.encryptToSelfMessage && NRS.account == transaction.sender) {
+                            fieldsToDecrypt.encryptToSelfMessage = $.t("note_to_self");
                         }
-                        $output.append("<table>" +
-                            "<tr><td><strong>" + $.t("from") + "</strong>:&nbsp;</td><td>" + NRS.getAccountLink(transaction, "sender") + "</td></tr>" +
-                            "<tr><td><strong>" + $.t("to") + "</strong>:&nbsp;</td><td>" + NRS.getAccountLink(transaction, "recipient") + "</td></tr>" +
-                            "<tr><td><strong>" + $.t("compressed") + "</strong>:&nbsp;</td><td>" + isCompressed + "</td></tr>" +
-                            hashRow + downloadLink +
-                        "</table>");
-                        $output.show();
-                        break;
-                    case 1:
-                        data = {
-                            "type": $.t("alias_assignment"),
-                            "alias": transaction.attachment.alias,
-                            "data_formatted_html": transaction.attachment.uri.autoLink()
+                        var options = {
+                            "noPadding": true,
+                            "formEl": "#transaction_info_decryption_form",
+                            "outputEl": "#transaction_info_decryption_output"
                         };
-                        data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
+                        if (sharedKey) {
+                            options["sharedKey"] = sharedKey;
+                        }
+                        NRS.tryToDecrypt(transaction, fieldsToDecrypt, NRS.getAccountForDecryption(transaction), options);
+                    }
+                } else {
+                    $output.append("<div style='padding-bottom:10px'>" + $.t("message_empty") + "</div>");
+                }
+                var isCompressed = false;
+                if (transaction.attachment.encryptedMessage) {
+                    isCompressed = transaction.attachment.encryptedMessage.isCompressed;
+                } else if (transaction.attachment.encryptToSelfMessage) {
+                    isCompressed = transaction.attachment.encryptToSelfMessage.isCompressed;
+                }
+                var hash = transaction.attachment.messageHash || transaction.attachment.encryptedMessageHash;
+                var hashRow = hash ? ("<tr><td><strong>" + $.t("hash") + "</strong>:&nbsp;</td><td>" + hash + "</td></tr>") : "";
+                var downloadLink = "";
+                if (transaction.attachment.messageHash && !NRS.isTextMessage(transaction) && transaction.block) {
+                    downloadLink = "<tr><td>" + NRS.getMessageDownloadLink(transaction.transaction, sharedKey) + "</td></tr>";
+                }
+                $output.append("<table>" +
+                    "<tr><td><strong>" + $.t("from") + "</strong>:&nbsp;</td><td>" + NRS.getAccountLink(transaction, "sender") + "</td></tr>" +
+                    "<tr><td><strong>" + $.t("to") + "</strong>:&nbsp;</td><td>" + NRS.getAccountLink(transaction, "recipient") + "</td></tr>" +
+                    "<tr><td><strong>" + $.t("compressed") + "</strong>:&nbsp;</td><td>" + isCompressed + "</td></tr>" +
+                    hashRow + downloadLink +
+                "</table>");
+                $output.show();
+            } else if (NRS.isOfType(transaction, "AliasAssignment")) {
+                data = {
+                    "type": $.t("alias_assignment"),
+                    "alias": transaction.attachment.alias,
+                    "data_formatted_html": transaction.attachment.uri.autoLink()
+                };
+                data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "PollCreation")) {
+                data = {
+                    "type": $.t("poll_creation"),
+                    "name": transaction.attachment.name,
+                    "description": transaction.attachment.description,
+                    "finish_height": transaction.attachment.finishHeight,
+                    "min_number_of_options": transaction.attachment.minNumberOfOptions,
+                    "max_number_of_options": transaction.attachment.maxNumberOfOptions,
+                    "min_range_value": transaction.attachment.minRangeValue,
+                    "max_range_value": transaction.attachment.maxRangeValue,
+                    "min_balance": transaction.attachment.minBalance,
+                    "min_balance_model": transaction.attachment.minBalanceModel
+                };
 
-                        break;
-                    case 2:
-                        data = {
-                            "type": $.t("poll_creation"),
-                            "name": transaction.attachment.name,
-                            "description": transaction.attachment.description,
-                            "finish_height": transaction.attachment.finishHeight,
-                            "min_number_of_options": transaction.attachment.minNumberOfOptions,
-                            "max_number_of_options": transaction.attachment.maxNumberOfOptions,
-                            "min_range_value": transaction.attachment.minRangeValue,
-                            "max_range_value": transaction.attachment.maxRangeValue,
-                            "min_balance": transaction.attachment.minBalance,
-                            "min_balance_model": transaction.attachment.minBalanceModel
-                        };
-
-                        if (transaction.attachment.votingModel == -1) {
-                            data["voting_model"] = $.t("vote_by_none");
-                        } else if (transaction.attachment.votingModel == 0) {
-                            data["voting_model"] = $.t("vote_by_account");
-                        } else if (transaction.attachment.votingModel == 1) {
-                            data["voting_model"] = $.t("vote_by_balance");
-                        } else if (transaction.attachment.votingModel == 2) {
-                            data["voting_model"] = $.t("vote_by_asset");
-                            data["asset_id"] = transaction.attachment.holding;
-                        } else if (transaction.attachment.votingModel == 3) {
-                            data["voting_model"] = $.t("vote_by_currency");
-                            data["currency_id"] = transaction.attachment.holding;
-                        } else if (transaction.attachment.votingModel == 4) {
-                            data["voting_model"] = $.t("vote_by_transaction");
-                        } else if (transaction.attachment.votingModel == 5) {
-                            data["voting_model"] = $.t("vote_by_hash");
+                if (transaction.attachment.votingModel == -1) {
+                    data["voting_model"] = $.t("vote_by_none");
+                } else if (transaction.attachment.votingModel == 0) {
+                    data["voting_model"] = $.t("vote_by_account");
+                } else if (transaction.attachment.votingModel == 1) {
+                    data["voting_model"] = $.t("vote_by_balance");
+                } else if (transaction.attachment.votingModel == 2) {
+                    data["voting_model"] = $.t("vote_by_asset");
+                    data["asset_id"] = transaction.attachment.holding;
+                } else if (transaction.attachment.votingModel == 3) {
+                    data["voting_model"] = $.t("vote_by_currency");
+                    data["currency_id"] = transaction.attachment.holding;
+                } else if (transaction.attachment.votingModel == 4) {
+                    data["voting_model"] = $.t("vote_by_transaction");
+                } else if (transaction.attachment.votingModel == 5) {
+                    data["voting_model"] = $.t("vote_by_hash");
+                } else {
+                    data["voting_model"] = transaction.attachment.votingModel;
+                }
+                for (i = 0; i < transaction.attachment.options.length; i++) {
+                    data["option_" + i] = transaction.attachment.options[i];
+                }
+                if (transaction.sender != NRS.account) {
+                    data["sender"] = NRS.getAccountTitle(transaction, "sender");
+                }
+                data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "VoteCasting")) {
+                var vote = "";
+                var votes = transaction.attachment.vote;
+                if (votes && votes.length > 0) {
+                    for (i = 0; i < votes.length; i++) {
+                        if (votes[i] == -128) {
+                            vote += "N/A";
                         } else {
-                            data["voting_model"] = transaction.attachment.votingModel;
+                            vote += votes[i];
                         }
-
-
-                        for (i = 0; i < transaction.attachment.options.length; i++) {
-                            data["option_" + i] = transaction.attachment.options[i];
+                        if (i < votes.length - 1) {
+                            vote += " , ";
                         }
-
-                        if (transaction.sender != NRS.account) {
-                            data["sender"] = NRS.getAccountTitle(transaction, "sender");
-                        }
-
-                        data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    case 3:
-                        var vote = "";
-                        var votes = transaction.attachment.vote;
-                        if (votes && votes.length > 0) {
-                            for (i = 0; i < votes.length; i++) {
-                                if (votes[i] == -128) {
-                                    vote += "N/A";
-                                } else {
-                                    vote += votes[i];
-                                }
-                                if (i < votes.length - 1) {
-                                    vote += " , ";
-                                }
-                            }
-                        }
-                        data = {
-                            "type": $.t("vote_casting"),
-                            "poll_formatted_html": NRS.getEntityLink(transaction.attachment.poll, 4),
-                            "vote": vote
-                        };
-                        data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    case 4:
-                        data = {
-                            "type": $.t("hub_announcement")
-                        };
-
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    case 5:
-                        data = {
-                            "type": $.t("account_info"),
-                            "name": transaction.attachment.name,
-                            "description": transaction.attachment.description
-                        };
-
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    case 6:
-                        var type = $.t("alias_sale");
-                        if (transaction.attachment.priceNQT == "0") {
-                            if (transaction.sender == transaction.recipient) {
-                                type = $.t("alias_sale_cancellation");
-                            } else {
-                                type = $.t("alias_transfer");
-                            }
-                        }
-
-                        data = {
-                            "type": type,
-                            "alias_name": transaction.attachment.alias
-                        };
-
-                        if (type == $.t("alias_sale")) {
-                            data["price"] = transaction.attachment.priceNQT
-                        }
-
-                        if (type != $.t("alias_sale_cancellation")) {
-                            data["recipient"] = transaction.recipientRS ? transaction.recipientRS : transaction.recipient;
-                        }
-
-                        data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-
-                        if (type == $.t("alias_sale")) {
-                            message = "";
-                            var messageStyle = "info";
-
-                            NRS.sendRequest("getAlias", {
-                                "aliasName": transaction.attachment.alias
-                            }, function (response) {
-                                NRS.fetchingModalData = false;
-
-                                if (!response.errorCode) {
-                                    if (transaction.recipient != response.buyer || transaction.attachment.priceNQT != response.priceNQT) {
-                                        message = $.t("alias_sale_info_outdated");
-                                        messageStyle = "danger";
-                                    } else if (transaction.recipient == NRS.account) {
-                                        message = $.t("alias_sale_direct_offer", {
-                                            "nxt": NRS.formatAmount(transaction.attachment.priceNQT)
-                                        }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
-                                    } else if (typeof transaction.recipient == "undefined") {
-                                        message = $.t("alias_sale_indirect_offer", {
-                                            "nxt": NRS.formatAmount(transaction.attachment.priceNQT)
-                                        }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
-                                    } else if (transaction.senderRS == NRS.accountRS) {
-                                        if (transaction.attachment.priceNQT != "0") {
-                                            message = $.t("your_alias_sale_offer") + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#cancel_alias_sale_modal'>" + $.t("cancel_sale_q") + "</a>";
-                                        }
-                                    } else {
-                                        message = $.t("error_alias_sale_different_account");
-                                    }
-                                }
-                            }, { isAsync: false });
-
-                            if (message) {
-                                $("#transaction_info_bottom").html("<div class='callout callout-bottom callout-" + messageStyle + "'>" + message + "</div>").show();
-                            }
-                        }
-
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    case 7:
-                        data = {
-                            "type": $.t("alias_buy"),
-                            "alias_name": transaction.attachment.alias,
-                            "price": transaction.amountNQT,
-                            "recipient": transaction.recipientRS ? transaction.recipientRS : transaction.recipient,
-                            "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
-                        };
-
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    case 8:
-                        data = {
-                            "type": $.t("alias_deletion"),
-                            "alias_name": transaction.attachment.alias,
-                            "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
-                        };
-
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    case 9:
-                        data = {
-                            "type": $.t("transaction_approval")
-                        };
-                        for (i = 0; i < transaction.attachment.transactionFullHashes.length; i++) {
-                            data["transaction" + (i + 1) + "_formatted_html"] =
-                                NRS.getTransactionLink(transaction.attachment.transactionFullHashes[i]);
-                        }
-
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    case 10:
-                        data = {
-                            "type": $.t("set_account_property"),
-                            "property": transaction.attachment.property,
-                            "value": transaction.attachment.value
-                        };
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    case 11:
-                        data = {
-                            "type": $.t("delete_account_property"),
-                            "property_formatted_html": NRS.getEntityLink(transaction.attachment.property, 5)
-                        };
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    default:
-                        incorrect = true;
-                        break;
+                    }
                 }
-            } else if (transaction.type == 2) {
-                switch (transaction.subtype) {
-                    case 0:
-                        NRS.sendRequest("getAsset", {
-                            "asset": NRS.fullHashToId(transaction.fullHash)
-                        }, function (asset) {
-                            data = {
-                                "type": $.t("asset_issuance"),
-                                "name": transaction.attachment.name,
-                                "decimals": transaction.attachment.decimals,
-                                "description": transaction.attachment.description
-                            };
-                            if (asset) {
-                                data["initial_quantity"] = [asset.initialQuantityQNT, transaction.attachment.decimals];
-                                data["quantity"] = [asset.quantityQNT, transaction.attachment.decimals];
+                data = {
+                    "type": $.t("vote_casting"),
+                    "poll_formatted_html": NRS.getEntityLink(transaction.attachment.poll, 4),
+                    "vote": vote
+                };
+                data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "AccountInfo")) {
+                data = {
+                    "type": $.t("account_info"),
+                    "name": transaction.attachment.name,
+                    "description": transaction.attachment.description
+                };
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "AliasSell")) {
+                var type = $.t("alias_sale");
+                if (transaction.attachment.priceNQT == "0") {
+                    if (transaction.sender == transaction.recipient) {
+                        type = $.t("alias_sale_cancellation");
+                    } else {
+                        type = $.t("alias_transfer");
+                    }
+                }
+
+                data = {
+                    "type": type,
+                    "alias_name": transaction.attachment.alias
+                };
+
+                if (type == $.t("alias_sale")) {
+                    data["price"] = transaction.attachment.priceNQT
+                }
+
+                if (type != $.t("alias_sale_cancellation")) {
+                    data["recipient"] = transaction.recipientRS ? transaction.recipientRS : transaction.recipient;
+                }
+
+                data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
+
+                if (type == $.t("alias_sale")) {
+                    message = "";
+                    var messageStyle = "info";
+
+                    NRS.sendRequest("getAlias", {
+                        "aliasName": transaction.attachment.alias
+                    }, function (response) {
+                        NRS.fetchingModalData = false;
+
+                        if (!response.errorCode) {
+                            if (transaction.recipient != response.buyer || transaction.attachment.priceNQT != response.priceNQT) {
+                                message = $.t("alias_sale_info_outdated");
+                                messageStyle = "danger";
+                            } else if (transaction.recipient == NRS.account) {
+                                message = $.t("alias_sale_direct_offer", {
+                                    "nxt": NRS.formatAmount(transaction.attachment.priceNQT)
+                                }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
+                            } else if (typeof transaction.recipient == "undefined") {
+                                message = $.t("alias_sale_indirect_offer", {
+                                    "nxt": NRS.formatAmount(transaction.attachment.priceNQT)
+                                }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
+                            } else if (transaction.senderRS == NRS.accountRS) {
+                                if (transaction.attachment.priceNQT != "0") {
+                                    message = $.t("your_alias_sale_offer") + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#cancel_alias_sale_modal'>" + $.t("cancel_sale_q") + "</a>";
+                                }
+                            } else {
+                                message = $.t("error_alias_sale_different_account");
                             }
-                            data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                            $("#transaction_info_callout").html("<a href='#' data-goto-asset='" + NRS.fullHashToId(transaction.fullHash) + "'>Click here</a> to view this asset in the Asset Exchange.").show();
+                        }
+                    }, { isAsync: false });
 
-                            infoTable.find("tbody").append(NRS.createInfoTable(data));
-                            infoTable.show();
-                        });
+                    if (message) {
+                        $("#transaction_info_bottom").html("<div class='callout callout-bottom callout-" + messageStyle + "'>" + message + "</div>").show();
+                    }
+                }
 
-                        break;
-                    case 1:
-                        async = true;
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "AliasBuy")) {
+                data = {
+                    "type": $.t("alias_buy"),
+                    "alias_name": transaction.attachment.alias,
+                    "price": transaction.amountNQT,
+                    "recipient": transaction.recipientRS ? transaction.recipientRS : transaction.recipient,
+                    "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
+                };
 
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "AliasDelete")) {
+                data = {
+                    "type": $.t("alias_deletion"),
+                    "alias_name": transaction.attachment.alias,
+                    "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
+                };
+
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "PhasingVoteCasting")) {
+                data = {
+                    "type": $.t("transaction_approval")
+                };
+                for (i = 0; i < transaction.attachment.transactionFullHashes.length; i++) {
+                    data["transaction" + (i + 1) + "_formatted_html"] =
+                        NRS.getTransactionLink(transaction.attachment.transactionFullHashes[i]);
+                }
+
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "AccountProperty")) {
+                data = {
+                    "type": $.t("set_account_property"),
+                    "property": transaction.attachment.property,
+                    "value": transaction.attachment.value
+                };
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "AccountPropertyDelete")) {
+                data = {
+                    "type": $.t("delete_account_property"),
+                    "property_formatted_html": NRS.getEntityLink(transaction.attachment.property, 5)
+                };
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "AssetIssuance")) {
+                NRS.sendRequest("getAsset", {
+                    "asset": NRS.fullHashToId(transaction.fullHash)
+                }, function (asset) {
+                    data = {
+                        "type": $.t("asset_issuance"),
+                        "name": transaction.attachment.name,
+                        "decimals": transaction.attachment.decimals,
+                        "description": transaction.attachment.description
+                    };
+                    if (asset) {
+                        data["initial_quantity"] = [asset.initialQuantityQNT, transaction.attachment.decimals];
+                        data["quantity"] = [asset.quantityQNT, transaction.attachment.decimals];
+                    }
+                    data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
+                    $("#transaction_info_callout").html("<a href='#' data-goto-asset='" + NRS.fullHashToId(transaction.fullHash) + "'>Click here</a> to view this asset in the Asset Exchange.").show();
+
+                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.show();
+                });
+            } else if (NRS.isOfType(transaction, "AssetTransfer")) {
+                async = true;
+                NRS.sendRequest("getAsset", {
+                    "asset": transaction.attachment.asset
+                }, function (asset) {
+                    data = {
+                        "type": $.t("asset_transfer"),
+                        "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                        "asset_name": asset.name,
+                        "quantity": [transaction.attachment.quantityQNT, asset.decimals]
+                    };
+
+                    data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
+                    data["recipient"] = transaction.recipientRS ? transaction.recipientRS : transaction.recipient;
+                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.show();
+
+                    $("#transaction_info_modal").modal("show");
+                    NRS.fetchingModalData = false;
+                });
+            } else if (NRS.isOfType(transaction, "AskOrderPlacement") || NRS.isOfType(transaction, "BidOrderPlacement")) {
+                async = true;
+                NRS.sendRequest("getAsset", {
+                    "asset": transaction.attachment.asset
+                }, function (asset) {
+                    NRS.formatAssetOrder(asset, transaction, isModalVisible)
+                });
+            } else if (NRS.isOfType(transaction, "AskOrderCancellation")) {
+                async = true;
+                NRS.sendRequest("getTransaction", {
+                    "transaction": transaction.attachment.order // TODO this won't work need full hash
+                }, function (transaction) {
+                    if (transaction.attachment.asset) {
                         NRS.sendRequest("getAsset", {
                             "asset": transaction.attachment.asset
                         }, function (asset) {
                             data = {
-                                "type": $.t("asset_transfer"),
+                                "type": $.t("ask_order_cancellation"),
+                                "order_formatted_html": NRS.getTransactionLink(transaction.fullHash),
                                 "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
                                 "asset_name": asset.name,
-                                "quantity": [transaction.attachment.quantityQNT, asset.decimals]
+                                "quantity": [transaction.attachment.quantityQNT, asset.decimals],
+                                "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " " + NRS.getActiveChainName(),
+                                "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " " + NRS.getActiveChainName()
                             };
-
                             data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                            data["recipient"] = transaction.recipientRS ? transaction.recipientRS : transaction.recipient;
                             infoTable.find("tbody").append(NRS.createInfoTable(data));
                             infoTable.show();
-
                             $("#transaction_info_modal").modal("show");
                             NRS.fetchingModalData = false;
                         });
-
-                        break;
-                    case 2:
-                    case 3:
-                        async = true;
-                        NRS.sendRequest("getAsset", {
-                            "asset": transaction.attachment.asset
-                        }, function (asset) {
-                            NRS.formatAssetOrder(asset, transaction, isModalVisible)
-                        });
-                        break;
-                    case 4:
-                        async = true;
-
-                        NRS.sendRequest("getTransaction", {
-                            "transaction": transaction.attachment.order
-                        }, function (transaction) {
-                            if (transaction.attachment.asset) {
-                                NRS.sendRequest("getAsset", {
-                                    "asset": transaction.attachment.asset
-                                }, function (asset) {
-                                    data = {
-                                        "type": $.t("ask_order_cancellation"),
-                                        "order_formatted_html": NRS.getTransactionLink(transaction.fullHash),
-                                        "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
-                                        "asset_name": asset.name,
-                                        "quantity": [transaction.attachment.quantityQNT, asset.decimals],
-                                        "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " " + NRS.getActiveChainName(),
-                                        "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " " + NRS.getActiveChainName()
-                                    };
-                                    data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                                    infoTable.find("tbody").append(NRS.createInfoTable(data));
-                                    infoTable.show();
-                                    $("#transaction_info_modal").modal("show");
-                                    NRS.fetchingModalData = false;
-                                });
-                            } else {
-                                NRS.fetchingModalData = false;
-                            }
-                        });
-                        break;
-                    case 5:
-                        async = true;
-                        NRS.sendRequest("getTransaction", {
-                            "transaction": transaction.attachment.order
-                        }, function (transaction) {
-                            if (transaction.attachment.asset) {
-                                NRS.sendRequest("getAsset", {
-                                    "asset": transaction.attachment.asset
-                                }, function (asset) {
-                                    data = {
-                                        "type": $.t("bid_order_cancellation"),
-                                        "order_formatted_html": NRS.getTransactionLink(transaction.fullHash),
-                                        "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
-                                        "asset_name": asset.name,
-                                        "quantity": [transaction.attachment.quantityQNT, asset.decimals],
-                                        "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " " + NRS.getActiveChainName(),
-                                        "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " " + NRS.getActiveChainName()
-                                    };
-                                    data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                                    infoTable.find("tbody").append(NRS.createInfoTable(data));
-                                    infoTable.show();
-                                    $("#transaction_info_modal").modal("show");
-                                    NRS.fetchingModalData = false;
-                                });
-                            } else {
-                                NRS.fetchingModalData = false;
-                            }
-                        });
-                        break;
-                    case 6:
-                        async = true;
-
-                        NRS.sendRequest("getTransaction", {
-                            "transaction": transaction.transaction
-                        }, function (transaction) {
-                            if (transaction.attachment.asset) {
-                                NRS.sendRequest("getAsset", {
-                                    "asset": transaction.attachment.asset
-                                }, function (asset) {
-                                    data = {
-                                        "type": $.t("dividend_payment"),
-                                        "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
-                                        "asset_name": asset.name,
-                                        "amount_per_share": NRS.formatOrderPricePerWholeQNT(transaction.attachment.amountNQTPerQNT, asset.decimals) + " " + NRS.getActiveChainName(),
-                                        "height": transaction.attachment.height
-                                    };
-                                    data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                                    infoTable.find("tbody").append(NRS.createInfoTable(data));
-                                    infoTable.show();
-
-                                    $("#transaction_info_modal").modal("show");
-                                    NRS.fetchingModalData = false;
-                                });
-                            } else {
-                                NRS.fetchingModalData = false;
-                            }
-                        });
-                        break;
-                    case 7:
-                        async = true;
-
+                    } else {
+                        NRS.fetchingModalData = false;
+                    }
+                });
+            } else if (NRS.isOfType(transaction, "BidOrderCancellation")) {
+                async = true;
+                NRS.sendRequest("getTransaction", {
+                    "transaction": transaction.attachment.order // TODO this won't work need full hash
+                }, function (transaction) {
+                    if (transaction.attachment.asset) {
                         NRS.sendRequest("getAsset", {
                             "asset": transaction.attachment.asset
                         }, function (asset) {
                             data = {
-                                "type": $.t("delete_asset_shares"),
+                                "type": $.t("bid_order_cancellation"),
+                                "order_formatted_html": NRS.getTransactionLink(transaction.fullHash),
                                 "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
                                 "asset_name": asset.name,
-                                "quantity": [transaction.attachment.quantityQNT, asset.decimals]
+                                "quantity": [transaction.attachment.quantityQNT, asset.decimals],
+                                "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " " + NRS.getActiveChainName(),
+                                "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " " + NRS.getActiveChainName()
                             };
-
+                            data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
+                            infoTable.find("tbody").append(NRS.createInfoTable(data));
+                            infoTable.show();
+                            $("#transaction_info_modal").modal("show");
+                            NRS.fetchingModalData = false;
+                        });
+                    } else {
+                        NRS.fetchingModalData = false;
+                    }
+                });
+            } else if (NRS.isOfType(transaction, "DividendPayment")) {
+                async = true;
+                NRS.sendRequest("getTransaction", {
+                    "transaction": transaction.fullHash
+                }, function (transaction) {
+                    if (transaction.attachment.asset) {
+                        NRS.sendRequest("getAsset", {
+                            "asset": transaction.attachment.asset
+                        }, function (asset) {
+                            data = {
+                                "type": $.t("dividend_payment"),
+                                "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                                "asset_name": asset.name,
+                                "amount_per_share": NRS.formatOrderPricePerWholeQNT(transaction.attachment.amountNQTPerQNT, asset.decimals) + " " + NRS.getActiveChainName(),
+                                "height": transaction.attachment.height
+                            };
                             data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
                             infoTable.find("tbody").append(NRS.createInfoTable(data));
                             infoTable.show();
@@ -693,306 +606,296 @@ var NRS = (function (NRS, $, undefined) {
                             $("#transaction_info_modal").modal("show");
                             NRS.fetchingModalData = false;
                         });
-                        break;
-                    default:
-                        incorrect = true;
-                        break;
-                }
-            } else if (transaction.type == 3) {
-                switch (transaction.subtype) {
-                    case 0:
-                        data = {
-                            "type": $.t("marketplace_listing"),
-                            "name": transaction.attachment.name,
-                            "description": transaction.attachment.description,
-                            "price": transaction.attachment.priceNQT,
-                            "quantity_formatted_html": NRS.format(transaction.attachment.quantity),
-                            "seller": NRS.getAccountFormatted(transaction, "sender")
-                        };
+                    } else {
+                        NRS.fetchingModalData = false;
+                    }
+                });
+            } else if (NRS.isOfType(transaction, "AssetDelete")) {
+                async = true;
+                NRS.sendRequest("getAsset", {
+                    "asset": transaction.attachment.asset
+                }, function (asset) {
+                    data = {
+                        "type": $.t("delete_asset_shares"),
+                        "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                        "asset_name": asset.name,
+                        "quantity": [transaction.attachment.quantityQNT, asset.decimals]
+                    };
 
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
+                    data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
+                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.show();
 
-                        break;
-                    case 1:
-                        async = true;
-                        NRS.sendRequest("getDGSGood", {
-                            "goods": transaction.attachment.goods
-                        }, function (goods) {
-                            data = {
-                                "type": $.t("marketplace_removal"),
-                                "item_name": goods.name,
-                                "seller": NRS.getAccountFormatted(goods, "seller")
-                            };
+                    $("#transaction_info_modal").modal("show");
+                    NRS.fetchingModalData = false;
+                });
+            } else if (NRS.isOfType(transaction, "DigitalGoodsListing")) {
+                data = {
+                    "type": $.t("marketplace_listing"),
+                    "name": transaction.attachment.name,
+                    "description": transaction.attachment.description,
+                    "price": transaction.attachment.priceNQT,
+                    "quantity_formatted_html": NRS.format(transaction.attachment.quantity),
+                    "seller": NRS.getAccountFormatted(transaction, "sender")
+                };
 
-                            infoTable.find("tbody").append(NRS.createInfoTable(data));
-                            infoTable.show();
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "DigitalGoodsDelisting")) {
+                async = true;
+                NRS.sendRequest("getDGSGood", {
+                    "goods": transaction.attachment.goods
+                }, function (goods) {
+                    data = {
+                        "type": $.t("marketplace_removal"),
+                        "item_name": goods.name,
+                        "seller": NRS.getAccountFormatted(goods, "seller")
+                    };
 
-                            $("#transaction_info_modal").modal("show");
-                            NRS.fetchingModalData = false;
-                        });
-                        break;
-                    case 2:
-                        async = true;
-                        NRS.sendRequest("getDGSGood", {
-                            "goods": transaction.attachment.goods
-                        }, function (goods) {
-                            data = {
-                                "type": $.t("marketplace_item_price_change"),
-                                "item_name": goods.name,
-                                "new_price_formatted_html": NRS.formatAmount(transaction.attachment.priceNQT) + " " + NRS.getActiveChainName(),
-                                "seller": NRS.getAccountFormatted(goods, "seller")
-                            };
+                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.show();
 
-                            infoTable.find("tbody").append(NRS.createInfoTable(data));
-                            infoTable.show();
+                    $("#transaction_info_modal").modal("show");
+                    NRS.fetchingModalData = false;
+                });
+            } else if (NRS.isOfType(transaction, "DigitalGoodsPriceChange")) {
+                async = true;
+                NRS.sendRequest("getDGSGood", {
+                    "goods": transaction.attachment.goods
+                }, function (goods) {
+                    data = {
+                        "type": $.t("marketplace_item_price_change"),
+                        "item_name": goods.name,
+                        "new_price_formatted_html": NRS.formatAmount(transaction.attachment.priceNQT) + " " + NRS.getActiveChainName(),
+                        "seller": NRS.getAccountFormatted(goods, "seller")
+                    };
 
-                            $("#transaction_info_modal").modal("show");
-                            NRS.fetchingModalData = false;
-                        });
-                        break;
-                    case 3:
-                        async = true;
-                        NRS.sendRequest("getDGSGood", {
-                            "goods": transaction.attachment.goods
-                        }, function (goods) {
-                            data = {
-                                "type": $.t("marketplace_item_quantity_change"),
-                                "item_name": goods.name,
-                                "delta_quantity": transaction.attachment.deltaQuantity,
-                                "seller": NRS.getAccountFormatted(goods, "seller")
-                            };
+                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.show();
 
-                            infoTable.find("tbody").append(NRS.createInfoTable(data));
-                            infoTable.show();
+                    $("#transaction_info_modal").modal("show");
+                    NRS.fetchingModalData = false;
+                });
+            } else if (NRS.isOfType(transaction, "DigitalGoodsQuantityChange")) {
+                async = true;
+                NRS.sendRequest("getDGSGood", {
+                    "goods": transaction.attachment.goods
+                }, function (goods) {
+                    data = {
+                        "type": $.t("marketplace_item_quantity_change"),
+                        "item_name": goods.name,
+                        "delta_quantity": transaction.attachment.deltaQuantity,
+                        "seller": NRS.getAccountFormatted(goods, "seller")
+                    };
 
-                            $("#transaction_info_modal").modal("show");
-                            NRS.fetchingModalData = false;
-                        });
-                        break;
-                    case 4:
-                        async = true;
-                        NRS.sendRequest("getDGSGood", {
-                            "goods": transaction.attachment.goods
-                        }, function (goods) {
-                            data = {
-                                "type": $.t("marketplace_purchase"),
-                                "item_name": goods.name,
-                                "price": transaction.attachment.priceNQT,
-                                "quantity_formatted_html": NRS.format(transaction.attachment.quantity),
-                                "buyer": NRS.getAccountFormatted(transaction, "sender"),
-                                "seller": NRS.getAccountFormatted(goods, "seller")
-                            };
+                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.show();
 
-                            infoTable.find("tbody").append(NRS.createInfoTable(data));
-                            infoTable.show();
+                    $("#transaction_info_modal").modal("show");
+                    NRS.fetchingModalData = false;
+                });
+            } else if (NRS.isOfType(transaction, "DigitalGoodsPurchase")) {
+                async = true;
+                NRS.sendRequest("getDGSGood", {
+                    "goods": transaction.attachment.goods
+                }, function (goods) {
+                    data = {
+                        "type": $.t("marketplace_purchase"),
+                        "item_name": goods.name,
+                        "price": transaction.attachment.priceNQT,
+                        "quantity_formatted_html": NRS.format(transaction.attachment.quantity),
+                        "buyer": NRS.getAccountFormatted(transaction, "sender"),
+                        "seller": NRS.getAccountFormatted(goods, "seller")
+                    };
 
-                            NRS.sendRequest("getDGSPurchase", {
-                                "purchase": transaction.transaction
-                            }, function (purchase) {
-                                var callout = "";
-                                if (purchase.errorCode) {
-                                    if (purchase.errorCode == 4) {
-                                        if (transactionDetails.block == "unconfirmed") {
-                                            callout = $.t("unconfirmed_transaction");
-                                        } else {
-                                            callout = $.t("incorrect_purchase");
-                                        }
+                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.show();
+
+                    NRS.sendRequest("getDGSPurchase", {
+                        "purchase": transaction.transaction
+                    }, function (purchase) {
+                        var callout = "";
+                        if (purchase.errorCode) {
+                            if (purchase.errorCode == 4) {
+                                if (transactionDetails.block == "unconfirmed") {
+                                    callout = $.t("unconfirmed_transaction");
+                                } else {
+                                    callout = $.t("incorrect_purchase");
+                                }
+                            } else {
+                                callout = NRS.escapeRespStr(purchase.errorDescription);
+                            }
+                        } else {
+                            if (NRS.account == transaction.recipient || NRS.account == transaction.sender) {
+                                if (purchase.pending) {
+                                    if (NRS.account == transaction.recipient) {
+                                        callout = "<a href='#' data-toggle='modal' data-target='#dgs_delivery_modal' data-purchase='" + NRS.fullHashToId(transaction.fullHash) + "'>" + $.t("deliver_goods_q") + "</a>";
                                     } else {
-                                        callout = NRS.escapeRespStr(purchase.errorDescription);
+                                        callout = $.t("waiting_on_seller");
                                     }
                                 } else {
-                                    if (NRS.account == transaction.recipient || NRS.account == transaction.sender) {
-                                        if (purchase.pending) {
-                                            if (NRS.account == transaction.recipient) {
-                                                callout = "<a href='#' data-toggle='modal' data-target='#dgs_delivery_modal' data-purchase='" + NRS.fullHashToId(transaction.fullHash) + "'>" + $.t("deliver_goods_q") + "</a>";
-                                            } else {
-                                                callout = $.t("waiting_on_seller");
-                                            }
-                                        } else {
-                                            if (purchase.refundNQT) {
-                                                callout = $.t("purchase_refunded");
-                                            } else {
-                                                callout = $.t("purchase_delivered");
-                                            }
-                                        }
-                                    }
-                                }
-                                if (callout) {
-                                    $("#transaction_info_bottom").html("<div class='callout " + (purchase.errorCode ? "callout-danger" : "callout-info") + " callout-bottom'>" + callout + "</div>").show();
-                                }
-                                $("#transaction_info_modal").modal("show");
-                                NRS.fetchingModalData = false;
-                            });
-                        });
-                        break;
-                    case 5:
-                        async = true;
-                        NRS.sendRequest("getDGSPurchase", {
-                            "purchase": transaction.attachment.purchase
-                        }, function (purchase) {
-                            NRS.sendRequest("getDGSGood", {
-                                "goods": purchase.goods
-                            }, function (goods) {
-                                data = {
-                                    "type": $.t("marketplace_delivery"),
-                                    "item_name": goods.name,
-                                    "price": purchase.priceNQT
-                                };
-
-                                data["quantity_formatted_html"] = NRS.format(purchase.quantity);
-
-                                if (purchase.quantity != "1") {
-                                    var orderTotal = NRS.formatAmount(new BigInteger(String(purchase.quantity)).multiply(new BigInteger(String(purchase.priceNQT))));
-                                    data["total_formatted_html"] = orderTotal + " " + NRS.getActiveChainName();
-                                }
-
-                                if (transaction.attachment.discountNQT) {
-                                    data["discount"] = transaction.attachment.discountNQT;
-                                }
-
-                                data["buyer"] = NRS.getAccountFormatted(purchase, "buyer");
-                                data["seller"] = NRS.getAccountFormatted(purchase, "seller");
-
-                                if (transaction.attachment.goodsData) {
-                                    NRS.tryToDecrypt(transaction, {
-                                        "goodsData": {
-                                            "title": $.t("data"),
-                                            "nonce": "goodsNonce"
-                                        }
-                                    }, NRS.getAccountForDecryption(purchase, "buyer", "seller"));
-                                }
-
-                                infoTable.find("tbody").append(NRS.createInfoTable(data));
-                                infoTable.show();
-
-                                var callout;
-
-                                if (NRS.account == purchase.buyer) {
                                     if (purchase.refundNQT) {
                                         callout = $.t("purchase_refunded");
-                                    } else if (!purchase.feedbackNote) {
-                                        callout = $.t("goods_received") + " <a href='#' data-toggle='modal' data-target='#dgs_feedback_modal' data-purchase='" + NRS.escapeRespStr(transaction.attachment.purchase) + "'>" + $.t("give_feedback_q") + "</a>";
+                                    } else {
+                                        callout = $.t("purchase_delivered");
                                     }
-                                } else if (NRS.account == purchase.seller && purchase.refundNQT) {
-                                    callout = $.t("purchase_refunded");
                                 }
+                            }
+                        }
+                        if (callout) {
+                            $("#transaction_info_bottom").html("<div class='callout " + (purchase.errorCode ? "callout-danger" : "callout-info") + " callout-bottom'>" + callout + "</div>").show();
+                        }
+                        $("#transaction_info_modal").modal("show");
+                        NRS.fetchingModalData = false;
+                    });
+                });
+            } else if (NRS.isOfType(transaction, "DigitalGoodsDelivery")) {
+                async = true;
+                NRS.sendRequest("getDGSPurchase", {
+                    "purchase": transaction.attachment.purchase
+                }, function (purchase) {
+                    NRS.sendRequest("getDGSGood", {
+                        "goods": purchase.goods
+                    }, function (goods) {
+                        data = {
+                            "type": $.t("marketplace_delivery"),
+                            "item_name": goods.name,
+                            "price": purchase.priceNQT
+                        };
 
+                        data["quantity_formatted_html"] = NRS.format(purchase.quantity);
+
+                        if (purchase.quantity != "1") {
+                            var orderTotal = NRS.formatAmount(new BigInteger(String(purchase.quantity)).multiply(new BigInteger(String(purchase.priceNQT))));
+                            data["total_formatted_html"] = orderTotal + " " + NRS.getActiveChainName();
+                        }
+
+                        if (transaction.attachment.discountNQT) {
+                            data["discount"] = transaction.attachment.discountNQT;
+                        }
+
+                        data["buyer"] = NRS.getAccountFormatted(purchase, "buyer");
+                        data["seller"] = NRS.getAccountFormatted(purchase, "seller");
+
+                        if (transaction.attachment.goodsData) {
+                            NRS.tryToDecrypt(transaction, {
+                                "goodsData": {
+                                    "title": $.t("data"),
+                                    "nonce": "goodsNonce"
+                                }
+                            }, NRS.getAccountForDecryption(purchase, "buyer", "seller"));
+                        }
+
+                        infoTable.find("tbody").append(NRS.createInfoTable(data));
+                        infoTable.show();
+
+                        var callout;
+
+                        if (NRS.account == purchase.buyer) {
+                            if (purchase.refundNQT) {
+                                callout = $.t("purchase_refunded");
+                            } else if (!purchase.feedbackNote) {
+                                callout = $.t("goods_received") + " <a href='#' data-toggle='modal' data-target='#dgs_feedback_modal' data-purchase='" + NRS.escapeRespStr(transaction.attachment.purchase) + "'>" + $.t("give_feedback_q") + "</a>";
+                            }
+                        } else if (NRS.account == purchase.seller && purchase.refundNQT) {
+                            callout = $.t("purchase_refunded");
+                        }
+
+                        if (callout) {
+                            $("#transaction_info_bottom").append("<div class='callout callout-info callout-bottom'>" + callout + "</div>").show();
+                        }
+
+                        $("#transaction_info_modal").modal("show");
+                        NRS.fetchingModalData = false;
+                    });
+                });
+            } else if (NRS.isOfType(transaction, "DigitalGoodsFeedback")) {
+                async = true;
+                NRS.sendRequest("getDGSPurchase", {
+                    "purchase": transaction.attachment.purchase
+                }, function (purchase) {
+                    NRS.sendRequest("getDGSGood", {
+                        "goods": purchase.goods
+                    }, function (goods) {
+                        data = {
+                            "type": $.t("marketplace_feedback"),
+                            "item_name": goods.name,
+                            "buyer": NRS.getAccountFormatted(purchase, "buyer"),
+                            "seller": NRS.getAccountFormatted(purchase, "seller")
+                        };
+
+                        infoTable.find("tbody").append(NRS.createInfoTable(data));
+                        infoTable.show();
+
+                        if (purchase.seller == NRS.account || purchase.buyer == NRS.account) {
+                            NRS.sendRequest("getDGSPurchase", {
+                                "purchase": transaction.attachment.purchase
+                            }, function (purchase) {
+                                var callout;
+                                if (purchase.buyer == NRS.account) {
+                                    if (purchase.refundNQT) {
+                                        callout = $.t("purchase_refunded");
+                                    }
+                                } else {
+                                    if (!purchase.refundNQT) {
+                                        callout = "<a href='#' data-toggle='modal' data-target='#dgs_refund_modal' data-purchase='" + NRS.escapeRespStr(transaction.attachment.purchase) + "'>" + $.t("refund_this_purchase_q") + "</a>";
+                                    } else {
+                                        callout = $.t("purchase_refunded");
+                                    }
+                                }
                                 if (callout) {
                                     $("#transaction_info_bottom").append("<div class='callout callout-info callout-bottom'>" + callout + "</div>").show();
                                 }
-
                                 $("#transaction_info_modal").modal("show");
                                 NRS.fetchingModalData = false;
                             });
-                        });
-                        break;
-                    case 6:
-                        async = true;
-                        NRS.sendRequest("getDGSPurchase", {
-                            "purchase": transaction.attachment.purchase
-                        }, function (purchase) {
-                            NRS.sendRequest("getDGSGood", {
-                                "goods": purchase.goods
-                            }, function (goods) {
-                                data = {
-                                    "type": $.t("marketplace_feedback"),
-                                    "item_name": goods.name,
-                                    "buyer": NRS.getAccountFormatted(purchase, "buyer"),
-                                    "seller": NRS.getAccountFormatted(purchase, "seller")
-                                };
-
-                                infoTable.find("tbody").append(NRS.createInfoTable(data));
-                                infoTable.show();
-
-                                if (purchase.seller == NRS.account || purchase.buyer == NRS.account) {
-                                    NRS.sendRequest("getDGSPurchase", {
-                                        "purchase": transaction.attachment.purchase
-                                    }, function (purchase) {
-                                        var callout;
-                                        if (purchase.buyer == NRS.account) {
-                                            if (purchase.refundNQT) {
-                                                callout = $.t("purchase_refunded");
-                                            }
-                                        } else {
-                                            if (!purchase.refundNQT) {
-                                                callout = "<a href='#' data-toggle='modal' data-target='#dgs_refund_modal' data-purchase='" + NRS.escapeRespStr(transaction.attachment.purchase) + "'>" + $.t("refund_this_purchase_q") + "</a>";
-                                            } else {
-                                                callout = $.t("purchase_refunded");
-                                            }
-                                        }
-                                        if (callout) {
-                                            $("#transaction_info_bottom").append("<div class='callout callout-info callout-bottom'>" + callout + "</div>").show();
-                                        }
-                                        $("#transaction_info_modal").modal("show");
-                                        NRS.fetchingModalData = false;
-                                    });
-                                } else {
-                                    $("#transaction_info_modal").modal("show");
-                                    NRS.fetchingModalData = false;
-                                }
-                            });
-                        });
-                        break;
-                    case 7:
-                        async = true;
-                        NRS.sendRequest("getDGSPurchase", {
-                            "purchase": transaction.attachment.purchase
-                        }, function (purchase) {
-                            NRS.sendRequest("getDGSGood", {
-                                "goods": purchase.goods
-                            }, function (goods) {
-                                data = {
-                                    "type": $.t("marketplace_refund"),
-                                    "item_name": goods.name
-                                };
-                                var orderTotal = new BigInteger(String(purchase.quantity)).multiply(new BigInteger(String(purchase.priceNQT)));
-                                data["order_total_formatted_html"] = NRS.formatAmount(orderTotal) + " " + NRS.getActiveChainName();
-                                data["refund"] = transaction.attachment.refundNQT;
-                                data["buyer"] = NRS.getAccountFormatted(purchase, "buyer");
-                                data["seller"] = NRS.getAccountFormatted(purchase, "seller");
-                                infoTable.find("tbody").append(NRS.createInfoTable(data));
-                                infoTable.show();
-                                $("#transaction_info_modal").modal("show");
-                                NRS.fetchingModalData = false;
-                            });
-                        });
-                        break;
-                    default:
-                        incorrect = true;
-                        break
-                }
-            } else if (transaction.type == 4 || transaction.type == -3) {
-                switch (transaction.subtype) {
-                    case 0:
+                        } else {
+                            $("#transaction_info_modal").modal("show");
+                            NRS.fetchingModalData = false;
+                        }
+                    });
+                });
+            } else if (NRS.isOfType(transaction, "DigitalGoodsRefund")) {
+                async = true;
+                NRS.sendRequest("getDGSPurchase", {
+                    "purchase": transaction.attachment.purchase
+                }, function (purchase) {
+                    NRS.sendRequest("getDGSGood", {
+                        "goods": purchase.goods
+                    }, function (goods) {
                         data = {
-                            "type": $.t("balance_leasing"),
-                            "period": transaction.attachment.period,
-                            "lessee": transaction.recipientRS ? transaction.recipientRS : transaction.recipient
+                            "type": $.t("marketplace_refund"),
+                            "item_name": goods.name
                         };
-
+                        var orderTotal = new BigInteger(String(purchase.quantity)).multiply(new BigInteger(String(purchase.priceNQT)));
+                        data["order_total_formatted_html"] = NRS.formatAmount(orderTotal) + " " + NRS.getActiveChainName();
+                        data["refund"] = transaction.attachment.refundNQT;
+                        data["buyer"] = NRS.getAccountFormatted(purchase, "buyer");
+                        data["seller"] = NRS.getAccountFormatted(purchase, "seller");
                         infoTable.find("tbody").append(NRS.createInfoTable(data));
                         infoTable.show();
+                        $("#transaction_info_modal").modal("show");
+                        NRS.fetchingModalData = false;
+                    });
+                });
 
-                        break;
-                    case 1:
-                        data = {
-                            "type": $.t("phasing_only")
-                        };
+            } else if (NRS.isOfType(transaction, "EffectiveBalanceLeasing")) {
+                data = {
+                    "type": $.t("balance_leasing"),
+                    "period": transaction.attachment.period,
+                    "lessee": transaction.recipientRS ? transaction.recipientRS : transaction.recipient
+                };
 
-                        NRS.getPhasingDetails(data, transaction.attachment.phasingControlParams);
-
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-
-                    default:
-                        incorrect = true;
-                        break;
-                }
-            }
-            else if (transaction.type == 5) {
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "SetPhasingOnly")) {
+                data = {
+                    "type": $.t("phasing_only")
+                };
+                NRS.getPhasingDetails(data, transaction.attachment.phasingControlParams);
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (transaction.type == 5) { // Currency
                 async = true;
                 var currency = null;
                 var id = (transaction.subtype == 0 ? transaction.transaction : transaction.attachment.currency);
@@ -1002,121 +905,107 @@ var NRS = (function (NRS, $, undefined) {
                     if (!response.errorCode) {
                         currency = response;
                     }
-                }, { isAsync: false });
-
-                switch (transaction.subtype) {
-                    case 0:
-                        var minReservePerUnitNQT = new BigInteger(transaction.attachment.minReservePerUnitNQT).multiply(new BigInteger("" + Math.pow(10, transaction.attachment.decimals)));
+                }, {isAsync: false});
+                if (NRS.isOfType(transaction, "CurrencyIssuance")) {
+                    var minReservePerUnitNQT = new BigInteger(transaction.attachment.minReservePerUnitNQT).multiply(new BigInteger("" + Math.pow(10, transaction.attachment.decimals)));
+                    data = {
+                        "type": $.t("currency_issuance"),
+                        "name": transaction.attachment.name,
+                        "code": transaction.attachment.code,
+                        "currency_type": transaction.attachment.type,
+                        "description_formatted_html": transaction.attachment.description.autoLink(),
+                        "initial_units": [transaction.attachment.initialSupply, transaction.attachment.decimals],
+                        "reserve_units": [transaction.attachment.reserveSupply, transaction.attachment.decimals],
+                        "max_units": [transaction.attachment.maxSupply, transaction.attachment.decimals],
+                        "decimals": transaction.attachment.decimals,
+                        "issuance_height": transaction.attachment.issuanceHeight,
+                        "min_reserve_per_unit_formatted_html": NRS.formatAmount(minReservePerUnitNQT) + " " + NRS.getActiveChainName(),
+                        "minDifficulty": transaction.attachment.minDifficulty,
+                        "maxDifficulty": transaction.attachment.maxDifficulty,
+                        "algorithm": transaction.attachment.algorithm
+                    };
+                    if (currency) {
+                        data["current_units"] = NRS.convertToQNTf(currency.currentSupply, currency.decimals);
+                        var currentReservePerUnitNQT = new BigInteger(currency.currentReservePerUnitNQT).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
+                        data["current_reserve_per_unit_formatted_html"] = NRS.formatAmount(currentReservePerUnitNQT) + " " + NRS.getActiveChainName();
+                    } else {
+                        data["status"] = "Currency Deleted or not Issued";
+                    }
+                } else if (NRS.isOfType(transaction, "ReserveIncrease")) {
+                    if (currency) {
+                        var amountPerUnitNQT = new BigInteger(transaction.attachment.amountPerUnitNQT).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
+                        var resSupply = currency.reserveSupply;
                         data = {
-                            "type": $.t("currency_issuance"),
-                            "name": transaction.attachment.name,
-                            "code": transaction.attachment.code,
-                            "currency_type": transaction.attachment.type,
-                            "description_formatted_html": transaction.attachment.description.autoLink(),
-                            "initial_units": [transaction.attachment.initialSupply, transaction.attachment.decimals],
-                            "reserve_units": [transaction.attachment.reserveSupply, transaction.attachment.decimals],
-                            "max_units": [transaction.attachment.maxSupply, transaction.attachment.decimals],
-                            "decimals": transaction.attachment.decimals,
-                            "issuance_height": transaction.attachment.issuanceHeight,
-                            "min_reserve_per_unit_formatted_html": NRS.formatAmount(minReservePerUnitNQT) + " " + NRS.getActiveChainName(),
-                            "minDifficulty": transaction.attachment.minDifficulty,
-                            "maxDifficulty": transaction.attachment.maxDifficulty,
-                            "algorithm": transaction.attachment.algorithm
+                            "type": $.t("reserve_increase"),
+                            "code": currency.code,
+                            "reserve_units": [resSupply, currency.decimals],
+                            "amount_per_unit_formatted_html": NRS.formatAmount(amountPerUnitNQT) + " " + NRS.getActiveChainName(),
+                            "reserved_amount_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(amountPerUnitNQT, NRS.convertToQNTf(resSupply, currency.decimals))) + " " + NRS.getActiveChainName()
                         };
-                        if (currency) {
-                            data["current_units"] = NRS.convertToQNTf(currency.currentSupply, currency.decimals);
-                            var currentReservePerUnitNQT = new BigInteger(currency.currentReservePerUnitNQT).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
-                            data["current_reserve_per_unit_formatted_html"] = NRS.formatAmount(currentReservePerUnitNQT) + " " + NRS.getActiveChainName();
-                        } else {
-                            data["status"] = "Currency Deleted or not Issued";
-                        }
-                        break;
-                    case 1:
-                        if (currency) {
-                            var amountPerUnitNQT = new BigInteger(transaction.attachment.amountPerUnitNQT).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
-                            var resSupply = currency.reserveSupply;
-                            data = {
-                                "type": $.t("reserve_increase"),
-                                "code": currency.code,
-                                "reserve_units": [resSupply, currency.decimals],
-                                "amount_per_unit_formatted_html": NRS.formatAmount(amountPerUnitNQT) + " " + NRS.getActiveChainName(),
-                                "reserved_amount_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(amountPerUnitNQT, NRS.convertToQNTf(resSupply, currency.decimals))) + " " + NRS.getActiveChainName()
-                            };
-                        } else {
-                            data = NRS.getUnknownCurrencyData(transaction);
-                        }
-                        break;
-                    case 2:
-                        if (currency) {
-                            var reservePerUnitNQT = new BigInteger(currency.currentReservePerUnitNQT).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
-                            data = {
-                                "type": $.t("reserve_claim"),
-                                "code": currency.code,
-                                "units": [transaction.attachment.units, currency.decimals],
-                                "claimed_amount_formatted_html": NRS.formatAmount(NRS.convertToQNTf(NRS.calculateOrderTotalNQT(reservePerUnitNQT, transaction.attachment.units), currency.decimals)) + " " + NRS.getActiveChainName()
-                            };
-                        } else {
-                            data = NRS.getUnknownCurrencyData(transaction);
-                        }
-                        break;
-                    case 3:
-                        if (currency) {
-                            data = {
-                                "type": $.t("currency_transfer"),
-                                "code": currency.code,
-                                "units": [transaction.attachment.units, currency.decimals]
-                            };
-                        } else {
-                            data = NRS.getUnknownCurrencyData(transaction);
-                        }
-                        break;
-                    case 4:
-                        if (currency) {
-                            data = NRS.formatCurrencyOffer(currency, transaction);
-                        } else {
-                            data = NRS.getUnknownCurrencyData(transaction);
-                        }
-                        break;
-                    case 5:
-                        if (currency) {
-                            data = NRS.formatCurrencyExchange(currency, transaction, "buy");
-                        } else {
-                            data = NRS.getUnknownCurrencyData(transaction);
-                        }
-                        break;
-                    case 6:
-                        if (currency) {
-                            data = NRS.formatCurrencyExchange(currency, transaction, "sell");
-                        } else {
-                            data = NRS.getUnknownCurrencyData(transaction);
-                        }
-                        break;
-                    case 7:
-                        if (currency) {
-                            data = {
-                                "type": $.t("mint_currency"),
-                                "code": currency.code,
-                                "units": [transaction.attachment.units, currency.decimals],
-                                "counter": transaction.attachment.counter,
-                                "nonce": transaction.attachment.nonce
-                            };
-                        } else {
-                            data = NRS.getUnknownCurrencyData(transaction);
-                        }
-                        break;
-                    case 8:
-                        if (currency) {
-                            data = {
-                                "type": $.t("delete_currency"),
-                                "code": currency.code
-                            };
-                        } else {
-                            data = NRS.getUnknownCurrencyData(transaction);
-                        }
-                        break;
-                    default:
-                        incorrect = true;
-                        break;
+                    } else {
+                        data = NRS.getUnknownCurrencyData(transaction);
+                    }
+                } else if (NRS.isOfType(transaction, "ReserveClaim")) {
+                    if (currency) {
+                        var reservePerUnitNQT = new BigInteger(currency.currentReservePerUnitNQT).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
+                        data = {
+                            "type": $.t("reserve_claim"),
+                            "code": currency.code,
+                            "units": [transaction.attachment.units, currency.decimals],
+                            "claimed_amount_formatted_html": NRS.formatAmount(NRS.convertToQNTf(NRS.calculateOrderTotalNQT(reservePerUnitNQT, transaction.attachment.units), currency.decimals)) + " " + NRS.getActiveChainName()
+                        };
+                    } else {
+                        data = NRS.getUnknownCurrencyData(transaction);
+                    }
+                } else if (NRS.isOfType(transaction, "CurrencyTransfer")) {
+                    if (currency) {
+                        data = {
+                            "type": $.t("currency_transfer"),
+                            "code": currency.code,
+                            "units": [transaction.attachment.units, currency.decimals]
+                        };
+                    } else {
+                        data = NRS.getUnknownCurrencyData(transaction);
+                    }
+                } else if (NRS.isOfType(transaction, "PublishExchangeOffer")) {
+                    if (currency) {
+                        data = NRS.formatCurrencyOffer(currency, transaction);
+                    } else {
+                        data = NRS.getUnknownCurrencyData(transaction);
+                    }
+                } else if (NRS.isOfType(transaction, "ExchangeBuy")) {
+                    if (currency) {
+                        data = NRS.formatCurrencyExchange(currency, transaction, "buy");
+                    } else {
+                        data = NRS.getUnknownCurrencyData(transaction);
+                    }
+                } else if (NRS.isOfType(transaction, "ExchangeSell")) {
+                    if (currency) {
+                        data = NRS.formatCurrencyExchange(currency, transaction, "sell");
+                    } else {
+                        data = NRS.getUnknownCurrencyData(transaction);
+                    }
+                } else if (NRS.isOfType(transaction, "CurrencyMinting")) {
+                    if (currency) {
+                        data = {
+                            "type": $.t("mint_currency"),
+                            "code": currency.code,
+                            "units": [transaction.attachment.units, currency.decimals],
+                            "counter": transaction.attachment.counter,
+                            "nonce": transaction.attachment.nonce
+                        };
+                    } else {
+                        data = NRS.getUnknownCurrencyData(transaction);
+                    }
+                } else if (NRS.isOfType(transaction, "CurrencyDeletion")) {
+                    if (currency) {
+                        data = {
+                            "type": $.t("delete_currency"),
+                            "code": currency.code
+                        };
+                    } else {
+                        data = NRS.getUnknownCurrencyData(transaction);
+                    }
                 }
                 if (!incorrect) {
                     if (transaction.sender != NRS.account) {
@@ -1143,25 +1032,10 @@ var NRS = (function (NRS, $, undefined) {
                     }
                     NRS.fetchingModalData = false;
                 }
-            } else if (transaction.type == 6) {
-                switch (transaction.subtype) {
-                    case 0:
-                        data = NRS.getTaggedData(transaction.attachment, 0, transaction);
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    case 1:
-                        data = NRS.getTaggedData(transaction.attachment, 1, transaction);
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-
-                    default:
-                        incorrect = true;
-                        break;
-                }
+            } else if (NRS.isOfType(transaction, "TaggedDataUpload")) {
+                data = NRS.getTaggedData(transaction.attachment, 0, transaction);
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
             } else if (NRS.isOfType(transaction, "ShufflingCreation")) {
                 data = {
                     "type": $.t("shuffling_creation"),
@@ -1271,7 +1145,7 @@ var NRS = (function (NRS, $, undefined) {
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();
             }
-            if (!(transaction.type == 1 && transaction.subtype == 0)) {
+            if (NRS.notOfType(transaction, "ArbitraryMessage")) {
                 if (transaction.attachment) {
                     var transactionInfoOutputBottom = $("#transaction_info_output_bottom");
                     if (transaction.attachment.message) {
@@ -1353,12 +1227,12 @@ var NRS = (function (NRS, $, undefined) {
         data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
         var rows = "";
         var params;
-        if (transaction.subtype == 2) {
+        if (NRS.isOfType(transaction, "AskOrderPlacement")) {
             params = {"askOrder": transaction.transaction};
         } else {
             params = {"bidOrder": transaction.transaction};
         }
-        var transactionField = (transaction.subtype == 2 ? "bidOrderFullHash" : "askOrderFullHash");
+        var transactionField = (NRS.isOfType(transaction, "AskOrderPlacement") ? "bidOrderFullHash" : "askOrderFullHash");
         NRS.sendRequest("getOrderTrades", params, function (response) {
             var tradeQuantity = BigInteger.ZERO;
             var tradeTotal = BigInteger.ZERO;
