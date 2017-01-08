@@ -924,7 +924,11 @@ final class PeerImpl implements Peer {
     void handshakeComplete() {
         handshakePending = false;
         if (!outputQueue.isEmpty()) {
-            keyEvent.update(SelectionKey.OP_WRITE, 0);
+            try {
+                keyEvent.update(SelectionKey.OP_WRITE, 0);
+            } catch (IllegalStateException exc) {
+                Logger.logErrorMessage("Unable to update network selection key", exc);
+            }
         }
     }
 
@@ -1016,10 +1020,14 @@ final class PeerImpl implements Peer {
             }
         }
         if (sendMessage) {
-            keyEvent.update(SelectionKey.OP_WRITE, 0);
-            if (Peers.communicationLogging == 1) {
-                Logger.logDebugMessage(String.format("%s[%d] message sent to %s",
-                        message.getMessageName(), message.getMessageId(), host));
+            try {
+                keyEvent.update(SelectionKey.OP_WRITE, 0);
+                if (Peers.communicationLogging == 1) {
+                    Logger.logDebugMessage(String.format("%s[%d] message sent to %s",
+                            message.getMessageName(), message.getMessageId(), host));
+                }
+            } catch (IllegalStateException exc) {
+                Logger.logErrorMessage("Unable to update network selection key", exc);
             }
         } else if (disconnect) {
             disconnectPeer();
