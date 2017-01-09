@@ -33,18 +33,19 @@ public final class GetCoinExchangeTrade extends APIServlet.APIRequestHandler {
      * </ul>
      */
     private GetCoinExchangeTrade() {
-        super(new APITag[] {APITag.CE}, "orderFullHash", "matchFullHash");
+        super(new APITag[] {APITag.CE}, "orderFullHash", "matchFullHash", "includeChainInfo");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         byte[] orderFullHash = ParameterParser.getBytes(req, "orderFullHash", true);
         byte[] matchFullHash = ParameterParser.getBytes(req, "matchFullHash", true);
+        boolean includeChainInfo = "true".equalsIgnoreCase(req.getParameter("includeChainInfo"));
         Trade trade = CoinExchange.getTrade(orderFullHash, matchFullHash);
         if (trade == null) {
             return JSONResponses.unknown("trade");
         }
-        return JSONData.coinExchangeTrade(trade);
+        return JSONData.coinExchangeTrade(trade, includeChainInfo);
     }
 
     @Override
