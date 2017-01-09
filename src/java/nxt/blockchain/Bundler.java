@@ -229,6 +229,8 @@ public final class Bundler {
                             ChildBlockFxtTransaction childBlockFxtTransaction = bundle(childTransactions, totalFeeFQT, now);
                             currentTotalFeesFQT += totalFeeFQT;
                             childBlockFxtTransactions.add(childBlockFxtTransaction);
+                        } catch (NxtException.NotCurrentlyValidException e) {
+                            Logger.logDebugMessage(e.getMessage(), e);
                         } catch (NxtException.ValidationException e) {
                             Logger.logInfoMessage(e.getMessage(), e);
                         }
