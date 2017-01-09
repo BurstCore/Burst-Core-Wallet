@@ -18,6 +18,7 @@ package nxt.shuffling;
 
 import nxt.NxtException;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.AppendixParser;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;

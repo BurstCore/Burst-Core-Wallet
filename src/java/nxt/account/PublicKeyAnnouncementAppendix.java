@@ -18,6 +18,7 @@ package nxt.account;
 
 import nxt.NxtException;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.AppendixParser;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
