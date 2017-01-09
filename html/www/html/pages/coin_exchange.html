@@ -72,21 +72,21 @@
     </section>
 </div>
              
-<div id="coin_trade_history_page" class="paginated page">
-    <section class="content-header"><h1 data-i18n="trade_history">Trade History</h1></section>
+<div id="coin_exchange_history_page" class="paginated page">
+    <section class="content-header"><h1 data-i18n="exchange_history">Exchange History</h1></section>
     <section class="content">
         <div class="data-container data-loading">
-            <table class="table table-striped" id="trade_history_table">
+            <table class="table table-striped" id="coin_exchange_history_table">
                 <thead>
                 <tr>
-                    <th data-i18n="chain">Chain</th>
                     <th data-i18n="date">Date</th>
-                    <th data-i18n="type">Type</th>
+                    <th data-i18n="order">Order</th>
+                    <th data-i18n="match">Match</th>
+                    <th data-i18n="chain">Chains</th>
+                    <th data-i18n="account">Account</th>
                     <th data-i18n="quantity" class='numeric'>Quantity</th>
                     <th data-i18n="price" class='numeric'>Price</th>
                     <th data-i18n="total" class='numeric'>Total</th>
-                    <th data-i18n="buyer">Buyer</th>
-                    <th data-i18n="seller">Seller</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -94,7 +94,7 @@
                 </tbody>
             </table>
             <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
-            <div class="data-empty-container"><p data-i18n="no_trade_history">No trade history available.</p></div>
+            <div class="data-empty-container"><p data-i18n="no_exchange_history">No exchange history available.</p></div>
         </div>
         <div class="data-pagination"></div>
     </section>

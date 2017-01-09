@@ -19,8 +19,64 @@
  */
 var NRS = (function (NRS, $, undefined) {
 
+    var coins;
+    var coinIds;
+    var closedGroups;
+    var coinSearch;
+    var viewingCoin;
+    var currentCoin;
+    var coinTradeHistoryType;
+    var currentCoinID;
+    var selectedApprovalCoin;
+
     NRS.pages.coin_exchange = function() { alert("not implemented") };
     NRS.pages.coin_exchange_history = function() { alert("not implemented") };
+    NRS.pages.coin_exchange_history = function () {
+        NRS.sendRequest("getCoinExchangeTrades+", {
+            "account": NRS.accountRS,
+            "includeChainInfo": true,
+            "firstIndex": NRS.pageNumber * NRS.itemsPerPage - NRS.itemsPerPage,
+            "lastIndex": NRS.pageNumber * NRS.itemsPerPage
+        }, function (response) {
+            if (response.trades && response.trades.length) {
+                if (response.trades.length > NRS.itemsPerPage) {
+                    NRS.hasMorePages = true;
+                    response.trades.pop();
+                }
+                var trades = response.trades;
+                var quantityDecimals = NRS.getNumberOfDecimals(trades, "quantityQNT", function(val) {
+                    return NRS.formatQuantity(val.quantityQNT, val.decimals);
+                });
+                var priceDecimals = NRS.getNumberOfDecimals(trades, "priceNQT", function(val) {
+                    return NRS.formatOrderPricePerWholeQNT(val.priceNQT, val.decimals);
+                });
+                var amountDecimals = NRS.getNumberOfDecimals(trades, "totalNQT", function(val) {
+                    return NRS.formatAmount(NRS.calculateOrderTotalNQT(val.quantityQNT, val.priceNQT));
+                });
+                var rows = "";
+                for (var i = 0; i < trades.length; i++) {
+                    var trade = trades[i];
+                    trade.priceNQT = new BigInteger(trade.priceNQT);
+                    trade.quantityQNT = new BigInteger(trade.quantityQNT);
+                    trade.totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(trade.priceNQT, trade.quantityQNT));
+                    rows += "<tr>" +
+                        "<td>" + NRS.formatTimestamp(trade.timestamp) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(trade.orderFullHash) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(trade.matchFullHash) + "</td>" +
+                        "<td>" + NRS.getChainLink(trade.chain) + "</td>" +
+                        "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, trade.decimals, false, quantityDecimals) + "</td>" +
+                        "<td class='asset_price numeric'>" + NRS.formatOrderPricePerWholeQNT(trade.priceNQT, trade.decimals, priceDecimals) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatAmount(trade.totalNQT, false, false, amountDecimals) + "</td>" +
+                        "</tr>";
+                }
+                NRS.dataLoaded(rows);
+            } else {
+                NRS.dataLoaded();
+            }
+        });
+    };
+
     NRS.pages.open_coin_orders = function() { alert("not implemented") };
 
     NRS.setup.coin_exchange = function () {
@@ -28,7 +84,7 @@ var NRS = (function (NRS, $, undefined) {
         var options = {
             "id": sidebarId,
             "titleHTML": '<i class="fa fa-money"></i><span data-i18n="coin_exchange">Coin Exchange</span>',
-            "page": 'coin_exchange',
+            "page": 'coin_exchange_history',
             "desiredPosition": 30,
             "depends": { tags: [ NRS.constants.API_TAGS.CE ] }
         };
