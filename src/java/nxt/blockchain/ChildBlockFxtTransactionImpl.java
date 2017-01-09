@@ -86,7 +86,7 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
         ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)getAttachment();
         if (this.childTransactions == null) {
             byte[][] hashes = childBlockAttachment.getChildTransactionFullHashes();
-            if (TransactionHome.hasFxtTransaction(this.getId(), Nxt.getBlockchain().getHeight() + 1)) {
+            if (getSignature() != null && TransactionHome.hasFxtTransaction(this.getId(), Nxt.getBlockchain().getHeight() + 1)) {
                 TransactionHome transactionHome = ChildChain.getChildChain(childBlockAttachment.getChainId()).getTransactionHome();
                 List<ChildTransactionImpl> list = transactionHome.findChildTransactions(this.getId());
                 for (ChildTransactionImpl childTransaction : list) {

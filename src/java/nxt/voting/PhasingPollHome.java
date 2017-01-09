@@ -628,7 +628,7 @@ public final class PhasingPollHome {
                 pstmt.executeUpdate();
             }
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_finish (transaction_id, full_hash, chain_id, finish_height, height) "
-                    + "VALUES (?, ?, ?, ?)")) {
+                    + "VALUES (?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, id);
                 pstmt.setBytes(++i, hash);

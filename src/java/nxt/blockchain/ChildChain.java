@@ -102,8 +102,8 @@ public final class ChildChain extends Chain {
         this.exchangeRequestHome = ExchangeRequestHome.forChain(this);
         this.tradeHome = TradeHome.forChain(this);
         this.orderHome = OrderHome.forChain(this);
-        this.phasingPollHome = PhasingPollHome.forChain(this);
         this.phasingVoteHome = PhasingVoteHome.forChain(this);
+        this.phasingPollHome = PhasingPollHome.forChain(this);
         this.pollHome = PollHome.forChain(this);
         this.shufflingHome = ShufflingHome.forChain(this);
         this.shufflingParticipantHome = ShufflingParticipantHome.forChain(this);

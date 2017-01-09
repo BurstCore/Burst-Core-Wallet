@@ -212,7 +212,7 @@ public abstract class TransactionImpl implements Transaction {
 
         final BuilderImpl prunableAttachments(JSONObject prunableAttachments) throws NxtException.NotValidException {
             if (prunableAttachments != null) {
-                for (Appendix.AppendixParser parser : Appendix.getPrunableParsers()) {
+                for (AppendixParser parser : AppendixParser.getPrunableParsers()) {
                     appendix(parser.parse(prunableAttachments));
                 }
             }
@@ -887,7 +887,7 @@ public abstract class TransactionImpl implements Transaction {
             List<Appendix.AbstractAppendix> appendages = new ArrayList<>();
             appendages.add(transactionType.parseAttachment(attachmentData));
             if (attachmentData != null) {
-                for (Appendix.AppendixParser parser : Appendix.getParsers()) {
+                for (AppendixParser parser : AppendixParser.getParsers()) {
                     Appendix.AbstractAppendix appendix = parser.parse(attachmentData);
                     if (appendix != null) {
                         appendages.add(appendix);
@@ -922,9 +922,9 @@ public abstract class TransactionImpl implements Transaction {
         }
         List<Appendix.AbstractAppendix> list = new ArrayList<>();
         list.add(attachment);
-        Collection<Appendix.AppendixParser> parsers = Appendix.getParsers();
+        Collection<AppendixParser> parsers = AppendixParser.getParsers();
         int position = 1;
-        for (Appendix.AppendixParser parser : parsers) {
+        for (AppendixParser parser : parsers) {
             if ((flags & position) != 0) {
                 list.add(parser.parse(buffer));
             }

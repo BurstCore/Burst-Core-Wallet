@@ -59,18 +59,27 @@ public class ApproveTransaction extends CreateTransaction {
 
         List<ChainTransactionId> phasedTransactionIds = new ArrayList<>(phasedTransactionValues.length);
         for (String phasedTransactionValue : phasedTransactionValues) {
-            String[] s = phasedTransactionValue.split(":");
-            int chainId = Integer.parseInt(s[0]);
-            ChildChain childChain = ChildChain.getChildChain(chainId);
-            if (childChain == null) {
-                return UNKNOWN_CHAIN;
+            try {
+                String[] s = phasedTransactionValue.split(":");
+                if (s.length != 2) {
+                    return JSONResponses.incorrect("phasedTransaction",
+                            "value must be in the form 'chainId:fullHash'");
+                }
+                int chainId = Integer.parseInt(s[0]);
+                ChildChain childChain = ChildChain.getChildChain(chainId);
+                if (childChain == null) {
+                    return UNKNOWN_CHAIN;
+                }
+                byte[] hash = Convert.parseHexString(s[1]);
+                PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(hash);
+                if (phasingPoll == null) {
+                    return UNKNOWN_PHASED_TRANSACTION;
+                }
+                phasedTransactionIds.add(new ChainTransactionId(chainId, hash));
+            } catch (NumberFormatException exc) {
+                return JSONResponses.incorrect("phasedTransaction",
+                        "value '" + phasedTransactionValue + "' is not valid");
             }
-            byte[] hash = Convert.parseHexString(s[1]);
-            PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(hash);
-            if (phasingPoll == null) {
-                return UNKNOWN_PHASED_TRANSACTION;
-            }
-            phasedTransactionIds.add(new ChainTransactionId(chainId, hash));
         }
 
         byte[] secret;

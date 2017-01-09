@@ -22,6 +22,7 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.AppendixParser;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;

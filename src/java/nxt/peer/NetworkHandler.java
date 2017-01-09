@@ -190,6 +190,9 @@ public final class NetworkHandler implements Runnable {
     /** Connection map */
     static final ConcurrentHashMap<InetAddress, PeerImpl> connectionMap = new ConcurrentHashMap<>();
 
+    /** Network started */
+    private static volatile boolean networkStarted = false;
+
     /** Network shutdown */
     private static volatile boolean networkShutdown = false;
 
@@ -363,6 +366,7 @@ public final class NetworkHandler implements Runnable {
     public void run() {
         try {
             Logger.logDebugMessage("Network listener started");
+            networkStarted = true;
             //
             // Process network events
             //
@@ -373,6 +377,7 @@ public final class NetworkHandler implements Runnable {
             Logger.logErrorMessage("Network listener abnormally terminated", exc);
             networkShutdown = true;
         }
+        networkStarted = false;
         Logger.logDebugMessage("Network listener stopped");
     }
 
@@ -847,6 +852,15 @@ public final class NetworkHandler implements Runnable {
     static void sendGetInfoMessage(PeerImpl peer) {
         getInfoMessage.setBlockchainState(Peers.getMyBlockchainState());
         peer.sendMessage(getInfoMessage);
+    }
+
+    /**
+     * Check if the network has finished initialization
+     *
+     * @return                          TRUE if the network is availble
+     */
+    public static boolean isNetworkStarted() {
+        return networkStarted;
     }
 
     /**

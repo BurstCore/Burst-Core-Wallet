@@ -19,6 +19,7 @@ package nxt.taggeddata;
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.AppendixParser;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;

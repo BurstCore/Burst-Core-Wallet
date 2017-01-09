@@ -252,7 +252,7 @@ public final class Peers {
         // Schedule our background processing threads
         //
         ThreadPool.scheduleThread("PeerUnBlacklisting", peerUnBlacklistingThread, 60);
-        ThreadPool.scheduleThread("PeerConnecting", peerConnectingThread, 60);
+        ThreadPool.scheduleThread("PeerConnecting", peerConnectingThread, 15);
         if (getMorePeers) {
             ThreadPool.scheduleThread("GetMorePeers", getMorePeersThread, 10*60);
     	}
@@ -585,6 +585,9 @@ public final class Peers {
      * Create outbound connections
      */
     private static final Runnable peerConnectingThread = () -> {
+        if (!NetworkHandler.isNetworkStarted()) {
+            return;
+        }
         try {
             final int now = Nxt.getEpochTime();
             //

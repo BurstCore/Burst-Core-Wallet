@@ -18,6 +18,7 @@ package nxt.messaging;
 
 import nxt.NxtException;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.AppendixParser;
 import nxt.crypto.EncryptedData;
 import org.json.simple.JSONObject;
 
