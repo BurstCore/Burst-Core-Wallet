@@ -182,7 +182,7 @@ var NRS = (function(NRS, $, undefined) {
 		}
 	};
 
-	NRS.switchAccount = function(account) {
+	NRS.switchAccount = function(account, chain) {
 		// Reset security related state
 		NRS.resetEncryptionState();
 		NRS.setServerPassword(null);
@@ -209,12 +209,13 @@ var NRS = (function(NRS, $, undefined) {
 		$.each(NRS.plugins, function(pluginId) {
 			NRS.determinePluginLaunchStatus(pluginId);
 		});
+        NRS.mobileSettings.chain = chain;
 
 		// Return to the dashboard and notify the user
 		NRS.goToPage("dashboard");
         NRS.login(false, account, function() {
-            $.growl($.t("switched_to_account", { account: account }))
-        }, true);
+            $.growl($.t("switched_to_account", { account: account, chain: NRS.constants.CHAIN_PROPERTIES[chain].name }));
+        }, true, false, chain);
 	};
 
     $("#loginButtons").find(".btn").click(function (e) {
@@ -271,7 +272,7 @@ var NRS = (function(NRS, $, undefined) {
     }
 
     // id can be either account id or passphrase
-    NRS.login = function(isPassphraseLogin, id, callback, isAccountSwitch, isSavedPassphrase) {
+    NRS.login = function(isPassphraseLogin, id, callback, isAccountSwitch, isSavedPassphrase, chain) {
 		console.log("login isPassphraseLogin = " + isPassphraseLogin +
 			", isAccountSwitch = " + isAccountSwitch +
 			", isSavedPassphrase = " + isSavedPassphrase);
@@ -297,7 +298,10 @@ var NRS = (function(NRS, $, undefined) {
 			$("#login_password, #registration_password, #registration_password_repeat").val("");
 			loginCheckPasswordLength.val(1);
 		}
-        NRS.setActiveChain($('select[name="chain"]').val());
+		if (!chain) {
+        	chain = $('select[name="chain"]').val();
+		}
+        NRS.setActiveChain(chain);
 		console.log("login calling getBlockchainStatus, active chain is " + NRS.getActiveChainName());
 		NRS.sendRequest("getBlockchainStatus", {}, function(response) {
 			if (response.errorCode) {
@@ -471,28 +475,48 @@ var NRS = (function(NRS, $, undefined) {
 					$("[data-i18n]").i18n();
 
 					/* Add accounts to dropdown for quick switching */
-					var accountIdDropdown = $("#account_id_dropdown");
-					accountIdDropdown.find(".dropdown-menu .switchAccount").remove();
-					if (NRS.getStrItem("savedNxtAccounts") && NRS.getStrItem("savedNxtAccounts")!=""){
-						accountIdDropdown.show();
-						accounts = NRS.getStrItem("savedNxtAccounts").split(";");
-						$.each(accounts, function(index, account) {
-							if (account != ''){
-								$('#account_id_dropdown').find('.dropdown-menu')
-								.append($("<li class='switchAccount'></li>")
-									.append($("<a></a>")
-										.attr("href","#")
-										.attr("style","font-size: 85%;")
-										.attr("onClick","NRS.switchAccount('"+account+"')")
-										.text(account))
-								);
-							}
-						});
-					} else {
-						accountIdDropdown.hide();
+                    var accountIdDropdown = $("#account_id_dropdown");
+                    accountIdDropdown.find(".dropdown-menu .switchAccount").remove();
+                    if (NRS.getStrItem("savedNxtAccounts") && NRS.getStrItem("savedNxtAccounts")!=""){
+                        accountIdDropdown.show();
+                        accounts = NRS.getStrItem("savedNxtAccounts").split(";");
+                        $.each(accounts, function(index, account) {
+                            if (account != '') {
+                                accountIdDropdown.find('.dropdown-menu')
+                                    .append($("<li class='switchAccount'></li>")
+                                        .append($("<a></a>")
+                                            .attr("href","#")
+                                            .attr("style","font-size: 85%;")
+                                            .attr("onClick","NRS.switchAccount('" + account + "','" + NRS.getActiveChain() + "')")
+                                            .text(account)
+										)
+								    );
+                            }
+                        });
+                    } else {
+                        accountIdDropdown.hide();
+                    }
+
+					/* Add chains to dropdown for quick switching */
+                    var chainDropdown = $("#chain_dropdown");
+                    chainDropdown.find(".dropdown-menu .switchAccount").remove();
+                    var chainDropdownMenu = chainDropdown.find(".dropdown-menu");
+                    for (var chainId in NRS.constants.CHAIN_PROPERTIES) {
+                        if (!NRS.constants.CHAIN_PROPERTIES.hasOwnProperty(chainId)) {
+                            continue;
+                        }
+                        var chain = NRS.constants.CHAIN_PROPERTIES[chainId];
+                        chainDropdownMenu.append($("<li class='switchAccount'></li>")
+							.append($("<a></a>")
+								.attr("href", "#")
+								.attr("style", "font-size: 85%;")
+								.attr("onClick", "NRS.switchAccount('" + NRS.accountRS + "','" + chain.id + "')")
+								.text(chain.name)
+							)
+						);
 					}
 
-					NRS.updateApprovalRequests();
+                    NRS.updateApprovalRequests();
 				});
 			});
 		});

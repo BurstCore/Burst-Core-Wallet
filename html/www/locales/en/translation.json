@@ -1722,7 +1722,7 @@
   "transaction10": "Transaction",
   "whitelist": "Whitelist",
   "expired": "Expired",
-  "switched_to_account": "Switched to account __account__",
+  "switched_to_account": "Switched to account __account__ on chain __chain__",
   "regional_format": "Regional Format",
   "use_browser_default": "Use Browser Default",
   "missing_asset_param": "Parameter 'asset' was not specified",

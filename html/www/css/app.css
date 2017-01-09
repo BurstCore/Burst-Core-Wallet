@@ -2964,7 +2964,12 @@ label .popover-content {
 #account_id:hover {
 	cursor:pointer;
 }
+
 #account_id_dropdown ul.dropdown-menu>li>a {
+	padding:3px 8px;
+}
+
+#chain_dropdown ul.dropdown-menu>li>a {
 	padding:3px 8px;
 }
 
