@@ -17,9 +17,13 @@
 package nxt;
 
 import nxt.blockchain.BlockchainProcessor;
+import nxt.blockchain.Chain;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.TransactionProcessorImpl;
+import nxt.http.APICall;
 import nxt.util.Logger;
 import nxt.util.Time;
+import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -37,23 +41,19 @@ public abstract class BlockchainTest extends AbstractBlockchainTest {
 
     protected static int baseHeight;
 
-    protected static String forgerSecretPhrase = "aSykrgKGZNlSVOMDxkZZgbTvQqJPGtsBggb";
-    protected static final String forgerAccountId = "NXT-9KZM-KNYY-QBXZ-5TD8V";
-    protected static String secretPhrase1 = "hope peace happen touch easy pretend worthless talk them indeed wheel state";
-    protected static String secretPhrase2 = "rshw9abtpsa2";
-    protected static String secretPhrase3 = "eOdBVLMgySFvyiTy8xMuRXDTr45oTzB7L5J";
-    protected static String secretPhrase4 = "t9G2ymCmDsQij7VtYinqrbGCOAtDDA3WiNr";
+    private static String forgerSecretPhrase = "aSykrgKGZNlSVOMDxkZZgbTvQqJPGtsBggb";
+    private static final String forgerAccountId = "NXT-9KZM-KNYY-QBXZ-5TD8V";
 
     private static final String aliceSecretPhrase = "hope peace happen touch easy pretend worthless talk them indeed wheel state";
     private static final String bobSecretPhrase2 = "rshw9abtpsa2";
     private static final String chuckSecretPhrase = "eOdBVLMgySFvyiTy8xMuRXDTr45oTzB7L5J";
     private static final String daveSecretPhrase = "t9G2ymCmDsQij7VtYinqrbGCOAtDDA3WiNr";
 
-    protected static boolean isNxtInitted = false;
-    protected static boolean needShutdownAfterClass = false;
+    private static boolean isNxtInitialized = false;
+    private static boolean needShutdownAfterClass = false;
 
     public static void initNxt() {
-        if (!isNxtInitted) {
+        if (!isNxtInitialized) {
             Properties properties = ManualForgingTest.newTestProperties();
             properties.setProperty("nxt.isTestnet", "true");
             properties.setProperty("nxt.isOffline", "true");
@@ -65,13 +65,13 @@ public abstract class BlockchainTest extends AbstractBlockchainTest {
             properties.setProperty("nxt.disableProcessTransactionsThread", "true");
             properties.setProperty("nxt.deleteFinishedShufflings", "false");
             AbstractForgingTest.init(properties);
-            isNxtInitted = true;
+            isNxtInitialized = true;
         }
     }
     
     @BeforeClass
     public static void init() {
-        needShutdownAfterClass = !isNxtInitted;
+        needShutdownAfterClass = !isNxtInitialized;
         initNxt();
         
         Nxt.setTime(new Time.CounterTime(Nxt.getEpochTime()));
@@ -82,6 +82,21 @@ public abstract class BlockchainTest extends AbstractBlockchainTest {
         BOB = new Tester(bobSecretPhrase2);
         CHUCK = new Tester(chuckSecretPhrase);
         DAVE = new Tester(daveSecretPhrase);
+
+        startBundlers();
+    }
+
+    private static void startBundlers() {
+        for (Chain chain : ChildChain.getAll()) {
+            JSONObject response = new APICall.Builder("startBundler").
+                    secretPhrase(FORGY.getSecretPhrase()).
+                    param("chain", chain.getId()).
+                    param("minRateNQTPerFXT", chain.ONE_COIN).
+                    param("totalFeesLimitFQT", 1000 * chain.ONE_COIN). // does not work with 2 decimal chains until DEFAULT_CHILD_FEE is implemented per chain
+                    param("overpayFQTPerFXT", 0).
+                    build().invoke();
+            Logger.logDebugMessage("startBundler: " + response);
+        }
     }
 
     @AfterClass
@@ -107,7 +122,7 @@ public abstract class BlockchainTest extends AbstractBlockchainTest {
         }
     }
 
-    public static void generateBlocks(int howMany) {
+    protected static void generateBlocks(int howMany) {
         for (int i = 0; i < howMany; i++) {
             generateBlock();
         }
