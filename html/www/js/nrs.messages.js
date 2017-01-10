@@ -105,7 +105,7 @@ var NRS = (function(NRS, $) {
         }
         var shareAction = "";
         if (decoded.extra == "decrypted") {
-            shareAction = "<a href='#' class='btn btn-xs' data-toggle='modal' data-fullHash='" + response.fullHash + "' data-sharedkey='" + decoded.sharedKey + "' data-target='#shared_key_modal'>" + $.t("share") + "</a>";
+            shareAction = "<a href='#' class='btn btn-xs' data-toggle='modal' data-fullhash='" + response.fullHash + "' data-sharedkey='" + decoded.sharedKey + "' data-target='#shared_key_modal'>" + $.t("share") + "</a>";
         }
         var downloadAction = "";
         if (!decryptAction && !retrieveAction && decoded.hash && decoded.message == $.t("binary_data")) {
@@ -350,7 +350,7 @@ var NRS = (function(NRS, $) {
                 if (decoded.sharedKey) {
                     var inverseIcon = messages[i].recipient == NRS.account ? "" : " fa-inverse";
 					sharedKeyTag = "<a href='#' class='btn btn-xs' data-toggle='modal' data-target='#shared_key_modal' " +
-						"data-sharedkey='" + decoded.sharedKey + "' data-fullHash='" + messages[i].fullHash +"'>" +
+						"data-sharedkey='" + decoded.sharedKey + "' data-fullhash='" + messages[i].fullHash +"'>" +
 						"<i class='fa fa-link" + inverseIcon + "'></i>" +
 					"</a>";
 				}
@@ -567,7 +567,7 @@ var NRS = (function(NRS, $) {
         var $invoker = $(e.relatedTarget);
 		var sharedKey = $invoker.data("sharedkey");
         $("#shared_key_text").val(sharedKey);
-		var fullHash = $invoker.data("fullHash");
+		var fullHash = $invoker.data("fullhash");
         $("#shared_key_transaction").html(NRS.getTransactionLink(fullHash));
 		if (NRS.state.apiProxy) {
 			$("#shared_key_link_container").hide();
@@ -576,7 +576,8 @@ var NRS = (function(NRS, $) {
 			if (url.lastIndexOf("#") == url.length-1) {
 				url = url.substr(0, url.length - 1);
 			}
-			url += "?account=" + NRS.accountRS + "&modal=transaction_info_modal" +
+			url += "?account=" + NRS.accountRS + "&chain=" + NRS.getActiveChainName() +
+				"&modal=transaction_info_modal" +
 				"&fullHash=" + fullHash +
 				"&sharedKey=" + sharedKey;
 			var sharedKeyLink = $("#shared_key_link");

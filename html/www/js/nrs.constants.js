@@ -275,5 +275,15 @@ var NRS = (function (NRS, $) {
         return true;
     };
 
+    NRS.findChainByName = function(chainName) {
+        for (var id in  NRS.constants.CHAIN_PROPERTIES) {
+            if (NRS.constants.CHAIN_PROPERTIES.hasOwnProperty(id) &&
+                NRS.constants.CHAIN_PROPERTIES[id].name == chainName) {
+                return id;
+            }
+        }
+        return false;
+    };
+
     return NRS;
 }(NRS || {}, jQuery));

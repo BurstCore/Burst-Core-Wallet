@@ -351,8 +351,12 @@ var NRS = (function(NRS, $, undefined) {
 
 				$("#dgs_search_account_center").mask("NXT-****-****-****-*****");
 				console.log("done initialization");
-				if (NRS.getUrlParameter("account")) {
-					NRS.login(false, NRS.getUrlParameter("account"));
+                var chain = NRS.getUrlParameter("chain");
+                if (NRS.getUrlParameter("account") && chain) {
+                    var chainId = NRS.findChainByName(chain);
+                    if (chainId !== false) {
+                        NRS.login(false, NRS.getUrlParameter("account"), null, false, false, chainId);
+                    }
 				} else if (savedPassphrase) {
 					$("#remember_me").prop("checked", true);
 					NRS.login(true, savedPassphrase, null, false, true);
