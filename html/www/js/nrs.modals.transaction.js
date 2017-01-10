@@ -1167,7 +1167,28 @@ var NRS = (function (NRS, $, undefined) {
                 data.transactions_formatted_html = childTransactions;
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();
+            } else if (NRS.isOfType(transaction, "CoinExchangeOrderIssue") || NRS.isOfType(transaction, "FxtCoinExchangeOrderIssue")) {
+                data = {
+                    "type": $.t("issue_coin_exchange_order")
+                };
+                data.chain_formatted_html = NRS.getChainLink(transaction.attachment.chain);
+                data.exchange_chain_formatted_html = NRS.getChainLink(transaction.attachment.exchangeChain);
+                var decimals = NRS.constants.CHAIN_PROPERTIES[transaction.attachment.chain].decimals;
+                data.quantity_formatted_html = NRS.formatQuantity(transaction.attachment.quantityQNT, decimals);
+                var exchangeDecimals = NRS.constants.CHAIN_PROPERTIES[transaction.attachment.exchangeChain].decimals;
+                data.price_formatted_html = NRS.formatQuantity(transaction.attachment.priceNQT, exchangeDecimals);
+
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
+            } else if (NRS.isOfType(transaction, "CoinExchangeOrderCancel") || NRS.isOfType(transaction, "FxtCoinExchangeOrderCancel")) {
+                data = {
+                    "type": $.t("cancel_coin_exchange_order")
+                };
+                data.order = transaction.attachment.order; // TODO how to link back to the exchanges?
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
             }
+
             if (NRS.notOfType(transaction, "ArbitraryMessage")) {
                 if (transaction.attachment) {
                     var transactionInfoOutputBottom = $("#transaction_info_output_bottom");
@@ -1345,7 +1366,7 @@ var NRS = (function (NRS, $, undefined) {
         var buyOffer;
         var sellOffer;
         NRS.sendRequest("getOffer", {
-            "offer": transaction.transaction
+            "offer": transaction.transaction // TODO, use full hash
         }, function (response) {
             buyOffer = response.buyOffer;
             sellOffer = response.sellOffer;

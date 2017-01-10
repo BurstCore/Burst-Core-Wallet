@@ -1881,5 +1881,7 @@
   "child_chain_block": "Child Chain Block",
   "messaging": "Messaging",
   "voting": "Voting",
-  "unsupported_transaction_type": "Unsupported transaction type __type__"
+  "unsupported_transaction_type": "Unsupported transaction type __type__",
+  "issue_coin_exchange_order": "Issue Coin Exchange Order",
+  "cancel_coin_exchange_order": "Cancel Coin Exchange Order"
 }

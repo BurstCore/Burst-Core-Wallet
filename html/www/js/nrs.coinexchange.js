@@ -34,7 +34,7 @@ var NRS = (function (NRS, $, undefined) {
     NRS.pages.coin_exchange_history = function () {
         NRS.sendRequest("getCoinExchangeTrades+", {
             "account": NRS.accountRS,
-            "includeChainInfo": true,
+            "includeChainInfo": false,
             "firstIndex": NRS.pageNumber * NRS.itemsPerPage - NRS.itemsPerPage,
             "lastIndex": NRS.pageNumber * NRS.itemsPerPage
         }, function (response) {
@@ -44,30 +44,27 @@ var NRS = (function (NRS, $, undefined) {
                     response.trades.pop();
                 }
                 var trades = response.trades;
-                var quantityDecimals = NRS.getNumberOfDecimals(trades, "quantityQNT", function(val) {
-                    return NRS.formatQuantity(val.quantityQNT, val.decimals);
-                });
+                var chainDecimals = NRS.constants.CHAIN_PROPERTIES[NRS.getActiveChain()].decimals;
+                var exchangeDecimals = NRS.constants.CHAIN_PROPERTIES[trades[0].exchange].decimals;
                 var priceDecimals = NRS.getNumberOfDecimals(trades, "priceNQT", function(val) {
-                    return NRS.formatOrderPricePerWholeQNT(val.priceNQT, val.decimals);
+                    return NRS.formatOrderPricePerWholeQNT(val.priceNQT, exchangeDecimals);
                 });
-                var amountDecimals = NRS.getNumberOfDecimals(trades, "totalNQT", function(val) {
-                    return NRS.formatAmount(NRS.calculateOrderTotalNQT(val.quantityQNT, val.priceNQT));
+                var amountDecimals = NRS.getNumberOfDecimals(trades, "amountNQT", function(val) {
+                    return NRS.formatQuantity(val.quantityQNT, chainDecimals);
                 });
                 var rows = "";
                 for (var i = 0; i < trades.length; i++) {
                     var trade = trades[i];
                     trade.priceNQT = new BigInteger(trade.priceNQT);
-                    trade.quantityQNT = new BigInteger(trade.quantityQNT);
-                    trade.totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(trade.priceNQT, trade.quantityQNT));
+                    trade.amountNQT = new BigInteger(trade.amountNQT);
                     rows += "<tr>" +
                         "<td>" + NRS.formatTimestamp(trade.timestamp) + "</td>" +
                         "<td>" + NRS.getTransactionLink(trade.orderFullHash) + "</td>" +
-                        "<td>" + NRS.getTransactionLink(trade.matchFullHash) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(trade.matchFullHash, null, false, trade.exchange) + "</td>" +
                         "<td>" + NRS.getChainLink(trade.chain) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, trade.decimals, false, quantityDecimals) + "</td>" +
-                        "<td class='asset_price numeric'>" + NRS.formatOrderPricePerWholeQNT(trade.priceNQT, trade.decimals, priceDecimals) + "</td>" +
-                        "<td class='numeric'>" + NRS.formatAmount(trade.totalNQT, false, false, amountDecimals) + "</td>" +
+                        "<td class='asset_price numeric'>" + NRS.formatAmount(trade.priceNQT, false, false, priceDecimals) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatAmount(trade.amountNQT, false, false, amountDecimals) + "</td>" +
                         "</tr>";
                 }
                 NRS.dataLoaded(rows);
