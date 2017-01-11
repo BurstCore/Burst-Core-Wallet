@@ -31,8 +31,8 @@ public final class BidOrderCancellationAttachment extends OrderCancellationAttac
         super(attachmentData);
     }
 
-    public BidOrderCancellationAttachment(long orderId) {
-        super(orderId);
+    public BidOrderCancellationAttachment(byte[] orderHash) {
+        super(orderHash);
     }
 
     @Override

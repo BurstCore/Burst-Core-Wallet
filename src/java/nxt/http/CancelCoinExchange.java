@@ -50,12 +50,13 @@ public final class CancelCoinExchange extends CreateTransaction {
         if (order.getChainId() != chain.getId()) {
             return INCORRECT_CHAIN;
         }
+        byte[] orderHash = order.getFullHash();
         // require the cancellation order to be submitted on the same chain as the order,
         // but always submit the transaction on the Fxt chain if it was one of the chains involved
         Chain exchange = Chain.getChain(order.getExchangeId());
         Chain txChain = (exchange.getId() == FxtChain.FXT.getId() ? exchange : chain);
         Attachment attachment = (txChain.getId() == FxtChain.FXT.getId() ?
-                new OrderCancelFxtAttachment(orderId) : new OrderCancelAttachment(orderId));
+                new OrderCancelFxtAttachment(orderHash) : new OrderCancelAttachment(orderHash));
         try {
             return createTransaction(req, account, attachment, txChain);
         } catch (NxtException.InsufficientBalanceException e) {

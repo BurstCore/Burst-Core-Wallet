@@ -25,34 +25,43 @@ import java.nio.ByteBuffer;
 public abstract class OrderCancellationAttachment extends Attachment.AbstractAttachment {
 
     private final long orderId;
+    private final byte[] orderHash;
 
     OrderCancellationAttachment(ByteBuffer buffer) {
         super(buffer);
-        this.orderId = buffer.getLong();
+        orderHash = new byte[32];
+        buffer.get(orderHash);
+        orderId = Convert.fullHashToId(orderHash);
     }
 
     OrderCancellationAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        this.orderId = Convert.parseUnsignedLong((String) attachmentData.get("order"));
+        orderHash = Convert.parseHexString((String)attachmentData.get("orderHash"));
+        orderId = Convert.fullHashToId(orderHash);
     }
 
-    OrderCancellationAttachment(long orderId) {
-        this.orderId = orderId;
+    OrderCancellationAttachment(byte[] orderHash) {
+        this.orderHash = orderHash;
+        this.orderId = Convert.fullHashToId(this.orderHash);
     }
 
     @Override
     protected int getMySize() {
-        return 8;
+        return 32;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
-        buffer.putLong(orderId);
+        buffer.put(orderHash);
     }
 
     @Override
     protected void putMyJSON(JSONObject attachment) {
-        attachment.put("order", Long.toUnsignedString(orderId));
+        attachment.put("orderHash", Convert.toHexString(orderHash));
+    }
+
+    public byte[] getOrderHash() {
+        return orderHash;
     }
 
     public long getOrderId() {

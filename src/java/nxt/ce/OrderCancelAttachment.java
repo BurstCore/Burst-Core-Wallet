@@ -27,35 +27,49 @@ import org.json.simple.JSONObject;
  */
 public class OrderCancelAttachment extends Attachment.AbstractAttachment {
 
+    private final byte[] orderHash;
     private final long orderId;
 
-    public OrderCancelAttachment(long orderId) {
-        this.orderId = orderId;
+    public OrderCancelAttachment(byte[] orderHash) {
+        this.orderHash = orderHash;
+        this.orderId = Convert.fullHashToId(this.orderHash);
     }
 
     OrderCancelAttachment(ByteBuffer buffer) {
         super(buffer);
-        orderId = buffer.getLong();
+        orderHash = new byte[32];
+        buffer.get(orderHash);
+        orderId = Convert.fullHashToId(orderHash);
     }
 
     OrderCancelAttachment(JSONObject data) {
         super(data);
-        this.orderId = Convert.parseUnsignedLong((String)data.get("order"));
+        orderHash = Convert.parseHexString((String)data.get("orderHash"));
+        orderId = Convert.fullHashToId(orderHash);
     }
 
     @Override
     protected int getMySize() {
-        return 8;
+        return 32;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
-        buffer.putLong(orderId);
+        buffer.put(orderHash);
     }
 
     @Override
     protected void putMyJSON(JSONObject attachment) {
-        attachment.put("order", Long.toUnsignedString(orderId));
+        attachment.put("orderHash", Convert.toHexString(orderHash));
+    }
+
+    /**
+     * Return the exchange order hash
+     *
+     * @return                      Exchange order hash
+     */
+    public byte[] getOrderHash() {
+        return orderHash;
     }
 
     /**

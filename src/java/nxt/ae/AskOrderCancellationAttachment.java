@@ -31,8 +31,8 @@ public final class AskOrderCancellationAttachment extends OrderCancellationAttac
         super(attachmentData);
     }
 
-    public AskOrderCancellationAttachment(long orderId) {
-        super(orderId);
+    public AskOrderCancellationAttachment(byte[] orderHash) {
+        super(orderHash);
     }
 
     @Override

@@ -45,7 +45,7 @@ public final class CancelAskOrder extends CreateTransaction {
         if (orderData == null || orderData.getAccountId() != account.getId()) {
             return UNKNOWN_ORDER;
         }
-        Attachment attachment = new AskOrderCancellationAttachment(orderId);
+        Attachment attachment = new AskOrderCancellationAttachment(orderData.getFullHash());
         return createTransaction(req, account, attachment);
     }
 

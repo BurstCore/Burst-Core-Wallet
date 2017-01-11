@@ -25,8 +25,8 @@ import java.nio.ByteBuffer;
  */
 public class OrderCancelFxtAttachment extends OrderCancelAttachment {
 
-    public OrderCancelFxtAttachment(long orderId) {
-        super(orderId);
+    public OrderCancelFxtAttachment(byte[] orderHash) {
+        super(orderHash);
     }
 
     OrderCancelFxtAttachment(ByteBuffer buffer) {
