@@ -131,7 +131,7 @@ var NRS = (function(NRS, $) {
     };
 
     NRS.getChain = function(chain) {
-        return String(NRS.constants.CHAIN_PROPERTIES[chain]);
+        return NRS.constants.CHAIN_PROPERTIES[chain];
     };
 
     NRS.getChainName = function(chain) {

@@ -997,7 +997,7 @@ NRS.addPagination = function () {
 			groupName: "VARCHAR(30) COLLATE NOCASE"
 		};
         schema["coins"] = {
-            coin: {
+            id: {
                 "primary": true,
                 "type": "NUMBER"
             },

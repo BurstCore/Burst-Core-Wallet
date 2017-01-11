@@ -164,7 +164,7 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.saveCoinBookmarks = function(coin, callback) {
         var newCoin = {
-            "coin": String(coin.id),
+            "id": String(coin.id),
             "name": String(coin.name),
             "decimals": parseInt(coin.decimals, 10),
             "groupName": ""
@@ -194,7 +194,7 @@ var NRS = (function (NRS, $, undefined) {
                     callback([], coins);
                 }
             } else {
-                NRS.storageInsert("coins", "coin", newCoins, function () {
+                NRS.storageInsert("coins", "id", newCoins, function () {
                     $.each(newCoins, function (key, coin) {
                         coinIds.push(coin.id);
                         coins.push(coin);
@@ -425,7 +425,7 @@ var NRS = (function (NRS, $, undefined) {
         }
 
         NRS.storageSelect("coins", [{
-            "coin": currentCoinID
+            "id": currentCoinID
         }], function (error, coin) {
             if (coin && coin.length && coin[0].id == currentCoinID) {
                 NRS.loadCoin(coin[0], refresh);
@@ -507,8 +507,8 @@ var NRS = (function (NRS, $, undefined) {
             $("#your_coin_balance").html("0");
         }
 
-        NRS.loadCoinOrders("ask", coinId, refresh);
-        NRS.loadCoinOrders("bid", coinId, refresh);
+        NRS.loadCoinOrders(NRS.getActiveChain(), refresh);
+        NRS.loadCoinOrders(coinId, refresh);
         NRS.getCoinTradeHistory(coinId, refresh);
     };
 
@@ -558,7 +558,7 @@ var NRS = (function (NRS, $, undefined) {
         NRS.dataLoadFinished($("#coin_exchange_" + type + "_orders_table"), !refresh);
     }
 
-    NRS.loadCoinOrders = function (type, coinId, refresh) {
+    NRS.loadCoinOrders = function (coinId, refresh) {
         var params = {
             "chain": coinId,
             "firstIndex": 0,
