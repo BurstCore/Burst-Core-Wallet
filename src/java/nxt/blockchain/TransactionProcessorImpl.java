@@ -537,7 +537,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 }
                 return;
             }
-            transactions.forEach(transaction -> removeUnconfirmedTransaction(transaction));
+            transactions.forEach(this::removeUnconfirmedTransaction);
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
         }

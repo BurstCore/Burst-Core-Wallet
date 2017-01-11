@@ -32,9 +32,7 @@ final class GetCumulativeDifficulty {
      */
     static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetCumulativeDifficultyMessage request) {
         Block lastBlock = Nxt.getBlockchain().getLastBlock();
-        NetworkMessage.CumulativeDifficultyMessage response =
-                new NetworkMessage.CumulativeDifficultyMessage(request.getMessageId(),
-                        lastBlock.getCumulativeDifficulty(), lastBlock.getHeight());
-        return response;
+        return new NetworkMessage.CumulativeDifficultyMessage(request.getMessageId(),
+                lastBlock.getCumulativeDifficulty(), lastBlock.getHeight());
     }
 }

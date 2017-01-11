@@ -61,12 +61,7 @@ public enum HashFunction {
         }
     };
 
-    private static final ThreadLocal<Scrypt> threadLocalScrypt = new ThreadLocal<Scrypt>() {
-        @Override
-        protected Scrypt initialValue() {
-            return new Scrypt();
-        }
-    };
+    private static final ThreadLocal<Scrypt> threadLocalScrypt = ThreadLocal.withInitial(() -> new Scrypt());
 
     private final byte id;
 

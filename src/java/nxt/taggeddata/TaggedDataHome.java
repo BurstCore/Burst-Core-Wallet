@@ -310,7 +310,7 @@ public final class TaggedDataHome {
         private int blockTimestamp;
         private int height;
 
-        public TaggedData(Transaction transaction, TaggedDataAttachment attachment) {
+        private TaggedData(Transaction transaction, TaggedDataAttachment attachment) {
             this(transaction, attachment, Nxt.getBlockchain().getLastBlockTimestamp(), Nxt.getBlockchain().getHeight());
         }
 

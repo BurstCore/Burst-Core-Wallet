@@ -58,9 +58,7 @@ public final class BlockDb {
                     if (cacheHeight <= height - BLOCK_CACHE_SIZE || cacheHeight >= height) {
                         cacheBlock.getFxtTransactions().forEach(fxtTransaction -> {
                             fxtTransactionCache.remove(fxtTransaction.getId());
-                            fxtTransaction.getChildTransactions().forEach(childTransaction -> {
-                                childTransactionCache.remove(ChainTransactionId.getChainTransactionId(childTransaction));
-                            });
+                            fxtTransaction.getChildTransactions().forEach(childTransaction -> childTransactionCache.remove(ChainTransactionId.getChainTransactionId(childTransaction)));
                         });
                         heightMap.remove(cacheHeight);
                         it.remove();
@@ -68,9 +66,7 @@ public final class BlockDb {
                 }
                 block.getFxtTransactions().forEach(fxtTransaction -> {
                     fxtTransactionCache.put(fxtTransaction.getId(), (FxtTransactionImpl)fxtTransaction);
-                    fxtTransaction.getChildTransactions().forEach(childTransaction -> {
-                        childTransactionCache.put(ChainTransactionId.getChainTransactionId(childTransaction), (ChildTransactionImpl)childTransaction);
-                    });
+                    fxtTransaction.getChildTransactions().forEach(childTransaction -> childTransactionCache.put(ChainTransactionId.getChainTransactionId(childTransaction), (ChildTransactionImpl)childTransaction));
                 });
                 heightMap.put(height, (BlockImpl)block);
                 blockCache.put(block.getId(), (BlockImpl)block);

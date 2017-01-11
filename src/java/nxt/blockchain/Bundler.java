@@ -85,9 +85,7 @@ public final class Bundler {
     }
 
     public static void stopAccountBundlers(long accountId) {
-        bundlers.values().forEach(childChainBundlers -> {
-            childChainBundlers.remove(accountId);
-        });
+        bundlers.values().forEach(childChainBundlers -> childChainBundlers.remove(accountId));
     }
 
     public static void stopChildChainBundlers(ChildChain childChain) {

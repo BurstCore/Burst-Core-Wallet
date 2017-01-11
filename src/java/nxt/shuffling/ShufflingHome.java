@@ -408,11 +408,10 @@ public final class ShufflingHome {
             // Calculate the token for the current sender by iteratively encrypting it using the public key of all the participants
             // which did not perform shuffle processing yet
             byte[] bytesToEncrypt = recipientPublicKey;
-            byte[] nonce = this.hash;
             for (int i = shufflingParticipants.size() - 1; i > participantIndex; i--) {
                 ShufflingParticipantHome.ShufflingParticipant participant = shufflingParticipants.get(i);
                 byte[] participantPublicKey = Account.getPublicKey(participant.getAccountId());
-                AnonymouslyEncryptedData encryptedData = AnonymouslyEncryptedData.encrypt(bytesToEncrypt, secretPhrase, participantPublicKey, nonce);
+                AnonymouslyEncryptedData encryptedData = AnonymouslyEncryptedData.encrypt(bytesToEncrypt, secretPhrase, participantPublicKey, this.hash);
                 bytesToEncrypt = encryptedData.getBytes();
             }
             outputDataList.add(bytesToEncrypt);

@@ -1570,7 +1570,7 @@ public abstract class NetworkMessage {
             bytes.putLong(messageId);
             bytes.put(isLastBlock ? (byte)1 : (byte)0);
             bytes.putShort((short)blockIds.size());
-            blockIds.forEach((id) -> bytes.putLong(id));
+            blockIds.forEach(bytes::putLong);
         }
 
         /**
@@ -1836,7 +1836,7 @@ public abstract class NetworkMessage {
             super.getBytes(bytes);
             bytes.putLong(messageId);
             bytes.putShort((short)blockIds.size());
-            blockIds.forEach((id) -> bytes.putLong(id));
+            blockIds.forEach(bytes::putLong);
         }
 
         /**
@@ -1978,7 +1978,7 @@ public abstract class NetworkMessage {
             super.getBytes(bytes);
             bytes.putLong(messageId);
             bytes.putLong(blockId).putInt(limit).putShort((short)blockIds.size());
-            blockIds.forEach((id) -> bytes.putLong(id));
+            blockIds.forEach(bytes::putLong);
         }
 
         /**
@@ -2623,7 +2623,7 @@ public abstract class NetworkMessage {
             super.getBytes(bytes);
             bytes.putLong(messageId);
             bytes.putShort((short)exclusionIds.size());
-            exclusionIds.forEach((id) -> bytes.putLong(id));
+            exclusionIds.forEach(bytes::putLong);
         }
 
         /**
@@ -3140,8 +3140,8 @@ public abstract class NetworkMessage {
         void getBytes(ByteBuffer bytes) throws BufferOverflowException {
             super.getBytes(bytes);
             bytes.putShort((short)transactionIds.size());
-            for (int i=0; i<transactionIds.size(); i++) {
-                transactionIds.get(i).put(bytes);
+            for (ChainTransactionId transactionId : transactionIds) {
+                transactionId.put(bytes);
             }
         }
 
@@ -3548,7 +3548,7 @@ public abstract class NetworkMessage {
         /**
          * Construct an encoded transaction
          *
-         * @param   transactionBytes
+         * @param   transactionBytes    transaction bytes
          */
         private TransactionBytes(byte[] transactionBytes) {
             this.transactionBytes = transactionBytes;

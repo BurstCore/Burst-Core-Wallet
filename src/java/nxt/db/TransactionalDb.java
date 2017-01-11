@@ -210,7 +210,7 @@ public class TransactionalDb extends BasicDb {
 
     private final class DbConnection extends FilteredConnection {
 
-        long txStart = 0;
+        private long txStart = 0;
         private volatile String schema;
 
         private DbConnection(Connection con, String schema) throws SQLException {

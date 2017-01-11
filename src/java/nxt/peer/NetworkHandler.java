@@ -661,7 +661,7 @@ public final class NetworkHandler implements Runnable {
                     if (key == null) {
                         Logger.logErrorMessage("Unable to register socket channel for " + peer.getHost());
                     } else {
-                        Peers.peersService.execute(() -> peer.setInbound());
+                        Peers.peersService.execute(peer::setInbound);
                     }
                 }
             }
@@ -704,7 +704,7 @@ public final class NetworkHandler implements Runnable {
                     count = channel.read(buffer);
                     if (count <= 0) {
                         if (count < 0) {
-                            Peers.peersService.execute(() -> peer.disconnectPeer());
+                            Peers.peersService.execute(peer::disconnectPeer);
                         }
                         break;
                     }
@@ -721,13 +721,13 @@ public final class NetworkHandler implements Runnable {
                     if (!Arrays.equals(hdrBytes, MESSAGE_HEADER_MAGIC)) {
                         Logger.logDebugMessage("Incorrect message header received from " + peer.getHost());
                         Logger.logDebugMessage("  " + Arrays.toString(hdrBytes));
-                        Peers.peersService.execute(() -> peer.disconnectPeer());
+                        Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     }
                     if ( length < 1 || length > MAX_MESSAGE_SIZE) {
                         Logger.logDebugMessage("Message length " + length + " for message from " + peer.getHost()
                                 + " is not valid");
-                        Peers.peersService.execute(() -> peer.disconnectPeer());
+                        Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     }
                     byte[] msgBytes = new byte[MESSAGE_HEADER_LENGTH + length];
@@ -757,7 +757,7 @@ public final class NetworkHandler implements Runnable {
                 }
             }
         } catch (IOException exc) {
-            Peers.peersService.execute(() -> peer.disconnectPeer());
+            Peers.peersService.execute(peer::disconnectPeer);
         }
     }
 
@@ -796,7 +796,7 @@ public final class NetworkHandler implements Runnable {
                     } catch (BufferOverflowException exc) {
                         Logger.logErrorMessage("Buffer is too short for '" + message.getMessageName()
                                 + "' message from " + peer.getHost());
-                        Peers.peersService.execute(() -> peer.disconnectPeer());
+                        Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     }
                     peer.setOutputBuffer(buffer);
@@ -815,7 +815,7 @@ public final class NetworkHandler implements Runnable {
                 peer.setOutputBuffer(null);
             }
         } catch (IOException exc) {
-            Peers.peersService.execute(() -> peer.disconnectPeer());
+            Peers.peersService.execute(peer::disconnectPeer);
         }
     }
 

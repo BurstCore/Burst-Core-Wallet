@@ -635,7 +635,7 @@ public final class Peers {
                 }
             }
             if (!connectList.isEmpty()) {
-                connectList.forEach(peer -> peersService.execute(() -> peer.connectPeer()));
+                connectList.forEach(peer -> peersService.execute(peer::connectPeer));
             }
             //
             // Remove peers if we have too many
@@ -671,7 +671,7 @@ public final class Peers {
                     if (!bundlerRates.isEmpty()) {
                         Logger.logDebugMessage("Broadcasting our bundler rates");
                         List<BundlerRate> rates = new ArrayList<>();
-                        bundlerRates.values().forEach(rateList -> rateList.forEach(rate -> rates.add(rate)));
+                        bundlerRates.values().forEach(rateList -> rateList.forEach(rates::add));
                         NetworkHandler.broadcastMessage(new NetworkMessage.BundlerRateMessage(rates));
                     }
                 }
@@ -782,7 +782,7 @@ public final class Peers {
         }
     };
 
-    /**
+    /*
      * Update the peer database when the services provided by a peer changes
      */
     static {
@@ -918,13 +918,7 @@ public final class Peers {
             while (it.hasNext()) {
                 Map.Entry<Long, List<BundlerRate>> entry = it.next();
                 List<BundlerRate> rates = entry.getValue();
-                Iterator<BundlerRate> rit = rates.iterator();
-                while (rit.hasNext()) {
-                    BundlerRate rate = rit.next();
-                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + 15 * 60)) {
-                        rit.remove();
-                    }
-                }
+                rates.removeIf(rate -> rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + 15 * 60));
                 if (rates.isEmpty()) {
                     it.remove();
                 }

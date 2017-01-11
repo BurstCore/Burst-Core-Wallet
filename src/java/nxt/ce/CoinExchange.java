@@ -210,8 +210,7 @@ public final class CoinExchange {
                 }
             }
         }
-        DbIterator<Order> it = orderTable.getManyBy(dbClause, from, to, "ORDER BY bid_price DESC");
-        return it;
+        return orderTable.getManyBy(dbClause, from, to, "ORDER BY bid_price DESC");
     }
 
     /**
@@ -290,8 +289,7 @@ public final class CoinExchange {
                 }
             }
         }
-        DbIterator<Trade> it = tradeTable.getManyBy(dbClause, from, to, "ORDER BY height DESC, db_id DESC");
-        return it;
+        return tradeTable.getManyBy(dbClause, from, to, "ORDER BY height DESC, db_id DESC");
     }
 
     /**

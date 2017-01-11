@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -148,13 +147,7 @@ final class BlockInventory {
                         blockCache.put(block.getId(), block);
                     }
                     int now = Nxt.getEpochTime();
-                    Iterator<Block> it = blockCache.values().iterator();
-                    while (it.hasNext()) {
-                        Block cacheBlock = it.next();
-                        if (cacheBlock.getTimestamp() < now - 10*60) {
-                            it.remove();
-                        }
-                    }
+                    blockCache.values().removeIf(cacheBlock -> cacheBlock.getTimestamp() < now - 10 * 60);
                 } catch (NxtException | RuntimeException e) {
                     if (feederPeer != null) {
                         feederPeer.blacklist(e);

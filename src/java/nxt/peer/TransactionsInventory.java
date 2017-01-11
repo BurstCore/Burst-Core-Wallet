@@ -132,7 +132,7 @@ public final class TransactionsInventory {
                     Logger.logErrorMessage(e.getMessage(), e); //should not happen
                 }
             } finally {
-                requestIds.forEach(id -> pendingTransactions.remove(id));
+                requestIds.forEach(pendingTransactions::remove);
             }
         });
         return null;
@@ -149,8 +149,6 @@ public final class TransactionsInventory {
     }
 
     public static void cacheTransactions(List<? extends Transaction> transactions) {
-        transactions.forEach(transaction -> {
-            transactionCache.put(ChainTransactionId.getChainTransactionId(transaction), transaction);
-        });
+        transactions.forEach(transaction -> transactionCache.put(ChainTransactionId.getChainTransactionId(transaction), transaction));
     }
 }

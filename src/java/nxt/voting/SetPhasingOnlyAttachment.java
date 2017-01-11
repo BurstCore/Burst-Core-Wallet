@@ -102,9 +102,7 @@ public final class SetPhasingOnlyAttachment extends Attachment.AbstractAttachmen
         phasingParams.putMyJSON(phasingControlParams);
         json.put("phasingControlParams", phasingControlParams);
         JSONObject maxFeesJSON = new JSONObject();
-        maxFees.forEach((chainId,maxFee) -> {
-            maxFeesJSON.put(chainId, maxFee);
-        });
+        maxFees.forEach(maxFeesJSON::put);
         json.put("controlMaxFees", maxFeesJSON);
         json.put("controlMinDuration", minDuration);
         json.put("controlMaxDuration", maxDuration);

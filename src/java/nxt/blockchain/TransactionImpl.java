@@ -618,7 +618,7 @@ public abstract class TransactionImpl implements Transaction {
 
     private static final int SIGNATURE_OFFSET = 4 + 1 + 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8;
 
-    protected int getSize() {
+    int getSize() {
         return SIGNATURE_OFFSET + 64 + 4 + 8 + 4 + appendagesSize;
     }
 
@@ -666,7 +666,7 @@ public abstract class TransactionImpl implements Transaction {
 
     }
 
-    protected void validateId() throws NxtException.ValidationException {
+    void validateId() throws NxtException.ValidationException {
         if (getId() == 0L) {
             throw new NxtException.NotValidException("Invalid transaction id 0");
         }

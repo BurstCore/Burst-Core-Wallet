@@ -66,7 +66,7 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
     @Override
     synchronized void unsetBlock() {
         super.unsetBlock();
-        getChildTransactions().forEach(childTransaction -> childTransaction.unsetFxtTransaction());
+        getChildTransactions().forEach(ChildTransactionImpl::unsetFxtTransaction);
         childTransactions = null;
         sortedChildTransactions = null;
     }

@@ -110,7 +110,7 @@ public class AccountLedger {
         /**
          * Create the account ledger table
          */
-        public AccountLedgerTable() {
+        private AccountLedgerTable() {
             super("public.account_ledger");
         }
 
@@ -119,7 +119,7 @@ public class AccountLedger {
          *
          * @param   ledgerEntry             Ledger entry
          */
-        public void insert(LedgerEntry ledgerEntry) {
+        private void insert(LedgerEntry ledgerEntry) {
             try (Connection con = getConnection()) {
                 ledgerEntry.save(con);
             } catch (SQLException e) {

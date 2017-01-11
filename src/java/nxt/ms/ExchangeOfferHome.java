@@ -258,7 +258,7 @@ public final class ExchangeOfferHome {
         account.addToUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, eventId, Math.multiplyExact(units, rateNQT) - totalAmountNQT);
     }
 
-    void removeOffer(LedgerEvent event, BuyOffer buyOffer) {
+    private void removeOffer(LedgerEvent event, BuyOffer buyOffer) {
         SellOffer sellOffer = buyOffer.getCounterOffer();
 
         removeBuyOffer(buyOffer);
@@ -272,7 +272,7 @@ public final class ExchangeOfferHome {
 
     public abstract class ExchangeOffer {
 
-        protected final long id;
+        final long id;
         private final byte[] hash;
         private final long currencyId;
         private final long accountId;
