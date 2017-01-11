@@ -277,7 +277,6 @@ var NRS = (function(NRS, $) {
                 "<td>" + NRS.formatAmount(block.totalFeeNQT) + "</td>" +
                 "<td>" + NRS.formatAmount(block.numberOfTransactions) + "</td>" +
                 "<td>" + NRS.getAccountLink(block, "generator") + "</td>" +
-                "<td>" + NRS.formatVolume(block.payloadLength) + "</td>" +
 				"<td>" + NRS.baseTargetPercent(block).pad(4) + " %</td>" +
             "</tr>";
 		}
@@ -289,7 +288,7 @@ var NRS = (function(NRS, $) {
 			}, function(response) {
 				if (response.numberOfBlocks && response.numberOfBlocks > 0) {
 					$("#forged_blocks_total").html(response.numberOfBlocks).removeClass("loading_dots");
-                    var avgFee = new Big(NRS.accountInfo.forgedBalanceNQT).div(response.numberOfBlocks).div(new Big("100000000")).toFixed(2);
+                    var avgFee = new Big(NRS.accountInfo.forgedBalanceNQT).div(response.numberOfBlocks).div(new Big(NRS.getActiveChainOneCoin())).toFixed(2);
                     $("#blocks_average_fee").html(NRS.formatStyledAmount(NRS.convertToNQT(avgFee))).removeClass("loading_dots");
 				} else {
 					$("#forged_blocks_total").html(0).removeClass("loading_dots");
@@ -312,8 +311,8 @@ var NRS = (function(NRS, $) {
             var averageFee = 0;
             var averageAmount = 0;
 			if (blocks.length) {
-				averageFee = new Big(totalFees.toString()).div(new Big("100000000")).div(new Big(String(blocks.length))).toFixed(2);
-				averageAmount = new Big(totalAmount.toString()).div(new Big("100000000")).div(new Big(String(blocks.length))).toFixed(2);
+				averageFee = new Big(totalFees.toString()).div(new Big(NRS.getActiveChainOneCoin())).div(new Big(String(blocks.length))).toFixed(2);
+				averageAmount = new Big(totalAmount.toString()).div(new Big(NRS.getActiveChainOneCoin())).div(new Big(String(blocks.length))).toFixed(2);
 			}
 			averageFee = NRS.convertToNQT(averageFee);
 			averageAmount = NRS.convertToNQT(averageAmount);

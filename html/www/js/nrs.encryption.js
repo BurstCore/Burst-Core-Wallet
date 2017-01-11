@@ -361,7 +361,7 @@ var NRS = (function (NRS, $) {
 		var formEl = (options.formEl ? NRS.escapeRespStr(options.formEl) : "#transaction_info_output_bottom");
 		var outputEl = (options.outputEl ? NRS.escapeRespStr(options.outputEl) : "#transaction_info_output_bottom");
 		var output = "";
-		var identifier = (options.identifier ? transaction[options.identifier] : transaction.transaction);
+		var identifier = (options.identifier ? transaction[options.identifier] : transaction.fullHash);
 
 		//check in cache first..
 		if (_decryptedTransactions && _decryptedTransactions[identifier]) {
@@ -601,7 +601,7 @@ var NRS = (function (NRS, $) {
 						return false;
 					}
 				}
-                output += formatMessageArea(title, nrFields, data, _encryptedNote.options, _encryptedNote.transaction);
+                output += formatMessageArea(title, nrFields, data, _encryptedNote.options, NRS.formatFullHash(_encryptedNote.fullHash));
 			}
 		});
 		if (decryptionError) {

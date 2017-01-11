@@ -233,7 +233,7 @@ var NRS = (function(NRS, $) {
 
     var getTransactionLink = function (transaction, coin) {
         if (coin == "NXT") {
-            return "<a href='#' class='show_transaction_modal_action' data-transaction='" + transaction + "'>" + transaction + "</a>";
+            return NRS.getTransactionLink(transaction);
         }
         if (coin == "BTC") {
             return "<a target='_blank' href='https://blockchain.info/tx/" + transaction + "'>" + transaction + "</a>";
@@ -283,7 +283,7 @@ var NRS = (function(NRS, $) {
                         row += "<td>" + getAddressLink(data.withdraw, depositAddresses[i].pair.split('_')[1]) + "</td>";
                         row += "<td>" + data.outgoingCoin + "</td>";
                         row += "<td>" + data.outgoingType + "</td>";
-                        row += "<td>" + getTransactionLink(data.transaction, depositAddresses[i].pair.split('_')[1]) + "</td>";
+                        row += "<td>" + data.transaction + "</td>"; // TODO fix link
                         NRS.logConsole(row);
                         callback(null, row);
                     }, true);
@@ -578,7 +578,7 @@ var NRS = (function(NRS, $) {
                 modal.find(".error_message").html("").hide();
                 rate.val(data.success.quotedRate);
                 fee.val(data.success.minerFee);
-                // add 1 NXT fee to make sure the net amount is what requested by shape shift
+                // add 1 to fee to make sure the net amount is what requested by shape shift
                 depositAmount.val(parseFloat(data.success.depositAmount) + 1);
                 depositAddress.val(data.success.deposit);
                 expiration.val(NRS.formatTimestamp(data.success.expiration, false, true));

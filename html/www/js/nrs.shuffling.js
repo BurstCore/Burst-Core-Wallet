@@ -99,7 +99,7 @@ var NRS = (function(NRS, $) {
                     }
                     return "<span>" + $.t("already_joined") + "</span>";
                 })(),
-            shufflingFormatted: NRS.getTransactionLink(response.shuffling),
+            shufflingFormatted: NRS.getTransactionLink(response.shufflingFullHash),
             stageLabel: shufflerStage,
             shufflerStatus: shufflerStatus,
             shufflerIndicatorFormatted: shufflerIndicatorFormatted,
@@ -117,9 +117,9 @@ var NRS = (function(NRS, $) {
             })(),
             holdingFormatted: (function () {
                 switch (response.holdingType) {
-                    case 0: return 'NXT';
-                    case 1: return NRS.getTransactionLink(response.holding) + " (" + $.t('asset') + ")";
-                    case 2: return NRS.getTransactionLink(response.holding, response.holdingInfo.code)  + " (" + $.t('currency') + ")";
+                    case 0: return NRS.getActiveChainName();
+                    case 1: return NRS.getEntityLink(response.holding, response.holdingType) + " (" + $.t('asset') + ")";
+                    case 2: return NRS.getEntityLink(response.holding, response.holdingType, response.holdingInfo.code)  + " (" + $.t('currency') + ")";
                 }
             })(),
             participants: NRS.escapeRespStr(response.registrantCount) + " / " + NRS.escapeRespStr(response.participantCount),
@@ -428,7 +428,7 @@ var NRS = (function(NRS, $) {
     NRS.forms.shufflingCreateComplete = function(response) {
         $.growl($.t("shuffling_created"));
         // After shuffling created we show the start shuffler modal
-        $("#shuffler_start_shuffling_id").html(response.transaction);
+        $("#shuffler_start_shuffling_id").html(NRS.fullHashToId(response.fullHash));
         $("#shuffler_start_shuffling_full_hash").val(response.fullHash);
         $('#m_shuffler_start_modal').modal("show");
     };

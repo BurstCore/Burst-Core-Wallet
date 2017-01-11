@@ -57,7 +57,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
             }
         });
-        //convert NXT to NQT...
+        //convert coin to NQT...
         var field = "N/A";
         try {
             var nxtFields = [
@@ -74,7 +74,8 @@ var NRS = (function (NRS, $, undefined) {
                 ["minBalanceNXT", "minBalance"],
                 ["shufflingAmountNXT", "amount"],
                 ["monitorAmountNXT", "amount"],
-                ["monitorThresholdNXT", "threshold"]
+                ["monitorThresholdNXT", "threshold"],
+                ["minRateNXTPerFXT", "minRateNQTPerFXT"]
             ];
 
             for (i = 0; i < nxtFields.length; i++) {
@@ -190,6 +191,10 @@ var NRS = (function (NRS, $, undefined) {
                 "accountRS": accountRS
             });
             return;
+        }
+
+        if (!data.chain) {
+            data.chain = NRS.getActiveChain();
         }
 
         //check to see if secretPhrase supplied matches logged in account, if not - show error.
@@ -505,7 +510,9 @@ var NRS = (function (NRS, $, undefined) {
             }, data);
             return;
         }
-        var payload = transactionBytes.substr(0, 192) + signature + transactionBytes.substr(320);
+        var sigPos = 2 * 69; // 2 * (bytes before signature from TransactionImpl newTransactionBuilder())
+        var sigLen = 2 * 64;
+        var payload = transactionBytes.substr(0, sigPos) + signature + transactionBytes.substr(sigPos + sigLen);
         if (data.broadcast == "false") {
             response.transactionBytes = payload;
             response.transactionJSON.signature = signature;
@@ -520,35 +527,44 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.verifyTransactionBytes = function (byteArray, requestType, data, attachment, isVerifyECBlock) {
         var transaction = {};
-        transaction.type = byteArray[0];
-        transaction.version = (byteArray[1] & 0xF0) >> 4;
-        transaction.subtype = byteArray[1] & 0x0F;
-        transaction.timestamp = String(converters.byteArrayToSignedInt32(byteArray, 2));
-        transaction.deadline = String(converters.byteArrayToSignedShort(byteArray, 6));
-        transaction.publicKey = converters.byteArrayToHexString(byteArray.slice(8, 40));
-        transaction.recipient = String(converters.byteArrayToBigInteger(byteArray, 40));
-        transaction.amountNQT = String(converters.byteArrayToBigInteger(byteArray, 48));
-        transaction.feeNQT = String(converters.byteArrayToBigInteger(byteArray, 56));
-
-        var refHash = byteArray.slice(64, 96);
-        transaction.referencedTransactionFullHash = converters.byteArrayToHexString(refHash);
-        if (transaction.referencedTransactionFullHash == "0000000000000000000000000000000000000000000000000000000000000000") {
-            transaction.referencedTransactionFullHash = "";
+        var pos = 0;
+        transaction.chain = String(converters.byteArrayToSignedInt32(byteArray, pos));
+        pos += 4;
+        transaction.type = byteArray[pos++];
+        // Patch until I find the official way of converting JS byte to signed byte
+        if (transaction.type >= 128) {
+            transaction.type -= 256;
         }
-        transaction.flags = 0;
-        if (transaction.version > 0) {
-            transaction.flags = converters.byteArrayToSignedInt32(byteArray, 160);
-            transaction.ecBlockHeight = String(converters.byteArrayToSignedInt32(byteArray, 164));
-            transaction.ecBlockId = String(converters.byteArrayToBigInteger(byteArray, 168));
-            if (isVerifyECBlock) {
-                var ecBlock = NRS.constants.LAST_KNOWN_BLOCK;
-                if (ecBlock.id != "0") {
-                    if (transaction.ecBlockHeight != ecBlock.height) {
-                        return false;
-                    }
-                    if (transaction.ecBlockId != ecBlock.id) {
-                        return false;
-                    }
+        transaction.subtype = byteArray[pos++];
+        transaction.version = byteArray[pos++];
+        transaction.timestamp = String(converters.byteArrayToSignedInt32(byteArray, pos));
+        pos += 4;
+        transaction.deadline = String(converters.byteArrayToSignedShort(byteArray, pos));
+        pos += 2;
+        transaction.publicKey = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+        pos += 32;
+        transaction.recipient = String(converters.byteArrayToBigInteger(byteArray, pos));
+        pos += 8;
+        transaction.amountNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+        pos += 8;
+        transaction.feeNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+        pos += 8;
+        transaction.signature = byteArray.slice(pos, pos + 64);
+        pos += 64;
+        transaction.ecBlockHeight = String(converters.byteArrayToSignedInt32(byteArray, pos));
+        pos += 4;
+        transaction.ecBlockId = String(converters.byteArrayToBigInteger(byteArray, pos));
+        pos += 8;
+        transaction.flags = String(converters.byteArrayToSignedInt32(byteArray, pos));
+        pos += 4;
+        if (isVerifyECBlock) {
+            var ecBlock = NRS.constants.LAST_KNOWN_BLOCK;
+            if (ecBlock.id != "0") {
+                if (transaction.ecBlockHeight != ecBlock.height) {
+                    return false;
+                }
+                if (transaction.ecBlockId != ecBlock.id) {
+                    return false;
                 }
             }
         }
@@ -562,9 +578,7 @@ var NRS = (function (NRS, $, undefined) {
         }
 
         if (transaction.recipient !== data.recipient) {
-            if ((data.recipient == NRS.constants.GENESIS || data.recipient == "") && transaction.recipient == "0") {
-                //ok
-            } else {
+            if (!((data.recipient === undefined || data.recipient == "") && transaction.recipient == "0")) {
                 return false;
             }
         }
@@ -577,19 +591,12 @@ var NRS = (function (NRS, $, undefined) {
             if (transaction.referencedTransactionFullHash !== data.referencedTransactionFullHash) {
                 return false;
             }
-        } else if (transaction.referencedTransactionFullHash !== "") {
+        } else if (transaction.referencedTransactionFullHash && transaction.referencedTransactionFullHash !== "") {
             return false;
         }
-        var pos;
-        if (transaction.version > 0) {
-            //has empty attachment, so no attachmentVersion byte...
-            if (requestType == "sendMoney" || requestType == "sendMessage") {
-                pos = 176;
-            } else {
-                pos = 177;
-            }
-        } else {
-            pos = 160;
+        //has empty attachment, so no attachmentVersion byte...
+        if (!(requestType == "sendMoney" || requestType == "sendMessage")) {
+            pos++;
         }
         return NRS.verifyTransactionTypes(byteArray, transaction, requestType, data, pos, attachment);
     };
@@ -600,17 +607,17 @@ var NRS = (function (NRS, $, undefined) {
         var serverHash, sha256, utfBytes, isText, hashWords, calculatedHash;
         switch (requestType) {
             case "sendMoney":
-                if (transaction.type !== 0 || transaction.subtype !== 0) {
+                if (NRS.notOfType(transaction, "FxtPayment") && NRS.notOfType(transaction, "OrdinaryPayment")) {
                     return false;
                 }
                 break;
             case "sendMessage":
-                if (transaction.type !== 1 || transaction.subtype !== 0) {
+                if (transaction.notOfType("ArbitraryMessage")) {
                     return false;
                 }
                 break;
             case "setAlias":
-                if (transaction.type !== 1 || transaction.subtype !== 1) {
+                if (transaction.notOfType("AliasAssignment")) {
                     return false;
                 }
                 length = parseInt(byteArray[pos], 10);
@@ -626,7 +633,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "createPoll":
-                if (transaction.type !== 1 || transaction.subtype !== 2) {
+                if (transaction.notOfType("PollCreation")) {
                     return false;
                 }
                 length = converters.byteArrayToSignedShort(byteArray, pos);
@@ -681,7 +688,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "castVote":
-                if (transaction.type !== 1 || transaction.subtype !== 3) {
+                if (transaction.notOfType("VoteCasting")) {
                     return false;
                 }
                 transaction.poll = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -698,14 +705,8 @@ var NRS = (function (NRS, $, undefined) {
                     return false;
                 }
                 break;
-            case "hubAnnouncement":
-                if (transaction.type !== 1 || transaction.subtype != 4) {
-                    return false;
-                }
-                return false;
-                break;
             case "setAccountInfo":
-                if (transaction.type !== 1 || transaction.subtype != 5) {
+                if (NRS.notOfType(transaction, "AccountInfo")) {
                     return false;
                 }
                 length = parseInt(byteArray[pos], 10);
@@ -721,7 +722,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "sellAlias":
-                if (transaction.type !== 1 || transaction.subtype !== 6) {
+                if (NRS.notOfType(transaction, "AliasSell")) {
                     return false;
                 }
                 length = parseInt(byteArray[pos], 10);
@@ -735,7 +736,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "buyAlias":
-                if (transaction.type !== 1 && transaction.subtype !== 7) {
+                if (NRS.notOfType(transaction, "AliasBuy")) {
                     return false;
                 }
                 length = parseInt(byteArray[pos], 10);
@@ -747,7 +748,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "deleteAlias":
-                if (transaction.type !== 1 && transaction.subtype !== 8) {
+                if (NRS.notOfType(transaction, "AliasDelete")) {
                     return false;
                 }
                 length = parseInt(byteArray[pos], 10);
@@ -759,7 +760,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "approveTransaction":
-                if (transaction.type !== 1 && transaction.subtype !== 9) {
+                if (NRS.notOfType(transaction, "PhasingVoteCasting")) {
                     return false;
                 }
                 var fullHashesLength = byteArray[pos];
@@ -784,7 +785,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "setAccountProperty":
-                if (transaction.type !== 1 && transaction.subtype !== 10) {
+                if (NRS.notOfType(transaction, "AccountProperty")) {
                     return false;
                 }
                 length = byteArray[pos];
@@ -801,7 +802,7 @@ var NRS = (function (NRS, $, undefined) {
                 pos += length;
                 break;
             case "deleteAccountProperty":
-                if (transaction.type !== 1 && transaction.subtype !== 11) {
+                if (NRS.notOfType(transaction, "AccountPropertyDelete")) {
                     return false;
                 }
                 // no way to validate the property id, just skip it
@@ -809,7 +810,7 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 8;
                 break;
             case "issueAsset":
-                if (transaction.type !== 2 || transaction.subtype !== 0) {
+                if (NRS.notOfType(transaction, "AssetIssuance")) {
                     return false;
                 }
                 length = byteArray[pos];
@@ -829,7 +830,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "transferAsset":
-                if (transaction.type !== 2 || transaction.subtype !== 1) {
+                if (NRS.notOfType(transaction, "AssetTransfer")) {
                     return false;
                 }
                 transaction.asset = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -842,11 +843,7 @@ var NRS = (function (NRS, $, undefined) {
                 break;
             case "placeAskOrder":
             case "placeBidOrder":
-                if (transaction.type !== 2) {
-                    return false;
-                } else if (requestType == "placeAskOrder" && transaction.subtype !== 2) {
-                    return false;
-                } else if (requestType == "placeBidOrder" && transaction.subtype !== 3) {
+                if (NRS.notOfType(transaction, "AskOrderPlacement") && NRS.notOfType(transaction, "BidOrderPlacement")) {
                     return false;
                 }
                 transaction.asset = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -861,11 +858,7 @@ var NRS = (function (NRS, $, undefined) {
                 break;
             case "cancelAskOrder":
             case "cancelBidOrder":
-                if (transaction.type !== 2) {
-                    return false;
-                } else if (requestType == "cancelAskOrder" && transaction.subtype !== 4) {
-                    return false;
-                } else if (requestType == "cancelBidOrder" && transaction.subtype !== 5) {
+                if (NRS.notOfType(transaction, "AskOrderCancellation") && NRS.notOfType(transaction, "BidOrderCancellation")) {
                     return false;
                 }
                 transaction.order = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -875,7 +868,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "deleteAssetShares":
-                if (transaction.type !== 2 || transaction.subtype !== 7) {
+                if (NRS.notOfType(transaction, "AssetDelete")) {
                     return false;
                 }
                 transaction.asset = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -887,7 +880,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "dividendPayment":
-                if (transaction.type !== 2 || transaction.subtype !== 6) {
+                if (NRS.notOfType(transaction, "DividendPayment")) {
                     return false;
                 }
                 transaction.asset = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -903,7 +896,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "dgsListing":
-                if (transaction.type !== 3 && transaction.subtype != 0) {
+                if (NRS.notOfType(transaction, "DigitalGoodsListing")) {
                     return false;
                 }
                 length = converters.byteArrayToSignedShort(byteArray, pos);
@@ -927,7 +920,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "dgsDelisting":
-                if (transaction.type !== 3 && transaction.subtype !== 1) {
+                if (NRS.notOfType(transaction, "DigitalGoodsDelisting")) {
                     return false;
                 }
                 transaction.goods = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -937,7 +930,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "dgsPriceChange":
-                if (transaction.type !== 3 && transaction.subtype !== 2) {
+                if (NRS.notOfType(transaction, "DigitalGoodsPriceChange")) {
                     return false;
                 }
                 transaction.goods = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -949,7 +942,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "dgsQuantityChange":
-                if (transaction.type !== 3 && transaction.subtype !== 3) {
+                if (NRS.notOfType(transaction, "DigitalGoodsQuantityChange")) {
                     return false;
                 }
                 transaction.goods = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -961,7 +954,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "dgsPurchase":
-                if (transaction.type !== 3 && transaction.subtype !== 4) {
+                if (NRS.notOfType(transaction, "DigitalGoodsPurchase")) {
                     return false;
                 }
                 transaction.goods = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -977,7 +970,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "dgsDelivery":
-                if (transaction.type !== 3 && transaction.subtype !== 5) {
+                if (NRS.notOfType(transaction, "DigitalGoodsDelivery")) {
                     return false;
                 }
                 transaction.purchase = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -1004,7 +997,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "dgsFeedback":
-                if (transaction.type !== 3 && transaction.subtype !== 6) {
+                if (NRS.notOfType(transaction, "DigitalGoodsFeedback")) {
                     return false;
                 }
                 transaction.purchase = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -1014,7 +1007,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "dgsRefund":
-                if (transaction.type !== 3 && transaction.subtype !== 7) {
+                if (NRS.notOfType(transaction, "DigitalGoodsRefund")) {
                     return false;
                 }
                 transaction.purchase = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -1026,7 +1019,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "leaseBalance":
-                if (transaction.type !== 4 && transaction.subtype !== 0) {
+                if (NRS.notOfType(transaction, "EffectiveBalanceLeasing")) {
                     return false;
                 }
                 transaction.period = String(converters.byteArrayToSignedShort(byteArray, pos));
@@ -1036,13 +1029,13 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "setPhasingOnlyControl":
-                if (transaction.type !== 4 && transaction.subtype !== 1) {
+                if (NRS.notOfType(transaction, "SetPhasingOnly")) {
                     return false;
                 }
                 return validateCommonPhasingData(byteArray, pos, data, "control") != -1;
                 break;
             case "issueCurrency":
-                if (transaction.type !== 5 && transaction.subtype !== 0) {
+                if (NRS.notOfType(transaction, "CurrencyIssuance")) {
                     return false;
                 }
                 length = byteArray[pos];
@@ -1096,7 +1089,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "currencyReserveIncrease":
-                if (transaction.type !== 5 && transaction.subtype !== 1) {
+                if (NRS.notOfType(transaction, "ReserveIncrease")) {
                     return false;
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -1108,7 +1101,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "currencyReserveClaim":
-                if (transaction.type !== 5 && transaction.subtype !== 2) {
+                if (NRS.notOfType(transaction, "ReserveClaim")) {
                     return false;
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -1120,7 +1113,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "transferCurrency":
-                if (transaction.type !== 5 && transaction.subtype !== 3) {
+                if (NRS.notOfType(transaction, "CurrencyTransfer")) {
                     return false;
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -1132,7 +1125,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "publishExchangeOffer":
-                if (transaction.type !== 5 && transaction.subtype !== 4) {
+                if (NRS.notOfType(transaction, "PublishExchangeOffer")) {
                     return false;
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -1158,7 +1151,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "currencyBuy":
-                if (transaction.type !== 5 && transaction.subtype !== 5) {
+                if (NRS.notOfType(transaction, "ExchangeBuy")) {
                     return false;
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -1172,7 +1165,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "currencySell":
-                if (transaction.type !== 5 && transaction.subtype !== 6) {
+                if (NRS.notOfType(transaction, "ExchangeSell")) {
                     return false;
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -1186,7 +1179,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "currencyMint":
-                if (transaction.type !== 5 && transaction.subtype !== 7) {
+                if (NRS.notOfType(transaction, "CurrencyMinting")) {
                     return false;
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -1203,7 +1196,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "deleteCurrency":
-                if (transaction.type !== 5 && transaction.subtype !== 8) {
+                if (NRS.notOfType(transaction, "CurrencyDeletion")) {
                     return false;
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -1213,7 +1206,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "uploadTaggedData":
-                if (transaction.type !== 6 && transaction.subtype !== 0) {
+                if (NRS.notOfType(transaction, "TaggedDataUpload")) {
                     return false;
                 }
                 serverHash = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
@@ -1246,18 +1239,8 @@ var NRS = (function (NRS, $, undefined) {
                     return false;
                 }
                 break;
-            case "extendTaggedData":
-                if (transaction.type !== 6 && transaction.subtype !== 1) {
-                    return false;
-                }
-                transaction.taggedDataId = String(converters.byteArrayToBigInteger(byteArray, pos));
-                pos += 8;
-                if (transaction.taggedDataId !== data.transaction) {
-                    return false;
-                }
-                break;
             case "shufflingCreate":
-                if (transaction.type !== 7 && transaction.subtype !== 0) {
+                if (NRS.notOfType(transaction, "ShufflingCreation")) {
                     return false;
                 }
                 var holding = String(converters.byteArrayToBigInteger(byteArray, pos));
@@ -1602,8 +1585,7 @@ var NRS = (function (NRS, $, undefined) {
             data.amountNQT = "0";
         }
         if (!("recipient" in data)) {
-            data.recipient = NRS.constants.GENESIS;
-            data.recipientRS = NRS.constants.GENESIS_RS;
+            NRS.logConsole("No recipient in data");
         }
     }
 

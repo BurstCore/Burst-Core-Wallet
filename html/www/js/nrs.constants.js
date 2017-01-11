@@ -89,7 +89,8 @@ var NRS = (function (NRS, $) {
 
     NRS.loadServerConstants = function(resolve) {
         function processConstants(response) {
-            if (response.genesisAccountId) {
+            if (response.genesisBlockId) {
+                NRS.constants.GENESIS_BLOCK_ID = response.genesisBlockId;
                 NRS.constants.SERVER = response;
                 NRS.constants.VOTING_MODELS = response.votingModels;
                 NRS.constants.MIN_BALANCE_MODELS = response.minBalanceModels;
@@ -98,8 +99,6 @@ var NRS = (function (NRS, $) {
                 NRS.constants.MINTING_HASH_ALGORITHMS = response.mintingHashAlgorithms;
                 NRS.constants.MAX_TAGGED_DATA_DATA_LENGTH = response.maxTaggedDataDataLength;
                 NRS.constants.MAX_PRUNABLE_MESSAGE_LENGTH = response.maxPrunableMessageLength;
-                NRS.constants.GENESIS = response.genesisAccountId;
-                NRS.constants.GENESIS_RS = NRS.convertNumericToRSAccountFormat(response.genesisAccountId);
                 NRS.constants.EPOCH_BEGINNING = response.epochBeginning;
                 NRS.constants.REQUEST_TYPES = response.requestTypes;
                 NRS.constants.API_TAGS = response.apiTags;
@@ -111,6 +110,8 @@ var NRS = (function (NRS, $) {
                 NRS.constants.LAST_KNOWN_BLOCK.id = response.genesisBlockId;
                 NRS.loadTransactionTypeConstants(response);
                 NRS.constants.PROXY_NOT_FORWARDED_REQUESTS = response.proxyNotForwardedRequests;
+                NRS.constants.CHAINS = response.chains;
+                NRS.constants.CHAIN_PROPERTIES = response.chainProperties;
                 console.log("done loading server constants");
                 resolve();
             }
@@ -219,7 +220,8 @@ var NRS = (function (NRS, $) {
             requestType == "startShuffler" ||
             requestType == "getForging" ||
             requestType == "markHost" ||
-            requestType == "startFundingMonitor";
+            requestType == "startFundingMonitor" ||
+            requestType == "startBundler";
     };
 
     NRS.getFileUploadConfig = function (requestType, data) {
@@ -271,6 +273,16 @@ var NRS = (function (NRS, $) {
             }
         }
         return true;
+    };
+
+    NRS.findChainByName = function(chainName) {
+        for (var id in  NRS.constants.CHAIN_PROPERTIES) {
+            if (NRS.constants.CHAIN_PROPERTIES.hasOwnProperty(id) &&
+                NRS.constants.CHAIN_PROPERTIES[id].name == chainName) {
+                return id;
+            }
+        }
+        return false;
     };
 
     return NRS;

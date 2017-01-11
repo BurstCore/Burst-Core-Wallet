@@ -699,8 +699,8 @@ var NRS = (function(NRS, $) {
 				if (typeof formCompleteFunction == "function") {
 					data.requestType = requestType;
 
-					if (response.transaction) {
-						NRS.addUnconfirmedTransaction(response.transaction, function(alreadyProcessed) {
+					if (response.fullHash) {
+						NRS.addUnconfirmedTransaction(response.fullHash, function(alreadyProcessed) {
 							response.alreadyProcessed = alreadyProcessed;
 							formCompleteFunction(response, data);
 						});
@@ -709,7 +709,7 @@ var NRS = (function(NRS, $) {
 						formCompleteFunction(response, data);
 					}
 				} else {
-					NRS.addUnconfirmedTransaction(response.transaction);
+					NRS.addUnconfirmedTransaction(response.fullHash);
 				}
 			} else {
 				if (typeof formCompleteFunction == "function") {

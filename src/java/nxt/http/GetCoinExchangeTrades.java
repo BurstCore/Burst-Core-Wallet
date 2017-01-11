@@ -42,7 +42,7 @@ public final class GetCoinExchangeTrades extends APIServlet.APIRequestHandler {
      * The orders will be sorted by timestamp in descending order.
      */
     private GetCoinExchangeTrades() {
-        super(new APITag[] {APITag.CE}, "exchange", "account", "orderFullHash", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.CE}, "exchange", "account", "orderFullHash", "firstIndex", "lastIndex", "includeChainInfo");
     }
 
     @Override
@@ -55,11 +55,12 @@ public final class GetCoinExchangeTrades extends APIServlet.APIRequestHandler {
         byte[] orderFullHash = ParameterParser.getBytes(req, "orderFullHash", false);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        boolean includeChainInfo = "true".equalsIgnoreCase(req.getParameter("includeChainInfo"));
         JSONArray orders = new JSONArray();
         try (DbIterator<Trade> it = CoinExchange.getTrades(accountId, chainId, exchangeId, orderFullHash,
                 firstIndex, lastIndex)) {
             while (it.hasNext()) {
-                orders.add(JSONData.coinExchangeTrade(it.next()));
+                orders.add(JSONData.coinExchangeTrade(it.next(), includeChainInfo));
             }
         }
         JSONObject response = new JSONObject();

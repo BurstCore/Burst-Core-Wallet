@@ -66,7 +66,8 @@ var NRS = (function(NRS, $, undefined) {
         remote_node_port: 7876,
         is_remote_node_ssl: false,
         validators_count: 3,
-        bootstrap_nodes_count: 5
+        bootstrap_nodes_count: 5,
+		chain: "1"
     };
 	NRS.contacts = {};
 
@@ -219,7 +220,8 @@ var NRS = (function(NRS, $, undefined) {
 			NRS.loadServerConstants(resolve);
 		});
 		loadConstantsPromise.then(function() {
-			var getStatePromise = new Promise(function(resolve) {
+            NRS.createChainSelect();
+            var getStatePromise = new Promise(function(resolve) {
 				console.log("calling getState");
 				NRS.sendRequest("getState", {
 					"includeCounts": "false"
@@ -349,8 +351,12 @@ var NRS = (function(NRS, $, undefined) {
 
 				$("#dgs_search_account_center").mask("NXT-****-****-****-*****");
 				console.log("done initialization");
-				if (NRS.getUrlParameter("account")) {
-					NRS.login(false, NRS.getUrlParameter("account"));
+                var chain = NRS.getUrlParameter("chain");
+                if (NRS.getUrlParameter("account") && chain) {
+                    var chainId = NRS.findChainByName(chain);
+                    if (chainId !== false) {
+                        NRS.login(false, NRS.getUrlParameter("account"), null, false, false, chainId);
+                    }
 				} else if (savedPassphrase) {
 					$("#remember_me").prop("checked", true);
 					NRS.login(true, savedPassphrase, null, false, true);
@@ -1746,11 +1752,11 @@ NRS.addPagination = function () {
 				return;
 			}
 			NRS.sendRequest("getTransaction", {
-				"transaction": id
+				"fullHash": id
 			}, function(response, input) {
 				if (!response.errorCode) {
 					response.transaction = input.transaction;
-					NRS.showTransactionModal(response);
+					NRS.showTransactionModal(response, response.chain);
 				} else {
 					NRS.sendRequest("getAccount", {
 						"account": id

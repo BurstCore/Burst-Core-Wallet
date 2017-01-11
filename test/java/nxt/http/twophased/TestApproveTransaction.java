@@ -50,9 +50,9 @@ public class TestApproveTransaction extends BlockchainTest {
         Assert.assertNotNull(response.get("transaction"));
 
         generateBlocks(duration);
-        Assert.assertEquals(-50 * ChildChain.IGNIS.ONE_COIN - 2 * ChildChain.IGNIS.ONE_COIN, ALICE.getBalanceDiff());
-        Assert.assertEquals(50 * ChildChain.IGNIS.ONE_COIN, BOB.getBalanceDiff());
-        Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN, CHUCK.getBalanceDiff());
+        Assert.assertEquals(-50 * ChildChain.IGNIS.ONE_COIN - 2 * ChildChain.IGNIS.ONE_COIN, ALICE.getFxtBalanceDiff());
+        Assert.assertEquals(50 * ChildChain.IGNIS.ONE_COIN, BOB.getFxtBalanceDiff());
+        Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN, CHUCK.getFxtBalanceDiff());
     }
 
     @Test
@@ -74,17 +74,17 @@ public class TestApproveTransaction extends BlockchainTest {
         Assert.assertNotNull(response.get("error"));
         generateBlock();
 
-        Assert.assertEquals("ALICE balance: ", -2 * ChildChain.IGNIS.ONE_COIN, ALICE.getBalanceDiff());
-        Assert.assertEquals("BOB balance: ", 0, BOB.getBalanceDiff());
-        Assert.assertEquals("CHUCK balance: ", 0, CHUCK.getBalanceDiff());
-        Assert.assertEquals("DAVE balance: ", 0, DAVE.getBalanceDiff());
+        Assert.assertEquals("ALICE balance: ", -2 * ChildChain.IGNIS.ONE_COIN, ALICE.getFxtBalanceDiff());
+        Assert.assertEquals("BOB balance: ", 0, BOB.getFxtBalanceDiff());
+        Assert.assertEquals("CHUCK balance: ", 0, CHUCK.getFxtBalanceDiff());
+        Assert.assertEquals("DAVE balance: ", 0, DAVE.getFxtBalanceDiff());
 
         generateBlocks(duration);
 
-        Assert.assertEquals("ALICE balance: ", -2 * ChildChain.IGNIS.ONE_COIN, ALICE.getBalanceDiff());
-        Assert.assertEquals("BOB balance: ", 0, BOB.getBalanceDiff());
-        Assert.assertEquals("CHUCK balance: ", 0, CHUCK.getBalanceDiff());
-        Assert.assertEquals("DAVE balance: ", 0, DAVE.getBalanceDiff());
+        Assert.assertEquals("ALICE balance: ", -2 * ChildChain.IGNIS.ONE_COIN, ALICE.getFxtBalanceDiff());
+        Assert.assertEquals("BOB balance: ", 0, BOB.getFxtBalanceDiff());
+        Assert.assertEquals("CHUCK balance: ", 0, CHUCK.getFxtBalanceDiff());
+        Assert.assertEquals("DAVE balance: ", 0, DAVE.getFxtBalanceDiff());
     }
 
     @Test
@@ -104,23 +104,23 @@ public class TestApproveTransaction extends BlockchainTest {
         generateBlock();
         // Transaction is not applied yet, fee is paid
         // Forger
-        Assert.assertEquals(fee, FORGY.getBalanceDiff());
-        Assert.assertEquals(fee, FORGY.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(fee, FORGY.getFxtBalanceDiff());
+        Assert.assertEquals(fee, FORGY.getFxtUnconfirmedBalanceDiff());
         // Sender
-        Assert.assertEquals(-fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-fee, ALICE.getFxtBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getFxtUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(0, BOB.getBalanceDiff());
-        Assert.assertEquals(0, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(0, BOB.getFxtBalanceDiff());
+        Assert.assertEquals(0, BOB.getFxtUnconfirmedBalanceDiff());
 
         generateBlock();
         // Transaction is applied
         // Sender
-        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getFxtBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getFxtUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getBalanceDiff());
-        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getFxtBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getFxtUnconfirmedBalanceDiff());
     }
 
     @Test
@@ -148,11 +148,11 @@ public class TestApproveTransaction extends BlockchainTest {
         generateBlock();
         // Transaction is not applied yet
         // Sender
-        Assert.assertEquals(-fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-fee, ALICE.getFxtBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getFxtUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(0, BOB.getBalanceDiff());
-        Assert.assertEquals(0, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(0, BOB.getFxtBalanceDiff());
+        Assert.assertEquals(0, BOB.getFxtUnconfirmedBalanceDiff());
 
         response = new APICall.Builder("broadcastTransaction").
                 param("transactionBytes", approvalTransactionBytes).
@@ -162,11 +162,11 @@ public class TestApproveTransaction extends BlockchainTest {
 
         // Transaction is applied before finish height
         // Sender
-        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getFxtBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getFxtUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getBalanceDiff());
-        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getFxtBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getFxtUnconfirmedBalanceDiff());
     }
 
     @Test
@@ -203,11 +203,11 @@ public class TestApproveTransaction extends BlockchainTest {
         generateBlock();
         // Transaction is not applied yet
         // Sender
-        Assert.assertEquals(-fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-fee, ALICE.getFxtBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getFxtUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(0, BOB.getBalanceDiff());
-        Assert.assertEquals(0, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(0, BOB.getFxtBalanceDiff());
+        Assert.assertEquals(0, BOB.getFxtUnconfirmedBalanceDiff());
 
         response = new APICall.Builder("broadcastTransaction").
                 param("transactionBytes", approvalTransactionBytes1).
@@ -221,11 +221,11 @@ public class TestApproveTransaction extends BlockchainTest {
 
         // Transaction is applied since 2 out 3 hashes were provided
         // Sender
-        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getFxtBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getFxtUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getBalanceDiff());
-        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getFxtBalanceDiff());
+        Assert.assertEquals(100 * ChildChain.IGNIS.ONE_COIN, BOB.getFxtUnconfirmedBalanceDiff());
     }
 
     @Test
@@ -247,20 +247,20 @@ public class TestApproveTransaction extends BlockchainTest {
         generateBlock();
         // Transaction is not applied yet
         // Sender
-        Assert.assertEquals(-fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-fee, ALICE.getFxtBalanceDiff());
+        Assert.assertEquals(-100 * ChildChain.IGNIS.ONE_COIN - fee, ALICE.getFxtUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(0, BOB.getBalanceDiff());
-        Assert.assertEquals(0, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(0, BOB.getFxtBalanceDiff());
+        Assert.assertEquals(0, BOB.getFxtUnconfirmedBalanceDiff());
 
         generateBlock();
         // Transaction is rejected since full hash does not match
         // Sender
-        Assert.assertEquals(-fee, ALICE.getBalanceDiff());
-        Assert.assertEquals(-fee, ALICE.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(-fee, ALICE.getFxtBalanceDiff());
+        Assert.assertEquals(-fee, ALICE.getFxtUnconfirmedBalanceDiff());
         // Recipient
-        Assert.assertEquals(0, BOB.getBalanceDiff());
-        Assert.assertEquals(0, BOB.getUnconfirmedBalanceDiff());
+        Assert.assertEquals(0, BOB.getFxtBalanceDiff());
+        Assert.assertEquals(0, BOB.getFxtUnconfirmedBalanceDiff());
     }
 
     @Test

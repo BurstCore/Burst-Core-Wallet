@@ -37,7 +37,7 @@
                     <div>
                         <a id="sideBalance" data-target="#account_details_modal" data-toggle="modal" href="#">
                             <span class="badge-active" style="padding:3px;" id="account_balance_sidebar"></span>
-                            <span>NXT</span>
+                            <span class="coin-symbol"></span>
                         </a>
                     </div>
                 </div>
@@ -46,6 +46,15 @@
                     <a href="#" id="forging_indicator" class="forging" data-toggle="tooltip" title="" data-placement="bottom" style="display:none;font-size:13px;">
                         <i class="fa fa-circle" style="font-size:12px;"></i> <span data-18n="forging">Forging</span>
                     </a>
+                </div>
+                <div style="margin-bottom:5px;">
+                    <div id="chain_dropdown" class="btn-group">
+                        <button type="button" class="btn btn-primary btn-xs show_chain_modal_action" id="chain_name"></button>
+                        <button type="button" class="btn btn-primary btn-xs dropdown-toggle" data-toggle="dropdown">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1"></ul>
+                    </div>
                 </div>
                 <div class="input-group" style="margin-bottom:5px;">
                     <span data-i18n="height">HEIGHT</span>

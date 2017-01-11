@@ -16,6 +16,14 @@
 
 QUnit.module("nrs.util");
 
+NRS.getActiveChainDecimals = function() {
+    return 8;
+};
+
+NRS.getActiveChainOneCoin = function() {
+    return "100000000";
+};
+
 QUnit.test("convertToNXT", function (assert) {
     assert.equal(NRS.convertToNXT(200000000), "2", "whole");
     assert.equal(NRS.convertToNXT(20000000), "0.2", "fraction");
@@ -193,14 +201,11 @@ QUnit.test("getAccountLink", function (assert) {
     assert.equal(NRS.getAccountLink({ entityRS: "NXT-XK4R-7VJU-6EQG-7R335" }, "entity"), "<a href='#' data-user='NXT-XK4R-7VJU-6EQG-7R335' class='show_account_modal_action user-info'>foo</a>", "contact");
     NRS.accountRS = "NXT-XK4R-7VJU-6EQG-7R335";
     assert.equal(NRS.getAccountLink({ entityRS: "NXT-XK4R-7VJU-6EQG-7R335" }, "entity"), "<a href='#' data-user='NXT-XK4R-7VJU-6EQG-7R335' class='show_account_modal_action user-info'>You</a>", "you");
-    assert.equal(NRS.getAccountLink({ entityRS: "NXT-XK4R-7VJU-6EQG-7R335" }, "entity", "NXT-XK4R-7VJU-6EQG-7R335", "My Precious"), "<a href='#' data-user='NXT-XK4R-7VJU-6EQG-7R335' class='show_account_modal_action user-info'>My Precious</a>", "force.account.name");
+    assert.equal(NRS.getAccountLink({ entityRS: "NXT-XK4R-7VJU-6EQG-7R335" }, "entity", "NXT-XK4R-7VJU-6EQG-7R335", "account"), "<a href='#' data-user='NXT-XK4R-7VJU-6EQG-7R335' class='show_account_modal_action user-info'>Account</a>", "force.account.name");
     assert.equal(NRS.getAccountLink({ entityRS: "NXT-XK4R-7VJU-6EQG-7R335" }, "entity", undefined, undefined, true), "<a href='#' data-user='NXT-XK4R-7VJU-6EQG-7R335' class='show_account_modal_action user-info'>NXT-XK4R-7VJU-6EQG-7R335</a>", "maintain.rs.format");
     assert.equal(NRS.getAccountLink({ entityRS: "NXT-XK4R-7VJU-6EQG-7R335" }, "entity", undefined, undefined, undefined, "btn btn-xs"), "<a href='#' data-user='NXT-XK4R-7VJU-6EQG-7R335' class='show_account_modal_action user-info btn btn-xs'>You</a>", "add.class");
     NRS.contacts = null;
     NRS.accountRS = null;
-    NRS.constants.GENESIS = 1739068987193023818;
-    NRS.constants.GENESIS_RS = "NXT-MR8N-2YLS-3MEQ-3CMAJ";
-    assert.equal(NRS.getAccountLink({ entityRS: NRS.constants.GENESIS_RS }, "entity"), "<a href='#' data-user='NXT-MR8N-2YLS-3MEQ-3CMAJ' class='show_account_modal_action user-info'>Genesis</a>", "genesis");
 });
 
 QUnit.test("generateToken", function (assert) {

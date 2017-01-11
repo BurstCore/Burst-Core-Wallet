@@ -78,7 +78,6 @@ var NRS = (function (NRS, $, undefined) {
 			var toRemove = price.slice(-decimals);
 
 			if (!/^[0]+$/.test(toRemove)) {
-				//return new Big(price).div(new Big(Math.pow(10, decimals))).round(8, 0);
 				throw $.t("error_invalid_input");
 			} else {
 				return price.slice(0, -decimals);
@@ -121,34 +120,36 @@ var NRS = (function (NRS, $, undefined) {
 		return NRS.format(result.toString());
 	};
 
-    NRS.convertToNXT = function (amount, returnAsObject) {
+    NRS.convertToNXT = function(amount, returnAsObject) {
+        var oneCoin = NRS.getActiveChainOneCoin();
+        var decimals = NRS.getActiveChainDecimals();
+        return convertDecimalToWholeNumber(amount, returnAsObject, oneCoin, decimals);
+    };
+
+    NRS.convertToFXT = function(amount, returnAsObject) {
+        return convertDecimalToWholeNumber(amount, returnAsObject, "100000000", 8);
+    };
+
+    function convertDecimalToWholeNumber(amount, returnAsObject, oneCoin, decimals) {
+        if (typeof amount != "object") {
+            amount = new BigInteger(String(amount));
+        }
         var negative = "";
-        var mantissa = "";
-
-		if (typeof amount != "object") {
-			amount = new BigInteger(String(amount));
-		}
-
         if (amount.compareTo(BigInteger.ZERO) < 0) {
             amount = amount.abs();
             negative = "-";
         }
-
-        var fractionalPart = amount.mod(new BigInteger("100000000")).toString();
-        amount = amount.divide(new BigInteger("100000000"));
-
+        var fractionalPart = amount.mod(new BigInteger(oneCoin)).toString();
+        amount = amount.divide(new BigInteger(oneCoin));
+        var mantissa = "";
         if (fractionalPart && fractionalPart != "0") {
             mantissa = ".";
-
-            for (var i = fractionalPart.length; i < 8; i++) {
+            for (var i = fractionalPart.length; i < decimals; i++) {
                 mantissa += "0";
             }
-
             mantissa += fractionalPart.replace(/0+$/, "");
         }
-
 		amount = amount.toString();
-
         if (returnAsObject) {
             return {
                 "negative": negative,
@@ -158,7 +159,7 @@ var NRS = (function (NRS, $, undefined) {
         } else {
             return negative + amount + mantissa;
         }
-    };
+    }
 
     NRS.amountToPrecision = function (amount, decimals) {
 		amount = String(amount);
@@ -182,45 +183,36 @@ var NRS = (function (NRS, $, undefined) {
 		}
 	};
 
-    NRS.convertToNQT = function (currency) {
+    NRS.convertToNQT = function(currency) {
 		currency = String(currency);
-
 		var parts = currency.split(".");
-
 		var amount = parts[0];
-
-		//no fractional part
         var fraction;
-		if (parts.length == 1) {
-            fraction = "00000000";
+        if (parts.length == 1) {
+            //no fractional part
+            fraction = NRS.getActiveChainOneCoin().substring(1);
 		} else if (parts.length == 2) {
-			if (parts[1].length <= 8) {
+			if (parts[1].length <= NRS.getActiveChainDecimals()) {
                 fraction = parts[1];
 			} else {
-                fraction = parts[1].substring(0, 8);
+                fraction = parts[1].substring(0, NRS.getActiveChainDecimals());
 			}
 		} else {
 			throw $.t("error_invalid_input");
 		}
-
-		for (var i = fraction.length; i < 8; i++) {
+		for (var i = fraction.length; i < NRS.getActiveChainDecimals(); i++) {
 			fraction += "0";
 		}
-
 		var result = amount + "" + fraction;
-
-		//in case there's a comma or something else in there.. at this point there should only be numbers
 		if (!/^\d+$/.test(result)) {
-			throw $.t("error_invalid_input");
+            //in case there's a comma or something else in there.. at this point there should only be numbers
+            throw $.t("error_invalid_input");
 		}
-
 		//remove leading zeroes
 		result = result.replace(/^0+/, "");
-
 		if (result === "") {
 			result = "0";
 		}
-
 		return result;
 	};
 
@@ -306,7 +298,6 @@ var NRS = (function (NRS, $, undefined) {
 		return qnt.replace(/^0+/, "");
 	};
 
-    var zeros = "00000000";
     NRS.format = function (params, no_escaping, zeroPad) {
         var amount;
         var mantissa;
@@ -337,9 +328,9 @@ var NRS = (function (NRS, $, undefined) {
         if (zeroPad) {
             var mantissaLen = formattedMantissa.length;
             if (mantissaLen > 0) {
-                formattedMantissa += zeros.substr(0, zeroPad - mantissaLen + 1);
+                formattedMantissa += NRS.getActiveChainOneCoin().substr(1, zeroPad - mantissaLen + 1);
             } else {
-                formattedMantissa += zeros.substr(0, zeroPad);
+                formattedMantissa += NRS.getActiveChainOneCoin().substr(1, zeroPad);
                 if (zeroPad != 0) {
                     formattedMantissa = locale.decimal + formattedMantissa;
                 }
@@ -627,6 +618,11 @@ var NRS = (function (NRS, $, undefined) {
         }
     };
 
+    NRS.fullHashToId = function(fullHash) {
+        var transactionBytes = converters.hexStringToByteArray(fullHash);
+        return converters.byteArrayToBigInteger(transactionBytes, 0).toString().escapeHTML();
+    };
+
     NRS.convertNumericToRSAccountFormat = function (account) {
 		if (/^NXT\-/i.test(account)) {
 			return String(account).escapeHTML();
@@ -671,11 +667,32 @@ var NRS = (function (NRS, $, undefined) {
             "' class='show_account_modal_action user-info" + clazz + "'>" + accountTitle + "</a>";
     };
 
-    NRS.getTransactionLink = function(id, text, isEscapedText) {
+    NRS.formatFullHash = function(fullHash) {
+        return NRS.escapeRespStr(fullHash).substring(8); // Present the first 8 letters like GIT
+    };
+
+    NRS.getTransactionLink = function(id, text, isEscapedText, chain) {
+        if (!text) {
+            text = NRS.fullHashToId(id);
+        }
+        if (!chain) {
+            chain = NRS.getActiveChain();
+        }
+        return "<a href='#' class='show_transaction_modal_action' data-fullHash='" + String(id).escapeHTML() + "' data-chain='" + chain +"'>"
+            + (isEscapedText ? text : String(text).escapeHTML()) + "</a>";
+    };
+
+    NRS.getChainLink = function(chain) {
+        return "<a href='#' class='show_chain_modal_action' data-chain='" + String(chain).escapeHTML() + "'>"
+            + NRS.constants.CHAIN_PROPERTIES[chain].name + "</a>";
+    };
+
+    NRS.getEntityLink = function(id, type, text, isEscapedText) {
+        // type: 1 - asset, 2 - currency, 3 - data, 4 - poll, 5 - property, 6 - shuffling
         if (!text) {
             text = id;
         }
-        return "<a href='#' class='show_transaction_modal_action' data-transaction='" + String(id).escapeHTML() + "'>"
+        return "<a href='#' class='show_entity_modal_action' data-id='" + String(id).escapeHTML() + "' data-type='" + type + "'>"
             + (isEscapedText ? text : String(text).escapeHTML()) + "</a>";
     };
 
@@ -727,8 +744,6 @@ var NRS = (function (NRS, $, undefined) {
 
         if (formattedAcc == NRS.account || formattedAcc == NRS.accountRS) {
             return $.t("you");
-        } else if (formattedAcc == NRS.constants.GENESIS || formattedAcc == NRS.constants.GENESIS_RS) {
-            return $.t("genesis");
         } else if (formattedAcc in NRS.contacts) {
             return NRS.contacts[formattedAcc].name.escapeHTML();
         } else {
@@ -855,7 +870,7 @@ var NRS = (function (NRS, $, undefined) {
                     value = NRS.formatQuantity(value, 0);
                 }
             } else if (key == "price" || key == "total" || key == "amount" || key == "fee" || key == "refund" || key == "discount") {
-                value = NRS.formatAmount(new BigInteger(String(value))) + " NXT";
+                value = NRS.formatAmount(new BigInteger(String(value))) + " " + NRS.getActiveChainName();
             } else if (key == "sender" || key == "recipient" || key == "account" || key == "seller" || key == "buyer" || key == "lessee") {
                 value = "<a href='#' data-user='" + NRS.escapeRespStr(value) + "' class='show_account_modal_action'>" + NRS.getAccountTitle(value) + "</a>";
             } else if (key == "request_processing_time") { /* Skip from displaying request processing time */
@@ -892,77 +907,18 @@ var NRS = (function (NRS, $, undefined) {
 		}
 	};
 
-    NRS.getUnconfirmedTransactionsFromCache = function (type, subtype, fields, single) {
+    NRS.getUnconfirmedTransactionsFromCache = function(type, subtype) {
 		if (!NRS.unconfirmedTransactions.length) {
 			return false;
 		}
-
-		if (typeof type == "number") {
-			type = [type];
-		}
-
-		if (typeof subtype == "number") {
-			subtype = [subtype];
-		}
-
 		var unconfirmedTransactions = [];
-
 		for (var i = 0; i < NRS.unconfirmedTransactions.length; i++) {
 			var unconfirmedTransaction = NRS.unconfirmedTransactions[i];
-
-			if (type.indexOf(unconfirmedTransaction.type) == -1 || (subtype.length > 0 && subtype.indexOf(unconfirmedTransaction.subtype) == -1)) {
-				continue;
-			}
-
-			if (fields) {
-				for (var key in fields) {
-                    if (!fields.hasOwnProperty(key)) {
-                        continue;
-                    }
-					if (unconfirmedTransaction[key] == fields[key]) {
-						if (single) {
-							return NRS.completeUnconfirmedTransactionDetails(unconfirmedTransaction);
-						} else {
-							unconfirmedTransactions.push(unconfirmedTransaction);
-						}
-					}
-				}
-			} else {
-				if (single) {
-					return NRS.completeUnconfirmedTransactionDetails(unconfirmedTransaction);
-				} else {
-					unconfirmedTransactions.push(unconfirmedTransaction);
-				}
-			}
+            if (type == unconfirmedTransaction.type && (subtype == unconfirmedTransaction.subtype || subtype == -1)) {
+                unconfirmedTransactions.push(unconfirmedTransaction);
+            }
 		}
-
-		if (single || unconfirmedTransactions.length == 0) {
-			return false;
-		} else {
-            $.each(unconfirmedTransactions, function (key, val) {
-				unconfirmedTransactions[key] = NRS.completeUnconfirmedTransactionDetails(val);
-			});
-
-			return unconfirmedTransactions;
-		}
-	};
-
-    NRS.completeUnconfirmedTransactionDetails = function (unconfirmedTransaction) {
-		if (unconfirmedTransaction.type == 3 && unconfirmedTransaction.subtype == 4 && !unconfirmedTransaction.name) {
-			NRS.sendRequest("getDGSGood", {
-				"goods": unconfirmedTransaction.attachment.goods
-            }, function (response) {
-				unconfirmedTransaction.name = response.name;
-				unconfirmedTransaction.buyer = unconfirmedTransaction.sender;
-				unconfirmedTransaction.buyerRS = unconfirmedTransaction.senderRS;
-				unconfirmedTransaction.seller = response.seller;
-				unconfirmedTransaction.sellerRS = response.sellerRS;
-			}, { isAsync: false });
-		} else if (unconfirmedTransaction.type == 3 && unconfirmedTransaction.subtype == 0) {
-			unconfirmedTransaction.goods = unconfirmedTransaction.transaction;
-		}
-
-		return unconfirmedTransaction;
+        return unconfirmedTransactions;
 	};
 
     NRS.hasTransactionUpdates = function (transactions) {

@@ -17,6 +17,8 @@
 package nxt;
 
 import nxt.account.Account;
+import nxt.blockchain.Chain;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.FxtChain;
 import nxt.crypto.Crypto;
 import nxt.db.DbIterator;
@@ -34,9 +36,11 @@ public class Tester {
     private final long id;
     private final String strId;
     private final String rsAccount;
-    private final long initialBalance;
-    private final long initialUnconfirmedBalance;
-    private final long initialEffectiveBalance;
+    private final long initialFxtBalance;
+    private final long initialFxtUnconfirmedBalance;
+    private final long initialFxtEffectiveBalance;
+    private final Map<Integer, Long> initialChainBalance = new HashMap<>();
+    private final Map<Integer, Long> initialChainUnconfirmedBalance = new HashMap<>();
     private final Map<Long, Long> initialAssetQuantity = new HashMap<>();
     private final Map<Long, Long> initialUnconfirmedAssetQuantity = new HashMap<>();
     private final Map<Long, Long> initialCurrencyUnits = new HashMap<>();
@@ -52,9 +56,13 @@ public class Tester {
         this.rsAccount = Convert.rsAccount(id);
         Account account = Account.getAccount(publicKey);
         if (account != null) {
-            this.initialBalance = FxtChain.FXT.getBalanceHome().getBalance(account.getId()).getBalance();
-            this.initialUnconfirmedBalance = FxtChain.FXT.getBalanceHome().getBalance(account.getId()).getUnconfirmedBalance();
-            this.initialEffectiveBalance = account.getEffectiveBalanceFXT();
+            this.initialFxtBalance = FxtChain.FXT.getBalanceHome().getBalance(account.getId()).getBalance();
+            this.initialFxtUnconfirmedBalance = FxtChain.FXT.getBalanceHome().getBalance(account.getId()).getUnconfirmedBalance();
+            this.initialFxtEffectiveBalance = account.getEffectiveBalanceFXT();
+            for (Chain chain : ChildChain.getAll()) {
+                initialChainBalance.put(chain.getId(), chain.getBalanceHome().getBalance(account.getId()).getBalance());
+                initialChainUnconfirmedBalance.put(chain.getId(), chain.getBalanceHome().getBalance(account.getId()).getUnconfirmedBalance());
+            }
             DbIterator<Account.AccountAsset> assets = account.getAssets(0, -1);
             for (Account.AccountAsset accountAsset : assets) {
                 initialAssetQuantity.put(accountAsset.getAssetId(), accountAsset.getQuantityQNT());
@@ -66,9 +74,9 @@ public class Tester {
                 initialUnconfirmedCurrencyUnits.put(accountCurrency.getCurrencyId(), accountCurrency.getUnconfirmedUnits());
             }
         } else {
-            initialBalance = 0;
-            initialUnconfirmedBalance = 0;
-            initialEffectiveBalance = 0;
+            initialFxtBalance = 0;
+            initialFxtUnconfirmedBalance = 0;
+            initialFxtEffectiveBalance = 0;
         }
     }
 
@@ -104,20 +112,36 @@ public class Tester {
         return rsAccount;
     }
 
-    public long getBalanceDiff() {
-        return FxtChain.FXT.getBalanceHome().getBalance(id).getBalance() - initialBalance;
+    public long getFxtBalanceDiff() {
+        return FxtChain.FXT.getBalanceHome().getBalance(id).getBalance() - initialFxtBalance;
     }
 
-    public long getUnconfirmedBalanceDiff() {
-        return FxtChain.FXT.getBalanceHome().getBalance(id).getUnconfirmedBalance() - initialUnconfirmedBalance;
+    public long getFxtUnconfirmedBalanceDiff() {
+        return FxtChain.FXT.getBalanceHome().getBalance(id).getUnconfirmedBalance() - initialFxtUnconfirmedBalance;
     }
 
-    public long getInitialBalance() {
-        return initialBalance;
+    public long getInitialFxtBalance() {
+        return initialFxtBalance;
     }
 
-    public long getBalance() {
+    public long getFxtBalance() {
         return FxtChain.FXT.getBalanceHome().getBalance(id).getBalance();
+    }
+
+    public long getChainBalanceDiff(int chain) {
+        return Chain.getChain(chain).getBalanceHome().getBalance(id).getBalance() - initialChainBalance.get(chain);
+    }
+
+    public long getChainUnconfirmedBalanceDiff(int chain) {
+        return Chain.getChain(chain).getBalanceHome().getBalance(id).getUnconfirmedBalance() - initialChainUnconfirmedBalance.get(chain);
+    }
+
+    public long getInitialChainBalance(int chain) {
+        return initialChainBalance.get(chain);
+    }
+
+    public long getChainBalance(int chain) {
+        return Chain.getChain(chain).getBalanceHome().getBalance(id).getBalance();
     }
 
     public long getAssetQuantityDiff(long assetId) {
@@ -136,12 +160,12 @@ public class Tester {
         return Account.getAccount(id).getUnconfirmedCurrencyUnits(currencyId) - getInitialUnconfirmedCurrencyUnits(currencyId);
     }
 
-    public long getInitialUnconfirmedBalance() {
-        return initialUnconfirmedBalance;
+    public long getInitialFxtUnconfirmedBalance() {
+        return initialFxtUnconfirmedBalance;
     }
 
-    public long getInitialEffectiveBalance() {
-        return initialEffectiveBalance;
+    public long getInitialFxtEffectiveBalance() {
+        return initialFxtEffectiveBalance;
     }
 
     public long getInitialAssetQuantity(long assetId) {

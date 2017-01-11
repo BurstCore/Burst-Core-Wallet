@@ -553,7 +553,7 @@ var NRS = (function (NRS, $, undefined) {
                 "scrollTop": 0
             }, 0);
             $("#asset_account").html(NRS.getAccountLink(asset, "account"));
-            $("#asset_id").html(NRS.getTransactionLink(assetId));
+            $("#asset_id").html(NRS.getEntityLink(assetId, 1));
             $("#asset_decimals").html(NRS.escapeRespStr(asset.decimals));
             $("#asset_name").html(NRS.escapeRespStr(asset.name));
             $("#asset_description").html(String(asset.description).autoLink());
@@ -695,7 +695,7 @@ var NRS = (function (NRS, $, undefined) {
                 var statusIcon = NRS.getTransactionStatusIcon(order);
                 var className = (order.account == NRS.account ? "your-order" : "");
                 rows += "<tr class='" + className + "' data-transaction='" + NRS.escapeRespStr(order.order) + "' data-quantity='" + order.quantityQNT.toString().escapeHTML() + "' data-price='" + order.priceNQT.toString().escapeHTML() + "'>" +
-                    "<td>" + NRS.getTransactionLink(order.order, statusIcon, true) + "</td>" +
+                    "<td>" + NRS.getTransactionLink(order.orderFullHash, statusIcon, true) + "</td>" +
                     "<td>" + NRS.getAccountLink(order, "account", currentAsset.accountRS, "Asset Issuer") + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(order.quantityQNT, currentAsset.decimals, false, quantityDecimals) + "</td>" +
                     "<td class='numeric'>" + NRS.formatOrderPricePerWholeQNT(order.priceNQT, currentAsset.decimals, priceDecimals) + "</td>" +
@@ -791,7 +791,7 @@ var NRS = (function (NRS, $, undefined) {
                 dividend.amountNQTPerQNT = new BigInteger(dividend.amountNQTPerQNT);
                 dividend.totalDividend = new BigInteger(dividend.totalDividend);
                 view.data.push({
-                    "timestamp": NRS.getTransactionLink(dividend.assetDividend, NRS.formatTimestamp(dividend.timestamp)),
+                    "timestamp": NRS.getTransactionLink(dividend.assetDividendFullHash, NRS.formatTimestamp(dividend.timestamp)),
                     "dividend_height": String(dividend.dividendHeight).escapeHTML(),
                     "total": NRS.formatAmount(dividend.totalDividend, false, false, amountDecimals),
                     "accounts": NRS.formatQuantity(dividend.numberOfAccounts, false, false, accountsDecimals),
@@ -837,7 +837,7 @@ var NRS = (function (NRS, $, undefined) {
                     trade.quantityQNT = new BigInteger(trade.quantityQNT);
                     trade.totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(trade.priceNQT, trade.quantityQNT));
                     rows += "<tr>" +
-                        "<td>" + NRS.getTransactionLink(trade.bidOrder, NRS.formatTimestamp(trade.timestamp)) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(trade.bidOrderFullHash, NRS.formatTimestamp(trade.timestamp)) + "</td>" +
                         "<td>" + $.t(trade.tradeType) + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, currentAsset.decimals, false, quantityDecimals) + "</td>" +
                         "<td class='asset_price numeric'>" + NRS.formatOrderPricePerWholeQNT(trade.priceNQT, currentAsset.decimals, priceDecimals) + "</td>" +
@@ -1100,7 +1100,7 @@ var NRS = (function (NRS, $, undefined) {
         }
 
         $("#asset_order_description").html(description);
-        $("#asset_order_total").html(totalNXT + " NXT");
+        $("#asset_order_total").html(totalNXT + " " + NRS.getActiveChainName());
 
         var assetOrderTotalTooltip = $("#asset_order_total_tooltip");
         if (quantity != "1") {
@@ -1408,7 +1408,7 @@ var NRS = (function (NRS, $, undefined) {
                     transfer.quantityQNT = new BigInteger(transfer.quantityQNT);
                     var type = (transfer.recipientRS == NRS.accountRS ? "receive" : "send");
                     rows += "<tr>" +
-                        "<td>" + NRS.getTransactionLink(transfer.assetTransfer) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(transfer.assetTransferFullHash) + "</td>" +
                         "<td><a href='#' data-goto-asset='" + NRS.escapeRespStr(transfer.asset) + "'>" + NRS.escapeRespStr(transfer.name) + "</a></td>" +
                         "<td>" + NRS.formatTimestamp(transfer.timestamp) + "</td>" +
                         "<td style='" + (type == "receive" ? "color:green" : "color:red") + "' class='numeric'>" + NRS.formatQuantity(transfer.quantityQNT, transfer.decimals, false, quantityDecimals) + "</td>" +
@@ -1444,7 +1444,7 @@ var NRS = (function (NRS, $, undefined) {
                 for (var i = 0; i < deletes.length; i++) {
                     deletes[i].quantityQNT = new BigInteger(deletes[i].quantityQNT);
                     rows += "<tr>" +
-                        "<td>" + NRS.getTransactionLink(deletes[i].assetDelete) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(deletes[i].assetDeleteFullHash) + "</td>" +
                         "<td><a href='#' data-goto-asset='" + NRS.escapeRespStr(deletes[i].asset) + "'>" + NRS.escapeRespStr(deletes[i].name) + "</a></td>" +
                         "<td>" + NRS.formatTimestamp(deletes[i].timestamp) + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(deletes[i].quantityQNT, deletes[i].decimals, false, quantityDecimals) + "</td>" +

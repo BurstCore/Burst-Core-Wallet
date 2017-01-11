@@ -17,14 +17,76 @@
 /**
  * @depends {nrs.js}
  */
-var NRS = (function(NRS, $, undefined) {
-    // If you add new mandatory attributes, please make sure to add them to
-    // NRS.loadTransactionTypeConstants as well (below)
+var NRS = (function(NRS, $) {
+
     NRS.transactionTypes = {
+        "-4": {
+            'title': "Coin Exchange",
+            'i18nKeyTitle': 'coin_exchange',
+            'iconHTML': "<i class='fa fa-exchange'></i>",
+            'chainType': "parent",
+            'subTypes': {
+                0: {
+                    'title': "Issue Order",
+                    'i18nKeyTitle': 'issue_order',
+                    'iconHTML': "<i class='fa fa-money'></i>",
+                    'receiverPage': 'open_coin_orders'
+                },
+                1: {
+                    'title': "Cancel Order",
+                    'i18nKeyTitle': 'cancel_order',
+                    'iconHTML': "<i class='fa fa-times'></i>",
+                    'receiverPage': 'open_coin_orders'
+                }
+            }
+        },
+        "-3": {
+            'title': "Account Control",
+            'i18nKeyTitle': 'account_control',
+            'iconHTML': '<i class="ion-locked"></i>',
+            'chainType': "parent",
+            'subTypes': {
+                0: {
+                    'title': "Balance Leasing",
+                    'i18nKeyTitle': 'balance_leasing',
+                    'iconHTML': '<i class="fa fa-arrow-circle-o-right"></i>',
+                    'receiverPage': "transactions"
+                }
+            }
+        },
+        "-2": {
+            'title': "Payment",
+            'i18nKeyTitle': 'payment',
+            'iconHTML': "<i class='ion-calculator'></i>",
+            'chainType': "parent",
+            'subTypes': {
+                0: {
+                    'title': "Ordinary Payment",
+                    'i18nKeyTitle': 'ordinary_payment',
+                    'iconHTML': "<i class='fa fa-money'></i>",
+                    'receiverPage': 'transactions'
+                }
+            }
+        },
+        "-1": {
+            'title': "Child Chain Block",
+            'i18nKeyTitle': 'child_chain_block',
+            'iconHTML': "<i class='fa fa-crop'></i>",
+            'chainType': "parent",
+            'subTypes': {
+                0: {
+                    'title': "Child Chain Block",
+                    'i18nKeyTitle': 'child_chain_block',
+                    'iconHTML': "<i class='fa fa-crop'></i>",
+                    'receiverPage': 'transactions'
+                }
+            }
+        },
         0: {
             'title': "Payment",
             'i18nKeyTitle': 'payment',
             'iconHTML': "<i class='ion-calculator'></i>",
+            'chainType': "child",
             'subTypes': {
                 0: {
                     'title': "Ordinary Payment",
@@ -35,75 +97,16 @@ var NRS = (function(NRS, $, undefined) {
             }
         },
         1: {
-            'title': "Messaging/Voting/Aliases",
-            'i18nKeyTitle': 'messaging_voting_aliases',
+            'title': "Messaging",
+            'i18nKeyTitle': 'messaging',
             'iconHTML': "<i class='fa fa-envelope-square'></i>",
+            'chainType': "child",
             'subTypes': {
                 0: {
                     'title': "Arbitrary Message",
                     'i18nKeyTitle': 'arbitrary_message',
                     'iconHTML': "<i class='fa fa-envelope-o'></i>",
                     'receiverPage': 'messages'
-                },
-                1: {
-                    'title': "Alias Assignment",
-                    'i18nKeyTitle': 'alias_assignment',
-                    'iconHTML': "<i class='fa fa-bookmark'></i>"
-                },
-                2: {
-                    'title': "Poll Creation",
-                    'i18nKeyTitle': 'poll_creation',
-                    'iconHTML': "<i class='fa fa-check-square-o'></i>"
-                },
-                3: {
-                    'title': "Vote Casting",
-                    'i18nKeyTitle': 'vote_casting',
-                    'iconHTML': "<i class='fa fa-check'></i>"
-                },
-                4: {
-                    'title': "Hub Announcement",
-                    'i18nKeyTitle': 'hub_announcement',
-                    'iconHTML': "<i class='ion-radio-waves'></i>"
-                },
-                5: {
-                    'title': "Account Info",
-                    'i18nKeyTitle': 'account_info',
-                    'iconHTML': "<i class='fa fa-info'></i>"
-                },
-                6: {
-                    'title': "Alias Sale/Transfer",
-                    'i18nKeyTitle': 'alias_sale_transfer',
-                    'iconHTML': "<i class='fa fa-tag'></i>",
-                    'receiverPage': "aliases"
-                },
-                7: {
-                    'title': "Alias Buy",
-                    'i18nKeyTitle': 'alias_buy',
-                    'iconHTML': "<i class='fa fa-money'></i>",
-                    'receiverPage': "aliases"
-                },
-                8: {
-                    'title': "Alias Deletion",
-                    'i18nKeyTitle': 'alias_deletion',
-                    'iconHTML': "<i class='fa fa-times'></i>"
-                },
-                9: {
-                    'title': "Transaction Approval",
-                    'i18nKeyTitle': 'transaction_approval',
-                    'iconHTML': "<i class='fa fa-gavel'></i>",
-                    'receiverPage': "transactions"
-                },
-                10: {
-                    'title': "Account Property",
-                    'i18nKeyTitle': 'account_property',
-                    'iconHTML': "<i class='fa fa-gavel'></i>",
-                    'receiverPage': "transactions"
-                },
-                11: {
-                    'title': "AccountPropertyDelete",
-                    'i18nKeyTitle': 'account_property_delete',
-                    'iconHTML': "<i class='fa fa-question'></i>",
-                    'receiverPage': "transactions"
                 }
             }
         },
@@ -111,6 +114,7 @@ var NRS = (function(NRS, $, undefined) {
             'title': "Asset Exchange",
             'i18nKeyTitle': 'asset_exchange',
             'iconHTML': '<i class="fa fa-signal"></i>',
+            'chainType': "child",
             'subTypes': {
                 0: {
                     'title': "Asset Issuance",
@@ -165,6 +169,7 @@ var NRS = (function(NRS, $, undefined) {
             'title': "Marketplace",
             'i18nKeyTitle': 'marketplace',
             'iconHTML': '<i class="fa fa-shopping-cart"></i>',
+            'chainType': "child",
             'subTypes': {
                 0: {
                     'title': "Marketplace Listing",
@@ -216,14 +221,9 @@ var NRS = (function(NRS, $, undefined) {
             'title': "Account Control",
             'i18nKeyTitle': 'account_control',
             'iconHTML': '<i class="ion-locked"></i>',
+            'chainType': "child",
             'subTypes': {
                 0: {
-                    'title': "Balance Leasing",
-                    'i18nKeyTitle': 'balance_leasing',
-                    'iconHTML': '<i class="fa fa-arrow-circle-o-right"></i>',
-                    'receiverPage': "transactions"
-                },
-                1: {
                     'title': "Mandatory Approval",
                     'i18nKeyTitle': 'phasing_only',
                     'iconHTML': '<i class="fa fa-gavel"></i>',
@@ -235,6 +235,7 @@ var NRS = (function(NRS, $, undefined) {
             'title': "Monetary System",
             'i18nKeyTitle': 'monetary_system',
             'iconHTML': '<i class="fa fa-bank"></i>',
+            'chainType': "child",
             'subTypes': {
                 0: {
                     'title': "Issue Currency",
@@ -292,16 +293,12 @@ var NRS = (function(NRS, $, undefined) {
             'title': "Data Cloud",
             'i18nKeyTitle': 'tagged_data',
             'iconHTML': '<i class="fa fa-dashboard"></i>',
+            'chainType': "child",
             'subTypes': {
                 0: {
                     'title': "Upload Data",
                     'i18nKeyTitle': 'upload_tagged_data',
                     'iconHTML': '<i class="fa fa-upload"></i>'
-                },
-                1: {
-                    'title': "Extend Data Lifetime",
-                    'i18nKeyTitle': 'extend_tagged_data',
-                    'iconHTML': '<i class="fa fa-expand"></i>'
                 }
             }
         },
@@ -309,6 +306,7 @@ var NRS = (function(NRS, $, undefined) {
             'title': "Shuffling",
             'i18nKeyTitle': 'shuffling',
             'iconHTML': '<i class="fa fa-random"></i>',
+            'chainType': "child",
             'subTypes': {
                 0: {
                     'title': "Shuffling Creation",
@@ -341,44 +339,147 @@ var NRS = (function(NRS, $, undefined) {
                     'iconHTML': '<i class="fa fa-thumbs-down"></i>'
                 }
             }
+        },
+        8: {
+            'title': "Aliases",
+            'i18nKeyTitle': 'aliases',
+            'iconHTML': "<i class='fa fa-envelope-square'></i>",
+            'chainType': "child",
+            'subTypes': {
+                0: {
+                    'title': "Alias Assignment",
+                    'i18nKeyTitle': 'alias_assignment',
+                    'iconHTML': "<i class='fa fa-bookmark'></i>"
+                },
+                1: {
+                    'title': "Alias Sale/Transfer",
+                    'i18nKeyTitle': 'alias_sale_transfer',
+                    'iconHTML': "<i class='fa fa-tag'></i>",
+                    'receiverPage': "aliases"
+                },
+                2: {
+                    'title': "Alias Buy",
+                    'i18nKeyTitle': 'alias_buy',
+                    'iconHTML': "<i class='fa fa-money'></i>",
+                    'receiverPage': "aliases"
+                },
+                3: {
+                    'title': "Alias Deletion",
+                    'i18nKeyTitle': 'alias_deletion',
+                    'iconHTML': "<i class='fa fa-times'></i>"
+                }
+            }
+        },
+        9: {
+            'title': "Voting",
+            'i18nKeyTitle': 'voting',
+            'iconHTML': "<i class='fa fa-check-square-o'></i>",
+            'chainType': "child",
+            'subTypes': {
+                0: {
+                    'title': "Poll Creation",
+                    'i18nKeyTitle': 'poll_creation',
+                    'iconHTML': "<i class='fa fa-check-square-o'></i>"
+                },
+                1: {
+                    'title': "Vote Casting",
+                    'i18nKeyTitle': 'vote_casting',
+                    'iconHTML': "<i class='fa fa-check'></i>"
+                },
+                2: {
+                    'title': "Transaction Approval",
+                    'i18nKeyTitle': 'transaction_approval',
+                    'iconHTML': "<i class='fa fa-gavel'></i>",
+                    'receiverPage': "transactions"
+                }
+            }
+        },
+        10: {
+            'title': "Account Properties",
+            'i18nKeyTitle': 'account_properties',
+            'iconHTML': "<i class='fa fa-gavel'></i>",
+            'chainType': "child",
+            'subTypes': {
+                0: {
+                    'title': "Account Info",
+                    'i18nKeyTitle': 'account_info',
+                    'iconHTML': "<i class='fa fa-info'></i>"
+                },
+                1: {
+                    'title': "Account Property",
+                    'i18nKeyTitle': 'account_property',
+                    'iconHTML': "<i class='fa fa-gavel'></i>",
+                    'receiverPage': "transactions"
+                },
+                2: {
+                    'title': "AccountPropertyDelete",
+                    'i18nKeyTitle': 'account_property_delete',
+                    'iconHTML': "<i class='fa fa-question'></i>",
+                    'receiverPage': "transactions"
+                }
+            }
+        },
+        11: {
+            'title': "Coin Exchange",
+            'i18nKeyTitle': 'coin_exchange',
+            'iconHTML': "<i class='fa fa-exchange'></i>",
+            'chainType': "child",
+            'subTypes': {
+                0: {
+                    'title': "Issue Order",
+                    'i18nKeyTitle': 'issue_order',
+                    'iconHTML': "<i class='fa fa-money'></i>",
+                    'receiverPage': 'open_coin_orders'
+                },
+                1: {
+                    'title': "Cancel Order",
+                    'i18nKeyTitle': 'cancel_order',
+                    'iconHTML': "<i class='fa fa-times'></i>",
+                    'receiverPage': 'open_coin_orders'
+                }
+            }
         }
     };
 
     NRS.subtype = {};
 
     NRS.loadTransactionTypeConstants = function(response) {
-        if (response.genesisAccountId) {
-            $.each(response.transactionTypes, function(typeIndex, type) {
-                if (!(typeIndex in NRS.transactionTypes)) {
-                    NRS.transactionTypes[typeIndex] = {
+        $.each(response.transactionTypes, function (typeIndex, type) {
+            if (!(typeIndex in NRS.transactionTypes)) {
+                NRS.transactionTypes[typeIndex] = {
+                    'title': "Unknown",
+                    'i18nKeyTitle': 'unknown',
+                    'iconHTML': '<i class="fa fa-question-circle"></i>',
+                    'subTypes': {}
+                }
+            }
+            $.each(type.subtypes, function (subTypeIndex, subType) {
+                if (!(subTypeIndex in NRS.transactionTypes[typeIndex]["subTypes"])) {
+                    NRS.transactionTypes[typeIndex]["subTypes"][subTypeIndex] = {
                         'title': "Unknown",
                         'i18nKeyTitle': 'unknown',
-                        'iconHTML': '<i class="fa fa-question-circle"></i>',
-                        'subTypes': {}
+                        'iconHTML': '<i class="fa fa-question-circle"></i>'
                     }
                 }
-                $.each(type.subtypes, function(subTypeIndex, subType) {
-                    if (!(subTypeIndex in NRS.transactionTypes[typeIndex]["subTypes"])) {
-                        NRS.transactionTypes[typeIndex]["subTypes"][subTypeIndex] = {
-                            'title': "Unknown",
-                            'i18nKeyTitle': 'unknown',
-                            'iconHTML': '<i class="fa fa-question-circle"></i>'
-                        }
-                    }
-                    NRS.transactionTypes[typeIndex]["subTypes"][subTypeIndex]["serverConstants"] = subType;
-                });
+                NRS.transactionTypes[typeIndex]["subTypes"][subTypeIndex]["serverConstants"] = subType;
             });
-            NRS.subtype = response.transactionSubTypes;
-        }
+        });
+        NRS.subtype = response.transactionSubTypes;
     };
 
-    NRS.isOfType = function(transaction, type_str) {
-        if (!NRS.subtype[type_str]) {
-            $.growl($.t("unsupported_transaction_type"));
-            return;
+    NRS.isOfType = function(transaction, typeStr) {
+        if (!NRS.subtype[typeStr]) {
+            var msg = $.t("unsupported_transaction_type", { type: typeStr });
+            $.growl(msg);
+            NRS.logConsole(msg);
+            return false;
         }
-        return transaction.type == NRS.subtype[type_str].type && transaction.subtype == NRS.subtype[type_str].subtype;
+        return transaction.type == NRS.subtype[typeStr].type && transaction.subtype == NRS.subtype[typeStr].subtype;
     };
-    
+
+    NRS.notOfType = function(transaction, typeStr) {
+        return !NRS.isOfType(transaction, typeStr);
+    };
+
     return NRS;
 }(NRS || {}, jQuery));
