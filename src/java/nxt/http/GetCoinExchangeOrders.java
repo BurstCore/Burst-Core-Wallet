@@ -14,15 +14,23 @@
  */
 package nxt.http;
 
+import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Chain;
+import nxt.blockchain.Transaction;
 import nxt.ce.CoinExchange;
 import nxt.ce.CoinExchange.Order;
+import nxt.ce.CoinExchangeTransactionType;
+import nxt.ce.OrderCancelAttachment;
 import nxt.db.DbIterator;
+import nxt.util.Filter;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -36,6 +44,7 @@ public final class GetCoinExchangeOrders extends APIServlet.APIRequestHandler {
      * <li>account - Select orders for this account
      * <li>chain - Select orders exchanging coins for this chain
      * <li>exchange - Select orders requesting coins for this chain
+     * <li>showExpectedCancellations - Show orders that will be canceled at the next block
      * </ul>
      *
      * <p<>All orders will be returned if no search criteria are specified.
@@ -43,7 +52,8 @@ public final class GetCoinExchangeOrders extends APIServlet.APIRequestHandler {
      * is the amount remaining to be exchanged.
      */
     private GetCoinExchangeOrders() {
-        super(new APITag[] {APITag.CE}, "exchange", "account", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.CE}, "exchange", "account", "firstIndex", "lastIndex",
+                "showExpectedCancellations");
     }
 
     @Override
@@ -55,10 +65,31 @@ public final class GetCoinExchangeOrders extends APIServlet.APIRequestHandler {
         long accountId = ParameterParser.getAccountId(req, "account", false);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
+        boolean showExpectedCancellations = "true".equalsIgnoreCase(req.getParameter("showExpectedCancellations"));
+
+        long[] cancellations = null;
+        if (showExpectedCancellations) {
+            Filter<Transaction> filter = transaction ->
+                    transaction.getType() == CoinExchangeTransactionType.ORDER_CANCEL
+                    && (chain == null || transaction.getChain() == chain);
+            List<? extends Transaction> transactions = Nxt.getBlockchain().getExpectedTransactions(filter);
+            cancellations = new long[transactions.size()];
+            for (int i = 0; i < transactions.size(); i++) {
+                OrderCancelAttachment attachment = (OrderCancelAttachment) transactions.get(i).getAttachment();
+                cancellations[i] = attachment.getOrderId();
+            }
+            Arrays.sort(cancellations);
+        }
+
         JSONArray orders = new JSONArray();
         try (DbIterator<Order> it = CoinExchange.getOrders(accountId, chainId, exchangeId, firstIndex, lastIndex)) {
             while (it.hasNext()) {
-                orders.add(JSONData.coinExchangeOrder(it.next()));
+                Order order = it.next();
+                JSONObject orderJSON = JSONData.coinExchangeOrder(order);
+                if (showExpectedCancellations && Arrays.binarySearch(cancellations, order.getId()) >= 0) {
+                    orderJSON.put("expectedCancellation", Boolean.TRUE);
+                }
+                orders.add(orderJSON);
             }
         }
         JSONObject response = new JSONObject();
