@@ -20,7 +20,6 @@ import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Appendix;
-import nxt.blockchain.AppendixParser;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Fee;
@@ -37,7 +36,7 @@ public class MessageAppendix extends Appendix.AbstractAppendix {
     public static final int appendixType = 1;
     public static final String appendixName = "Message";
 
-    public static final AppendixParser appendixParser = new AppendixParser() {
+    public static final Parser appendixParser = new Parser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
             return new MessageAppendix(buffer);

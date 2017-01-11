@@ -57,6 +57,11 @@ public interface Appendix {
         void encrypt(String secretPhrase);
     }
 
+    interface Parser {
+        AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException;
+        AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException;
+    }
+
     abstract class AbstractAppendix implements Appendix {
 
         private final byte version;

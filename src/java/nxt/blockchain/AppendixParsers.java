@@ -15,7 +15,6 @@
 
 package nxt.blockchain;
 
-import nxt.NxtException;
 import nxt.account.PublicKeyAnnouncementAppendix;
 import nxt.messaging.EncryptToSelfMessageAppendix;
 import nxt.messaging.EncryptedMessageAppendix;
@@ -25,9 +24,7 @@ import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.shuffling.ShufflingProcessingAttachment;
 import nxt.taggeddata.TaggedDataAttachment;
 import nxt.voting.PhasingAppendix;
-import org.json.simple.JSONObject;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -35,23 +32,23 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-public abstract class AppendixParser {
+public final class AppendixParsers {
 
-    public static Collection<AppendixParser> getParsers() {
+    public static Collection<Appendix.Parser> getParsers() {
         return parsersMap.values();
     }
 
-    public static AppendixParser getParser(int appendixType) {
+    public static Appendix.Parser getParser(int appendixType) {
         return parsersMap.get(appendixType);
     }
 
-    public static Collection<AppendixParser> getPrunableParsers() {
+    public static Collection<Appendix.Parser> getPrunableParsers() {
         return prunableParsers;
     }
 
-    private static final SortedMap<Integer,AppendixParser> parsersMap;
+    private static final SortedMap<Integer,Appendix.Parser> parsersMap;
     static {
-        SortedMap<Integer,AppendixParser> map = new TreeMap<>();
+        SortedMap<Integer,Appendix.Parser> map = new TreeMap<>();
         map.put(MessageAppendix.appendixType, MessageAppendix.appendixParser);
         map.put(EncryptedMessageAppendix.appendixType, EncryptedMessageAppendix.appendixParser);
         map.put(EncryptToSelfMessageAppendix.appendixType, EncryptToSelfMessageAppendix.appendixParser);
@@ -62,9 +59,9 @@ public abstract class AppendixParser {
         parsersMap = Collections.unmodifiableSortedMap(map);
     }
 
-    private static final List<AppendixParser> prunableParsers;
+    private static final List<Appendix.Parser> prunableParsers;
     static {
-        List<AppendixParser> list = new ArrayList<>();
+        List<Appendix.Parser> list = new ArrayList<>();
         list.add(PrunablePlainMessageAppendix.appendixParser);
         list.add(PrunableEncryptedMessageAppendix.appendixParser);
         list.add(ShufflingProcessingAttachment.appendixParser);
@@ -73,8 +70,6 @@ public abstract class AppendixParser {
         prunableParsers = Collections.unmodifiableList(list);
     }
 
-    public abstract Appendix.AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException;
-
-    public abstract Appendix.AbstractAppendix parse(JSONObject attachmentData) throws NxtException.NotValidException;
+    private AppendixParsers() {}
 
 }

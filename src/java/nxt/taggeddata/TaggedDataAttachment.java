@@ -19,7 +19,6 @@ package nxt.taggeddata;
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.blockchain.Appendix;
-import nxt.blockchain.AppendixParser;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
@@ -34,7 +33,7 @@ import java.util.Arrays;
 
 public final class TaggedDataAttachment extends Attachment.AbstractAttachment implements Appendix.Prunable {
 
-    public static final AppendixParser appendixParser = new AppendixParser() {
+    public static final Parser appendixParser = new Parser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
             return new TaggedDataAttachment(buffer);

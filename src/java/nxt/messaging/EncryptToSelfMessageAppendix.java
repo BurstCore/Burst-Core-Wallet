@@ -18,7 +18,6 @@ package nxt.messaging;
 
 import nxt.NxtException;
 import nxt.blockchain.Appendix;
-import nxt.blockchain.AppendixParser;
 import nxt.crypto.EncryptedData;
 import org.json.simple.JSONObject;
 
@@ -29,7 +28,7 @@ public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppend
     public static final int appendixType = 4;
     public static final String appendixName = "EncryptToSelfMessage";
 
-    public static final AppendixParser appendixParser = new AppendixParser() {
+    public static final Parser appendixParser = new Parser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
             return new EncryptToSelfMessageAppendix(buffer);

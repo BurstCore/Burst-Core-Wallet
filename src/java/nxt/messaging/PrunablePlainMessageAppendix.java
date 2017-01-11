@@ -21,7 +21,6 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Appendix;
-import nxt.blockchain.AppendixParser;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.Fee;
@@ -39,7 +38,7 @@ public class PrunablePlainMessageAppendix extends Appendix.AbstractAppendix impl
     public static final int appendixType = 8;
     public static final String appendixName = "PrunablePlainMessage";
 
-    public static final AppendixParser appendixParser = new AppendixParser() {
+    public static final Parser appendixParser = new Parser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
             return new PrunablePlainMessageAppendix(buffer);

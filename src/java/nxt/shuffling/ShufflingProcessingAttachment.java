@@ -18,7 +18,6 @@ package nxt.shuffling;
 
 import nxt.NxtException;
 import nxt.blockchain.Appendix;
-import nxt.blockchain.AppendixParser;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;
@@ -35,7 +34,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
 
     private static final byte[] emptyDataHash = Crypto.sha256().digest();
 
-    public static final AppendixParser appendixParser = new AppendixParser() {
+    public static final Parser appendixParser = new Parser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
             return new ShufflingProcessingAttachment(buffer);

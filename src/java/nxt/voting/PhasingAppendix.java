@@ -22,7 +22,6 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.blockchain.Appendix;
-import nxt.blockchain.AppendixParser;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
@@ -53,7 +52,7 @@ public final class PhasingAppendix extends Appendix.AbstractAppendix {
     public static final int appendixType = 64;
     public static final String appendixName = "Phasing";
 
-    public static final AppendixParser appendixParser = new AppendixParser() {
+    public static final Parser appendixParser = new Parser() {
         @Override
         public AbstractAppendix parse(ByteBuffer buffer) throws NxtException.NotValidException {
             return new PhasingAppendix(buffer);
