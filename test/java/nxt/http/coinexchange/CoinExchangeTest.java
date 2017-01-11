@@ -57,8 +57,8 @@ public class CoinExchangeTest extends BlockchainTest {
         // Bob received 100 IGNIS and paid 0.25 USD per IGNIS
         JSONArray trades = (JSONArray) response.get("trades");
         JSONObject trade = (JSONObject) trades.get(0);
-        Assert.assertEquals(4L, trade.get("chain"));
-        Assert.assertEquals(2L, trade.get("exchange"));
+        Assert.assertEquals(USD.getId(), (int)(long)trade.get("chain"));
+        Assert.assertEquals(IGNIS.getId(), (int)(long)trade.get("exchange"));
         Assert.assertEquals("" + (100 * IGNIS.ONE_COIN), trade.get("amountNQT")); // IGNIS bought
         Assert.assertEquals("" + (long)(0.25 * USD.ONE_COIN), trade.get("priceNQT")); // USD per IGNIS price
 
@@ -72,8 +72,8 @@ public class CoinExchangeTest extends BlockchainTest {
         // Alice received 25 USD and paid 4 IGNIS per USD
         trades = (JSONArray) response.get("trades");
         trade = (JSONObject) trades.get(0);
-        Assert.assertEquals(2L, trade.get("chain"));
-        Assert.assertEquals(4L, trade.get("exchange"));
+        Assert.assertEquals(IGNIS.getId(), (int)(long)trade.get("chain"));
+        Assert.assertEquals(USD.getId(), (int)(long)trade.get("exchange"));
         Assert.assertEquals("" + (25 * USD.ONE_COIN), trade.get("amountNQT")); // IGNIS bought
         Assert.assertEquals("" + (4 * IGNIS.ONE_COIN), trade.get("priceNQT")); // Total USD paid?
 

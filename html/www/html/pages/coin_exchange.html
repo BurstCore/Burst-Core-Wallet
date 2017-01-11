@@ -20,17 +20,17 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="box box-primary">
-                    <div class="box-header"><h3 class="box-title" data-i18n="sell_orders">Sell Orders</h3></div>
+                    <div class="box-header"><h3 class="box-title" data-i18n="coin_orders">Coin Orders</h3></div>
                     <div class="box-body no-padding">
                         <div class="data-container data-loading" data-no-padding="true">
-                            <table class="table table-striped" id="open_ask_orders_table">
+                            <table class="table table-striped" id="open_coin_orders_table">
                                 <thead>
                                 <tr>
-                                    <th data-i18n="chain">Chain</th>
-                                    <th data-i18n="quantity">Quantity</th>
-                                    <th data-i18n="price">Price</th>
-                                    <th data-i18n="total">Total</th>
-                                    <th data-i18n="cancel">Cancel</th>
+                                    <th data-i18n="order">Order</th>
+                                    <th data-i18n="exchange">Exchange</th>
+                                    <th data-i18n="amount">Amount</th>
+                                    <th data-i18n="bid">Bid</th>
+                                    <th data-i18n="ask">Ask</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -38,36 +38,11 @@
                                 </tbody>
                             </table>
                             <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
-                            <div class="data-empty-container"><p data-i18n="no_open_sell_orders">No open sell orders.</p></div>
+                            <div class="data-empty-container"><p data-i18n="no_open_orders">No open orders.</p></div>
                         </div>
                     </div>
                 </div>
             </div>                                          
-            <div class="col-md-6">
-                <div class="box box-primary">
-                    <div class="box-header"><h3 class="box-title" data-i18n="buy_orders">Buy Orders</h3></div>
-                    <div class="box-body no-padding">
-                        <div class="data-container data-loading" data-no-padding="true">
-                            <table class="table table-striped" id="open_bid_orders_table">
-                                <thead>
-                                <tr>
-                                    <th data-i18n="chain">Chain</th>
-                                    <th data-i18n="quantity">Quantity</th>
-                                    <th data-i18n="price">Price</th>
-                                    <th data-i18n="total">Total</th>
-                                    <th data-i18n="cancel">Cancel</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                
-                                </tbody>
-                            </table>
-                            <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
-                            <div class="data-empty-container"><p data-i18n="no_open_buy_orders">No open buy orders.</p></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </section>
 </div>

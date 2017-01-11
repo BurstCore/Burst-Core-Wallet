@@ -126,9 +126,20 @@ var NRS = (function(NRS, $) {
     NRS.getActiveChainDecimals = function() {
         return parseInt(NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain].decimals);
     };
-
     NRS.getActiveChainOneCoin = function() {
         return NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain].ONE_COIN;
+    };
+
+    NRS.getChain = function(chain) {
+        return String(NRS.constants.CHAIN_PROPERTIES[chain]);
+    };
+
+    NRS.getChainName = function(chain) {
+        return String(NRS.constants.CHAIN_PROPERTIES[chain].name);
+    };
+
+    NRS.getChainDecimals = function(chain) {
+        return String(NRS.constants.CHAIN_PROPERTIES[chain].decimals);
     };
 
     NRS.createChainSelect = function() {
