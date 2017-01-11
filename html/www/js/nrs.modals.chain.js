@@ -48,8 +48,10 @@ var NRS = (function(NRS, $) {
     		NRS.modalStack.push({ class: "show_chain_modal_action", key: "chain", value: { chain: chain.id }});
             var chainDetails = $.extend({}, chain);
             delete chainDetails.ONE_COIN;
-            chainDetails.shuffling_deposit_formatted_html = NRS.convertToNXT(chainDetails.SHUFFLING_DEPOSIT_NQT);
-            delete chainDetails.SHUFFLING_DEPOSIT_NQT;
+            if (chainDetails.SHUFFLING_DEPOSIT_NQT) {
+                chainDetails.shuffling_deposit_formatted_html = NRS.formatQuantity(chainDetails.SHUFFLING_DEPOSIT_NQT, chain.decimals);
+                delete chainDetails.SHUFFLING_DEPOSIT_NQT;
+            }
             chainDetails.chain_id = chainDetails.id;
             delete chainDetails.id;
             var detailsTable = $("#chain_details_table");

@@ -1897,5 +1897,8 @@
   "error_coin_already_bookmarked": "Coin already bookmarked",
   "success_coin_bookmarked": "Coin bookmarked successfully",
   "coin_exchange_duplicates_warning": "Warning: There is 1 other coin with the same name in the coin exchange. Please make sure you choose the right one. Look at the account and coin ID for confirmation.",
-  "exchange_chain": "Exchange Chain"
+  "exchange_chain": "Exchange Chain",
+  "buy_coin_with_nxt": "Buy __base__ with __counter__",
+  "sell_coin_for_nxt": "Sell __base__ for __counter__"
+
 }

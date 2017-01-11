@@ -113,7 +113,7 @@
                         <div id="loading_coin_data" style="padding-top: 150px;text-align:center;display: none;"><span data-i18n="coin_data_loading">Coin data loading, please wait...</span><br /><br /><img class="loading" src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
                         <div id="coin_details" style="display:none;">
                             <div style="float:right;color: #999999;background:white;padding:5px;border:1px solid #ccc;border-radius:3px">
-                                <strong data-i18n="coin_id">Coin Id</strong>: <span id="coin_id"></span><br />
+                                <strong data-i18n="coin_name">Coin Name</strong>: <span id="coin_link"></span><br />
                             </div>
                             <h3 style="margin-top:0" id="coin_name"></h3>
 
@@ -142,7 +142,7 @@
                                             <form role="form" class="form-horizontal" style="padding: 10px;;max-width:350px;margin-left:auto;margin-right:auto;" autocomplete="off">
                                                 <div style="margin-left:-20px">
                                                     <div class="form-group">
-                                                        <label for="buy_coin_quantity" class="col-sm-3 control-label" data-i18n="quantity">Quantity</label>
+                                                        <label for="buy_coin_quantity" class="col-sm-3 control-label" data-i18n="amount">Amount</label>
                                                         <div class="col-sm-9">
                                                             <div class="input-group">
                                                                 <input id="buy_coin_quantity" type="text" name="buy_coin_quantity" value="0" class="form-control" data-type="buy" />
@@ -190,9 +190,8 @@
                                                     <tr>
                                                         <th></th>
                                                         <th data-i18n="account">Account</th>
-                                                        <th data-i18n="quantity" class='numeric'>Quantity</th>
+                                                        <th data-i18n="amount" class='numeric'>Amount</th>
                                                         <th data-i18n="price" class='numeric'>Price</th>
-                                                        <th data-i18n="total" class='numeric'>Total</th>
                                                         <th data-i18n="sum" class='numeric'>Sum</th>
                                                     </tr>
                                                     </thead>
@@ -222,7 +221,7 @@
                                             <form role="form" class="form-horizontal" style="padding: 10px;max-width:350px;margin-left:auto;margin-right:auto;" autocomplete="off">
                                                 <div style="margin-left:-20px">
                                                     <div class="form-group">
-                                                        <label for="sell_coin_quantity" class="col-sm-3 control-label" data-i18n="quantity">Quantity</label>
+                                                        <label for="sell_coin_quantity" class="col-sm-3 control-label" data-i18n="amount">Amount</label>
                                                         <div class="col-sm-9">
                                                             <div class="input-group">
                                                                 <input id="sell_coin_quantity" type="text" name="sell_coin_quantity" value="0" class="form-control" data-type="sell" />
@@ -270,9 +269,8 @@
                                                     <tr>
                                                         <th></th>
                                                         <th data-i18n="account">Account</th>
-                                                        <th data-i18n="quantity" class='numeric'>Quantity</th>
+                                                        <th data-i18n="amount" class='numeric'>Amount</th>
                                                         <th data-i18n="price" class='numeric'>Price</th>
-                                                        <th data-i18n="total" class='numeric'>Total</th>
                                                         <th data-i18n="sum" class='numeric'>Sum</th>
                                                     </tr>
                                                     </thead>
