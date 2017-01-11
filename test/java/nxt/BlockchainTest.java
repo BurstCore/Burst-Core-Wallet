@@ -16,11 +16,9 @@
 
 package nxt;
 
-import nxt.blockchain.BlockchainProcessor;
-import nxt.blockchain.Chain;
-import nxt.blockchain.ChildChain;
-import nxt.blockchain.TransactionProcessorImpl;
+import nxt.blockchain.*;
 import nxt.http.APICall;
+import nxt.util.Convert;
 import nxt.util.Logger;
 import nxt.util.Time;
 import org.json.simple.JSONObject;
@@ -88,11 +86,12 @@ public abstract class BlockchainTest extends AbstractBlockchainTest {
 
     private static void startBundlers() {
         for (Chain chain : ChildChain.getAll()) {
+            long factor = Convert.decimalMultiplier(FxtChain.getChain(1).getDecimals() - chain.getDecimals());
             JSONObject response = new APICall.Builder("startBundler").
                     secretPhrase(FORGY.getSecretPhrase()).
                     param("chain", chain.getId()).
-                    param("minRateNQTPerFXT", chain.ONE_COIN).
-                    param("totalFeesLimitFQT", 1000 * chain.ONE_COIN). // does not work with 2 decimal chains until DEFAULT_CHILD_FEE is implemented per chain
+                    param("minRateNQTPerFXT", chain.ONE_COIN / factor).
+                    param("totalFeesLimitFQT", 1000 * chain.ONE_COIN * factor). // allow 1000 default fee transactions per class
                     param("overpayFQTPerFXT", 0).
                     build().invoke();
             Logger.logDebugMessage("startBundler: " + response);
