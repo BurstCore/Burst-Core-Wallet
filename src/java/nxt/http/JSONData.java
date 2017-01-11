@@ -382,18 +382,12 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject coinExchangeTrade(CoinExchange.Trade trade, boolean includeChainInfo) {
+    static JSONObject coinExchangeTrade(CoinExchange.Trade trade) {
         JSONObject json = new JSONObject();
         json.put("orderFullHash", Convert.toHexString(trade.getOrderFullHash()));
         json.put("matchFullHash", Convert.toHexString(trade.getMatchFullHash()));
         json.put("chain", trade.getChainId());
-        if (includeChainInfo) {
-            putChainInfo(json, trade.getChainId());
-        }
         json.put("exchange", trade.getExchangeId());
-        if (includeChainInfo) {
-            putChainInfo(json, trade.getExchangeId());
-        }
         putAccount(json, "account", trade.getAccountId());
         json.put("amountNQT", String.valueOf(trade.getExchangeQuantity()));
         json.put("priceNQT", String.valueOf(trade.getExchangePrice()));
@@ -1239,12 +1233,6 @@ public final class JSONData {
         Asset asset = Asset.getAsset(assetId);
         json.put("name", asset.getName());
         json.put("decimals", asset.getDecimals());
-    }
-
-    private static void putChainInfo(JSONObject json, int chainId) {
-        Chain chain = Chain.getChain(chainId);
-        json.put("name." + chainId, chain.getName());
-        json.put("decimals." + chainId, chain.getDecimals());
     }
 
     private static void putExpectedTransaction(JSONObject json, Transaction transaction) {
