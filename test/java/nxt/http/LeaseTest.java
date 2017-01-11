@@ -50,7 +50,7 @@ public class LeaseTest extends BlockchainTest {
                 param("includeEffectiveBalance", "true").
                 build().invoke();
         Logger.logDebugMessage("getLesseeAccount: " + lesseeResponse);
-        Assert.assertEquals(ALICE.getInitialEffectiveBalance(), lesseeResponse.get("effectiveBalanceNXT"));
+        Assert.assertEquals(ALICE.getInitialFxtEffectiveBalance(), lesseeResponse.get("effectiveBalanceNXT"));
 
         // lease is registered
         JSONObject leasedResponse1 = new APICall.Builder("getAccount").
@@ -75,7 +75,7 @@ public class LeaseTest extends BlockchainTest {
                 param("includeEffectiveBalance", "true").
                 build().invoke();
         Logger.logDebugMessage("getLesseeAccount: " + lesseeResponse);
-        Assert.assertEquals((ALICE.getInitialBalance() + BOB.getInitialBalance() + CHUCK.getInitialBalance()) / ChildChain.IGNIS.ONE_COIN - 2,
+        Assert.assertEquals((ALICE.getInitialFxtBalance() + BOB.getInitialFxtBalance() + CHUCK.getInitialFxtBalance()) / ChildChain.IGNIS.ONE_COIN - 2,
                 lesseeResponse.get("effectiveBalanceNXT"));
         generateBlock();
         generateBlock();
@@ -84,7 +84,7 @@ public class LeaseTest extends BlockchainTest {
                 param("includeEffectiveBalance", "true").
                 build().invoke();
         Logger.logDebugMessage("getLesseeAccount: " + lesseeResponse);
-        Assert.assertEquals((ALICE.getInitialBalance() + CHUCK.getInitialBalance()) / ChildChain.IGNIS.ONE_COIN - 1 /* fees */,
+        Assert.assertEquals((ALICE.getInitialFxtBalance() + CHUCK.getInitialFxtBalance()) / ChildChain.IGNIS.ONE_COIN - 1 /* fees */,
                 lesseeResponse.get("effectiveBalanceNXT"));
         generateBlock();
         lesseeResponse = new APICall.Builder("getAccount").
@@ -92,7 +92,7 @@ public class LeaseTest extends BlockchainTest {
                 param("includeEffectiveBalance", "true").
                 build().invoke();
         Logger.logDebugMessage("getLesseeAccount: " + lesseeResponse);
-        Assert.assertEquals((ALICE.getInitialBalance()) / ChildChain.IGNIS.ONE_COIN,
+        Assert.assertEquals((ALICE.getInitialFxtBalance()) / ChildChain.IGNIS.ONE_COIN,
                 lesseeResponse.get("effectiveBalanceNXT"));
     }
 }

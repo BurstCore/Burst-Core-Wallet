@@ -77,6 +77,6 @@ public class CoinExchangeTest extends BlockchainTest {
         Assert.assertEquals("" + (25 * USD.ONE_COIN), trade.get("amountNQT")); // IGNIS bought
         Assert.assertEquals("" + (4 * IGNIS.ONE_COIN), trade.get("priceNQT")); // Total USD paid?
 
-        ALICE.getBalanceDiff();
+        ALICE.getFxtBalanceDiff();
     }
 }
