@@ -268,8 +268,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         Connection con = null;
         try {
             con = getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT " + schemaTable + ".*, ft.score FROM " + schemaTable +
-                    ", ftl_search('PUBLIC', '" + schemaTable + "', ?, 2147483647, 0) ft "
+            PreparedStatement pstmt = con.prepareStatement("SELECT " + schemaTable + ".*, ft.score FROM " + schemaTable
+                    + ", ftl_search('" + schema + "', '" + table + "', ?, 2147483647, 0) ft "
                     + " WHERE " + schemaTable + ".db_id = ft.keys[0] "
                     + (multiversion ? " AND " + schemaTable + ".latest = TRUE " : " ")
                     + " AND " + dbClause.getClause() + sort
