@@ -1896,5 +1896,6 @@
   "error_coin_id_invalid": "Coin id has to be numeric",
   "error_coin_already_bookmarked": "Coin already bookmarked",
   "success_coin_bookmarked": "Coin bookmarked successfully",
-  "coin_exchange_duplicates_warning": "Warning: There is 1 other coin with the same name in the coin exchange. Please make sure you choose the right one. Look at the account and coin ID for confirmation."
+  "coin_exchange_duplicates_warning": "Warning: There is 1 other coin with the same name in the coin exchange. Please make sure you choose the right one. Look at the account and coin ID for confirmation.",
+  "exchange_chain": "Exchange Chain"
 }

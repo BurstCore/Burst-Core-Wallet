@@ -1162,8 +1162,8 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.getTransactionLink(order.orderFullHash) + "</td>" +
                         "<td>" + NRS.getChainLink(order.exchange) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.amountNQT, decimals) + "</td>" +
-                        "<td>" + NRS.formatOrderPricePerWholeQNT(order.bidNQT, order.decimals) + "</td>" +
-                        "<td>" + NRS.formatOrderPricePerWholeQNT(order.askNQT, order.decimals) + "</td>" +
+                        "<td>" + NRS.formatQuantity(order.bidNQT, decimals) + "</td>" +
+                        "<td>" + NRS.formatQuantity(order.askNQT, decimals) + "</td>" +
                         "<td class='cancel'><a href='#' data-toggle='modal' data-target='#cancel_coin_order_modal' data-order='" + NRS.escapeRespStr(order.order) + "'>" + $.t("cancel") + "</a></td>" +
                     "</tr>";
                 }
