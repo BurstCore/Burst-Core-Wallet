@@ -130,6 +130,10 @@ var NRS = (function(NRS, $) {
         return NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain].ONE_COIN;
     };
 
+    NRS.getChain = function(chain) {
+        return String(NRS.constants.CHAIN_PROPERTIES[chain]);
+    };
+
     NRS.getChainName = function(chain) {
         return String(NRS.constants.CHAIN_PROPERTIES[chain].name);
     };

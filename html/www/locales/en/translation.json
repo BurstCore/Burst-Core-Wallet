@@ -1887,5 +1887,14 @@
   "coin_orders": "Coin Orders",
   "bid": "Bid",
   "ask": "Ask",
-  "no_open_orders": "No open orders."
+  "no_open_orders": "No open orders.",
+  "missing_coin_param": "Missing 'coin' parameter",
+  "add_coin": "Add Coin",
+  "find_coin_id_help": "Find the chain id representing the coin",
+  "add_coin_bookmark_id": "Add Coin Bookmark Id",
+  "error_coin_id_required": "Coin id is required",
+  "error_coin_id_invalid": "Coin id has to be numeric",
+  "error_coin_already_bookmarked": "Coin already bookmarked",
+  "success_coin_bookmarked": "Coin bookmarked successfully",
+  "coin_exchange_duplicates_warning": "Warning: There is 1 other coin with the same name in the coin exchange. Please make sure you choose the right one. Look at the account and coin ID for confirmation."
 }
