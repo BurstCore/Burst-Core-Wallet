@@ -124,6 +124,12 @@ var NRS = (function (NRS, $, undefined) {
         }
     };
 
+    $("#cancel_coin_order_modal").on("show.bs.modal", function (e) {
+        var $invoker = $(e.relatedTarget);
+        var order = $invoker.data("order");
+        $("#cancel_coin_order_order").val(order);
+    });
+
     NRS.setup.coin_exchange = function () {
         var sidebarId = 'sidebar_coin_exchange';
         var options = {
