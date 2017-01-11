@@ -1883,5 +1883,9 @@
   "voting": "Voting",
   "unsupported_transaction_type": "Unsupported transaction type __type__",
   "issue_coin_exchange_order": "Issue Coin Exchange Order",
-  "cancel_coin_exchange_order": "Cancel Coin Exchange Order"
+  "cancel_coin_exchange_order": "Cancel Coin Exchange Order",
+  "coin_orders": "Coin Orders",
+  "bid": "Bid",
+  "ask": "Ask",
+  "no_open_orders": "No open orders."
 }

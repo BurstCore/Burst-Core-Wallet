@@ -1175,8 +1175,7 @@ var NRS = (function (NRS, $, undefined) {
                 data.exchange_chain_formatted_html = NRS.getChainLink(transaction.attachment.exchangeChain);
                 var decimals = NRS.constants.CHAIN_PROPERTIES[transaction.attachment.chain].decimals;
                 data.quantity_formatted_html = NRS.formatQuantity(transaction.attachment.quantityQNT, decimals);
-                var exchangeDecimals = NRS.constants.CHAIN_PROPERTIES[transaction.attachment.exchangeChain].decimals;
-                data.price_formatted_html = NRS.formatQuantity(transaction.attachment.priceNQT, exchangeDecimals);
+                data.price_formatted_html = NRS.formatQuantity(transaction.attachment.priceNQT, decimals);
 
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();

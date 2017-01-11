@@ -30,7 +30,7 @@ var NRS = (function (NRS, $, undefined) {
     var selectedApprovalCoin;
 
     NRS.pages.coin_exchange = function() { alert("not implemented") };
-    NRS.pages.coin_exchange_history = function() { alert("not implemented") };
+
     NRS.pages.coin_exchange_history = function () {
         NRS.sendRequest("getCoinExchangeTrades+", {
             "account": NRS.accountRS,
@@ -44,13 +44,13 @@ var NRS = (function (NRS, $, undefined) {
                     response.trades.pop();
                 }
                 var trades = response.trades;
-                var chainDecimals = NRS.constants.CHAIN_PROPERTIES[NRS.getActiveChain()].decimals;
                 var exchangeDecimals = NRS.constants.CHAIN_PROPERTIES[trades[0].exchange].decimals;
-                var priceDecimals = NRS.getNumberOfDecimals(trades, "priceNQT", function(val) {
-                    return NRS.formatOrderPricePerWholeQNT(val.priceNQT, exchangeDecimals);
-                });
                 var amountDecimals = NRS.getNumberOfDecimals(trades, "amountNQT", function(val) {
-                    return NRS.formatQuantity(val.quantityQNT, chainDecimals);
+                    return NRS.formatQuantity(val.quantityQNT, exchangeDecimals);
+                });
+                var chainDecimals = NRS.constants.CHAIN_PROPERTIES[NRS.getActiveChain()].decimals;
+                var priceDecimals = NRS.getNumberOfDecimals(trades, "priceNQT", function(val) {
+                    return NRS.formatOrderPricePerWholeQNT(val.priceNQT, chainDecimals);
                 });
                 var rows = "";
                 for (var i = 0; i < trades.length; i++) {
@@ -74,7 +74,55 @@ var NRS = (function (NRS, $, undefined) {
         });
     };
 
-    NRS.pages.open_coin_orders = function() { alert("not implemented") };
+    NRS.pages.open_coin_orders = function() {
+        NRS.getOpenOrders();
+    };
+
+    NRS.getOpenOrders = function() {
+        NRS.sendRequest("getCoinExchangeOrders", {
+            "account": NRS.account,
+            "firstIndex": 0,
+            "lastIndex": 100
+        }, function (response) {
+            if (response["orders"] && response["orders"].length) {
+                var orders = response["orders"];
+                orders.sort(function (a, b) {
+                    if (NRS.getChainName(a.exchange) > NRS.getChainName(b.exchange)) {
+                        return 1;
+                    } else if (NRS.getChainName(a.exchange) < NRS.getChainName(b.exchange)) {
+                        return -1;
+                    } else {
+                        // todo sort same chain orders
+                    }
+                });
+
+                var rows = "";
+                for (var i = 0; i < orders.length; i++) {
+                    var order = orders[i];
+                    order.priceNQT = new BigInteger(order.priceNQT);
+                    order.amountNQT = new BigInteger(order.amountNQT);
+                    var decimals = NRS.getChainDecimals(order.chain);
+                    rows += "<tr>" +
+                        "<td>" + NRS.getTransactionLink(order.orderFullHash) + "</td>" +
+                        "<td>" + NRS.getChainLink(order.exchange) + "</td>" +
+                        "<td>" + NRS.formatQuantity(order.amountNQT, decimals) + "</td>" +
+                        "<td>" + NRS.formatOrderPricePerWholeQNT(order.bidNQT, order.decimals) + "</td>" +
+                        "<td>" + NRS.formatOrderPricePerWholeQNT(order.askNQT, order.decimals) + "</td>" +
+                        "<td class='cancel'><a href='#' data-toggle='modal' data-target='#cancel_coin_order_modal' data-order='" + NRS.escapeRespStr(order.order) + "'>" + $.t("cancel") + "</a></td>" +
+                    "</tr>";
+                }
+                NRS.dataLoaded(rows);
+            } else {
+                NRS.dataLoaded();
+            }
+        });
+    };
+
+    NRS.incoming.open_orders = function (transactions) {
+        if (NRS.hasTransactionUpdates(transactions)) {
+            NRS.loadPage("open_coin_orders");
+        }
+    };
 
     NRS.setup.coin_exchange = function () {
         var sidebarId = 'sidebar_coin_exchange';
