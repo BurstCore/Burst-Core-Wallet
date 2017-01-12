@@ -210,7 +210,7 @@ public class DesktopApplication extends Application {
             return;
         }
         String msg = transactionEvent.toString() + " ids " +
-                transactions.stream().map(Transaction::getStringId).collect(Collectors.joining(","));
+                transactions.stream().map(transaction -> Long.toUnsignedString(transaction.getId())).collect(Collectors.joining(","));
         updateClientState(msg);
     }
 

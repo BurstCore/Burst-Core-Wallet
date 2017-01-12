@@ -177,7 +177,7 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
         for (ChildTransactionImpl childTransaction : getSortedChildTransactions()) {
             if (childTransaction.getFxtTransactionId() != this.getId()) {
                 throw new IllegalStateException(String.format("Child transaction fxtTransactionId set to %s, must be %s",
-                        Long.toUnsignedString(childTransaction.getFxtTransactionId()), this.getStringId()));
+                        Long.toUnsignedString(childTransaction.getFxtTransactionId()), Long.toUnsignedString(this.getId())));
             }
             childTransaction.save(con, childChainSchemaTable);
         }

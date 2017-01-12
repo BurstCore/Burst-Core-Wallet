@@ -465,7 +465,7 @@ public abstract class TransactionImpl implements Transaction {
         if (stringId == null) {
             getId();
             if (stringId == null) {
-                stringId = Long.toUnsignedString(id);
+                stringId = getChain().getId() + ':' + Convert.toHexString(getFullHash());
             }
         }
         return stringId;

@@ -531,7 +531,7 @@ public final class DebugTrace {
         if (logFee) {
             map.put("transaction fee", String.valueOf(fee));
         }
-        map.put("transaction", transaction.getStringId());
+        map.put("transaction", Long.toUnsignedString(transaction.getId()));
         if (isRecipient) {
             map.put("sender", Long.toUnsignedString(transaction.getSenderId()));
         } else {
@@ -632,7 +632,7 @@ public final class DebugTrace {
             OrderPlacementAttachment orderPlacement = (OrderPlacementAttachment)attachment;
             boolean isAsk = orderPlacement instanceof AskOrderPlacementAttachment;
             map.put("asset", Long.toUnsignedString(orderPlacement.getAssetId()));
-            map.put("order", transaction.getStringId());
+            map.put("order", Long.toUnsignedString(transaction.getId()));
             map.put("order price", String.valueOf(orderPlacement.getPriceNQT()));
             long quantity = orderPlacement.getQuantityQNT();
             if (isAsk) {
@@ -651,7 +651,7 @@ public final class DebugTrace {
                 return Collections.emptyMap();
             }
             AssetIssuanceAttachment assetIssuance = (AssetIssuanceAttachment)attachment;
-            map.put("asset", transaction.getStringId());
+            map.put("asset", Long.toUnsignedString(transaction.getId()));
             map.put("asset quantity", String.valueOf(assetIssuance.getQuantityQNT()));
             map.put("event", "asset issuance");
         } else if (attachment instanceof AssetTransferAttachment) {
@@ -682,7 +682,7 @@ public final class DebugTrace {
                 map = getValues(((ChildChain) transaction.getChain()).getDigitalGoodsHome().getGoods(purchase.getGoodsId()).getSellerId(), false);
             }
             map.put("event", "purchase");
-            map.put("purchase", transaction.getStringId());
+            map.put("purchase", Long.toUnsignedString(transaction.getId()));
         } else if (attachment instanceof DeliveryAttachment) {
             DeliveryAttachment delivery = (DeliveryAttachment)transaction.getAttachment();
             DigitalGoodsHome.Purchase purchase = ((ChildChain) transaction.getChain()).getDigitalGoodsHome().getPurchase(delivery.getPurchaseId());
@@ -729,7 +729,7 @@ public final class DebugTrace {
         } else if (attachment instanceof PublishExchangeOfferAttachment) {
             PublishExchangeOfferAttachment publishOffer = (PublishExchangeOfferAttachment)attachment;
             map.put("currency", Long.toUnsignedString(publishOffer.getCurrencyId()));
-            map.put("offer", transaction.getStringId());
+            map.put("offer", Long.toUnsignedString(transaction.getId()));
             map.put("buy rate", String.valueOf(publishOffer.getBuyRateNQT()));
             map.put("sell rate", String.valueOf(publishOffer.getSellRateNQT()));
             long buyUnits = publishOffer.getInitialBuySupply();
@@ -743,7 +743,7 @@ public final class DebugTrace {
             map.put("event", "offer");
         } else if (attachment instanceof CurrencyIssuanceAttachment) {
             CurrencyIssuanceAttachment currencyIssuance = (CurrencyIssuanceAttachment) attachment;
-            map.put("currency", transaction.getStringId());
+            map.put("currency", Long.toUnsignedString(transaction.getId()));
             map.put("currency units", String.valueOf(currencyIssuance.getInitialSupply()));
             map.put("event", "currency issuance");
         } else if (attachment instanceof CurrencyTransferAttachment) {

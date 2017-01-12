@@ -298,7 +298,7 @@ public final class JSONData {
     private static JSONObject expectedOrder(Transaction transaction) {
         JSONObject json = new JSONObject();
         OrderPlacementAttachment attachment = (OrderPlacementAttachment)transaction.getAttachment();
-        json.put("order", transaction.getStringId());
+        json.put("order", Long.toUnsignedString(transaction.getId()));
         json.put("orderFullHash", Convert.toHexString(transaction.getFullHash()));
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "account", transaction.getSenderId());
@@ -352,7 +352,7 @@ public final class JSONData {
     private static JSONObject expectedOffer(Transaction transaction) {
         PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment)transaction.getAttachment();
         JSONObject json = new JSONObject();
-        json.put("offer", transaction.getStringId());
+        json.put("offer", Long.toUnsignedString(transaction.getId()));
         json.put("offerFullHash", Convert.toHexString(transaction.getFullHash()));
         putAccount(json, "account", transaction.getSenderId());
         json.put("expirationHeight", attachment.getExpirationHeight());
@@ -399,7 +399,7 @@ public final class JSONData {
 
     static JSONObject expectedCoinExchangeOrder(Transaction transaction) {
         JSONObject json = new JSONObject();
-        json.put("order", transaction.getStringId());
+        json.put("order", Long.toUnsignedString(transaction.getId()));
         json.put("orderFullHash", Convert.toHexString(transaction.getFullHash()));
         OrderIssueAttachment orderIssueAttachment = (OrderIssueAttachment)transaction.getAttachment();
         json.put("chain", orderIssueAttachment.getChain().getId());
@@ -509,7 +509,7 @@ public final class JSONData {
         if (includeTransactions) {
             block.getFxtTransactions().forEach(transaction -> transactions.add(transaction(transaction)));
         } else {
-            block.getFxtTransactions().forEach(transaction -> transactions.add(transaction.getStringId()));
+            block.getFxtTransactions().forEach(transaction -> transactions.add(Convert.toHexString(transaction.getFullHash())));
         }
         json.put("transactions", transactions);
         if (includeExecutedPhased) {
