@@ -79,7 +79,11 @@ public final class PublishExchangeOffer extends CreateTransaction {
 
         Attachment attachment = new PublishExchangeOfferAttachment(currency.getId(), buyRateNQT, sellRateNQT,
                 totalBuyLimit, totalSellLimit, initialBuySupply, initialSellSupply, expirationHeight);
-        return createTransaction(req, account, attachment);
+        try {
+            return createTransaction(req, account, attachment);
+        } catch (NxtException.InsufficientBalanceException e) {
+            return JSONResponses.NOT_ENOUGH_FUNDS;
+        }
     }
 
 }
