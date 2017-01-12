@@ -256,6 +256,7 @@ public final class ShufflingHome {
                     + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
+                pstmt.setBytes(++i, this.hash);
                 DbUtils.setLongZeroToNull(pstmt, ++i, this.holdingId);
                 pstmt.setByte(++i, this.holdingType.getCode());
                 pstmt.setLong(++i, this.issuerId);
