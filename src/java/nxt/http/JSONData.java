@@ -468,6 +468,7 @@ public final class JSONData {
         putAccount(json, "account", shuffler.getAccountId());
         putAccount(json, "recipient", Account.getId(shuffler.getRecipientPublicKey()));
         json.put("shufflingFullHash", Convert.toHexString(shuffler.getShufflingFullHash()));
+        json.put("feeRateNQTPerFXT", Long.toUnsignedString(shuffler.getFeeRateNQTPerFXT()));
         if (shuffler.getFailedTransaction() != null) {
             json.put("failedTransaction", unconfirmedTransaction(shuffler.getFailedTransaction()));
             json.put("failureCause", shuffler.getFailureCause().getMessage());

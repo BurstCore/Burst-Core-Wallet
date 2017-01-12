@@ -48,7 +48,8 @@ public final class Shuffler {
     private static final Map<String, Map<Long, Shuffler>> shufflingsMap = new HashMap<>();
     private static final Map<Integer, Set<String>> expirations = new HashMap<>();
 
-    public static Shuffler addOrGetShuffler(ChildChain childChain, String secretPhrase, byte[] recipientPublicKey, byte[] shufflingFullHash) throws ShufflerException {
+    public static Shuffler addOrGetShuffler(ChildChain childChain, String secretPhrase, byte[] recipientPublicKey,
+                byte[] shufflingFullHash, long feeRateNQTPerFXT) throws ShufflerException {
         long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
         BlockchainImpl.getInstance().writeLock();
         try {
@@ -80,7 +81,7 @@ public final class Shuffler {
                 if (account != null && account.getControls().contains(Account.ControlType.PHASING_ONLY)) {
                     throw new ControlledAccountException("Cannot run a shuffler for an account under phasing only control");
                 }
-                shuffler = new Shuffler(childChain, secretPhrase, recipientPublicKey, shufflingFullHash);
+                shuffler = new Shuffler(childChain, secretPhrase, recipientPublicKey, shufflingFullHash, feeRateNQTPerFXT);
                 if (shuffling != null) {
                     shuffler.init(shuffling);
                     clearExpiration(shuffling);
@@ -308,15 +309,18 @@ public final class Shuffler {
     private final String secretPhrase;
     private final byte[] recipientPublicKey;
     private final byte[] shufflingFullHash;
+    private final long feeRateNQTPerFXT;
     private volatile Transaction failedTransaction;
     private volatile NxtException.NotCurrentlyValidException failureCause;
 
-    private Shuffler(ChildChain childChain, String secretPhrase, byte[] recipientPublicKey, byte[] shufflingFullHash) {
+    private Shuffler(ChildChain childChain, String secretPhrase, byte[] recipientPublicKey,
+                byte[] shufflingFullHash, long feeRateNQTPerFXT) {
         this.childChain = childChain;
         this.secretPhrase = secretPhrase;
         this.accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
         this.recipientPublicKey = recipientPublicKey;
         this.shufflingFullHash = shufflingFullHash;
+        this.feeRateNQTPerFXT = feeRateNQTPerFXT;
     }
 
     public long getAccountId() {
@@ -333,6 +337,10 @@ public final class Shuffler {
 
     public Transaction getFailedTransaction() {
         return failedTransaction;
+    }
+
+    public long getFeeRateNQTPerFXT() {
+        return feeRateNQTPerFXT;
     }
 
     public NxtException.NotCurrentlyValidException getFailureCause() {
@@ -465,6 +473,7 @@ public final class Shuffler {
         }
         try {
             ChildTransaction.Builder builder = childChain.newTransactionBuilder(Crypto.getPublicKey(secretPhrase), 0, 0, (short) 1440, attachment);
+            builder.feeRateNQTPerFXT(feeRateNQTPerFXT);
             builder.timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(secretPhrase);
             failedTransaction = null;

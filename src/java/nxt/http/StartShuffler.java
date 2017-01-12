@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.Constants;
 import nxt.NxtException;
 import nxt.blockchain.ChildChain;
 import nxt.shuffling.Shuffler;
@@ -31,7 +32,8 @@ public final class StartShuffler extends APIServlet.APIRequestHandler {
     static final StartShuffler instance = new StartShuffler();
 
     private StartShuffler() {
-        super(new APITag[]{APITag.SHUFFLING}, "secretPhrase", "shufflingFullHash", "recipientSecretPhrase", "recipientPublicKey");
+        super(new APITag[]{APITag.SHUFFLING}, "secretPhrase", "shufflingFullHash",
+                "recipientSecretPhrase", "recipientPublicKey", "feeRateNQTPerFXT");
     }
 
     @Override
@@ -39,9 +41,11 @@ public final class StartShuffler extends APIServlet.APIRequestHandler {
         byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
         String secretPhrase = ParameterParser.getSecretPhrase(req, true);
         byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient");
+        long feeRateNQTPerFXT = ParameterParser.getLong(req, "feeRateNQTPerFXT", 1, Constants.MAX_BALANCE_NQT, true);
         ChildChain childChain = ParameterParser.getChildChain(req);
         try {
-            Shuffler shuffler = Shuffler.addOrGetShuffler(childChain, secretPhrase, recipientPublicKey, shufflingFullHash);
+            Shuffler shuffler = Shuffler.addOrGetShuffler(childChain, secretPhrase, recipientPublicKey,
+                    shufflingFullHash, feeRateNQTPerFXT);
             return shuffler != null ? JSONData.shuffler(shuffler, false) : JSON.emptyJSON;
         } catch (Shuffler.ShufflerLimitException e) {
             JSONObject response = new JSONObject();
