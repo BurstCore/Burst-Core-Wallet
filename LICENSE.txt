@@ -1,9 +1,8 @@
 Copyright © 2013-2016 The Nxt Core Developers.
 Copyright © 2016-2017 Jelurida IP B.V.
 
-This is an experimental version for evaluation and testing only, limited to
-running each blockchain instance for no longer than 21 days. It may also
-contain other modifications intended to make it unsuitable for production use.
+This is an experimental version for evaluation and testing only. It contains
+modifications intended to make it unsuitable for production use.
 
 A temporary permission is granted to use this software only for testing
 purposes. Production use, sub-licensing, and redistribution is prohibited. The
