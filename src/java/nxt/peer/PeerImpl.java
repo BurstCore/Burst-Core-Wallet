@@ -1022,7 +1022,7 @@ final class PeerImpl implements Peer {
         if (sendMessage) {
             try {
                 keyEvent.update(SelectionKey.OP_WRITE, 0);
-                if (Peers.communicationLogging == 1) {
+                if (Peers.isLogLevelEnabled(Peers.LOG_LEVEL_NAMES)) {
                     Logger.logDebugMessage(String.format("%s[%d] message sent to %s",
                             message.getMessageName(), message.getMessageId(), host));
                 }

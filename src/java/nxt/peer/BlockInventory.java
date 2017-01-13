@@ -92,6 +92,9 @@ final class BlockInventory {
                             excludedTransactionIds.set(i);
                         }
                     }
+                    if (Peers.isLogLevelEnabled(Peers.LOG_LEVEL_DETAILS)) {
+                        Logger.logDebugMessage("Requesting block " + Long.toUnsignedString(invBlockId));
+                    }
                     NetworkMessage.GetBlockMessage blockRequest =
                             new NetworkMessage.GetBlockMessage(invBlockId, excludedTransactionIds);
                     //
@@ -126,6 +129,9 @@ final class BlockInventory {
                     // Process the block
                     //
                     Block block = response.getBlock(cachedTransactions);
+                    if (Peers.isLogLevelEnabled(Peers.LOG_LEVEL_DETAILS)) {
+                        Logger.logDebugMessage("Received block " + block.getStringId());
+                    }
                     long previousBlockId = block.getPreviousBlockId();
                     Block lastBlock = Nxt.getBlockchain().getLastBlock();
                     try {

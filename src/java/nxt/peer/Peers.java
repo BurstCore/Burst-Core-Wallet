@@ -82,11 +82,15 @@ public final class Peers {
     /** Bundler rate broadcast interval */
     static final int BUNDLER_RATE_BROADCAST_INTERVAL = 60 * 60;
 
+    /** Communication log levels */
+    public static final int LOG_LEVEL_NAMES = 1;
+    public static final int LOG_LEVEL_DETAILS = 2;
+
     /** Peer blacklist period (seconds) */
     static final int blacklistingPeriod = Nxt.getIntProperty("nxt.blacklistingPeriod", 600);
 
     /** Communication logging (0=no logging, 1=log message names) */
-    static int communicationLogging = Nxt.getIntProperty("nxt.communicationLogging", 0);
+    private static int communicationLogging = Nxt.getIntProperty("nxt.communicationLogging", 0);
 
     /** Get more peers */
     private static final boolean getMorePeers = Nxt.getBooleanProperty("nxt.getMorePeers");
@@ -1064,6 +1068,16 @@ public final class Peers {
         if (!rates.isEmpty()) {
             peer.sendMessage(new NetworkMessage.BundlerRateMessage(rates));
         }
+    }
+
+    /**
+     * Check if the specified communication log level is enabled
+     *
+     * @param   logLevel            Communication logging level
+     * @return                      TRUE if the log level is enabled
+     */
+    public static boolean isLogLevelEnabled(int logLevel) {
+        return ((communicationLogging & logLevel) != 0);
     }
 
     /**

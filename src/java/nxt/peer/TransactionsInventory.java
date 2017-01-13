@@ -56,10 +56,14 @@ public final class TransactionsInventory {
         //
         List<ChainTransactionId> requestIds = new ArrayList<>(Math.min(100, transactionIds.size()));
         for (ChainTransactionId transactionId : transactionIds) {
-            if (transactionCache.get(transactionId) == null && notCurrentlyValidTransactions.get(transactionId) == null
+            if (transactionCache.get(transactionId) == null
+                    && notCurrentlyValidTransactions.get(transactionId) == null
                     && !pendingTransactions.contains(transactionId)) {
                 requestIds.add(transactionId);
                 pendingTransactions.add(transactionId);
+                if (Peers.isLogLevelEnabled(Peers.LOG_LEVEL_DETAILS)) {
+                    Logger.logDebugMessage("Requesting transaction " + transactionId.getStringId());
+                }
                 if (requestIds.size() >= 100) {
                     break;
                 }
@@ -107,6 +111,9 @@ public final class TransactionsInventory {
                                 ChainTransactionId transactionId = ChainTransactionId.getChainTransactionId(tx);
                                 requestIds.remove(transactionId);
                                 pendingTransactions.remove(transactionId);
+                                if (Peers.isLogLevelEnabled(Peers.LOG_LEVEL_DETAILS)) {
+                                    Logger.logDebugMessage("Received transaction " + tx.getStringId());
+                                }
                             });
                             List<? extends Transaction> addedTransactions = Nxt.getTransactionProcessor().processPeerTransactions(transactions);
                             cacheTransactions(addedTransactions);
