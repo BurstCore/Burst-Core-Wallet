@@ -1276,6 +1276,8 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             genesisBlockId = genesisBlock.getId();
             byte[] generationSignature = Genesis.apply();
             if (!Arrays.equals(generationSignature, genesisBlock.getGenerationSignature())) {
+                scheduleScan(0, true);
+                Db.db.commitTransaction();
                 throw new RuntimeException("Invalid generation signature " + Arrays.toString(generationSignature));
             } else {
                 Db.db.commitTransaction();
@@ -1907,7 +1909,10 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 long currentBlockId = currentBlock.getId();
                 if (height == 0) {
                     blockchain.setLastBlock(currentBlock); // special case to avoid no last block
-                    Genesis.apply();
+                    byte[] generationSignature = Genesis.apply();
+                    if (!Arrays.equals(generationSignature, currentBlock.getGenerationSignature())) {
+                        throw new RuntimeException("Invalid generation signature " + Arrays.toString(generationSignature));
+                    }
                 } else {
                     blockchain.setLastBlock(BlockDb.findBlockAtHeight(height - 1));
                 }
