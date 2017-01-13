@@ -455,7 +455,7 @@ public abstract class TransactionImpl implements Transaction {
             fullHash = digest.digest(signatureHash);
             BigInteger bigInteger = new BigInteger(1, new byte[]{fullHash[7], fullHash[6], fullHash[5], fullHash[4], fullHash[3], fullHash[2], fullHash[1], fullHash[0]});
             id = bigInteger.longValue();
-            stringId = getChain().getId() + ':' + Convert.toHexString(getFullHash());
+            stringId = getChain().getId() + ":" + Convert.toHexString(getFullHash());
         }
         return id;
     }

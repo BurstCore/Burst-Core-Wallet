@@ -40,6 +40,10 @@ public final class ChainTransactionId {
         return chainId;
     }
 
+    public String getStringId() {
+        return chainId + ":" + Convert.toHexString(hash);
+    }
+
     public byte[] getFullHash() {
         return hash;
     }
