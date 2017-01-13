@@ -25,8 +25,8 @@ public final class Constants {
     public static final boolean isLightClient = Nxt.getBooleanProperty("nxt.isLightClient");
 
     public static final int MAX_NUMBER_OF_FXT_TRANSACTIONS = 10;
-    public static final int MAX_NUMBER_OF_CHILD_TRANSACTIONS = 1024;
-    public static final int MAX_CHILDBLOCK_PAYLOAD_LENGTH = 512 * 1024;
+    public static final int MAX_NUMBER_OF_CHILD_TRANSACTIONS = 100;
+    public static final int MAX_CHILDBLOCK_PAYLOAD_LENGTH = 512 * 100;
     public static final long EPOCH_BEGINNING;
     static {
         try {
