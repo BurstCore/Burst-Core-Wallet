@@ -795,7 +795,12 @@ public final class NetworkHandler implements Runnable {
                         buffer.flip();
                     } catch (BufferOverflowException exc) {
                         Logger.logErrorMessage("Buffer is too short for '" + message.getMessageName()
-                                + "' message from " + peer.getHost());
+                                + "' message to " + peer.getHost());
+                        Peers.peersService.execute(peer::disconnectPeer);
+                        break;
+                    } catch (Exception exc) {
+                        Logger.logErrorMessage("Unable to process '" + message.getMessageName()
+                                + "' message to " + peer.getHost());
                         Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     }
