@@ -38,7 +38,7 @@ var NRS = (function(NRS, $) {
             minRateNQTPerFXT: NRS.formatAmount(response.minRateNQTPerFXT),
             overpayFQTPerFXT: NRS.formatAmount(response.overpayFQTPerFXT),
             stopLinkFormatted: "<a href='#' class='btn btn-xs' data-toggle='modal' data-target='#stop_bundler_modal' " +
-                "data-account='" + NRS.escapeRespStr(response.bundlerRS) + "'>" + $.t("stop") + "</a>"
+                "data-account='" + NRS.escapeRespStr(response.bundlerRS) + "' data-chain='" + NRS.escapeRespStr(response.chain) + "'>" + $.t("stop") + "</a>"
         };
     };
 
@@ -55,7 +55,7 @@ var NRS = (function(NRS, $) {
             bundlers: []
         });
         var params = {
-            "chain": NRS.getActiveChain(),
+            "nochain": true,
             "adminPassword": NRS.getAdminPassword(),
             "firstIndex": NRS.pageNumber * NRS.itemsPerPage - NRS.itemsPerPage,
             "lastIndex": NRS.pageNumber * NRS.itemsPerPage
@@ -91,11 +91,11 @@ var NRS = (function(NRS, $) {
 
     NRS.forms.startBundler = function($modal) {
         var data = NRS.getFormData($modal.find("form:first"));
-        data.totalFeesLimitFQT = NRS.convertToFXT(data.totalFeesLimitFXT);
+        data.totalFeesLimitFQT = NRS.convertToNQT(data.totalFeesLimitFXT);
         delete data.totalFeesLimitFXT;
-        data.overpayFQTPerFXT = NRS.convertToFXT(data.overpayFXTPerFXT);
+        data.overpayFQTPerFXT = NRS.convertToNQT(data.overpayFXTPerFXT);
         delete data.overpayFXTPerFXT;
-        return data;
+        return { data: data };
     };
 
     NRS.forms.startBundlerComplete = function() {
@@ -108,6 +108,10 @@ var NRS = (function(NRS, $) {
         var account = $invoker.data("account");
         if (account) {
             $("#stop_bundler_account").val(account);
+        }
+        var chain = $invoker.data("chain");
+        if (chain) {
+            $("#stop_bundler_chain").val(chain);
         }
         if (NRS.getAdminPassword()) {
             $("#stop_bundler_admin_password").val(NRS.getAdminPassword());

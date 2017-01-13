@@ -193,8 +193,10 @@ var NRS = (function (NRS, $, undefined) {
             return;
         }
 
-        if (!data.chain) {
+        if (!data.chain && !data.nochain) {
             data.chain = NRS.getActiveChain();
+        } else {
+            delete data.nochain;
         }
 
         //check to see if secretPhrase supplied matches logged in account, if not - show error.
