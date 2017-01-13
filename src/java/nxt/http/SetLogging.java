@@ -32,8 +32,12 @@ import javax.servlet.http.HttpServletRequest;
  * <ul>
  * <li>logLevel - Specifies the log message level and defaults to INFO if not specified.
  * <li>communicationLogging - Specifies peer message logging and defaults to no
- * communication logging if not specified.  Specify 1 to enable communication logging
- * or 0 to disable communication logging.
+ * communication logging if not specified.  The log level is a bit mask and
+ * more than one bit may be set.  The bits are defined as follows:
+ * <ul>
+ * <li>1 - Log network message names
+ * <li>2 - Log network message details
+ * </ul>
  * </ul>
  *
  * <p>Response parameters:
@@ -110,7 +114,7 @@ public class SetLogging extends APIServlet.APIRequestHandler {
         //
         // Set communication logging
         //
-        Peers.setCommunicationLogging(ParameterParser.getInt(req, "communicationLogging", 0, 1, false));
+        Peers.setCommunicationLogging(ParameterParser.getInt(req, "communicationLogging", 0, 3, false));
         //
         // Return the response
         //
