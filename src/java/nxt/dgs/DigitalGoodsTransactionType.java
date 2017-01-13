@@ -29,8 +29,7 @@ import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
 import nxt.blockchain.TransactionType;
 import nxt.messaging.PrunablePlainMessageAppendix;
-import org.apache.tika.Tika;
-import org.apache.tika.mime.MediaType;
+import nxt.util.Search;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -159,10 +158,8 @@ public abstract class DigitalGoodsTransactionType extends ChildTransactionType {
             if (prunablePlainMessage != null) {
                 byte[] image = prunablePlainMessage.getMessage();
                 if (image != null) {
-                    Tika tika = new Tika();
-                    String mediaTypeName = tika.detect(image);
-                    MediaType mediaType = MediaType.parse(mediaTypeName);
-                    if (mediaType == null || !"image".equals(mediaType.getType())) {
+                    String mediaType = Search.detectMimeType(image);
+                    if (mediaType == null || !mediaType.startsWith("image/")) {
                         throw new NxtException.NotValidException("Only image attachments allowed for DGS listing, media type is " + mediaType);
                     }
                 }
