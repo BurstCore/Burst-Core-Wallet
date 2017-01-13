@@ -62,8 +62,7 @@ var NRS = (function (NRS, $, undefined) {
                 NRS.sendRequest("getTransaction", {
                     "fullHash": transaction,
                     "chain": chain
-                }, function (response, input) {
-                    response.transaction = input.transaction;
+                }, function (response) {
                     NRS.processTransactionModalData(response, isModalVisible, sharedKey);
                 });
             } else {
@@ -290,7 +289,7 @@ var NRS = (function (NRS, $, undefined) {
                 var hashRow = hash ? ("<tr><td><strong>" + $.t("hash") + "</strong>:&nbsp;</td><td>" + hash + "</td></tr>") : "";
                 var downloadLink = "";
                 if (transaction.attachment.messageHash && !NRS.isTextMessage(transaction) && transaction.block) {
-                    downloadLink = "<tr><td>" + NRS.getMessageDownloadLink(transaction.transaction, sharedKey) + "</td></tr>";
+                    downloadLink = "<tr><td>" + NRS.getMessageDownloadLink(transaction.fullHash, sharedKey) + "</td></tr>";
                 }
                 $output.append("<table>" +
                     "<tr><td><strong>" + $.t("from") + "</strong>:&nbsp;</td><td>" + NRS.getAccountLink(transaction, "sender") + "</td></tr>" +
@@ -722,7 +721,7 @@ var NRS = (function (NRS, $, undefined) {
                     infoTable.show();
 
                     NRS.sendRequest("getDGSPurchase", {
-                        "purchase": transaction.transaction
+                        "purchase": NRS.fullHashToId(transaction.fullHash)
                     }, function (purchase) {
                         var callout = "";
                         if (purchase.errorCode) {
@@ -908,7 +907,7 @@ var NRS = (function (NRS, $, undefined) {
             } else if (transaction.type == 5) { // Currency
                 async = true;
                 var currency = null;
-                var id = (transaction.subtype == 0 ? transaction.transaction : transaction.attachment.currency);
+                var id = (transaction.subtype == 0 ? NRS.fullHashToId(transaction.fullHash) : transaction.attachment.currency);
                 NRS.sendRequest("getCurrency", {
                     "currency": id
                 }, function (response) {
@@ -1066,7 +1065,7 @@ var NRS = (function (NRS, $, undefined) {
                 } else {
                     data.amount = transaction.attachment.amount;
                 }
-                NRS.sendRequest("getShufflingParticipants", { "shuffling": transaction.transaction }, function (response) {
+                NRS.sendRequest("getShufflingParticipants", { "shufflingFullHash": transaction.fullHash }, function (response) {
                     if (response.participants && response.participants.length > 0) {
                         var rows = "<table class='table table-striped'><thead><tr>" +
                         "<th>" + $.t("participant") + "</th>" +
@@ -1107,7 +1106,7 @@ var NRS = (function (NRS, $, undefined) {
                     }
                 }, { isAsync: false });
                 NRS.sendRequest("getShuffling", {
-                    "shuffling": transaction.transaction
+                    "shufflingFullHash": transaction.fullHash
                 }, function (response) {
                     if (response.shuffling) {
                         data["stage_formatted_html"] = NRS.getShufflingStage(response.stage);
@@ -1183,7 +1182,7 @@ var NRS = (function (NRS, $, undefined) {
                 data = {
                     "type": $.t("cancel_coin_exchange_order")
                 };
-                data.order = transaction.attachment.order; // TODO how to link back to the exchanges?
+                data.order_formatted_html = NRS.getTransactionLink(transaction.attachment.orderHash);
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();
             }
@@ -1326,7 +1325,7 @@ var NRS = (function (NRS, $, undefined) {
         };
         var rows = "";
         NRS.sendRequest("getExchangesByExchangeRequest", {
-            "transaction": transaction.transaction
+            "transaction": NRS.fullHashToId(transaction.fullHash)
         }, function (response) {
             var exchangedUnits = BigInteger.ZERO;
             var exchangedTotal = BigInteger.ZERO;
@@ -1365,7 +1364,7 @@ var NRS = (function (NRS, $, undefined) {
         var buyOffer;
         var sellOffer;
         NRS.sendRequest("getOffer", {
-            "offer": transaction.transaction // TODO, use full hash
+            "offer": NRS.fullHashToId(transaction.fullHash)
         }, function (response) {
             buyOffer = response.buyOffer;
             sellOffer = response.sellOffer;
@@ -1388,7 +1387,7 @@ var NRS = (function (NRS, $, undefined) {
         }
         var rows = "";
         NRS.sendRequest("getExchangesByOffer", {
-            "offer": transaction.transaction
+            "offer": NRS.fullHashToId(transaction.fullHash)
         }, function (response) {
             var exchangedUnits = BigInteger.ZERO;
             var exchangedTotal = BigInteger.ZERO;
@@ -1465,7 +1464,7 @@ var NRS = (function (NRS, $, undefined) {
             }
         }
         if (transaction.block) {
-            data["link_formatted_html"] = NRS.getTaggedDataLink(transaction.transaction, attachment.isText);
+            data["link_formatted_html"] = NRS.getTaggedDataLink(transaction.transaction, attachment.isText); // TODO full hash
         }
         return data;
     };

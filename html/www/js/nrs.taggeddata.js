@@ -35,6 +35,7 @@ var NRS = (function(NRS, $) {
         };
     };
 
+    // TODO convert to transactionFullHash
     NRS.getTaggedDataLink = function(transaction, isText) {
         if (isText) {
             return "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' " +

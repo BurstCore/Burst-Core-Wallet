@@ -409,7 +409,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 Logger.logDebugMessage("Will broadcast new transaction later " + transaction.getStringId());
             } else {
                 Set<? extends TransactionImpl> displaced = processTransaction(unconfirmedTransaction);
-                Logger.logDebugMessage("Accepted new transaction " + transaction.getStringId());
+                Logger.logDebugMessage(String.format("Accepted new transaction %s on chain %s", Convert.toHexString(transaction.getFullHash()), transaction.getChain().getName()));
                 removeUnconfirmedTransactions(displaced);
                 List<Transaction> acceptedTransactions = Collections.singletonList(transaction);
                 TransactionsInventory.cacheTransactions(acceptedTransactions);

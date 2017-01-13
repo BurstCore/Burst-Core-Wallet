@@ -541,7 +541,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 var statusIcon = NRS.getTransactionStatusIcon(order);
                 rows += "<tr data-transaction='" + NRS.escapeRespStr(order.order) + "' data-amount='" + order.amountNQT.toString().escapeHTML() + "' data-price='" + price.toString().escapeHTML() + "'>" +
-                    "<td>" + NRS.getTransactionLink(order.orderFullHash, statusIcon, true) + "</td>" +
+                    "<td>" + NRS.getTransactionLink(order.orderFullHash, statusIcon, true, getCoinOrderChain(order)) + "</td>" +
                     "<td>" + NRS.getAccountLink(order, "account") + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(order.amountNQT, currentCoin.decimals, false, amountDecimals) + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(price, currentCoin.decimals, priceDecimals) + "</td>" +
@@ -845,25 +845,32 @@ var NRS = (function (NRS, $, undefined) {
         var priceNQTPerWholeQNT = priceNQT;
         var description;
         var tooltipTitle;
+        var coinName = $("#coin_name");
         if (orderType == "buy") {
-            description = $.t("buy_order_description", {
-                "quantity": NRS.formatQuantity(quantityQNT, currentCoin.decimals, true),
-                "coin_name": $("#coin_name").html().escapeHTML(),
-                "nxt": NRS.formatAmount(priceNQTPerWholeQNT)
+            description = $.t("buy_coin_order_description", {
+                "amount": NRS.formatQuantity(quantityQNT, currentCoin.decimals, true),
+                "base": coinName.html().escapeHTML(),
+                "price": NRS.formatAmount(priceNQTPerWholeQNT),
+                "counter": NRS.getActiveChainName()
             });
-            tooltipTitle = $.t("buy_order_description_help", {
-                "nxt": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
-                "total_nxt": totalNXT
+            tooltipTitle = $.t("buy_coin_order_description_help", {
+                "price": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
+                "base": coinName.html().escapeHTML(),
+                "total": totalNXT,
+                "counter": NRS.getActiveChainName()
             });
         } else {
-            description = $.t("sell_order_description", {
-                "quantity": NRS.formatQuantity(quantityQNT, currentCoin.decimals, true),
-                "coin_name": $("#coin_name").html().escapeHTML(),
-                "nxt": NRS.formatAmount(priceNQTPerWholeQNT)
+            description = $.t("sell_coin_order_description", {
+                "amount": NRS.formatQuantity(quantityQNT, currentCoin.decimals, true),
+                "base": coinName.html().escapeHTML(),
+                "price": NRS.formatAmount(priceNQTPerWholeQNT),
+                "counter": NRS.getActiveChainName()
             });
-            tooltipTitle = $.t("sell_order_description_help", {
-                "nxt": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
-                "total_nxt": totalNXT
+            tooltipTitle = $.t("sell_coin_order_description_help", {
+                "price": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
+                "base": coinName.html().escapeHTML(),
+                "total": totalNXT,
+                "counter": NRS.getActiveChainName()
             });
         }
 
@@ -1157,7 +1164,7 @@ var NRS = (function (NRS, $, undefined) {
                     order.amountNQT = new BigInteger(order.amountNQT);
                     var decimals = NRS.getChainDecimals(order.chain);
                     rows += "<tr>" +
-                        "<td>" + NRS.getTransactionLink(order.orderFullHash) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(order.orderFullHash, false, false, getCoinOrderChain(order)) + "</td>" +
                         "<td>" + NRS.getChainLink(order.exchange) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.amountNQT, decimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.bidNQT, decimals) + "</td>" +
@@ -1184,12 +1191,16 @@ var NRS = (function (NRS, $, undefined) {
         $("#cancel_coin_order_order").val(order);
     });
 
+    function getCoinOrderChain(order) {
+        return order.exchange == 1 ? 1 : NRS.getActiveChain();
+    }
+
     NRS.setup.coin_exchange = function () {
         var sidebarId = 'sidebar_coin_exchange';
         var options = {
             "id": sidebarId,
             "titleHTML": '<i class="fa fa-money"></i><span data-i18n="coin_exchange">Coin Exchange</span>',
-            "page": 'coin_exchange_history',
+            "page": 'coin_exchange',
             "desiredPosition": 30,
             "depends": { tags: [ NRS.constants.API_TAGS.CE ] }
         };
