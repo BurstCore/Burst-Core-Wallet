@@ -300,6 +300,8 @@ var NRS = (function(NRS, $, undefined) {
 		}
 		if (!chain) {
         	chain = $('select[name="chain"]').val();
+		} else {
+            $('select[name="chain"]').val(chain);
 		}
         NRS.setActiveChain(chain);
 		console.log("login calling getBlockchainStatus, active chain is " + NRS.getActiveChainName());
