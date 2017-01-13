@@ -1233,7 +1233,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             List<TransactionImpl> transactions = new ArrayList<>();
             for (int i = 0; i < 10; i++) {
                 byte[] recipientPublicKey = Crypto.getPublicKey(String.valueOf(i));
-                TransactionImpl transaction = new TransactionImpl.BuilderImpl((byte) 0, Genesis.CREATOR_PUBLIC_KEY,
+                TransactionImpl transaction = new TransactionImpl.BuilderImpl((byte) 0, Constants.CREATOR_PUBLIC_KEY,
                         Constants.MAX_BALANCE_NQT / 10, 0, (short) 0,
                         Attachment.ORDINARY_PAYMENT)
                         .timestamp(0)
@@ -1253,11 +1253,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 digest.update(transaction.bytes());
             }
             BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
-                    Genesis.CREATOR_PUBLIC_KEY, new byte[32], new byte[32], transactions, "Nxt");
+                    Constants.CREATOR_PUBLIC_KEY, new byte[32], new byte[32], transactions, "Nxt");
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
-            Account.addOrGetAccount(Genesis.CREATOR_ID).apply(Genesis.CREATOR_PUBLIC_KEY);
+            Account.addOrGetAccount(Constants.CREATOR_ID).apply(Constants.CREATOR_PUBLIC_KEY);
             accept(genesisBlock, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
             if (!genesisBlock.verifyBlockSignature()) {
                 Db.db.rollbackTransaction();
@@ -1871,7 +1871,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 long currentBlockId = currentBlock.getId();
                 if (height == 0) {
                     blockchain.setLastBlock(currentBlock); // special case to avoid no last block
-                    Account.addOrGetAccount(Genesis.CREATOR_ID).apply(Genesis.CREATOR_PUBLIC_KEY);
+                    Account.addOrGetAccount(Constants.CREATOR_ID).apply(Constants.CREATOR_PUBLIC_KEY);
                 } else {
                     blockchain.setLastBlock(BlockDb.findBlockAtHeight(height - 1));
                 }

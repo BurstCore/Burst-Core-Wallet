@@ -20,7 +20,6 @@ import nxt.Account;
 import nxt.Appendix;
 import nxt.Attachment;
 import nxt.Constants;
-import nxt.Genesis;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.PhasingParams;
@@ -219,7 +218,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             }
             Transaction transaction = builder.build(secretPhrase);
             try {
-                if (Math.addExact(amountNQT, transaction.getFeeNQT()) > senderAccount.getUnconfirmedBalanceNQT() && senderAccount.getId() != Genesis.CREATOR_ID) {
+                if (Math.addExact(amountNQT, transaction.getFeeNQT()) > senderAccount.getUnconfirmedBalanceNQT() && senderAccount.getId() != Constants.CREATOR_ID) {
                     return NOT_ENOUGH_FUNDS;
                 }
             } catch (ArithmeticException e) {

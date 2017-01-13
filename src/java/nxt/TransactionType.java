@@ -214,7 +214,7 @@ public abstract class TransactionType {
         }
         long totalAmountNQT = Math.addExact(amountNQT, feeNQT);
         if (senderAccount.getUnconfirmedBalanceNQT() < totalAmountNQT
-                && !Arrays.equals(transaction.getSenderPublicKey(), Genesis.CREATOR_PUBLIC_KEY)) {
+                && !Arrays.equals(transaction.getSenderPublicKey(), Constants.CREATOR_PUBLIC_KEY)) {
             return false;
         }
         senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -amountNQT, -feeNQT);
@@ -354,7 +354,7 @@ public abstract class TransactionType {
         @Override
         final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             if (recipientAccount == null) {
-                Account.getAccount(Genesis.CREATOR_ID).addToBalanceAndUnconfirmedBalanceNQT(getLedgerEvent(),
+                Account.getAccount(Constants.CREATOR_ID).addToBalanceAndUnconfirmedBalanceNQT(getLedgerEvent(),
                         transaction.getId(), transaction.getAmountNQT());
             }
         }
@@ -467,7 +467,7 @@ public abstract class TransactionType {
                 if (transaction.getAmountNQT() != 0) {
                     throw new NxtException.NotValidException("Invalid arbitrary message: " + attachment.getJSONObject());
                 }
-                if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+                if (transaction.getRecipientId() == Constants.CREATOR_ID) {
                     throw new NxtException.NotValidException("Sending messages to Genesis not allowed.");
                 }
             }
@@ -635,7 +635,7 @@ public abstract class TransactionType {
                     throw new NxtException.NotValidException("Invalid alias sell price: " + priceNQT);
                 }
                 if (priceNQT == 0) {
-                    if (Genesis.CREATOR_ID == transaction.getRecipientId()) {
+                    if (Constants.CREATOR_ID == transaction.getRecipientId()) {
                         throw new NxtException.NotValidException("Transferring aliases to Genesis account not allowed");
                     } else if (transaction.getRecipientId() == 0) {
                         throw new NxtException.NotValidException("Missing alias transfer recipient");
@@ -647,7 +647,7 @@ public abstract class TransactionType {
                 } else if (alias.getAccountId() != transaction.getSenderId()) {
                     throw new NxtException.NotCurrentlyValidException("Alias doesn't belong to sender: " + aliasName);
                 }
-                if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+                if (transaction.getRecipientId() == Constants.CREATOR_ID) {
                     throw new NxtException.NotValidException("Selling alias to Genesis not allowed");
                 }
             }
@@ -1287,7 +1287,7 @@ public abstract class TransactionType {
                 if (transaction.getAmountNQT() != 0) {
                     throw new NxtException.NotValidException("Account property transaction cannot be used to send NXT");
                 }
-                if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+                if (transaction.getRecipientId() == Constants.CREATOR_ID) {
                     throw new NxtException.NotValidException("Setting Genesis account properties not allowed");
                 }
             }
@@ -1355,7 +1355,7 @@ public abstract class TransactionType {
                 if (transaction.getAmountNQT() != 0) {
                     throw new NxtException.NotValidException("Account property transaction cannot be used to send NXT");
                 }
-                if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+                if (transaction.getRecipientId() == Constants.CREATOR_ID) {
                     throw new NxtException.NotValidException("Deleting Genesis account properties not allowed");
                 }
             }
@@ -1544,7 +1544,7 @@ public abstract class TransactionType {
                 Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
                 senderAccount.addToAssetBalanceQNT(getLedgerEvent(), transaction.getId(), attachment.getAssetId(),
                         -attachment.getQuantityQNT());
-                if (recipientAccount.getId() == Genesis.CREATOR_ID) {
+                if (recipientAccount.getId() == Constants.CREATOR_ID) {
                     Asset.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityQNT());
                 } else {
                     recipientAccount.addToAssetAndUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
@@ -1566,7 +1566,7 @@ public abstract class TransactionType {
                 if (transaction.getAmountNQT() != 0 || attachment.getAssetId() == 0) {
                     throw new NxtException.NotValidException("Invalid asset transfer amount or asset: " + attachment.getJSONObject());
                 }
-                if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+                if (transaction.getRecipientId() == Constants.CREATOR_ID) {
                     throw new NxtException.NotValidException("Asset transfer to Genesis not allowed, "
                             + "use asset delete attachment instead");
                 }
@@ -2784,7 +2784,7 @@ public abstract class TransactionType {
                     throw new NxtException.NotCurrentlyValidException("Invalid effective balance leasing: "
                             + " recipient account " + Long.toUnsignedString(transaction.getRecipientId()) + " not found or no public key published");
                 }
-                if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+                if (transaction.getRecipientId() == Constants.CREATOR_ID) {
                     throw new NxtException.NotValidException("Leasing to Genesis account not allowed");
                 }
             }

@@ -1188,14 +1188,23 @@ public final class Account {
         return forgedBalanceNQT;
     }
 
+    private static final long[] genesisAccounts = new long[10];
+    static {
+        for (int i = 0; i < 10; i++) {
+            genesisAccounts[i] = Account.getId(Crypto.getPublicKey(String.valueOf(i)));
+        }
+        Arrays.sort(genesisAccounts);
+    }
+
     public long getEffectiveBalanceNXT() {
         return getEffectiveBalanceNXT(Nxt.getBlockchain().getHeight());
     }
 
     public long getEffectiveBalanceNXT(int height) {
         if (height <= 1440) {
-            Long amount = Genesis.GENESIS_AMOUNTS.get(id);
-            return amount == null ? 0 : amount;
+            if (Arrays.binarySearch(genesisAccounts, this.id) >= 0) {
+                return Constants.MAX_BALANCE_NXT / 10;
+            }
         }
         if (this.publicKey == null) {
             this.publicKey = publicKeyTable.get(accountDbKeyFactory.newKey(this));
@@ -1736,7 +1745,7 @@ public final class Account {
     }
 
     private static void checkBalance(long accountId, long confirmed, long unconfirmed) {
-        if (accountId == Genesis.CREATOR_ID) {
+        if (accountId == Constants.CREATOR_ID) {
             return;
         }
         if (confirmed < 0) {

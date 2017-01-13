@@ -22,6 +22,12 @@ public final class Constants {
     public static final boolean isOffline = Nxt.getBooleanProperty("nxt.isOffline");
     public static final boolean isLightClient = Nxt.getBooleanProperty("nxt.isLightClient");
 
+    public static final byte[] CREATOR_PUBLIC_KEY = new byte[] {
+            94, -114, -33, -116, -61, 73, 73, 66, -17, 51, 91, 34, 18, 115, -53, 83,
+            -34, -1, 1, -111, -35, -107, 126, 71, 125, -33, 29, -105, -110, 8, -68, 44
+    };
+    public static final long CREATOR_ID = -5818567296047414575L;
+    public static final long EPOCH_BEGINNING = 1483228800000L;
     public static final int MAX_NUMBER_OF_TRANSACTIONS = 255;
     public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int MAX_PAYLOAD_LENGTH = MAX_NUMBER_OF_TRANSACTIONS * MIN_TRANSACTION_SIZE;

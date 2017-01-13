@@ -220,7 +220,7 @@ public final class DebugTrace {
             }
             long recipientId = transaction.getRecipientId();
             if (transaction.getAmountNQT() > 0 && recipientId == 0) {
-                recipientId = Genesis.CREATOR_ID;
+                recipientId = Constants.CREATOR_ID;
             }
             if (include(recipientId)) {
                 log(getValues(recipientId, transaction, true, true, true));
