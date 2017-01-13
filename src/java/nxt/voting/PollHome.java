@@ -74,7 +74,6 @@ public final class PollHome {
     }
 
     private final ChildChain childChain;
-    private final VoteHome voteHome;
     private final DbKey.LongKeyFactory<Poll> pollDbKeyFactory;
     private final EntityDbTable<Poll> pollTable;
     private final DbKey.LongKeyFactory<Poll> pollResultsDbKeyFactory;
@@ -82,7 +81,6 @@ public final class PollHome {
 
     private PollHome(ChildChain childChain) {
         this.childChain = childChain;
-        this.voteHome = childChain.getVoteHome();
         this.pollDbKeyFactory = new DbKey.LongKeyFactory<Poll>("id") {
             @Override
             public DbKey newKey(Poll poll) {
@@ -278,7 +276,7 @@ public final class PollHome {
         }
 
         public DbIterator<VoteHome.Vote> getVotes() {
-            return voteHome.getVotes(this.getId(), 0, -1);
+            return childChain.getVoteHome().getVotes(this.getId(), 0, -1);
         }
 
         public String getName() {
@@ -333,7 +331,7 @@ public final class PollHome {
         private List<OptionResult> countResults(VoteWeighting voteWeighting, int height) {
             final OptionResult[] result = new OptionResult[options.length];
             VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
-            try (DbIterator<VoteHome.Vote> votes = voteHome.getVotes(this.getId(), 0, -1)) {
+            try (DbIterator<VoteHome.Vote> votes = childChain.getVoteHome().getVotes(this.getId(), 0, -1)) {
                 for (VoteHome.Vote vote : votes) {
                     long weight = votingModel.calcWeight(voteWeighting, vote.getVoterId(), height);
                     if (weight <= 0) {
