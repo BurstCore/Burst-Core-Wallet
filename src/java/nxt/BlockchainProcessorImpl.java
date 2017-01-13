@@ -1231,18 +1231,18 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         Db.db.beginTransaction();
         try {
             List<TransactionImpl> transactions = new ArrayList<>();
-            for (int i = 0; i < Genesis.GENESIS_RECIPIENTS.length; i++) {
+            for (int i = 0; i < 10; i++) {
+                byte[] recipientPublicKey = Crypto.getPublicKey(String.valueOf(i));
                 TransactionImpl transaction = new TransactionImpl.BuilderImpl((byte) 0, Genesis.CREATOR_PUBLIC_KEY,
-                        Genesis.GENESIS_AMOUNTS.get(Genesis.GENESIS_RECIPIENTS[i]) * Constants.ONE_NXT, 0, (short) 0,
+                        Constants.MAX_BALANCE_NQT / 10, 0, (short) 0,
                         Attachment.ORDINARY_PAYMENT)
                         .timestamp(0)
-                        .recipientId(Genesis.GENESIS_RECIPIENTS[i])
+                        .recipientId(Account.getId(recipientPublicKey))
                         .height(0)
                         .ecBlockHeight(0)
                         .ecBlockId(0)
-                        .appendix(new Appendix.PublicKeyAnnouncement(Genesis.GENESIS_PUBLIC_KEYS[i]))
-                        .signature(Genesis.GENESIS_SIGNATURES[i])
-                        .build();
+                        .appendix(new Appendix.PublicKeyAnnouncement(recipientPublicKey))
+                        .build("Nxt");
                 if (transaction.verifySignature() && !transactions.add(transaction)) {
                     Logger.logDebugMessage(Convert.toHexString(transaction.getSignature()));
                 }
@@ -1252,12 +1252,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             for (TransactionImpl transaction : transactions) {
                 digest.update(transaction.bytes());
             }
-            byte[] generationSignature = new byte[32];
-            if (Constants.isTestnet) {
-                Arrays.fill(generationSignature, (byte)1);
-            }
             BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 160, digest.digest(),
-                    Genesis.CREATOR_PUBLIC_KEY, generationSignature, Genesis.GENESIS_BLOCK_SIGNATURE, new byte[32], transactions);
+                    Genesis.CREATOR_PUBLIC_KEY, new byte[32], new byte[32], transactions, "Nxt");
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();

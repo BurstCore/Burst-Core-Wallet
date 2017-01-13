@@ -16,7 +16,15 @@
 
 package nxt.http;
 
-import nxt.*;
+import nxt.Account;
+import nxt.Appendix;
+import nxt.Attachment;
+import nxt.Constants;
+import nxt.Genesis;
+import nxt.Nxt;
+import nxt.NxtException;
+import nxt.PhasingParams;
+import nxt.Transaction;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
@@ -25,7 +33,14 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import static nxt.http.JSONResponses.*;
+import static nxt.http.JSONResponses.FEATURE_NOT_AVAILABLE;
+import static nxt.http.JSONResponses.INCORRECT_DEADLINE;
+import static nxt.http.JSONResponses.INCORRECT_EC_BLOCK;
+import static nxt.http.JSONResponses.INCORRECT_LINKED_FULL_HASH;
+import static nxt.http.JSONResponses.INCORRECT_WHITELIST;
+import static nxt.http.JSONResponses.MISSING_DEADLINE;
+import static nxt.http.JSONResponses.MISSING_SECRET_PHRASE;
+import static nxt.http.JSONResponses.NOT_ENOUGH_FUNDS;
 
 abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
@@ -204,7 +219,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             }
             Transaction transaction = builder.build(secretPhrase);
             try {
-                if (Math.addExact(amountNQT, transaction.getFeeNQT()) > senderAccount.getUnconfirmedBalanceNQT()) {
+                if (Math.addExact(amountNQT, transaction.getFeeNQT()) > senderAccount.getUnconfirmedBalanceNQT() && senderAccount.getId() != Genesis.CREATOR_ID) {
                     return NOT_ENOUGH_FUNDS;
                 }
             } catch (ArithmeticException e) {
