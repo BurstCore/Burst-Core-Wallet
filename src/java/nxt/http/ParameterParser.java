@@ -808,9 +808,9 @@ public final class ParameterParser {
                 try {
                     chain = Chain.getChain(Integer.valueOf(chainName));
                 } catch (NumberFormatException ignore) {}
-            }
-            if (chain == null) {
-                throw new ParameterException(UNKNOWN_CHAIN);
+                if (chain == null) {
+                    throw new ParameterException(UNKNOWN_CHAIN);
+                }
             }
             return chain;
         } else if (isMandatory) {

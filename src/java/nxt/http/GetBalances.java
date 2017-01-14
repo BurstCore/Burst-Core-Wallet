@@ -47,7 +47,7 @@ public final class GetBalances extends APIServlet.APIRequestHandler {
         }
         JSONObject chainBalances = new JSONObject();
         for (String chainId : chains) {
-            Chain chain = Chain.getChain(chainId);
+            Chain chain = Chain.getChain(chainId.toUpperCase());
             if (chain == null) {
                 try {
                     chain = Chain.getChain(Integer.parseInt(chainId));
