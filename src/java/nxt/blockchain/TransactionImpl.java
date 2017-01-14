@@ -565,6 +565,9 @@ public abstract class TransactionImpl implements Transaction {
         json.put("ecBlockHeight", ecBlockHeight);
         json.put("ecBlockId", Long.toUnsignedString(ecBlockId));
         json.put("signature", Convert.toHexString(getSignature()));
+        if (getSignature() != null) {
+            json.put("fullHash", Convert.toHexString(getFullHash()));
+        }
         JSONObject attachmentJSON = new JSONObject();
         for (Appendix.AbstractAppendix appendage : appendages) {
             appendage.loadPrunable(this);

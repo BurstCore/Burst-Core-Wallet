@@ -206,6 +206,10 @@ public abstract class UnconfirmedTransaction implements Transaction {
 
     @Override
     public void validate() throws NxtException.ValidationException {
+        if (TransactionProcessorImpl.getInstance().getUnconfirmedTransaction(transaction.getId()) != null
+                || getChain().getTransactionHome().hasTransaction(transaction)) {
+            throw new NxtException.ExistingTransactionException("Transaction already processed");
+        }
         transaction.validate();
     }
 

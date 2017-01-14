@@ -75,7 +75,7 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
     public void validate() throws NxtException.ValidationException {
         try {
             getChildTransactions();
-        } catch (RuntimeException e) {
+        } catch (IllegalStateException e) {
             throw new NxtException.NotCurrentlyValidException("Missing or invalid child transaction", e);
         }
         super.validate();
