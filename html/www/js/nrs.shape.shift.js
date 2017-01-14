@@ -117,7 +117,7 @@ var NRS = (function(NRS, $) {
     };
 
     function invert(rate) {
-        return Math.round(100000000 / parseFloat(rate)) / 100000000;
+        return Math.round(NRS.constants.MAX_ONE_COIN / parseFloat(rate)) / NRS.constants.MAX_ONE_COIN;
     }
 
     var renderExchangeTable = function (op) {

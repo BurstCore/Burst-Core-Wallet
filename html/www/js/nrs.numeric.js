@@ -83,23 +83,22 @@ var NRS = (function (NRS, $) {
     };
 
     NRS.convertToNXT = function(amount, returnAsObject) {
-        var oneCoin = NRS.getActiveChainOneCoin();
         var decimals = NRS.getActiveChainDecimals();
-        return NRS.intToFloat(amount, returnAsObject, oneCoin, decimals);
+        return NRS.intToFloat(amount, returnAsObject, decimals);
     };
 
     NRS.convertToFXT = function(amount, returnAsObject) {
-        return NRS.intToFloat(amount, returnAsObject, "100000000", 8);
+        return NRS.intToFloat(amount, returnAsObject, 8);
     };
 
     NRS.convertToChainCoin = function(amount, chain, returnAsObject) {
         if (typeof chain == "number") {
             chain = NRS.getChain(chain);
         }
-        return NRS.intToFloat(amount, returnAsObject, chain.ONE_COIN, chain.decimals);
+        return NRS.intToFloat(amount, returnAsObject, chain.decimals);
     };
 
-    NRS.intToFloat = function(amount, returnAsObject, oneCoin, decimals) {
+    NRS.intToFloat = function (amount, returnAsObject, decimals) {
         if (typeof amount != "object") {
             amount = new BigInteger(String(amount));
         }
@@ -108,6 +107,7 @@ var NRS = (function (NRS, $) {
             amount = amount.abs();
             negative = "-";
         }
+        var oneCoin = String(NRS.constants.MAX_ONE_COIN).substring(0, decimals + 1);
         var fractionalPart = amount.mod(new BigInteger(oneCoin)).toString();
         amount = amount.divide(new BigInteger(oneCoin));
         var mantissa = "";

@@ -1184,7 +1184,7 @@ NRS.addPagination = function () {
                                 var assetTotal = 0;
                                 for (i = 0; i < response.trades.length; i++) {
                                     var trade = response.trades[i];
-                                    assetTotal += assetBalancesMap[trade.asset] * trade.priceNQT / 100000000;
+                                    assetTotal += assetBalancesMap[trade.asset] * trade.priceNQT / NRS.constants.MAX_ONE_COIN;
                                 }
                                 $("#account_assets_balance").html(NRS.formatStyledAmount(new Big(assetTotal).toFixed(8)));
                                 $("#account_nr_assets").html(response.trades.length);
@@ -1219,7 +1219,7 @@ NRS.addPagination = function () {
                                 var currencyTotal = 0;
                                 for (i = 0; i < response.exchanges.length; i++) {
                                     var exchange = response.exchanges[i];
-                                    currencyTotal += currencyBalancesMap[exchange.currency] * exchange.rateNQT / 100000000;
+                                    currencyTotal += currencyBalancesMap[exchange.currency] * exchange.rateNQT / NRS.constants.MAX_ONE_COIN;
                                 }
                                 $("#account_currencies_balance").html(NRS.formatStyledAmount(new Big(currencyTotal).toFixed(8)));
                             } else {
