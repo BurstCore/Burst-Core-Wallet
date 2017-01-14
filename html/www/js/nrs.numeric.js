@@ -85,21 +85,21 @@ var NRS = (function (NRS, $) {
     NRS.convertToNXT = function(amount, returnAsObject) {
         var oneCoin = NRS.getActiveChainOneCoin();
         var decimals = NRS.getActiveChainDecimals();
-        return NRS.convertDecimalToWholeNumber(amount, returnAsObject, oneCoin, decimals);
+        return NRS.intToFloat(amount, returnAsObject, oneCoin, decimals);
     };
 
     NRS.convertToFXT = function(amount, returnAsObject) {
-        return NRS.convertDecimalToWholeNumber(amount, returnAsObject, "100000000", 8);
+        return NRS.intToFloat(amount, returnAsObject, "100000000", 8);
     };
 
     NRS.convertToChainCoin = function(amount, chain, returnAsObject) {
-        if (typeof chain == "numeric") {
+        if (typeof chain == "number") {
             chain = NRS.getChain(chain);
         }
-        return NRS.convertDecimalToWholeNumber(amount, returnAsObject, "100000000", chain.decimals); // TODO need ONCE_COIN
+        return NRS.intToFloat(amount, returnAsObject, chain.ONE_COIN, chain.decimals);
     };
 
-    NRS.convertDecimalToWholeNumber = function(amount, returnAsObject, oneCoin, decimals) {
+    NRS.intToFloat = function(amount, returnAsObject, oneCoin, decimals) {
         if (typeof amount != "object") {
             amount = new BigInteger(String(amount));
         }
