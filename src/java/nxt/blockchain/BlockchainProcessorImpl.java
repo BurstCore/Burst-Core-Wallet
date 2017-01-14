@@ -1804,8 +1804,9 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             pushBlock(block);
             blockListeners.notify(block, Event.BLOCK_GENERATED);
-            Logger.logDebugMessage("Account " + Long.toUnsignedString(block.getGeneratorId()) + " generated block " + block.getStringId()
-                    + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float)block.getTotalFeeFQT())/Constants.ONE_FXT);
+            Logger.logDebugMessage(String.format("Account %s generated block %s at height %d timestamp %d fee %f %s",
+                    Long.toUnsignedString(block.getGeneratorId()), block.getStringId(), block.getHeight(), block.getTimestamp(),
+                    ((float)block.getTotalFeeFQT())/Constants.ONE_FXT, FxtChain.FXT_NAME));
         } catch (TransactionNotAcceptedException e) {
             Logger.logDebugMessage("Generate block failed: " + e.getMessage());
             TransactionProcessorImpl.getInstance().processWaitingTransactions();

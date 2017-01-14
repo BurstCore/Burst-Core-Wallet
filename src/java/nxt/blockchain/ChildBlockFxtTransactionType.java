@@ -136,8 +136,11 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
             childTransaction.apply();
             totalFee = Math.addExact(totalFee, childTransaction.getFee());
         }
-        senderAccount.addToBalanceAndUnconfirmedBalance(ChildChain.getChildChain(attachment.getChainId()),
-                getLedgerEvent(), AccountLedger.newEventId(transaction), totalFee);
+        ChildChain childChain = ChildChain.getChildChain(attachment.getChainId());
+        senderAccount.addToBalanceAndUnconfirmedBalance(childChain, getLedgerEvent(), AccountLedger.newEventId(transaction), totalFee);
+        Logger.logDebugMessage(String.format("Bundler %s received %f %s child transaction fees and paid %f %s forging fees",
+                Long.toUnsignedString(senderAccount.getId()), (float)totalFee/childChain.ONE_COIN, childChain.getName(),
+                (float)transaction.getFee()/Constants.ONE_FXT, FxtChain.FXT_NAME));
     }
 
     @Override
