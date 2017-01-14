@@ -137,7 +137,7 @@ QUnit.test("calculateOrderTotalNQT", function (assert) {
 });
 
 QUnit.test("calculateOrderTotal", function (assert) {
-    assert.equal(NRS.calculateOrderTotal(12, 34, NRS.getActiveChain()), "0.00000408", "multiplication");
+    assert.equal(NRS.calculateOrderTotal(12, 34), "0.00000408", "multiplication");
 });
 
 QUnit.test("calculatePercentage", function (assert) {
@@ -171,6 +171,15 @@ QUnit.test("convertToNQT", function (assert) {
     assert.throws(function () {
         NRS.convertToNQT(0.00000001); // since it's passed as 1e-8
     }, "error_invalid_input", "invalid.input");
+});
+
+QUnit.test("floatToInt", function (assert) {
+    assert.equal(NRS.floatToInt(1, 2), "100", "one");
+    assert.equal(NRS.floatToInt(1., 2), "100", "one.dot");
+    assert.equal(NRS.floatToInt(1.0, 2), "100", "one.dot.zero");
+    assert.equal(NRS.floatToInt(.1, 2), "10", "dot.one");
+    assert.equal(NRS.floatToInt(0.1, 2), "10", "zero.dot.one");
+    assert.equal(NRS.floatToInt("0.01", 2), "1", "nqt");
 });
 
 QUnit.test("convertToQNTf", function (assert) {

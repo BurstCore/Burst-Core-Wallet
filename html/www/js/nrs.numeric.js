@@ -156,23 +156,27 @@ var NRS = (function (NRS, $) {
     };
 
     NRS.convertToNQT = function(currency) {
+        return NRS.floatToInt(currency, NRS.getActiveChainDecimals());
+    };
+
+    NRS.floatToInt = function(currency, decimals) {
         currency = String(currency);
         var parts = currency.split(".");
         var amount = parts[0];
         var fraction;
         if (parts.length == 1) {
             //no fractional part
-            fraction = NRS.getActiveChainOneCoin().substring(1);
+            fraction = getOneCoin(decimals).substring(1);
         } else if (parts.length == 2) {
-            if (parts[1].length <= NRS.getActiveChainDecimals()) {
+            if (parts[1].length <= decimals) {
                 fraction = parts[1];
             } else {
-                fraction = parts[1].substring(0, NRS.getActiveChainDecimals());
+                fraction = parts[1].substring(0, decimals);
             }
         } else {
             throw $.t("error_invalid_input");
         }
-        for (var i = fraction.length; i < NRS.getActiveChainDecimals(); i++) {
+        for (var i = fraction.length; i < decimals; i++) {
             fraction += "0";
         }
         var result = amount + "" + fraction;
