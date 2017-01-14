@@ -29,7 +29,6 @@ var NRS = (function (NRS, $) {
         if (typeof price != "object") {
             price = new BigInteger(String(price));
         }
-
         return NRS.convertToNXT(price.multiply(new BigInteger("" + Math.pow(10, decimals))), returnAsObject);
     };
 
@@ -64,7 +63,11 @@ var NRS = (function (NRS, $) {
     };
 
     NRS.calculateOrderTotal = function (quantityQNT, priceNQT) {
-        return NRS.convertToNXT(calculateOrderTotalImpl(quantityQNT, priceNQT));
+        return NRS.calculateOrderTotalDecimals(quantityQNT, priceNQT, NRS.getActiveChainDecimals());
+    };
+
+    NRS.calculateOrderTotalDecimals = function (quantityQNT, priceNQT, decimals) {
+        return NRS.intToFloat(calculateOrderTotalImpl(quantityQNT, priceNQT), decimals);
     };
 
     NRS.calculatePercentage = function (a, b, rounding_mode) {
@@ -84,21 +87,21 @@ var NRS = (function (NRS, $) {
 
     NRS.convertToNXT = function(amount, returnAsObject) {
         var decimals = NRS.getActiveChainDecimals();
-        return NRS.intToFloat(amount, returnAsObject, decimals);
+        return NRS.intToFloat(amount, decimals, returnAsObject);
     };
 
     NRS.convertToFXT = function(amount, returnAsObject) {
-        return NRS.intToFloat(amount, returnAsObject, 8);
+        return NRS.intToFloat(amount, 8, returnAsObject);
     };
 
     NRS.convertToChainCoin = function(amount, chain, returnAsObject) {
         if (typeof chain == "number") {
             chain = NRS.getChain(chain);
         }
-        return NRS.intToFloat(amount, returnAsObject, chain.decimals);
+        return NRS.intToFloat(amount, chain.decimals, returnAsObject);
     };
 
-    NRS.intToFloat = function (amount, returnAsObject, decimals) {
+    NRS.intToFloat = function (amount, decimals, returnAsObject) {
         if (typeof amount != "object") {
             amount = new BigInteger(String(amount));
         }
@@ -107,7 +110,7 @@ var NRS = (function (NRS, $) {
             amount = amount.abs();
             negative = "-";
         }
-        var oneCoin = String(NRS.constants.MAX_ONE_COIN).substring(0, decimals + 1);
+        var oneCoin = getOneCoin(decimals);
         var fractionalPart = amount.mod(new BigInteger(oneCoin)).toString();
         amount = amount.divide(new BigInteger(oneCoin));
         var mantissa = "";
@@ -267,7 +270,11 @@ var NRS = (function (NRS, $) {
         return qnt.replace(/^0+/, "");
     };
 
-    NRS.format = function (params, no_escaping, zeroPad) {
+    NRS.format = function(params, no_escaping, zeroPad) {
+        return NRS.formatDecimals(params, no_escaping, zeroPad, NRS.getActiveChainDecimals());
+    };
+
+    NRS.formatDecimals = function(params, no_escaping, zeroPad, decimals) {
         var amount;
         var mantissa;
         if (typeof params != "object") {
@@ -297,9 +304,9 @@ var NRS = (function (NRS, $) {
         if (zeroPad) {
             var mantissaLen = formattedMantissa.length;
             if (mantissaLen > 0) {
-                formattedMantissa += NRS.getActiveChainOneCoin().substr(1, zeroPad - mantissaLen + 1);
+                formattedMantissa += getOneCoin(decimals).substr(1, zeroPad - mantissaLen + 1);
             } else {
-                formattedMantissa += NRS.getActiveChainOneCoin().substr(1, zeroPad);
+                formattedMantissa += getOneCoin(decimals).substr(1, zeroPad);
                 if (zeroPad != 0) {
                     formattedMantissa = locale.decimal + formattedMantissa;
                 }
@@ -325,6 +332,10 @@ var NRS = (function (NRS, $) {
     };
 
     NRS.formatAmount = function (amount, round, no_escaping, zeroPad) {
+        return NRS.formatAmountDecimals(amount, round, no_escaping, zeroPad, NRS.getActiveChainDecimals())
+    };
+
+    NRS.formatAmountDecimals = function (amount, round, no_escaping, zeroPad, decimals) {
         if (typeof amount == "undefined") {
             return "0";
         } else if (typeof amount == "string") {
@@ -335,8 +346,7 @@ var NRS = (function (NRS, $) {
         var mantissa = "";
 
         if (typeof amount == "object") {
-            var params = NRS.convertToNXT(amount, true);
-
+            var params = NRS.intToFloat(amount, decimals, true);
             negative = params.negative;
             amount = params.amount;
             mantissa = params.mantissa;
@@ -469,6 +479,10 @@ var NRS = (function (NRS, $) {
             return false;
         }
     };
+
+    function getOneCoin(decimals) {
+        return String(NRS.constants.MAX_ONE_COIN).substring(0, decimals + 1);
+    }
 
     return NRS;
 }(NRS || {}, jQuery));

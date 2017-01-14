@@ -51,15 +51,15 @@ QUnit.test("convertToNXT", function (assert) {
 });
 
 QUnit.test("intToFloat", function (assert) {
-    assert.equal(NRS.intToFloat(200, false, 2), "2", "whole");
-    assert.equal(NRS.intToFloat(200, false, 4), "0.02", "four.decimals");
-    assert.equal(NRS.intToFloat(20, false, 2), "0.2", "fraction");
-    assert.equal(NRS.intToFloat(-200, false, 2), "-2", "negative");
-    assert.equal(NRS.intToFloat(-20, false, 2), "-0.2", "fraction.negative");
-    assert.equal(NRS.intToFloat(-220, false, 2), "-2.2", "whole.fraction.negative");
-    assert.equal(NRS.intToFloat(2, false, 2), "0.02", "nqt");
-    assert.equal(NRS.intToFloat(-2, false, 2), "-0.02", "nqt.negative");
-    assert.equal(NRS.intToFloat(new BigInteger(String(2)), false, 2), "0.02", "input.object");
+    assert.equal(NRS.intToFloat(200, 2), "2", "whole");
+    assert.equal(NRS.intToFloat(200, 4), "0.02", "four.decimals");
+    assert.equal(NRS.intToFloat(20, 2), "0.2", "fraction");
+    assert.equal(NRS.intToFloat(-200, 2), "-2", "negative");
+    assert.equal(NRS.intToFloat(-20, 2), "-0.2", "fraction.negative");
+    assert.equal(NRS.intToFloat(-220, 2), "-2.2", "whole.fraction.negative");
+    assert.equal(NRS.intToFloat(2, 2), "0.02", "nqt");
+    assert.equal(NRS.intToFloat(-2, 2), "-0.02", "nqt.negative");
+    assert.equal(NRS.intToFloat(new BigInteger(String(2)), 2), "0.02", "input.object");
 });
 
 QUnit.test("format", function (assert) {
