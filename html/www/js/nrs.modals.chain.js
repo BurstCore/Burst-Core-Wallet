@@ -27,7 +27,7 @@ var NRS = (function(NRS, $) {
 		NRS.fetchingModalData = true;
         var chainId;
         if (!$(this).data("chain")) {
-            chainId = NRS.getActiveChain();
+            chainId = NRS.getActiveChainId();
         } else if (typeof $(this).data("chain") == "object") {
             var dataObject = $(this).data("chain");
             chainId = dataObject["chain"];

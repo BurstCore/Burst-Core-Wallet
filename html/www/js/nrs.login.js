@@ -489,7 +489,7 @@ var NRS = (function(NRS, $, undefined) {
                                         .append($("<a></a>")
                                             .attr("href","#")
                                             .attr("style","font-size: 85%;")
-                                            .attr("onClick","NRS.switchAccount('" + account + "','" + NRS.getActiveChain() + "')")
+                                            .attr("onClick","NRS.switchAccount('" + account + "','" + NRS.getActiveChainId() + "')")
                                             .text(account)
 										)
 								    );

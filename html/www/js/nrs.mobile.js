@@ -108,6 +108,10 @@ var NRS = (function(NRS, $) {
     };
 
     NRS.getActiveChain = function() {
+        return NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain];
+    };
+
+    NRS.getActiveChainId = function() {
         return NRS.mobileSettings.chain;
     };
 
@@ -149,7 +153,7 @@ var NRS = (function(NRS, $) {
         $.each(NRS.constants.CHAIN_PROPERTIES, function(id, chain) {
             chains.append('<option value="' + id + '">' + chain.name + '</option>');
         });
-        chains.val(NRS.getActiveChain());
+        chains.val(NRS.getActiveChainId());
     };
 
     return NRS;

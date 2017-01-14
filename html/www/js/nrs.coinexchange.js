@@ -100,8 +100,9 @@ var NRS = (function (NRS, $, undefined) {
         var cachedCoin = {
             "id": String(coin.id),
             "name": String(coin.name),
-            "groupName": String(coin.groupName).toLowerCase(),
-            "decimals": parseInt(coin.decimals, 10)
+            "decimals": parseInt(coin.decimals, 10),
+            "ONE_COIN": coin.ONE_COIN,
+            "groupName": String(coin.groupName).toLowerCase()
         };
         coins.push(cachedCoin);
     };
@@ -167,6 +168,7 @@ var NRS = (function (NRS, $, undefined) {
             "id": String(coin.id),
             "name": String(coin.name),
             "decimals": parseInt(coin.decimals, 10),
+            "ONE_COIN": coin.ONE_COIN,
             "groupName": ""
         };
 
@@ -507,14 +509,14 @@ var NRS = (function (NRS, $, undefined) {
             $("#your_coin_balance").html("0");
         }
 
-        NRS.loadCoinOrders(NRS.getActiveChain(), refresh);
+        NRS.loadCoinOrders(NRS.getActiveChainId(), refresh);
         NRS.loadCoinOrders(coinId, refresh);
         NRS.getCoinTradeHistory(coinId, refresh);
     };
 
     function processOrders(orders, coinId, refresh) {
         var type;
-        if (coinId == NRS.getActiveChain()) {
+        if (coinId == NRS.getActiveChainId()) {
             type = "ask";
         } else {
             type = "bid";
@@ -595,7 +597,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 var orders = results[0].concat(results[1]);
                 orders.sort(function (a, b) {
-                    if (coinId == NRS.getActiveChain()) {
+                    if (coinId == NRS.getActiveChainId()) {
                         return a.priceNQT - b.priceNQT;
                     } else {
                         return b.priceNQT - a.priceNQT;
@@ -810,6 +812,7 @@ var NRS = (function (NRS, $, undefined) {
                 var total = NRS.convertToChainCoin(NRS.calculateOrderTotal(quantityQNT, priceNQT, currentCoin.decimals), currentCoin);
                 $("#" + orderType + "_coin_total").val(total.toString());
             }
+            NRS.logConsole("quantityQNT " + quantityQNT + " priceNQT " + priceNQT + " total " + total);
         } catch (err) {
             $("#" + orderType + "_coin_total").val("0");
         }
@@ -1109,7 +1112,7 @@ var NRS = (function (NRS, $, undefined) {
                 var amountDecimals = NRS.getNumberOfDecimals(trades, "amountNQT", function(val) {
                     return NRS.formatQuantity(val.quantityQNT, exchangeDecimals);
                 });
-                var chainDecimals = NRS.constants.CHAIN_PROPERTIES[NRS.getActiveChain()].decimals;
+                var chainDecimals = NRS.constants.CHAIN_PROPERTIES[NRS.getActiveChainId()].decimals;
                 var priceDecimals = NRS.getNumberOfDecimals(trades, "priceNQT", function(val) {
                     return NRS.formatOrderPricePerWholeQNT(val.priceNQT, chainDecimals);
                 });
@@ -1192,7 +1195,7 @@ var NRS = (function (NRS, $, undefined) {
     });
 
     function getCoinOrderChain(order) {
-        return order.exchange == 1 ? 1 : NRS.getActiveChain();
+        return order.exchange == 1 ? 1 : NRS.getActiveChainId();
     }
 
     NRS.setup.coin_exchange = function () {

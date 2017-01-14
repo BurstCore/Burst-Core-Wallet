@@ -1003,6 +1003,7 @@ NRS.addPagination = function () {
             },
             name: "VARCHAR(10)",
             decimals: "NUMBER",
+			ONE_COIN: "VARCHAR(9)",
             groupName: "VARCHAR(30) COLLATE NOCASE"
         };
         schema["polls"] = {

@@ -194,7 +194,7 @@ var NRS = (function (NRS, $, undefined) {
         }
 
         if (!data.chain && !data.nochain) {
-            data.chain = NRS.getActiveChain();
+            data.chain = NRS.getActiveChainId();
         } else {
             delete data.nochain;
         }
