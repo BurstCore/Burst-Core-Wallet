@@ -42,9 +42,9 @@ import nxt.blockchain.Block;
 import nxt.blockchain.Bundler;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChainTransactionId;
-import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.FxtChain;
+import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.Generator;
 import nxt.blockchain.Transaction;
 import nxt.ce.CoinExchange;
@@ -126,9 +126,9 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject balance(ChildChain childChain, long accountId, int height) {
+    static JSONObject balance(Chain chain, long accountId, int height) {
         JSONObject json = new JSONObject();
-        BalanceHome.Balance balance = childChain.getBalanceHome().getBalance(accountId, height);
+        BalanceHome.Balance balance = chain.getBalanceHome().getBalance(accountId, height);
         if (balance == null) {
             json.put("balanceNQT", "0");
             json.put("unconfirmedBalanceNQT", "0");
@@ -1010,6 +1010,9 @@ public final class JSONData {
             json.put("signature", Convert.toHexString(signature));
             json.put("signatureHash", Convert.toHexString(Crypto.sha256().digest(signature)));
             json.put("fullHash", Convert.toHexString(transaction.getFullHash()));
+            if (transaction instanceof FxtTransaction) {
+                json.put("transaction", Long.toUnsignedString(transaction.getId()));
+            }
         }
         JSONObject attachmentJSON = new JSONObject();
         if (filter == null) {
@@ -1061,6 +1064,30 @@ public final class JSONData {
         json.put("confirmations", Nxt.getBlockchain().getHeight() - transaction.getHeight());
         json.put("blockTimestamp", transaction.getBlockTimestamp());
         json.put("transactionIndex", transaction.getIndex());
+        return json;
+    }
+
+    static JSONObject fxtTransaction(FxtTransaction fxtTransaction, boolean includeChildTransactions) {
+        JSONObject json = transaction(fxtTransaction);
+        if (includeChildTransactions) {
+            JSONArray childTransactions = new JSONArray();
+            fxtTransaction.getChildTransactions().forEach(childTransaction -> {
+                childTransactions.add(transaction(childTransaction));
+            });
+            json.put("childTransactions", childTransactions);
+        }
+        return json;
+    }
+
+    static JSONObject unconfirmedFxtTransaction(FxtTransaction fxtTransaction, boolean includeChildTransactions) {
+        JSONObject json = unconfirmedTransaction(fxtTransaction);
+        if (includeChildTransactions) {
+            JSONArray childTransactions = new JSONArray();
+            fxtTransaction.getChildTransactions().forEach(childTransaction -> {
+                childTransactions.add(unconfirmedTransaction(childTransaction));
+            });
+            json.put("childTransactions", childTransactions);
+        }
         return json;
     }
 

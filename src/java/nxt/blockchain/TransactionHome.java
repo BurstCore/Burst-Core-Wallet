@@ -16,6 +16,7 @@
 
 package nxt.blockchain;
 
+import nxt.Nxt;
 import nxt.NxtException;
 import nxt.db.Table;
 import nxt.dbschema.Db;
@@ -112,6 +113,10 @@ public final class TransactionHome {
             throw new RuntimeException("Transaction already in database, full_hash = " + Convert.toHexString(fullHash)
                     + ", does not pass validation!", e);
         }
+    }
+
+    static boolean hasFxtTransaction(long transactionId) {
+        return hasFxtTransaction(transactionId, Nxt.getBlockchain().getHeight());
     }
 
     static boolean hasFxtTransaction(long transactionId, int height) {

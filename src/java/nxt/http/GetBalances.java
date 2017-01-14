@@ -18,39 +18,47 @@ package nxt.http;
 
 import nxt.Nxt;
 import nxt.NxtException;
-import nxt.account.Account;
 import nxt.blockchain.Chain;
-import nxt.blockchain.FxtChain;
+import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-public final class GetBalance extends APIServlet.APIRequestHandler {
+import static nxt.http.JSONResponses.UNKNOWN_CHAIN;
 
-    static final GetBalance instance = new GetBalance();
+public final class GetBalances extends APIServlet.APIRequestHandler {
 
-    private GetBalance() {
-        super(new APITag[] {APITag.ACCOUNTS}, "account", "includeEffectiveBalance", "height");
+    static final GetBalances instance = new GetBalances();
+
+    private GetBalances() {
+        super(new APITag[] {APITag.ACCOUNTS}, "chain", "chain", "account", "height");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        boolean includeEffectiveBalance = "true".equalsIgnoreCase(req.getParameter("includeEffectiveBalance"));
         long accountId = ParameterParser.getAccountId(req, true);
         int height = ParameterParser.getHeight(req);
         if (height < 0) {
             height = Nxt.getBlockchain().getHeight();
         }
-        Chain chain = ParameterParser.getChain(req);
-        if (chain == FxtChain.FXT) {
-            Account account = Account.getAccount(accountId, height);
-            return JSONData.accountBalance(account, includeEffectiveBalance, height);
-        } else {
-            if (includeEffectiveBalance) {
-                return JSONResponses.error("includeEffectiveBalance not supported for child chains");
-            }
-            return JSONData.balance(chain, accountId, height);
+        String[] chains = req.getParameterValues("chain");
+        if (chains == null || chains.length == 0) {
+            return JSONResponses.MISSING_CHAIN;
         }
+        JSONObject chainBalances = new JSONObject();
+        for (String chainId : chains) {
+            Chain chain = Chain.getChain(chainId);
+            if (chain == null) {
+                try {
+                    chain = Chain.getChain(Integer.parseInt(chainId));
+                } catch (NumberFormatException ignore) {}
+                if (chain == null) {
+                    return UNKNOWN_CHAIN;
+                }
+            }
+            chainBalances.put(chain.getId(), JSONData.balance(chain, accountId, height));
+        }
+        return chainBalances;
     }
 
 }

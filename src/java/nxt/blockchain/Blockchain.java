@@ -75,6 +75,10 @@ public interface Blockchain {
 
     boolean hasTransaction(Chain chain, byte[] fullHash);
 
+    FxtTransaction getFxtTransaction(long transactionId);
+
+    boolean hasFxtTransaction(long transactionId);
+
     int getTransactionCount(Chain chain);
 
     DbIterator<? extends ChildTransaction> getTransactions(ChildChain chain, long accountId, byte type, byte subtype, int blockTimestamp,

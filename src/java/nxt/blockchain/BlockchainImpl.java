@@ -364,6 +364,16 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    public FxtTransactionImpl getFxtTransaction(long transactionId) {
+        return TransactionHome.findFxtTransaction(transactionId);
+    }
+
+    @Override
+    public boolean hasFxtTransaction(long transactionId) {
+        return TransactionHome.hasFxtTransaction(transactionId);
+    }
+
+    @Override
     public int getTransactionCount(Chain chain) {
         return chain.getTransactionHome().getTransactionCount();
     }
