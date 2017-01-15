@@ -509,29 +509,26 @@ var NRS = (function (NRS, $, undefined) {
             $("#your_coin_balance").html("0");
         }
 
-        NRS.loadCoinOrders(NRS.getActiveChainId(), refresh);
         NRS.loadCoinOrders(coinId, refresh);
         NRS.getCoinTradeHistory(coinId, refresh);
     };
 
     function processOrders(orders, coinId, refresh) {
+        // TODO cleanup this function code
         var type;
-        if (coinId == NRS.getActiveChainId()) {
-            type = "ask";
-        } else {
-            type = "bid";
-        }
+        type = "ask";
         if (orders.length) {
             var order;
             $("#" + (type == "ask" ? "sell" : "buy") + "_orders_count").html("(" + orders.length + (orders.length == 50 ? "+" : "") + ")");
             var rows = "";
             var sum = new BigInteger(String("0"));
+            var decimals = NRS.constants.CHAIN_PROPERTIES[coinId].decimals;
             var amountDecimals = NRS.getNumberOfDecimals(orders, "amountNQT", function(val) {
-                return NRS.formatQuantity(val.amountNQT, currentCoin.decimals);
+                return NRS.formatQuantity(val.amountNQT, decimals);
             });
             var priceAttr = type + "NQT";
             var priceDecimals = NRS.getNumberOfDecimals(orders, priceAttr, function(val) {
-                return NRS.formatOrderPricePerWholeQNT(val[priceAttr], NRS.getActiveChainDecimals());
+                return NRS.formatOrderPricePerWholeQNT(val[priceAttr], decimals);
             });
             for (var i = 0; i < orders.length; i++) {
                 order = orders[i];
@@ -543,11 +540,11 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 var statusIcon = NRS.getTransactionStatusIcon(order);
                 rows += "<tr data-transaction='" + NRS.escapeRespStr(order.order) + "' data-amount='" + amount.toString().escapeHTML() + "' data-price='" + price.toString().escapeHTML() + "'>" +
-                    "<td>" + NRS.getTransactionLink(order.orderFullHash, statusIcon, true, getCoinOrderChain(order)) + "</td>" +
+                    "<td>" + NRS.getTransactionLink(order.orderFullHash, statusIcon, true, order.chain) + "</td>" +
                     "<td>" + NRS.getAccountLink(order, "account") + "</td>" +
-                    "<td class='numeric'>" + NRS.formatQuantity(amount, amountDecimals) + "</td>" +
-                    "<td class='numeric'>" + NRS.formatQuantity(price, priceDecimals) + "</td>" +
-                    "<td class='numeric'>" + NRS.formatQuantity(sum, priceDecimals) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatQuantity(amount, decimals) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatQuantity(price, NRS.getActiveChainDecimals()) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatQuantity(sum, decimals) + "</td>" +
                     "</tr>";
             }
             $("#coin_exchange_" + type + "_orders_table tbody").empty().append(rows);
@@ -564,6 +561,7 @@ var NRS = (function (NRS, $, undefined) {
     NRS.loadCoinOrders = function (coinId, refresh) {
         var params = {
             "chain": coinId,
+            "exchange": NRS.getActiveChainId(),
             "firstIndex": 0,
             "lastIndex": 25
         };
@@ -832,8 +830,10 @@ var NRS = (function (NRS, $, undefined) {
         $(".coin_order_modal_type").html(orderType);
 
         orderType = orderType.toLowerCase();
+        var displayedQuantity;
         try {
             var quantity = String($("#" + orderType + "_coin_quantity").val());
+            displayedQuantity = new BigInteger(quantity);
             var quantityQNT = new BigInteger(NRS.convertToQNT(quantity, currentCoin.decimals));
             var priceNQT = new BigInteger(NRS.convertToQNT(String($("#" + orderType + "_coin_price").val()), NRS.getActiveChainDecimals()));
             var totalNXT = NRS.formatQuantity(NRS.convertToChainCoin(NRS.calculateOrderTotalNQT(quantityQNT, priceNQT), currentCoin), NRS.getActiveChainDecimals());
@@ -901,7 +901,7 @@ var NRS = (function (NRS, $, undefined) {
 
         $("#coin_order_type").val((orderType == "buy" ? "placeBidOrder" : "placeAskOrder"));
         $("#coin_order_coin").val(coinId);
-        $("#coin_order_quantity").val(quantityQNT.toString());
+        $("#coin_order_quantity").val(displayedQuantity.multiply(priceNQT).toString()); // convert from base coin to counter coin
         $("#coin_order_price").val(priceNQT.toString());
     });
 
@@ -1134,7 +1134,7 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.getChainLink(trade.chain) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
                         "<td class='coin_price numeric'>" + NRS.formatAmount(trade.priceNQT, false, false, priceDecimals) + "</td>" +
-                        "<td class='numeric'>" + NRS.formatAmount(trade.amountNQT, false, false, amountDecimals) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(trade.amountNQT, amountDecimals) + "</td>" +
                         "</tr>";
                 }
                 NRS.dataLoaded(rows);
@@ -1172,12 +1172,13 @@ var NRS = (function (NRS, $, undefined) {
                     order.priceNQT = new BigInteger(order.priceNQT);
                     order.amountNQT = new BigInteger(order.amountNQT);
                     var decimals = NRS.getChainDecimals(order.chain);
+                    var exchangeDecimals = NRS.getChainDecimals(order.exchange);
                     rows += "<tr>" +
-                        "<td>" + NRS.getTransactionLink(order.orderFullHash, false, false, getCoinOrderChain(order)) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(order.orderFullHash, false, false, order.chain) + "</td>" +
                         "<td>" + NRS.getChainLink(order.exchange) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.amountNQT, decimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.bidNQT, decimals) + "</td>" +
-                        "<td>" + NRS.formatQuantity(order.askNQT, decimals) + "</td>" +
+                        "<td>" + NRS.formatQuantity(order.askNQT, exchangeDecimals) + "</td>" +
                         "<td class='cancel'><a href='#' data-toggle='modal' data-target='#cancel_coin_order_modal' data-order='" + NRS.escapeRespStr(order.order) + "'>" + $.t("cancel") + "</a></td>" +
                     "</tr>";
                 }

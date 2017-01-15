@@ -1899,7 +1899,7 @@
   "coin_exchange_duplicates_warning": "Warning: There is 1 other coin with the same name in the coin exchange. Please make sure you choose the right one. Look at the account and coin ID for confirmation.",
   "exchange_chain": "Exchange Chain",
   "buy_coin_order_description": "Buy __amount__ __base__ coins at __price__ __counter__ each.",
-  "buy_coin_order_description_help": "Per coin bought you will pay __price__ __base__, making a total of __total__ __counter__ once everything has been purchased.",
+  "buy_coin_order_description_help": "Per __base__ bought you will pay __price__ __counter__, making a total of __total__ __counter__ once everything has been purchased.",
   "sell_coin_order_description": "Sell __amount__ __base__ coins at __price__ __counter__ each.",
   "sell_coin_order_description_help": "Per coin sold you will receive __price__ __counter__, making a total of __total__ __counter__ once everything has been sold.",
   "buy_coin_with_nxt": "Buy __base__ with __counter__",

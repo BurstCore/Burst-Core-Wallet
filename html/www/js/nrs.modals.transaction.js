@@ -1172,10 +1172,9 @@ var NRS = (function (NRS, $, undefined) {
                 };
                 data.chain_formatted_html = NRS.getChainLink(transaction.attachment.chain);
                 data.exchange_chain_formatted_html = NRS.getChainLink(transaction.attachment.exchangeChain);
-                var exchangeChainDecimals = NRS.constants.CHAIN_PROPERTIES[transaction.attachment.exchangeChain].decimals;
-                data.amount_formatted_html = NRS.formatQuantity(transaction.attachment.amountNQT, exchangeChainDecimals);
                 var chainDecimals = NRS.constants.CHAIN_PROPERTIES[transaction.attachment.chain].decimals;
-                data.price_formatted_html = NRS.formatQuantity(transaction.attachment.priceNQT, chainDecimals);
+                data.amount_formatted_html = NRS.formatQuantity(transaction.attachment.amountNQT, chainDecimals) + " " + NRS.getChain(transaction.attachment.chain).name;
+                data.price_formatted_html = NRS.formatQuantity(transaction.attachment.priceNQT, chainDecimals)  + " " + NRS.getChain(transaction.attachment.chain).name;
 
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();

@@ -30,13 +30,14 @@ var NRS = (function(NRS, $) {
     NRS.jsondata = NRS.jsondata||{};
 
     NRS.jsondata.bundlers = function (response) {
+        var fxtDecimals = NRS.getChain(1).decimals;
         return {
             accountFormatted: NRS.getAccountLink(response, "bundler"),
             chainFormatted: NRS.getChainLink(response.chain),
-            totalFeesLimitFQT: NRS.formatAmount(response.totalFeesLimitFQT),
-            currentTotalFeesFQT: NRS.formatAmount(response.currentTotalFeesFQT),
-            minRateNQTPerFXT: NRS.formatAmount(response.minRateNQTPerFXT),
-            overpayFQTPerFXT: NRS.formatAmount(response.overpayFQTPerFXT),
+            totalFeesLimitFQT: NRS.formatQuantity(response.totalFeesLimitFQT, fxtDecimals),
+            currentTotalFeesFQT: NRS.formatQuantity(response.currentTotalFeesFQT, fxtDecimals),
+            minRateNQTPerFXT: NRS.formatQuantity(response.minRateNQTPerFXT, NRS.getChain(response.chain).decimals),
+            overpayFQTPerFXT: NRS.formatQuantity(response.overpayFQTPerFXT, fxtDecimals),
             stopLinkFormatted: "<a href='#' class='btn btn-xs' data-toggle='modal' data-target='#stop_bundler_modal' " +
                 "data-account='" + NRS.escapeRespStr(response.bundlerRS) + "' data-chain='" + NRS.escapeRespStr(response.chain) + "'>" + $.t("stop") + "</a>"
         };
@@ -91,9 +92,10 @@ var NRS = (function(NRS, $) {
 
     NRS.forms.startBundler = function($modal) {
         var data = NRS.getFormData($modal.find("form:first"));
-        data.totalFeesLimitFQT = NRS.convertToNQT(data.totalFeesLimitFXT);
+        var fxtDecimals = NRS.getChain(1).decimals;
+        data.totalFeesLimitFQT = NRS.floatToInt(data.totalFeesLimitFXT, fxtDecimals);
         delete data.totalFeesLimitFXT;
-        data.overpayFQTPerFXT = NRS.convertToNQT(data.overpayFXTPerFXT);
+        data.overpayFQTPerFXT = NRS.floatToInt(data.overpayFXTPerFXT, fxtDecimals);
         delete data.overpayFXTPerFXT;
         return { data: data };
     };
