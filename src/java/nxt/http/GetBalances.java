@@ -58,7 +58,9 @@ public final class GetBalances extends APIServlet.APIRequestHandler {
             }
             chainBalances.put(chain.getId(), JSONData.balance(chain, accountId, height));
         }
-        return chainBalances;
+        JSONObject response = new JSONObject();
+        response.put("balances", chainBalances);
+        return response;
     }
 
 }
