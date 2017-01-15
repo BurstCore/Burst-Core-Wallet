@@ -22,6 +22,7 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.blockchain.Appendix;
+import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Fee;
@@ -30,6 +31,8 @@ import nxt.blockchain.TransactionImpl;
 import nxt.blockchain.TransactionType;
 import org.json.simple.JSONObject;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -471,9 +474,16 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         @Override
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             BidOrderPlacementAttachment attachment = (BidOrderPlacementAttachment) transaction.getAttachment();
-            if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT())) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
-                        -Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT()));
+            ChildChain chain = transaction.getChain();
+            Asset asset = Asset.getAsset(attachment.getAssetId());
+            BigDecimal quantity = new BigDecimal(attachment.getQuantityQNT(), MathContext.DECIMAL128)
+                    .movePointLeft(asset.getDecimals());
+            BigDecimal price = new BigDecimal(attachment.getPriceNQT(), MathContext.DECIMAL128)
+                    .movePointLeft(chain.getDecimals());
+            long amount = quantity.multiply(price).movePointRight(chain.getDecimals()).longValue();
+            if (chain.getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= amount) {
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
+                        AccountLedger.newEventId(transaction), -amount);
                 return true;
             }
             return false;
@@ -488,8 +498,15 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             BidOrderPlacementAttachment attachment = (BidOrderPlacementAttachment) transaction.getAttachment();
-            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
-                    Math.multiplyExact(attachment.getQuantityQNT(), attachment.getPriceNQT()));
+            ChildChain chain = transaction.getChain();
+            Asset asset = Asset.getAsset(attachment.getAssetId());
+            BigDecimal quantity = new BigDecimal(attachment.getQuantityQNT(), MathContext.DECIMAL128)
+                    .movePointLeft(asset.getDecimals());
+            BigDecimal price = new BigDecimal(attachment.getPriceNQT(), MathContext.DECIMAL128)
+                    .movePointLeft(chain.getDecimals());
+            long amount = quantity.multiply(price).movePointRight(chain.getDecimals()).longValue();
+            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
+                    AccountLedger.newEventId(transaction), amount);
         }
 
         @Override
@@ -618,8 +635,8 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             OrderHome.Order order = orderHome.getBidOrder(attachment.getOrderId());
             orderHome.removeBidOrder(attachment.getOrderId());
             if (order != null) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
-                        Math.multiplyExact(order.getQuantityQNT(), order.getPriceNQT()));
+                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
+                        AccountLedger.newEventId(transaction), ((OrderHome.Bid)order).getAmountNQT());
             }
         }
 

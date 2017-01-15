@@ -403,6 +403,8 @@ public class ChildDbVersion extends DbVersion {
             case 141:
                 apply("CREATE INDEX IF NOT EXISTS asset_dividend_height_idx ON asset_dividend (height)");
             case 142:
+                apply("ALTER TABLE bid_order ADD COLUMN IF NOT EXISTS amount BIGINT NOT NULL DEFAULT 0");
+            case 143:
                 return;
             default:
                 throw new RuntimeException("Child chain " + schema + " database inconsistent with code, at update " + nextUpdate

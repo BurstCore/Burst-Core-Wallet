@@ -28,6 +28,8 @@ import nxt.db.DbIterator;
 import nxt.db.DbKey;
 import nxt.db.VersionedEntityDbTable;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -130,25 +132,6 @@ public final class OrderHome {
             this.creationHeight = rs.getInt("creation_height");
             this.transactionIndex = rs.getShort("transaction_index");
             this.transactionHeight = rs.getInt("transaction_height");
-        }
-
-        private void save(Connection con, String table) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, full_hash, account_id, asset_id, "
-                    + "price, quantity, creation_height, transaction_index, transaction_height, height, latest) KEY (id, height) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
-                int i = 0;
-                pstmt.setLong(++i, this.id);
-                pstmt.setBytes(++i, this.hash);
-                pstmt.setLong(++i, this.accountId);
-                pstmt.setLong(++i, this.assetId);
-                pstmt.setLong(++i, this.priceNQT);
-                pstmt.setLong(++i, this.quantityQNT);
-                pstmt.setInt(++i, this.creationHeight);
-                pstmt.setShort(++i, this.transactionIndex);
-                pstmt.setInt(++i, this.transactionHeight);
-                pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
-                pstmt.executeUpdate();
-            }
         }
 
         public final ChildChain getChildChain() {
@@ -272,7 +255,22 @@ public final class OrderHome {
         }
 
         private void save(Connection con, String table) throws SQLException {
-            super.save(con, table);
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, full_hash, account_id, asset_id, "
+                    + "price, quantity, creation_height, transaction_index, transaction_height, height, latest) KEY (id, height) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                int i = 0;
+                pstmt.setLong(++i, getId());
+                pstmt.setBytes(++i, getFullHash());
+                pstmt.setLong(++i, getAccountId());
+                pstmt.setLong(++i, getAssetId());
+                pstmt.setLong(++i, getPriceNQT());
+                pstmt.setLong(++i, getQuantityQNT());
+                pstmt.setInt(++i, getHeight());
+                pstmt.setShort(++i, (short)getTransactionIndex());
+                pstmt.setInt(++i, getTransactionHeight());
+                pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
+                pstmt.executeUpdate();
+            }
         }
 
         private void updateQuantityQNT(long quantityQNT) {
@@ -345,23 +343,53 @@ public final class OrderHome {
     public final class Bid extends Order {
 
         private final DbKey dbKey;
+        private long amountNQT;
 
         private Bid(Transaction transaction, BidOrderPlacementAttachment attachment) {
             super(transaction, attachment);
             this.dbKey = bidOrderDbKeyFactory.newKey(super.id);
+            Asset asset = Asset.getAsset(getAssetId());
+            BigDecimal quantity = new BigDecimal(getQuantityQNT(), MathContext.DECIMAL128)
+                        .movePointLeft(asset.getDecimals());
+            BigDecimal price = new BigDecimal(getPriceNQT(), MathContext.DECIMAL128)
+                        .movePointLeft(childChain.getDecimals());
+            this.amountNQT = quantity.multiply(price).movePointRight(childChain.getDecimals()).longValue();
         }
 
         private Bid(ResultSet rs, DbKey dbKey) throws SQLException {
             super(rs);
+            this.amountNQT = rs.getLong("amount");
             this.dbKey = dbKey;
         }
 
         private void save(Connection con, String table) throws SQLException {
-            super.save(con, table);
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, full_hash, account_id, asset_id, "
+                    + "price, quantity, amount, "
+                    + "creation_height, transaction_index, transaction_height, height, latest) KEY (id, height) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                int i = 0;
+                pstmt.setLong(++i, getId());
+                pstmt.setBytes(++i, getFullHash());
+                pstmt.setLong(++i, getAccountId());
+                pstmt.setLong(++i, getAssetId());
+                pstmt.setLong(++i, getPriceNQT());
+                pstmt.setLong(++i, getQuantityQNT());
+                pstmt.setLong(++i, amountNQT);
+                pstmt.setInt(++i, getHeight());
+                pstmt.setShort(++i, (short)getTransactionIndex());
+                pstmt.setInt(++i, getTransactionHeight());
+                pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
+                pstmt.executeUpdate();
+            }
         }
 
-        private void updateQuantityQNT(long quantityQNT) {
+        public long getAmountNQT() {
+            return amountNQT;
+        }
+
+        private void updateQuantityQNT(long quantityQNT, long amountNQT) {
             super.setQuantityQNT(quantityQNT);
+            this.amountNQT = amountNQT;
             if (quantityQNT > 0) {
                 bidOrderTable.insert(this);
             } else if (quantityQNT == 0) {
@@ -377,6 +405,7 @@ public final class OrderHome {
 
         Ask askOrder;
         Bid bidOrder;
+        Asset asset = Asset.getAsset(assetId);
 
         while ((askOrder = getNextAskOrder(assetId)) != null
                 && (bidOrder = getNextBidOrder(assetId)) != null) {
@@ -387,25 +416,38 @@ public final class OrderHome {
 
             TradeHome.Trade trade = tradeHome.addTrade(assetId, askOrder, bidOrder);
 
+            BigDecimal quantity = new BigDecimal(trade.getQuantityQNT(), MathContext.DECIMAL128)
+                    .movePointLeft(asset.getDecimals());
+            BigDecimal price = new BigDecimal(trade.getPriceNQT(), MathContext.DECIMAL128)
+                    .movePointLeft(childChain.getDecimals());
+            long amount = Math.min(bidOrder.getAmountNQT(),
+                    quantity.multiply(price).movePointRight(childChain.getDecimals()).longValue());
+
             askOrder.updateQuantityQNT(Math.subtractExact(askOrder.getQuantityQNT(), trade.getQuantityQNT()));
             Account askAccount = Account.getAccount(askOrder.getAccountId());
-            AccountLedger.LedgerEventId askEventId = AccountLedger.newEventId(askOrder.getId(), askOrder.getFullHash(), childChain);
+            AccountLedger.LedgerEventId askEventId =
+                    AccountLedger.newEventId(askOrder.getId(), askOrder.getFullHash(), childChain);
             BalanceHome.Balance askBalance = childChain.getBalanceHome().getBalance(askOrder.getAccountId());
-            askBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.ASSET_TRADE, askEventId,
-                    Math.multiplyExact(trade.getQuantityQNT(), trade.getPriceNQT()));
+            askBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.ASSET_TRADE, askEventId, amount);
             askAccount.addToAssetBalanceQNT(LedgerEvent.ASSET_TRADE, askEventId,
                     assetId, -trade.getQuantityQNT());
 
-            bidOrder.updateQuantityQNT(Math.subtractExact(bidOrder.getQuantityQNT(), trade.getQuantityQNT()));
+            long bidQuantity = Math.subtractExact(bidOrder.getQuantityQNT(), trade.getQuantityQNT());
+            long bidAmount = Math.subtractExact(bidOrder.getAmountNQT(), amount);
+            if (bidAmount == 0) {
+                bidQuantity = 0;
+            }
+            bidOrder.updateQuantityQNT(bidQuantity, bidAmount);
             Account bidAccount = Account.getAccount(bidOrder.getAccountId());
-            AccountLedger.LedgerEventId bidEventId = AccountLedger.newEventId(bidOrder.getId(), bidOrder.getFullHash(), childChain);
+            AccountLedger.LedgerEventId bidEventId =
+                    AccountLedger.newEventId(bidOrder.getId(), bidOrder.getFullHash(), childChain);
             bidAccount.addToAssetAndUnconfirmedAssetBalanceQNT(LedgerEvent.ASSET_TRADE, bidEventId,
                     assetId, trade.getQuantityQNT());
             BalanceHome.Balance bidBalance = childChain.getBalanceHome().getBalance(bidOrder.getAccountId());
-            bidBalance.addToBalance(LedgerEvent.ASSET_TRADE, bidEventId,
-                    -Math.multiplyExact(trade.getQuantityQNT(), trade.getPriceNQT()));
-            bidBalance.addToUnconfirmedBalance(LedgerEvent.ASSET_TRADE, bidEventId,
-                    Math.multiplyExact(trade.getQuantityQNT(), (bidOrder.getPriceNQT() - trade.getPriceNQT())));
+            bidBalance.addToBalance(LedgerEvent.ASSET_TRADE, bidEventId, -amount);
+            if (bidQuantity == 0 && bidAmount != 0) {
+                bidBalance.addToUnconfirmedBalance(LedgerEvent.ASSET_TRADE, bidEventId, bidAmount);
+            }
         }
 
     }
