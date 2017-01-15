@@ -64,7 +64,7 @@ public abstract class NetworkMessage {
     private static final int MIN_PROTOCOL_LEVEL = 1;
 
     /** Maximum byte array length */
-    public static final int MAX_ARRAY_LENGTH = 4096;
+    public static final int MAX_ARRAY_LENGTH = 48 * 1024;
 
     /** Maximum list size */
     public static final int MAX_LIST_SIZE = 1500;
