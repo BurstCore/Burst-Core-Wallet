@@ -452,7 +452,7 @@ body > .header .navbar .nav > li > a:hover > .label {
 }
 body > .header .logo {
   float: left;
-  font-size: 20px;
+  font-size: 0px;
   line-height: 50px;
   text-align: center;
   padding: 0 10px;
@@ -2008,16 +2008,16 @@ body > .header .logo .icon {
   text-transform: uppercase;
 }
 #registration_link a, #custom_passphrase_link a {
-  color: rgba(255,255,255,0.5);
+  color: rgba(7,66,109,0.8);
 }
 #registration_link a:hover, #custom_passphrase_link a {
-  color: rgba(255,255,255,1.0);
+  color: rgba(7,66,109,1.0);
   text-decoration: none;
 }
 
 #login_panel #remember_me_container label,
 #lockscreen_active_plugins_warning label
-{ opacity: 0.53; }
+{ opacity: 0.8; }
 
 #login_panel #remember_me_container label:hover,
 #lockscreen_active_plugins_warning label:hover
@@ -2996,7 +2996,7 @@ label .popover-content {
 }
 
 #remember_me_container {
-    color: #fff;
+    color: #07426D;
     width: 260px;
 }
 
@@ -3005,8 +3005,8 @@ label .popover-content {
 }
 
 .chain-selector label {
-    color: #fff;
-    opacity: 0.5;
+    color: #07426D;
+    opacity: 0.8;
     font-weight: normal;
 }
 
