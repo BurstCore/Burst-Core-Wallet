@@ -110,7 +110,7 @@ var NRS = (function (NRS, $) {
             amount = amount.abs();
             negative = "-";
         }
-        var oneCoin = getOneCoin(decimals);
+        var oneCoin = NRS.getOneCoin(decimals);
         var fractionalPart = amount.mod(new BigInteger(oneCoin)).toString();
         amount = amount.divide(new BigInteger(oneCoin));
         var mantissa = "";
@@ -166,7 +166,7 @@ var NRS = (function (NRS, $) {
         var fraction;
         if (parts.length == 1) {
             //no fractional part
-            fraction = getOneCoin(decimals).substring(1);
+            fraction = NRS.getOneCoin(decimals).substring(1);
         } else if (parts.length == 2) {
             if (parts[1].length <= decimals) {
                 fraction = parts[1];
@@ -308,9 +308,9 @@ var NRS = (function (NRS, $) {
         if (zeroPad) {
             var mantissaLen = formattedMantissa.length;
             if (mantissaLen > 0) {
-                formattedMantissa += getOneCoin(decimals).substr(1, zeroPad - mantissaLen + 1);
+                formattedMantissa += NRS.getOneCoin(decimals).substr(1, zeroPad - mantissaLen + 1);
             } else {
-                formattedMantissa += getOneCoin(decimals).substr(1, zeroPad);
+                formattedMantissa += NRS.getOneCoin(decimals).substr(1, zeroPad);
                 if (zeroPad != 0) {
                     formattedMantissa = locale.decimal + formattedMantissa;
                 }
@@ -484,9 +484,9 @@ var NRS = (function (NRS, $) {
         }
     };
 
-    function getOneCoin(decimals) {
+    NRS.getOneCoin = function(decimals) {
         return String(NRS.constants.MAX_ONE_COIN).substring(0, decimals + 1);
-    }
+    };
 
     return NRS;
 }(NRS || {}, jQuery));
