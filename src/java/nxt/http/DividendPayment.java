@@ -30,7 +30,7 @@ public class DividendPayment extends CreateTransaction {
     static final DividendPayment instance = new DividendPayment();
 
     private DividendPayment() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "height", "amountNQTPerQNT");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "height", "amountNQT");
     }
 
     @Override
@@ -38,13 +38,13 @@ public class DividendPayment extends CreateTransaction {
             throws NxtException
     {
         final int height = ParameterParser.getHeight(request);
-        final long amountNQTPerQNT = ParameterParser.getAmountNQTPerQNT(request);
+        final long amountNQT = ParameterParser.getAmountNQT(request);
         final Account account = ParameterParser.getSenderAccount(request);
         final Asset asset = ParameterParser.getAsset(request);
         if (Asset.getAsset(asset.getId(), height) == null) {
             return JSONResponses.ASSET_NOT_ISSUED_YET;
         }
-        final Attachment attachment = new DividendPaymentAttachment(asset.getId(), height, amountNQTPerQNT);
+        final Attachment attachment = new DividendPaymentAttachment(asset.getId(), height, amountNQT);
         try {
             return this.createTransaction(request, account, attachment);
         } catch (NxtException.InsufficientBalanceException e) {

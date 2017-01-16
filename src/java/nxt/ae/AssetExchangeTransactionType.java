@@ -690,10 +690,18 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             if (asset == null) {
                 return true;
             }
+            ChildChain childChain = transaction.getChain();
             long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
-            long totalDividendPayment = Math.multiplyExact(attachment.getAmountNQTPerQNT(), quantityQNT);
-            if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= totalDividendPayment) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
+            BigDecimal quantity = new BigDecimal(quantityQNT, MathContext.DECIMAL128)
+                    .movePointLeft(asset.getDecimals());
+            BigDecimal amount = new BigDecimal(attachment.getAmountNQT()).movePointLeft(childChain.getDecimals());
+            long totalDividendPayment = quantity.multiply(amount)
+                    .movePointRight(childChain.getDecimals()).longValue();
+            if (totalDividendPayment == 0) {
+                return true;
+            }
+            if (childChain.getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= totalDividendPayment) {
+                senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
                         AccountLedger.newEventId(transaction), -totalDividendPayment);
                 return true;
             }
@@ -714,10 +722,17 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             if (asset == null) {
                 return;
             }
+            ChildChain childChain = transaction.getChain();
             long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
-            long totalDividendPayment = Math.multiplyExact(attachment.getAmountNQTPerQNT(), quantityQNT);
-            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
-                    AccountLedger.newEventId(transaction), totalDividendPayment);
+            BigDecimal quantity = new BigDecimal(quantityQNT, MathContext.DECIMAL128)
+                    .movePointLeft(asset.getDecimals());
+            BigDecimal amount = new BigDecimal(attachment.getAmountNQT()).movePointLeft(childChain.getDecimals());
+            long totalDividendPayment = quantity.multiply(amount)
+                    .movePointRight(childChain.getDecimals()).longValue();
+            if (totalDividendPayment > 0) {
+                senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
+                        AccountLedger.newEventId(transaction), totalDividendPayment);
+            }
         }
 
         @Override
@@ -737,7 +752,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
                 throw new NxtException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId())
                         + " for dividend payment doesn't exist yet");
             }
-            if (asset.getAccountId() != transaction.getSenderId() || attachment.getAmountNQTPerQNT() <= 0) {
+            if (asset.getAccountId() != transaction.getSenderId() || attachment.getAmountNQT() <= 0) {
                 throw new NxtException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
             }
             AssetDividendHome.AssetDividend lastDividend = transaction.getChain().getAssetDividendHome().getLastDividend(attachment.getAssetId());

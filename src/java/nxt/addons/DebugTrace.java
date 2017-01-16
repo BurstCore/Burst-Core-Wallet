@@ -21,6 +21,7 @@ import nxt.account.Account;
 import nxt.account.BalanceHome;
 import nxt.account.HoldingType;
 import nxt.ae.AskOrderPlacementAttachment;
+import nxt.ae.Asset;
 import nxt.ae.AssetDeleteAttachment;
 import nxt.ae.AssetIssuanceAttachment;
 import nxt.ae.AssetTransferAttachment;
@@ -65,7 +66,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -631,19 +634,25 @@ public final class DebugTrace {
             }
             OrderPlacementAttachment orderPlacement = (OrderPlacementAttachment)attachment;
             boolean isAsk = orderPlacement instanceof AskOrderPlacementAttachment;
+            Asset asset = Asset.getAsset(orderPlacement.getAssetId());
+            ChildChain childChain = (ChildChain)transaction.getChain();
             map.put("asset", Long.toUnsignedString(orderPlacement.getAssetId()));
             map.put("order", Long.toUnsignedString(transaction.getId()));
             map.put("order price", String.valueOf(orderPlacement.getPriceNQT()));
-            long quantity = orderPlacement.getQuantityQNT();
+            long quantityQNT = orderPlacement.getQuantityQNT();
             if (isAsk) {
-                quantity = - quantity;
+                quantityQNT = - quantityQNT;
             }
-            map.put("order quantity", String.valueOf(quantity));
-            BigInteger orderCost = BigInteger.valueOf(orderPlacement.getPriceNQT()).multiply(BigInteger.valueOf(orderPlacement.getQuantityQNT()));
+            map.put("order quantity", String.valueOf(quantityQNT));
+            BigDecimal price = new BigDecimal(orderPlacement.getPriceNQT(), MathContext.DECIMAL128)
+                    .movePointLeft(childChain.getDecimals());
+            BigDecimal quantity = new BigDecimal(orderPlacement.getQuantityQNT(), MathContext.DECIMAL128)
+                    .movePointLeft(asset.getDecimals());
+            long orderCost = price.multiply(quantity).movePointRight(childChain.getDecimals()).longValue();
             if (! isAsk) {
-                orderCost = orderCost.negate();
+                orderCost = -orderCost;
             }
-            map.put("order cost", orderCost.toString());
+            map.put("order cost", Long.toString(orderCost));
             String event = (isAsk ? "ask" : "bid") + " order";
             map.put("event", event);
         } else if (attachment instanceof AssetIssuanceAttachment) {
@@ -770,19 +779,29 @@ public final class DebugTrace {
             map.put("event", "currency reserve");
         } else if (attachment instanceof DividendPaymentAttachment) {
             DividendPaymentAttachment dividendPayment = (DividendPaymentAttachment)attachment;
+            ChildChain childChain = (ChildChain)transaction.getChain();
+            Asset asset = Asset.getAsset(dividendPayment.getAssetId());
+            BigDecimal amount = new BigDecimal(dividendPayment.getAmountNQT(), MathContext.DECIMAL128)
+                    .movePointLeft(childChain.getDecimals());
             long totalDividend = 0;
             String assetId = Long.toUnsignedString(dividendPayment.getAssetId());
             try (DbIterator<Account.AccountAsset> iterator = Account.getAssetAccounts(dividendPayment.getAssetId(), dividendPayment.getHeight(), 0, -1)) {
                 while (iterator.hasNext()) {
                     Account.AccountAsset accountAsset = iterator.next();
                     if (accountAsset.getAccountId() != accountId && accountAsset.getQuantityQNT() != 0) {
-                        long dividend = Math.multiplyExact(accountAsset.getQuantityQNT(), dividendPayment.getAmountNQTPerQNT());
-                        Map recipient = getValues(accountAsset.getAccountId(), false);
-                        recipient.put("dividend", String.valueOf(dividend));
-                        recipient.put("asset", assetId);
-                        recipient.put("event", "dividend");
-                        totalDividend += dividend;
-                        log(recipient);
+                        long dividend = new BigDecimal(accountAsset.getQuantityQNT(), MathContext.DECIMAL128)
+                                .movePointLeft(asset.getDecimals())
+                                .multiply(amount)
+                                .movePointRight(childChain.getDecimals())
+                                .longValue();
+                        if (dividend > 0) {
+                            Map recipient = getValues(accountAsset.getAccountId(), false);
+                            recipient.put("dividend", String.valueOf(dividend));
+                            recipient.put("asset", assetId);
+                            recipient.put("event", "dividend");
+                            totalDividend += dividend;
+                            log(recipient);
+                        }
                     }
                 }
             }

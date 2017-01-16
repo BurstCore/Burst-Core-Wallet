@@ -319,10 +319,6 @@ public final class ParameterParser {
         return getLong(req, "quantityQNT", 1L, Constants.MAX_ASSET_QUANTITY_QNT, true);
     }
 
-    public static long getAmountNQTPerQNT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountNQTPerQNT", 1L, Constants.MAX_BALANCE_NQT, true);
-    }
-
     public static DigitalGoodsHome.Goods getGoods(HttpServletRequest req) throws ParameterException {
         ChildChain childChain = getChildChain(req);
         DigitalGoodsHome.Goods goods = childChain.getDigitalGoodsHome().getGoods(getUnsignedLong(req, "goods", true));

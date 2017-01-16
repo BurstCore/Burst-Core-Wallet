@@ -29,6 +29,8 @@ import nxt.db.EntityDbTable;
 import nxt.util.Listener;
 import nxt.util.Listeners;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -99,26 +101,64 @@ public final class AssetDividendHome {
     void payDividends(Transaction transaction, DividendPaymentAttachment attachment) {
         long totalDividend = 0;
         long issuerId = transaction.getSenderId();
+        long assetId = attachment.getAssetId();
+        int height = attachment.getHeight();
+        Account issuer = Account.getAccount(issuerId);
+        Asset asset = Asset.getAsset(assetId);
         AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
+        //
+        // Calculate the total amount deducted from the issuer unconfirmed balance
+        //
+        long quantityQNT = asset.getQuantityQNT() - issuer.getAssetBalanceQNT(assetId, height);
+        long amountNQT = attachment.getAmountNQT();
+        BigDecimal quantity = new BigDecimal(quantityQNT, MathContext.DECIMAL128)
+                .movePointLeft(asset.getDecimals());
+        BigDecimal amount = new BigDecimal(amountNQT, MathContext.DECIMAL128)
+                .movePointLeft(childChain.getDecimals());
+        long totalAmount = quantity.multiply(amount).movePointRight(childChain.getDecimals()).longValue();
+        //
+        // Get a list of all asset owners
+        //
         List<Account.AccountAsset> accountAssets = new ArrayList<>();
         try (DbIterator<Account.AccountAsset> iterator = Account.getAssetAccounts(attachment.getAssetId(), attachment.getHeight(), 0, -1)) {
             while (iterator.hasNext()) {
                 accountAssets.add(iterator.next());
             }
         }
+        //
+        // Pay dividends.  We will not pay a dividend if the amount is zero.
+        //
         BalanceHome balanceHome = childChain.getBalanceHome();
-        final long amountNQTPerQNT = attachment.getAmountNQTPerQNT();
         long numAccounts = 0;
-        for (final Account.AccountAsset accountAsset : accountAssets) {
+        for (Account.AccountAsset accountAsset : accountAssets) {
             if (accountAsset.getAccountId() != issuerId && accountAsset.getQuantityQNT() != 0) {
-                long dividend = Math.multiplyExact(accountAsset.getQuantityQNT(), amountNQTPerQNT);
-                balanceHome.getBalance(accountAsset.getAccountId())
-                        .addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, eventId, dividend);
-                totalDividend += dividend;
-                numAccounts += 1;
+                long dividend = new BigDecimal(accountAsset.getQuantityQNT(), MathContext.DECIMAL128)
+                        .movePointLeft(asset.getDecimals())
+                        .multiply(amount)
+                        .movePointRight(childChain.getDecimals())
+                        .longValue();
+                if (dividend > 0) {
+                    balanceHome.getBalance(accountAsset.getAccountId())
+                        .addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT,
+                                eventId, dividend);
+                    totalDividend += dividend;
+                    numAccounts += 1;
+                    totalAmount -= dividend;
+                }
             }
         }
-        balanceHome.getBalance(issuerId).addToBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, eventId, -totalDividend);
+        //
+        // Update the issuer balance for the dividends paid and refund any unused amount
+        //
+        BalanceHome.Balance balance = balanceHome.getBalance(issuerId);
+        balance.addToBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, eventId, -totalDividend);
+        if (totalAmount != 0) {
+            balance.addToUnconfirmedBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT,
+                    eventId, totalAmount);
+        }
+        //
+        // Update the dividend table
+        //
         AssetDividend assetDividend = new AssetDividend(transaction, attachment, totalDividend, numAccounts);
         assetDividendTable.insert(assetDividend);
         listeners.notify(assetDividend, Event.ASSET_DIVIDEND);
@@ -130,7 +170,7 @@ public final class AssetDividendHome {
         private final byte[] hash;
         private final DbKey dbKey;
         private final long assetId;
-        private final long amountNQTPerQNT;
+        private final long amountNQT;
         private final int dividendHeight;
         private final long totalDividend;
         private final long numAccounts;
@@ -143,7 +183,7 @@ public final class AssetDividendHome {
             this.hash = transaction.getFullHash();
             this.dbKey = dividendDbKeyFactory.newKey(this.hash, this.id);
             this.assetId = attachment.getAssetId();
-            this.amountNQTPerQNT = attachment.getAmountNQTPerQNT();
+            this.amountNQT = attachment.getAmountNQT();
             this.dividendHeight = attachment.getHeight();
             this.totalDividend = totalDividend;
             this.numAccounts = numAccounts;
@@ -156,7 +196,7 @@ public final class AssetDividendHome {
             this.hash = rs.getBytes("full_hash");
             this.dbKey = dbKey;
             this.assetId = rs.getLong("asset_id");
-            this.amountNQTPerQNT = rs.getLong("amount");
+            this.amountNQT = rs.getLong("amount");
             this.dividendHeight = rs.getInt("dividend_height");
             this.totalDividend = rs.getLong("total_dividend");
             this.numAccounts = rs.getLong("num_accounts");
@@ -172,7 +212,7 @@ public final class AssetDividendHome {
                 pstmt.setLong(++i, this.id);
                 pstmt.setBytes(++i, this.hash);
                 pstmt.setLong(++i, this.assetId);
-                pstmt.setLong(++i, this.amountNQTPerQNT);
+                pstmt.setLong(++i, this.amountNQT);
                 pstmt.setInt(++i, this.dividendHeight);
                 pstmt.setLong(++i, this.totalDividend);
                 pstmt.setLong(++i, this.numAccounts);
@@ -194,8 +234,8 @@ public final class AssetDividendHome {
             return assetId;
         }
 
-        public long getAmountNQTPerQNT() {
-            return amountNQTPerQNT;
+        public long getAmountNQT() {
+            return amountNQT;
         }
 
         public int getDividendHeight() {

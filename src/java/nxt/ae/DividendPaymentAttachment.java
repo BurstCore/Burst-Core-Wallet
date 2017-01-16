@@ -27,26 +27,26 @@ public final class DividendPaymentAttachment extends Attachment.AbstractAttachme
 
     private final long assetId;
     private final int height;
-    private final long amountNQTPerQNT;
+    private final long amountNQT;
 
     DividendPaymentAttachment(ByteBuffer buffer) {
         super(buffer);
         this.assetId = buffer.getLong();
         this.height = buffer.getInt();
-        this.amountNQTPerQNT = buffer.getLong();
+        this.amountNQT = buffer.getLong();
     }
 
     DividendPaymentAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String)attachmentData.get("asset"));
         this.height = ((Long)attachmentData.get("height")).intValue();
-        this.amountNQTPerQNT = Convert.parseLong(attachmentData.get("amountNQTPerQNT"));
+        this.amountNQT = Convert.parseLong(attachmentData.get("amountNQT"));
     }
 
-    public DividendPaymentAttachment(long assetId, int height, long amountNQTPerQNT) {
+    public DividendPaymentAttachment(long assetId, int height, long amountNQT) {
         this.assetId = assetId;
         this.height = height;
-        this.amountNQTPerQNT = amountNQTPerQNT;
+        this.amountNQT = amountNQT;
     }
 
     @Override
@@ -58,14 +58,14 @@ public final class DividendPaymentAttachment extends Attachment.AbstractAttachme
     protected void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(assetId);
         buffer.putInt(height);
-        buffer.putLong(amountNQTPerQNT);
+        buffer.putLong(amountNQT);
     }
 
     @Override
     protected void putMyJSON(JSONObject attachment) {
         attachment.put("asset", Long.toUnsignedString(assetId));
         attachment.put("height", height);
-        attachment.put("amountNQTPerQNT", amountNQTPerQNT);
+        attachment.put("amountNQT", amountNQT);
     }
 
     @Override
@@ -81,8 +81,8 @@ public final class DividendPaymentAttachment extends Attachment.AbstractAttachme
         return height;
     }
 
-    public long getAmountNQTPerQNT() {
-        return amountNQTPerQNT;
+    public long getAmountNQT() {
+        return amountNQT;
     }
 
 }

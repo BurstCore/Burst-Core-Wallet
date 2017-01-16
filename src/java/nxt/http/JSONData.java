@@ -894,7 +894,7 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("assetDividendFullHash", Convert.toHexString(assetDividend.getFullHash()));
         json.put("asset", Long.toUnsignedString(assetDividend.getAssetId()));
-        json.put("amountNQTPerQNT", String.valueOf(assetDividend.getAmountNQTPerQNT()));
+        json.put("amountNQT", String.valueOf(assetDividend.getAmountNQT()));
         json.put("totalDividend", String.valueOf(assetDividend.getTotalDividend()));
         json.put("dividendHeight", assetDividend.getDividendHeight());
         json.put("numberOfAccounts", assetDividend.getNumAccounts());
