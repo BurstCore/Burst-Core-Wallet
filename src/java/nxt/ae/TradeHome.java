@@ -171,8 +171,9 @@ public final class TradeHome {
         return tradeTable.getCount(new DbClause.LongClause("asset_id", assetId));
     }
 
-    Trade addTrade(long assetId, OrderHome.Ask askOrder, OrderHome.Bid bidOrder) {
-        Trade trade = new Trade(assetId, askOrder, bidOrder);
+    Trade addTrade(long assetId, OrderHome.Ask askOrder, OrderHome.Bid bidOrder,
+                   long quantityQNT, long priceNQT) {
+        Trade trade = new Trade(assetId, askOrder, bidOrder, quantityQNT, priceNQT);
         tradeTable.insert(trade);
         listeners.notify(trade, Event.TRADE);
         return trade;
@@ -197,7 +198,8 @@ public final class TradeHome {
         private final long priceNQT;
         private final boolean isBuy;
 
-        private Trade(long assetId, OrderHome.Ask askOrder, OrderHome.Bid bidOrder) {
+        private Trade(long assetId, OrderHome.Ask askOrder, OrderHome.Bid bidOrder,
+                      long quantityQNT, long priceNQT) {
             Block block = Nxt.getBlockchain().getLastBlock();
             this.blockId = block.getId();
             this.height = block.getHeight();
@@ -212,12 +214,9 @@ public final class TradeHome {
             this.sellerId = askOrder.getAccountId();
             this.buyerId = bidOrder.getAccountId();
             this.dbKey = tradeDbKeyFactory.newKey(this.askOrderHash, this.askOrderId, this.bidOrderHash, this.bidOrderId);
-            this.quantityQNT = Math.min(askOrder.getQuantityQNT(), bidOrder.getQuantityQNT());
-            this.isBuy = askOrderHeight < bidOrderHeight ||
-                    askOrderHeight == bidOrderHeight &&
-                            (askOrder.getTransactionHeight() < bidOrder.getTransactionHeight() ||
-                                    (askOrder.getTransactionHeight() == bidOrder.getTransactionHeight() && askOrder.getTransactionIndex() < bidOrder.getTransactionIndex()));
-            this.priceNQT = isBuy ? askOrder.getPriceNQT() : bidOrder.getPriceNQT();
+            this.quantityQNT = quantityQNT;
+            this.priceNQT = priceNQT;
+            this.isBuy = (priceNQT == askOrder.getPriceNQT());
         }
 
         private Trade(ResultSet rs, DbKey dbKey) throws SQLException {

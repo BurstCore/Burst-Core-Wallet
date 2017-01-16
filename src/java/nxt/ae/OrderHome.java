@@ -402,54 +402,112 @@ public final class OrderHome {
     }
 
     private void matchOrders(long assetId) {
-
         Ask askOrder;
         Bid bidOrder;
         Asset asset = Asset.getAsset(assetId);
-
+        //
+        // Process pending orders for this asset
+        //
         while ((askOrder = getNextAskOrder(assetId)) != null
                 && (bidOrder = getNextBidOrder(assetId)) != null) {
-
             if (askOrder.getPriceNQT() > bidOrder.getPriceNQT()) {
                 break;
             }
-
-            TradeHome.Trade trade = tradeHome.addTrade(assetId, askOrder, bidOrder);
-
-            BigDecimal quantity = new BigDecimal(trade.getQuantityQNT(), MathContext.DECIMAL128)
-                    .movePointLeft(asset.getDecimals());
-            BigDecimal price = new BigDecimal(trade.getPriceNQT(), MathContext.DECIMAL128)
-                    .movePointLeft(childChain.getDecimals());
-            long amount = Math.min(bidOrder.getAmountNQT(),
-                    quantity.multiply(price).movePointRight(childChain.getDecimals()).longValue());
-
-            askOrder.updateQuantityQNT(Math.subtractExact(askOrder.getQuantityQNT(), trade.getQuantityQNT()));
+            //
+            // Determine the trade quantity and price.  We will nullify the trade
+            // if the trade amount (price x quantity) is zero.
+            //
+            boolean isBuy  = (askOrder.getHeight() < bidOrder.getHeight() ||
+                    (askOrder.getHeight() == bidOrder.getHeight() &&
+                        (askOrder.getTransactionHeight() < bidOrder.getTransactionHeight() ||
+                            (askOrder.getTransactionHeight() == bidOrder.getTransactionHeight() &&
+                             askOrder.getTransactionIndex() < bidOrder.getTransactionIndex()))));
+            long priceNQT = isBuy ? askOrder.getPriceNQT() : bidOrder.getPriceNQT();
+            long quantityQNT = Math.min(askOrder.getQuantityQNT(), bidOrder.getQuantityQNT());
+            BigDecimal price = new BigDecimal(priceNQT, MathContext.DECIMAL128)
+                        .movePointLeft(childChain.getDecimals());
+            BigDecimal quantity = new BigDecimal(quantityQNT, MathContext.DECIMAL128)
+                        .movePointLeft(asset.getDecimals());
+            long amountNQT = Math.min(bidOrder.getAmountNQT(),
+                        quantity.multiply(price)
+                                .movePointRight(childChain.getDecimals())
+                                .longValue());
+            if (amountNQT == 0) {
+                quantityQNT = 0;
+            }
+            //
+            // Close the ask order and refund the remaining ask quantity
+            // if the value of the remaining quantity is zero
+            //
+            boolean refundAskQuantity = false;
+            long askQuantity = askOrder.getQuantityQNT() - quantityQNT;
+            if (askQuantity > 0) {
+                long cost = new BigDecimal(askQuantity, MathContext.DECIMAL128)
+                        .movePointLeft(asset.getDecimals())
+                        .multiply(price)
+                        .movePointRight(childChain.getDecimals())
+                        .longValue();
+                if (cost == 0) {
+                    refundAskQuantity = true;
+                }
+            }
+            //
+            // Close the bid order and refund the remaining bid amount
+            // if the value of the remaining quantity is zero
+            //
+            long bidQuantity = bidOrder.getQuantityQNT() - quantityQNT;
+            long bidAmount = bidOrder.getAmountNQT() - amountNQT;
+            if (bidAmount == 0) {
+                bidQuantity = 0;
+            } else if (bidQuantity > 0) {
+                long cost = new BigDecimal(bidQuantity, MathContext.DECIMAL128)
+                        .movePointLeft(asset.getDecimals())
+                        .multiply(price)
+                        .movePointRight(childChain.getDecimals())
+                        .longValue();
+                if (cost == 0) {
+                    bidQuantity = 0;
+                }
+            }
+            //
+            // Create the trade if we have a non-zero amount
+            //
+            if (amountNQT > 0) {
+                tradeHome.addTrade(assetId, askOrder, bidOrder, quantityQNT, priceNQT);
+            }
+            //
+            // Update the seller balances
+            //
+            askOrder.updateQuantityQNT(refundAskQuantity ? 0 : askQuantity);
             Account askAccount = Account.getAccount(askOrder.getAccountId());
             AccountLedger.LedgerEventId askEventId =
                     AccountLedger.newEventId(askOrder.getId(), askOrder.getFullHash(), childChain);
-            BalanceHome.Balance askBalance = childChain.getBalanceHome().getBalance(askOrder.getAccountId());
-            askBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.ASSET_TRADE, askEventId, amount);
-            askAccount.addToAssetBalanceQNT(LedgerEvent.ASSET_TRADE, askEventId,
-                    assetId, -trade.getQuantityQNT());
-
-            long bidQuantity = Math.subtractExact(bidOrder.getQuantityQNT(), trade.getQuantityQNT());
-            long bidAmount = Math.subtractExact(bidOrder.getAmountNQT(), amount);
-            if (bidAmount == 0) {
-                bidQuantity = 0;
+            if (amountNQT > 0) {
+                BalanceHome.Balance askBalance = childChain.getBalanceHome().getBalance(askOrder.getAccountId());
+                askBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.ASSET_TRADE, askEventId, amountNQT);
+                askAccount.addToAssetBalanceQNT(LedgerEvent.ASSET_TRADE, askEventId,
+                        assetId, -quantityQNT);
             }
+            if (refundAskQuantity) {
+                askAccount.addToUnconfirmedAssetBalanceQNT(LedgerEvent.ASSET_TRADE, askEventId,
+                        assetId, askQuantity);
+            }
+            //
+            // Update the buyer balances
+            //
             bidOrder.updateQuantityQNT(bidQuantity, bidAmount);
             Account bidAccount = Account.getAccount(bidOrder.getAccountId());
             AccountLedger.LedgerEventId bidEventId =
                     AccountLedger.newEventId(bidOrder.getId(), bidOrder.getFullHash(), childChain);
-            bidAccount.addToAssetAndUnconfirmedAssetBalanceQNT(LedgerEvent.ASSET_TRADE, bidEventId,
-                    assetId, trade.getQuantityQNT());
             BalanceHome.Balance bidBalance = childChain.getBalanceHome().getBalance(bidOrder.getAccountId());
-            bidBalance.addToBalance(LedgerEvent.ASSET_TRADE, bidEventId, -amount);
+            if (amountNQT > 0) {
+                bidAccount.addToAssetAndUnconfirmedAssetBalanceQNT(LedgerEvent.ASSET_TRADE, bidEventId,
+                        assetId, quantityQNT);
+                bidBalance.addToBalance(LedgerEvent.ASSET_TRADE, bidEventId, -amountNQT);
+            }
             if (bidQuantity == 0 && bidAmount != 0) {
                 bidBalance.addToUnconfirmedBalance(LedgerEvent.ASSET_TRADE, bidEventId, bidAmount);
             }
         }
-
     }
-
 }

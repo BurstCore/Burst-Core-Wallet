@@ -173,6 +173,14 @@ public final class JSONResponses {
         NOT_ENOUGH_ASSETS = JSON.prepare(response);
     }
 
+    public static final JSONStreamAware NO_COST_ORDER;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 6);
+        response.put("errorDescription", "Order value is zero");
+        NO_COST_ORDER = JSON.prepare(response);
+    }
+
     public static final JSONStreamAware ASSET_NOT_ISSUED_YET;
     static {
         JSONObject response = new JSONObject();

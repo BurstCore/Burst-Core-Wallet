@@ -21,10 +21,14 @@ import nxt.account.Account;
 import nxt.ae.Asset;
 import nxt.ae.BidOrderPlacementAttachment;
 import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildChain;
 import org.json.simple.JSONStreamAware;
+import java.math.BigDecimal;
+import java.math.MathContext;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static nxt.http.JSONResponses.NO_COST_ORDER;
 import static nxt.http.JSONResponses.NOT_ENOUGH_FUNDS;
 
 public final class PlaceBidOrder extends CreateTransaction {
@@ -42,6 +46,15 @@ public final class PlaceBidOrder extends CreateTransaction {
         long priceNQT = ParameterParser.getPriceNQT(req);
         long quantityQNT = ParameterParser.getQuantityQNT(req);
         Account account = ParameterParser.getSenderAccount(req);
+
+        ChildChain childChain = ParameterParser.getChildChain(req);
+        BigDecimal quantity = new BigDecimal(quantityQNT, MathContext.DECIMAL128)
+                .movePointLeft(asset.getDecimals());
+        BigDecimal price = new BigDecimal(priceNQT, MathContext.DECIMAL128)
+                .movePointLeft(childChain.getDecimals());
+        if (quantity.multiply(price).movePointRight(childChain.getDecimals()).longValue() == 0) {
+            return NO_COST_ORDER;
+        }
 
         Attachment attachment = new BidOrderPlacementAttachment(asset.getId(), quantityQNT, priceNQT);
         try {
