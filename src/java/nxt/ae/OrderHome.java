@@ -442,9 +442,11 @@ public final class OrderHome {
             boolean refundAskQuantity = false;
             long askQuantity = askOrder.getQuantityQNT() - quantityQNT;
             if (askQuantity > 0) {
+                BigDecimal askPrice = new BigDecimal(askOrder.getPriceNQT(), MathContext.DECIMAL128)
+                        .movePointLeft(childChain.getDecimals());
                 long cost = new BigDecimal(askQuantity, MathContext.DECIMAL128)
                         .movePointLeft(asset.getDecimals())
-                        .multiply(price)
+                        .multiply(askPrice)
                         .movePointRight(childChain.getDecimals())
                         .longValue();
                 if (cost == 0) {
@@ -460,9 +462,11 @@ public final class OrderHome {
             if (bidAmount == 0) {
                 bidQuantity = 0;
             } else if (bidQuantity > 0) {
+                BigDecimal bidPrice = new BigDecimal(bidOrder.getPriceNQT(), MathContext.DECIMAL128)
+                        .movePointLeft(childChain.getDecimals());
                 long cost = new BigDecimal(bidQuantity, MathContext.DECIMAL128)
                         .movePointLeft(asset.getDecimals())
-                        .multiply(price)
+                        .multiply(bidPrice)
                         .movePointRight(childChain.getDecimals())
                         .longValue();
                 if (cost == 0) {
