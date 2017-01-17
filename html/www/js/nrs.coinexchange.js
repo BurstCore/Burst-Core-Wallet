@@ -483,25 +483,18 @@ var NRS = (function (NRS, $, undefined) {
             $("#coin_decimals").html(NRS.escapeRespStr(coin.decimals));
             $("#coin_name").html(NRS.escapeRespStr(coin.name));
             $(".coin_name").html(NRS.escapeRespStr(coin.name));
-            $("#sell_coin_button").data("coin", coinId);
             $("#buy_coin_button").data("coin", coinId);
-            $("#sell_coin_for_nxt").html($.t("sell_coin_for_nxt", {
-                base: NRS.escapeRespStr(coin.name), counter: NRS.getActiveChainName()
-            }));
             $("#buy_coin_with_nxt").html($.t("buy_coin_with_nxt", {
                 base: NRS.escapeRespStr(coin.name), counter: NRS.getActiveChainName()
             }));
-            $("#sell_coin_price, #buy_coin_price").val("");
-            $("#sell_coin_quantity, #sell_coin_total, #buy_coin_quantity, #buy_coin_total").val("0");
+            $("#buy_coin_price").val("");
+            $("#buy_coin_quantity, #buy_coin_total").val("0");
 
             var coinExchangeAskOrdersTable = $("#coin_exchange_ask_orders_table");
-            var coinExchangeBidOrdersTable = $("#coin_exchange_bid_orders_table");
             var coinExchangeTradeHistoryTable = $("#coin_exchange_trade_history_table");
             coinExchangeAskOrdersTable.find("tbody").empty();
-            coinExchangeBidOrdersTable.find("tbody").empty();
             coinExchangeTradeHistoryTable.find("tbody").empty();
             coinExchangeAskOrdersTable.parent().addClass("data-loading").removeClass("data-empty");
-            coinExchangeBidOrdersTable.parent().addClass("data-loading").removeClass("data-empty");
             coinExchangeTradeHistoryTable.parent().addClass("data-loading").removeClass("data-empty");
 
             $(".data-loading img.loading").hide();
@@ -550,7 +543,7 @@ var NRS = (function (NRS, $, undefined) {
                 var amount = new BigInteger(order.amountNQT);
                 sum = sum.add(amount);
                 if (i == 0 && !refresh) {
-                    $("#buy_coin_price").val(NRS.formatQuantity(price, currentCoin.decimals));
+                    $("#buy_coin_price").val(NRS.formatQuantity(price, NRS.getActiveChainDecimals()));
                 }
                 var statusIcon = NRS.getTransactionStatusIcon(order);
                 rows += "<tr data-transaction='" + NRS.escapeRespStr(order.order) + "' data-amount='" + amount.toString().escapeHTML() + "' data-price='" + price.toString().escapeHTML() + "'>" +
@@ -642,7 +635,7 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(trade.amountNQT, NRS.getActiveChainDecimals()) + "</td>" +
                         "<td class='coin_price numeric'>" + NRS.formatQuantity(trade.priceNQT, currentCoin.decimals) + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(NRS.calculateOrderTotal(trade.amountNQT, trade.priceNQT), NRS.getActiveChainId()) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(NRS.calculateOrderTotal(trade.amountNQT, trade.priceNQT), currentCoin.decimals) + "</td>" +
                     "</tr>";
                 }
                 exchangeTradeHistoryTable.find("tbody").empty().append(rows);
@@ -691,7 +684,7 @@ var NRS = (function (NRS, $, undefined) {
         coinExchangeSearch.trigger("submit");
     });
 
-    $("#buy_coin_box .box-header, #sell_coin_box .box-header").click(function (e) {
+    $("#buy_coin_box").find(".box-header").click(function (e) {
         e.preventDefault();
         //Find the box parent
         var box = $(this).parents(".box").first();
@@ -790,7 +783,8 @@ var NRS = (function (NRS, $, undefined) {
         }
     });
 
-    $("#buy_coin_quantity, #buy_coin_price, #sell_coin_quantity, #sell_coin_price").keydown(function (e) {
+    var buyCoinFields = $("#buy_coin_quantity, #buy_coin_price");
+    buyCoinFields.keydown(function (e) {
         var charCode = !e.charCode ? e.which : e.charCode;
         if (NRS.isControlKey(charCode) || e.ctrlKey || e.metaKey) {
             return;
@@ -801,8 +795,7 @@ var NRS = (function (NRS, $, undefined) {
         NRS.validateDecimals(maxFractionLength, charCode, $(this).val(), e);
     });
 
-    //calculate preview price (calculated on every keypress)
-    $("#sell_coin_quantity, #sell_coin_price, #buy_coin_quantity, #buy_coin_price").keyup(function () {
+    buyCoinFields.keyup(function () {
         try {
             var quantityQNT = new BigInteger(NRS.convertToQNT(String($("#buy_coin_quantity").val()), currentCoin.decimals));
             var priceNQT = new BigInteger(NRS.convertToQNT(String($("#buy_coin_price").val()), currentCoin.decimals));
@@ -817,7 +810,7 @@ var NRS = (function (NRS, $, undefined) {
             }
             NRS.logConsole("quantityQNT " + quantityQNT + " priceNQT " + priceNQT + " total " + total);
         } catch (err) {
-            NRS.logConsole("orderType " + "buy" + " error " + err.message);
+            NRS.logConsole("buy error " + err.message);
             $("#buy_coin_total").val("0");
         }
     });
@@ -882,20 +875,10 @@ var NRS = (function (NRS, $, undefined) {
             coinOrderTotalTooltip.hide();
         }
 
-        $("#coin_order_type").val("placeBidOrder");
         $("#coin_order_coin").val(coinId);
         $("#coin_order_quantity").val(displayedQuantity.multiply(priceNQT).toString()); // convert from base coin to counter coin
         $("#coin_order_price").val(priceNQT.toString());
     });
-
-    NRS.forms.orderCoin = function () {
-        var orderType = $("#coin_order_type").val();
-        return {
-            "requestType": orderType,
-            "successMessage": (orderType == "placeBidOrder" ? $.t("success_buy_order_coin") : $.t("success_sell_order_coin")),
-            "errorMessage": $.t("error_order_coin")
-        };
-    };
 
     $("#coin_exchange_sidebar_group_context").on("click", "a", function (e) {
         e.preventDefault();
