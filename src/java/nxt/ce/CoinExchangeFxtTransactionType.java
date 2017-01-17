@@ -26,6 +26,7 @@ import nxt.blockchain.FxtTransactionImpl;
 import nxt.blockchain.FxtTransactionType;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;
+import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -218,7 +219,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
                 throw new NxtException.NotValidException(
                         "Order " + Long.toUnsignedString(order.getId())
                         + " was created by account "
-                        + Long.toUnsignedString(order.getAccountId()));
+                        + Convert.rsAccount(order.getAccountId()));
             }
             if (order.getChainId() != FxtChain.FXT.getId() && order.getExchangeId() != FxtChain.FXT.getId()) {
                 throw new NxtException.NotValidException("Only cancellations of orders to/from Ardor may be submitted on the Fxt chain");

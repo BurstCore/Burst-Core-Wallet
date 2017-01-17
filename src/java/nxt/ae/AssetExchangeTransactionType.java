@@ -28,6 +28,7 @@ import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
 import nxt.blockchain.TransactionType;
+import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -578,7 +579,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             }
             if (ask.getAccountId() != transaction.getSenderId()) {
                 throw new NxtException.NotValidException("Order " + Long.toUnsignedString(attachment.getOrderId()) + " was created by account "
-                        + Long.toUnsignedString(ask.getAccountId()));
+                        + Convert.rsAccount(ask.getAccountId()));
             }
         }
 
@@ -632,7 +633,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             }
             if (bid.getAccountId() != transaction.getSenderId()) {
                 throw new NxtException.NotValidException("Order " + Long.toUnsignedString(attachment.getOrderId()) + " was created by account "
-                        + Long.toUnsignedString(bid.getAccountId()));
+                        + Convert.rsAccount(bid.getAccountId()));
             }
         }
 
