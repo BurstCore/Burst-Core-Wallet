@@ -536,13 +536,13 @@ var NRS = (function (NRS, $, undefined) {
             $("#sell_orders_count").html("(" + orders.length + (orders.length == 50 ? "+" : "") + ")");
             var rows = "";
             var sum = new BigInteger(String("0"));
-            var decimals = NRS.constants.CHAIN_PROPERTIES[coinId].decimals;
+            var decimals = NRS.getChain(coinId).decimals;
             for (var i = 0; i < orders.length; i++) {
                 order = orders[i];
                 var price = new BigInteger(order.askNQT);
                 var amount = new BigInteger(order.amountNQT);
-                var total = NRS.calculateOrderTotal(amount, price);
-                sum = sum.add(new BigInteger(total));
+                var total = price.multiply(amount);
+                sum = sum.add(total);
                 if (i == 0 && !refresh) {
                     $("#buy_coin_price").val(NRS.formatQuantity(price, NRS.getActiveChainDecimals()));
                 }
@@ -552,8 +552,8 @@ var NRS = (function (NRS, $, undefined) {
                     "<td>" + NRS.getAccountLink(order, "account") + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(amount, decimals) + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(price, NRS.getActiveChainDecimals()) + "</td>" +
-                    "<td class='numeric'>" + NRS.formatQuantity(total, decimals) + "</td>" +
-                    "<td class='numeric'>" + NRS.formatQuantity(sum, decimals) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatQuantity(total, decimals + NRS.getActiveChainDecimals()) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatQuantity(sum, decimals + + NRS.getActiveChainDecimals()) + "</td>" +
                     "</tr>";
             }
             askOrdersTable.find("tbody").empty().append(rows);
