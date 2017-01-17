@@ -352,8 +352,16 @@ public final class DebugTrace {
                 currencyFounders.add(founder);
             }
         }
+        BigDecimal totalAmount = new BigDecimal(totalAmountPerUnit, MathContext.DECIMAL128)
+                .movePointLeft(childChain.getDecimals());
         for (CurrencyFounderHome.CurrencyFounder founder : currencyFounders) {
-            long units = Math.multiplyExact(remainingSupply, founder.getAmountPerUnitNQT()) / totalAmountPerUnit;
+            long units = new BigDecimal(remainingSupply, MathContext.DECIMAL128)
+                    .movePointLeft(currency.getDecimals())
+                    .multiply(new BigDecimal(founder.getAmountPerUnitNQT(), MathContext.DECIMAL128)
+                            .movePointLeft(childChain.getDecimals())
+                            .divide(totalAmount, MathContext.DECIMAL128))
+                    .movePointRight(currency.getDecimals())
+                    .longValue();
             Map<String,String> founderMap = getValues(founder.getAccountId(), false);
             founderMap.put("currency", Long.toUnsignedString(currency.getId()));
             founderMap.put("currency units", String.valueOf(units));
@@ -366,7 +374,9 @@ public final class DebugTrace {
         map.put("crowdfunding", String.valueOf(currency.getReserveSupply()));
         map.put("currency units", String.valueOf(remainingSupply - foundersTotal));
         if (!currency.is(CurrencyType.CLAIMABLE)) {
-            map.put("currency cost", String.valueOf(Math.multiplyExact(currency.getReserveSupply(), currency.getCurrentReservePerUnitNQT())));
+            long cost = Convert.unitRateToAmount(currency.getReserveSupply(), currency.getDecimals(),
+                                    currency.getCurrentReservePerUnitNQT(), childChain.getDecimals());
+            map.put("currency cost", String.valueOf(cost));
         }
         map.put("event", "crowdfunding");
         log(map);
@@ -379,7 +389,7 @@ public final class DebugTrace {
             for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                 Map<String,String> founderMap = getValues(founder.getAccountId(), false);
                 founderMap.put("currency", Long.toUnsignedString(currency.getId()));
-                founderMap.put("currency cost", String.valueOf(Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitNQT())));
+                founderMap.put("currency cost", String.valueOf(founder.getAmountNQT()));
                 founderMap.put("event", "undo distribution");
                 log(founderMap);
             }
@@ -392,8 +402,10 @@ public final class DebugTrace {
     }
 
     private void delete(Currency currency) {
-        long accountId = 0;
-        long units = 0;
+        //TODO: child chain
+        ChildChain childChain = ChildChain.IGNIS;
+        long accountId;
+        long units;
         if (!currency.isActive()) {
             accountId = currency.getAccountId();
             units = currency.getCurrentSupply();
@@ -412,16 +424,16 @@ public final class DebugTrace {
         map.put("currency", Long.toUnsignedString(currency.getId()));
         if (currency.is(CurrencyType.RESERVABLE)) {
             if (currency.is(CurrencyType.CLAIMABLE) && currency.isActive()) {
-                map.put("currency cost", String.valueOf(Math.multiplyExact(units, currency.getCurrentReservePerUnitNQT())));
+                long cost = Convert.unitRateToAmount(units, currency.getDecimals(),
+                                        currency.getCurrentReservePerUnitNQT(), childChain.getDecimals());
+                map.put("currency cost", String.valueOf(cost));
             }
             if (!currency.isActive()) {
-                //TODO: child chain
-                ChildChain childChain = ChildChain.IGNIS;
                 try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                     for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                         Map<String,String> founderMap = getValues(founder.getAccountId(), false);
                         founderMap.put("currency", Long.toUnsignedString(currency.getId()));
-                        founderMap.put("currency cost", String.valueOf(Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitNQT())));
+                        founderMap.put("currency cost", String.valueOf(founder.getAmountNQT()));
                         founderMap.put("event", "undo distribution");
                         log(founderMap);
                     }
@@ -458,7 +470,6 @@ public final class DebugTrace {
     }
 
     private Map<String,String> getValues(BalanceHome.Balance balance, boolean unconfirmed) {
-        Chain chain = balance.getChain();
         Map<String,String> map = new HashMap<>();
         map.put("account", Long.toUnsignedString(balance.getAccountId()));
         map.put("balance", String.valueOf(balance.getBalance()));
@@ -470,22 +481,28 @@ public final class DebugTrace {
     }
 
     private Map<String,String> getValues(long accountId, TradeHome.Trade trade, boolean isAsk) {
+        ChildChain childChain = trade.getChildChain();
+        Asset asset = Asset.getAsset(trade.getAssetId());
         Map<String,String> map = getValues(accountId, false);
         map.put("asset", Long.toUnsignedString(trade.getAssetId()));
         map.put("trade quantity", String.valueOf(isAsk ? - trade.getQuantityQNT() : trade.getQuantityQNT()));
         map.put("trade price", String.valueOf(trade.getPriceNQT()));
-        long tradeCost = Math.multiplyExact(trade.getQuantityQNT(), trade.getPriceNQT());
+        long tradeCost = Convert.unitRateToAmount(trade.getQuantityQNT(), asset.getDecimals(),
+                                    trade.getPriceNQT(), childChain.getDecimals());
         map.put("trade cost", String.valueOf((isAsk ? tradeCost : - tradeCost)));
         map.put("event", "trade");
         return map;
     }
 
     private Map<String,String> getValues(long accountId, ExchangeHome.Exchange exchange, boolean isSell) {
+        ChildChain childChain = exchange.getChildChain();
+        Currency currency = Currency.getCurrency(exchange.getCurrencyId());
         Map<String,String> map = getValues(accountId, false);
         map.put("currency", Long.toUnsignedString(exchange.getCurrencyId()));
         map.put("exchange quantity", String.valueOf(isSell ? -exchange.getUnits() : exchange.getUnits()));
         map.put("exchange rate", String.valueOf(exchange.getRate()));
-        long exchangeCost = Math.multiplyExact(exchange.getUnits(), exchange.getRate());
+        long exchangeCost = Convert.unitRateToAmount(exchange.getUnits(), currency.getDecimals(),
+                                        exchange.getRate(), childChain.getDecimals());
         map.put("exchange cost", String.valueOf((isSell ? exchangeCost : - exchangeCost)));
         map.put("event", "exchange");
         return map;
@@ -628,6 +645,7 @@ public final class DebugTrace {
 
     private Map<String,String> getValues(long accountId, Transaction transaction, Attachment attachment, boolean isRecipient) {
         Map<String,String> map = getValues(accountId, false);
+        Chain chain = transaction.getChain();
         if (attachment instanceof OrderPlacementAttachment) {
             if (isRecipient) {
                 return Collections.emptyMap();
@@ -635,7 +653,6 @@ public final class DebugTrace {
             OrderPlacementAttachment orderPlacement = (OrderPlacementAttachment)attachment;
             boolean isAsk = orderPlacement instanceof AskOrderPlacementAttachment;
             Asset asset = Asset.getAsset(orderPlacement.getAssetId());
-            ChildChain childChain = (ChildChain)transaction.getChain();
             map.put("asset", Long.toUnsignedString(orderPlacement.getAssetId()));
             map.put("order", Long.toUnsignedString(transaction.getId()));
             map.put("order price", String.valueOf(orderPlacement.getPriceNQT()));
@@ -645,7 +662,7 @@ public final class DebugTrace {
             }
             map.put("order quantity", String.valueOf(quantityQNT));
             long orderCost = Convert.unitRateToAmount(orderPlacement.getQuantityQNT(), asset.getDecimals(),
-                                    orderPlacement.getPriceNQT(), childChain.getDecimals());
+                                    orderPlacement.getPriceNQT(), chain.getDecimals());
             if (! isAsk) {
                 orderCost = -orderCost;
             }
@@ -734,6 +751,7 @@ public final class DebugTrace {
             }
         } else if (attachment instanceof PublishExchangeOfferAttachment) {
             PublishExchangeOfferAttachment publishOffer = (PublishExchangeOfferAttachment)attachment;
+            Currency currency = Currency.getCurrency(publishOffer.getCurrencyId());
             map.put("currency", Long.toUnsignedString(publishOffer.getCurrencyId()));
             map.put("offer", Long.toUnsignedString(transaction.getId()));
             map.put("buy rate", String.valueOf(publishOffer.getBuyRateNQT()));
@@ -742,10 +760,12 @@ public final class DebugTrace {
             map.put("buy units", String.valueOf(buyUnits));
             long sellUnits = publishOffer.getInitialSellSupply();
             map.put("sell units", String.valueOf(sellUnits));
-            BigInteger buyCost = BigInteger.valueOf(publishOffer.getBuyRateNQT()).multiply(BigInteger.valueOf(buyUnits));
-            map.put("buy cost", buyCost.toString());
-            BigInteger sellCost = BigInteger.valueOf(publishOffer.getSellRateNQT()).multiply(BigInteger.valueOf(sellUnits));
-            map.put("sell cost", sellCost.toString());
+            long buyCost = Convert.unitRateToAmount(buyUnits, currency.getDecimals(),
+                                        publishOffer.getBuyRateNQT(), chain.getDecimals());
+            map.put("buy cost", Long.toString(buyCost));
+            long sellCost = Convert.unitRateToAmount(sellUnits, currency.getDecimals(),
+                                        publishOffer.getSellRateNQT(), chain.getDecimals());
+            map.put("sell cost", Long.toString(sellCost));
             map.put("event", "offer");
         } else if (attachment instanceof CurrencyIssuanceAttachment) {
             CurrencyIssuanceAttachment currencyIssuance = (CurrencyIssuanceAttachment) attachment;
@@ -763,23 +783,26 @@ public final class DebugTrace {
             map.put("event", "currency transfer");
         } else if (attachment instanceof ReserveClaimAttachment) {
             ReserveClaimAttachment claim = (ReserveClaimAttachment) attachment;
-            map.put("currency", Long.toUnsignedString(claim.getCurrencyId()));
             Currency currency = Currency.getCurrency(claim.getCurrencyId());
+            map.put("currency", Long.toUnsignedString(claim.getCurrencyId()));
             map.put("currency units", String.valueOf(-claim.getUnits()));
-            map.put("currency cost", String.valueOf(Math.multiplyExact(claim.getUnits(), currency.getCurrentReservePerUnitNQT())));
+            long cost = Convert.unitRateToAmount(claim.getUnits(), currency.getDecimals(),
+                                    currency.getCurrentReservePerUnitNQT(), chain.getDecimals());
+            map.put("currency cost", Long.toString(cost));
             map.put("event", "currency claim");
         } else if (attachment instanceof ReserveIncreaseAttachment) {
             ReserveIncreaseAttachment reserveIncrease = (ReserveIncreaseAttachment) attachment;
             map.put("currency", Long.toUnsignedString(reserveIncrease.getCurrencyId()));
             Currency currency = Currency.getCurrency(reserveIncrease.getCurrencyId());
-            map.put("currency cost", String.valueOf(-Math.multiplyExact(reserveIncrease.getAmountPerUnitNQT(), currency.getReserveSupply())));
+            long cost = Convert.unitRateToAmount(currency.getReserveSupply(), currency.getDecimals(),
+                                    reserveIncrease.getAmountPerUnitNQT(), chain.getDecimals());
+            map.put("currency cost", Long.toString(cost));
             map.put("event", "currency reserve");
         } else if (attachment instanceof DividendPaymentAttachment) {
             DividendPaymentAttachment dividendPayment = (DividendPaymentAttachment)attachment;
-            ChildChain childChain = (ChildChain)transaction.getChain();
             Asset asset = Asset.getAsset(dividendPayment.getAssetId());
             BigDecimal amount = new BigDecimal(dividendPayment.getAmountNQT(), MathContext.DECIMAL128)
-                    .movePointLeft(childChain.getDecimals());
+                    .movePointLeft(chain.getDecimals());
             long totalDividend = 0;
             String assetId = Long.toUnsignedString(dividendPayment.getAssetId());
             try (DbIterator<Account.AccountAsset> iterator = Account.getAssetAccounts(dividendPayment.getAssetId(), dividendPayment.getHeight(), 0, -1)) {
@@ -789,7 +812,7 @@ public final class DebugTrace {
                         long dividend = new BigDecimal(accountAsset.getQuantityQNT(), MathContext.DECIMAL128)
                                 .movePointLeft(asset.getDecimals())
                                 .multiply(amount)
-                                .movePointRight(childChain.getDecimals())
+                                .movePointRight(chain.getDecimals())
                                 .longValue();
                         if (dividend > 0) {
                             Map recipient = getValues(accountAsset.getAccountId(), false);
