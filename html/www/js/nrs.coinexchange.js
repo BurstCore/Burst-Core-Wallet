@@ -1095,12 +1095,15 @@ var NRS = (function (NRS, $, undefined) {
                 var rows = "";
                 for (var i = 0; i < trades.length; i++) {
                     var trade = trades[i];
+                    var isArdorTrade = NRS.isParentChain() || trade.exchange == 1;
+                    var orderChain = isArdorTrade ? 1 : NRS.getActiveChainId();
+                    var matchChain = isArdorTrade ? 1 : trade.exchange;
                     trade.priceNQT = new BigInteger(trade.priceNQT);
                     trade.amountNQT = new BigInteger(trade.amountNQT);
                     rows += "<tr>" +
                         "<td>" + NRS.formatTimestamp(trade.timestamp) + "</td>" +
-                        "<td>" + NRS.getTransactionLink(trade.orderFullHash) + "</td>" +
-                        "<td>" + NRS.getTransactionLink(trade.matchFullHash, null, false, trade.exchange) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(trade.orderFullHash, null, false, orderChain) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(trade.matchFullHash, null, false, matchChain) + "</td>" +
                         "<td>" + NRS.getChainLink(trade.chain) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
                         "<td class='coin_price numeric'>" + NRS.formatAmount(trade.priceNQT, false, false, priceDecimals) + "</td>" +
