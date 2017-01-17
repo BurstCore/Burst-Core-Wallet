@@ -132,13 +132,20 @@ var NRS = (function (NRS, $, undefined) {
                 "error": $.t("error_coin_id_required")
             };
         }
-
-        if (!/^\d+$/.test(data.id)) {
+        if (!$.isNumeric(data.id)) {
+            data.id = NRS.getChainIdByName(data.id);
+        }
+        if (data.id == NRS.getActiveChainId()) {
+            return {
+                "error": $.t("error_coin_id_same_as_chain")
+            };
+        }
+        var chain = NRS.getChain(data.id);
+        if (!chain) {
             return {
                 "error": $.t("error_coin_id_invalid")
             };
         }
-        var chain = NRS.getChain(data.id);
         NRS.saveCoinBookmark(chain, NRS.forms.addCoinBookmarkComplete);
     };
 
@@ -193,7 +200,7 @@ var NRS = (function (NRS, $, undefined) {
         var newCoins = [];
         newCoins.push(newCoin);
         newCoinIds.push({
-            "coin": String(coin.id)
+            "id": String(coin.id)
         });
 
         NRS.storageSelect("coins", newCoinIds, function (error, existingCoins) {
@@ -204,7 +211,7 @@ var NRS = (function (NRS, $, undefined) {
                 });
 
                 newCoins = $.grep(newCoins, function(v) {
-                    return (existingIds.indexOf(v.coin) === -1);
+                    return (existingIds.indexOf(v.id) === -1);
                 });
             }
 
