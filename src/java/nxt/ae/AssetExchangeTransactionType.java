@@ -79,6 +79,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
     public static final TransactionType ASSET_ISSUANCE = new AssetExchangeTransactionType() {
 
         private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(Constants.ONE_FXT, Constants.ONE_FXT, 32) {
+            @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 AssetIssuanceAttachment attachment = (AssetIssuanceAttachment) transaction.getAttachment();
                 return attachment.getDescription().length();
@@ -496,6 +497,9 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             BidOrderPlacementAttachment attachment = (BidOrderPlacementAttachment) transaction.getAttachment();
             ChildChain chain = transaction.getChain();
             Asset asset = Asset.getAsset(attachment.getAssetId());
+            if (asset == null) {
+                return;
+            }
             long amount = Convert.unitRateToAmount(attachment.getQuantityQNT(), asset.getDecimals(),
                                     attachment.getPriceNQT(), chain.getDecimals());
             senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
