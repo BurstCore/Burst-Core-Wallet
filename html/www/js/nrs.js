@@ -1123,8 +1123,16 @@ NRS.addPagination = function () {
 					NRS.accountRS = NRS.accountInfo.accountRS;
 				}
                 NRS.updateDashboardMessage();
-                $("#account_balance, #account_balance_sidebar").html(NRS.formatStyledAmount(response.unconfirmedBalanceNQT));
-                $("#account_forged_balance").html(NRS.formatStyledAmount(response.forgedBalanceNQT));
+                NRS.sendRequest("getBalance", {
+                    "account": NRS.account
+                }, function(balance) {
+                    $("#account_balance, #account_balance_sidebar").html(NRS.formatStyledAmount(balance.unconfirmedBalanceNQT));
+                });
+                if (response.forgedBalanceFQT) {
+                    $("#account_forged_balance").html(NRS.formatStyledAmount(response.forgedBalanceFQT));
+                } else {
+                    $("#account_forged_balance").html("0");
+				}
 
                 if (NRS.isDisplayOptionalDashboardTiles()) {
                     // only show if happened within last week and not during account switch
