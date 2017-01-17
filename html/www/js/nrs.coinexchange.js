@@ -539,9 +539,10 @@ var NRS = (function (NRS, $, undefined) {
             var decimals = NRS.constants.CHAIN_PROPERTIES[coinId].decimals;
             for (var i = 0; i < orders.length; i++) {
                 order = orders[i];
-                var price = new BigInteger(order["askNQT"]);
+                var price = new BigInteger(order.askNQT);
                 var amount = new BigInteger(order.amountNQT);
-                sum = sum.add(amount);
+                var total = NRS.calculateOrderTotal(amount, price);
+                sum = sum.add(new BigInteger(total));
                 if (i == 0 && !refresh) {
                     $("#buy_coin_price").val(NRS.formatQuantity(price, NRS.getActiveChainDecimals()));
                 }
@@ -551,6 +552,7 @@ var NRS = (function (NRS, $, undefined) {
                     "<td>" + NRS.getAccountLink(order, "account") + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(amount, decimals) + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(price, NRS.getActiveChainDecimals()) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatQuantity(total, decimals) + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(sum, decimals) + "</td>" +
                     "</tr>";
             }
@@ -626,16 +628,18 @@ var NRS = (function (NRS, $, undefined) {
                 var rows = "";
                 for (var i = 0; i < trades.length; i++) {
                     var trade = trades[i];
-                    trade.priceNQT = new BigInteger(trade.priceNQT);
-                    trade.amountNQT = new BigInteger(trade.amountNQT);
+                    var price = new BigInteger(trade.priceNQT);
+                    var amount = new BigInteger(trade.amountNQT);
+                    var total = NRS.calculateOrderTotalDecimals(amount, price, NRS.getActiveChainDecimals() + currentCoin.decimals);
+
                     rows += "<tr>" +
                         "<td>" + NRS.formatTimestamp(trade.timestamp) + "</td>" +
                         "<td>" + NRS.getTransactionLink(trade.orderFullHash, false, false, currentCoin.id) + "</td>" +
                         "<td>" + NRS.getTransactionLink(trade.matchFullHash, false, false, NRS.getActiveChainId()) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(trade.amountNQT, NRS.getActiveChainDecimals()) + "</td>" +
-                        "<td class='coin_price numeric'>" + NRS.formatQuantity(trade.priceNQT, currentCoin.decimals) + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(NRS.calculateOrderTotal(trade.amountNQT, trade.priceNQT), currentCoin.decimals) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(amount, NRS.getActiveChainDecimals()) + "</td>" +
+                        "<td class='coin_price numeric'>" + NRS.formatQuantity(price, currentCoin.decimals) + "</td>" +
+                        "<td class='numeric'>" + total + "</td>" +
                     "</tr>";
                 }
                 exchangeTradeHistoryTable.find("tbody").empty().append(rows);

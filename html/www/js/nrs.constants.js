@@ -27,7 +27,7 @@ var NRS = (function (NRS, $) {
         'MAX_INT_JAVA': 2147483647,
         'MIN_PRUNABLE_MESSAGE_LENGTH': 28,
         'DISABLED_API_ERROR_CODE': 16,
-        'MAX_ONE_COIN': 100000000,
+        'MAX_ONE_COIN': 10000000000000000,
 
         //Plugin launch status numbers
         'PL_RUNNING': 1,
