@@ -27,9 +27,8 @@ import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;
 import nxt.db.VersionedEntityDbTable;
+import nxt.util.Convert;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -348,12 +347,14 @@ public final class OrderHome {
         private Bid(Transaction transaction, BidOrderPlacementAttachment attachment) {
             super(transaction, attachment);
             this.dbKey = bidOrderDbKeyFactory.newKey(super.id);
+            //
+            // The amount column contains the residual unconfirmed balance for the bid order.
+            // It will be added to the buyer account balance upon completion of the order
+            // to account for any fractional rounding when matching orders.
+            //
             Asset asset = Asset.getAsset(getAssetId());
-            BigDecimal quantity = new BigDecimal(getQuantityQNT(), MathContext.DECIMAL128)
-                        .movePointLeft(asset.getDecimals());
-            BigDecimal price = new BigDecimal(getPriceNQT(), MathContext.DECIMAL128)
-                        .movePointLeft(childChain.getDecimals());
-            this.amountNQT = quantity.multiply(price).movePointRight(childChain.getDecimals()).longValue();
+            this.amountNQT = Convert.unitRateToAmount(getQuantityQNT(), asset.getDecimals(),
+                                        getPriceNQT(), childChain.getDecimals());
         }
 
         private Bid(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -424,14 +425,8 @@ public final class OrderHome {
                              askOrder.getTransactionIndex() < bidOrder.getTransactionIndex()))));
             long priceNQT = isBuy ? askOrder.getPriceNQT() : bidOrder.getPriceNQT();
             long quantityQNT = Math.min(askOrder.getQuantityQNT(), bidOrder.getQuantityQNT());
-            BigDecimal price = new BigDecimal(priceNQT, MathContext.DECIMAL128)
-                        .movePointLeft(childChain.getDecimals());
-            BigDecimal quantity = new BigDecimal(quantityQNT, MathContext.DECIMAL128)
-                        .movePointLeft(asset.getDecimals());
-            long amountNQT = Math.min(bidOrder.getAmountNQT(),
-                        quantity.multiply(price)
-                                .movePointRight(childChain.getDecimals())
-                                .longValue());
+            long amountNQT = Convert.unitRateToAmount(quantityQNT, asset.getDecimals(),
+                                        priceNQT, childChain.getDecimals());
             if (amountNQT == 0) {
                 quantityQNT = 0;
             }
@@ -442,13 +437,8 @@ public final class OrderHome {
             boolean refundAskQuantity = false;
             long askQuantity = askOrder.getQuantityQNT() - quantityQNT;
             if (askQuantity > 0) {
-                BigDecimal askPrice = new BigDecimal(askOrder.getPriceNQT(), MathContext.DECIMAL128)
-                        .movePointLeft(childChain.getDecimals());
-                long cost = new BigDecimal(askQuantity, MathContext.DECIMAL128)
-                        .movePointLeft(asset.getDecimals())
-                        .multiply(askPrice)
-                        .movePointRight(childChain.getDecimals())
-                        .longValue();
+                long cost = Convert.unitRateToAmount(askQuantity, asset.getDecimals(),
+                                        askOrder.getPriceNQT(), childChain.getDecimals());
                 if (cost == 0) {
                     refundAskQuantity = true;
                 }
@@ -462,13 +452,8 @@ public final class OrderHome {
             if (bidAmount == 0) {
                 bidQuantity = 0;
             } else if (bidQuantity > 0) {
-                BigDecimal bidPrice = new BigDecimal(bidOrder.getPriceNQT(), MathContext.DECIMAL128)
-                        .movePointLeft(childChain.getDecimals());
-                long cost = new BigDecimal(bidQuantity, MathContext.DECIMAL128)
-                        .movePointLeft(asset.getDecimals())
-                        .multiply(bidPrice)
-                        .movePointRight(childChain.getDecimals())
-                        .longValue();
+                long cost = Convert.unitRateToAmount(bidQuantity, asset.getDecimals(),
+                                        bidOrder.getPriceNQT(), childChain.getDecimals());
                 if (cost == 0) {
                     bidQuantity = 0;
                 }

@@ -26,11 +26,10 @@ import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;
 import nxt.db.EntityDbTable;
+import nxt.util.Convert;
 import nxt.util.Listener;
 import nxt.util.Listeners;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -111,11 +110,7 @@ public final class AssetDividendHome {
         //
         long quantityQNT = asset.getQuantityQNT() - issuer.getAssetBalanceQNT(assetId, height);
         long amountNQT = attachment.getAmountNQT();
-        BigDecimal quantity = new BigDecimal(quantityQNT, MathContext.DECIMAL128)
-                .movePointLeft(asset.getDecimals());
-        BigDecimal amount = new BigDecimal(amountNQT, MathContext.DECIMAL128)
-                .movePointLeft(childChain.getDecimals());
-        long totalAmount = quantity.multiply(amount).movePointRight(childChain.getDecimals()).longValue();
+        long totalAmount = Convert.unitRateToAmount(quantityQNT, asset.getDecimals(), amountNQT, childChain.getDecimals());
         //
         // Get a list of all asset owners
         //
@@ -132,11 +127,8 @@ public final class AssetDividendHome {
         long numAccounts = 0;
         for (Account.AccountAsset accountAsset : accountAssets) {
             if (accountAsset.getAccountId() != issuerId && accountAsset.getQuantityQNT() != 0) {
-                long dividend = new BigDecimal(accountAsset.getQuantityQNT(), MathContext.DECIMAL128)
-                        .movePointLeft(asset.getDecimals())
-                        .multiply(amount)
-                        .movePointRight(childChain.getDecimals())
-                        .longValue();
+                long dividend = Convert.unitRateToAmount(accountAsset.getQuantityQNT(), asset.getDecimals(),
+                                    amountNQT, childChain.getDecimals());
                 if (dividend > 0) {
                     balanceHome.getBalance(accountAsset.getAccountId())
                         .addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT,

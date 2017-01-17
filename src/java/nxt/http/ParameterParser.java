@@ -251,12 +251,20 @@ public final class ParameterParser {
         return getLong(req, "amountNQT", 1L, Constants.MAX_BALANCE_NQT, true);
     }
 
+    public static long getAmountNQTPerShare(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "amountNQTPerShare", 1L, Constants.MAX_BALANCE_NQT, true);
+    }
+
     public static long getFeeNQT(HttpServletRequest req) throws ParameterException {
         return getLong(req, "feeNQT", 0L, Constants.MAX_BALANCE_NQT, true);
     }
 
     public static long getPriceNQT(HttpServletRequest req) throws ParameterException {
         return getLong(req, "priceNQT", 1L, Constants.MAX_BALANCE_NQT, true);
+    }
+
+    public static long getRateNQT(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "rateNQT", 1L, Constants.MAX_BALANCE_NQT, true);
     }
 
     public static PollHome.Poll getPoll(HttpServletRequest req) throws ParameterException {
@@ -317,6 +325,10 @@ public final class ParameterParser {
 
     public static long getQuantityQNT(HttpServletRequest req) throws ParameterException {
         return getLong(req, "quantityQNT", 1L, Constants.MAX_ASSET_QUANTITY_QNT, true);
+    }
+
+    public static long getUnitsQNT(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "units", 1L, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
     }
 
     public static DigitalGoodsHome.Goods getGoods(HttpServletRequest req) throws ParameterException {

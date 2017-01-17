@@ -22,9 +22,8 @@ import nxt.ae.AskOrderPlacementAttachment;
 import nxt.ae.Asset;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChildChain;
+import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
-import java.math.BigDecimal;
-import java.math.MathContext;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -46,13 +45,10 @@ public final class PlaceAskOrder extends CreateTransaction {
         long priceNQT = ParameterParser.getPriceNQT(req);
         long quantityQNT = ParameterParser.getQuantityQNT(req);
         Account account = ParameterParser.getSenderAccount(req);
-
         ChildChain childChain = ParameterParser.getChildChain(req);
-        BigDecimal quantity = new BigDecimal(quantityQNT, MathContext.DECIMAL128)
-                .movePointLeft(asset.getDecimals());
-        BigDecimal price = new BigDecimal(priceNQT, MathContext.DECIMAL128)
-                .movePointLeft(childChain.getDecimals());
-        if (quantity.multiply(price).movePointRight(childChain.getDecimals()).longValue() == 0) {
+        
+        long amount = Convert.unitRateToAmount(quantityQNT, asset.getDecimals(), priceNQT, childChain.getDecimals());
+        if (amount == 0) {
             return NO_COST_ORDER;
         }
 

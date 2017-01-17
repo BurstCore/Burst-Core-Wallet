@@ -29,10 +29,9 @@ import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
 import nxt.blockchain.TransactionType;
+import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -476,11 +475,8 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             BidOrderPlacementAttachment attachment = (BidOrderPlacementAttachment) transaction.getAttachment();
             ChildChain chain = transaction.getChain();
             Asset asset = Asset.getAsset(attachment.getAssetId());
-            BigDecimal quantity = new BigDecimal(attachment.getQuantityQNT(), MathContext.DECIMAL128)
-                    .movePointLeft(asset.getDecimals());
-            BigDecimal price = new BigDecimal(attachment.getPriceNQT(), MathContext.DECIMAL128)
-                    .movePointLeft(chain.getDecimals());
-            long amount = quantity.multiply(price).movePointRight(chain.getDecimals()).longValue();
+            long amount = Convert.unitRateToAmount(attachment.getQuantityQNT(), asset.getDecimals(),
+                                    attachment.getPriceNQT(), chain.getDecimals());
             if (chain.getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= amount) {
                 senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
                         AccountLedger.newEventId(transaction), -amount);
@@ -500,11 +496,8 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             BidOrderPlacementAttachment attachment = (BidOrderPlacementAttachment) transaction.getAttachment();
             ChildChain chain = transaction.getChain();
             Asset asset = Asset.getAsset(attachment.getAssetId());
-            BigDecimal quantity = new BigDecimal(attachment.getQuantityQNT(), MathContext.DECIMAL128)
-                    .movePointLeft(asset.getDecimals());
-            BigDecimal price = new BigDecimal(attachment.getPriceNQT(), MathContext.DECIMAL128)
-                    .movePointLeft(chain.getDecimals());
-            long amount = quantity.multiply(price).movePointRight(chain.getDecimals()).longValue();
+            long amount = Convert.unitRateToAmount(attachment.getQuantityQNT(), asset.getDecimals(),
+                                    attachment.getPriceNQT(), chain.getDecimals());
             senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
                     AccountLedger.newEventId(transaction), amount);
         }
@@ -692,11 +685,8 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             }
             ChildChain childChain = transaction.getChain();
             long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
-            BigDecimal quantity = new BigDecimal(quantityQNT, MathContext.DECIMAL128)
-                    .movePointLeft(asset.getDecimals());
-            BigDecimal amount = new BigDecimal(attachment.getAmountNQT()).movePointLeft(childChain.getDecimals());
-            long totalDividendPayment = quantity.multiply(amount)
-                    .movePointRight(childChain.getDecimals()).longValue();
+            long totalDividendPayment = Convert.unitRateToAmount(quantityQNT, asset.getDecimals(),
+                                            attachment.getAmountNQT(), childChain.getDecimals());
             if (totalDividendPayment == 0) {
                 return true;
             }
@@ -724,11 +714,8 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             }
             ChildChain childChain = transaction.getChain();
             long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
-            BigDecimal quantity = new BigDecimal(quantityQNT, MathContext.DECIMAL128)
-                    .movePointLeft(asset.getDecimals());
-            BigDecimal amount = new BigDecimal(attachment.getAmountNQT()).movePointLeft(childChain.getDecimals());
-            long totalDividendPayment = quantity.multiply(amount)
-                    .movePointRight(childChain.getDecimals()).longValue();
+            long totalDividendPayment = Convert.unitRateToAmount(quantityQNT, asset.getDecimals(),
+                                                    attachment.getAmountNQT(), childChain.getDecimals());
             if (totalDividendPayment > 0) {
                 senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
                         AccountLedger.newEventId(transaction), totalDividendPayment);

@@ -644,11 +644,8 @@ public final class DebugTrace {
                 quantityQNT = - quantityQNT;
             }
             map.put("order quantity", String.valueOf(quantityQNT));
-            BigDecimal price = new BigDecimal(orderPlacement.getPriceNQT(), MathContext.DECIMAL128)
-                    .movePointLeft(childChain.getDecimals());
-            BigDecimal quantity = new BigDecimal(orderPlacement.getQuantityQNT(), MathContext.DECIMAL128)
-                    .movePointLeft(asset.getDecimals());
-            long orderCost = price.multiply(quantity).movePointRight(childChain.getDecimals()).longValue();
+            long orderCost = Convert.unitRateToAmount(orderPlacement.getQuantityQNT(), asset.getDecimals(),
+                                    orderPlacement.getPriceNQT(), childChain.getDecimals());
             if (! isAsk) {
                 orderCost = -orderCost;
             }

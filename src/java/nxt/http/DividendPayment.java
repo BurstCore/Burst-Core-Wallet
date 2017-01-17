@@ -30,7 +30,7 @@ public class DividendPayment extends CreateTransaction {
     static final DividendPayment instance = new DividendPayment();
 
     private DividendPayment() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "height", "amountNQT");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "height", "amountNQTPerShare");
     }
 
     @Override
@@ -38,7 +38,7 @@ public class DividendPayment extends CreateTransaction {
             throws NxtException
     {
         final int height = ParameterParser.getHeight(request);
-        final long amountNQT = ParameterParser.getAmountNQT(request);
+        final long amountNQT = ParameterParser.getAmountNQTPerShare(request);
         final Account account = ParameterParser.getSenderAccount(request);
         final Asset asset = ParameterParser.getAsset(request);
         if (Asset.getAsset(asset.getId(), height) == null) {

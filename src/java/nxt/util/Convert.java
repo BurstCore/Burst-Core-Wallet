@@ -24,7 +24,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.MathContext;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -316,4 +318,11 @@ public final class Convert {
         return o1.length - o2.length;
     };
 
+    public static long unitRateToAmount(long unitsQNT, int unitsDecimals, long rateNQT, int rateDecimals) {
+        return new BigDecimal(unitsQNT, MathContext.DECIMAL128)
+                .movePointLeft(unitsDecimals)
+                .multiply(new BigDecimal(rateNQT, MathContext.DECIMAL128).movePointLeft(rateDecimals))
+                .movePointRight(rateDecimals)
+                .longValue();
+    }
 }
