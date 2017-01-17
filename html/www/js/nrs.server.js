@@ -585,7 +585,7 @@ var NRS = (function (NRS, $, undefined) {
             }
         }
 
-        if (transaction.amountNQT !== data.amountNQT) {
+        if (transaction.amountNQT !== data.amountNQT && !(requestType === "exchangeCoins" && transaction.amountNQT === "0")) {
             return false;
         }
 
@@ -1272,6 +1272,35 @@ var NRS = (function (NRS, $, undefined) {
                     return false;
                 }
                 pos += 2;
+                break;
+            case "exchangeCoins":
+                var chain = String(converters.byteArrayToSignedInt32(byteArray, pos));
+                if (chain !== data.chain) {
+                    return false;
+                }
+                pos += 4;
+                var exchange = String(converters.byteArrayToSignedInt32(byteArray, pos));
+                if (exchange !== data.exchange) {
+                    return false;
+                }
+                pos += 4;
+                var amountNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                if (amountNQT !== data.amountNQT) {
+                    return false;
+                }
+                pos += 8;
+                var priceNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                if (priceNQT !== data.priceNQT) {
+                    return false;
+                }
+                pos += 8;
+                break;
+            case "cancelCoinExchange":
+                var orderHash = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+                if (NRS.fullHashToId(orderHash) !== data.order) {
+                    return false;
+                }
+                pos += 32;
                 break;
             default:
                 //invalid requestType..
