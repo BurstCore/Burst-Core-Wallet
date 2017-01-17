@@ -24,6 +24,7 @@ import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;
 import nxt.db.VersionedEntityDbTable;
+import nxt.util.Convert;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -74,12 +75,13 @@ public final class CurrencyFounderHome {
         };
     }
 
-    private void addOrUpdateFounder(long currencyId, long accountId, long amount) {
+    private void addOrUpdateFounder(long currencyId, long accountId, long amountPerUnit, long amount) {
         CurrencyFounder founder = getFounder(currencyId, accountId);
         if (founder == null) {
-            founder = new CurrencyFounder(currencyId, accountId, amount);
+            founder = new CurrencyFounder(currencyId, accountId, amountPerUnit, amount);
         } else {
-            founder.amountPerUnitNQT += amount;
+            founder.amountPerUnitNQT += amountPerUnit;
+            founder.amountNQT += amount;
         }
         currencyFounderTable.insert(founder);
     }
@@ -106,11 +108,14 @@ public final class CurrencyFounderHome {
         founders.forEach(currencyFounderTable::delete);
     }
 
-    void increaseReserve(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId, Account account, long currencyId, long amountPerUnitNQT) {
+    void increaseReserve(AccountLedger.LedgerEvent event, AccountLedger.LedgerEventId eventId,
+                         Account account, long currencyId, long amountPerUnitNQT) {
         Currency currency = Currency.getCurrency(currencyId);
-        account.addToBalance(childChain, event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitNQT));
+        long amountNQT = Convert.unitRateToAmount(currency.getReserveSupply(), currency.getDecimals(),
+                                    amountPerUnitNQT, childChain.getDecimals());
+        account.addToBalance(childChain, event, eventId, -amountNQT);
         currency.increaseReserve(amountPerUnitNQT);
-        addOrUpdateFounder(currencyId, account.getId(), amountPerUnitNQT);
+        addOrUpdateFounder(currencyId, account.getId(), amountPerUnitNQT, amountNQT);
     }
 
 
@@ -120,28 +125,33 @@ public final class CurrencyFounderHome {
         private final long currencyId;
         private final long accountId;
         private long amountPerUnitNQT;
+        private long amountNQT;
 
-        private CurrencyFounder(long currencyId, long accountId, long amountPerUnitNQT) {
+        private CurrencyFounder(long currencyId, long accountId, long amountPerUnitNQT, long amountNQT) {
             this.currencyId = currencyId;
             this.dbKey = currencyFounderDbKeyFactory.newKey(currencyId, accountId);
             this.accountId = accountId;
             this.amountPerUnitNQT = amountPerUnitNQT;
+            this.amountNQT = amountNQT;
         }
 
         private CurrencyFounder(ResultSet rs, DbKey dbKey) throws SQLException {
             this.currencyId = rs.getLong("currency_id");
             this.accountId = rs.getLong("account_id");
             this.dbKey = dbKey;
-            this.amountPerUnitNQT = rs.getLong("amount");
+            this.amountPerUnitNQT = rs.getLong("amount_per_unit");
+            this.amountNQT = rs.getLong("amount");
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_founder (currency_id, account_id, amount, height, latest) "
-                    + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE)")) {
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_founder "
+                    + "(currency_id, account_id, amount_per_unit, amount, height, latest) "
+                    + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.getCurrencyId());
                 pstmt.setLong(++i, this.getAccountId());
                 pstmt.setLong(++i, this.getAmountPerUnitNQT());
+                pstmt.setLong(++i, this.getAmountNQT());
                 pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
                 pstmt.executeUpdate();
             }
@@ -157,6 +167,10 @@ public final class CurrencyFounderHome {
 
         public long getAmountPerUnitNQT() {
             return amountPerUnitNQT;
+        }
+
+        public long getAmountNQT() {
+            return amountNQT;
         }
 
         public ChildChain getChildChain() {

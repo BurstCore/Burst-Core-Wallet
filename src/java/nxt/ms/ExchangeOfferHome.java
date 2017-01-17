@@ -199,20 +199,24 @@ public final class ExchangeOfferHome {
             // Decrease the number of units we can buy and increase the number we can sell.
             // A non-zero excess will be returned if the sell limit has been reached.
             //
-            buyOffer.decreaseLimitAndSupply(curUnitsQNT, curAmountNQT);
-            long excess = buyOffer.getCounterOffer().increaseSupply(curUnitsQNT);
+            long excessAmount = buyOffer.decreaseLimitAndSupply(curUnitsQNT, curAmountNQT);
+            long excessUnits = buyOffer.getCounterOffer().increaseSupply(curUnitsQNT);
             //
             // Update the buyer account balances
             //
             Account counterAccount = Account.getAccount(buyOffer.getAccountId());
             AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(buyOffer.getId(),
                     buyOffer.getFullHash(), childChain);
+            if (excessAmount != 0) {
+                counterAccount.addToUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, eventId,
+                        -excessAmount);
+            }
             counterAccount.addToBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, eventId,
                     -curAmountNQT);
             counterAccount.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, eventId, currencyId,
                     curUnitsQNT);
             counterAccount.addToUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, eventId,
-                    currencyId, excess);
+                    currencyId, excessUnits);
             exchangeHome.addExchange(transaction, currencyId, buyOffer, account.getId(),
                     buyOffer.getAccountId(), curUnitsQNT);
         }
@@ -547,10 +551,12 @@ public final class ExchangeOfferHome {
             return excess;
         }
 
-        void decreaseLimitAndSupply(long deltaUnits, long deltaAmount) {
+        long decreaseLimitAndSupply(long deltaUnits, long deltaAmount) {
             super.decreaseLimitAndSupply(deltaUnits);
-            amount -= deltaAmount;
+            long excess = Math.max(deltaAmount - amount, 0);
+            amount -= deltaAmount - excess;
             buyOfferTable.insert(this);
+            return excess;
         }
 
         long getAmount() {

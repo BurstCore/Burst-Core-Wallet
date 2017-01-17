@@ -28,10 +28,9 @@ import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;
+import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -278,20 +277,30 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             ReserveIncreaseAttachment attachment = (ReserveIncreaseAttachment) transaction.getAttachment();
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
-            if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitNQT())) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
-                        -Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitNQT()));
-                return true;
+            ChildChain childChain = transaction.getChain();
+            long amount = Convert.unitRateToAmount(currency.getReserveSupply(), currency.getDecimals(),
+                                    attachment.getAmountPerUnitNQT(), childChain.getDecimals());
+            BalanceHome.Balance balance = childChain.getBalanceHome().getBalance(senderAccount.getId());
+            if (balance.getUnconfirmedBalance() < amount) {
+                return false;
             }
-            return false;
+            senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
+                    AccountLedger.newEventId(transaction), -amount);
+            return true;
         }
 
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             ReserveIncreaseAttachment attachment = (ReserveIncreaseAttachment) transaction.getAttachment();
             Currency currency = Currency.getCurrency(attachment.getCurrencyId(), true);
-            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
-                    Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitNQT()));
+            if (currency == null) {
+                return;
+            }
+            ChildChain childChain = transaction.getChain();
+            long amount = Convert.unitRateToAmount(currency.getReserveSupply(), currency.getDecimals(),
+                                    attachment.getAmountPerUnitNQT(), childChain.getDecimals());
+            senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
+                    AccountLedger.newEventId(transaction), amount);
         }
 
         @Override
@@ -525,20 +534,15 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             Currency currency = Currency.getCurrency(currencyId);
             ChildChain childChain = transaction.getChain();
             AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
-
             if (attachment.getInitialBuySupply() > 0) {
-                BigDecimal quantity = new BigDecimal(attachment.getInitialBuySupply(), MathContext.DECIMAL128)
-                        .movePointLeft(currency.getDecimals());
-                BigDecimal rate = new BigDecimal(attachment.getBuyRateNQT(), MathContext.DECIMAL128)
-                        .movePointLeft(childChain.getDecimals());
-                long amountNQT = quantity.multiply(rate).movePointRight(childChain.getDecimals()).longValue();
+                long amountNQT = Convert.unitRateToAmount(attachment.getInitialBuySupply(), currency.getDecimals(),
+                                            attachment.getBuyRateNQT(), childChain.getDecimals());
                 BalanceHome.Balance balance = childChain.getBalanceHome().getBalance(senderAccount.getId());
                 if (balance.getUnconfirmedBalance() < amountNQT) {
                     return false;
                 }
                 senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, -amountNQT);
             }
-
             if (senderAccount.getUnconfirmedCurrencyUnits(currencyId) < attachment.getInitialSellSupply()) {
                 return false;
             }
@@ -552,21 +556,18 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment) transaction.getAttachment();
             long currencyId = attachment.getCurrencyId();
             Currency currency = Currency.getCurrency(currencyId);
+            if (currency == null) {
+                return;
+            }
             ChildChain childChain = transaction.getChain();
             AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
-
             if (attachment.getInitialBuySupply() > 0) {
-                BigDecimal quantity = new BigDecimal(attachment.getInitialBuySupply(), MathContext.DECIMAL128)
-                        .movePointLeft(currency.getDecimals());
-                BigDecimal rate = new BigDecimal(attachment.getBuyRateNQT(), MathContext.DECIMAL128)
-                        .movePointLeft(childChain.getDecimals());
-                long amountNQT = quantity.multiply(rate).movePointRight(childChain.getDecimals()).longValue();
+                long amountNQT = Convert.unitRateToAmount(attachment.getInitialBuySupply(), currency.getDecimals(),
+                                            attachment.getBuyRateNQT(), childChain.getDecimals());
                 senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, amountNQT);
             }
-            if (currency != null) {
-                senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), eventId,
+            senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), eventId,
                         currencyId, attachment.getInitialSellSupply());
-            }
         }
 
         @Override
@@ -645,12 +646,8 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             long currencyId = attachment.getCurrencyId();
             Currency currency = Currency.getCurrency(currencyId);
             ChildChain childChain = transaction.getChain();
-
-            BigDecimal units = new BigDecimal(attachment.getUnits(), MathContext.DECIMAL128)
-                    .movePointLeft(currency.getDecimals());
-            BigDecimal rate = new BigDecimal(attachment.getRateNQT(), MathContext.DECIMAL128)
-                    .movePointLeft(childChain.getDecimals());
-            long amount = units.multiply(rate).movePointRight(childChain.getDecimals()).longValue();
+            long amount = Convert.unitRateToAmount(attachment.getUnits(), currency.getDecimals(),
+                                    attachment.getRateNQT(), childChain.getDecimals());
             BalanceHome.Balance balance = childChain.getBalanceHome().getBalance(senderAccount.getId());
             if (balance.getUnconfirmedBalance() < amount) {
                 return false;
@@ -665,13 +662,12 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             ExchangeBuyAttachment attachment = (ExchangeBuyAttachment) transaction.getAttachment();
             long currencyId = attachment.getCurrencyId();
             Currency currency = Currency.getCurrency(currencyId);
+            if (currency == null) {
+                return;
+            }
             ChildChain childChain = transaction.getChain();
-
-            BigDecimal units = new BigDecimal(attachment.getUnits(), MathContext.DECIMAL128)
-                    .movePointLeft(currency.getDecimals());
-            BigDecimal rate = new BigDecimal(attachment.getRateNQT(), MathContext.DECIMAL128)
-                    .movePointLeft(childChain.getDecimals());
-            long amount = units.multiply(rate).movePointRight(childChain.getDecimals()).longValue();
+            long amount = Convert.unitRateToAmount(attachment.getUnits(), currency.getDecimals(),
+                                    attachment.getRateNQT(), childChain.getDecimals());
             senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
                     AccountLedger.newEventId(transaction), amount);
         }

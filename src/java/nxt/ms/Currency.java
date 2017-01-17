@@ -29,6 +29,7 @@ import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;
 import nxt.db.VersionedEntityDbTable;
+import nxt.util.Convert;
 import nxt.util.Listener;
 import nxt.util.Listeners;
 
@@ -426,19 +427,18 @@ public final class Currency {
     }
 
     void increaseReserve(long amountPerUnitNQT) {
+        getSupplyData();
         currencySupply.currentReservePerUnitNQT += amountPerUnitNQT;
         currencySupplyTable.insert(currencySupply);
     }
 
-    static void claimReserve(ChildChain childChain, LedgerEvent event, AccountLedger.LedgerEventId eventId, Account account, long currencyId, long units) {
+    static void claimReserve(ChildChain childChain, LedgerEvent event, AccountLedger.LedgerEventId eventId,
+                    Account account, long currencyId, long units) {
         account.addToCurrencyUnits(event, eventId, currencyId, -units);
         Currency currency = Currency.getCurrency(currencyId);
         currency.increaseSupply(-units);
-        BigDecimal claimUnits = new BigDecimal(units, MathContext.DECIMAL128)
-                .movePointLeft(currency.getDecimals());
-        BigDecimal claimRate = new BigDecimal(currency.getCurrentReservePerUnitNQT(), MathContext.DECIMAL128)
-                .movePointLeft(childChain.getDecimals());
-        long claimAmount = claimUnits.multiply(claimRate).movePointRight(childChain.getDecimals()).longValue();
+        long claimAmount = Convert.unitRateToAmount(units, currency.getDecimals(),
+                                        currency.getCurrentReservePerUnitNQT(), childChain.getDecimals());
         account.addToBalanceAndUnconfirmedBalance(childChain, event, eventId, claimAmount);
     }
 
@@ -506,14 +506,15 @@ public final class Currency {
             if (is(CurrencyType.CLAIMABLE) && isActive()) {
                 senderAccount.addToUnconfirmedCurrencyUnits(event, eventId, currencyId,
                         -senderAccount.getCurrencyUnits(currencyId));
-                Currency.claimReserve(childChain, event, eventId, senderAccount, currencyId, senderAccount.getCurrencyUnits(currencyId));
+                Currency.claimReserve(childChain, event, eventId, senderAccount, currencyId,
+                        senderAccount.getCurrencyUnits(currencyId));
             }
             if (!isActive()) {
                 BalanceHome balanceHome = childChain.getBalanceHome();
                 try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currencyId, 0, Integer.MAX_VALUE)) {
                     for (CurrencyFounderHome.CurrencyFounder founder : founders) {
                         balanceHome.getBalance(founder.getAccountId()).addToBalanceAndUnconfirmedBalance(event, eventId,
-                                Math.multiplyExact(reserveSupply, founder.getAmountPerUnitNQT()));
+                                founder.getAmountNQT());
                     }
                 }
             }
@@ -553,12 +554,13 @@ public final class Currency {
             AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(currency.getId(), null, childChain);
             try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounderHome.CurrencyFounder founder : founders) {
-                    balanceHome.getBalance(founder.getAccountId()).addToBalanceAndUnconfirmedBalance(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, eventId,
-                            Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitNQT()));
+                    balanceHome.getBalance(founder.getAccountId()).addToBalanceAndUnconfirmedBalance(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING,
+                            eventId, founder.getAmountNQT());
                 }
             }
             Account.getAccount(currency.getAccountId())
-                    .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, eventId, currency.getId(), - currency.getInitialSupply());
+                    .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, eventId,
+                            currency.getId(), - currency.getInitialSupply());
             currency.isDeleted = true;
             currencyTable.insert(currency);
             childChain.getCurrencyFounderHome().remove(currency.getId());
@@ -566,30 +568,41 @@ public final class Currency {
 
         private void distributeCurrency(Currency currency) {
             ChildChain childChain = currency.getChildChain();
-            long totalAmountPerUnit = 0;
-            final long remainingSupply = currency.getReserveSupply() - currency.getInitialSupply();
+            long totalAmountPerUnitNQT = 0;
+            final long remainingSupplyQNT = currency.getReserveSupply() - currency.getInitialSupply();
             List<CurrencyFounderHome.CurrencyFounder> currencyFounders = new ArrayList<>();
             try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounderHome.CurrencyFounder founder : founders) {
-                    totalAmountPerUnit += founder.getAmountPerUnitNQT();
+                    totalAmountPerUnitNQT += founder.getAmountPerUnitNQT();
                     currencyFounders.add(founder);
                 }
             }
             AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(currency.getId(), null, childChain);
             CurrencySupply currencySupply = currency.getSupplyData();
+            BigDecimal remainingSupply = new BigDecimal(remainingSupplyQNT, MathContext.DECIMAL128)
+                                            .movePointLeft(currency.getDecimals());
+            BigDecimal totalAmount = new BigDecimal(totalAmountPerUnitNQT, MathContext.DECIMAL128)
+                                            .movePointLeft(childChain.getDecimals());
+            long totalFounderAmountNQT = 0;
             for (CurrencyFounderHome.CurrencyFounder founder : currencyFounders) {
-                long units = Math.multiplyExact(remainingSupply, founder.getAmountPerUnitNQT()) / totalAmountPerUnit;
+                long units = remainingSupply
+                        .multiply(new BigDecimal(founder.getAmountPerUnitNQT(), MathContext.DECIMAL128)
+                                .movePointLeft(childChain.getDecimals())
+                                .divide(totalAmount, MathContext.DECIMAL128))
+                        .movePointRight(currency.getDecimals())
+                        .longValue();
                 currencySupply.currentSupply += units;
                 Account.getAccount(founder.getAccountId())
                         .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, eventId,
                                 currency.getId(), units);
+                totalFounderAmountNQT += founder.getAmountNQT();
             }
             Account issuerAccount = Account.getAccount(currency.getAccountId());
             issuerAccount.addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, eventId,
                     currency.getId(), currency.getReserveSupply() - currency.getCurrentSupply());
             if (!currency.is(CurrencyType.CLAIMABLE)) {
-                issuerAccount.addToBalanceAndUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_DISTRIBUTION, eventId,
-                        Math.multiplyExact(totalAmountPerUnit, currency.getReserveSupply()));
+                issuerAccount.addToBalanceAndUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_DISTRIBUTION,
+                        eventId, totalFounderAmountNQT);
             }
             currencySupply.currentSupply = currency.getReserveSupply();
             currencySupplyTable.insert(currencySupply);

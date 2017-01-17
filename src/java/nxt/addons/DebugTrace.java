@@ -340,23 +340,24 @@ public final class DebugTrace {
     }
 
     private void crowdfunding(Currency currency) {
-        long totalAmountPerUnit = 0;
-        long foundersTotal = 0;
-        final long remainingSupply = currency.getReserveSupply() - currency.getInitialSupply();
+        long totalAmountPerUnitNQT = 0;
+        long foundersTotalQNT = 0;
+        final long remainingSupplyQNT = currency.getReserveSupply() - currency.getInitialSupply();
         List<CurrencyFounderHome.CurrencyFounder> currencyFounders = new ArrayList<>();
         //TODO: child chain
         ChildChain childChain = ChildChain.IGNIS;
         try (DbIterator<CurrencyFounderHome.CurrencyFounder> founders = childChain.getCurrencyFounderHome().getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
             for (CurrencyFounderHome.CurrencyFounder founder : founders) {
-                totalAmountPerUnit += founder.getAmountPerUnitNQT();
+                totalAmountPerUnitNQT += founder.getAmountPerUnitNQT();
                 currencyFounders.add(founder);
             }
         }
-        BigDecimal totalAmount = new BigDecimal(totalAmountPerUnit, MathContext.DECIMAL128)
-                .movePointLeft(childChain.getDecimals());
+        BigDecimal remainingSupply = new BigDecimal(remainingSupplyQNT, MathContext.DECIMAL128)
+                                        .movePointLeft(currency.getDecimals());
+        BigDecimal totalAmount = new BigDecimal(totalAmountPerUnitNQT, MathContext.DECIMAL128)
+                                        .movePointLeft(childChain.getDecimals());
         for (CurrencyFounderHome.CurrencyFounder founder : currencyFounders) {
-            long units = new BigDecimal(remainingSupply, MathContext.DECIMAL128)
-                    .movePointLeft(currency.getDecimals())
+            long units = remainingSupply
                     .multiply(new BigDecimal(founder.getAmountPerUnitNQT(), MathContext.DECIMAL128)
                             .movePointLeft(childChain.getDecimals())
                             .divide(totalAmount, MathContext.DECIMAL128))
@@ -367,12 +368,12 @@ public final class DebugTrace {
             founderMap.put("currency units", String.valueOf(units));
             founderMap.put("event", "distribution");
             log(founderMap);
-            foundersTotal += units;
+            foundersTotalQNT += units;
         }
         Map<String,String> map = getValues(currency.getAccountId(), false);
         map.put("currency", Long.toUnsignedString(currency.getId()));
         map.put("crowdfunding", String.valueOf(currency.getReserveSupply()));
-        map.put("currency units", String.valueOf(remainingSupply - foundersTotal));
+        map.put("currency units", String.valueOf(remainingSupplyQNT - foundersTotalQNT));
         if (!currency.is(CurrencyType.CLAIMABLE)) {
             long cost = Convert.unitRateToAmount(currency.getReserveSupply(), currency.getDecimals(),
                                     currency.getCurrentReservePerUnitNQT(), childChain.getDecimals());
