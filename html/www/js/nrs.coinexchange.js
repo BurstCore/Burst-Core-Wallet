@@ -932,13 +932,13 @@ var NRS = (function (NRS, $, undefined) {
 
     $("#coin_exchange_sidebar_context").on("click", "a", function (e) {
         e.preventDefault();
-        var coinId = NRS.selectedContext.data("coin");
+        var coinId = String(NRS.selectedContext.data("coin"));
         var option = $(this).data("option");
         NRS.closeContextMenu();
         if (option == "add_to_group") {
             $("#coin_exchange_group_coin").val(coinId);
             NRS.storageSelect("coins", [{
-                "coin": coinId
+                "id": coinId
             }], function (error, coin) {
                 coin = coin[0];
                 $("#coin_exchange_group_title").html(NRS.escapeRespStr(coin.name));
@@ -975,7 +975,7 @@ var NRS = (function (NRS, $, undefined) {
             NRS.storageUpdate("coins", {
                 "groupName": ""
             }, [{
-                "coin": coinId
+                "id": coinId
             }], function () {
                 setTimeout(function () {
                     NRS.loadPage("coin_exchange");
@@ -986,7 +986,7 @@ var NRS = (function (NRS, $, undefined) {
             });
         } else if (option == "remove_from_bookmarks") {
             NRS.storageDelete("coins", [{
-                "coin": coinId
+                "id": coinId
             }], function () {
                 setTimeout(function () {
                     NRS.loadPage("coin_exchange");
@@ -1027,7 +1027,7 @@ var NRS = (function (NRS, $, undefined) {
         NRS.storageUpdate("coins", {
             "groupName": groupName
         }, [{
-            "coin": coinId
+            "id": coinId
         }], function () {
             setTimeout(function () {
                 NRS.loadPage("coin_exchange");
