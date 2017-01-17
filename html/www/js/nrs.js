@@ -1123,8 +1123,16 @@ NRS.addPagination = function () {
 					NRS.accountRS = NRS.accountInfo.accountRS;
 				}
                 NRS.updateDashboardMessage();
-                $("#account_balance, #account_balance_sidebar").html(NRS.formatStyledAmount(response.unconfirmedBalanceNQT));
-                $("#account_forged_balance").html(NRS.formatStyledAmount(response.forgedBalanceNQT));
+                NRS.sendRequest("getBalance", {
+                    "account": NRS.account
+                }, function(balance) {
+                    $("#account_balance, #account_balance_sidebar").html(NRS.formatStyledAmount(balance.unconfirmedBalanceNQT));
+                });
+                if (response.forgedBalanceFQT) {
+                    $("#account_forged_balance").html(NRS.formatStyledAmount(response.forgedBalanceFQT));
+                } else {
+                    $("#account_forged_balance").html("0");
+				}
 
                 if (NRS.isDisplayOptionalDashboardTiles()) {
                     // only show if happened within last week and not during account switch
@@ -1165,7 +1173,7 @@ NRS.addPagination = function () {
                             }
                         });
                     }
-
+                    var decimals = NRS.getActiveChainDecimals();
                     var i;
                     if ((firstRun || isAccountSwitch) && response.assetBalances) {
                         var assets = [];
@@ -1184,9 +1192,9 @@ NRS.addPagination = function () {
                                 var assetTotal = 0;
                                 for (i = 0; i < response.trades.length; i++) {
                                     var trade = response.trades[i];
-                                    assetTotal += assetBalancesMap[trade.asset] * trade.priceNQT / NRS.constants.MAX_ONE_COIN;
+                                    assetTotal += assetBalancesMap[trade.asset] * trade.priceNQT / NRS.getOneCoin(decimals);
                                 }
-                                $("#account_assets_balance").html(NRS.formatStyledAmount(new Big(assetTotal).toFixed(8)));
+                                $("#account_assets_balance").html(NRS.formatStyledAmount(new Big(assetTotal).toFixed(decimals)));
                                 $("#account_nr_assets").html(response.trades.length);
                             } else {
                                 $("#account_assets_balance").html(0);
@@ -1219,9 +1227,9 @@ NRS.addPagination = function () {
                                 var currencyTotal = 0;
                                 for (i = 0; i < response.exchanges.length; i++) {
                                     var exchange = response.exchanges[i];
-                                    currencyTotal += currencyBalancesMap[exchange.currency] * exchange.rateNQT / NRS.constants.MAX_ONE_COIN;
+                                    currencyTotal += currencyBalancesMap[exchange.currency] * exchange.rateNQT / NRS.getOneCoin(decimals);
                                 }
-                                $("#account_currencies_balance").html(NRS.formatStyledAmount(new Big(currencyTotal).toFixed(8)));
+                                $("#account_currencies_balance").html(NRS.formatStyledAmount(new Big(currencyTotal).toFixed(decimals)));
                             } else {
                                 $("#account_currencies_balance").html(0);
                             }
@@ -1239,22 +1247,27 @@ NRS.addPagination = function () {
                         "firstIndex": 0,
                         "lastIndex": 99
                     }, function (response) {
+                        var accountMessageCount = $("#account_message_count");
                         if (response.transactions && response.transactions.length) {
-                            if (response.transactions.length > 99)
-                                $("#account_message_count").empty().append("99+");
-                            else
-                                $("#account_message_count").empty().append(response.transactions.length);
+                            if (response.transactions.length > 99) {
+                                accountMessageCount.empty().append("99+");
+                            } else {
+                                accountMessageCount.empty().append(response.transactions.length);
+                            }
                         } else {
-                            $("#account_message_count").empty().append("0");
+                            accountMessageCount.empty().append("0");
                         }
                     });
 
                     NRS.sendRequest("getAliasCount+", {
                         "account": NRS.account
                     }, function (response) {
+                        var accountAliasCount = $("#account_alias_count");
                         if (response.numberOfAliases != null) {
-                            $("#account_alias_count").empty().append(response.numberOfAliases);
-                        }
+                            accountAliasCount.empty().append(response.numberOfAliases);
+                        } else {
+							accountAliasCount.empty().append("0");
+						}
                     });
 
                     NRS.sendRequest("getDGSPurchaseCount+", {
@@ -1294,7 +1307,7 @@ NRS.addPagination = function () {
                 var leasingChange = false;
 				if (NRS.lastBlockHeight) {
 					var isLeased = NRS.lastBlockHeight >= NRS.accountInfo.currentLeasingHeightFrom;
-					if (isLeased != NRS.IsLeased) {
+					if (isLeased != NRS.isLeased) {
 						leasingChange = true;
 						NRS.isLeased = isLeased;
 					}

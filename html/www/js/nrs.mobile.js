@@ -146,6 +146,18 @@ var NRS = (function(NRS, $) {
         return String(NRS.constants.CHAIN_PROPERTIES[chain].decimals);
     };
 
+    NRS.getChainIdByName = function(name) {
+        for (var chain in NRS.constants.CHAIN_PROPERTIES) {
+            if (!NRS.constants.CHAIN_PROPERTIES.hasOwnProperty(chain)) {
+                continue;
+            }
+            if (NRS.constants.CHAIN_PROPERTIES[chain].name == name) {
+                return chain;
+            }
+        }
+        return -1;
+    };
+
     NRS.createChainSelect = function() {
         // Build chain select box for login page
         var chains = $('select[name="chain"]');

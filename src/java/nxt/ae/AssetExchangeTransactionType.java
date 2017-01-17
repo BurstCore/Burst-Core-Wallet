@@ -592,7 +592,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             }
             if (ask.getAccountId() != transaction.getSenderId()) {
                 throw new NxtException.NotValidException("Order " + Long.toUnsignedString(attachment.getOrderId()) + " was created by account "
-                        + Long.toUnsignedString(ask.getAccountId()));
+                        + Convert.rsAccount(ask.getAccountId()));
             }
         }
 
@@ -646,7 +646,7 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             }
             if (bid.getAccountId() != transaction.getSenderId()) {
                 throw new NxtException.NotValidException("Order " + Long.toUnsignedString(attachment.getOrderId()) + " was created by account "
-                        + Long.toUnsignedString(bid.getAccountId()));
+                        + Convert.rsAccount(bid.getAccountId()));
             }
         }
 

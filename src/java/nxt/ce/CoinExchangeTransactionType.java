@@ -25,6 +25,7 @@ import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;
+import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -215,7 +216,7 @@ public abstract class CoinExchangeTransactionType extends ChildTransactionType {
             if (order.getAccountId() != transaction.getSenderId()) {
                 throw new NxtException.NotValidException("Order " + Long.toUnsignedString(order.getId())
                         + " was created by account "
-                        + Long.toUnsignedString(order.getAccountId()));
+                        + Convert.rsAccount(order.getAccountId()));
             }
             if (transaction.getChain().getId() != order.getChainId()) {
                 throw new NxtException.NotValidException("Coin exchange order cancellation for order on chain "
