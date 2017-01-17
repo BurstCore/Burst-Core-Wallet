@@ -32,6 +32,8 @@ import nxt.db.VersionedEntityDbTable;
 import nxt.util.Listener;
 import nxt.util.Listeners;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -431,9 +433,13 @@ public final class Currency {
     static void claimReserve(ChildChain childChain, LedgerEvent event, AccountLedger.LedgerEventId eventId, Account account, long currencyId, long units) {
         account.addToCurrencyUnits(event, eventId, currencyId, -units);
         Currency currency = Currency.getCurrency(currencyId);
-        currency.increaseSupply(- units);
-        account.addToBalanceAndUnconfirmedBalance(childChain, event, eventId,
-                Math.multiplyExact(units, currency.getCurrentReservePerUnitNQT()));
+        currency.increaseSupply(-units);
+        BigDecimal claimUnits = new BigDecimal(units, MathContext.DECIMAL128)
+                .movePointLeft(currency.getDecimals());
+        BigDecimal claimRate = new BigDecimal(currency.getCurrentReservePerUnitNQT(), MathContext.DECIMAL128)
+                .movePointLeft(childChain.getDecimals());
+        long claimAmount = claimUnits.multiply(claimRate).movePointRight(childChain.getDecimals()).longValue();
+        account.addToBalanceAndUnconfirmedBalance(childChain, event, eventId, claimAmount);
     }
 
     static void transferCurrency(LedgerEvent event, AccountLedger.LedgerEventId eventId, Account senderAccount, Account recipientAccount,

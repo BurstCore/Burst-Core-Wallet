@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
@@ -68,12 +69,12 @@ public final class PublishExchangeOffer extends CreateTransaction {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         Currency currency = ParameterParser.getCurrency(req);
-        long buyRateNQT = ParameterParser.getLong(req, "buyRateNQT", 0, Long.MAX_VALUE, true);
-        long sellRateNQT= ParameterParser.getLong(req, "sellRateNQT", 0, Long.MAX_VALUE, true);
-        long totalBuyLimit = ParameterParser.getLong(req, "totalBuyLimit", 0, Long.MAX_VALUE, true);
-        long totalSellLimit = ParameterParser.getLong(req, "totalSellLimit", 0, Long.MAX_VALUE, true);
-        long initialBuySupply = ParameterParser.getLong(req, "initialBuySupply", 0, Long.MAX_VALUE, true);
-        long initialSellSupply = ParameterParser.getLong(req, "initialSellSupply", 0, Long.MAX_VALUE, true);
+        long buyRateNQT = ParameterParser.getLong(req, "buyRateNQT", 1, Constants.MAX_BALANCE_NQT, true);
+        long sellRateNQT= ParameterParser.getLong(req, "sellRateNQT", 1, Constants.MAX_BALANCE_NQT, true);
+        long totalBuyLimit = ParameterParser.getLong(req, "totalBuyLimit", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
+        long totalSellLimit = ParameterParser.getLong(req, "totalSellLimit", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
+        long initialBuySupply = ParameterParser.getLong(req, "initialBuySupply", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
+        long initialSellSupply = ParameterParser.getLong(req, "initialSellSupply", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
         int expirationHeight = ParameterParser.getInt(req, "expirationHeight", 0, Integer.MAX_VALUE, true);
         Account account = ParameterParser.getSenderAccount(req);
 

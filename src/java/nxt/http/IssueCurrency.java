@@ -122,7 +122,7 @@ public final class IssueCurrency extends CreateTransaction {
         if (Convert.emptyToNull(req.getParameter("type")) == null) {
             for (CurrencyType currencyType : CurrencyType.values()) {
                 if ("1".equals(req.getParameter(currencyType.toString().toLowerCase()))) {
-                    type = type | currencyType.getCode();
+                    type |= currencyType.getCode();
                 }
             }
         } else {

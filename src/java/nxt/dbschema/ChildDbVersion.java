@@ -405,6 +405,8 @@ public class ChildDbVersion extends DbVersion {
             case 142:
                 apply("ALTER TABLE bid_order ADD COLUMN IF NOT EXISTS amount BIGINT NOT NULL DEFAULT 0");
             case 143:
+                apply("ALTER TABLE buy_offer ADD COLUMN IF NOT EXISTS amount BIGINT NOT NULL DEFAULT 0");
+            case 144:
                 return;
             default:
                 throw new RuntimeException("Child chain " + schema + " database inconsistent with code, at update " + nextUpdate

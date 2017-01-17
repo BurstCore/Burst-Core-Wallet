@@ -56,7 +56,7 @@ public final class CurrencyMint extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         Currency currency = ParameterParser.getCurrency(req);
         long nonce = ParameterParser.getLong(req, "nonce", Long.MIN_VALUE, Long.MAX_VALUE, true);
-        long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
+        long units = ParameterParser.getUnitsQNT(req);
         long counter = ParameterParser.getLong(req, "counter", 0, Integer.MAX_VALUE, true);
         Account account = ParameterParser.getSenderAccount(req);
 

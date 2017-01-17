@@ -19,11 +19,15 @@ package nxt.http;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildChain;
 import nxt.ms.Currency;
 import nxt.ms.ExchangeSellAttachment;
+import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
+
+import static nxt.http.JSONResponses.NO_COST_ORDER;
 
 /**
  * Sell currency for NXT
@@ -55,10 +59,16 @@ public final class CurrencySell extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         Currency currency = ParameterParser.getCurrency(req);
         long rateNQT = ParameterParser.getLong(req, "rateNQT", 0, Long.MAX_VALUE, true);
-        long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
+        long unitsQNT = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
         Account account = ParameterParser.getSenderAccount(req);
+        ChildChain childChain = ParameterParser.getChildChain(req);
 
-        Attachment attachment = new ExchangeSellAttachment(currency.getId(), rateNQT, units);
+        long amount = Convert.unitRateToAmount(unitsQNT, currency.getDecimals(), rateNQT, childChain.getDecimals());
+        if (amount == 0) {
+            return NO_COST_ORDER;
+        }
+
+        Attachment attachment = new ExchangeSellAttachment(currency.getId(), rateNQT, unitsQNT);
         try {
             return createTransaction(req, account, attachment);
         } catch (NxtException.InsufficientBalanceException e) {

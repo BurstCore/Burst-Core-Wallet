@@ -21,6 +21,7 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEvent;
+import nxt.account.BalanceHome;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransactionImpl;
 import nxt.blockchain.ChildTransactionType;
@@ -29,6 +30,8 @@ import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionType;
 import org.json.simple.JSONObject;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -518,28 +521,51 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment) transaction.getAttachment();
-            if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateNQT())
-                    && senderAccount.getUnconfirmedCurrencyUnits(attachment.getCurrencyId()) >= attachment.getInitialSellSupply()) {
-                AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), eventId,
-                        -Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateNQT()));
-                senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), eventId,
-                        attachment.getCurrencyId(), -attachment.getInitialSellSupply());
-                return true;
+            long currencyId = attachment.getCurrencyId();
+            Currency currency = Currency.getCurrency(currencyId);
+            ChildChain childChain = transaction.getChain();
+            AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
+
+            if (attachment.getInitialBuySupply() > 0) {
+                BigDecimal quantity = new BigDecimal(attachment.getInitialBuySupply(), MathContext.DECIMAL128)
+                        .movePointLeft(currency.getDecimals());
+                BigDecimal rate = new BigDecimal(attachment.getBuyRateNQT(), MathContext.DECIMAL128)
+                        .movePointLeft(childChain.getDecimals());
+                long amountNQT = quantity.multiply(rate).movePointRight(childChain.getDecimals()).longValue();
+                BalanceHome.Balance balance = childChain.getBalanceHome().getBalance(senderAccount.getId());
+                if (balance.getUnconfirmedBalance() < amountNQT) {
+                    return false;
+                }
+                senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, -amountNQT);
             }
-            return false;
+
+            if (senderAccount.getUnconfirmedCurrencyUnits(currencyId) < attachment.getInitialSellSupply()) {
+                return false;
+            }
+            senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), eventId,
+                        currencyId, -attachment.getInitialSellSupply());
+            return true;
         }
 
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment) transaction.getAttachment();
+            long currencyId = attachment.getCurrencyId();
+            Currency currency = Currency.getCurrency(currencyId);
+            ChildChain childChain = transaction.getChain();
             AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
-            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), eventId,
-                    Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateNQT()));
-            Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+
+            if (attachment.getInitialBuySupply() > 0) {
+                BigDecimal quantity = new BigDecimal(attachment.getInitialBuySupply(), MathContext.DECIMAL128)
+                        .movePointLeft(currency.getDecimals());
+                BigDecimal rate = new BigDecimal(attachment.getBuyRateNQT(), MathContext.DECIMAL128)
+                        .movePointLeft(childChain.getDecimals());
+                long amountNQT = quantity.multiply(rate).movePointRight(childChain.getDecimals()).longValue();
+                senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, amountNQT);
+            }
             if (currency != null) {
                 senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), eventId,
-                        attachment.getCurrencyId(), attachment.getInitialSellSupply());
+                        currencyId, attachment.getInitialSellSupply());
             }
         }
 
@@ -616,19 +642,38 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             ExchangeBuyAttachment attachment = (ExchangeBuyAttachment) transaction.getAttachment();
-            if (transaction.getChain().getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= Math.multiplyExact(attachment.getUnits(), attachment.getRateNQT())) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
-                        -Math.multiplyExact(attachment.getUnits(), attachment.getRateNQT()));
-                return true;
+            long currencyId = attachment.getCurrencyId();
+            Currency currency = Currency.getCurrency(currencyId);
+            ChildChain childChain = transaction.getChain();
+
+            BigDecimal units = new BigDecimal(attachment.getUnits(), MathContext.DECIMAL128)
+                    .movePointLeft(currency.getDecimals());
+            BigDecimal rate = new BigDecimal(attachment.getRateNQT(), MathContext.DECIMAL128)
+                    .movePointLeft(childChain.getDecimals());
+            long amount = units.multiply(rate).movePointRight(childChain.getDecimals()).longValue();
+            BalanceHome.Balance balance = childChain.getBalanceHome().getBalance(senderAccount.getId());
+            if (balance.getUnconfirmedBalance() < amount) {
+                return false;
             }
-            return false;
+            senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
+                    AccountLedger.newEventId(transaction), -amount);
+            return true;
         }
 
         @Override
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             ExchangeBuyAttachment attachment = (ExchangeBuyAttachment) transaction.getAttachment();
-            senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
-                    Math.multiplyExact(attachment.getUnits(), attachment.getRateNQT()));
+            long currencyId = attachment.getCurrencyId();
+            Currency currency = Currency.getCurrency(currencyId);
+            ChildChain childChain = transaction.getChain();
+
+            BigDecimal units = new BigDecimal(attachment.getUnits(), MathContext.DECIMAL128)
+                    .movePointLeft(currency.getDecimals());
+            BigDecimal rate = new BigDecimal(attachment.getRateNQT(), MathContext.DECIMAL128)
+                    .movePointLeft(childChain.getDecimals());
+            long amount = units.multiply(rate).movePointRight(childChain.getDecimals()).longValue();
+            senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
+                    AccountLedger.newEventId(transaction), amount);
         }
 
         @Override
