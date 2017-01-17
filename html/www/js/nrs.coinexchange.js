@@ -814,9 +814,9 @@ var NRS = (function (NRS, $, undefined) {
             if (priceNQT.toString() == "0" || quantityQNT.toString() == "0") {
                 $("#buy_coin_total").val("0");
             } else {
-                var totalCurrentCoin = NRS.calculateOrderTotalDecimals(quantityQNT, priceNQT, currentCoin.decimals);
+                var totalCurrentCoin = quantityQNT.multiply(priceNQT);
                 NRS.logConsole("totalCurrentCoin " + totalCurrentCoin);
-                var total = NRS.intToFloat(totalCurrentCoin, currentCoin.decimals);
+                var total = NRS.intToFloat(totalCurrentCoin, currentCoin.decimals + currentCoin.decimals);
                 $("#buy_coin_total").val(total.toString());
             }
             NRS.logConsole("quantityQNT " + quantityQNT + " priceNQT " + priceNQT + " total " + total);
@@ -998,6 +998,14 @@ var NRS = (function (NRS, $, undefined) {
         }
     });
 
+    NRS.forms.exchangeCoins = function () {
+        return {
+            "requestType": "exchangeCoins",
+            "successMessage": $.t("success_buy_order_coin"),
+            "errorMessage": $.t("error_order_coin")
+        };
+    };
+
     $("#coin_exchange_group_group").on("change", function () {
         var value = $(this).val();
         if (value == -1) {
@@ -1130,7 +1138,6 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.getOpenOrders = function() {
         NRS.sendRequest("getCoinExchangeOrders", {
-            "account": NRS.account,
             "firstIndex": 0,
             "lastIndex": 100
         }, function (response) {
@@ -1156,6 +1163,7 @@ var NRS = (function (NRS, $, undefined) {
                     rows += "<tr>" +
                         "<td>" + NRS.getTransactionLink(order.orderFullHash, false, false, order.chain) + "</td>" +
                         "<td>" + NRS.getChainLink(order.exchange) + "</td>" +
+                        "<td>" + NRS.getAccountLink(order, "account") + "</td>" +
                         "<td>" + NRS.formatQuantity(order.amountNQT, decimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.bidNQT, decimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.askNQT, exchangeDecimals) + "</td>" +

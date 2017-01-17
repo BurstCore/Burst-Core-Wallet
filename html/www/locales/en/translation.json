@@ -1902,5 +1902,7 @@
   "buy_coin_order_description_help": "Per __base__ bought you will pay __price__ __counter__, making a total of __total__ __counter__ once everything has been purchased.",
   "buy_coin_with_nxt": "Buy __base__ with __counter__",
   "error_coin_id_same_as_chain": "Coin id is same as the current chain id. You cannot exchange a coin with itself",
-  "chain_id_or_name": "Chain id or name"
+  "chain_id_or_name": "Chain id or name",
+  "success_buy_order_coin": "The buy order has been submitted.",
+  "error_order_coin": "An unknown error occurred! The order may or may not have gone through."
 }
