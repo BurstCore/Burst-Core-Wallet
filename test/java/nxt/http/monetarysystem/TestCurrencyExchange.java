@@ -18,6 +18,7 @@ package nxt.http.monetarysystem;
 
 import nxt.AccountCurrencyBalance;
 import nxt.BlockchainTest;
+import nxt.Tester;
 import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
 import nxt.ms.CurrencyType;
@@ -34,8 +35,8 @@ public class TestCurrencyExchange extends BlockchainTest {
     public void buyCurrency() {
         APICall apiCall1 = new TestCurrencyIssuance.Builder().type(CurrencyType.EXCHANGEABLE.getCode()).build();
         String currencyId = TestCurrencyIssuance.issueCurrencyApi(apiCall1);
-        AccountCurrencyBalance initialSellerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId);
-        AccountCurrencyBalance initialBuyerBalance = new AccountCurrencyBalance(BOB.getSecretPhrase(), currencyId);
+        AccountCurrencyBalance initialSellerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId, ChildChain.IGNIS);
+        AccountCurrencyBalance initialBuyerBalance = new AccountCurrencyBalance(BOB.getSecretPhrase(), currencyId, ChildChain.IGNIS);
 
         Assert.assertEquals(100000, initialSellerBalance.getCurrencyUnits());
         Assert.assertEquals(100000, initialSellerBalance.getUnconfirmedCurrencyUnits());
@@ -48,11 +49,11 @@ public class TestCurrencyExchange extends BlockchainTest {
         JSONObject getAllOffersResponse = apiCall.invoke();
         Logger.logDebugMessage("getAllOffersResponse:" + getAllOffersResponse.toJSONString());
         JSONArray offer = (JSONArray)getAllOffersResponse.get("offers");
-        Assert.assertEquals(publishExchangeOfferResponse.get("transaction"), ((JSONObject)offer.get(0)).get("offer"));
+        Assert.assertEquals(Tester.responseToStringId(publishExchangeOfferResponse), ((JSONObject)offer.get(0)).get("offer"));
 
         // The buy offer reduces the unconfirmed balance but does not change the confirmed balance
         // The sell offer reduces the unconfirmed currency units and confirmed units
-        AccountCurrencyBalance afterOfferSellerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId);
+        AccountCurrencyBalance afterOfferSellerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId, ChildChain.IGNIS);
         Assert.assertEquals(new AccountCurrencyBalance(-1000*95 - ChildChain.IGNIS.ONE_COIN, -ChildChain.IGNIS.ONE_COIN, -500, 0),
                 afterOfferSellerBalance.diff(initialSellerBalance));
 
@@ -67,11 +68,11 @@ public class TestCurrencyExchange extends BlockchainTest {
         Logger.logDebugMessage("currencyExchangeResponse:" + currencyExchangeResponse);
         generateBlock();
 
-        AccountCurrencyBalance afterBuySellerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId);
+        AccountCurrencyBalance afterBuySellerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId, ChildChain.IGNIS);
         Assert.assertEquals(new AccountCurrencyBalance(2000, 200 * 105, 0, -200),
                 afterBuySellerBalance.diff(afterOfferSellerBalance));
 
-        AccountCurrencyBalance afterBuyBuyerBalance = new AccountCurrencyBalance(BOB.getSecretPhrase(), currencyId);
+        AccountCurrencyBalance afterBuyBuyerBalance = new AccountCurrencyBalance(BOB.getSecretPhrase(), currencyId, ChildChain.IGNIS);
         Assert.assertEquals(new AccountCurrencyBalance(-200*105 - ChildChain.IGNIS.ONE_COIN, -200*105 - ChildChain.IGNIS.ONE_COIN, 200, 200),
                 afterBuyBuyerBalance.diff(initialBuyerBalance));
 
@@ -91,8 +92,8 @@ public class TestCurrencyExchange extends BlockchainTest {
     public void sellCurrency() {
         APICall apiCall1 = new TestCurrencyIssuance.Builder().type(CurrencyType.EXCHANGEABLE.getCode()).build();
         String currencyId = TestCurrencyIssuance.issueCurrencyApi(apiCall1);
-        AccountCurrencyBalance initialBuyerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId);
-        AccountCurrencyBalance initialSellerBalance = new AccountCurrencyBalance(BOB.getSecretPhrase(), currencyId);
+        AccountCurrencyBalance initialBuyerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId, ChildChain.IGNIS);
+        AccountCurrencyBalance initialSellerBalance = new AccountCurrencyBalance(BOB.getSecretPhrase(), currencyId, ChildChain.IGNIS);
 
         Assert.assertEquals(100000, initialBuyerBalance.getCurrencyUnits());
         Assert.assertEquals(100000, initialBuyerBalance.getUnconfirmedCurrencyUnits());
@@ -105,11 +106,11 @@ public class TestCurrencyExchange extends BlockchainTest {
         JSONObject getAllOffersResponse = apiCall.invoke();
         Logger.logDebugMessage("getAllOffersResponse:" + getAllOffersResponse.toJSONString());
         JSONArray offer = (JSONArray)getAllOffersResponse.get("offers");
-        Assert.assertEquals(publishExchangeOfferResponse.get("transaction"), ((JSONObject)offer.get(0)).get("offer"));
+        Assert.assertEquals(Tester.responseToStringId(publishExchangeOfferResponse), ((JSONObject)offer.get(0)).get("offer"));
 
         // The buy offer reduces the unconfirmed balance but does not change the confirmed balance
         // The sell offer reduces the unconfirmed currency units and confirmed units
-        AccountCurrencyBalance afterOfferBuyerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId);
+        AccountCurrencyBalance afterOfferBuyerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId, ChildChain.IGNIS);
         Assert.assertEquals(new AccountCurrencyBalance(-1000 * 95 - ChildChain.IGNIS.ONE_COIN, -ChildChain.IGNIS.ONE_COIN, -500, 0),
                 afterOfferBuyerBalance.diff(initialBuyerBalance));
 
@@ -123,11 +124,11 @@ public class TestCurrencyExchange extends BlockchainTest {
         apiCall.invoke();
         generateBlock();
 
-        AccountCurrencyBalance afterTransferBuyerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId);
+        AccountCurrencyBalance afterTransferBuyerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId, ChildChain.IGNIS);
         Assert.assertEquals(new AccountCurrencyBalance(-ChildChain.IGNIS.ONE_COIN, -ChildChain.IGNIS.ONE_COIN, -2000, -2000),
                 afterTransferBuyerBalance.diff(afterOfferBuyerBalance));
 
-        AccountCurrencyBalance afterTransferSellerBalance = new AccountCurrencyBalance(BOB.getSecretPhrase(), currencyId);
+        AccountCurrencyBalance afterTransferSellerBalance = new AccountCurrencyBalance(BOB.getSecretPhrase(), currencyId, ChildChain.IGNIS);
         Assert.assertEquals(new AccountCurrencyBalance(0, 0, 2000, 2000),
                 afterTransferSellerBalance.diff(initialSellerBalance));
 
@@ -143,11 +144,11 @@ public class TestCurrencyExchange extends BlockchainTest {
         generateBlock();
 
         // the seller receives 200*95=19000 for 200 units
-        AccountCurrencyBalance afterBuyBuyerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId);
+        AccountCurrencyBalance afterBuyBuyerBalance = new AccountCurrencyBalance(ALICE.getSecretPhrase(), currencyId, ChildChain.IGNIS);
         Assert.assertEquals(new AccountCurrencyBalance(0, -19000, 0, 200),
                 afterBuyBuyerBalance.diff(afterTransferBuyerBalance));
 
-        AccountCurrencyBalance afterBuySellerBalance = new AccountCurrencyBalance(BOB.getSecretPhrase(), currencyId);
+        AccountCurrencyBalance afterBuySellerBalance = new AccountCurrencyBalance(BOB.getSecretPhrase(), currencyId, ChildChain.IGNIS);
         Assert.assertEquals(new AccountCurrencyBalance(19000- ChildChain.IGNIS.ONE_COIN, 19000- ChildChain.IGNIS.ONE_COIN, -200, -200),
                 afterBuySellerBalance.diff(afterTransferSellerBalance));
 
