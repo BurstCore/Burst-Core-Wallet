@@ -82,6 +82,10 @@ public class APICall {
             return param("secretPhrase", value);
         }
 
+        public Builder chain(int chainId) {
+            return param("chain", "" + chainId);
+        }
+
         public Builder feeNQT(long value) {
             return param("feeNQT", "" + value);
         }
