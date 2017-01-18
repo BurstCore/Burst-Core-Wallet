@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.blockchain.ChildChain;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -54,6 +55,7 @@ public class APICall {
         public Builder(String requestType) {
             params.put("requestType", Collections.singletonList(requestType));
             params.put("deadline", Collections.singletonList("1440"));
+            params.put("chain", Collections.singletonList("" + ChildChain.IGNIS.getId()));
         }
 
         public Builder param(String key, String value) {
