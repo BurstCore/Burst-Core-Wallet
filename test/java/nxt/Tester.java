@@ -23,6 +23,7 @@ import nxt.blockchain.FxtChain;
 import nxt.crypto.Crypto;
 import nxt.db.DbIterator;
 import nxt.util.Convert;
+import org.json.simple.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -78,6 +79,18 @@ public class Tester {
             initialFxtUnconfirmedBalance = 0;
             initialFxtEffectiveBalance = 0;
         }
+    }
+
+    public static String responseToStringId(JSONObject transaction) {
+        return responseToStringId(transaction, "fullHash");
+    }
+
+    public static String responseToStringId(JSONObject response, String attr) {
+        return hexFullHashToStringId((String)response.get(attr));
+    }
+
+    public static String hexFullHashToStringId(String fullHash) {
+        return Long.toUnsignedString(Convert.fullHashToId(Convert.parseHexString(fullHash)));
     }
 
     public String getSecretPhrase() {

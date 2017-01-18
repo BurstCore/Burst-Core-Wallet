@@ -1127,6 +1127,7 @@ NRS.addPagination = function () {
                     "account": NRS.account
                 }, function(balance) {
                     $("#account_balance, #account_balance_sidebar").html(NRS.formatStyledAmount(balance.unconfirmedBalanceNQT));
+                    NRS.accountInfo = $.extend({}, NRS.accountInfo, balance);
                 });
                 if (response.forgedBalanceFQT) {
                     $("#account_forged_balance").html(NRS.formatStyledAmount(response.forgedBalanceFQT));

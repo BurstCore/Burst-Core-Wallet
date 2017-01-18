@@ -17,18 +17,17 @@
 package nxt;
 
 import nxt.account.Account;
-import nxt.blockchain.FxtChain;
+import nxt.blockchain.Chain;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 
 public class AccountCurrencyBalance {
 
-    long accountId;
-    long currencyId;
-    long unconfirmedBalance;
-    long balance;
-    long unconfirmedCurrencyUnits;
-    long currencyUnits;
+    private long accountId;
+    private long unconfirmedBalance;
+    private long balance;
+    private long unconfirmedCurrencyUnits;
+    private long currencyUnits;
 
     public AccountCurrencyBalance(long unconfirmedBalance, long balance, long unconfirmedCurrencyUnits, long currencyUnits) {
         this.unconfirmedBalance = unconfirmedBalance;
@@ -37,30 +36,19 @@ public class AccountCurrencyBalance {
         this.currencyUnits = currencyUnits;
     }
 
-    public AccountCurrencyBalance(String secretPhrase, String currency) {
+    public AccountCurrencyBalance(String secretPhrase, String currency, Chain chain) {
         Account account = Account.getAccount(Crypto.getPublicKey(secretPhrase));
+        assert account != null;
         accountId = account.getId();
-        this.currencyId = Convert.parseUnsignedLong(currency);
-        this.unconfirmedBalance = FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance();
-        this.balance = FxtChain.FXT.getBalanceHome().getBalance(accountId).getBalance();
+        this.unconfirmedBalance = chain.getBalanceHome().getBalance(accountId).getUnconfirmedBalance();
+        this.balance = chain.getBalanceHome().getBalance(accountId).getBalance();
+        long currencyId = Convert.parseUnsignedLong(currency);
         this.unconfirmedCurrencyUnits = account.getUnconfirmedCurrencyUnits(currencyId);
         this.currencyUnits = account.getCurrencyUnits(currencyId);
     }
 
     public long getAccountId() {
         return accountId;
-    }
-
-    public long getCurrencyId() {
-        return currencyId;
-    }
-
-    public long getUnconfirmedBalance() {
-        return unconfirmedBalance;
-    }
-
-    public long getBalance() {
-        return balance;
     }
 
     public long getUnconfirmedCurrencyUnits() {

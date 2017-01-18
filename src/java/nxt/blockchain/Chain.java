@@ -112,4 +112,8 @@ public abstract class Chain {
 
     abstract UnconfirmedTransaction newUnconfirmedTransaction(ResultSet rs) throws SQLException, NxtException.NotValidException;
 
+    @Override
+    public String toString() {
+        return name + " (" + id + ")";
+    }
 }

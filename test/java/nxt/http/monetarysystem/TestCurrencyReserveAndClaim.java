@@ -54,8 +54,8 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
                 reserveSupply((long)100000).
                 build();
         String currencyId = TestCurrencyIssuance.issueCurrencyApi(apiCall1);
-        long balanceNQT1 = ALICE.getFxtBalance();
-        long balanceNQT2 = BOB.getFxtBalance();
+        long balanceNQT1 = ALICE.getChainBalance(ChildChain.IGNIS.getId());
+        long balanceNQT2 = BOB.getChainBalance(ChildChain.IGNIS.getId());
         reserveIncreaseImpl(currencyId, ALICE.getSecretPhrase(), BOB.getSecretPhrase());
         generateBlock(); // cancellation of crowd funding because of insufficient funds
         APICall apiCall = new APICall.Builder("getCurrencyFounders").
@@ -65,8 +65,8 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
         JSONObject getFoundersResponse = apiCall.invoke();
         Logger.logMessage("getFoundersResponse: " + getFoundersResponse);
         Assert.assertTrue(((JSONArray)getFoundersResponse.get("founders")).size() == 0);
-        Assert.assertEquals(balanceNQT1 - ChildChain.IGNIS.ONE_COIN, ALICE.getFxtBalance());
-        Assert.assertEquals(balanceNQT2 - 2* ChildChain.IGNIS.ONE_COIN, BOB.getFxtBalance());
+        Assert.assertEquals(balanceNQT1 - ChildChain.IGNIS.ONE_COIN, ALICE.getChainBalance(ChildChain.IGNIS.getId()));
+        Assert.assertEquals(balanceNQT2 - 2* ChildChain.IGNIS.ONE_COIN, BOB.getChainBalance(ChildChain.IGNIS.getId()));
     }
 
     @Test
@@ -80,14 +80,14 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
                 build();
 
         String currencyId = TestCurrencyIssuance.issueCurrencyApi(apiCall);
-        long balanceNQT1 = ALICE.getFxtBalance();
-        long balanceNQT2 = BOB.getFxtBalance();
+        long balanceNQT1 = ALICE.getChainBalance(ChildChain.IGNIS.getId());
+        long balanceNQT2 = BOB.getChainBalance(ChildChain.IGNIS.getId());
         reserveIncreaseImpl(currencyId, ALICE.getSecretPhrase(), BOB.getSecretPhrase());
         generateBlock(); // distribution of currency to founders
         Assert.assertEquals(20000, ALICE.getCurrencyUnits(Convert.parseAccountId(currencyId)));
         Assert.assertEquals(80000, BOB.getCurrencyUnits(Convert.parseAccountId(currencyId)));
-        Assert.assertEquals(balanceNQT1 - ChildChain.IGNIS.ONE_COIN - 200000 + (100000*10), ALICE.getFxtBalance());
-        Assert.assertEquals(balanceNQT2 - 2* ChildChain.IGNIS.ONE_COIN - 800000, BOB.getFxtBalance());
+        Assert.assertEquals(balanceNQT1 - ChildChain.IGNIS.ONE_COIN - 200000 + (100000*10), ALICE.getChainBalance(ChildChain.IGNIS.getId()));
+        Assert.assertEquals(balanceNQT2 - 2*ChildChain.IGNIS.ONE_COIN - 800000, BOB.getChainBalance(ChildChain.IGNIS.getId()));
     }
 
     @Test
@@ -102,9 +102,9 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
                 build();
 
         String currencyId = TestCurrencyIssuance.issueCurrencyApi(apiCall);
-        long balanceNQT1 = ALICE.getFxtBalance();
-        long balanceNQT2 = BOB.getFxtBalance();
-        long balanceNQT3 = CHUCK.getFxtBalance();
+        long balanceNQT1 = ALICE.getChainBalance(ChildChain.IGNIS.getId());
+        long balanceNQT2 = BOB.getChainBalance(ChildChain.IGNIS.getId());
+        long balanceNQT3 = CHUCK.getChainBalance(ChildChain.IGNIS.getId());
         reserveIncreaseImpl(currencyId, BOB.getSecretPhrase(), CHUCK.getSecretPhrase());
         generateBlock(); // distribution of currency to founders
 
@@ -114,9 +114,9 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
         Assert.assertEquals(4, BOB.getCurrencyUnits(Convert.parseAccountId(currencyId)));
         Assert.assertEquals(19, CHUCK.getCurrencyUnits(Convert.parseAccountId(currencyId)));
         Assert.assertEquals(1, ALICE.getCurrencyUnits(Convert.parseAccountId(currencyId)));
-        Assert.assertEquals(balanceNQT1 + 24 * 10, ALICE.getFxtBalance());
-        Assert.assertEquals(balanceNQT2 - ChildChain.IGNIS.ONE_COIN - 24 * 2, BOB.getFxtBalance());
-        Assert.assertEquals(balanceNQT3 - 2 * ChildChain.IGNIS.ONE_COIN - 24 * 8, CHUCK.getFxtBalance());
+        Assert.assertEquals(balanceNQT1 + 24 * 10, ALICE.getChainBalance(ChildChain.IGNIS.getId()));
+        Assert.assertEquals(balanceNQT2 - ChildChain.IGNIS.ONE_COIN - 24 * 2, BOB.getChainBalance(ChildChain.IGNIS.getId()));
+        Assert.assertEquals(balanceNQT3 - 2 * ChildChain.IGNIS.ONE_COIN - 24 * 8, CHUCK.getChainBalance(ChildChain.IGNIS.getId()));
 
         apiCall = new APICall.Builder("getCurrency").
                 param("currency", currencyId).
@@ -125,7 +125,7 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
         Assert.assertEquals("24", response.get("currentSupply"));
     }
 
-    public void reserveIncreaseImpl(String currencyId, String secret1, String secret2) {
+    private void reserveIncreaseImpl(String currencyId, String secret1, String secret2) {
         APICall apiCall = new APICall.Builder("currencyReserveIncrease").
                 secretPhrase(secret1).
                 feeNQT(ChildChain.IGNIS.ONE_COIN).

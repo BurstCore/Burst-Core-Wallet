@@ -17,6 +17,7 @@
 package nxt.http.monetarysystem;
 
 import nxt.BlockchainTest;
+import nxt.Tester;
 import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
 import nxt.ms.CurrencyType;
@@ -34,7 +35,7 @@ public class TestCurrencyIssuance extends BlockchainTest {
 
     @Test
     public void issueMultipleCurrencies() {
-        APICall apiCall = new Builder().naming("axc", "AXC", "Currency A").build();
+        APICall apiCall = new Builder().naming("axcc", "AXCC", "Currency A").build();
         issueCurrencyApi(apiCall);
         apiCall = new Builder().naming("bXbx", "BXBX", "Currency B").feeNQT(1000 * ChildChain.IGNIS.ONE_COIN).build();
         issueCurrencyApi(apiCall);
@@ -47,7 +48,7 @@ public class TestCurrencyIssuance extends BlockchainTest {
 
     static String issueCurrencyApi(APICall apiCall) {
         JSONObject issueCurrencyResponse = apiCall.invoke();
-        String currencyId = (String) issueCurrencyResponse.get("transaction");
+        String currencyId = Tester.hexFullHashToStringId((String)issueCurrencyResponse.get("fullHash"));
         generateBlock();
 
         apiCall = new APICall.Builder("getCurrency").param("currency", currencyId).build();
@@ -58,11 +59,12 @@ public class TestCurrencyIssuance extends BlockchainTest {
 
     public static class Builder extends APICall.Builder {
 
+        private static int[] FEE_STEPS = new int[] { 0, 0, 0, 25000, 1000, 40};
+
         public Builder() {
             super("issueCurrency");
             secretPhrase(ALICE.getSecretPhrase());
-            feeNQT(0l);
-            //feeNQT(25000 * Constants.ONE_NXT);
+            chain(ChildChain.IGNIS.getId());
             param("name", "Test1");
             param("code", "TSXXX");
             param("description", "Test Currency 1");
@@ -71,12 +73,14 @@ public class TestCurrencyIssuance extends BlockchainTest {
             param("initialSupply", 100000);
             param("issuanceHeight", 0);
             param("algorithm", (byte)0);
+            feeNQT(40 * ChildChain.IGNIS.ONE_COIN);
         }
 
         public Builder naming(String name, String code, String description) {
             param("name", name);
             param("code", code).
             param("description", description);
+            feeNQT(FEE_STEPS[code.length()] * ChildChain.IGNIS.ONE_COIN);
             return this;
         }
 
