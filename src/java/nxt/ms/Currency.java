@@ -424,6 +424,7 @@ public final class Currency {
     }
 
     void increaseReserve(long amountPerUnitNQT) {
+        getSupplyData();
         currencySupply.currentReservePerUnitNQT += amountPerUnitNQT;
         currencySupplyTable.insert(currencySupply);
     }
