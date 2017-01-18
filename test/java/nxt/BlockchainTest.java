@@ -90,8 +90,8 @@ public abstract class BlockchainTest extends AbstractBlockchainTest {
             JSONObject response = new APICall.Builder("startBundler").
                     secretPhrase(FORGY.getSecretPhrase()).
                     param("chain", chain.getId()).
-                    param("minRateNQTPerFXT", chain.ONE_COIN / factor / 10).
-                    param("totalFeesLimitFQT", 20000 * chain.ONE_COIN * factor). // allow 1000 default fee transactions per class
+                    param("minRateNQTPerFXT", chain.ONE_COIN / factor / 10). // Make it low to allow more transactions
+                    param("totalFeesLimitFQT", 20000 * chain.ONE_COIN * factor). // Forgy has only 24K Ignis
                     param("overpayFQTPerFXT", 0).
                     build().invoke();
             Logger.logDebugMessage("startBundler: " + response);
