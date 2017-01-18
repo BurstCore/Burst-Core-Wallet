@@ -1,9 +1,9 @@
 package nxt.http.coinexchange;
 
 import nxt.BlockchainTest;
+import nxt.Tester;
 import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
-import nxt.util.Convert;
 import nxt.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -41,9 +41,9 @@ public class CoinExchangeTest extends BlockchainTest {
         generateBlock();
 
         JSONObject transactionJSON = (JSONObject)response.get("transactionJSON");
-        long orderId = Convert.fullHashToId(Convert.parseHexString((String)transactionJSON.get("fullHash")));
+        String orderId = Tester.responseToStringId(transactionJSON);
         apiCall = new APICall.Builder("getCoinExchangeOrder").
-                param("order", Long.toUnsignedString(orderId)).
+                param("order", orderId).
                 build();
         response = apiCall.invoke();
         Assert.assertEquals(Long.toString(100 * IGNIS.ONE_COIN), response.get("amountNQT"));
@@ -66,9 +66,9 @@ public class CoinExchangeTest extends BlockchainTest {
         generateBlock();
 
         transactionJSON = (JSONObject)response.get("transactionJSON");
-        orderId = Convert.fullHashToId(Convert.parseHexString((String)transactionJSON.get("fullHash")));
+        orderId = Tester.responseToStringId(transactionJSON);
         apiCall = new APICall.Builder("getCoinExchangeOrder").
-                param("order", Long.toUnsignedString(orderId)).
+                param("order", orderId).
                 build();
         response = apiCall.invoke();
         Assert.assertEquals(Long.toString(10 * USD.ONE_COIN), response.get("amountNQT")); // leftover after the exchange of 25

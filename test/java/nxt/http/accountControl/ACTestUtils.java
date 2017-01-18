@@ -30,7 +30,7 @@ public class ACTestUtils {
         public Builder(String requestType, String secretPhrase) {
             super(requestType);
             secretPhrase(secretPhrase);
-            feeNQT(0);
+            feeNQT(ChildChain.IGNIS.ONE_COIN);
         }
     }
     
@@ -56,7 +56,7 @@ public class ACTestUtils {
             param("initialSellSupply", 5);
             param("expirationHeight", height);
             secretPhrase(secretPhrase);
-            feeNQT(0);
+            feeNQT(ChildChain.IGNIS.ONE_COIN);
         }
     }
     
@@ -69,7 +69,7 @@ public class ACTestUtils {
             param("quantityQNT", 10000);
             param("decimals", 4);
             secretPhrase(secretPhrase);
-            feeNQT(0);
+            feeNQT(1000 * ChildChain.IGNIS.ONE_COIN);
         }
 
     }
@@ -79,7 +79,7 @@ public class ACTestUtils {
         
         Logger.logMessage(builder.getParam("requestType") + " response: " + response.toJSONString());
         Assert.assertNull(response.get("error"));
-        String result = (String) response.get("transaction");
+        String result = (String) response.get("fullHash");
         Assert.assertNotNull(result);
         return response;
     }
