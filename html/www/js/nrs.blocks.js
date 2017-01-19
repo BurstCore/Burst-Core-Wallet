@@ -57,6 +57,7 @@ var NRS = (function(NRS, $) {
 						//last week
 						NRS.setStateInterval(10);
 					}
+					NRS.downloadingBlockchain = true;
 					$("#nrs_update_explanation").find("span").hide();
 					$("#nrs_update_explanation_wait").attr("style", "display: none !important");
 					$("#downloading_blockchain, #nrs_update_explanation_blockchain_sync").show();
