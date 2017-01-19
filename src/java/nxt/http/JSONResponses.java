@@ -128,7 +128,7 @@ public final class JSONResponses {
     public static final JSONStreamAware INCORRECT_SHUFFLING = incorrect("shuffling");
     public static final JSONStreamAware RESPONSE_STREAM_ERROR = responseError("responseOutputStream");
     public static final JSONStreamAware RESPONSE_WRITE_ERROR = responseError("responseWrite");
-    public static final JSONStreamAware MISSING_TRANSACTION_FULL_HASH = missing("transactionFullHash");
+    public static final JSONStreamAware MISSING_PHASED_TRANSACTION = missing("phasedTransaction");
     public static final JSONStreamAware UNKNOWN_TRANSACTION_FULL_HASH = unknown("transactionFullHash");
     public static final JSONStreamAware INCORRECT_LINKED_TRANSACTION = incorrect("phasingLinkedTransaction");
     public static final JSONStreamAware INCORRECT_TAGGED_DATA_NAME = incorrect("name", "(length must be not longer than " + Constants.MAX_TAGGED_DATA_NAME_LENGTH + " characters)");

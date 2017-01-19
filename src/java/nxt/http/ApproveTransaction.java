@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
-import static nxt.http.JSONResponses.MISSING_TRANSACTION_FULL_HASH;
+import static nxt.http.JSONResponses.MISSING_PHASED_TRANSACTION;
 import static nxt.http.JSONResponses.TOO_MANY_PHASING_VOTES;
 import static nxt.http.JSONResponses.UNKNOWN_CHAIN;
 import static nxt.http.JSONResponses.UNKNOWN_PHASED_TRANSACTION;
@@ -50,7 +50,7 @@ public class ApproveTransaction extends CreateTransaction {
         String[] phasedTransactionValues = req.getParameterValues("phasedTransaction");
 
         if (phasedTransactionValues == null || phasedTransactionValues.length == 0) {
-            return MISSING_TRANSACTION_FULL_HASH;
+            return MISSING_PHASED_TRANSACTION;
         }
 
         if (phasedTransactionValues.length > Constants.MAX_PHASING_VOTE_TRANSACTIONS) {
