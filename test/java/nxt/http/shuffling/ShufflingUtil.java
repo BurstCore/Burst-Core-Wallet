@@ -121,7 +121,7 @@ class ShufflingUtil {
                 param("shufflingFullHash", shufflingFullHash).
                 param("secretPhrase", tester.getSecretPhrase()).
                 param("recipientSecretPhrase", recipient.getSecretPhrase()).
-                feeNQT(100 * ChildChain.IGNIS.ONE_COIN); // TODO how to calculate this
+                feeNQT(10 * ChildChain.IGNIS.ONE_COIN); // TODO how to calculate this
         if (!broadcast) {
             builder.param("broadcast", "false");
         }
