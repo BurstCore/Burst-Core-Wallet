@@ -486,6 +486,7 @@ var NRS = (function (NRS, $, undefined) {
             $("#coin_details").show().parent().animate({
                 "scrollTop": 0
             }, 0);
+            $("#coin_quantity").html(NRS.formatQuantity("100000000000000000", coin.decimals));
             $("#coin_link").html(NRS.getChainLink(coinId));
             $("#coin_decimals").html(NRS.escapeRespStr(coin.decimals));
             $("#coin_name").html(NRS.escapeRespStr(coin.name));
