@@ -18,7 +18,7 @@
  * @depends {nrs.js}
  * @depends {nrs.modals.js}
  */
-var NRS = (function(NRS, $, undefined) {
+var NRS = (function(NRS, $) {
 	$("body").on("click", ".show_block_modal_action", function(event) {
 		event.preventDefault();
 		if (NRS.fetchingModalData) {
@@ -84,7 +84,7 @@ var NRS = (function(NRS, $, undefined) {
                         transaction.amount = new BigInteger(transaction.amountNQT);
                         transaction.fee = new BigInteger(transaction.feeNQT);
                         rows += "<tr>" +
-                        "<td>" + NRS.getTransactionLink(transaction.fullHash, NRS.formatTimestamp(transaction.timestamp)) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(transaction.fullHash, NRS.formatTimestamp(transaction.timestamp), false, transaction.chain) + "</td>" +
                         "<td>" + NRS.getTransactionIconHTML(transaction.type, transaction.subtype) + "</td>" +
                         "<td>" + NRS.formatAmount(transaction.amount) + "</td>" +
                         "<td>" + NRS.formatAmount(transaction.fee) + "</td>" +

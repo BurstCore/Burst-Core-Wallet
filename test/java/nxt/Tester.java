@@ -78,6 +78,10 @@ public class Tester {
             initialFxtBalance = 0;
             initialFxtUnconfirmedBalance = 0;
             initialFxtEffectiveBalance = 0;
+            for (Chain chain : ChildChain.getAll()) {
+                initialChainBalance.put(chain.getId(), 0L);
+                initialChainUnconfirmedBalance.put(chain.getId(), 0L);
+            }
         }
     }
 

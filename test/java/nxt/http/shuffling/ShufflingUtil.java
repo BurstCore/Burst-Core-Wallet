@@ -94,34 +94,34 @@ class ShufflingUtil {
         return response;
     }
 
-    static JSONObject getShuffling(String shufflingId) {
+    static JSONObject getShuffling(String shufflingFullHash) {
         APICall apiCall = new APICall.Builder("getShuffling").
-                param("shuffling", shufflingId).
+                param("shufflingFullHash", shufflingFullHash).
                 build();
         JSONObject getShufflingResponse = apiCall.invoke();
         Logger.logMessage("getShufflingResponse: " + getShufflingResponse.toJSONString());
         return getShufflingResponse;
     }
 
-    static JSONObject getShufflingParticipants(String shufflingId) {
+    static JSONObject getShufflingParticipants(String shufflingFullHash) {
         APICall apiCall = new APICall.Builder("getShufflingParticipants").
-                param("shuffling", shufflingId).
+                param("shufflingFullHash", shufflingFullHash).
                 build();
         JSONObject getParticipantsResponse = apiCall.invoke();
         Logger.logMessage("getShufflingParticipantsResponse: " + getParticipantsResponse.toJSONString());
         return getParticipantsResponse;
     }
 
-    static JSONObject process(String shufflingId, Tester tester, Tester recipient) {
-        return process(shufflingId, tester, recipient, true);
+    static JSONObject process(String shufflingFullHash, Tester tester, Tester recipient) {
+        return process(shufflingFullHash, tester, recipient, true);
     }
 
-    static JSONObject process(String shufflingId, Tester tester, Tester recipient, boolean broadcast) {
+    static JSONObject process(String shufflingFullHash, Tester tester, Tester recipient, boolean broadcast) {
         APICall.Builder builder = new APICall.Builder("shufflingProcess").
-                param("shuffling", shufflingId).
+                param("shufflingFullHash", shufflingFullHash).
                 param("secretPhrase", tester.getSecretPhrase()).
                 param("recipientSecretPhrase", recipient.getSecretPhrase()).
-                feeNQT(0);
+                feeNQT(10 * ChildChain.IGNIS.ONE_COIN); // TODO how to calculate this
         if (!broadcast) {
             builder.param("broadcast", "false");
         }
@@ -131,9 +131,9 @@ class ShufflingUtil {
         return shufflingProcessResponse;
     }
 
-    static JSONObject verify(String shufflingId, Tester tester, String shufflingStateHash) {
+    static JSONObject verify(String shufflingFullHash, Tester tester, String shufflingStateHash) {
         APICall apiCall = new APICall.Builder("shufflingVerify").
-                param("shuffling", shufflingId).
+                param("shufflingFullHash", shufflingFullHash).
                 param("secretPhrase", tester.getSecretPhrase()).
                 param("shufflingStateHash", shufflingStateHash).
                 feeNQT(ChildChain.IGNIS.ONE_COIN).
@@ -143,13 +143,13 @@ class ShufflingUtil {
         return response;
     }
 
-    static JSONObject cancel(String shufflingId, Tester tester, String shufflingStateHash, long cancellingAccountId) {
-        return cancel(shufflingId, tester, shufflingStateHash, cancellingAccountId, true);
+    static JSONObject cancel(String shufflingFullHash, Tester tester, String shufflingStateHash, long cancellingAccountId) {
+        return cancel(shufflingFullHash, tester, shufflingStateHash, cancellingAccountId, true);
     }
 
-    static JSONObject cancel(String shufflingId, Tester tester, String shufflingStateHash, long cancellingAccountId, boolean broadcast) {
+    static JSONObject cancel(String shufflingFullHash, Tester tester, String shufflingStateHash, long cancellingAccountId, boolean broadcast) {
         APICall.Builder builder = new APICall.Builder("shufflingCancel").
-                param("shuffling", shufflingId).
+                param("shufflingFullHash", shufflingFullHash).
                 param("secretPhrase", tester.getSecretPhrase()).
                 param("shufflingStateHash", shufflingStateHash).
                 feeNQT(10 * ChildChain.IGNIS.ONE_COIN);
@@ -189,6 +189,7 @@ class ShufflingUtil {
                 secretPhrase(tester.getSecretPhrase()).
                 param("recipientPublicKey", Convert.toHexString(recipient.getPublicKey())).
                 param("shufflingFullHash", shufflingFullHash).
+                param("feeRateNQTPerFXT", ChildChain.IGNIS.ONE_COIN).
                 build();
         JSONObject response = apiCall.invoke();
         Logger.logMessage("startShufflerResponse: " + response.toJSONString());
