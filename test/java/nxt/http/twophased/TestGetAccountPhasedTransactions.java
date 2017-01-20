@@ -48,12 +48,12 @@ public class TestGetAccountPhasedTransactions extends BlockchainTest {
         JSONObject response = phasedTransactionsApiCall().invoke();
         Logger.logMessage("getAccountPhasedTransactionsResponse:" + response.toJSONString());
         JSONArray transactionsJson = (JSONArray) response.get("transactions");
-        Assert.assertTrue(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON.get("transaction")));
+        Assert.assertTrue(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON.get("fullHash")));
 
         response = phasedTransactionsApiCall(CHUCK.getId()).invoke();
         Logger.logMessage("getAccountPhasedTransactionsResponse:" + response.toJSONString());
         transactionsJson = (JSONArray) response.get("transactions");
-        Assert.assertFalse(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON.get("transaction")));
+        Assert.assertFalse(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON.get("fullHash")));
     }
 
     @Test
@@ -65,12 +65,12 @@ public class TestGetAccountPhasedTransactions extends BlockchainTest {
         JSONObject response = phasedTransactionsApiCall(BOB.getId()).invoke();
         Logger.logMessage("getAccountPhasedTransactionsResponse:" + response.toJSONString());
         JSONArray transactionsJson = (JSONArray) response.get("transactions");
-        Assert.assertTrue(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON.get("transaction")));
+        Assert.assertTrue(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON.get("fullHash")));
 
         response = phasedTransactionsApiCall(CHUCK.getId()).invoke();
         Logger.logMessage("getAccountPhasedTransactionsResponse:" + response.toJSONString());
         transactionsJson = (JSONArray) response.get("transactions");
-        Assert.assertFalse(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON.get("transaction")));
+        Assert.assertFalse(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON.get("fullHash")));
     }
 
     @Test
@@ -92,8 +92,8 @@ public class TestGetAccountPhasedTransactions extends BlockchainTest {
         int transactionsSize = transactionsJson.size();
 
         Assert.assertTrue(transactionsSize - transactionsSize0 == 2);
-        Assert.assertTrue(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON1.get("transaction")));
-        Assert.assertTrue(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON2.get("transaction")));
+        Assert.assertTrue(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON1.get("fullHash")));
+        Assert.assertTrue(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON2.get("fullHash")));
     }
 
     @Test

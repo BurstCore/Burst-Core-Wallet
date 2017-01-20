@@ -28,7 +28,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class TestGetAssetPhasedTransactions extends BlockchainTest {
-    private static String asset = "18055555436405339905";
+    private static String asset = "987080838556097560";
 
     static APICall phasedTransactionsApiCall() {
         return new APICall.Builder("getAssetPhasedTransactions")
@@ -55,7 +55,7 @@ public class TestGetAssetPhasedTransactions extends BlockchainTest {
         JSONObject response = phasedTransactionsApiCall().invoke();
         Logger.logMessage("getAssetPhasedTransactionsResponse:" + response.toJSONString());
         JSONArray transactionsJson = (JSONArray) response.get("transactions");
-        Assert.assertTrue(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON.get("transaction")));
+        Assert.assertTrue(TwoPhasedSuite.searchForTransactionId(transactionsJson, (String) transactionJSON.get("fullHash")));
     }
 
     @Test

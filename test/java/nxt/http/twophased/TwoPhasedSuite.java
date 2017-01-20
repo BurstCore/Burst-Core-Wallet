@@ -39,7 +39,7 @@ public class TwoPhasedSuite extends AbstractHttpApiSuite {
         boolean found = false;
         for (Object transactionsJsonObj : transactionsJson) {
             JSONObject transactionObject = (JSONObject) transactionsJsonObj;
-            String iteratedTransactionId = (String) transactionObject.get("transaction");
+            String iteratedTransactionId = (String) transactionObject.get("fullHash");
             if (iteratedTransactionId.equals(transactionId)) {
                 found = true;
                 break;

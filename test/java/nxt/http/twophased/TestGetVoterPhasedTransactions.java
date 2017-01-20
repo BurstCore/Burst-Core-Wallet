@@ -40,7 +40,7 @@ public class TestGetVoterPhasedTransactions extends BlockchainTest {
     public void simpleTransactionLookup() {
         APICall apiCall = new TwoPhasedMoneyTransferBuilder().build();
         JSONObject transactionJSON = TestCreateTwoPhased.issueCreateTwoPhased(apiCall, false);
-        String transactionId = (String) transactionJSON.get("transaction");
+        String transactionId = (String) transactionJSON.get("fullHash");
 
         generateBlock();
 
@@ -63,7 +63,7 @@ public class TestGetVoterPhasedTransactions extends BlockchainTest {
         long fee = ChildChain.IGNIS.ONE_COIN;
         apiCall = new APICall.Builder("approveTransaction")
                 .param("secretPhrase", CHUCK.getSecretPhrase())
-                .param("transactionFullHash", transactionFullHash)
+                .param("phasedTransaction", ChildChain.IGNIS.getId() + ":" + transactionFullHash)
                 .param("feeNQT", fee)
                 .build();
         JSONObject response = apiCall.invoke();
