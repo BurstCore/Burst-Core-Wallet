@@ -21,12 +21,14 @@ import nxt.blockchain.Chain;
 import nxt.blockchain.FxtChain;
 import nxt.ce.OrderIssueAttachment;
 import nxt.ce.OrderIssueFxtAttachment;
-
 import org.json.simple.JSONStreamAware;
+import java.math.BigDecimal;
+import java.math.MathContext;
 
 import javax.servlet.http.HttpServletRequest;
 
 import static nxt.http.JSONResponses.NOT_ENOUGH_FUNDS;
+import static nxt.http.JSONResponses.NO_COST_ORDER;
 
 public final class ExchangeCoins extends CreateTransaction {
 
@@ -45,6 +47,13 @@ public final class ExchangeCoins extends CreateTransaction {
         }
         long amountNQT = ParameterParser.getAmountNQT(req);
         long priceNQT = ParameterParser.getPriceNQT(req);
+        long amount = new BigDecimal(1L, MathContext.DECIMAL128)
+                .divide(new BigDecimal(priceNQT, MathContext.DECIMAL128)
+                        .movePointLeft(chain.getDecimals()), MathContext.DECIMAL128)
+                .movePointRight(exchange.getDecimals()).longValue();
+        if (amount == 0) {
+            return NO_COST_ORDER;
+        }
         // All ARDR exchange transactions must be on the Fxt chain, otherwise the transaction is on the child chain
         Account account = ParameterParser.getSenderAccount(req);
         Chain txChain = (exchange.getId() == FxtChain.FXT.getId() ? exchange : chain);

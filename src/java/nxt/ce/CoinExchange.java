@@ -441,9 +441,8 @@ public final class CoinExchange {
             Chain exchange = Chain.getChain(exchangeId);
             BigDecimal bidValue = new BigDecimal(this.bidPrice, MathContext.DECIMAL128)
                     .movePointLeft(chain.getDecimals());
-            long askValue = askConstant.divide(bidValue, MathContext.DECIMAL128)
+            this.askPrice = askConstant.divide(bidValue, MathContext.DECIMAL128)
                     .movePointRight(exchange.getDecimals()).longValue();
-            this.askPrice = (askValue > 0 ? askValue : 1);
             this.dbKey = orderDbKeyFactory.newKey(this.id);
         }
 

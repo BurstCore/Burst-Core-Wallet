@@ -28,6 +28,8 @@ import nxt.blockchain.TransactionType;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -123,7 +125,16 @@ public abstract class CoinExchangeTransactionType extends ChildTransactionType {
                         + " was submitted on chain " + transaction.getChain().getName());
             }
             if (attachment.getChain() == attachment.getExchangeChain()) {
-                throw new NxtException.NotValidException("Coin exchange order chain and exchange chain must be different: " + attachment.getJSONObject());
+                throw new NxtException.NotValidException("Coin exchange order chain and exchange chain must be different: "
+                        + attachment.getJSONObject());
+            }
+            long amount = new BigDecimal(1L, MathContext.DECIMAL128)
+                    .divide(new BigDecimal(attachment.getPriceNQT(), MathContext.DECIMAL128)
+                            .movePointLeft(attachment.getChain().getDecimals()), MathContext.DECIMAL128)
+                    .movePointRight(attachment.getExchangeChain().getDecimals()).longValue();
+            if (amount == 0) {
+                throw new NxtException.NotValidException("Coin exchange order has no value: "
+                        + attachment.getJSONObject());
             }
         }
 
