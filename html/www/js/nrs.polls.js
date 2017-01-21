@@ -710,6 +710,7 @@ var NRS = (function(NRS, $, undefined) {
             }
 		} else if(pollType.val() == "1") {
 			data["votingModel"] = 1;
+            data["holding"] = NRS.getActiveChainId();
 			data["minBalanceModel"] = 1;
 		} else if(pollType.val() == "2") {
 			data["votingModel"] = 2;

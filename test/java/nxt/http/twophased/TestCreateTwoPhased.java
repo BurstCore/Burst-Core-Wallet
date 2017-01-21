@@ -38,7 +38,7 @@ public class TestCreateTwoPhased extends BlockchainTest {
         Logger.logMessage("two-phased sendMoney: " + twoPhased.toJSONString());
 
         generateBlock();
-        String transactionId = (String)twoPhased.get("transaction");
+        String transactionId = (String)twoPhased.get("fullHash");
         if (!shouldFail && transactionId == null || shouldFail && transactionId != null) {
             Assert.fail();
         }
@@ -147,7 +147,7 @@ public class TestCreateTwoPhased extends BlockchainTest {
         for(int i=0; i < 10; i++){
             APICall apiCall = new TwoPhasedMoneyTransferBuilder().build();
             JSONObject transactionJSON = issueCreateTwoPhased(apiCall, false);
-            String idString = (String) transactionJSON.get("transaction");
+            String idString = (String) transactionJSON.get("fullHash");
             transactionIds.add(idString);
         }
 
