@@ -614,12 +614,12 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "sendMessage":
-                if (transaction.notOfType("ArbitraryMessage")) {
+                if (NRS.notOfType(transaction, "ArbitraryMessage")) {
                     return false;
                 }
                 break;
             case "setAlias":
-                if (transaction.notOfType("AliasAssignment")) {
+                if (NRS.notOfType(transaction, "AliasAssignment")) {
                     return false;
                 }
                 length = parseInt(byteArray[pos], 10);
@@ -635,7 +635,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "createPoll":
-                if (transaction.notOfType("PollCreation")) {
+                if (NRS.notOfType(transaction, "PollCreation")) {
                     return false;
                 }
                 length = converters.byteArrayToSignedShort(byteArray, pos);
@@ -690,7 +690,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 break;
             case "castVote":
-                if (transaction.notOfType("VoteCasting")) {
+                if (NRS.notOfType(transaction, "VoteCasting")) {
                     return false;
                 }
                 transaction.poll = String(converters.byteArrayToBigInteger(byteArray, pos));
