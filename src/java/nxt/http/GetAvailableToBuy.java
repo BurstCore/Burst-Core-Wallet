@@ -34,7 +34,7 @@ public final class GetAvailableToBuy extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         long currencyId = ParameterParser.getUnsignedLong(req, "currency", true);
-        long units = ParameterParser.getLong(req, "units", 1L, Long.MAX_VALUE, true);
+        long units = ParameterParser.getUnitsQNT(req);
         ChildChain childChain = ParameterParser.getChildChain(req);
 
         ExchangeOfferHome.AvailableOffers availableOffers = childChain.getExchangeOfferHome().getAvailableToBuy(currencyId, units);

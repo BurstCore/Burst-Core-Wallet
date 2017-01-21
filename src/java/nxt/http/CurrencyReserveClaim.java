@@ -50,7 +50,7 @@ public final class CurrencyReserveClaim extends CreateTransaction {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         Currency currency = ParameterParser.getCurrency(req);
-        long units = ParameterParser.getLong(req, "units", 0, currency.getReserveSupply(), false);
+        long units = ParameterParser.getUnitsQNT(req);
         Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new ReserveClaimAttachment(currency.getId(), units);
         return createTransaction(req, account, attachment);

@@ -41,7 +41,7 @@ public final class TransferCurrency extends CreateTransaction {
         long recipient = ParameterParser.getAccountId(req, "recipient", true);
 
         Currency currency = ParameterParser.getCurrency(req);
-        long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
+        long units = ParameterParser.getUnitsQNT(req);
         Account account = ParameterParser.getSenderAccount(req);
 
         Attachment attachment = new CurrencyTransferAttachment(currency.getId(), units);
