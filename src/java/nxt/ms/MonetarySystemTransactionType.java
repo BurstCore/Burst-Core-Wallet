@@ -555,7 +555,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment) transaction.getAttachment();
             long currencyId = attachment.getCurrencyId();
-            Currency currency = Currency.getCurrency(currencyId);
+            Currency currency = Currency.getCurrency(currencyId, true);
             if (currency == null) {
                 return;
             }
@@ -566,8 +566,10 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
                                             attachment.getBuyRateNQT(), childChain.getDecimals());
                 senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, amountNQT);
             }
-            senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), eventId,
+            if (!currency.isDeleted()) {
+                senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), eventId,
                         currencyId, attachment.getInitialSellSupply());
+            }
         }
 
         @Override
@@ -661,7 +663,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         public void undoAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             ExchangeBuyAttachment attachment = (ExchangeBuyAttachment) transaction.getAttachment();
             long currencyId = attachment.getCurrencyId();
-            Currency currency = Currency.getCurrency(currencyId);
+            Currency currency = Currency.getCurrency(currencyId, true);
             if (currency == null) {
                 return;
             }
