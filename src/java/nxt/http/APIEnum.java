@@ -292,7 +292,8 @@ public enum APIEnum {
     GET_EXPECTED_COIN_EXCHANGE_ORDER_CANCELLATIONS("getExpectedCoinExchangeOrderCancellations", GetExpectedCoinExchangeOrderCancellations.instance),
     GET_BUNDLER_RATES("getBundlerRates", GetBundlerRates.instance),
     GET_FXT_TRANSACTION("getFxtTransaction", GetFxtTransaction.instance),
-    GET_BALANCES("getBalances", GetBalances.instance);
+    GET_BALANCES("getBalances", GetBalances.instance),
+    SIMULATE_COIN_EXCHANGE("simulateCoinExchange", SimulateCoinExchange.instance);
 
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 
