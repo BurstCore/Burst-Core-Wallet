@@ -172,8 +172,8 @@ public final class TradeHome {
     }
 
     Trade addTrade(long assetId, OrderHome.Ask askOrder, OrderHome.Bid bidOrder,
-                   long quantityQNT, long priceNQT) {
-        Trade trade = new Trade(assetId, askOrder, bidOrder, quantityQNT, priceNQT);
+                   long quantityQNT, long priceNQT, boolean isBuy) {
+        Trade trade = new Trade(assetId, askOrder, bidOrder, quantityQNT, priceNQT, isBuy);
         tradeTable.insert(trade);
         listeners.notify(trade, Event.TRADE);
         return trade;
@@ -199,7 +199,7 @@ public final class TradeHome {
         private final boolean isBuy;
 
         private Trade(long assetId, OrderHome.Ask askOrder, OrderHome.Bid bidOrder,
-                      long quantityQNT, long priceNQT) {
+                      long quantityQNT, long priceNQT, boolean isBuy) {
             Block block = Nxt.getBlockchain().getLastBlock();
             this.blockId = block.getId();
             this.height = block.getHeight();
@@ -216,7 +216,7 @@ public final class TradeHome {
             this.dbKey = tradeDbKeyFactory.newKey(this.askOrderHash, this.askOrderId, this.bidOrderHash, this.bidOrderId);
             this.quantityQNT = quantityQNT;
             this.priceNQT = priceNQT;
-            this.isBuy = (priceNQT == askOrder.getPriceNQT());
+            this.isBuy = isBuy;
         }
 
         private Trade(ResultSet rs, DbKey dbKey) throws SQLException {

@@ -462,7 +462,7 @@ public final class OrderHome {
             // Create the trade if we have a non-zero amount
             //
             if (amountNQT > 0) {
-                tradeHome.addTrade(assetId, askOrder, bidOrder, quantityQNT, priceNQT);
+                tradeHome.addTrade(assetId, askOrder, bidOrder, quantityQNT, priceNQT, isBuy);
             }
             //
             // Update the seller balances
