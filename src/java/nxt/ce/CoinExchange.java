@@ -57,7 +57,7 @@ public final class CoinExchange {
         return listeners.removeListener(listener, eventType);
     }
 
-    private static final BigDecimal askConstant = new BigDecimal(1L, MathContext.DECIMAL128);
+    public static final BigDecimal ASK_CONSTANT = new BigDecimal(1L, MathContext.DECIMAL128);
     private static final DbKey.LongKeyFactory<Order> orderDbKeyFactory =
             new DbKey.LongKeyFactory<Order>("id") {
         @Override
@@ -441,7 +441,7 @@ public final class CoinExchange {
             Chain exchange = Chain.getChain(exchangeId);
             BigDecimal bidValue = new BigDecimal(this.bidPrice, MathContext.DECIMAL128)
                     .movePointLeft(chain.getDecimals());
-            long askValue = askConstant.divide(bidValue, MathContext.DECIMAL128)
+            long askValue = ASK_CONSTANT.divide(bidValue, MathContext.DECIMAL128)
                     .movePointRight(exchange.getDecimals()).longValue();
             this.askPrice = (askValue > 0 ? askValue : 1);
             this.dbKey = orderDbKeyFactory.newKey(this.id);
