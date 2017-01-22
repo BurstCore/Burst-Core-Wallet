@@ -124,11 +124,11 @@ public class PhasingOnlyTest extends BlockchainTest {
 
         //now can submit next transaction
         response = ACTestUtils.assertTransactionSuccess(builder);
-        String fullHash = (String) response.get("fullHash");
+        String fullHash = getPhasedTransaction(response);
         generateBlock();
 
         //approve
-        approveBuilder.param("transactionFullHash", fullHash);
+        approveBuilder.param("phasedTransaction", fullHash);
         ACTestUtils.assertTransactionSuccess(approveBuilder);
         generateBlock();
 
