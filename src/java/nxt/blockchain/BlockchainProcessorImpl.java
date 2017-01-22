@@ -459,7 +459,11 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                         throw new RuntimeException(exc.getMessage(), exc);
                     }
                     if (blockList == null) {
-                        nextBlocks.getPeer().disconnectPeer();
+                        Peer blockPeer = nextBlocks.getPeer();
+                        if (blockPeer.getState() == Peer.State.CONNECTED) {
+                            Logger.logDebugMessage("Peer " + blockPeer.getHost() + " is on a fork, disconnecting");
+                            blockPeer.disconnectPeer();
+                        }
                         continue;
                     }
                     Peer peer = nextBlocks.getPeer();
