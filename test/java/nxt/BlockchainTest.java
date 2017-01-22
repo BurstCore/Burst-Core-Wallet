@@ -32,10 +32,11 @@ import java.util.Properties;
 public abstract class BlockchainTest extends AbstractBlockchainTest {
 
     protected static Tester FORGY;
-    protected static Tester ALICE;
+    public static Tester ALICE;
     public static Tester BOB;
     public static Tester CHUCK;
     public static Tester DAVE;
+    protected static Tester RIKER;
 
     protected static final int baseHeight = 0;
 
@@ -46,6 +47,7 @@ public abstract class BlockchainTest extends AbstractBlockchainTest {
     private static final String bobSecretPhrase2 = "rshw9abtpsa2";
     private static final String chuckSecretPhrase = "eOdBVLMgySFvyiTy8xMuRXDTr45oTzB7L5J";
     private static final String daveSecretPhrase = "t9G2ymCmDsQij7VtYinqrbGCOAtDDA3WiNr";
+    private static final String rikerSecretPhrase = "5hiig9BPdYoBzWni0QPaCDno6Wz0Vg8oX9yMcXRjEhmkuQKhvB";
 
     private static boolean isNxtInitialized = false;
     private static boolean needShutdownAfterClass = false;
@@ -80,6 +82,7 @@ public abstract class BlockchainTest extends AbstractBlockchainTest {
         BOB = new Tester(bobSecretPhrase2);
         CHUCK = new Tester(chuckSecretPhrase);
         DAVE = new Tester(daveSecretPhrase);
+        RIKER = new Tester(rikerSecretPhrase);
 
         startBundlers();
     }
