@@ -48,7 +48,7 @@ public class TestCurrencyIssuance extends BlockchainTest {
 
     static String issueCurrencyApi(APICall apiCall) {
         JSONObject issueCurrencyResponse = apiCall.invoke();
-        String currencyId = Tester.hexFullHashToStringId((String)issueCurrencyResponse.get("fullHash"));
+        String currencyId = Tester.responseToStringId(issueCurrencyResponse);
         generateBlock();
 
         apiCall = new APICall.Builder("getCurrency").param("currency", currencyId).build();

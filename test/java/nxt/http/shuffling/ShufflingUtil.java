@@ -16,6 +16,7 @@
 
 package nxt.http.shuffling;
 
+import nxt.BlockchainTest;
 import nxt.Tester;
 import nxt.account.HoldingType;
 import nxt.blockchain.ChildChain;
@@ -33,8 +34,8 @@ class ShufflingUtil {
 
     static final long defaultShufflingAmount = 1500000000;
     static final long defaultHoldingShufflingAmount = 40000;
-    static final long shufflingAsset = 3320741880585366286L;
-    static final long shufflingCurrency = -5643814336689018857L;
+    static long shufflingAsset;
+    static long shufflingCurrency;
 
     static JSONObject create(Tester creator) {
         return create(creator, 4);
@@ -54,7 +55,19 @@ class ShufflingUtil {
     }
 
     static JSONObject createAssetShuffling(Tester creator) {
-        APICall apiCall = new APICall.Builder("shufflingCreate").
+        APICall apiCall = new APICall.Builder("issueAsset")
+                .param("secretPhrase", creator.getSecretPhrase())
+                .param("name", "phased")
+                .param("description", "pahsed transaction testing")
+                .param("quantityQNT", 100000)
+                .param("decimals", 2)
+                .param("feeNQT", 1000 * ChildChain.IGNIS.ONE_COIN)
+                .param("deadline", 1440)
+                .build();
+        JSONObject response = apiCall.invoke();
+        shufflingAsset = Long.parseUnsignedLong(Tester.responseToStringId(response));
+        BlockchainTest.generateBlock();
+        apiCall = new APICall.Builder("shufflingCreate").
                 secretPhrase(creator.getSecretPhrase()).
                 feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("amount", String.valueOf(defaultHoldingShufflingAmount)).
@@ -63,13 +76,59 @@ class ShufflingUtil {
                 param("holding", Long.toUnsignedString(shufflingAsset)).
                 param("holdingType", String.valueOf(HoldingType.ASSET.getCode())).
                 build();
-        JSONObject response = apiCall.invoke();
+        response = apiCall.invoke();
         Logger.logMessage("shufflingCreateResponse: " + response.toJSONString());
         return response;
     }
 
     static JSONObject createCurrencyShuffling(Tester creator) {
-        APICall apiCall = new APICall.Builder("shufflingCreate").
+        APICall apiCall = new APICall.Builder("issueCurrency")
+                .param("secretPhrase", creator.getSecretPhrase())
+                .param("name", "phased")
+                .param("code", "PHSD")
+                .param("description", "phased transaction testing")
+                .param("type", 1)
+                .param("initialSupply", 10000000)
+                .param("maxSupply", 10000000)
+                .param("decimals", 2)
+                .param("feeNQT", 1000 * ChildChain.IGNIS.ONE_COIN)
+                .param("deadline", 1440)
+                .build();
+        JSONObject response = apiCall.invoke();
+        shufflingCurrency = Long.parseUnsignedLong(Tester.responseToStringId(response));
+        BlockchainTest.generateBlock();
+        apiCall = new APICall.Builder("transferCurrency")
+                .param("secretPhrase", creator.getSecretPhrase())
+                .param("recipient", BlockchainTest.BOB.getRsAccount())
+                .param("currency", Long.toUnsignedString(shufflingCurrency))
+                .param("units", 100000)
+                .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
+                .param("deadline", 1440)
+                .build();
+        response = apiCall.invoke();
+        Logger.logMessage("transferCurrencyResponse: " + response.toJSONString());
+        apiCall = new APICall.Builder("transferCurrency")
+                .param("secretPhrase", creator.getSecretPhrase())
+                .param("recipient", BlockchainTest.CHUCK.getRsAccount())
+                .param("currency", Long.toUnsignedString(shufflingCurrency))
+                .param("units", 100000)
+                .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
+                .param("deadline", 1440)
+                .build();
+        response = apiCall.invoke();
+        Logger.logMessage("transferCurrencyResponse: " + response.toJSONString());
+        apiCall = new APICall.Builder("transferCurrency")
+                .param("secretPhrase", creator.getSecretPhrase())
+                .param("recipient", BlockchainTest.DAVE.getRsAccount())
+                .param("currency", Long.toUnsignedString(shufflingCurrency))
+                .param("units", 100000)
+                .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
+                .param("deadline", 1440)
+                .build();
+        response = apiCall.invoke();
+        Logger.logMessage("transferCurrencyResponse: " + response.toJSONString());
+        BlockchainTest.generateBlock();
+        apiCall = new APICall.Builder("shufflingCreate").
                 secretPhrase(creator.getSecretPhrase()).
                 feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("amount", String.valueOf(defaultHoldingShufflingAmount)).
@@ -78,7 +137,7 @@ class ShufflingUtil {
                 param("holding", Long.toUnsignedString(shufflingCurrency)).
                 param("holdingType", String.valueOf(HoldingType.CURRENCY.getCode())).
                 build();
-        JSONObject response = apiCall.invoke();
+        response = apiCall.invoke();
         Logger.logMessage("shufflingCreateResponse: " + response.toJSONString());
         return response;
     }

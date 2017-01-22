@@ -33,9 +33,9 @@ public abstract class BlockchainTest extends AbstractBlockchainTest {
 
     protected static Tester FORGY;
     protected static Tester ALICE;
-    protected static Tester BOB;
-    protected static Tester CHUCK;
-    protected static Tester DAVE;
+    public static Tester BOB;
+    public static Tester CHUCK;
+    public static Tester DAVE;
 
     protected static int baseHeight;
 
