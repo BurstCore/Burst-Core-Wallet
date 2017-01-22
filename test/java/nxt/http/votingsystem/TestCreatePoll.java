@@ -20,6 +20,7 @@ import nxt.BlockchainTest;
 import nxt.Nxt;
 import nxt.blockchain.ChildChain;
 import nxt.http.APICall;
+import nxt.util.Convert;
 import nxt.util.Logger;
 import nxt.voting.VoteWeighting;
 import org.json.simple.JSONObject;
@@ -39,10 +40,10 @@ public class TestCreatePoll extends BlockchainTest {
         generateBlock();
 
         try {
-            String pollId = (String) createPollResponse.get("transaction");
+            byte[] fullHash = Convert.parseHexString((String) createPollResponse.get("fullHash"));
 
-            if(!shouldFail && pollId == null) Assert.fail();
-
+            if(!shouldFail && fullHash == null) Assert.fail();
+            String pollId = Long.toUnsignedString(Convert.fullHashToId(fullHash));
             apiCall = new APICall.Builder("getPoll").param("poll", pollId).build();
 
             JSONObject getPollResponse = apiCall.invoke();

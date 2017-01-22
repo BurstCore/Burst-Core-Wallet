@@ -35,14 +35,13 @@ public class TestGetPhasingPoll extends BlockchainTest {
                 .build();
         JSONObject transactionJSON = TestCreateTwoPhased.issueCreateTwoPhased(apiCall, false);
         String fullHash = (String) transactionJSON.get("fullHash");
-        String transactionId = (String) transactionJSON.get("transaction");
 
         generateBlock();
 
         long fee = ChildChain.IGNIS.ONE_COIN;
         apiCall = new APICall.Builder("approveTransaction")
                 .param("secretPhrase", CHUCK.getSecretPhrase())
-                .param("transactionFullHash", fullHash)
+                .param("phasedTransaction", ChildChain.IGNIS.getId() + ":" + fullHash)
                 .param("feeNQT", fee)
                 .build();
         JSONObject response = apiCall.invoke();
@@ -51,7 +50,7 @@ public class TestGetPhasingPoll extends BlockchainTest {
         generateBlock();
 
         apiCall = new APICall.Builder("getPhasingPoll")
-                .param("transaction", transactionId)
+                .param("transactionFullHash", fullHash)
                 .param("countVotes", "true")
                 .build();
         response = apiCall.invoke();
