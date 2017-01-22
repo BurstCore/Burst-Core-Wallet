@@ -834,14 +834,15 @@ var NRS = (function (NRS, $, undefined) {
         $(".coin_order_modal_type").html("Buy");
 
         var displayedQuantity;
+        var quantity = String($("#buy_coin_quantity").val());
+        var price = String($("#buy_coin_price").val());
         try {
-            var quantity = String($("#buy_coin_quantity").val());
             displayedQuantity = new BigInteger(quantity);
             var quantityQNT = new BigInteger(NRS.convertToQNT(quantity, currentCoin.decimals));
-            var priceNQT = new BigInteger(NRS.convertToQNT(String($("#buy_coin_price").val()), NRS.getActiveChainDecimals()));
+            var priceNQT = new BigInteger(NRS.convertToQNT(price, NRS.getActiveChainDecimals()));
             var totalNXT = NRS.formatQuantity(NRS.convertToChainCoin(NRS.calculateOrderTotalNQT(quantityQNT, priceNQT), currentCoin), NRS.getActiveChainDecimals());
         } catch (err) {
-            $.growl($.t("error_invalid_input"), {
+            $.growl($.t("error_invalid_input", { input: "quantity " + quantity + " price " + price + " decimals " + currentCoin.decimals }), {
                 "type": "danger"
             });
             return e.preventDefault();

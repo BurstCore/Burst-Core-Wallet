@@ -1055,13 +1055,14 @@ var NRS = (function (NRS, $, undefined) {
         $(".asset_order_modal_type").html(orderType);
 
         orderType = orderType.toLowerCase();
+        var quantity = String($("#" + orderType + "_asset_quantity").val());
+        var price = String($("#" + orderType + "_asset_price").val());
         try {
-            var quantity = String($("#" + orderType + "_asset_quantity").val());
             var quantityQNT = new BigInteger(NRS.convertToQNT(quantity, currentAsset.decimals));
-            var priceNQT = new BigInteger(NRS.calculatePricePerWholeQNT(NRS.convertToNQT(String($("#" + orderType + "_asset_price").val())), currentAsset.decimals));
+            var priceNQT = new BigInteger(NRS.calculatePricePerWholeQNT(NRS.convertToNQT(price), currentAsset.decimals));
             var totalNXT = NRS.formatAmount(NRS.calculateOrderTotalNQT(quantityQNT, priceNQT, currentAsset.decimals), false, true);
         } catch (err) {
-            $.growl($.t("error_invalid_input"), {
+            $.growl($.t("error_invalid_input", { input: "quantity " + quantity + " price " + price + " decimals " + currentAsset.decimals }), {
                 "type": "danger"
             });
             return e.preventDefault();

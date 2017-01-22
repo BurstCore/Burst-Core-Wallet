@@ -39,7 +39,7 @@ var NRS = (function (NRS, $) {
             var toRemove = price.slice(-decimals);
 
             if (!/^[0]+$/.test(toRemove)) {
-                throw $.t("error_invalid_input");
+                throw $.t("error_invalid_input", { input: "price " + price + " decimals " + decimals });
             } else {
                 return price.slice(0, -decimals);
             }
@@ -151,7 +151,7 @@ var NRS = (function (NRS, $) {
 
             return parts[0] + "." + fraction;
         } else {
-            throw $.t("error_invalid_input");
+            throw $.t("error_invalid_input", { input: "amount " + amount + " decimals " + decimals });
         }
     };
 
@@ -174,7 +174,7 @@ var NRS = (function (NRS, $) {
                 fraction = parts[1].substring(0, decimals);
             }
         } else {
-            throw $.t("error_invalid_input");
+            throw $.t("error_invalid_input", { input: "currency " + currency + " decimals " + decimals});
         }
         for (var i = fraction.length; i < decimals; i++) {
             fraction += "0";
@@ -182,7 +182,7 @@ var NRS = (function (NRS, $) {
         var result = amount + "" + fraction;
         if (!/^\d+$/.test(result)) {
             //in case there's a comma or something else in there.. at this point there should only be numbers
-            throw $.t("error_invalid_input");
+            throw $.t("error_invalid_input", { input: "currency " + currency + " decimals " + decimals});
         }
         //remove leading zeroes
         result = result.replace(/^0+/, "");
@@ -256,12 +256,12 @@ var NRS = (function (NRS, $) {
             }
             qnt += fraction;
         } else {
-            throw $.t("error_invalid_input");
+            throw $.t("error_invalid_input", { input: "quantity " + quantity + " decimals " + decimals});
         }
 
         //in case there's a comma or something else in there.. at this point there should only be numbers
         if (!/^\d+$/.test(qnt)) {
-            throw $.t("error_invalid_input_numbers");
+            throw $.t("error_invalid_input_numbers", { input: "quantity " + quantity + " decimals " + decimals});
         }
         try {
             if (parseInt(qnt) === 0) {
