@@ -499,7 +499,7 @@ var NRS = (function (NRS, $, undefined) {
                         "decimals": transaction.attachment.decimals,
                         "description": transaction.attachment.description
                     };
-                    if (asset) {
+                    if (!asset.errorCode) {
                         data["initial_quantity"] = [asset.initialQuantityQNT, transaction.attachment.decimals];
                         data["quantity"] = [asset.quantityQNT, transaction.attachment.decimals];
                     }
@@ -539,7 +539,7 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "AskOrderCancellation")) {
                 async = true;
                 NRS.sendRequest("getTransaction", {
-                    "transaction": transaction.attachment.order // TODO this won't work need full hash
+                    "fullHash": transaction.attachment.orderHash
                 }, function (transaction) {
                     if (transaction.attachment.asset) {
                         NRS.sendRequest("getAsset", {
@@ -567,7 +567,7 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "BidOrderCancellation")) {
                 async = true;
                 NRS.sendRequest("getTransaction", {
-                    "transaction": transaction.attachment.order // TODO this won't work need full hash
+                    "fullHash": transaction.attachment.orderHash
                 }, function (transaction) {
                     if (transaction.attachment.asset) {
                         NRS.sendRequest("getAsset", {
@@ -1175,6 +1175,8 @@ var NRS = (function (NRS, $, undefined) {
                 var chainDecimals = NRS.constants.CHAIN_PROPERTIES[transaction.attachment.chain].decimals;
                 data.amount_formatted_html = NRS.formatQuantity(transaction.attachment.amountNQT, chainDecimals) + " " + NRS.getChain(transaction.attachment.chain).name;
                 data.price_formatted_html = NRS.formatQuantity(transaction.attachment.priceNQT, chainDecimals)  + " " + NRS.getChain(transaction.attachment.chain).name;
+                var chainAmount = new BigInteger(transaction.attachment.amountNQT).divide(new BigInteger(transaction.attachment.priceNQT));
+                data.exchange_amount_formatted = NRS.formatQuantity(chainAmount, 0)  + " " + NRS.getChain(transaction.attachment.exchangeChain).name;
 
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();
