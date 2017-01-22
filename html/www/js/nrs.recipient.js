@@ -133,63 +133,68 @@ var NRS = (function(NRS, $) {
 		NRS.sendRequest("getAccount", {
 			"account": accountId
 		}, function(response) {
-			var result;
-			if (response.publicKey) {
-				if (response.name){
-					result = {
-						"type": "info",
-						"message": $.t("recipient_info_with_name", {
-							"name" : NRS.unescapeRespStr(response.name),
-							"nxt": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true)
-						}),
-						"account": response
-					};
-				}
-				else{
-					result = {
-						"type": "info",
-						"message": $.t("recipient_info", {
-							"nxt": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true)
-						}),
-						"account": response
-					};
-				}
-			} else {
-				if (response.errorCode) {
-					if (response.errorCode == 4) {
-						result = {
-							"type": "danger",
-							"message": $.t("recipient_malformed") + (!/^(NXT\-)/i.test(accountId) ? " " + $.t("recipient_alias_suggestion") : ""),
-							"account": null
-						};
-					} else if (response.errorCode == 5) {
-						result = {
-							"type": "warning",
-							"message": $.t("recipient_unknown_pka"),
-							"account": null,
-							"noPublicKey": true
-						};
-					} else {
-						result = {
-							"type": "danger",
-							"message": $.t("recipient_problem") + " " + NRS.unescapeRespStr(response.errorDescription),
-							"account": null
-						};
-					}
-				} else {
-					result = {
-						"type": "warning",
-						"message": $.t("recipient_no_public_key_pka", {
-							"nxt": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true)
-						}),
-						"account": response,
-						"noPublicKey": true
-					};
-				}
-			}
-			result.message = result.message.escapeHTML();
-			callback(result);
-		});
+            NRS.sendRequest("getBalance", {
+                "account": accountId,
+                "chain": NRS.getActiveChainId()
+            }, function (balance) {
+                var result;
+                if (response.publicKey) {
+                    if (response.name) {
+                        result = {
+                            "type": "info",
+                            "message": $.t("recipient_info_with_name", {
+                                "name": NRS.unescapeRespStr(response.name),
+                                "nxt": NRS.formatAmount(balance.unconfirmedBalanceNQT, false, true)
+                            }),
+                            "account": response
+                        };
+                    }
+                    else {
+                        result = {
+                            "type": "info",
+                            "message": $.t("recipient_info", {
+                                "nxt": NRS.formatAmount(balance.unconfirmedBalanceNQT, false, true)
+                            }),
+                            "account": response
+                        };
+                    }
+                } else {
+                    if (response.errorCode) {
+                        if (response.errorCode == 4) {
+                            result = {
+                                "type": "danger",
+                                "message": $.t("recipient_malformed") + (!/^(NXT\-)/i.test(accountId) ? " " + $.t("recipient_alias_suggestion") : ""),
+                                "account": null
+                            };
+                        } else if (response.errorCode == 5) {
+                            result = {
+                                "type": "warning",
+                                "message": $.t("recipient_unknown_pka"),
+                                "account": null,
+                                "noPublicKey": true
+                            };
+                        } else {
+                            result = {
+                                "type": "danger",
+                                "message": $.t("recipient_problem") + " " + NRS.unescapeRespStr(response.errorDescription),
+                                "account": null
+                            };
+                        }
+                    } else {
+                        result = {
+                            "type": "warning",
+                            "message": $.t("recipient_no_public_key_pka", {
+                                "nxt": NRS.formatAmount(balance.unconfirmedBalanceNQT, false, true)
+                            }),
+                            "account": response,
+                            "noPublicKey": true
+                        };
+                    }
+                }
+                result.message = result.message.escapeHTML();
+                callback(result);
+            });
+        });
 	};
 
 	NRS.correctAddressMistake = function(el) {

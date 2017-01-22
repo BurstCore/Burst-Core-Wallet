@@ -1124,7 +1124,8 @@ NRS.addPagination = function () {
 				}
                 NRS.updateDashboardMessage();
                 NRS.sendRequest("getBalance", {
-                    "account": NRS.account
+                    "account": NRS.account,
+					"chain": NRS.getActiveChainId()
                 }, function(balance) {
                     $("#account_balance, #account_balance_sidebar").html(NRS.formatStyledAmount(balance.unconfirmedBalanceNQT));
                     NRS.accountInfo = $.extend({}, NRS.accountInfo, balance);

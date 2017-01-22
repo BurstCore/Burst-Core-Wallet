@@ -80,11 +80,16 @@ var NRS = (function(NRS, $) {
 	};
 
 	NRS.processAccountModalData = function(account) {
-		if (account.unconfirmedBalanceNQT == "0") {
-			$("#user_info_modal_account_balance").html("0");
-		} else {
-			$("#user_info_modal_account_balance").html(NRS.formatAmount(account.unconfirmedBalanceNQT) + " " + NRS.getActiveChainName());
-		}
+		NRS.sendRequest("getBalance", {
+			"account": account.accountRS,
+			"chain": NRS.getActiveChainId()
+		}, function(response) {
+            if (response.unconfirmedBalanceNQT == "0") {
+                $("#user_info_modal_account_balance").html("0");
+            } else {
+                $("#user_info_modal_account_balance").html(NRS.formatAmount(response.unconfirmedBalanceNQT) + " " + NRS.getActiveChainName());
+            }
+		});
 
 		if (account.name) {
 			$("#user_info_modal_account_name").html(NRS.escapeRespStr(account.name));
@@ -117,7 +122,7 @@ var NRS = (function(NRS, $) {
 	body.on("click", ".switch-account", function() {
 		var account = $(this).data("account");
 		NRS.closeModal($("#user_info_modal"));
-		NRS.switchAccount(account);
+		NRS.switchAccount(account, NRS.getActiveChain());
 	});
 
 	var userInfoModal = $("#user_info_modal");

@@ -104,28 +104,6 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject accountBalance(Account account, boolean includeEffectiveBalance, int height) {
-        JSONObject json = new JSONObject();
-        if (account == null) {
-            json.put("balanceNQT", "0");
-            json.put("unconfirmedBalanceNQT", "0");
-            json.put("forgedBalanceFQT", "0");
-            if (includeEffectiveBalance) {
-                json.put("effectiveBalanceFXT", "0");
-                json.put("guaranteedBalanceFQT", "0");
-            }
-        } else {
-            json.put("balanceNQT", String.valueOf(FxtChain.FXT.getBalanceHome().getBalance(account.getId(), height).getBalance()));
-            json.put("unconfirmedBalanceNQT", String.valueOf(FxtChain.FXT.getBalanceHome().getBalance(account.getId(), height).getUnconfirmedBalance()));
-            json.put("forgedBalanceFQT", String.valueOf(account.getForgedBalanceFQT()));
-            if (includeEffectiveBalance) {
-                json.put("effectiveBalanceFXT", account.getEffectiveBalanceFXT(height));
-                json.put("guaranteedBalanceFQT", String.valueOf(account.getGuaranteedBalanceFQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height)));
-            }
-        }
-        return json;
-    }
-
     static JSONObject balance(Chain chain, long accountId, int height) {
         JSONObject json = new JSONObject();
         BalanceHome.Balance balance = chain.getBalanceHome().getBalance(accountId, height);

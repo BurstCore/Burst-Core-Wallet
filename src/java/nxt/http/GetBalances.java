@@ -38,29 +38,35 @@ public final class GetBalances extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         long accountId = ParameterParser.getAccountId(req, true);
         int height = ParameterParser.getHeight(req);
-        if (height < 0) {
-            height = Nxt.getBlockchain().getHeight();
-        }
-        String[] chains = req.getParameterValues("chain");
-        if (chains == null || chains.length == 0) {
-            return JSONResponses.MISSING_CHAIN;
-        }
-        JSONObject chainBalances = new JSONObject();
-        for (String chainId : chains) {
-            Chain chain = Chain.getChain(chainId.toUpperCase());
-            if (chain == null) {
-                try {
-                    chain = Chain.getChain(Integer.parseInt(chainId));
-                } catch (NumberFormatException ignore) {}
-                if (chain == null) {
-                    return UNKNOWN_CHAIN;
-                }
+        Nxt.getBlockchain().readLock();
+        try {
+            if (height < 0) {
+                height = Nxt.getBlockchain().getHeight();
             }
-            chainBalances.put(chain.getId(), JSONData.balance(chain, accountId, height));
+            String[] chains = req.getParameterValues("chain");
+            if (chains == null || chains.length == 0) {
+                return JSONResponses.MISSING_CHAIN;
+            }
+            JSONObject chainBalances = new JSONObject();
+            for (String chainId : chains) {
+                Chain chain = Chain.getChain(chainId.toUpperCase());
+                if (chain == null) {
+                    try {
+                        chain = Chain.getChain(Integer.parseInt(chainId));
+                    } catch (NumberFormatException ignore) {
+                    }
+                    if (chain == null) {
+                        return UNKNOWN_CHAIN;
+                    }
+                }
+                chainBalances.put(chain.getId(), JSONData.balance(chain, accountId, height));
+            }
+            JSONObject response = new JSONObject();
+            response.put("balances", chainBalances);
+            return response;
+        } finally {
+            Nxt.getBlockchain().readUnlock();
         }
-        JSONObject response = new JSONObject();
-        response.put("balances", chainBalances);
-        return response;
     }
 
 }
