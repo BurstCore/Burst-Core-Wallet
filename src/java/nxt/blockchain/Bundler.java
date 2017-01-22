@@ -272,7 +272,8 @@ public final class Bundler {
     }
 
     private long overpay(long feeFQT) {
-        return Math.addExact(feeFQT, Math.multiplyExact(overpayFQTPerFXT, feeFQT) / Constants.ONE_FXT);
+        return Math.addExact(feeFQT, BigInteger.valueOf(overpayFQTPerFXT).multiply(BigInteger.valueOf(feeFQT))
+                .divide(BigInteger.valueOf(Constants.ONE_FXT)).longValueExact());
     }
 
 }
