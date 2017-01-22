@@ -38,6 +38,7 @@ import nxt.messaging.PrunablePlainMessageAppendix;
 import nxt.util.Convert;
 import nxt.voting.PhasingAppendix;
 import nxt.voting.PhasingParams;
+import nxt.voting.VoteWeighting;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -136,6 +137,10 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         long minBalance = ParameterParser.getLong(req, parameterPrefix + "MinBalance", 0, Long.MAX_VALUE, false);
         byte minBalanceModel = ParameterParser.getByte(req, parameterPrefix + "MinBalanceModel", (byte)0, (byte)3, false);
         long holdingId = ParameterParser.getUnsignedLong(req, parameterPrefix + "Holding", false);
+        if (holdingId == 0 &&
+                (votingModel == VoteWeighting.VotingModel.COIN.getCode() || minBalanceModel == VoteWeighting.MinBalanceModel.COIN.getCode())) {
+            holdingId = ParameterParser.getChain(req).getId();
+        }
         long[] whitelist = null;
         String[] whitelistValues = req.getParameterValues(parameterPrefix + "Whitelisted");
         if (whitelistValues != null && whitelistValues.length > 0) {
