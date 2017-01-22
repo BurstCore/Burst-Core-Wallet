@@ -525,8 +525,9 @@ var NRS = (function (NRS, $, undefined) {
                     data["recipient"] = transaction.recipientRS ? transaction.recipientRS : transaction.recipient;
                     infoTable.find("tbody").append(NRS.createInfoTable(data));
                     infoTable.show();
-
-                    $("#transaction_info_modal").modal("show");
+                    if (!isModalVisible) {
+                        $("#transaction_info_modal").modal("show");
+                    }
                     NRS.fetchingModalData = false;
                 });
             } else if (NRS.isOfType(transaction, "AskOrderPlacement") || NRS.isOfType(transaction, "BidOrderPlacement")) {
@@ -557,7 +558,9 @@ var NRS = (function (NRS, $, undefined) {
                             data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
                             infoTable.find("tbody").append(NRS.createInfoTable(data));
                             infoTable.show();
-                            $("#transaction_info_modal").modal("show");
+                            if (!isModalVisible) {
+                                $("#transaction_info_modal").modal("show");
+                            }
                             NRS.fetchingModalData = false;
                         });
                     } else {
@@ -585,7 +588,9 @@ var NRS = (function (NRS, $, undefined) {
                             data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
                             infoTable.find("tbody").append(NRS.createInfoTable(data));
                             infoTable.show();
-                            $("#transaction_info_modal").modal("show");
+                            if (!isModalVisible) {
+                                $("#transaction_info_modal").modal("show");
+                            }
                             NRS.fetchingModalData = false;
                         });
                     } else {
@@ -612,7 +617,9 @@ var NRS = (function (NRS, $, undefined) {
                             infoTable.find("tbody").append(NRS.createInfoTable(data));
                             infoTable.show();
 
-                            $("#transaction_info_modal").modal("show");
+                            if (!isModalVisible) {
+                                $("#transaction_info_modal").modal("show");
+                            }
                             NRS.fetchingModalData = false;
                         });
                     } else {
@@ -635,7 +642,9 @@ var NRS = (function (NRS, $, undefined) {
                     infoTable.find("tbody").append(NRS.createInfoTable(data));
                     infoTable.show();
 
-                    $("#transaction_info_modal").modal("show");
+                    if (!isModalVisible) {
+                        $("#transaction_info_modal").modal("show");
+                    }
                     NRS.fetchingModalData = false;
                 });
             } else if (NRS.isOfType(transaction, "DigitalGoodsListing")) {
@@ -664,7 +673,9 @@ var NRS = (function (NRS, $, undefined) {
                     infoTable.find("tbody").append(NRS.createInfoTable(data));
                     infoTable.show();
 
-                    $("#transaction_info_modal").modal("show");
+                    if (!isModalVisible) {
+                        $("#transaction_info_modal").modal("show");
+                    }
                     NRS.fetchingModalData = false;
                 });
             } else if (NRS.isOfType(transaction, "DigitalGoodsPriceChange")) {
@@ -682,7 +693,9 @@ var NRS = (function (NRS, $, undefined) {
                     infoTable.find("tbody").append(NRS.createInfoTable(data));
                     infoTable.show();
 
-                    $("#transaction_info_modal").modal("show");
+                    if (!isModalVisible) {
+                        $("#transaction_info_modal").modal("show");
+                    }
                     NRS.fetchingModalData = false;
                 });
             } else if (NRS.isOfType(transaction, "DigitalGoodsQuantityChange")) {
@@ -700,7 +713,9 @@ var NRS = (function (NRS, $, undefined) {
                     infoTable.find("tbody").append(NRS.createInfoTable(data));
                     infoTable.show();
 
-                    $("#transaction_info_modal").modal("show");
+                    if (!isModalVisible) {
+                        $("#transaction_info_modal").modal("show");
+                    }
                     NRS.fetchingModalData = false;
                 });
             } else if (NRS.isOfType(transaction, "DigitalGoodsPurchase")) {
@@ -754,7 +769,9 @@ var NRS = (function (NRS, $, undefined) {
                         if (callout) {
                             $("#transaction_info_bottom").html("<div class='callout " + (purchase.errorCode ? "callout-danger" : "callout-info") + " callout-bottom'>" + callout + "</div>").show();
                         }
-                        $("#transaction_info_modal").modal("show");
+                        if (!isModalVisible) {
+                            $("#transaction_info_modal").modal("show");
+                        }
                         NRS.fetchingModalData = false;
                     });
                 });
@@ -814,7 +831,9 @@ var NRS = (function (NRS, $, undefined) {
                             $("#transaction_info_bottom").append("<div class='callout callout-info callout-bottom'>" + callout + "</div>").show();
                         }
 
-                        $("#transaction_info_modal").modal("show");
+                        if (!isModalVisible) {
+                            $("#transaction_info_modal").modal("show");
+                        }
                         NRS.fetchingModalData = false;
                     });
                 });
@@ -855,11 +874,15 @@ var NRS = (function (NRS, $, undefined) {
                                 if (callout) {
                                     $("#transaction_info_bottom").append("<div class='callout callout-info callout-bottom'>" + callout + "</div>").show();
                                 }
-                                $("#transaction_info_modal").modal("show");
+                                if (!isModalVisible) {
+                                    $("#transaction_info_modal").modal("show");
+                                }
                                 NRS.fetchingModalData = false;
                             });
                         } else {
-                            $("#transaction_info_modal").modal("show");
+                            if (!isModalVisible) {
+                                $("#transaction_info_modal").modal("show");
+                            }
                             NRS.fetchingModalData = false;
                         }
                     });
@@ -883,7 +906,9 @@ var NRS = (function (NRS, $, undefined) {
                         data["seller"] = NRS.getAccountFormatted(purchase, "seller");
                         infoTable.find("tbody").append(NRS.createInfoTable(data));
                         infoTable.show();
-                        $("#transaction_info_modal").modal("show");
+                        if (!isModalVisible) {
+                            $("#transaction_info_modal").modal("show");
+                        }
                         NRS.fetchingModalData = false;
                     });
                 });
