@@ -449,8 +449,8 @@ public class TestShuffling extends BlockchainTest {
         Assert.assertEquals(100000, DAVE.getCurrencyUnitsDiff(shufflingCurrency));
         Assert.assertEquals(100000, DAVE.getUnconfirmedCurrencyUnitsDiff(shufflingCurrency));
 
-        Assert.assertEquals(4 *  ChildChain.IGNIS.ONE_COIN +  ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 3 *  ChildChain.IGNIS.ONE_COIN + 1000 *  ChildChain.IGNIS.ONE_COIN, FORGY.getChainBalanceDiff(ChildChain.IGNIS.getId()));
-        Assert.assertEquals(4 *  ChildChain.IGNIS.ONE_COIN +  ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 3 *  ChildChain.IGNIS.ONE_COIN *  ChildChain.IGNIS.ONE_COIN, FORGY.getChainUnconfirmedBalanceDiff(ChildChain.IGNIS.getId()));
+        Assert.assertEquals(4 *  ChildChain.IGNIS.ONE_COIN +  ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 3 *  ChildChain.IGNIS.ONE_COIN + 1000 * ChildChain.IGNIS.ONE_COIN, FORGY.getChainBalanceDiff(ChildChain.IGNIS.getId()));
+        Assert.assertEquals(4 *  ChildChain.IGNIS.ONE_COIN +  ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 3 *  ChildChain.IGNIS.ONE_COIN + 1000 * ChildChain.IGNIS.ONE_COIN, FORGY.getChainUnconfirmedBalanceDiff(ChildChain.IGNIS.getId()));
 
     }
 
