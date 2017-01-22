@@ -605,7 +605,7 @@ var NRS = (function(NRS, $, undefined) {
                 balanceType = "currency";
                 balanceEntity = response.name;
                 change = NRS.formatQuantity(change, response.decimals, false, decimalParams.holdingChangeDecimals);
-                balance = NRS.formatQuantity(balance, response.decimals, false, decimalParams.holdingBalanceDecimals);
+                balance = NRS.formatQuantity(balance, response.decimals, false, NRS.getChain(entry.chain).decimals);
                 holdingIcon =  "<i class='fa fa-bank'></i> ";
             }, { isAsync: false });
         } else {
@@ -637,6 +637,7 @@ var NRS = (function(NRS, $, undefined) {
         html += "<a class='" + linkClass + "' href='#' data-timestamp='" + NRS.escapeRespStr(entry.timestamp) + "' " + dataToken + ">";
         html += " <i class='fa fa-info'></i></a>";
 		html += '</td>';
+		html += "<td>" + NRS.getChainLink(entry.chain) + "</td>";
 		if (balanceType == "nxt") {
             html += "<td style='vertical-align:middle;" + color + "' class='numeric'>" + sign + change + "</td>";
             html += "<td style='vertical-align:middle;' class='numeric'>" + balance + "</td>";

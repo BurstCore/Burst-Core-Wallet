@@ -57,14 +57,20 @@ var NRS = (function(NRS, $) {
                 entryDetails.entryTime = NRS.formatTimestamp(entryDetails.timestamp);
             }
             if (entryDetails.holding) {
-                entryDetails.holding_formatted_html = NRS.getEntityLink(entry.holding, entryDetails.holdingType);
+                if (entryDetails.holdingTypeCode <= 2) {
+                    entryDetails.holding_formatted_html = NRS.getChainLink(entry.chain);
+                } else {
+                    entryDetails.holding_formatted_html = NRS.getEntityLink(entry.holding, entryDetails.holdingType);
+                }
                 delete entryDetails.holding;
+                delete entryDetails.holdingTypeCode;
+                delete entryDetails.holdingTypeIsUnconfirmed;
             }
             entryDetails.height_formatted_html = NRS.getBlockLink(entry.height);
             delete entryDetails.block;
             delete entryDetails.height;
             if (entryDetails.isTransactionEvent) {
-                entryDetails.transaction_formatted_html = NRS.getTransactionLink(entry.eventHash, NRS.formatTimestamp(entry.timestamp));
+                entryDetails.transaction_formatted_html = NRS.getTransactionLink(entry.eventHash, NRS.formatTimestamp(entry.timestamp), false, entry.chain);
             }
             delete entryDetails.event;
             delete entryDetails.isTransactionEvent;
