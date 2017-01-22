@@ -17,8 +17,8 @@ public class AssetExchangeTest extends BlockchainTest {
                 .param("secretPhrase", creator.getSecretPhrase())
                 .param("name", "asset1")
                 .param("description", "asset testing")
-                .param("quantityQNT", 100000)
-                .param("decimals", 2)
+                .param("quantityQNT", 10000000)
+                .param("decimals", 4)
                 .param("feeNQT", 1000 * ChildChain.IGNIS.ONE_COIN)
                 .param("deadline", 1440)
                 .build();
@@ -59,9 +59,9 @@ public class AssetExchangeTest extends BlockchainTest {
     public void ignisDividend() {
         JSONObject response = issueAsset(ALICE);
         String assetId = Tester.responseToStringId(response);
-        transfer(assetId, ALICE, BOB, 300 * 100);
-        transfer(assetId, ALICE, CHUCK, 200 * 100);
-        transfer(assetId, ALICE, DAVE, 100 * 100);
+        transfer(assetId, ALICE, BOB, 300 * 10000);
+        transfer(assetId, ALICE, CHUCK, 200 * 10000);
+        transfer(assetId, ALICE, DAVE, 100 * 10000);
         generateBlock();
 
         // Pay dividend in IGNIS, nice and round
@@ -77,17 +77,18 @@ public class AssetExchangeTest extends BlockchainTest {
     public void usdDividend() {
         JSONObject response = issueAsset(RIKER);
         String assetId = Tester.responseToStringId(response);
-        transfer(assetId, RIKER, BOB, 300 * 100);
-        transfer(assetId, RIKER, CHUCK, 200 * 100);
-        transfer(assetId, RIKER, DAVE, 100 * 100);
+        transfer(assetId, RIKER, BOB, 5555555);
+        transfer(assetId, RIKER, CHUCK, 2222222);
+        transfer(assetId, RIKER, DAVE, 1111111);
         generateBlock();
 
         int chainId = ChildChain.USD.getId();
         payDividened(assetId, RIKER, Nxt.getBlockchain().getHeight(), 1L, ChildChain.USD);
         generateBlock();
-        Assert.assertEquals(300, BOB.getChainBalanceDiff(chainId));
-        Assert.assertEquals(200, CHUCK.getChainBalanceDiff(chainId));
-        Assert.assertEquals(100, DAVE.getChainBalanceDiff(chainId));
+        Assert.assertEquals(-555-222-111 - ChildChain.USD.ONE_COIN, RIKER.getChainBalanceDiff(chainId));
+        Assert.assertEquals(555, BOB.getChainBalanceDiff(chainId));
+        Assert.assertEquals(222, CHUCK.getChainBalanceDiff(chainId));
+        Assert.assertEquals(111, DAVE.getChainBalanceDiff(chainId));
     }
 
 }
