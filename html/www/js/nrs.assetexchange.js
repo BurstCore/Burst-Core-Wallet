@@ -561,11 +561,11 @@ var NRS = (function (NRS, $, undefined) {
             $("#sell_asset_button").data("asset", assetId);
             $("#buy_asset_button").data("asset", assetId);
             $("#view_asset_distribution_link").data("asset", assetId);
-            $("#sell_asset_for_nxt").html($.t("sell_asset_for_nxt", {
-                "assetName": NRS.escapeRespStr(asset.name)
+            $("#sell_asset_for_nxt").html($.t("sell_asset_for_coin", {
+                assetName: NRS.escapeRespStr(asset.name), coin: NRS.getActiveChainName()
             }));
-            $("#buy_asset_with_nxt").html($.t("buy_asset_with_nxt", {
-                "assetName": NRS.escapeRespStr(asset.name)
+            $("#buy_asset_with_nxt").html($.t("buy_asset_with_coin", {
+                assetName: NRS.escapeRespStr(asset.name), coin: NRS.getActiveChainName()
             }));
             $("#sell_asset_price, #buy_asset_price").val("");
             $("#sell_asset_quantity, #sell_asset_total, #buy_asset_quantity, #buy_asset_total").val("0");
