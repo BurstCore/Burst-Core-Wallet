@@ -20,6 +20,7 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.blockchain.Transaction;
 import nxt.util.Convert;
+import nxt.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -67,6 +68,9 @@ public final class BroadcastTransaction extends APIServlet.APIRequestHandler {
             Nxt.getTransactionProcessor().broadcast(transaction);
             response.put("fullHash", Convert.toHexString(transaction.getFullHash()));
         } catch (NxtException.ValidationException|RuntimeException e) {
+            if (e instanceof RuntimeException) {
+                Logger.logDebugMessage("Request processing failed", e);
+            }
             JSONData.putException(response, e, "Failed to broadcast transaction");
         }
         return response;
