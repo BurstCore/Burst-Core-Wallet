@@ -281,7 +281,7 @@ public final class ExchangeOfferHome {
             sellOffer.decreaseLimitAndSupply(curUnitsQNT);
             BuyOffer buyOffer = sellOffer.getCounterOffer();
             long unconfirmedAmount = buyOffer.getAmount();
-            long excess = buyOffer.increaseSupply(curUnitsQNT, curAmountNQT);
+            buyOffer.increaseSupply(curUnitsQNT);
             //
             // Update the seller account balances
             //
@@ -289,10 +289,8 @@ public final class ExchangeOfferHome {
             AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(sellOffer.getId(),
                     sellOffer.getFullHash(), childChain);
             counterAccount.addToBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, eventId, curAmountNQT);
-            if (excess != 0) {
-                counterAccount.addToUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE,
-                        eventId, curAmountNQT + unconfirmedAmount);
-            }
+            counterAccount.addToUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE,
+                        eventId, Math.addExact(curAmountNQT, (unconfirmedAmount - buyOffer.getAmount())));
             counterAccount.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, eventId, currencyId, -curUnitsQNT);
             exchangeHome.addExchange(transaction, currencyId, sellOffer, sellOffer.getAccountId(),
                     account.getId(), curUnitsQNT);
@@ -540,13 +538,12 @@ public final class ExchangeOfferHome {
             return getSellOffer(id);
         }
 
-        long increaseSupply(long deltaUnits, long deltaAmount) {
+        @Override
+        long increaseSupply(long deltaUnits) {
             long excess = super.increaseSupply(deltaUnits);
-            if (excess == 0) {
-                amount += deltaAmount;
-            } else {
-                amount = 0;
-            }
+            Currency currency = Currency.getCurrency(getCurrencyId());
+            amount = Convert.unitRateToAmount(getSupply(), currency.getDecimals(),
+                                              getRateNQT(), childChain.getDecimals());
             buyOfferTable.insert(this);
             return excess;
         }
