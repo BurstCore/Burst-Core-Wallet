@@ -1271,6 +1271,8 @@ public final class JSONData {
         json.put("balance", String.valueOf(entry.getBalance()));
         AccountLedger.LedgerHolding ledgerHolding = entry.getHolding();
         json.put("holdingType", ledgerHolding.name());
+        json.put("holdingTypeCode", ledgerHolding.getCode());
+        json.put("holdingTypeIsUnconfirmed", ledgerHolding.isUnconfirmed());
         json.put("holding", Long.toUnsignedString(entry.getHoldingId()));
         if (includeHoldingInfo) {
             JSONObject holdingJson = null;
