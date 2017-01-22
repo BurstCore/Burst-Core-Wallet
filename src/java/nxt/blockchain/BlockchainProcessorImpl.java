@@ -1124,7 +1124,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public List<BlockImpl> popOffTo(int height) {
-        if (height <= 0) {
+        if (height < 0) {
             fullReset();
         } else if (height < blockchain.getHeight()) {
             return popOffTo(blockchain.getBlockAtHeight(height));
