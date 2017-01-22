@@ -1134,10 +1134,10 @@ var NRS = (function (NRS, $, undefined) {
     };
 
     NRS.pages.open_coin_orders = function() {
-        NRS.getOpenOrders();
+        NRS.getOpenCoinOrders();
     };
 
-    NRS.getOpenOrders = function() {
+    NRS.getOpenCoinOrders = function() {
         NRS.sendRequest("getCoinExchangeOrders", {
             "firstIndex": 0,
             "lastIndex": 100
