@@ -1771,45 +1771,46 @@ NRS.addPagination = function () {
 					});
 				}
 			});
-		} else {
-			if (!/^\d+$/.test(id)) {
-				$.growl($.t("error_search_invalid"), {
-					"type": "danger"
-				});
-				return;
-			}
+		} else if (/^[0-9a-fA-F]{64}$/.test(id)) {
 			NRS.sendRequest("getTransaction", {
 				"fullHash": id
-			}, function(response, input) {
+			}, function(response) {
 				if (!response.errorCode) {
-					response.transaction = input.transaction;
 					NRS.showTransactionModal(response, response.chain);
 				} else {
-					NRS.sendRequest("getAccount", {
-						"account": id
-					}, function(response, input) {
-						if (!response.errorCode) {
-							response.account = input.account;
-							NRS.showAccountModal(response);
-						} else {
-							NRS.sendRequest("getBlock", {
-								"block": id,
-                                "includeTransactions": "true"
-							}, function(response, input) {
-								if (!response.errorCode) {
-									response.block = input.block;
-									NRS.showBlockModal(response);
-								} else {
-									$.growl($.t("error_search_no_results"), {
-										"type": "danger"
-									});
-								}
-							});
-						}
-					});
+                    $.growl($.t("error_search_full_hash_not_found", { chain: NRS.getActiveChainName() }), {
+                        "type": "danger"
+                    });
 				}
 			});
-		}
+		} else {
+            if (!/^\d+$/.test(id)) {
+                $.growl($.t("error_search_invalid"), {
+                    "type": "danger"
+                });
+                return;
+            }
+			NRS.sendRequest("getAccount", {
+                "account": id
+            }, function(response) {
+                if (!response.errorCode) {
+                    NRS.showAccountModal(response);
+                } else {
+                    NRS.sendRequest("getBlock", {
+                        "block": id,
+                        "includeTransactions": "true"
+                    }, function(response) {
+                        if (!response.errorCode) {
+                            NRS.showBlockModal(response);
+                        } else {
+                            $.growl($.t("error_search_no_results"), {
+                                "type": "danger"
+                            });
+                        }
+                    });
+                }
+            });
+        }
 	});
 
 	function checkLocalStorage() {
