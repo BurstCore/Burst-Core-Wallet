@@ -808,7 +808,7 @@ public final class ShufflingHome {
                 }
             }
             if (childBlockFxtTransaction == null) {
-                return true;
+                return block.getFxtTransactions().size() == Constants.MAX_NUMBER_OF_FXT_TRANSACTIONS;
             }
             return childBlockFxtTransaction.getFullSize() + transactionSize > Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH;
         }
