@@ -37,7 +37,7 @@ public abstract class BlockchainTest extends AbstractBlockchainTest {
     public static Tester CHUCK;
     public static Tester DAVE;
 
-    protected static int baseHeight;
+    protected static final int baseHeight = 0;
 
     private static String forgerSecretPhrase = "aSykrgKGZNlSVOMDxkZZgbTvQqJPGtsBggb";
     private static final String forgerAccountId = "NXT-9KZM-KNYY-QBXZ-5TD8V";
@@ -73,7 +73,7 @@ public abstract class BlockchainTest extends AbstractBlockchainTest {
         initNxt();
         
         Nxt.setTime(new Time.CounterTime(Nxt.getEpochTime()));
-        baseHeight = blockchain.getHeight();
+        Nxt.getBlockchainProcessor().popOffTo(baseHeight);
         Logger.logMessage("baseHeight: " + baseHeight);
         FORGY = new Tester(forgerSecretPhrase);
         ALICE = new Tester(aliceSecretPhrase);

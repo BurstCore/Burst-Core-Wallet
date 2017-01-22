@@ -92,6 +92,10 @@ public class APICall {
             return param("feeNQT", "" + value);
         }
 
+        public Builder feeRateNQTPerFXT(long value) {
+            return param("feeRateNQTPerFXT", "" + value);
+        }
+
         public Builder recipient(long id) {
             return param("recipient", Long.toUnsignedString(id));
         }

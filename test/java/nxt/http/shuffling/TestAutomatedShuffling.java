@@ -1269,9 +1269,10 @@ public class TestAutomatedShuffling extends BlockchainTest {
         JSONObject transactionJSON = (JSONObject)processResponse.get("transactionJSON");
         JSONArray data = (JSONArray)((JSONObject)transactionJSON.get("attachment")).get("data");
 
-        byte[] nonce = Convert.toBytes(Convert.parseUnsignedLong(shufflingFullHash));
+        byte[] nonce = Convert.parseHexString(shufflingFullHash);
         byte[] bytesToEncrypt = BOB_RECIPIENT.getPublicKey();
-        byte[] nonce2 = Convert.toBytes(Convert.parseUnsignedLong(shufflingFullHash) + 1);
+        byte[] nonce2 = Convert.parseHexString(shufflingFullHash);
+        nonce2[0] ^= 1;
         bytesToEncrypt = AnonymouslyEncryptedData.encrypt(bytesToEncrypt, BOB.getSecretPhrase(), DAVE.getPublicKey(), nonce).getBytes();
         byte[] bobBytes = AnonymouslyEncryptedData.encrypt(bytesToEncrypt, BOB.getSecretPhrase(), CHUCK.getPublicKey(), nonce).getBytes();
         byte[] modifiedBytes = AnonymouslyEncryptedData.encrypt(bytesToEncrypt, BOB.getSecretPhrase(), CHUCK.getPublicKey(), nonce2).getBytes();

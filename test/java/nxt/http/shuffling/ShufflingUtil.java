@@ -44,7 +44,8 @@ class ShufflingUtil {
     static JSONObject create(Tester creator, int participantCount) {
         APICall apiCall = new APICall.Builder("shufflingCreate").
                 secretPhrase(creator.getSecretPhrase()).
-                feeNQT(ChildChain.IGNIS.ONE_COIN).
+                feeNQT(0).
+                feeRateNQTPerFXT(ChildChain.IGNIS.ONE_COIN).
                 param("amount", String.valueOf(defaultShufflingAmount)).
                 param("participantCount", String.valueOf(participantCount)).
                 param("registrationPeriod", 10).
@@ -69,7 +70,8 @@ class ShufflingUtil {
         BlockchainTest.generateBlock();
         apiCall = new APICall.Builder("shufflingCreate").
                 secretPhrase(creator.getSecretPhrase()).
-                feeNQT(ChildChain.IGNIS.ONE_COIN).
+                feeNQT(0).
+                feeRateNQTPerFXT(ChildChain.IGNIS.ONE_COIN).
                 param("amount", String.valueOf(defaultHoldingShufflingAmount)).
                 param("participantCount", "4").
                 param("registrationPeriod", 10).
@@ -130,7 +132,8 @@ class ShufflingUtil {
         BlockchainTest.generateBlock();
         apiCall = new APICall.Builder("shufflingCreate").
                 secretPhrase(creator.getSecretPhrase()).
-                feeNQT(ChildChain.IGNIS.ONE_COIN).
+                feeNQT(0).
+                feeRateNQTPerFXT(ChildChain.IGNIS.ONE_COIN).
                 param("amount", String.valueOf(defaultHoldingShufflingAmount)).
                 param("participantCount", "4").
                 param("registrationPeriod", 10).
@@ -145,7 +148,8 @@ class ShufflingUtil {
     static JSONObject register(String shufflingFullHash, Tester tester) {
         APICall apiCall = new APICall.Builder("shufflingRegister").
                 secretPhrase(tester.getSecretPhrase()).
-                feeNQT(ChildChain.IGNIS.ONE_COIN).
+                feeNQT(0).
+                feeRateNQTPerFXT(ChildChain.IGNIS.ONE_COIN).
                 param("shufflingFullHash", shufflingFullHash).
                 build();
         JSONObject response = apiCall.invoke();
@@ -180,7 +184,8 @@ class ShufflingUtil {
                 param("shufflingFullHash", shufflingFullHash).
                 param("secretPhrase", tester.getSecretPhrase()).
                 param("recipientSecretPhrase", recipient.getSecretPhrase()).
-                feeNQT(10 * ChildChain.IGNIS.ONE_COIN); // TODO how to calculate this
+                feeNQT(0).
+                feeRateNQTPerFXT(ChildChain.IGNIS.ONE_COIN);
         if (!broadcast) {
             builder.param("broadcast", "false");
         }
@@ -195,7 +200,8 @@ class ShufflingUtil {
                 param("shufflingFullHash", shufflingFullHash).
                 param("secretPhrase", tester.getSecretPhrase()).
                 param("shufflingStateHash", shufflingStateHash).
-                feeNQT(ChildChain.IGNIS.ONE_COIN).
+                feeNQT(0).
+                feeRateNQTPerFXT(ChildChain.IGNIS.ONE_COIN).
                 build();
         JSONObject response = apiCall.invoke();
         Logger.logDebugMessage("shufflingVerifyResponse:" + response);
@@ -211,7 +217,8 @@ class ShufflingUtil {
                 param("shufflingFullHash", shufflingFullHash).
                 param("secretPhrase", tester.getSecretPhrase()).
                 param("shufflingStateHash", shufflingStateHash).
-                feeNQT(10 * ChildChain.IGNIS.ONE_COIN);
+                feeNQT(0).
+                feeRateNQTPerFXT(ChildChain.IGNIS.ONE_COIN);
         if (cancellingAccountId != 0) {
             builder.param("cancellingAccount", Long.toUnsignedString(cancellingAccountId));
         }
@@ -270,9 +277,10 @@ class ShufflingUtil {
                 param("secretPhrase", sender.getSecretPhrase()).
                 param("recipient", recipient.getStrId()).
                 param("amountNQT", amountNXT * ChildChain.IGNIS.ONE_COIN).
-                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
+                feeNQT(0).
+                feeRateNQTPerFXT(ChildChain.IGNIS.ONE_COIN).
                 build().invoke();
-        Logger.logMessage("sendMoneyReponse: " + response.toJSONString());
+        Logger.logMessage("sendMoneyResponse: " + response.toJSONString());
         return response;
     }
 
