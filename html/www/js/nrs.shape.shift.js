@@ -231,16 +231,6 @@ var NRS = (function(NRS, $) {
         return address;
     };
 
-    var getTransactionLink = function (transaction, coin) {
-        if (coin == "NXT") {
-            return NRS.getTransactionLink(transaction);
-        }
-        if (coin == "BTC") {
-            return "<a target='_blank' href='https://blockchain.info/tx/" + transaction + "'>" + transaction + "</a>";
-        }
-        return transaction;
-    };
-
     var renderMyExchangesTable = function () {
         var depositAddressesJSON = localStorage[DEPOSIT_ADDRESSES_KEY + NRS.accountRS];
         var depositAddresses = [];
