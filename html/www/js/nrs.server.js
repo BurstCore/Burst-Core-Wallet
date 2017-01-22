@@ -889,11 +889,11 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 8;
                 transaction.height = String(converters.byteArrayToSignedInt32(byteArray, pos));
                 pos += 4;
-                transaction.amountNQTPerQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.amountNQTPerShare = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 if (transaction.asset !== data.asset ||
                     transaction.height !== data.height ||
-                    transaction.amountNQTPerQNT !== data.amountNQTPerQNT) {
+                    transaction.amountNQTPerShare !== data.amountNQTPerShare) {
                     return false;
                 }
                 break;

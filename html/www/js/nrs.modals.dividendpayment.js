@@ -28,9 +28,7 @@ var NRS = (function(NRS, $) {
                 "error": $.t("error_amount_per_share_required")
             }
         } else {
-            data.amountNQTPerQNT = NRS.calculatePricePerWholeQNT(
-                NRS.convertToNQT(data.amountNXTPerShare),
-                NRS.getCurrentAsset().decimals);
+            data.amountNQTPerShare = NRS.convertToNQT(data.amountNXTPerShare);
         }
         if (!/^\d+$/.test(data.height)) {
             return {
@@ -76,15 +74,15 @@ var NRS = (function(NRS, $) {
                             totalQuantityQNT = totalQuantityQNT.add(new BigInteger(accountAsset.quantityQNT));
                         }
                     );
-                    var priceNQT = new BigInteger(NRS.calculatePricePerWholeQNT(NRS.convertToNQT(amountNXTPerShare), NRS.getCurrentAsset().decimals));
-                    var totalNXT = NRS.calculateOrderTotal(totalQuantityQNT, priceNQT);
-                    $callout.html($.t("dividend_payment_info_preview_success",
-                            {
-                                "amountNXT": totalNXT,
-                                "totalQuantity": NRS.formatQuantity(totalQuantityQNT, NRS.getCurrentAsset().decimals),
-                                "recipientCount": qualifiedDividendRecipients.length
-                            })
-                    );
+                    var priceNQT = new BigInteger(NRS.convertToNQT(amountNXTPerShare));
+                    var totalNQT = totalQuantityQNT.multiply(priceNQT);
+
+                    $callout.html($.t("dividend_payment_info_preview_success", {
+                        "amountNXT": NRS.intToFloat(totalNQT, NRS.getCurrentAsset().decimals + NRS.getActiveChainDecimals()),
+                        "coin": NRS.getActiveChainName(),
+                        "totalQuantity": NRS.formatQuantity(totalQuantityQNT, NRS.getCurrentAsset().decimals),
+                        "recipientCount": qualifiedDividendRecipients.length
+                    }));
                     $callout.removeClass(classes).addClass("callout-info").show();
                 },
                 function (response) {

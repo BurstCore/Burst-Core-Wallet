@@ -279,7 +279,6 @@
   "dividend_payment": "Dividend Payment",
   "dividend_payment_height_help": "Dividend calculation height must be within the last 1440 blocks.",
   "dividend_payment_info_preview_error": "Could not display preview information of the dividend payment due to an unexpected error. code: __errorCode__.",
-  "dividend_payment_info_preview_success": "A total of __amountNXT__ NXT will be distributed among __recipientCount__ accounts which own a total of __totalQuantity__ shares.",
   "dividends_payment": "Dividends Payment",
   "do_not_broadcast": "Do Not Broadcast",
   "do_not_delete": "No, Do Not Delete",
@@ -1911,5 +1910,6 @@
   "buy_asset_with_coin": "Buy __assetName__ with __coin__",
   "sell_asset_for_coin": "Sell __assetName__ for __coin__",
   "error_invalid_input": "Invalid input: __input__",
-  "error_invalid_input_numbers": "Invalid input. Only numbers and a dot are accepted: __input__"
+  "error_invalid_input_numbers": "Invalid input. Only numbers and a dot are accepted: __input__",
+  "dividend_payment_info_preview_success": "A total of __amountNXT__ __coin__ will be distributed among __recipientCount__ accounts which own a total of __totalQuantity__ shares."
 }

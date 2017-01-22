@@ -600,7 +600,7 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DividendPayment")) {
                 async = true;
                 NRS.sendRequest("getTransaction", {
-                    "transaction": transaction.fullHash
+                    "fullHash": transaction.fullHash
                 }, function (transaction) {
                     if (transaction.attachment.asset) {
                         NRS.sendRequest("getAsset", {
@@ -610,7 +610,7 @@ var NRS = (function (NRS, $, undefined) {
                                 "type": $.t("dividend_payment"),
                                 "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
                                 "asset_name": asset.name,
-                                "amount_per_share": NRS.formatOrderPricePerWholeQNT(transaction.attachment.amountNQTPerQNT, asset.decimals) + " " + NRS.getActiveChainName(),
+                                "amount_per_share": NRS.intToFloat(transaction.attachment.amountNQT, NRS.getActiveChainDecimals()) + " " + NRS.getActiveChainName(),
                                 "height": transaction.attachment.height
                             };
                             data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
