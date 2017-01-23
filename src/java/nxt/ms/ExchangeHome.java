@@ -189,7 +189,7 @@ public final class ExchangeHome {
         private final long buyerId;
         private final DbKey dbKey;
         private final long unitsQNT;
-        private final long rate;
+        private final long rateNQT;
 
         private Exchange(long transactionId, byte[] transactionHash, long currencyId, ExchangeOfferHome.ExchangeOffer offer,
                          long sellerId, long buyerId, long unitsQNT) {
@@ -206,7 +206,7 @@ public final class ExchangeHome {
             this.buyerId = buyerId;
             this.dbKey = exchangeDbKeyFactory.newKey(this.transactionHash, this.transactionId, this.offerHash, this.offerId);
             this.unitsQNT = unitsQNT;
-            this.rate = offer.getRateNQT();
+            this.rateNQT = offer.getRateNQT();
         }
 
         private Exchange(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -219,8 +219,8 @@ public final class ExchangeHome {
             this.sellerId = rs.getLong("seller_id");
             this.buyerId = rs.getLong("buyer_id");
             this.dbKey = dbKey;
-            this.unitsQNT = rs.getLong("unitsQNT");
-            this.rate = rs.getLong("rate");
+            this.unitsQNT = rs.getLong("units");
+            this.rateNQT = rs.getLong("rate");
             this.timestamp = rs.getInt("timestamp");
             this.height = rs.getInt("height");
         }
@@ -238,7 +238,7 @@ public final class ExchangeHome {
                 pstmt.setLong(++i, this.sellerId);
                 pstmt.setLong(++i, this.buyerId);
                 pstmt.setLong(++i, this.unitsQNT);
-                pstmt.setLong(++i, this.rate);
+                pstmt.setLong(++i, this.rateNQT);
                 pstmt.setInt(++i, this.timestamp);
                 pstmt.setInt(++i, this.height);
                 pstmt.executeUpdate();
@@ -277,8 +277,8 @@ public final class ExchangeHome {
             return unitsQNT;
         }
 
-        public long getRate() {
-            return rate;
+        public long getRateNQT() {
+            return rateNQT;
         }
 
         public long getCurrencyId() {
@@ -300,7 +300,7 @@ public final class ExchangeHome {
         @Override
         public String toString() {
             return "Exchange currency: " + Long.toUnsignedString(currencyId) + " offer: " + Long.toUnsignedString(offerId)
-                    + " rate: " + rate + " units: " + unitsQNT + " height: " + height + " transaction: " + Long.toUnsignedString(transactionId);
+                    + " rate: " + rateNQT + " units: " + unitsQNT + " height: " + height + " transaction: " + Long.toUnsignedString(transactionId);
         }
     }
 

@@ -67,7 +67,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -342,7 +341,7 @@ public final class DebugTrace {
     private void crowdfunding(Currency currency) {
         long totalAmountPerUnitNQT = 0;
         long foundersTotalQNT = 0;
-        final long remainingSupplyQNT = currency.getReserveSupply() - currency.getInitialSupply();
+        final long remainingSupplyQNT = currency.getReserveSupplyQNT() - currency.getInitialSupplyQNT();
         List<CurrencyFounderHome.CurrencyFounder> currencyFounders = new ArrayList<>();
         //TODO: child chain
         ChildChain childChain = ChildChain.IGNIS;
@@ -372,10 +371,10 @@ public final class DebugTrace {
         }
         Map<String,String> map = getValues(currency.getAccountId(), false);
         map.put("currency", Long.toUnsignedString(currency.getId()));
-        map.put("crowdfunding", String.valueOf(currency.getReserveSupply()));
+        map.put("crowdfunding", String.valueOf(currency.getReserveSupplyQNT()));
         map.put("currency units", String.valueOf(remainingSupplyQNT - foundersTotalQNT));
         if (!currency.is(CurrencyType.CLAIMABLE)) {
-            long cost = Convert.unitRateToAmount(currency.getReserveSupply(), currency.getDecimals(),
+            long cost = Convert.unitRateToAmount(currency.getReserveSupplyQNT(), currency.getDecimals(),
                                     currency.getCurrentReservePerUnitNQT(), childChain.getDecimals());
             map.put("currency cost", String.valueOf(cost));
         }
@@ -397,7 +396,7 @@ public final class DebugTrace {
         }
         Map<String,String> map = getValues(currency.getAccountId(), false);
         map.put("currency", Long.toUnsignedString(currency.getId()));
-        map.put("currency units", String.valueOf(-currency.getInitialSupply()));
+        map.put("currency units", String.valueOf(-currency.getInitialSupplyQNT()));
         map.put("event", "undo crowdfunding");
         log(map);
     }
@@ -409,7 +408,7 @@ public final class DebugTrace {
         long units;
         if (!currency.isActive()) {
             accountId = currency.getAccountId();
-            units = currency.getCurrentSupply();
+            units = currency.getCurrentSupplyQNT();
         } else {
             try (DbIterator<Account.AccountCurrency> accountCurrencies = Account.getCurrencyAccounts(currency.getId(), 0, -1)) {
                 if (accountCurrencies.hasNext()) {
@@ -452,7 +451,7 @@ public final class DebugTrace {
         }
         Map<String, String> map = getValues(mint.accountId, false);
         map.put("currency", Long.toUnsignedString(mint.currencyId));
-        map.put("currency units", String.valueOf(mint.units));
+        map.put("currency units", String.valueOf(mint.unitsQNT));
         map.put("event", "currency mint");
         log(map);
     }
@@ -500,10 +499,10 @@ public final class DebugTrace {
         Currency currency = Currency.getCurrency(exchange.getCurrencyId());
         Map<String,String> map = getValues(accountId, false);
         map.put("currency", Long.toUnsignedString(exchange.getCurrencyId()));
-        map.put("exchange quantity", String.valueOf(isSell ? -exchange.getUnits() : exchange.getUnits()));
-        map.put("exchange rate", String.valueOf(exchange.getRate()));
-        long exchangeCost = Convert.unitRateToAmount(exchange.getUnits(), currency.getDecimals(),
-                                        exchange.getRate(), childChain.getDecimals());
+        map.put("exchange quantity", String.valueOf(isSell ? -exchange.getUnitsQNT() : exchange.getUnitsQNT()));
+        map.put("exchange rate", String.valueOf(exchange.getRateNQT()));
+        long exchangeCost = Convert.unitRateToAmount(exchange.getUnitsQNT(), currency.getDecimals(),
+                                        exchange.getRateNQT(), childChain.getDecimals());
         map.put("exchange cost", String.valueOf((isSell ? exchangeCost : - exchangeCost)));
         map.put("event", "exchange");
         return map;
@@ -757,9 +756,9 @@ public final class DebugTrace {
             map.put("offer", Long.toUnsignedString(transaction.getId()));
             map.put("buy rate", String.valueOf(publishOffer.getBuyRateNQT()));
             map.put("sell rate", String.valueOf(publishOffer.getSellRateNQT()));
-            long buyUnits = publishOffer.getInitialBuySupply();
+            long buyUnits = publishOffer.getInitialBuySupplyQNT();
             map.put("buy units", String.valueOf(buyUnits));
-            long sellUnits = publishOffer.getInitialSellSupply();
+            long sellUnits = publishOffer.getInitialSellSupplyQNT();
             map.put("sell units", String.valueOf(sellUnits));
             long buyCost = Convert.unitRateToAmount(buyUnits, currency.getDecimals(),
                                         publishOffer.getBuyRateNQT(), chain.getDecimals());
@@ -771,12 +770,12 @@ public final class DebugTrace {
         } else if (attachment instanceof CurrencyIssuanceAttachment) {
             CurrencyIssuanceAttachment currencyIssuance = (CurrencyIssuanceAttachment) attachment;
             map.put("currency", Long.toUnsignedString(transaction.getId()));
-            map.put("currency units", String.valueOf(currencyIssuance.getInitialSupply()));
+            map.put("currency units", String.valueOf(currencyIssuance.getInitialSupplyQNT()));
             map.put("event", "currency issuance");
         } else if (attachment instanceof CurrencyTransferAttachment) {
             CurrencyTransferAttachment currencyTransfer = (CurrencyTransferAttachment) attachment;
             map.put("currency", Long.toUnsignedString(currencyTransfer.getCurrencyId()));
-            long units = currencyTransfer.getUnits();
+            long units = currencyTransfer.getUnitsQNT();
             if (!isRecipient) {
                 units = -units;
             }
@@ -786,8 +785,8 @@ public final class DebugTrace {
             ReserveClaimAttachment claim = (ReserveClaimAttachment) attachment;
             Currency currency = Currency.getCurrency(claim.getCurrencyId());
             map.put("currency", Long.toUnsignedString(claim.getCurrencyId()));
-            map.put("currency units", String.valueOf(-claim.getUnits()));
-            long cost = Convert.unitRateToAmount(claim.getUnits(), currency.getDecimals(),
+            map.put("currency units", String.valueOf(-claim.getUnitsQNT()));
+            long cost = Convert.unitRateToAmount(claim.getUnitsQNT(), currency.getDecimals(),
                                     currency.getCurrentReservePerUnitNQT(), chain.getDecimals());
             map.put("currency cost", Long.toString(cost));
             map.put("event", "currency claim");
@@ -795,7 +794,7 @@ public final class DebugTrace {
             ReserveIncreaseAttachment reserveIncrease = (ReserveIncreaseAttachment) attachment;
             map.put("currency", Long.toUnsignedString(reserveIncrease.getCurrencyId()));
             Currency currency = Currency.getCurrency(reserveIncrease.getCurrencyId());
-            long cost = Convert.unitRateToAmount(currency.getReserveSupply(), currency.getDecimals(),
+            long cost = Convert.unitRateToAmount(currency.getReserveSupplyQNT(), currency.getDecimals(),
                                     reserveIncrease.getAmountPerUnitNQT(), chain.getDecimals());
             map.put("currency cost", Long.toString(cost));
             map.put("event", "currency reserve");

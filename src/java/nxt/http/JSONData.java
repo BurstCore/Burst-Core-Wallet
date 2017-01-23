@@ -43,7 +43,6 @@ import nxt.blockchain.Bundler;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildTransaction;
-import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.Generator;
 import nxt.blockchain.Transaction;
@@ -161,10 +160,10 @@ public final class JSONData {
         json.put("description", currency.getDescription());
         json.put("type", currency.getType());
         json.put("chain", currency.getChildChain().getId());
-        json.put("initialSupplyQNT", String.valueOf(currency.getInitialSupply()));
-        json.put("currentSupplyQNT", String.valueOf(currency.getCurrentSupply()));
-        json.put("reserveSupplyQNT", String.valueOf(currency.getReserveSupply()));
-        json.put("maxSupplyQNT", String.valueOf(currency.getMaxSupply()));
+        json.put("initialSupplyQNT", String.valueOf(currency.getInitialSupplyQNT()));
+        json.put("currentSupplyQNT", String.valueOf(currency.getCurrentSupplyQNT()));
+        json.put("reserveSupplyQNT", String.valueOf(currency.getReserveSupplyQNT()));
+        json.put("maxSupplyQNT", String.valueOf(currency.getMaxSupplyQNT()));
         json.put("creationHeight", currency.getCreationHeight());
         json.put("issuanceHeight", currency.getIssuanceHeight());
         json.put("minReservePerUnitNQT", String.valueOf(currency.getMinReservePerUnitNQT()));
@@ -304,8 +303,8 @@ public final class JSONData {
         json.put("expirationHeight", offer.getExpirationHeight());
         json.put("currency", Long.toUnsignedString(offer.getCurrencyId()));
         json.put("rateNQT", String.valueOf(offer.getRateNQT()));
-        json.put("limitQNT", String.valueOf(offer.getLimit()));
-        json.put("supplyQNT", String.valueOf(offer.getSupply()));
+        json.put("limitQNT", String.valueOf(offer.getLimitQNT()));
+        json.put("supplyQNT", String.valueOf(offer.getSupplyQNT()));
         return json;
     }
 
@@ -313,8 +312,8 @@ public final class JSONData {
         JSONObject json = expectedOffer(transaction);
         PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment)transaction.getAttachment();
         json.put("rateNQT", String.valueOf(attachment.getBuyRateNQT()));
-        json.put("limitQNT", String.valueOf(attachment.getTotalBuyLimit()));
-        json.put("supplyQNT", String.valueOf(attachment.getInitialBuySupply()));
+        json.put("limitQNT", String.valueOf(attachment.getTotalBuyLimitQNT()));
+        json.put("supplyQNT", String.valueOf(attachment.getInitialBuySupplyQNT()));
         return json;
     }
 
@@ -322,8 +321,8 @@ public final class JSONData {
         JSONObject json = expectedOffer(transaction);
         PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment)transaction.getAttachment();
         json.put("rateNQT", String.valueOf(attachment.getSellRateNQT()));
-        json.put("limitQNT", String.valueOf(attachment.getTotalSellLimit()));
-        json.put("supplyQNT", String.valueOf(attachment.getInitialSellSupply()));
+        json.put("limitQNT", String.valueOf(attachment.getTotalSellLimitQNT()));
+        json.put("supplyQNT", String.valueOf(attachment.getInitialSellSupplyQNT()));
         return json;
     }
 
@@ -342,7 +341,7 @@ public final class JSONData {
     static JSONObject availableOffers(ExchangeOfferHome.AvailableOffers availableOffers) {
         JSONObject json = new JSONObject();
         json.put("rateNQT", String.valueOf(availableOffers.getRateNQT()));
-        json.put("unitsQNT", String.valueOf(availableOffers.getUnits()));
+        json.put("unitsQNT", String.valueOf(availableOffers.getUnitsQNT()));
         json.put("amountNQT", String.valueOf(availableOffers.getAmountNQT()));
         return json;
     }
@@ -887,7 +886,7 @@ public final class JSONData {
         json.put("currency", Long.toUnsignedString(transfer.getCurrencyId()));
         putAccount(json, "sender", transfer.getSenderId());
         putAccount(json, "recipient", transfer.getRecipientId());
-        json.put("unitsQNT", String.valueOf(transfer.getUnits()));
+        json.put("unitsQNT", String.valueOf(transfer.getUnitsQNT()));
         json.put("height", transfer.getHeight());
         json.put("timestamp", transfer.getTimestamp());
         if (includeCurrencyInfo) {
@@ -903,7 +902,7 @@ public final class JSONData {
         json.put("currency", Long.toUnsignedString(attachment.getCurrencyId()));
         putAccount(json, "sender", transaction.getSenderId());
         putAccount(json, "recipient", transaction.getRecipientId());
-        json.put("unitsQNT", String.valueOf(attachment.getUnits()));
+        json.put("unitsQNT", String.valueOf(attachment.getUnitsQNT()));
         if (includeCurrencyInfo) {
             putCurrencyInfo(json, attachment.getCurrencyId());
         }
@@ -915,8 +914,8 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("transactionFullHash", Convert.toHexString(exchange.getTransactionFullHash()));
         json.put("timestamp", exchange.getTimestamp());
-        json.put("unitsQNT", String.valueOf(exchange.getUnits()));
-        json.put("rateNQT", String.valueOf(exchange.getRate()));
+        json.put("unitsQNT", String.valueOf(exchange.getUnitsQNT()));
+        json.put("rateNQT", String.valueOf(exchange.getRateNQT()));
         json.put("currency", Long.toUnsignedString(exchange.getCurrencyId()));
         json.put("offer", Long.toUnsignedString(exchange.getOfferId()));
         json.put("offerFullHash", Convert.toHexString(exchange.getOfferFullHash()));
@@ -935,8 +934,8 @@ public final class JSONData {
         json.put("transactionFullHash", Convert.toHexString(exchangeRequest.getFullHash()));
         json.put("subtype", exchangeRequest.isBuy() ? MonetarySystemTransactionType.EXCHANGE_BUY.getSubtype() : MonetarySystemTransactionType.EXCHANGE_SELL.getSubtype());
         json.put("timestamp", exchangeRequest.getTimestamp());
-        json.put("unitsQNT", String.valueOf(exchangeRequest.getUnits()));
-        json.put("rateNQT", String.valueOf(exchangeRequest.getRate()));
+        json.put("unitsQNT", String.valueOf(exchangeRequest.getUnitsQNT()));
+        json.put("rateNQT", String.valueOf(exchangeRequest.getRateNQT()));
         json.put("height", exchangeRequest.getHeight());
         if (includeCurrencyInfo) {
             putCurrencyInfo(json, exchangeRequest.getCurrencyId());
@@ -949,7 +948,7 @@ public final class JSONData {
         json.put("transactionFullHash", Convert.toHexString(transaction.getFullHash()));
         json.put("subtype", transaction.getType().getSubtype());
         ExchangeAttachment attachment = (ExchangeAttachment)transaction.getAttachment();
-        json.put("unitsQNT", String.valueOf(attachment.getUnits()));
+        json.put("unitsQNT", String.valueOf(attachment.getUnitsQNT()));
         json.put("rateNQT", String.valueOf(attachment.getRateNQT()));
         if (includeCurrencyInfo) {
             putCurrencyInfo(json, attachment.getCurrencyId());

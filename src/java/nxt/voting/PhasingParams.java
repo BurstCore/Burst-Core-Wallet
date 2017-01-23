@@ -37,7 +37,7 @@ public final class PhasingParams {
     private final long quorum;
     private final long[] whitelist;
     private final VoteWeighting voteWeighting;
-    
+
     public PhasingParams(ByteBuffer buffer) {
         byte votingModel = buffer.get();
         quorum = buffer.getLong();
@@ -55,7 +55,7 @@ public final class PhasingParams {
         byte minBalanceModel = buffer.get();
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
-    
+
     public PhasingParams(JSONObject attachmentData) {
         quorum = Convert.parseLong(attachmentData.get("phasingQuorum"));
         long minBalance = Convert.parseLong(attachmentData.get("phasingMinBalance"));
@@ -73,7 +73,7 @@ public final class PhasingParams {
         byte minBalanceModel = ((Long) attachmentData.get("phasingMinBalanceModel")).byteValue();
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
-    
+
     public PhasingParams(byte votingModel, long holdingId, long quorum, long minBalance, byte minBalanceModel, long[] whitelist) {
         this.quorum = quorum;
         this.whitelist = Convert.nullToEmpty(whitelist);
@@ -82,11 +82,11 @@ public final class PhasingParams {
         }
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
-    
+
     public int getMySize() {
         return 1 + 8 + 8 + 1 + 8 * whitelist.length + 8 + 1;
     }
-    
+
     public void putMyBytes(ByteBuffer buffer) {
         buffer.put(voteWeighting.getVotingModel().getCode());
         buffer.putLong(quorum);
@@ -98,7 +98,7 @@ public final class PhasingParams {
         buffer.putLong(voteWeighting.getHoldingId());
         buffer.put(voteWeighting.getMinBalanceModel().getCode());
     }
-    
+
     public void putMyJSON(JSONObject json) {
         json.put("phasingQuorum", quorum);
         json.put("phasingMinBalance", voteWeighting.getMinBalance());
@@ -155,13 +155,13 @@ public final class PhasingParams {
             if (currency == null) {
                 throw new NxtException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
             }
-            if (quorum > currency.getMaxSupply()) {
+            if (quorum > currency.getMaxSupplyQNT()) {
                 throw new NxtException.NotCurrentlyValidException("Quorum of " + quorum
-                        + " exceeds max currency supply " + currency.getMaxSupply());
+                        + " exceeds max currency supply " + currency.getMaxSupplyQNT());
             }
-            if (voteWeighting.getMinBalance() > currency.getMaxSupply()) {
+            if (voteWeighting.getMinBalance() > currency.getMaxSupplyQNT()) {
                 throw new NxtException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                        + " exceeds max currency supply " + currency.getMaxSupply());
+                        + " exceeds max currency supply " + currency.getMaxSupplyQNT());
             }
         } else if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.ASSET) {
             Asset asset = Asset.getAsset(voteWeighting.getHoldingId());
@@ -185,9 +185,9 @@ public final class PhasingParams {
                 if (currency == null) {
                     throw new NxtException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
                 }
-                if (voteWeighting.getMinBalance() > currency.getMaxSupply()) {
+                if (voteWeighting.getMinBalance() > currency.getMaxSupplyQNT()) {
                     throw new NxtException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                            + " exceeds max currency supply " + currency.getMaxSupply());
+                            + " exceeds max currency supply " + currency.getMaxSupplyQNT());
                 }
             }
         }
@@ -216,7 +216,7 @@ public final class PhasingParams {
     public VoteWeighting getVoteWeighting() {
         return voteWeighting;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof PhasingParams)) {
@@ -227,7 +227,7 @@ public final class PhasingParams {
                 && other.voteWeighting.equals(this.voteWeighting)
                 && Arrays.equals(other.whitelist, this.whitelist);
     }
-    
+
     @Override
     public int hashCode() {
         int hashCode = 17;
@@ -238,7 +238,7 @@ public final class PhasingParams {
         hashCode = 31 * hashCode + voteWeighting.hashCode();
         return hashCode;
     }
-    
+
     @Override
     public String toString() {
         JSONObject resultJson = new JSONObject();
