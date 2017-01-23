@@ -18,9 +18,11 @@ package nxt.http;
 
 import nxt.NxtException;
 import nxt.account.Account;
+import nxt.account.HoldingType;
 import nxt.ae.Asset;
 import nxt.ae.DividendPaymentAttachment;
 import nxt.blockchain.Attachment;
+import nxt.blockchain.ChildChain;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,7 +32,7 @@ public class DividendPayment extends CreateTransaction {
     static final DividendPayment instance = new DividendPayment();
 
     private DividendPayment() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "height", "amountNQTPerShare");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "holding", "holdingType", "asset", "height", "amountNQTPerShare");
     }
 
     @Override
@@ -44,7 +46,10 @@ public class DividendPayment extends CreateTransaction {
         if (Asset.getAsset(asset.getId(), height) == null) {
             return JSONResponses.ASSET_NOT_ISSUED_YET;
         }
-        final Attachment attachment = new DividendPaymentAttachment(asset.getId(), height, amountNQT);
+        HoldingType holdingType = ParameterParser.getHoldingType(request);
+        ChildChain childChain = ParameterParser.getChildChain(request);
+        long holdingId = holdingType != HoldingType.COIN ? ParameterParser.getHoldingId(request) : childChain.getId();
+        final Attachment attachment = new DividendPaymentAttachment(holdingId, holdingType, asset.getId(), height, amountNQT);
         try {
             return this.createTransaction(request, account, attachment);
         } catch (NxtException.InsufficientBalanceException e) {

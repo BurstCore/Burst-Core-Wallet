@@ -16,6 +16,7 @@
 
 package nxt.ae;
 
+import nxt.account.HoldingType;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.TransactionType;
 import nxt.util.Convert;
@@ -28,9 +29,13 @@ public final class DividendPaymentAttachment extends Attachment.AbstractAttachme
     private final long assetId;
     private final int height;
     private final long amountNQT;
+    private final long holdingId;
+    private final HoldingType holdingType;
 
     DividendPaymentAttachment(ByteBuffer buffer) {
         super(buffer);
+        this.holdingId = buffer.getLong();
+        this.holdingType = HoldingType.get(buffer.get());
         this.assetId = buffer.getLong();
         this.height = buffer.getInt();
         this.amountNQT = buffer.getLong();
@@ -41,9 +46,13 @@ public final class DividendPaymentAttachment extends Attachment.AbstractAttachme
         this.assetId = Convert.parseUnsignedLong((String)attachmentData.get("asset"));
         this.height = ((Long)attachmentData.get("height")).intValue();
         this.amountNQT = Convert.parseLong(attachmentData.get("amountNQT"));
+        this.holdingId = Convert.parseUnsignedLong((String) attachmentData.get("holding"));
+        this.holdingType = HoldingType.get(((Long)attachmentData.get("holdingType")).byteValue());
     }
 
-    public DividendPaymentAttachment(long assetId, int height, long amountNQT) {
+    public DividendPaymentAttachment(long holdingId, HoldingType holdingType, long assetId, int height, long amountNQT) {
+        this.holdingId = holdingId;
+        this.holdingType = holdingType;
         this.assetId = assetId;
         this.height = height;
         this.amountNQT = amountNQT;
@@ -51,11 +60,13 @@ public final class DividendPaymentAttachment extends Attachment.AbstractAttachme
 
     @Override
     protected int getMySize() {
-        return 8 + 4 + 8;
+        return 8 + 1 + 8 + 4 + 8;
     }
 
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
+        buffer.putLong(holdingId);
+        buffer.put(holdingType.getCode());
         buffer.putLong(assetId);
         buffer.putInt(height);
         buffer.putLong(amountNQT);
@@ -66,6 +77,8 @@ public final class DividendPaymentAttachment extends Attachment.AbstractAttachme
         attachment.put("asset", Long.toUnsignedString(assetId));
         attachment.put("height", height);
         attachment.put("amountNQT", amountNQT);
+        attachment.put("holding", Long.toUnsignedString(holdingId));
+        attachment.put("holdingType", holdingType.getCode());
     }
 
     @Override
@@ -83,6 +96,14 @@ public final class DividendPaymentAttachment extends Attachment.AbstractAttachme
 
     public long getAmountNQT() {
         return amountNQT;
+    }
+
+    public long getHoldingId() {
+        return holdingId;
+    }
+
+    public HoldingType getHoldingType() {
+        return holdingType;
     }
 
 }

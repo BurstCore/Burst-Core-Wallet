@@ -18,6 +18,7 @@ package nxt.ms;
 
 import nxt.Constants;
 import nxt.NxtException;
+import nxt.ae.AssetExchangeTransactionType;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.Transaction;
@@ -62,13 +63,18 @@ public enum CurrencyType {
         @Override
         void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws NxtException.NotValidException {
             if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_TRANSFER) {
-                if (currency == null ||  (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
+                if (currency == null || (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
                     throw new NxtException.NotValidException("Controllable currency can only be transferred to/from issuer account");
                 }
             }
             if (transaction.getType() == MonetarySystemTransactionType.PUBLISH_EXCHANGE_OFFER) {
                 if (currency == null || currency.getAccountId() != transaction.getSenderId()) {
                     throw new NxtException.NotValidException("Only currency issuer can publish an exchange offer for controllable currency");
+                }
+            }
+            if (transaction.getType() == AssetExchangeTransactionType.DIVIDEND_PAYMENT) {
+                if (currency == null || currency.getAccountId() != transaction.getSenderId()) {
+                    throw new NxtException.NotValidException("Only currency issuer can pay dividends in controllable currency");
                 }
             }
         }

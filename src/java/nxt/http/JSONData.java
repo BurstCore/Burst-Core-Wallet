@@ -43,7 +43,6 @@ import nxt.blockchain.Bundler;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildTransaction;
-import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.Generator;
 import nxt.blockchain.Transaction;
@@ -878,6 +877,8 @@ public final class JSONData {
         json.put("numberOfAccounts", assetDividend.getNumAccounts());
         json.put("height", assetDividend.getHeight());
         json.put("timestamp", assetDividend.getTimestamp());
+        json.put("holding", Long.toUnsignedString(assetDividend.getHoldingId()));
+        json.put("holdingType", assetDividend.getHoldingType().getCode());
         return json;
     }
 
