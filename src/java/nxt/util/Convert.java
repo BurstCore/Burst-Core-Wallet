@@ -88,6 +88,16 @@ public final class Convert {
         return Long.parseUnsignedLong(number);
     }
 
+    public static int parseInt(Object o) {
+        if (o == null) {
+            return 0;
+        }
+        if (o instanceof Long) {
+            return ((Long)o).intValue();
+        }
+        throw new IllegalArgumentException("Not an integer: " + o);
+    }
+
     public static long parseLong(Object o) {
         if (o == null) {
             return 0;

@@ -219,7 +219,7 @@ public class MintWorker {
         params.put("requestType", "getMintingTarget");
         params.put("currency", Long.toUnsignedString(currencyId));
         params.put("account", rsAccount);
-        params.put("units", Long.toString(units));
+        params.put("unitsQNT", Long.toString(units));
         return getJsonResponse(params);
     }
 
@@ -313,18 +313,18 @@ public class MintWorker {
         private final long currencyId;
         private final long accountId;
         private final long counter;
-        private final long units;
+        private final long unitsQNT;
         private final long nonce;
         private final byte[] target;
         private final int poolSize;
 
-        private HashSolver(byte algorithm, long currencyId, long accountId, long counter, long units, long nonce,
+        private HashSolver(byte algorithm, long currencyId, long accountId, long counter, long unitsQNT, long nonce,
                            byte[] target, int poolSize) {
             this.hashFunction = HashFunction.getHashFunction(algorithm);
             this.currencyId = currencyId;
             this.accountId = accountId;
             this.counter = counter;
-            this.units = units;
+            this.unitsQNT = unitsQNT;
             this.nonce = nonce;
             this.target = target;
             this.poolSize = poolSize;
@@ -334,11 +334,11 @@ public class MintWorker {
         public Long call() {
             long n = nonce;
             while (!Thread.currentThread().isInterrupted()) {
-                byte[] hash = CurrencyMinting.getHash(hashFunction, n, currencyId, units, counter, accountId);
+                byte[] hash = CurrencyMinting.getHash(hashFunction, n, currencyId, unitsQNT, counter, accountId);
                 if (CurrencyMinting.meetsTarget(hash, target)) {
                     Logger.logDebugMessage("%s found solution hash %s nonce %d currencyId %d units %d counter %d accountId %d" +
                             " hash %s meets target %s",
-                            Thread.currentThread().getName(), hashFunction, n, currencyId, units, counter, accountId,
+                            Thread.currentThread().getName(), hashFunction, n, currencyId, unitsQNT, counter, accountId,
                             Arrays.toString(hash), Arrays.toString(target));
                     return n;
                 }

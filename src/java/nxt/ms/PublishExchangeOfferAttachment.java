@@ -55,7 +55,7 @@ public final class PublishExchangeOfferAttachment extends Attachment.AbstractAtt
         this.totalSellLimitQNT = Convert.parseLong(attachmentData.get("totalSellLimitQNT"));
         this.initialBuySupplyQNT = Convert.parseLong(attachmentData.get("initialBuySupplyQNT"));
         this.initialSellSupplyQNT = Convert.parseLong(attachmentData.get("initialSellSupplyQNT"));
-        this.expirationHeight = ((Long)attachmentData.get("expirationHeight")).intValue();
+        this.expirationHeight = Convert.parseInt(attachmentData.get("expirationHeight"));
     }
 
     public PublishExchangeOfferAttachment(long currencyId, long buyRateNQT, long sellRateNQT,
@@ -97,7 +97,7 @@ public final class PublishExchangeOfferAttachment extends Attachment.AbstractAtt
         attachment.put("totalSellLimitQNT", totalSellLimitQNT);
         attachment.put("initialBuySupplyQNT", initialBuySupplyQNT);
         attachment.put("initialSellSupplyQNT", initialSellSupplyQNT);
-        attachment.put("expirationHeightQNT", expirationHeight);
+        attachment.put("expirationHeight", expirationHeight);
     }
 
     @Override
