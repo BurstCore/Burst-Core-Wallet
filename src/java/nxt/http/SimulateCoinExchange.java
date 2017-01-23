@@ -24,12 +24,12 @@ import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.math.MathContext;
 
-public final class SimulateCoinExchange extends CreateTransaction {
+public final class SimulateCoinExchange extends APIServlet.APIRequestHandler {
 
     static final SimulateCoinExchange instance = new SimulateCoinExchange();
 
     private SimulateCoinExchange() {
-        super(new APITag[] {APITag.CE, APITag.CREATE_TRANSACTION}, "exchange", "amountNQT", "priceNQT");
+        super(new APITag[] {APITag.CE}, "exchange", "amountNQT", "priceNQT");
     }
 
     @Override
@@ -55,4 +55,15 @@ public final class SimulateCoinExchange extends CreateTransaction {
         response.put("askNQT",  askValue);
         return response;
     }
+
+    @Override
+    protected boolean allowRequiredBlockParameters() {
+        return false;
+    }
+
+    @Override
+    protected boolean requireBlockchain() {
+        return false;
+    }
+
 }
