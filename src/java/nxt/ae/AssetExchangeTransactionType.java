@@ -369,6 +369,11 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
                 throw new NxtException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) +
                         " does not exist yet");
             }
+            long amount = Convert.unitRateToAmount(attachment.getQuantityQNT(), asset.getDecimals(), attachment.getPriceNQT(),
+                    transaction.getChain().getDecimals());
+            if (amount == 0) {
+                throw new NxtException.NotValidException("Asset order has no value: " + attachment.getJSONObject());
+            }
         }
 
         @Override

@@ -605,6 +605,12 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             if (! currency.isActive()) {
                 throw new NxtException.NotCurrentlyValidException("Currency not active: " + attachment.getJSONObject());
             }
+            long amount = Convert.unitRateToAmount(attachment.getUnits(), currency.getDecimals(), attachment.getRateNQT(),
+                    transaction.getChain().getDecimals());
+            if (amount == 0) {
+                throw new NxtException.NotValidException("Currency exchange request has zero value: " + attachment.getJSONObject());
+            }
+
         }
 
         @Override
