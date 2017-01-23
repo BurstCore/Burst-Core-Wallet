@@ -776,26 +776,14 @@ var NRS = (function (NRS, $, undefined) {
         });
         NRS.sendRequest("getAssetDividends+", options, function (response) {
             var dividends = response.dividends;
-            var amountDecimals = NRS.getNumberOfDecimals(dividends, "totalDividend", function(val) {
-                return NRS.formatAmount(val.totalDividend);
-            });
-            var accountsDecimals = NRS.getNumberOfDecimals(dividends, "numberOfAccounts", function(val) {
-                return NRS.formatAmount(val.numberOfAccounts);
-            });
-            var amountNQTPerQNTDecimals = NRS.getNumberOfDecimals(dividends, "amountNQTPerQNT", function(val) {
-                return NRS.formatOrderPricePerWholeQNT(val.amountNQTPerQNT, currentAsset.decimals);
-            });
             for (var i = 0; i < dividends.length; i++) {
                 var dividend = dividends[i];
-                dividend.numberOfAccounts = new BigInteger(dividend.numberOfAccounts.toString());
-                dividend.amountNQTPerQNT = new BigInteger(dividend.amountNQTPerQNT);
-                dividend.totalDividend = new BigInteger(dividend.totalDividend);
                 view.data.push({
                     "timestamp": NRS.getTransactionLink(dividend.assetDividendFullHash, NRS.formatTimestamp(dividend.timestamp)),
                     "dividend_height": String(dividend.dividendHeight).escapeHTML(),
-                    "total": NRS.formatAmount(dividend.totalDividend, false, false, amountDecimals),
-                    "accounts": NRS.formatQuantity(dividend.numberOfAccounts, false, false, accountsDecimals),
-                    "amount_per_share": NRS.formatOrderPricePerWholeQNT(dividend.amountNQTPerQNT, currentAsset.decimals, amountNQTPerQNTDecimals)
+                    "total": NRS.intToFloat(dividend.totalDividend, NRS.getActiveChainDecimals()),
+                    "accounts": NRS.formatQuantity(dividend.numberOfAccounts, false, false, 0),
+                    "amount_per_share": NRS.intToFloat(dividend.amountNQT, NRS.getActiveChainDecimals())
                 })
             }
             view.render({
