@@ -32,7 +32,7 @@ public final class TransferCurrency extends CreateTransaction {
     static final TransferCurrency instance = new TransferCurrency();
 
     private TransferCurrency() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "recipient", "currency", "units");
+        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "recipient", "currency", "unitsQNT");
     }
 
     @Override
@@ -41,10 +41,10 @@ public final class TransferCurrency extends CreateTransaction {
         long recipient = ParameterParser.getAccountId(req, "recipient", true);
 
         Currency currency = ParameterParser.getCurrency(req);
-        long units = ParameterParser.getUnitsQNT(req);
+        long unitsQNT = ParameterParser.getUnitsQNT(req);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new CurrencyTransferAttachment(currency.getId(), units);
+        Attachment attachment = new CurrencyTransferAttachment(currency.getId(), unitsQNT);
         try {
             return createTransaction(req, account, recipient, 0, attachment);
         } catch (NxtException.InsufficientBalanceException e) {

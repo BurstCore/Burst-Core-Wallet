@@ -35,10 +35,10 @@ import javax.servlet.http.HttpServletRequest;
  * <li>currency - currency id of an active currency
  * <li>buyRateNQT - NXT amount for buying a currency unit specified in NQT
  * <li>sellRateNQT - NXT amount for selling a currency unit specified in NQT
- * <li>initialBuySupply - Initial number of currency units offered to buy by the publisher
- * <li>initialSellSupply - Initial number of currency units offered for sell by the publisher
- * <li>totalBuyLimit - Total number of currency units which can be bought from the offer
- * <li>totalSellLimit - Total number of currency units which can be sold from the offer
+ * <li>initialBuySupplyQNT - Initial number of currency units offered to buy by the publisher
+ * <li>initialSellSupplyQNT - Initial number of currency units offered for sell by the publisher
+ * <li>totalBuyLimitQNT - Total number of currency units which can be bought from the offer
+ * <li>totalSellLimitQNT - Total number of currency units which can be sold from the offer
  * <li>expirationHeight - Blockchain height at which the offer is expired
  * </ul>
  *
@@ -63,7 +63,7 @@ public final class PublishExchangeOffer extends CreateTransaction {
 
     private PublishExchangeOffer() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "buyRateNQT", "sellRateNQT",
-                "totalBuyLimit", "totalSellLimit", "initialBuySupply", "initialSellSupply", "expirationHeight");
+                "totalBuyLimitQNT", "totalSellLimitQNT", "initialBuySupplyQNT", "initialSellSupplyQNT", "expirationHeight");
     }
 
     @Override
@@ -71,10 +71,10 @@ public final class PublishExchangeOffer extends CreateTransaction {
         Currency currency = ParameterParser.getCurrency(req);
         long buyRateNQT = ParameterParser.getLong(req, "buyRateNQT", 1, Constants.MAX_BALANCE_NQT, true);
         long sellRateNQT= ParameterParser.getLong(req, "sellRateNQT", 1, Constants.MAX_BALANCE_NQT, true);
-        long totalBuyLimit = ParameterParser.getLong(req, "totalBuyLimit", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
-        long totalSellLimit = ParameterParser.getLong(req, "totalSellLimit", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
-        long initialBuySupply = ParameterParser.getLong(req, "initialBuySupply", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
-        long initialSellSupply = ParameterParser.getLong(req, "initialSellSupply", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
+        long totalBuyLimit = ParameterParser.getLong(req, "totalBuyLimitQNT", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
+        long totalSellLimit = ParameterParser.getLong(req, "totalSellLimitQNT", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
+        long initialBuySupply = ParameterParser.getLong(req, "initialBuySupplyQNT", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
+        long initialSellSupply = ParameterParser.getLong(req, "initialSellSupplyQNT", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
         int expirationHeight = ParameterParser.getInt(req, "expirationHeight", 0, Integer.MAX_VALUE, true);
         Account account = ParameterParser.getSenderAccount(req);
 

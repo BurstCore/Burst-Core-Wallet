@@ -29,29 +29,24 @@ public final class SimulateCoinExchange extends APIServlet.APIRequestHandler {
     static final SimulateCoinExchange instance = new SimulateCoinExchange();
 
     private SimulateCoinExchange() {
-        super(new APITag[] {APITag.CE}, "exchange", "amountNQT", "priceNQT");
+        super(new APITag[] {APITag.CE}, "exchange", "quantityQNT", "priceNQT");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         Chain chain = ParameterParser.getChain(req, "chain", true);
-        if (chain == null) {
-            return JSONResponses.missing("chain");
-        }
         Chain exchange = ParameterParser.getChain(req, "exchange", true);
-        if (exchange == null) {
-            return JSONResponses.missing("exchange");
-        }
         if (chain == exchange) {
             return JSONResponses.incorrect("exchange", "exchange must specify a different chain");
         }
-        long amountNQT = ParameterParser.getAmountNQT(req);
+        long quantityQNT = ParameterParser.getQuantityQNT(req);
         long priceNQT = ParameterParser.getPriceNQT(req);
         JSONObject response = new JSONObject();
-        response.put("amountNQT",  amountNQT);
+        response.put("quantityQNT",  quantityQNT);
         response.put("bidNQT",  priceNQT);
-        BigDecimal bidValue = new BigDecimal(priceNQT, MathContext.DECIMAL128).movePointLeft(chain.getDecimals());
-        long askValue = CoinExchange.ASK_CONSTANT.divide(bidValue, MathContext.DECIMAL128).movePointRight(exchange.getDecimals()).longValue();
+        long askValue = CoinExchange.ASK_CONSTANT
+                .divide(new BigDecimal(priceNQT).movePointLeft(chain.getDecimals()), MathContext.DECIMAL128)
+                .movePointRight(exchange.getDecimals()).longValue();
         response.put("askNQT",  askValue);
         return response;
     }

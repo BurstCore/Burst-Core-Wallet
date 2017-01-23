@@ -41,14 +41,14 @@ import javax.servlet.http.HttpServletRequest;
  * <li>description - free text description of the currency limited to 1000 characters
  * <li>type - a numeric value representing a bit vector modeling the currency capabilities (see below)
  * <li>ruleset - for future use, always set to 0
- * <li>maxSupply - the total number of currency units which can be created
- * <li>initialSupply - the number of currency units created when the currency is issued (pre-mine)
+ * <li>maxSupplyQNT - the total number of currency units which can be created
+ * <li>initialSupplyQNT - the number of currency units created when the currency is issued (pre-mine)
  * <li>decimals - currency units are divisible to this number of decimals
  * <li>issuanceHeight - the blockchain height at which the currency would become active
  * For {@link CurrencyType#RESERVABLE} currency
  * <li>minReservePerUnitNQT - the minimum NXT value per unit to allow the currency to become active
  * For {@link CurrencyType#RESERVABLE} currency
- * <li>reserveSupply - the number of units that will be distributed to founders when currency becomes active (less initialSupply)
+ * <li>reserveSupplyQNT - the number of units that will be distributed to founders when currency becomes active (less initialSupply)
  * For {@link CurrencyType#RESERVABLE} currency
  * <li>minDifficulty - for mint-able currency, the exponent of the initial difficulty.
  * For {@link CurrencyType#MINTABLE} currency
@@ -87,7 +87,9 @@ public final class IssueCurrency extends CreateTransaction {
 
     private IssueCurrency() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION},
-                "name", "code", "description", "type", "initialSupply", "reserveSupply", "maxSupply", "issuanceHeight", "minReservePerUnitNQT",
+                "name", "code", "description", "type",
+                "initialSupplyQNT", "reserveSupplyQNT", "maxSupplyQNT",
+                "issuanceHeight", "minReservePerUnitNQT",
                 "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals");
     }
 
@@ -129,9 +131,9 @@ public final class IssueCurrency extends CreateTransaction {
             type = ParameterParser.getInt(req, "type", 0, Integer.MAX_VALUE, false);
         }
 
-        long maxSupply = ParameterParser.getLong(req, "maxSupply", 1, Constants.MAX_CURRENCY_TOTAL_SUPPLY, false);
-        long reserveSupply = ParameterParser.getLong(req, "reserveSupply", 0, maxSupply, false);
-        long initialSupply = ParameterParser.getLong(req, "initialSupply", 0, maxSupply, false);
+        long maxSupply = ParameterParser.getLong(req, "maxSupplyQNT", 1, Constants.MAX_CURRENCY_TOTAL_SUPPLY, false);
+        long reserveSupply = ParameterParser.getLong(req, "reserveSupplyQNT", 0, maxSupply, false);
+        long initialSupply = ParameterParser.getLong(req, "initialSupplyQNT", 0, maxSupply, false);
         int issuanceHeight = ParameterParser.getInt(req, "issuanceHeight", 0, Integer.MAX_VALUE, false);
         long minReservePerUnit = ParameterParser.getLong(req, "minReservePerUnitNQT", 1, Constants.MAX_BALANCE_NQT, false);
         int minDifficulty = ParameterParser.getInt(req, "minDifficulty", 1, 255, false);

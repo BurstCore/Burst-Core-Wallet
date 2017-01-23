@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletRequest;
  * Parameters
  * <ul>
  * <li>currency - currency id
- * <li>units - the number of currency units claimed<br>
+ * <li>unitsQNT - the number of currency units claimed<br>
  * This value is multiplied by current currency rate and the result is added to the sender NXT account balance.
  * </ul>
  * <p>
@@ -44,7 +44,7 @@ public final class CurrencyReserveClaim extends CreateTransaction {
     static final CurrencyReserveClaim instance = new CurrencyReserveClaim();
 
     private CurrencyReserveClaim() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "units");
+        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "unitsQNT");
     }
 
     @Override

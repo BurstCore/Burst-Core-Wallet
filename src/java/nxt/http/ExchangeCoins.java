@@ -35,7 +35,7 @@ public final class ExchangeCoins extends CreateTransaction {
     static final ExchangeCoins instance = new ExchangeCoins();
 
     private ExchangeCoins() {
-        super(new APITag[] {APITag.CE, APITag.CREATE_TRANSACTION}, "exchange", "amountNQT", "priceNQT");
+        super(new APITag[] {APITag.CE, APITag.CREATE_TRANSACTION}, "exchange", "quantityQNT", "priceNQT");
     }
 
     @Override
@@ -45,11 +45,11 @@ public final class ExchangeCoins extends CreateTransaction {
         if (chain == exchange) {
             return JSONResponses.incorrect("exchange", "exchange must specify a different chain");
         }
-        long amountNQT = ParameterParser.getAmountNQT(req);
+        long quantityQNT = ParameterParser.getQuantityQNT(req);
         long priceNQT = ParameterParser.getPriceNQT(req);
-        long amount = new BigDecimal(1L, MathContext.DECIMAL128)
-                .divide(new BigDecimal(priceNQT, MathContext.DECIMAL128)
-                        .movePointLeft(chain.getDecimals()), MathContext.DECIMAL128)
+        // Check for a non-zero ask price (priceNQT is the bid price)
+        long amount = new BigDecimal(1L)
+                .divide(new BigDecimal(priceNQT).movePointLeft(chain.getDecimals()), MathContext.DECIMAL128)
                 .movePointRight(exchange.getDecimals()).longValue();
         if (amount == 0) {
             return NO_COST_ORDER;
@@ -58,8 +58,8 @@ public final class ExchangeCoins extends CreateTransaction {
         Account account = ParameterParser.getSenderAccount(req);
         Chain txChain = (exchange.getId() == FxtChain.FXT.getId() ? exchange : chain);
         Attachment attachment = (txChain.getId() == FxtChain.FXT.getId() ?
-                new OrderIssueFxtAttachment(chain, exchange, amountNQT, priceNQT) :
-                new OrderIssueAttachment(chain, exchange, amountNQT, priceNQT));
+                new OrderIssueFxtAttachment(chain, exchange, quantityQNT, priceNQT) :
+                new OrderIssueAttachment(chain, exchange, quantityQNT, priceNQT));
         try {
             return createTransaction(req, account, attachment, txChain);
         } catch (NxtException.InsufficientBalanceException e) {

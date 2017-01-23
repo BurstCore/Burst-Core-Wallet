@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletRequest;
  * <ul>
  * <li>currency - currency id of the minted currency</li>
  * <li>nonce - a unique nonce provided by the miner</li>
- * <li>units - number of units minted per this transaction</li>
+ * <li>unitsQNT - number of units minted per this transaction</li>
  * <li>counter - a sequential number counting the ordinal mint operation number per currency/account combination<br>
  * this ever increasing value ensures that the same mint transaction cannot execute more than once</li>
  * </ul>
@@ -49,7 +49,7 @@ public final class CurrencyMint extends CreateTransaction {
     static final CurrencyMint instance = new CurrencyMint();
 
     private CurrencyMint() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "nonce", "units", "counter");
+        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "nonce", "unitsQNT", "counter");
     }
 
     @Override

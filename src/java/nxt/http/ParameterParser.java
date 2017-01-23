@@ -328,7 +328,7 @@ public final class ParameterParser {
     }
 
     public static long getUnitsQNT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "units", 1L, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
+        return getLong(req, "unitsQNT", 1L, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
     }
 
     public static DigitalGoodsHome.Goods getGoods(HttpServletRequest req) throws ParameterException {
