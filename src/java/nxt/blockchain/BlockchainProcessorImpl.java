@@ -412,7 +412,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             // The download will be aborted if we are unable to get a segment after
             // retrying with different peers.
             //
-            download: while (!getList.isEmpty()) {
+            download: while (!getList.isEmpty() && !connectedPublicPeers.isEmpty()) {
                 //
                 // Submit threads to issue 'getNextBlocks' requests.  The first segment
                 // will always be sent to the feeder peer.  Subsequent segments will
@@ -429,13 +429,18 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                         peer = feederPeer;
                     } else {
                         while (true) {
+                            if (connectedPublicPeers.isEmpty()) {
+                                break download;
+                            }
                             if (nextPeerIndex >= connectedPublicPeers.size()) {
                                 nextPeerIndex = 0;
                             }
                             peer = connectedPublicPeers.get(nextPeerIndex++);
-                            if (peer.getState() == Peer.State.CONNECTED || peer == feederPeer) {
-                                break;
+                            if (peer.getState() != Peer.State.CONNECTED) {
+                                connectedPublicPeers.remove(peer);
+                                continue;
                             }
+                            break;
                         }
                     }
                     if (nextBlocks.getPeer() == peer) {
@@ -459,11 +464,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                         throw new RuntimeException(exc.getMessage(), exc);
                     }
                     if (blockList == null) {
-                        Peer blockPeer = nextBlocks.getPeer();
-                        if (blockPeer.getState() == Peer.State.CONNECTED) {
-                            Logger.logDebugMessage("Peer " + blockPeer.getHost() + " is on a fork, disconnecting");
-                            blockPeer.disconnectPeer();
-                        }
+                        connectedPublicPeers.remove(nextBlocks.getPeer());
                         continue;
                     }
                     Peer peer = nextBlocks.getPeer();
@@ -492,6 +493,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     NetworkHandler.getConnectionCount() >= NetworkHandler.getMaxOutboundConnections() &&
                     chainBlockIds.size() > 360) {
                 Logger.logDebugMessage(slowestPeer.getHost() + " took " + maxResponseTime + " ms, disconnecting");
+                connectedPublicPeers.remove(slowestPeer);
                 slowestPeer.disconnectPeer();
             }
             //
@@ -533,7 +535,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             } finally {
                 blockchain.writeUnlock();
             }
-
         }
 
     };
