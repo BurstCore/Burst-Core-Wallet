@@ -122,7 +122,7 @@ var NRS = (function(NRS, $) {
 	body.on("click", ".switch-account", function() {
 		var account = $(this).data("account");
 		NRS.closeModal($("#user_info_modal"));
-		NRS.switchAccount(account, NRS.getActiveChain());
+		NRS.switchAccount(account, NRS.getActiveChainId());
 	});
 
 	var userInfoModal = $("#user_info_modal");
