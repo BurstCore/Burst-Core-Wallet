@@ -143,7 +143,7 @@ public final class CurrencyTransfer {
     private final int height;
     private final long senderId;
     private final long recipientId;
-    private final long units;
+    private final long unitsQNT;
     private final int timestamp;
 
     private CurrencyTransfer(Transaction transaction, CurrencyTransferAttachment attachment) {
@@ -154,7 +154,7 @@ public final class CurrencyTransfer {
         this.currencyId = attachment.getCurrencyId();
         this.senderId = transaction.getSenderId();
         this.recipientId = transaction.getRecipientId();
-        this.units = attachment.getUnits();
+        this.unitsQNT = attachment.getUnitsQNT();
         this.timestamp = Nxt.getBlockchain().getLastBlockTimestamp();
     }
 
@@ -165,7 +165,7 @@ public final class CurrencyTransfer {
         this.currencyId = rs.getLong("currency_id");
         this.senderId = rs.getLong("sender_id");
         this.recipientId = rs.getLong("recipient_id");
-        this.units = rs.getLong("units");
+        this.unitsQNT = rs.getLong("unitsQNT");
         this.timestamp = rs.getInt("timestamp");
         this.height = rs.getInt("height");
     }
@@ -180,7 +180,7 @@ public final class CurrencyTransfer {
             pstmt.setLong(++i, this.currencyId);
             pstmt.setLong(++i, this.senderId);
             pstmt.setLong(++i, this.recipientId);
-            pstmt.setLong(++i, this.units);
+            pstmt.setLong(++i, this.unitsQNT);
             pstmt.setInt(++i, this.timestamp);
             pstmt.setInt(++i, this.height);
             pstmt.executeUpdate();
@@ -205,7 +205,9 @@ public final class CurrencyTransfer {
         return recipientId;
     }
 
-    public long getUnits() { return units; }
+    public long getUnitsQNT() {
+        return unitsQNT;
+    }
 
     public int getTimestamp() {
         return timestamp;

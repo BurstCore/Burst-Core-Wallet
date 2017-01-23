@@ -31,8 +31,8 @@ public final class ExchangeSellAttachment extends ExchangeAttachment {
         super(attachmentData);
     }
 
-    public ExchangeSellAttachment(long currencyId, long rateNQT, long units) {
-        super(currencyId, rateNQT, units);
+    public ExchangeSellAttachment(long currencyId, long rateNQT, long unitsQNT) {
+        super(currencyId, rateNQT, unitsQNT);
     }
 
     @Override

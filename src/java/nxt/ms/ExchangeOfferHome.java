@@ -41,12 +41,12 @@ public final class ExchangeOfferHome {
     public static final class AvailableOffers {
 
         private final long rateNQT;
-        private final long units;
+        private final long unitsQNT;
         private final long amountNQT;
 
-        private AvailableOffers(long rateNQT, long units, long amountNQT) {
+        private AvailableOffers(long rateNQT, long unitsQNT, long amountNQT) {
             this.rateNQT = rateNQT;
-            this.units = units;
+            this.unitsQNT = unitsQNT;
             this.amountNQT = amountNQT;
         }
 
@@ -54,8 +54,8 @@ public final class ExchangeOfferHome {
             return rateNQT;
         }
 
-        public long getUnits() {
-            return units;
+        public long getUnitsQNT() {
+            return unitsQNT;
         }
 
         public long getAmountNQT() {
@@ -133,23 +133,23 @@ public final class ExchangeOfferHome {
         addSellOffer(transaction, attachment);
     }
 
-    private AvailableOffers calculateTotal(long currencyId, List<? extends ExchangeOffer> offers, final long units) {
+    private AvailableOffers calculateTotal(long currencyId, List<? extends ExchangeOffer> offers, final long unitsQNT) {
         Currency currency = Currency.getCurrency(currencyId);
         long totalAmountNQT = 0;
-        long remainingUnits = units;
+        long remainingUnitsQNT = unitsQNT;
         long rateNQT = 0;
         for (ExchangeOffer offer : offers) {
-            if (remainingUnits == 0) {
+            if (remainingUnitsQNT == 0) {
                 break;
             }
             rateNQT = offer.getRateNQT();
-            long curUnitsQNT = Math.min(Math.min(remainingUnits, offer.getSupply()), offer.getLimit());
+            long curUnitsQNT = Math.min(Math.min(remainingUnitsQNT, offer.getSupplyQNT()), offer.getLimitQNT());
             long curAmountNQT = Convert.unitRateToAmount(curUnitsQNT, currency.getDecimals(),
                                             rateNQT, childChain.getDecimals());
             totalAmountNQT = Math.addExact(totalAmountNQT, curAmountNQT);
-            remainingUnits = Math.subtractExact(remainingUnits, curUnitsQNT);
+            remainingUnitsQNT = Math.subtractExact(remainingUnitsQNT, curUnitsQNT);
         }
-        return new AvailableOffers(rateNQT, Math.subtractExact(units, remainingUnits), totalAmountNQT);
+        return new AvailableOffers(rateNQT, Math.subtractExact(unitsQNT, remainingUnitsQNT), totalAmountNQT);
     }
 
     private static final DbClause availableOnlyDbClause = new DbClause.LongClause("unit_limit", DbClause.Op.NE, 0)
@@ -175,26 +175,26 @@ public final class ExchangeOfferHome {
     }
 
     void exchangeCurrencyForNXT(Transaction transaction, Account account, final long currencyId,
-                    final long rateNQT, final long units) {
+                    final long rateNQT, final long unitsQNT) {
         List<BuyOffer> currencyBuyOffers = getAvailableBuyOffers(currencyId, rateNQT);
         Currency currency = Currency.getCurrency(currencyId);
         long totalAmountNQT = 0;
-        long remainingUnits = units;
+        long remainingUnitsQNT = unitsQNT;
         for (BuyOffer buyOffer : currencyBuyOffers) {
-            if (remainingUnits == 0) {
+            if (remainingUnitsQNT == 0) {
                 break;
             }
             //
             // Calculate the number of units to buy and their value
             //
-            long curUnitsQNT = Math.min(Math.min(remainingUnits, buyOffer.getSupply()), buyOffer.getLimit());
+            long curUnitsQNT = Math.min(Math.min(remainingUnitsQNT, buyOffer.getSupplyQNT()), buyOffer.getLimitQNT());
             long curAmountNQT = Convert.unitRateToAmount(curUnitsQNT, currency.getDecimals(),
                                             buyOffer.getRateNQT(), childChain.getDecimals());
             //
             // Update the running totals
             //
             totalAmountNQT = Math.addExact(totalAmountNQT, curAmountNQT);
-            remainingUnits = Math.subtractExact(remainingUnits, curUnitsQNT);
+            remainingUnitsQNT = Math.subtractExact(remainingUnitsQNT, curUnitsQNT);
             //
             // Decrease the number of units we can buy and increase the number we can sell.
             // A non-zero excess will be returned if the sell limit has been reached.
@@ -227,13 +227,13 @@ public final class ExchangeOfferHome {
         account.addToBalanceAndUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE,
                 eventId, totalAmountNQT);
         account.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, eventId, currencyId,
-                -(units - remainingUnits));
+                -(unitsQNT - remainingUnitsQNT));
         account.addToUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, eventId,
-                currencyId, remainingUnits);
+                currencyId, remainingUnitsQNT);
     }
 
-    public AvailableOffers getAvailableToBuy(final long currencyId, final long units) {
-        return calculateTotal(currencyId, getAvailableSellOffers(currencyId, 0L), units);
+    public AvailableOffers getAvailableToBuy(final long currencyId, final long unitsQNT) {
+        return calculateTotal(currencyId, getAvailableSellOffers(currencyId, 0L), unitsQNT);
     }
 
     private List<SellOffer> getAvailableSellOffers(long currencyId, long maxRateNQT) {
@@ -252,35 +252,35 @@ public final class ExchangeOfferHome {
     }
 
     void exchangeNXTForCurrency(Transaction transaction, Account account, final long currencyId,
-            final long rateNQT, final long units) {
+            final long rateNQT, final long unitsQNT) {
         List<SellOffer> currencySellOffers = getAvailableSellOffers(currencyId, rateNQT);
         Currency currency = Currency.getCurrency(currencyId);
         long totalAmountNQT = 0;
-        long remainingUnits = units;
-        long reserveAmount = Convert.unitRateToAmount(units, currency.getDecimals(), rateNQT, childChain.getDecimals());
+        long remainingUnitsQNT = unitsQNT;
+        long reserveAmount = Convert.unitRateToAmount(unitsQNT, currency.getDecimals(), rateNQT, childChain.getDecimals());
 
         for (SellOffer sellOffer : currencySellOffers) {
-            if (remainingUnits == 0) {
+            if (remainingUnitsQNT == 0) {
                 break;
             }
             //
             // Calculate the number of units to sell and their value
             //
-            long curUnitsQNT = Math.min(Math.min(remainingUnits, sellOffer.getSupply()), sellOffer.getLimit());
+            long curUnitsQNT = Math.min(Math.min(remainingUnitsQNT, sellOffer.getSupplyQNT()), sellOffer.getLimitQNT());
             long curAmountNQT = Convert.unitRateToAmount(curUnitsQNT, currency.getDecimals(),
                                             sellOffer.getRateNQT(), childChain.getDecimals());
             //
             // Update the running totals
             //
             totalAmountNQT = Math.addExact(totalAmountNQT, curAmountNQT);
-            remainingUnits = Math.subtractExact(remainingUnits, curUnitsQNT);
+            remainingUnitsQNT = Math.subtractExact(remainingUnitsQNT, curUnitsQNT);
             //
             // Decrease the number of units we can sell and increase the number we can buy.
             // A non-zero excess indicates the buy limit has been reached.
             //
             sellOffer.decreaseLimitAndSupply(curUnitsQNT);
             BuyOffer buyOffer = sellOffer.getCounterOffer();
-            long unconfirmedAmount = buyOffer.getAmount();
+            long unconfirmedAmount = buyOffer.getAmountNQT();
             buyOffer.increaseSupply(curUnitsQNT);
             //
             // Update the seller account balances
@@ -290,14 +290,14 @@ public final class ExchangeOfferHome {
                     sellOffer.getFullHash(), childChain);
             counterAccount.addToBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, eventId, curAmountNQT);
             counterAccount.addToUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE,
-                        eventId, Math.addExact(curAmountNQT, (unconfirmedAmount - buyOffer.getAmount())));
+                        eventId, Math.addExact(curAmountNQT, (unconfirmedAmount - buyOffer.getAmountNQT())));
             counterAccount.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, eventId, currencyId, -curUnitsQNT);
             exchangeHome.addExchange(transaction, currencyId, sellOffer, sellOffer.getAccountId(),
                     account.getId(), curUnitsQNT);
         }
         AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
         account.addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, eventId,
-                currencyId, Math.subtractExact(units, remainingUnits));
+                currencyId, Math.subtractExact(unitsQNT, remainingUnitsQNT));
         account.addToBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, eventId, -totalAmountNQT);
         account.addToUnconfirmedBalance(childChain, LedgerEvent.CURRENCY_EXCHANGE, eventId,
                 reserveAmount - totalAmountNQT);
@@ -311,12 +311,11 @@ public final class ExchangeOfferHome {
 
         Account account = Account.getAccount(buyOffer.getAccountId());
         AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(buyOffer.getId(), buyOffer.getFullHash(), childChain);
-        if (buyOffer.getAmount() != 0) {
-            account.addToUnconfirmedBalance(childChain, event, eventId, buyOffer.getAmount());
+        if (buyOffer.getAmountNQT() != 0) {
+            account.addToUnconfirmedBalance(childChain, event, eventId, buyOffer.getAmountNQT());
         }
-        if (sellOffer.getSupply() != 0) {
-            account.addToUnconfirmedCurrencyUnits(event, eventId, buyOffer.getCurrencyId(),
-                    sellOffer.getSupply());
+        if (sellOffer.getSupplyQNT() != 0) {
+            account.addToUnconfirmedCurrencyUnits(event, eventId, buyOffer.getCurrencyId(), sellOffer.getSupplyQNT());
         }
     }
 
@@ -327,22 +326,22 @@ public final class ExchangeOfferHome {
         private final long currencyId;
         private final long accountId;
         private final long rateNQT;
-        private long limit; // limit on the total sum of units for this offer across transactions
-        private long supply; // total units supply for the offer
+        private long limitQNT; // limit on the total sum of units for this offer across transactions
+        private long supplyQNT; // total units supply for the offer
         private final int expirationHeight;
         private final int creationHeight;
         private final short transactionIndex;
         private final int transactionHeight;
 
         ExchangeOffer(long id, byte[] hash, long currencyId, long accountId, long rateNQT,
-                long limit, long supply, int expirationHeight, int transactionHeight, short transactionIndex) {
+                long limitQNT, long supplyQNT, int expirationHeight, int transactionHeight, short transactionIndex) {
             this.id = id;
             this.hash = hash;
             this.currencyId = currencyId;
             this.accountId = accountId;
             this.rateNQT = rateNQT;
-            this.limit = limit;
-            this.supply = supply;
+            this.limitQNT = limitQNT;
+            this.supplyQNT = supplyQNT;
             this.expirationHeight = expirationHeight;
             this.creationHeight = Nxt.getBlockchain().getHeight();
             this.transactionIndex = transactionIndex;
@@ -355,8 +354,8 @@ public final class ExchangeOfferHome {
             this.currencyId = rs.getLong("currency_id");
             this.accountId = rs.getLong("account_id");
             this.rateNQT = rs.getLong("rate");
-            this.limit = rs.getLong("unit_limit");
-            this.supply = rs.getLong("supply");
+            this.limitQNT = rs.getLong("unit_limit");
+            this.supplyQNT = rs.getLong("supply");
             this.expirationHeight = rs.getInt("expiration_height");
             this.creationHeight = rs.getInt("creation_height");
             this.transactionIndex = rs.getShort("transaction_index");
@@ -383,12 +382,12 @@ public final class ExchangeOfferHome {
             return rateNQT;
         }
 
-        public long getLimit() {
-            return limit;
+        public long getLimitQNT() {
+            return limitQNT;
         }
 
-        public long getSupply() {
-            return supply;
+        public long getSupplyQNT() {
+            return supplyQNT;
         }
 
         public int getExpirationHeight() {
@@ -413,15 +412,15 @@ public final class ExchangeOfferHome {
             return childChain;
         }
 
-        long increaseSupply(long delta) {
-            long excess = Math.max(Math.addExact(supply, Math.subtractExact(delta, limit)), 0);
-            supply += delta - excess;
-            return excess;
+        long increaseSupply(long deltaQNT) {
+            long excessQNT = Math.max(Math.addExact(supplyQNT, Math.subtractExact(deltaQNT, limitQNT)), 0);
+            supplyQNT += deltaQNT - excessQNT;
+            return excessQNT;
         }
 
-        void decreaseLimitAndSupply(long delta) {
-            limit -= delta;
-            supply -= delta;
+        void decreaseLimitAndSupply(long deltaQNT) {
+            limitQNT -= deltaQNT;
+            supplyQNT -= deltaQNT;
         }
     }
 
@@ -485,12 +484,12 @@ public final class ExchangeOfferHome {
     public final class BuyOffer extends ExchangeOffer {
 
         private final DbKey dbKey;
-        private long amount;
+        private long amountNQT;
 
         private BuyOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
             super(transaction.getId(), transaction.getFullHash(), attachment.getCurrencyId(),
                     transaction.getSenderId(), attachment.getBuyRateNQT(),
-                    attachment.getTotalBuyLimit(), attachment.getInitialBuySupply(),
+                    attachment.getTotalBuyLimitQNT(), attachment.getInitialBuySupplyQNT(),
                     attachment.getExpirationHeight(), transaction.getHeight(),
                     transaction.getIndex());
             this.dbKey = buyOfferDbKeyFactory.newKey(id);
@@ -499,13 +498,13 @@ public final class ExchangeOfferHome {
             // to the unconfirmed account balance when the buy offer expires.
             //
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
-            this.amount = Convert.unitRateToAmount(attachment.getInitialBuySupply(), currency.getDecimals(),
+            this.amountNQT = Convert.unitRateToAmount(attachment.getInitialBuySupplyQNT(), currency.getDecimals(),
                                         attachment.getBuyRateNQT(), childChain.getDecimals());
         }
 
         private BuyOffer(ResultSet rs, DbKey dbKey) throws SQLException {
             super(rs);
-            this.amount = rs.getLong("amount");
+            this.amountNQT = rs.getLong("amount");
             this.dbKey = dbKey;
         }
 
@@ -521,9 +520,9 @@ public final class ExchangeOfferHome {
                 pstmt.setLong(++i, getCurrencyId());
                 pstmt.setLong(++i, getAccountId());
                 pstmt.setLong(++i, getRateNQT());
-                pstmt.setLong(++i, getLimit());
-                pstmt.setLong(++i, getSupply());
-                pstmt.setLong(++i, amount);
+                pstmt.setLong(++i, getLimitQNT());
+                pstmt.setLong(++i, getSupplyQNT());
+                pstmt.setLong(++i, amountNQT);
                 pstmt.setInt(++i, getExpirationHeight());
                 pstmt.setInt(++i, getHeight());
                 pstmt.setShort(++i, getTransactionIndex());
@@ -539,25 +538,25 @@ public final class ExchangeOfferHome {
         }
 
         @Override
-        long increaseSupply(long deltaUnits) {
-            long excess = super.increaseSupply(deltaUnits);
+        long increaseSupply(long deltaQNT) {
+            long excessQNT = super.increaseSupply(deltaQNT);
             Currency currency = Currency.getCurrency(getCurrencyId());
-            amount = Convert.unitRateToAmount(getSupply(), currency.getDecimals(),
-                                              getRateNQT(), childChain.getDecimals());
+            amountNQT = Convert.unitRateToAmount(getSupplyQNT(), currency.getDecimals(),
+                                                 getRateNQT(), childChain.getDecimals());
             buyOfferTable.insert(this);
-            return excess;
+            return excessQNT;
         }
 
         long decreaseLimitAndSupply(long deltaUnits, long deltaAmount) {
             super.decreaseLimitAndSupply(deltaUnits);
-            long excess = Math.max(deltaAmount - amount, 0);
-            amount -= deltaAmount - excess;
+            long excessNQT = Math.max(deltaAmount - amountNQT, 0);
+            amountNQT -= deltaAmount - excessNQT;
             buyOfferTable.insert(this);
-            return excess;
+            return excessNQT;
         }
 
-        long getAmount() {
-            return amount;
+        long getAmountNQT() {
+            return amountNQT;
         }
 
     }
@@ -624,9 +623,10 @@ public final class ExchangeOfferHome {
         private final DbKey dbKey;
 
         private SellOffer(Transaction transaction, PublishExchangeOfferAttachment attachment) {
-            super(transaction.getId(), transaction.getFullHash(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateNQT(),
-                    attachment.getTotalSellLimit(), attachment.getInitialSellSupply(), attachment.getExpirationHeight(), transaction.getHeight(),
-                    transaction.getIndex());
+            super(transaction.getId(), transaction.getFullHash(), attachment.getCurrencyId(),
+                    transaction.getSenderId(), attachment.getSellRateNQT(),
+                    attachment.getTotalSellLimitQNT(), attachment.getInitialSellSupplyQNT(),
+                    attachment.getExpirationHeight(), transaction.getHeight(), transaction.getIndex());
             this.dbKey = sellOfferDbKeyFactory.newKey(id);
         }
 
@@ -647,8 +647,8 @@ public final class ExchangeOfferHome {
                 pstmt.setLong(++i, getCurrencyId());
                 pstmt.setLong(++i, getAccountId());
                 pstmt.setLong(++i, getRateNQT());
-                pstmt.setLong(++i, getLimit());
-                pstmt.setLong(++i, getSupply());
+                pstmt.setLong(++i, getLimitQNT());
+                pstmt.setLong(++i, getSupplyQNT());
                 pstmt.setInt(++i, getExpirationHeight());
                 pstmt.setInt(++i, getHeight());
                 pstmt.setShort(++i, getTransactionIndex());

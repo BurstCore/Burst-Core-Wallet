@@ -27,14 +27,14 @@ public final class CurrencyMintingAttachment extends Attachment.AbstractAttachme
 
     private final long nonce;
     private final long currencyId;
-    private final long units;
+    private final long unitsQNT;
     private final long counter;
 
     public CurrencyMintingAttachment(ByteBuffer buffer) {
         super(buffer);
         this.nonce = buffer.getLong();
         this.currencyId = buffer.getLong();
-        this.units = buffer.getLong();
+        this.unitsQNT = buffer.getLong();
         this.counter = buffer.getLong();
     }
 
@@ -42,14 +42,14 @@ public final class CurrencyMintingAttachment extends Attachment.AbstractAttachme
         super(attachmentData);
         this.nonce = Convert.parseLong(attachmentData.get("nonce"));
         this.currencyId = Convert.parseUnsignedLong((String)attachmentData.get("currency"));
-        this.units = Convert.parseLong(attachmentData.get("units"));
+        this.unitsQNT = Convert.parseLong(attachmentData.get("unitsQNT"));
         this.counter = Convert.parseLong(attachmentData.get("counter"));
     }
 
-    public CurrencyMintingAttachment(long nonce, long currencyId, long units, long counter) {
+    public CurrencyMintingAttachment(long nonce, long currencyId, long unitsQNT, long counter) {
         this.nonce = nonce;
         this.currencyId = currencyId;
-        this.units = units;
+        this.unitsQNT = unitsQNT;
         this.counter = counter;
     }
 
@@ -62,7 +62,7 @@ public final class CurrencyMintingAttachment extends Attachment.AbstractAttachme
     protected void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(nonce);
         buffer.putLong(currencyId);
-        buffer.putLong(units);
+        buffer.putLong(unitsQNT);
         buffer.putLong(counter);
     }
 
@@ -70,7 +70,7 @@ public final class CurrencyMintingAttachment extends Attachment.AbstractAttachme
     protected void putMyJSON(JSONObject attachment) {
         attachment.put("nonce", nonce);
         attachment.put("currency", Long.toUnsignedString(currencyId));
-        attachment.put("units", units);
+        attachment.put("unitsQNT", unitsQNT);
         attachment.put("counter", counter);
     }
 
@@ -88,8 +88,8 @@ public final class CurrencyMintingAttachment extends Attachment.AbstractAttachme
         return currencyId;
     }
 
-    public long getUnits() {
-        return units;
+    public long getUnitsQNT() {
+        return unitsQNT;
     }
 
     public long getCounter() {

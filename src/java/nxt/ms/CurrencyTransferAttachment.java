@@ -26,23 +26,23 @@ import java.nio.ByteBuffer;
 public final class CurrencyTransferAttachment extends Attachment.AbstractAttachment implements MonetarySystemAttachment {
 
     private final long currencyId;
-    private final long units;
+    private final long unitsQNT;
 
     public CurrencyTransferAttachment(ByteBuffer buffer) {
         super(buffer);
         this.currencyId = buffer.getLong();
-        this.units = buffer.getLong();
+        this.unitsQNT = buffer.getLong();
     }
 
     public CurrencyTransferAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.currencyId = Convert.parseUnsignedLong((String)attachmentData.get("currency"));
-        this.units = Convert.parseLong(attachmentData.get("units"));
+        this.unitsQNT = Convert.parseLong(attachmentData.get("unitsQNT"));
     }
 
-    public CurrencyTransferAttachment(long currencyId, long units) {
+    public CurrencyTransferAttachment(long currencyId, long unitsQNT) {
         this.currencyId = currencyId;
-        this.units = units;
+        this.unitsQNT = unitsQNT;
     }
 
     @Override
@@ -53,13 +53,13 @@ public final class CurrencyTransferAttachment extends Attachment.AbstractAttachm
     @Override
     protected void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(currencyId);
-        buffer.putLong(units);
+        buffer.putLong(unitsQNT);
     }
 
     @Override
     protected void putMyJSON(JSONObject attachment) {
         attachment.put("currency", Long.toUnsignedString(currencyId));
-        attachment.put("units", units);
+        attachment.put("unitsQNT", unitsQNT);
     }
 
     @Override
@@ -72,7 +72,7 @@ public final class CurrencyTransferAttachment extends Attachment.AbstractAttachm
         return currencyId;
     }
 
-    public long getUnits() {
-        return units;
+    public long getUnitsQNT() {
+        return unitsQNT;
     }
 }

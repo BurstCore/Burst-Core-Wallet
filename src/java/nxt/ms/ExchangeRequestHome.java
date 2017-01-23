@@ -102,8 +102,8 @@ public final class ExchangeRequestHome {
         private final int height;
         private final int timestamp;
         private final DbKey dbKey;
-        private final long units;
-        private final long rate;
+        private final long unitsQNT;
+        private final long rateNQT;
         private final boolean isBuy;
 
         private ExchangeRequest(Transaction transaction, ExchangeBuyAttachment attachment) {
@@ -120,8 +120,8 @@ public final class ExchangeRequestHome {
             this.dbKey = exchangeRequestDbKeyFactory.newKey(this.hash, this.id);
             this.accountId = transaction.getSenderId();
             this.currencyId = attachment.getCurrencyId();
-            this.units = attachment.getUnits();
-            this.rate = attachment.getRateNQT();
+            this.unitsQNT = attachment.getUnitsQNT();
+            this.rateNQT = attachment.getRateNQT();
             this.isBuy = isBuy;
             Block block = Nxt.getBlockchain().getLastBlock();
             this.height = block.getHeight();
@@ -134,8 +134,8 @@ public final class ExchangeRequestHome {
             this.dbKey = dbKey;
             this.accountId = rs.getLong("account_id");
             this.currencyId = rs.getLong("currency_id");
-            this.units = rs.getLong("units");
-            this.rate = rs.getLong("rate");
+            this.unitsQNT = rs.getLong("units");
+            this.rateNQT = rs.getLong("rate");
             this.isBuy = rs.getBoolean("is_buy");
             this.timestamp = rs.getInt("timestamp");
             this.height = rs.getInt("height");
@@ -149,8 +149,8 @@ public final class ExchangeRequestHome {
                 pstmt.setBytes(++i, this.hash);
                 pstmt.setLong(++i, this.accountId);
                 pstmt.setLong(++i, this.currencyId);
-                pstmt.setLong(++i, this.units);
-                pstmt.setLong(++i, this.rate);
+                pstmt.setLong(++i, this.unitsQNT);
+                pstmt.setLong(++i, this.rateNQT);
                 pstmt.setBoolean(++i, this.isBuy);
                 pstmt.setInt(++i, this.timestamp);
                 pstmt.setInt(++i, this.height);
@@ -174,12 +174,12 @@ public final class ExchangeRequestHome {
             return currencyId;
         }
 
-        public long getUnits() {
-            return units;
+        public long getUnitsQNT() {
+            return unitsQNT;
         }
 
-        public long getRate() {
-            return rate;
+        public long getRateNQT() {
+            return rateNQT;
         }
 
         public boolean isBuy() {

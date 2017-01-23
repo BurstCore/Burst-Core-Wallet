@@ -32,10 +32,11 @@ public final class CurrencyMinting {
             Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.SHA3, HashFunction.SCRYPT, HashFunction.Keccak25));
 
     public static boolean meetsTarget(long accountId, Currency currency, CurrencyMintingAttachment attachment) {
-        byte[] hash = getHash(currency.getAlgorithm(), attachment.getNonce(), attachment.getCurrencyId(), attachment.getUnits(),
+        byte[] hash = getHash(currency.getAlgorithm(), attachment.getNonce(), attachment.getCurrencyId(), attachment.getUnitsQNT(),
                 attachment.getCounter(), accountId);
         byte[] target = getTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(),
-                attachment.getUnits(), currency.getCurrentSupply() - currency.getReserveSupply(), currency.getMaxSupply() - currency.getReserveSupply());
+                attachment.getUnitsQNT(), currency.getCurrentSupplyQNT() - currency.getReserveSupplyQNT(),
+                currency.getMaxSupplyQNT() - currency.getReserveSupplyQNT());
         return meetsTarget(hash, target);
     }
 
@@ -51,24 +52,25 @@ public final class CurrencyMinting {
         return true;
     }
 
-    public static byte[] getHash(byte algorithm, long nonce, long currencyId, long units, long counter, long accountId) {
+    public static byte[] getHash(byte algorithm, long nonce, long currencyId, long unitsQNT, long counter, long accountId) {
         HashFunction hashFunction = HashFunction.getHashFunction(algorithm);
-        return getHash(hashFunction, nonce, currencyId, units, counter, accountId);
+        return getHash(hashFunction, nonce, currencyId, unitsQNT, counter, accountId);
     }
 
-    public static byte[] getHash(HashFunction hashFunction, long nonce, long currencyId, long units, long counter, long accountId) {
+    public static byte[] getHash(HashFunction hashFunction, long nonce, long currencyId, long unitsQNT,
+            long counter, long accountId) {
         ByteBuffer buffer = ByteBuffer.allocate(8 + 8 + 8 + 8 + 8);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.putLong(nonce);
         buffer.putLong(currencyId);
-        buffer.putLong(units);
+        buffer.putLong(unitsQNT);
         buffer.putLong(counter);
         buffer.putLong(accountId);
         return hashFunction.hash(buffer.array());
     }
 
-    public static byte[] getTarget(int min, int max, long units, long currentMintableSupply, long totalMintableSupply) {
-        return getTarget(getNumericTarget(min, max, units, currentMintableSupply, totalMintableSupply));
+    public static byte[] getTarget(int min, int max, long unitsQNT, long currentMintableSupplyQNT, long totalMintableSupplyQNT) {
+        return getTarget(getNumericTarget(min, max, unitsQNT, currentMintableSupplyQNT, totalMintableSupplyQNT));
     }
 
     public static byte[] getTarget(BigInteger numericTarget) {
@@ -82,17 +84,19 @@ public final class CurrencyMinting {
         return reverse(targetBytes);
     }
 
-    public static BigInteger getNumericTarget(Currency currency, long units) {
-        return getNumericTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(), units,
-                currency.getCurrentSupply() - currency.getReserveSupply(), currency.getMaxSupply() - currency.getReserveSupply());
+    public static BigInteger getNumericTarget(Currency currency, long unitsQNT) {
+        return getNumericTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(), unitsQNT,
+                currency.getCurrentSupplyQNT() - currency.getReserveSupplyQNT(),
+                currency.getMaxSupplyQNT() - currency.getReserveSupplyQNT());
     }
 
-    public static BigInteger getNumericTarget(int min, int max, long units, long currentMintableSupply, long totalMintableSupply) {
+    public static BigInteger getNumericTarget(int min, int max, long unitsQNT,
+            long currentMintableSupplyQNT, long totalMintableSupplyQNT) {
         if (min < 1 || max > 255) {
             throw new IllegalArgumentException(String.format("Min: %d, Max: %d, allowed range is 1 to 255", min, max));
         }
-        int exp = (int)(256 - min - ((max - min) * currentMintableSupply) / totalMintableSupply);
-        return BigInteger.valueOf(2).pow(exp).subtract(BigInteger.ONE).divide(BigInteger.valueOf(units));
+        int exp = (int)(256 - min - ((max - min) * currentMintableSupplyQNT) / totalMintableSupplyQNT);
+        return BigInteger.valueOf(2).pow(exp).subtract(BigInteger.ONE).divide(BigInteger.valueOf(unitsQNT));
     }
 
     private static byte[] reverse(byte[] b) {

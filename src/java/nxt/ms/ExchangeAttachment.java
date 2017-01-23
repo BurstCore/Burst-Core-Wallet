@@ -26,26 +26,26 @@ public abstract class ExchangeAttachment extends Attachment.AbstractAttachment i
 
     private final long currencyId;
     private final long rateNQT;
-    private final long units;
+    private final long unitsQNT;
 
     ExchangeAttachment(ByteBuffer buffer) {
         super(buffer);
         this.currencyId = buffer.getLong();
         this.rateNQT = buffer.getLong();
-        this.units = buffer.getLong();
+        this.unitsQNT = buffer.getLong();
     }
 
     ExchangeAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.currencyId = Convert.parseUnsignedLong((String)attachmentData.get("currency"));
         this.rateNQT = Convert.parseLong(attachmentData.get("rateNQT"));
-        this.units = Convert.parseLong(attachmentData.get("units"));
+        this.unitsQNT = Convert.parseLong(attachmentData.get("unitsQNT"));
     }
 
-    ExchangeAttachment(long currencyId, long rateNQT, long units) {
+    ExchangeAttachment(long currencyId, long rateNQT, long unitsQNT) {
         this.currencyId = currencyId;
         this.rateNQT = rateNQT;
-        this.units = units;
+        this.unitsQNT = unitsQNT;
     }
 
     @Override
@@ -57,14 +57,14 @@ public abstract class ExchangeAttachment extends Attachment.AbstractAttachment i
     protected void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(currencyId);
         buffer.putLong(rateNQT);
-        buffer.putLong(units);
+        buffer.putLong(unitsQNT);
     }
 
     @Override
     protected void putMyJSON(JSONObject attachment) {
         attachment.put("currency", Long.toUnsignedString(currencyId));
         attachment.put("rateNQT", rateNQT);
-        attachment.put("units", units);
+        attachment.put("unitsQNT", unitsQNT);
     }
 
     @Override
@@ -76,8 +76,8 @@ public abstract class ExchangeAttachment extends Attachment.AbstractAttachment i
         return rateNQT;
     }
 
-    public long getUnits() {
-        return units;
+    public long getUnitsQNT() {
+        return unitsQNT;
     }
 
 }

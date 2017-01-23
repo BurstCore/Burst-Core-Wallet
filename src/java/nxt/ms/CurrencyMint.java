@@ -49,17 +49,18 @@ public final class CurrencyMint {
 
         public final long accountId;
         public final long currencyId;
-        public final long units;
+        public final long unitsQNT;
 
-        private Mint(long accountId, long currencyId, long units) {
+        private Mint(long accountId, long currencyId, long unitsQNT) {
             this.accountId = accountId;
             this.currencyId = currencyId;
-            this.units = units;
+            this.unitsQNT = unitsQNT;
         }
 
     }
 
-    private static final DbKey.LongLongKeyFactory<CurrencyMint> currencyMintDbKeyFactory = new DbKey.LongLongKeyFactory<CurrencyMint>("currency_id", "account_id") {
+    private static final DbKey.LongLongKeyFactory<CurrencyMint> currencyMintDbKeyFactory =
+            new DbKey.LongLongKeyFactory<CurrencyMint>("currency_id", "account_id") {
 
         @Override
         public DbKey newKey(CurrencyMint currencyMint) {
@@ -68,7 +69,8 @@ public final class CurrencyMint {
 
     };
 
-    private static final VersionedEntityDbTable<CurrencyMint> currencyMintTable = new VersionedEntityDbTable<CurrencyMint>("public.currency_mint", currencyMintDbKeyFactory) {
+    private static final VersionedEntityDbTable<CurrencyMint> currencyMintTable =
+            new VersionedEntityDbTable<CurrencyMint>("public.currency_mint", currencyMintDbKeyFactory) {
 
         @Override
         protected CurrencyMint load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -115,7 +117,8 @@ public final class CurrencyMint {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_mint (currency_id, account_id, counter, height, latest) "
+        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_mint "
+                + "(currency_id, account_id, counter, height, latest) "
                 + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, this.currencyId);
@@ -152,10 +155,10 @@ public final class CurrencyMint {
                 currencyMint.counter = attachment.getCounter();
             }
             currencyMintTable.insert(currencyMint);
-            long units = Math.min(attachment.getUnits(), currency.getMaxSupply() - currency.getCurrentSupply());
-            account.addToCurrencyAndUnconfirmedCurrencyUnits(event, eventId, currency.getId(), units);
-            currency.increaseSupply(units);
-            listeners.notify(new Mint(account.getId(), currency.getId(), units), Event.CURRENCY_MINT);
+            long unitsQNT = Math.min(attachment.getUnitsQNT(), currency.getMaxSupplyQNT() - currency.getCurrentSupplyQNT());
+            account.addToCurrencyAndUnconfirmedCurrencyUnits(event, eventId, currency.getId(), unitsQNT);
+            currency.increaseSupply(unitsQNT);
+            listeners.notify(new Mint(account.getId(), currency.getId(), unitsQNT), Event.CURRENCY_MINT);
         } else {
             Logger.logDebugMessage("Currency mint hash no longer meets target %s", JSON.toJSONString(attachment.getJSONObject()));
         }

@@ -33,7 +33,7 @@ import java.math.BigInteger;
  * <ul>
  * <li>currency - currency id
  * <li>account - miner account id
- * <li>units - number of currency units the miner is trying to mint
+ * <li>unitsQNT - number of currency units the miner is trying to mint
  * </ul>
  */
 public final class GetMintingTarget extends APIServlet.APIRequestHandler {
@@ -41,7 +41,7 @@ public final class GetMintingTarget extends APIServlet.APIRequestHandler {
     static final GetMintingTarget instance = new GetMintingTarget();
 
     private GetMintingTarget() {
-        super(new APITag[] {APITag.MS}, "currency", "account", "units");
+        super(new APITag[] {APITag.MS}, "currency", "account", "unitsQNT");
     }
 
     @Override
@@ -49,8 +49,9 @@ public final class GetMintingTarget extends APIServlet.APIRequestHandler {
         Currency currency = ParameterParser.getCurrency(req);
         JSONObject json = new JSONObject();
         json.put("currency", Long.toUnsignedString(currency.getId()));
-        long units = ParameterParser.getLong(req, "units", 1, currency.getMaxSupply() - currency.getReserveSupply(), true);
-        BigInteger numericTarget = CurrencyMinting.getNumericTarget(currency, units);
+        long unitsQNT = ParameterParser.getLong(req, "unitsQNT", 1,
+                currency.getMaxSupplyQNT() - currency.getReserveSupplyQNT(), true);
+        BigInteger numericTarget = CurrencyMinting.getNumericTarget(currency, unitsQNT);
         json.put("difficulty", String.valueOf(BigInteger.ZERO.equals(numericTarget) ? -1 : BigInteger.valueOf(2).pow(256).subtract(BigInteger.ONE).divide(numericTarget)));
         json.put("targetBytes", Convert.toHexString(CurrencyMinting.getTarget(numericTarget)));
         json.put("counter", nxt.ms.CurrencyMint.getCounter(currency.getId(), ParameterParser.getAccountId(req, true)));

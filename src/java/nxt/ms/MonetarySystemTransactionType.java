@@ -182,12 +182,12 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             CurrencyIssuanceAttachment attachment = (CurrencyIssuanceAttachment) transaction.getAttachment();
-            if (attachment.getMaxSupply() > Constants.MAX_CURRENCY_TOTAL_SUPPLY
-                    || attachment.getMaxSupply() <= 0
-                    || attachment.getInitialSupply() < 0
-                    || attachment.getInitialSupply() > attachment.getMaxSupply()
-                    || attachment.getReserveSupply() < 0
-                    || attachment.getReserveSupply() > attachment.getMaxSupply()
+            if (attachment.getMaxSupplyQNT() > Constants.MAX_CURRENCY_TOTAL_SUPPLY
+                    || attachment.getMaxSupplyQNT() <= 0
+                    || attachment.getInitialSupplyQNT() < 0
+                    || attachment.getInitialSupplyQNT() > attachment.getMaxSupplyQNT()
+                    || attachment.getReserveSupplyQNT() < 0
+                    || attachment.getReserveSupplyQNT() > attachment.getMaxSupplyQNT()
                     || attachment.getIssuanceHeight() < 0
                     || attachment.getMinReservePerUnitNQT() < 0
                     || attachment.getDecimals() < 0 || attachment.getDecimals() > 8
@@ -220,7 +220,8 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             CurrencyIssuanceAttachment attachment = (CurrencyIssuanceAttachment) transaction.getAttachment();
             AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
             Currency.addCurrency(getLedgerEvent(), eventId, transaction, senderAccount, attachment);
-            senderAccount.addToCurrencyAndUnconfirmedCurrencyUnits(getLedgerEvent(), eventId, transaction.getId(), attachment.getInitialSupply());
+            senderAccount.addToCurrencyAndUnconfirmedCurrencyUnits(getLedgerEvent(), eventId, transaction.getId(),
+                    attachment.getInitialSupplyQNT());
         }
 
         @Override
@@ -278,7 +279,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             ReserveIncreaseAttachment attachment = (ReserveIncreaseAttachment) transaction.getAttachment();
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             ChildChain childChain = transaction.getChain();
-            long amount = Convert.unitRateToAmount(currency.getReserveSupply(), currency.getDecimals(),
+            long amount = Convert.unitRateToAmount(currency.getReserveSupplyQNT(), currency.getDecimals(),
                                     attachment.getAmountPerUnitNQT(), childChain.getDecimals());
             BalanceHome.Balance balance = childChain.getBalanceHome().getBalance(senderAccount.getId());
             if (balance.getUnconfirmedBalance() < amount) {
@@ -297,7 +298,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
                 return;
             }
             ChildChain childChain = transaction.getChain();
-            long amount = Convert.unitRateToAmount(currency.getReserveSupply(), currency.getDecimals(),
+            long amount = Convert.unitRateToAmount(currency.getReserveSupplyQNT(), currency.getDecimals(),
                                     attachment.getAmountPerUnitNQT(), childChain.getDecimals());
             senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
                     AccountLedger.newEventId(transaction), amount);
@@ -347,8 +348,8 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             ReserveClaimAttachment attachment = (ReserveClaimAttachment) transaction.getAttachment();
-            if (attachment.getUnits() <= 0) {
-                throw new NxtException.NotValidException("Reserve claim number of units must be positive: " + attachment.getUnits());
+            if (attachment.getUnitsQNT() <= 0) {
+                throw new NxtException.NotValidException("Reserve claim number of units must be positive: " + attachment.getUnitsQNT());
             }
             CurrencyType.validate(Currency.getCurrency(attachment.getCurrencyId()), transaction);
         }
@@ -356,9 +357,9 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             ReserveClaimAttachment attachment = (ReserveClaimAttachment) transaction.getAttachment();
-            if (senderAccount.getUnconfirmedCurrencyUnits(attachment.getCurrencyId()) >= attachment.getUnits()) {
+            if (senderAccount.getUnconfirmedCurrencyUnits(attachment.getCurrencyId()) >= attachment.getUnitsQNT()) {
                 senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), AccountLedger.newEventId(transaction),
-                        attachment.getCurrencyId(), -attachment.getUnits());
+                        attachment.getCurrencyId(), -attachment.getUnitsQNT());
                 return true;
             }
             return false;
@@ -370,7 +371,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             if (currency != null) {
                 senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), AccountLedger.newEventId(transaction),
-                        attachment.getCurrencyId(), attachment.getUnits());
+                        attachment.getCurrencyId(), attachment.getUnitsQNT());
             }
         }
 
@@ -378,7 +379,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             ReserveClaimAttachment attachment = (ReserveClaimAttachment) transaction.getAttachment();
             Currency.claimReserve(transaction.getChain(), getLedgerEvent(), AccountLedger.newEventId(transaction),
-                    senderAccount, attachment.getCurrencyId(), attachment.getUnits());
+                    senderAccount, attachment.getCurrencyId(), attachment.getUnitsQNT());
         }
 
         @Override
@@ -418,7 +419,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             CurrencyTransferAttachment attachment = (CurrencyTransferAttachment) transaction.getAttachment();
-            if (attachment.getUnits() <= 0) {
+            if (attachment.getUnitsQNT() <= 0) {
                 throw new NxtException.NotValidException("Invalid currency transfer: " + attachment.getJSONObject());
             }
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
@@ -431,11 +432,11 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             CurrencyTransferAttachment attachment = (CurrencyTransferAttachment) transaction.getAttachment();
-            if (attachment.getUnits() > senderAccount.getUnconfirmedCurrencyUnits(attachment.getCurrencyId())) {
+            if (attachment.getUnitsQNT() > senderAccount.getUnconfirmedCurrencyUnits(attachment.getCurrencyId())) {
                 return false;
             }
             senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), AccountLedger.newEventId(transaction),
-                    attachment.getCurrencyId(), -attachment.getUnits());
+                    attachment.getCurrencyId(), -attachment.getUnitsQNT());
             return true;
         }
 
@@ -445,7 +446,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             if (currency != null) {
                 senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), AccountLedger.newEventId(transaction),
-                        attachment.getCurrencyId(), attachment.getUnits());
+                        attachment.getCurrencyId(), attachment.getUnitsQNT());
             }
         }
 
@@ -453,7 +454,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         public void applyAttachment(ChildTransactionImpl transaction, Account senderAccount, Account recipientAccount) {
             CurrencyTransferAttachment attachment = (CurrencyTransferAttachment) transaction.getAttachment();
             Currency.transferCurrency(getLedgerEvent(), AccountLedger.newEventId(transaction), senderAccount, recipientAccount,
-                    attachment.getCurrencyId(), attachment.getUnits());
+                    attachment.getCurrencyId(), attachment.getUnitsQNT());
             CurrencyTransfer.addTransfer(transaction, attachment);
         }
 
@@ -500,21 +501,21 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
                 throw new NxtException.NotValidException(String.format("Invalid exchange offer, buy rate %d and sell rate %d has to be larger than 0, buy rate cannot be larger than sell rate",
                         attachment.getBuyRateNQT(), attachment.getSellRateNQT()));
             }
-            if (attachment.getTotalBuyLimit() < 0
-                    || attachment.getTotalSellLimit() < 0
-                    || attachment.getInitialBuySupply() < 0
-                    || attachment.getInitialSellSupply() < 0
+            if (attachment.getTotalBuyLimitQNT() < 0
+                    || attachment.getTotalSellLimitQNT() < 0
+                    || attachment.getInitialBuySupplyQNT() < 0
+                    || attachment.getInitialSellSupplyQNT() < 0
                     || attachment.getExpirationHeight() < 0) {
                 throw new NxtException.NotValidException("Invalid exchange offer, units and height cannot be negative: " + attachment.getJSONObject());
             }
-            if (attachment.getTotalBuyLimit() < attachment.getInitialBuySupply()
-                    || attachment.getTotalSellLimit() < attachment.getInitialSellSupply()) {
+            if (attachment.getTotalBuyLimitQNT() < attachment.getInitialBuySupplyQNT()
+                    || attachment.getTotalSellLimitQNT() < attachment.getInitialSellSupplyQNT()) {
                 throw new NxtException.NotValidException("Initial supplies must not exceed total limits");
             }
-            if (attachment.getTotalBuyLimit() == 0 && attachment.getTotalSellLimit() == 0) {
+            if (attachment.getTotalBuyLimitQNT() == 0 && attachment.getTotalSellLimitQNT() == 0) {
                 throw new NxtException.NotValidException("Total buy and sell limits cannot be both 0");
             }
-            if (attachment.getInitialBuySupply() == 0 && attachment.getInitialSellSupply() == 0) {
+            if (attachment.getInitialBuySupplyQNT() == 0 && attachment.getInitialSellSupplyQNT() == 0) {
                 throw new NxtException.NotValidException("Initial buy and sell supply cannot be both 0");
             }
             if (attachment.getExpirationHeight() <= attachment.getFinishValidationHeight(transaction)) {
@@ -534,8 +535,8 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             Currency currency = Currency.getCurrency(currencyId);
             ChildChain childChain = transaction.getChain();
             AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
-            if (attachment.getInitialBuySupply() > 0) {
-                long amountNQT = Convert.unitRateToAmount(attachment.getInitialBuySupply(), currency.getDecimals(),
+            if (attachment.getInitialBuySupplyQNT() > 0) {
+                long amountNQT = Convert.unitRateToAmount(attachment.getInitialBuySupplyQNT(), currency.getDecimals(),
                                             attachment.getBuyRateNQT(), childChain.getDecimals());
                 BalanceHome.Balance balance = childChain.getBalanceHome().getBalance(senderAccount.getId());
                 if (balance.getUnconfirmedBalance() < amountNQT) {
@@ -543,11 +544,11 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
                 }
                 senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, -amountNQT);
             }
-            if (senderAccount.getUnconfirmedCurrencyUnits(currencyId) < attachment.getInitialSellSupply()) {
+            if (senderAccount.getUnconfirmedCurrencyUnits(currencyId) < attachment.getInitialSellSupplyQNT()) {
                 return false;
             }
             senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), eventId,
-                        currencyId, -attachment.getInitialSellSupply());
+                        currencyId, -attachment.getInitialSellSupplyQNT());
             return true;
         }
 
@@ -561,14 +562,14 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             }
             ChildChain childChain = transaction.getChain();
             AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
-            if (attachment.getInitialBuySupply() > 0) {
-                long amountNQT = Convert.unitRateToAmount(attachment.getInitialBuySupply(), currency.getDecimals(),
+            if (attachment.getInitialBuySupplyQNT() > 0) {
+                long amountNQT = Convert.unitRateToAmount(attachment.getInitialBuySupplyQNT(), currency.getDecimals(),
                                             attachment.getBuyRateNQT(), childChain.getDecimals());
                 senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, amountNQT);
             }
             if (!currency.isDeleted()) {
                 senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), eventId,
-                        currencyId, attachment.getInitialSellSupply());
+                        currencyId, attachment.getInitialSellSupplyQNT());
             }
         }
 
@@ -597,7 +598,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public final void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             ExchangeAttachment attachment = (ExchangeAttachment) transaction.getAttachment();
-            if (attachment.getRateNQT() <= 0 || attachment.getUnits() == 0) {
+            if (attachment.getRateNQT() <= 0 || attachment.getUnitsQNT() == 0) {
                 throw new NxtException.NotValidException("Invalid exchange: " + attachment.getJSONObject());
             }
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
@@ -605,7 +606,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             if (! currency.isActive()) {
                 throw new NxtException.NotCurrentlyValidException("Currency not active: " + attachment.getJSONObject());
             }
-            long amount = Convert.unitRateToAmount(attachment.getUnits(), currency.getDecimals(), attachment.getRateNQT(),
+            long amount = Convert.unitRateToAmount(attachment.getUnitsQNT(), currency.getDecimals(), attachment.getRateNQT(),
                     transaction.getChain().getDecimals());
             if (amount == 0) {
                 throw new NxtException.NotValidException("Currency exchange request has zero value: " + attachment.getJSONObject());
@@ -654,7 +655,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             long currencyId = attachment.getCurrencyId();
             Currency currency = Currency.getCurrency(currencyId);
             ChildChain childChain = transaction.getChain();
-            long amount = Convert.unitRateToAmount(attachment.getUnits(), currency.getDecimals(),
+            long amount = Convert.unitRateToAmount(attachment.getUnitsQNT(), currency.getDecimals(),
                                     attachment.getRateNQT(), childChain.getDecimals());
             BalanceHome.Balance balance = childChain.getBalanceHome().getBalance(senderAccount.getId());
             if (balance.getUnconfirmedBalance() < amount) {
@@ -674,7 +675,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
                 return;
             }
             ChildChain childChain = transaction.getChain();
-            long amount = Convert.unitRateToAmount(attachment.getUnits(), currency.getDecimals(),
+            long amount = Convert.unitRateToAmount(attachment.getUnitsQNT(), currency.getDecimals(),
                                     attachment.getRateNQT(), childChain.getDecimals());
             senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
                     AccountLedger.newEventId(transaction), amount);
@@ -685,7 +686,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             ExchangeBuyAttachment attachment = (ExchangeBuyAttachment) transaction.getAttachment();
             transaction.getChain().getExchangeRequestHome().addExchangeRequest(transaction, attachment);
             transaction.getChain().getExchangeOfferHome().exchangeNXTForCurrency(transaction, senderAccount, attachment.getCurrencyId(),
-                    attachment.getRateNQT(), attachment.getUnits());
+                    attachment.getRateNQT(), attachment.getUnitsQNT());
         }
 
     };
@@ -720,9 +721,9 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         @Override
         public boolean applyAttachmentUnconfirmed(ChildTransactionImpl transaction, Account senderAccount) {
             ExchangeSellAttachment attachment = (ExchangeSellAttachment) transaction.getAttachment();
-            if (senderAccount.getUnconfirmedCurrencyUnits(attachment.getCurrencyId()) >= attachment.getUnits()) {
+            if (senderAccount.getUnconfirmedCurrencyUnits(attachment.getCurrencyId()) >= attachment.getUnitsQNT()) {
                 senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), AccountLedger.newEventId(transaction),
-                        attachment.getCurrencyId(), -attachment.getUnits());
+                        attachment.getCurrencyId(), -attachment.getUnitsQNT());
                 return true;
             }
             return false;
@@ -734,7 +735,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             if (currency != null) {
                 senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), AccountLedger.newEventId(transaction),
-                        attachment.getCurrencyId(), attachment.getUnits());
+                        attachment.getCurrencyId(), attachment.getUnitsQNT());
             }
         }
 
@@ -743,7 +744,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             ExchangeSellAttachment attachment = (ExchangeSellAttachment) transaction.getAttachment();
             transaction.getChain().getExchangeRequestHome().addExchangeRequest(transaction, attachment);
             transaction.getChain().getExchangeOfferHome().exchangeCurrencyForNXT(transaction, senderAccount, attachment.getCurrencyId(),
-                    attachment.getRateNQT(), attachment.getUnits());
+                    attachment.getRateNQT(), attachment.getUnitsQNT());
         }
 
     };
@@ -780,10 +781,10 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             CurrencyMintingAttachment attachment = (CurrencyMintingAttachment) transaction.getAttachment();
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             CurrencyType.validate(currency, transaction);
-            if (attachment.getUnits() <= 0) {
-                throw new NxtException.NotValidException("Invalid number of units: " + attachment.getUnits());
+            if (attachment.getUnitsQNT() <= 0) {
+                throw new NxtException.NotValidException("Invalid number of units: " + attachment.getUnitsQNT());
             }
-            if (attachment.getUnits() > (currency.getMaxSupply() - currency.getReserveSupply()) / Constants.MAX_MINTING_RATIO) {
+            if (attachment.getUnitsQNT() > (currency.getMaxSupplyQNT() - currency.getReserveSupplyQNT()) / Constants.MAX_MINTING_RATIO) {
                 throw new NxtException.NotValidException(String.format("Cannot mint more than 1/%d of the total units supply in a single request", Constants.MAX_MINTING_RATIO));
             }
             if (!currency.isActive()) {

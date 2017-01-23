@@ -96,13 +96,13 @@ public enum CurrencyType {
                 if (attachment.getMinReservePerUnitNQT() <= 0) {
                     throw new NxtException.NotValidException("Minimum reserve per unit must be > 0");
                 }
-                if (Math.multiplyExact(attachment.getMinReservePerUnitNQT(), attachment.getReserveSupply()) > Constants.MAX_BALANCE_NQT) {
+                if (Math.multiplyExact(attachment.getMinReservePerUnitNQT(), attachment.getReserveSupplyQNT()) > Constants.MAX_BALANCE_NQT) {
                     throw new NxtException.NotValidException("Minimum reserve per unit is too large");
                 }
-                if (attachment.getReserveSupply() <= attachment.getInitialSupply()) {
+                if (attachment.getReserveSupplyQNT() <= attachment.getInitialSupplyQNT()) {
                     throw new NxtException.NotValidException("Reserve supply must exceed initial supply");
                 }
-                if (!validators.contains(MINTABLE) && attachment.getReserveSupply() < attachment.getMaxSupply()) {
+                if (!validators.contains(MINTABLE) && attachment.getReserveSupplyQNT() < attachment.getMaxSupplyQNT()) {
                     throw new NxtException.NotValidException("Max supply must not exceed reserve supply for reservable and non-mintable currency");
                 }
             }
@@ -127,10 +127,10 @@ public enum CurrencyType {
                 if (attachment.getMinReservePerUnitNQT() > 0) {
                     throw new NxtException.NotValidException("Minimum reserve per unit for non-reservable currency must be 0 ");
                 }
-                if (attachment.getReserveSupply() > 0) {
+                if (attachment.getReserveSupplyQNT() > 0) {
                     throw new NxtException.NotValidException("Reserve supply for non-reservable currency must be 0");
                 }
-                if (!validators.contains(MINTABLE) && attachment.getInitialSupply() < attachment.getMaxSupply()) {
+                if (!validators.contains(MINTABLE) && attachment.getInitialSupplyQNT() < attachment.getMaxSupplyQNT()) {
                     throw new NxtException.NotValidException("Initial supply for non-reservable and non-mintable currency must be equal to max supply");
                 }
             }
@@ -152,7 +152,7 @@ public enum CurrencyType {
                 if (validators.contains(MINTABLE)) {
                     throw new NxtException.NotValidException("Claimable currency cannot be mintable");
                 }
-                if (attachment.getInitialSupply() > 0) {
+                if (attachment.getInitialSupplyQNT() > 0) {
                     throw new NxtException.NotValidException("Claimable currency must have initial supply 0");
                 }
             }
@@ -192,7 +192,7 @@ public enum CurrencyType {
                             String.format("Invalid minting difficulties min %d max %d, difficulty must be between 1 and 255, max larger than min",
                                     issuanceAttachment.getMinDifficulty(), issuanceAttachment.getMaxDifficulty()));
                 }
-                if (issuanceAttachment.getMaxSupply() <= issuanceAttachment.getReserveSupply()) {
+                if (issuanceAttachment.getMaxSupplyQNT() <= issuanceAttachment.getReserveSupplyQNT()) {
                     throw new NxtException.NotValidException("Max supply for mintable currency must exceed reserve supply");
                 }
             }

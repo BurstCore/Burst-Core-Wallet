@@ -31,9 +31,9 @@ public final class CurrencyIssuanceAttachment extends Attachment.AbstractAttachm
     private final String code;
     private final String description;
     private final byte type;
-    private final long initialSupply;
-    private final long reserveSupply;
-    private final long maxSupply;
+    private final long initialSupplyQNT;
+    private final long reserveSupplyQNT;
+    private final long maxSupplyQNT;
     private final int issuanceHeight;
     private final long minReservePerUnitNQT;
     private final int minDifficulty;
@@ -48,9 +48,9 @@ public final class CurrencyIssuanceAttachment extends Attachment.AbstractAttachm
         this.code = Convert.readString(buffer, buffer.get(), Constants.MAX_CURRENCY_CODE_LENGTH);
         this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_CURRENCY_DESCRIPTION_LENGTH);
         this.type = buffer.get();
-        this.initialSupply = buffer.getLong();
-        this.reserveSupply = buffer.getLong();
-        this.maxSupply = buffer.getLong();
+        this.initialSupplyQNT = buffer.getLong();
+        this.reserveSupplyQNT = buffer.getLong();
+        this.maxSupplyQNT = buffer.getLong();
         this.issuanceHeight = buffer.getInt();
         this.minReservePerUnitNQT = buffer.getLong();
         this.minDifficulty = buffer.get() & 0xFF;
@@ -66,9 +66,9 @@ public final class CurrencyIssuanceAttachment extends Attachment.AbstractAttachm
         this.code = (String)attachmentData.get("code");
         this.description = (String)attachmentData.get("description");
         this.type = ((Long)attachmentData.get("type")).byteValue();
-        this.initialSupply = Convert.parseLong(attachmentData.get("initialSupply"));
-        this.reserveSupply = Convert.parseLong(attachmentData.get("reserveSupply"));
-        this.maxSupply = Convert.parseLong(attachmentData.get("maxSupply"));
+        this.initialSupplyQNT = Convert.parseLong(attachmentData.get("initialSupplyQNT"));
+        this.reserveSupplyQNT = Convert.parseLong(attachmentData.get("reserveSupplyQNT"));
+        this.maxSupplyQNT = Convert.parseLong(attachmentData.get("maxSupplyQNT"));
         this.issuanceHeight = ((Long)attachmentData.get("issuanceHeight")).intValue();
         this.minReservePerUnitNQT = Convert.parseLong(attachmentData.get("minReservePerUnitNQT"));
         this.minDifficulty = ((Long)attachmentData.get("minDifficulty")).intValue();
@@ -78,16 +78,17 @@ public final class CurrencyIssuanceAttachment extends Attachment.AbstractAttachm
         this.decimals = ((Long) attachmentData.get("decimals")).byteValue();
     }
 
-    public CurrencyIssuanceAttachment(String name, String code, String description, byte type, long initialSupply, long reserveSupply,
-                                      long maxSupply, int issuanceHeight, long minReservePerUnitNQT, int minDifficulty, int maxDifficulty,
-                                      byte ruleset, byte algorithm, byte decimals) {
+    public CurrencyIssuanceAttachment(String name, String code, String description, byte type,
+            long initialSupplyQNT, long reserveSupplyQNT, long maxSupplyQNT,
+            int issuanceHeight, long minReservePerUnitNQT, int minDifficulty, int maxDifficulty,
+            byte ruleset, byte algorithm, byte decimals) {
         this.name = name;
         this.code = code;
         this.description = description;
         this.type = type;
-        this.initialSupply = initialSupply;
-        this.reserveSupply = reserveSupply;
-        this.maxSupply = maxSupply;
+        this.initialSupplyQNT = initialSupplyQNT;
+        this.reserveSupplyQNT = reserveSupplyQNT;
+        this.maxSupplyQNT = maxSupplyQNT;
         this.issuanceHeight = issuanceHeight;
         this.minReservePerUnitNQT = minReservePerUnitNQT;
         this.minDifficulty = minDifficulty;
@@ -115,9 +116,9 @@ public final class CurrencyIssuanceAttachment extends Attachment.AbstractAttachm
         buffer.putShort((short) description.length);
         buffer.put(description);
         buffer.put(type);
-        buffer.putLong(initialSupply);
-        buffer.putLong(reserveSupply);
-        buffer.putLong(maxSupply);
+        buffer.putLong(initialSupplyQNT);
+        buffer.putLong(reserveSupplyQNT);
+        buffer.putLong(maxSupplyQNT);
         buffer.putInt(issuanceHeight);
         buffer.putLong(minReservePerUnitNQT);
         buffer.put((byte)minDifficulty);
@@ -133,9 +134,9 @@ public final class CurrencyIssuanceAttachment extends Attachment.AbstractAttachm
         attachment.put("code", code);
         attachment.put("description", description);
         attachment.put("type", type);
-        attachment.put("initialSupply", initialSupply);
-        attachment.put("reserveSupply", reserveSupply);
-        attachment.put("maxSupply", maxSupply);
+        attachment.put("initialSupplyQNT", initialSupplyQNT);
+        attachment.put("reserveSupplyQNT", reserveSupplyQNT);
+        attachment.put("maxSupplyQNT", maxSupplyQNT);
         attachment.put("issuanceHeight", issuanceHeight);
         attachment.put("minReservePerUnitNQT", minReservePerUnitNQT);
         attachment.put("minDifficulty", minDifficulty);
@@ -166,16 +167,16 @@ public final class CurrencyIssuanceAttachment extends Attachment.AbstractAttachm
         return type;
     }
 
-    public long getInitialSupply() {
-        return initialSupply;
+    public long getInitialSupplyQNT() {
+        return initialSupplyQNT;
     }
 
-    public long getReserveSupply() {
-        return reserveSupply;
+    public long getReserveSupplyQNT() {
+        return reserveSupplyQNT;
     }
 
-    public long getMaxSupply() {
-        return maxSupply;
+    public long getMaxSupplyQNT() {
+        return maxSupplyQNT;
     }
 
     public int getIssuanceHeight() {
