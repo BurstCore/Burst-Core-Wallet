@@ -142,10 +142,13 @@ public final class AccountRestrictions {
         private void checkTransaction(ChildTransaction transaction, boolean validatingAtFinish) throws AccountControlException {
             ChildChain childChain = transaction.getChain();
             long maxFee = Convert.nullToZero(maxFees.get(childChain.getId()));
-            if (!validatingAtFinish && maxFee > 0 && Math.addExact(transaction.getFee(),
-                    childChain.getPhasingPollHome().getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFee) {
-                throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded",
-                        ((double)maxFee)/ childChain.ONE_COIN, childChain.getName()));
+            if (!validatingAtFinish && maxFee > 0) {
+                long totalFee = Math.addExact(transaction.getFee(),
+                        childChain.getPhasingPollHome().getSenderPhasedTransactionFees(transaction.getSenderId()));
+                if (totalFee > maxFee) {
+                    throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded, total fees are %f %s",
+                            ((double) maxFee) / childChain.ONE_COIN, childChain.getName(), ((double)totalFee) / childChain.ONE_COIN, childChain.getName()));
+                }
             }
             if (transaction.getType() == VotingTransactionType.PHASING_VOTE_CASTING) {
                 return;
