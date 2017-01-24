@@ -110,4 +110,59 @@ public class CoinExchangeTest extends BlockchainTest {
         Assert.assertEquals(100 * IGNIS.ONE_COIN, BOB.getChainBalanceDiff(IGNIS.getId()));
         Assert.assertEquals(-25 * USD.ONE_COIN - USD.ONE_COIN / 10, BOB.getChainBalanceDiff(USD.getId()));
     }
+
+    @Test
+    public void ronsSample() {
+        long usdToBuy = 5 * USD.ONE_COIN;
+        long ignisPerWholeUsd = (long) (0.75 * IGNIS.ONE_COIN);
+
+        APICall apiCall = new APICall.Builder("exchangeCoins").
+                secretPhrase(ALICE.getSecretPhrase()).
+                feeNQT(0).
+                param("feeRateNQTPerFXT", IGNIS.ONE_COIN).
+                param("chain", IGNIS.getId()).
+                param("exchange", USD.getId()).
+                param("quantityQNT", usdToBuy).
+                param("priceNQT", ignisPerWholeUsd).
+                build();
+        JSONObject response = apiCall.invoke();
+        String aliceOrder = Tester.responseToStringId(response);
+        generateBlock();
+
+        long ignisToBuy = 5 * IGNIS.ONE_COIN;
+        long usdPerWholeIgnis = (long) (1.35 * USD.ONE_COIN);
+
+        apiCall = new APICall.Builder("exchangeCoins").
+                secretPhrase(BOB.getSecretPhrase()).
+                feeNQT(0).
+                param("feeRateNQTPerFXT", USD.ONE_COIN).
+                param("chain", USD.getId()).
+                param("exchange", IGNIS.getId()).
+                param("quantityQNT", ignisToBuy).
+                param("priceNQT", usdPerWholeIgnis).
+                build();
+        response = apiCall.invoke();
+        String bobOrder = Tester.responseToStringId(response);
+        generateBlock();
+
+        Assert.assertEquals((long)(-3.75 * IGNIS.ONE_COIN) - IGNIS.ONE_COIN / 10, ALICE.getChainBalanceDiff(IGNIS.getId()));
+        Assert.assertEquals(5 * USD.ONE_COIN, ALICE.getChainBalanceDiff(USD.getId()));
+        Assert.assertEquals((long)(3.75 * IGNIS.ONE_COIN), BOB.getChainBalanceDiff(IGNIS.getId()));
+        Assert.assertEquals(-5 * USD.ONE_COIN - USD.ONE_COIN / 10, BOB.getChainBalanceDiff(USD.getId()));
+
+        apiCall = new APICall.Builder("getCoinExchangeOrder").
+                param("order", aliceOrder).
+                build();
+        response = apiCall.invoke();
+        Assert.assertEquals(5L, response.get("errorCode"));
+
+        apiCall = new APICall.Builder("getCoinExchangeOrder").
+                param("order", bobOrder).
+                build();
+        response = apiCall.invoke();
+        Assert.assertEquals((long)(1.25 * IGNIS.ONE_COIN), Long.parseLong((String) response.get("quantityQNT")));
+        Assert.assertEquals((long)(1.35 * USD.ONE_COIN), Long.parseLong((String) response.get("bidNQT")));
+        Assert.assertEquals((long)(0.74074074 * IGNIS.ONE_COIN), Long.parseLong((String) response.get("askNQT")));
+    }
+
 }
