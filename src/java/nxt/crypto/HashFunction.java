@@ -61,7 +61,7 @@ public enum HashFunction {
         }
     };
 
-    private static final ThreadLocal<Scrypt> threadLocalScrypt = ThreadLocal.withInitial(() -> new Scrypt());
+    private static final ThreadLocal<Scrypt> threadLocalScrypt = ThreadLocal.withInitial(Scrypt::new);
 
     private final byte id;
 

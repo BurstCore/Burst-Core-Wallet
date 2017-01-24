@@ -185,7 +185,7 @@ public final class NetworkHandler implements Runnable {
     private static Selector networkSelector;
 
     /** Channel register queue */
-    private static ConcurrentLinkedQueue<KeyEvent> keyEventQueue = new ConcurrentLinkedQueue<>();
+    private static final ConcurrentLinkedQueue<KeyEvent> keyEventQueue = new ConcurrentLinkedQueue<>();
 
     /** Connection map */
     static final ConcurrentHashMap<InetAddress, PeerImpl> connectionMap = new ConcurrentHashMap<>();

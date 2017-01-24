@@ -16,7 +16,6 @@ package nxt.http;
 
 import nxt.NxtException;
 import nxt.blockchain.Chain;
-import nxt.ce.CoinExchange;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

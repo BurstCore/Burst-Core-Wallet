@@ -836,9 +836,9 @@ public final class ParameterParser {
                 try {
                     chain = Chain.getChain(Integer.valueOf(chainName));
                 } catch (NumberFormatException ignore) {}
-            }
-            if (chain == null) {
-                throw new ParameterException(JSONResponses.unknown(name));
+                if (chain == null) {
+                    throw new ParameterException(JSONResponses.unknown(name));
+                }
             }
             return chain;
         } else if (isMandatory) {
@@ -859,9 +859,9 @@ public final class ParameterParser {
                 try {
                     chain = ChildChain.getChildChain(Integer.valueOf(chainName));
                 } catch (NumberFormatException ignore) {}
-            }
-            if (chain == null) {
-                throw new ParameterException(UNKNOWN_CHAIN);
+                if (chain == null) {
+                    throw new ParameterException(UNKNOWN_CHAIN);
+                }
             }
             return chain;
         } else if (isMandatory) {
