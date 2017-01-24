@@ -20,6 +20,7 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
+import nxt.account.BalanceHome;
 import nxt.account.HoldingType;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
@@ -658,15 +659,14 @@ public final class ShufflingHome {
                 // as a penalty the deposit goes to the generators of the finish block and previous 3 blocks
                 long fee = childChain.SHUFFLING_DEPOSIT_NQT / 4;
                 for (int i = 0; i < 3; i++) {
-                    Account previousGeneratorAccount = Account.getAccount(Nxt.getBlockchain().getBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
-                    previousGeneratorAccount.addToBalanceAndUnconfirmedBalance(childChain, AccountLedger.LedgerEvent.BLOCK_GENERATED, eventId, fee);
-                    //previousGeneratorAccount.addToForgedBalanceNQT(fee);
+                    BalanceHome.Balance previousGeneratorBalance = childChain.getBalanceHome().getBalance(Nxt.getBlockchain().getBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
+                    previousGeneratorBalance.addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent.BLOCK_GENERATED, eventId, fee);
                     Logger.logDebugMessage("Shuffling penalty %f %s awarded to forger at height %d", ((double) fee) / childChain.ONE_COIN,
                             childChain.getName(), block.getHeight() - i - 1);
                 }
                 fee = childChain.SHUFFLING_DEPOSIT_NQT - 3 * fee;
-                Account blockGeneratorAccount = Account.getAccount(block.getGeneratorId());
-                blockGeneratorAccount.addToBalanceAndUnconfirmedBalance(childChain, AccountLedger.LedgerEvent.BLOCK_GENERATED, eventId, fee);
+                BalanceHome.Balance blockGeneratorBalance = childChain.getBalanceHome().getBalance(block.getGeneratorId());
+                blockGeneratorBalance.addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent.BLOCK_GENERATED, eventId, fee);
                 Logger.logDebugMessage("Shuffling penalty %f %s awarded to forger at height %d", ((double) fee) / childChain.ONE_COIN,
                         childChain.getName(), block.getHeight());
             }

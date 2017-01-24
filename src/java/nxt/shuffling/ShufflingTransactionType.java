@@ -21,6 +21,7 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
+import nxt.account.BalanceHome;
 import nxt.account.HoldingType;
 import nxt.ae.Asset;
 import nxt.blockchain.Attachment;
@@ -175,16 +176,17 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
             HoldingType holdingType = attachment.getHoldingType();
             ChildChain childChain = transaction.getChain();
             AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
+            BalanceHome.Balance senderBalance = childChain.getBalanceHome().getBalance(senderAccount.getId());
             if (holdingType != HoldingType.COIN) {
                 if (holdingType.getUnconfirmedBalance(senderAccount, attachment.getHoldingId()) >= attachment.getAmount()
-                        && childChain.getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= childChain.SHUFFLING_DEPOSIT_NQT) {
+                        && senderBalance.getUnconfirmedBalance() >= childChain.SHUFFLING_DEPOSIT_NQT) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), eventId, attachment.getHoldingId(), -attachment.getAmount());
-                    senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, -childChain.SHUFFLING_DEPOSIT_NQT);
+                    senderBalance.addToUnconfirmedBalance(getLedgerEvent(), eventId, -childChain.SHUFFLING_DEPOSIT_NQT);
                     return true;
                 }
             } else {
-                if (childChain.getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= attachment.getAmount()) {
-                    senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, -attachment.getAmount());
+                if (senderBalance.getUnconfirmedBalance() >= attachment.getAmount()) {
+                    senderBalance.addToUnconfirmedBalance(getLedgerEvent(), eventId, -attachment.getAmount());
                     return true;
                 }
             }
@@ -296,16 +298,17 @@ public abstract class ShufflingTransactionType extends ChildTransactionType {
             ShufflingHome.Shuffling shuffling = childChain.getShufflingHome().getShuffling(attachment.getShufflingFullHash());
             HoldingType holdingType = shuffling.getHoldingType();
             AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
+            BalanceHome.Balance senderBalance = childChain.getBalanceHome().getBalance(senderAccount.getId());
             if (holdingType != HoldingType.COIN) {
                 if (holdingType.getUnconfirmedBalance(senderAccount, shuffling.getHoldingId()) >= shuffling.getAmount()
-                        && childChain.getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= childChain.SHUFFLING_DEPOSIT_NQT) {
+                        && senderBalance.getUnconfirmedBalance() >= childChain.SHUFFLING_DEPOSIT_NQT) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), eventId, shuffling.getHoldingId(), -shuffling.getAmount());
-                    senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, -childChain.SHUFFLING_DEPOSIT_NQT);
+                    senderBalance.addToUnconfirmedBalance(getLedgerEvent(), eventId, -childChain.SHUFFLING_DEPOSIT_NQT);
                     return true;
                 }
             } else {
-                if (childChain.getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= shuffling.getAmount()) {
-                    senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, -shuffling.getAmount());
+                if (senderBalance.getUnconfirmedBalance() >= shuffling.getAmount()) {
+                    senderBalance.addToUnconfirmedBalance(getLedgerEvent(), eventId, -shuffling.getAmount());
                     return true;
                 }
             }

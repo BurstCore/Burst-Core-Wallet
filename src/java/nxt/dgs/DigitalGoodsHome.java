@@ -18,9 +18,9 @@ package nxt.dgs;
 
 import nxt.Constants;
 import nxt.Nxt;
-import nxt.account.Account;
 import nxt.account.AccountLedger;
 import nxt.account.AccountLedger.LedgerEvent;
+import nxt.account.BalanceHome;
 import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.ChildChain;
@@ -215,8 +215,8 @@ public final class DigitalGoodsHome {
                 }
             }
             for (Purchase purchase : expiredPurchases) {
-                Account buyer = Account.getAccount(purchase.getBuyerId());
-                buyer.addToUnconfirmedBalance(childChain, LedgerEvent.DIGITAL_GOODS_PURCHASE_EXPIRED,
+                childChain.getBalanceHome().getBalance(purchase.getBuyerId()).addToUnconfirmedBalance(
+                        LedgerEvent.DIGITAL_GOODS_PURCHASE_EXPIRED,
                         AccountLedger.newEventId(purchase.getId(), null, childChain),
                         Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceNQT()));
                 getGoods(purchase.getGoodsId()).changeQuantity(purchase.getQuantity());
@@ -936,8 +936,8 @@ public final class DigitalGoodsHome {
             purchaseTable.insert(purchase);
             purchaseListeners.notify(purchase, Event.PURCHASE);
         } else {
-            Account buyer = Account.getAccount(transaction.getSenderId());
-            buyer.addToUnconfirmedBalance(transaction.getChain(), LedgerEvent.DIGITAL_GOODS_DELISTED, AccountLedger.newEventId(transaction),
+            BalanceHome.Balance buyerBalance = transaction.getChain().getBalanceHome().getBalance(transaction.getSenderId());
+            buyerBalance.addToUnconfirmedBalance(LedgerEvent.DIGITAL_GOODS_DELISTED, AccountLedger.newEventId(transaction),
                     Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
             // restoring the unconfirmed balance if purchase not successful, however buyer still lost the transaction fees
         }
@@ -947,13 +947,13 @@ public final class DigitalGoodsHome {
         Purchase purchase = getPendingPurchase(attachment.getPurchaseId());
         purchase.setPending(false);
         long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceNQT());
-        Account buyer = Account.getAccount(purchase.getBuyerId());
+        BalanceHome.Balance buyerBalance = childChain.getBalanceHome().getBalance(purchase.getBuyerId());
         AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
-        buyer.addToBalance(childChain, LedgerEvent.DIGITAL_GOODS_DELIVERY, eventId,
+        buyerBalance.addToBalance(LedgerEvent.DIGITAL_GOODS_DELIVERY, eventId,
                 Math.subtractExact(attachment.getDiscountNQT(), totalWithoutDiscount));
-        buyer.addToUnconfirmedBalance(childChain, LedgerEvent.DIGITAL_GOODS_DELIVERY, eventId, attachment.getDiscountNQT());
-        Account seller = Account.getAccount(transaction.getSenderId());
-        seller.addToBalanceAndUnconfirmedBalance(childChain, LedgerEvent.DIGITAL_GOODS_DELIVERY, eventId,
+        buyerBalance.addToUnconfirmedBalance(LedgerEvent.DIGITAL_GOODS_DELIVERY, eventId, attachment.getDiscountNQT());
+        BalanceHome.Balance sellerBalance = childChain.getBalanceHome().getBalance(transaction.getSenderId());
+        sellerBalance.addToBalanceAndUnconfirmedBalance(LedgerEvent.DIGITAL_GOODS_DELIVERY, eventId,
                 Math.subtractExact(totalWithoutDiscount, attachment.getDiscountNQT()));
         purchase.setEncryptedGoods(attachment.getGoods(), attachment.goodsIsText());
         purchase.setDiscountNQT(attachment.getDiscountNQT());
@@ -963,10 +963,10 @@ public final class DigitalGoodsHome {
     void refund(LedgerEvent event, AccountLedger.LedgerEventId eventId, long sellerId, long purchaseId, long refundNQT,
                 EncryptedMessageAppendix encryptedMessage) {
         Purchase purchase = purchaseTable.get(purchaseDbKeyFactory.newKey(purchaseId));
-        Account seller = Account.getAccount(sellerId);
-        seller.addToBalance(childChain, event, eventId, -refundNQT);
-        Account buyer = Account.getAccount(purchase.getBuyerId());
-        buyer.addToBalanceAndUnconfirmedBalance(childChain, event, eventId, refundNQT);
+        BalanceHome.Balance sellerBalance = childChain.getBalanceHome().getBalance(sellerId);
+        sellerBalance.addToBalance(event, eventId, -refundNQT);
+        BalanceHome.Balance buyerBalance = childChain.getBalanceHome().getBalance(purchase.getBuyerId());
+        buyerBalance.addToBalanceAndUnconfirmedBalance(event, eventId, refundNQT);
         if (encryptedMessage != null) {
             purchase.setRefundNote(encryptedMessage.getEncryptedData());
         }

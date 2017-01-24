@@ -21,6 +21,7 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
+import nxt.account.BalanceHome;
 import nxt.account.HoldingType;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.ChildChain;
@@ -486,9 +487,9 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             Asset asset = Asset.getAsset(attachment.getAssetId());
             long amount = Convert.unitRateToAmount(attachment.getQuantityQNT(), asset.getDecimals(),
                                     attachment.getPriceNQT(), chain.getDecimals());
-            if (chain.getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= amount) {
-                senderAccount.addToUnconfirmedBalance(transaction.getChain(), getLedgerEvent(),
-                        AccountLedger.newEventId(transaction), -amount);
+            BalanceHome.Balance balance = chain.getBalanceHome().getBalance(senderAccount.getId());
+            if (balance.getUnconfirmedBalance() >= amount) {
+                balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), -amount);
                 return true;
             }
             return false;

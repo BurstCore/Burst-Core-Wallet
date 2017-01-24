@@ -285,8 +285,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             if (balance.getUnconfirmedBalance() < amount) {
                 return false;
             }
-            senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
-                    AccountLedger.newEventId(transaction), -amount);
+            balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), -amount);
             return true;
         }
 
@@ -542,7 +541,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
                 if (balance.getUnconfirmedBalance() < amountNQT) {
                     return false;
                 }
-                senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(), eventId, -amountNQT);
+                balance.addToUnconfirmedBalance(getLedgerEvent(), eventId, -amountNQT);
             }
             if (senderAccount.getUnconfirmedCurrencyUnits(currencyId) < attachment.getInitialSellSupplyQNT()) {
                 return false;
@@ -661,8 +660,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             if (balance.getUnconfirmedBalance() < amount) {
                 return false;
             }
-            senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
-                    AccountLedger.newEventId(transaction), -amount);
+            balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), -amount);
             return true;
         }
 
