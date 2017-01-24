@@ -17,12 +17,15 @@ package nxt.http;
 import nxt.NxtException;
 import nxt.blockchain.Chain;
 import nxt.ce.CoinExchange;
+import nxt.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.math.MathContext;
+
+import static nxt.http.JSONResponses.NO_COST_ORDER;
 
 public final class SimulateCoinExchange extends APIServlet.APIRequestHandler {
 
@@ -41,13 +44,23 @@ public final class SimulateCoinExchange extends APIServlet.APIRequestHandler {
         }
         long quantityQNT = ParameterParser.getQuantityQNT(req);
         long priceNQT = ParameterParser.getPriceNQT(req);
+        // Check for a non-zero funding amount
+        long amount = Convert.unitRateToAmount(quantityQNT, exchange.getDecimals(), priceNQT, chain.getDecimals());
+        if (amount == 0) {
+            return NO_COST_ORDER;
+        }
+        // Check for a non-zero ask price
+        long askNQT = new BigDecimal(1L)
+                .divide(new BigDecimal(priceNQT).movePointLeft(chain.getDecimals()), MathContext.DECIMAL128)
+                .movePointRight(exchange.getDecimals()).longValue();
+        if (askNQT == 0) {
+            return NO_COST_ORDER;
+        }
+        // Return the response
         JSONObject response = new JSONObject();
         response.put("quantityQNT",  quantityQNT);
         response.put("bidNQT",  priceNQT);
-        long askValue = CoinExchange.ASK_CONSTANT
-                .divide(new BigDecimal(priceNQT).movePointLeft(chain.getDecimals()), MathContext.DECIMAL128)
-                .movePointRight(exchange.getDecimals()).longValue();
-        response.put("askNQT",  askValue);
+        response.put("askNQT",  askNQT);
         return response;
     }
 

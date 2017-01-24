@@ -353,9 +353,9 @@ public final class JSONData {
         json.put("chain", order.getChainId());
         json.put("exchange", order.getExchangeId());
         putAccount(json, "account", order.getAccountId());
-        json.put("quantityQNT", String.valueOf(order.getQuantity()));
-        json.put("bidNQT", String.valueOf(order.getBidPrice()));
-        json.put("askNQT", String.valueOf(order.getAskPrice()));
+        json.put("quantityQNT", String.valueOf(order.getQuantityQNT()));
+        json.put("bidNQT", String.valueOf(order.getBidPriceNQT()));
+        json.put("askNQT", String.valueOf(order.getAskPriceNQT()));
         return json;
     }
 
@@ -366,8 +366,8 @@ public final class JSONData {
         json.put("chain", trade.getChainId());
         json.put("exchange", trade.getExchangeId());
         putAccount(json, "account", trade.getAccountId());
-        json.put("quantityQNT", String.valueOf(trade.getExchangeQuantity()));
-        json.put("priceNQT", String.valueOf(trade.getExchangePrice()));
+        json.put("quantityQNT", String.valueOf(trade.getExchangeQuantityQNT()));
+        json.put("priceNQT", String.valueOf(trade.getExchangePriceNQT()));
         json.put("block", Long.toUnsignedString(trade.getBlockId()));
         json.put("height", trade.getHeight());
         json.put("timestamp", trade.getTimestamp());

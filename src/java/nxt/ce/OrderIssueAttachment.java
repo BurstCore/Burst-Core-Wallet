@@ -69,7 +69,7 @@ public class OrderIssueAttachment extends Attachment.AbstractAttachment {
         if (this.exchangeChain == null) {
             throw new NxtException.NotValidException("Exchange chain '" + chainId + "' not defined");
         }
-        this.quantityQNT = Convert.parseLong(data.get("amountNQT"));
+        this.quantityQNT = Convert.parseLong(data.get("quantityQNT"));
         this.priceNQT = Convert.parseLong(data.get("priceNQT"));
     }
 
@@ -90,7 +90,7 @@ public class OrderIssueAttachment extends Attachment.AbstractAttachment {
     protected void putMyJSON(JSONObject attachment) {
         attachment.put("chain", chain.getId());
         attachment.put("exchangeChain", exchangeChain.getId());
-        attachment.put("amountNQT", quantityQNT);
+        attachment.put("quantityQNT", quantityQNT);
         attachment.put("priceNQT", priceNQT);
     }
 

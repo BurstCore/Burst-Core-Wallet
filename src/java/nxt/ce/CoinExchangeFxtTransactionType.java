@@ -101,8 +101,10 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
         public boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
             BalanceHome.Balance balance = attachment.getChain().getBalanceHome().getBalance(senderAccount.getId());
-            if (balance.getUnconfirmedBalance() >= attachment.getQuantityQNT()) {
-                balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), -attachment.getQuantityQNT());
+            long amountNQT = Convert.unitRateToAmount(attachment.getQuantityQNT(), attachment.getExchangeChain().getDecimals(),
+                                        attachment.getPriceNQT(), attachment.getChain().getDecimals());
+            if (balance.getUnconfirmedBalance() >= amountNQT) {
+                balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), -amountNQT);
                 return true;
             }
             return false;
@@ -112,7 +114,9 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
         public void undoAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
             BalanceHome.Balance balance = attachment.getChain().getBalanceHome().getBalance(senderAccount.getId());
-            balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), attachment.getQuantityQNT());
+            long amountNQT = Convert.unitRateToAmount(attachment.getQuantityQNT(), attachment.getExchangeChain().getDecimals(),
+                                        attachment.getPriceNQT(), attachment.getChain().getDecimals());
+            balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), amountNQT);
         }
 
         @Override
@@ -124,22 +128,31 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
         @Override
         public final void validateAttachment(FxtTransactionImpl transaction) throws NxtException.ValidationException {
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
-            if (attachment.getQuantityQNT() <= 0 || attachment.getQuantityQNT() > Constants.MAX_BALANCE_NQT ||
-                    attachment.getPriceNQT() <= 0 || attachment.getPriceNQT() > Constants.MAX_BALANCE_NQT) {
+            long quantityQNT = attachment.getQuantityQNT();
+            long priceNQT = attachment.getPriceNQT();
+            Chain chain = attachment.getChain();
+            Chain exchangeChain = attachment.getExchangeChain();
+            if (quantityQNT <= 0 || quantityQNT > Constants.MAX_BALANCE_NQT ||
+                    priceNQT <= 0 || priceNQT > Constants.MAX_BALANCE_NQT) {
                 throw new NxtException.NotValidException("Invalid coin exchange order: " + attachment.getJSONObject());
             }
-            if (attachment.getChain() != FxtChain.FXT && attachment.getExchangeChain() != FxtChain.FXT) {
+            if (chain != FxtChain.FXT && exchangeChain != FxtChain.FXT) {
                 throw new NxtException.NotValidException("Only exchange orders to/from Ardor may be submitted on the Fxt chain");
             }
-            if (attachment.getChain() == attachment.getExchangeChain()) {
+            if (chain == exchangeChain) {
                 throw new NxtException.NotValidException("Coin exchange order chain and exchange chain must be different: "
                         + attachment.getJSONObject());
             }
-            long amount = new BigDecimal(1L, MathContext.DECIMAL128)
-                    .divide(new BigDecimal(attachment.getPriceNQT(), MathContext.DECIMAL128)
-                            .movePointLeft(attachment.getChain().getDecimals()), MathContext.DECIMAL128)
-                    .movePointRight(attachment.getExchangeChain().getDecimals()).longValue();
-            if (amount == 0) {
+            long amountNQT = Convert.unitRateToAmount(quantityQNT, exchangeChain.getDecimals(),
+                                        priceNQT, chain.getDecimals());
+            if (amountNQT == 0) {
+                throw new NxtException.NotValidException("Coin exchange order has no value: "
+                        + attachment.getJSONObject());
+            }
+            long askNQT = new BigDecimal(1L)
+                    .divide(new BigDecimal(priceNQT).movePointLeft(chain.getDecimals()), MathContext.DECIMAL128)
+                    .movePointRight(exchangeChain.getDecimals()).longValue();
+            if (askNQT == 0) {
                 throw new NxtException.NotValidException("Coin exchange order has no value: "
                         + attachment.getJSONObject());
             }
@@ -214,7 +227,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
                 CoinExchange.removeOrder(attachment.getOrderId());
                 BalanceHome.Balance balance = Chain.getChain(order.getChainId()).getBalanceHome().getBalance(senderAccount.getId());
                 balance.addToUnconfirmedBalance(AccountLedger.LedgerEvent.COIN_EXCHANGE_ORDER_CANCEL, AccountLedger.newEventId(transaction),
-                        order.getQuantity());
+                        order.getAmountNQT());
             }
         }
 

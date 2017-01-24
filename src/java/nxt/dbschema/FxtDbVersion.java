@@ -349,6 +349,8 @@ public class FxtDbVersion extends DbVersion {
             case 121:
                 apply("CREATE INDEX IF NOT EXISTS prunable_message_block_timestamp_dbid_idx ON prunable_message (block_timestamp DESC, db_id DESC)");
             case 122:
+                apply("ALTER TABLE coin_order_fxt ADD COLUMN IF NOT EXISTS amount BIGINT NOT NULL DEFAULT 0");
+            case 123:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate
