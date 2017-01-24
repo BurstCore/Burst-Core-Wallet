@@ -411,6 +411,10 @@ public class ChildDbVersion extends DbVersion {
             case 145:
                 apply("ALTER TABLE currency_founder ADD COLUMN IF NOT EXISTS amount BIGINT NOT NULL DEFAULT 0");
             case 146:
+                apply("ALTER TABLE asset_dividend ADD COLUMN IF NOT EXISTS holding_id BIGINT NOT NULL DEFAULT 0");
+            case 147:
+                apply("ALTER TABLE asset_dividend ADD COLUMN IF NOT EXISTS holding_type TINYINT NOT NULL DEFAULT 0");
+            case 148:
                 return;
             default:
                 throw new RuntimeException("Child chain " + schema + " database inconsistent with code, at update " + nextUpdate

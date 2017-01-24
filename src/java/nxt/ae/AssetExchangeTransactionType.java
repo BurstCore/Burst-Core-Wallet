@@ -21,6 +21,7 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
+import nxt.account.HoldingType;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransactionImpl;
@@ -29,6 +30,8 @@ import nxt.blockchain.Fee;
 import nxt.blockchain.Transaction;
 import nxt.blockchain.TransactionImpl;
 import nxt.blockchain.TransactionType;
+import nxt.ms.Currency;
+import nxt.ms.CurrencyType;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
 
@@ -692,16 +695,16 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             if (asset == null) {
                 return true;
             }
-            ChildChain childChain = transaction.getChain();
+            HoldingType holdingType = attachment.getHoldingType();
             long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
             long totalDividendPayment = Convert.unitRateToAmount(quantityQNT, asset.getDecimals(),
-                                            attachment.getAmountNQT(), childChain.getDecimals());
+                                            attachment.getAmountNQT(), holdingType.getDecimals(attachment.getHoldingId()));
             if (totalDividendPayment == 0) {
                 return true;
             }
-            if (childChain.getBalanceHome().getBalance(senderAccount.getId()).getUnconfirmedBalance() >= totalDividendPayment) {
-                senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
-                        AccountLedger.newEventId(transaction), -totalDividendPayment);
+            if (holdingType.getUnconfirmedBalance(senderAccount, attachment.getHoldingId()) >= totalDividendPayment) {
+                holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), AccountLedger.newEventId(transaction),
+                        attachment.getHoldingId(), -totalDividendPayment);
                 return true;
             }
             return false;
@@ -721,13 +724,13 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
             if (asset == null) {
                 return;
             }
-            ChildChain childChain = transaction.getChain();
+            HoldingType holdingType = attachment.getHoldingType();
             long quantityQNT = asset.getQuantityQNT() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
             long totalDividendPayment = Convert.unitRateToAmount(quantityQNT, asset.getDecimals(),
-                                                    attachment.getAmountNQT(), childChain.getDecimals());
+                                                    attachment.getAmountNQT(), holdingType.getDecimals(attachment.getHoldingId()));
             if (totalDividendPayment > 0) {
-                senderAccount.addToUnconfirmedBalance(childChain, getLedgerEvent(),
-                        AccountLedger.newEventId(transaction), totalDividendPayment);
+                holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), AccountLedger.newEventId(transaction),
+                        attachment.getHoldingId(), totalDividendPayment);
             }
         }
 
@@ -756,6 +759,26 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
                 throw new NxtException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId())
                         + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + Nxt.getBlockchain().getHeight()
                         + ", limit is one dividend per 60 blocks");
+            }
+            HoldingType holdingType = attachment.getHoldingType();
+            if (holdingType == HoldingType.COIN) {
+                if (attachment.getHoldingId() != transaction.getChain().getId()) {
+                    throw new NxtException.NotValidException("Holding id " + Long.toUnsignedString(attachment.getHoldingId())
+                            + " does not match chain id " + transaction.getChain().getId());
+                }
+            } else if (holdingType == HoldingType.ASSET) {
+                Asset dividendAsset = Asset.getAsset(attachment.getHoldingId());
+                if (dividendAsset == null) {
+                    throw new NxtException.NotCurrentlyValidException("Unknown asset " + Long.toUnsignedString(attachment.getHoldingId()));
+                }
+            } else if (holdingType == HoldingType.CURRENCY) {
+                Currency currency = Currency.getCurrency(attachment.getHoldingId());
+                CurrencyType.validate(currency, transaction);
+                if (!currency.isActive()) {
+                    throw new NxtException.NotCurrentlyValidException("Currency is not active: " + currency.getCode());
+                }
+            } else {
+                throw new RuntimeException("Unsupported holding type " + holdingType);
             }
         }
 

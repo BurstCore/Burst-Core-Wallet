@@ -16,11 +16,18 @@
 
 package nxt.account;
 
+import nxt.ae.Asset;
 import nxt.blockchain.Chain;
+import nxt.ms.Currency;
 
 public enum HoldingType {
 
     COIN((byte)0) {
+
+        @Override
+        public int getDecimals(long holdingId) {
+            return Chain.getChain(Math.toIntExact(holdingId)).getDecimals();
+        }
 
         @Override
         public long getBalance(Account account, long holdingId) {
@@ -52,6 +59,11 @@ public enum HoldingType {
     ASSET((byte)1) {
 
         @Override
+        public int getDecimals(long holdingId) {
+            return Asset.getAsset(holdingId).getDecimals();
+        }
+
+        @Override
         public long getBalance(Account account, long holdingId) {
             return account.getAssetBalanceQNT(holdingId);
         }
@@ -79,6 +91,11 @@ public enum HoldingType {
     },
 
     CURRENCY((byte)2) {
+
+        @Override
+        public int getDecimals(long holdingId) {
+            return Currency.getCurrency(holdingId, true).getDecimals();
+        }
 
         @Override
         public long getBalance(Account account, long holdingId) {
@@ -125,6 +142,8 @@ public enum HoldingType {
     public byte getCode() {
         return code;
     }
+
+    public abstract int getDecimals(long holdingId);
 
     public abstract long getBalance(Account account, long holdingId);
 

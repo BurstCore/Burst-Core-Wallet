@@ -19,12 +19,13 @@ package nxt.ae;
 import nxt.Nxt;
 import nxt.account.Account;
 import nxt.account.AccountLedger;
-import nxt.account.BalanceHome;
+import nxt.account.HoldingType;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;
+import nxt.db.DbUtils;
 import nxt.db.EntityDbTable;
 import nxt.util.Convert;
 import nxt.util.Listener;
@@ -105,12 +106,14 @@ public final class AssetDividendHome {
         Account issuer = Account.getAccount(issuerId);
         Asset asset = Asset.getAsset(assetId);
         AccountLedger.LedgerEventId eventId = AccountLedger.newEventId(transaction);
+        HoldingType holdingType = attachment.getHoldingType();
+        long holdingId = attachment.getHoldingId();
         //
         // Calculate the total amount deducted from the issuer unconfirmed balance
         //
         long quantityQNT = asset.getQuantityQNT() - issuer.getAssetBalanceQNT(assetId, height);
         long amountNQT = attachment.getAmountNQT();
-        long totalAmount = Convert.unitRateToAmount(quantityQNT, asset.getDecimals(), amountNQT, childChain.getDecimals());
+        long totalAmount = Convert.unitRateToAmount(quantityQNT, asset.getDecimals(), amountNQT, holdingType.getDecimals(holdingId));
         //
         // Get a list of all asset owners
         //
@@ -123,16 +126,15 @@ public final class AssetDividendHome {
         //
         // Pay dividends.  We will not pay a dividend if the amount is zero.
         //
-        BalanceHome balanceHome = childChain.getBalanceHome();
         long numAccounts = 0;
         for (Account.AccountAsset accountAsset : accountAssets) {
             if (accountAsset.getAccountId() != issuerId && accountAsset.getQuantityQNT() != 0) {
                 long dividend = Convert.unitRateToAmount(accountAsset.getQuantityQNT(), asset.getDecimals(),
-                                    amountNQT, childChain.getDecimals());
+                                    amountNQT, holdingType.getDecimals(holdingId));
                 if (dividend > 0) {
-                    balanceHome.getBalance(accountAsset.getAccountId())
-                        .addToBalanceAndUnconfirmedBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT,
-                                eventId, dividend);
+                    Account dividendRecipient = Account.getAccount(accountAsset.getAccountId());
+                    holdingType.addToBalanceAndUnconfirmedBalance(dividendRecipient, AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT,
+                            eventId, holdingId, dividend);
                     totalDividend += dividend;
                     numAccounts += 1;
                     totalAmount -= dividend;
@@ -142,11 +144,9 @@ public final class AssetDividendHome {
         //
         // Update the issuer balance for the dividends paid and refund any unused amount
         //
-        BalanceHome.Balance balance = balanceHome.getBalance(issuerId);
-        balance.addToBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, eventId, -totalDividend);
+        holdingType.addToBalance(issuer, AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, eventId, holdingId, -totalDividend);
         if (totalAmount != 0) {
-            balance.addToUnconfirmedBalance(AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT,
-                    eventId, totalAmount);
+            holdingType.addToUnconfirmedBalance(issuer, AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT, eventId, holdingId, totalAmount);
         }
         //
         // Update the dividend table
@@ -161,6 +161,8 @@ public final class AssetDividendHome {
         private final long id;
         private final byte[] hash;
         private final DbKey dbKey;
+        private final long holdingId;
+        private final HoldingType holdingType;
         private final long assetId;
         private final long amountNQT;
         private final int dividendHeight;
@@ -174,6 +176,8 @@ public final class AssetDividendHome {
             this.id = transaction.getId();
             this.hash = transaction.getFullHash();
             this.dbKey = dividendDbKeyFactory.newKey(this.hash, this.id);
+            this.holdingId = attachment.getHoldingId();
+            this.holdingType = attachment.getHoldingType();
             this.assetId = attachment.getAssetId();
             this.amountNQT = attachment.getAmountNQT();
             this.dividendHeight = attachment.getHeight();
@@ -187,6 +191,8 @@ public final class AssetDividendHome {
             this.id = rs.getLong("id");
             this.hash = rs.getBytes("full_hash");
             this.dbKey = dbKey;
+            this.holdingId = rs.getLong("holding_id");
+            this.holdingType = HoldingType.get(rs.getByte("holding_type"));
             this.assetId = rs.getLong("asset_id");
             this.amountNQT = rs.getLong("amount");
             this.dividendHeight = rs.getInt("dividend_height");
@@ -197,12 +203,14 @@ public final class AssetDividendHome {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_dividend (id, full_hash, asset_id, "
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_dividend (id, full_hash, holding_id, holding_type, asset_id, "
                     + "amount, dividend_height, total_dividend, num_accounts, timestamp, height) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
                 pstmt.setBytes(++i, this.hash);
+                DbUtils.setLongZeroToNull(pstmt, ++i, this.holdingId);
+                pstmt.setByte(++i, this.holdingType.getCode());
                 pstmt.setLong(++i, this.assetId);
                 pstmt.setLong(++i, this.amountNQT);
                 pstmt.setInt(++i, this.dividendHeight);
@@ -220,6 +228,14 @@ public final class AssetDividendHome {
 
         public byte[] getFullHash() {
             return hash;
+        }
+
+        public long getHoldingId() {
+            return holdingId;
+        }
+
+        public HoldingType getHoldingType() {
+            return holdingType;
         }
 
         public long getAssetId() {

@@ -877,6 +877,8 @@ public final class JSONData {
         json.put("numberOfAccounts", assetDividend.getNumAccounts());
         json.put("height", assetDividend.getHeight());
         json.put("timestamp", assetDividend.getTimestamp());
+        json.put("holding", Long.toUnsignedString(assetDividend.getHoldingId()));
+        json.put("holdingType", assetDividend.getHoldingType().getCode());
         return json;
     }
 
