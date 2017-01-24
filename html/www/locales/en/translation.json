@@ -1915,5 +1915,6 @@
   "child_block": "Child Block",
   "unconfirmed_coin_balance": "Unconfirmed Coin Balance",
   "coin_balance": "Coin Balance",
-  "event_hash": "Event Hash"
+  "event_hash": "Event Hash",
+  "no_distribution_accounts_found": "No accounts found. Should never happen"
 }
