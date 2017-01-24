@@ -125,8 +125,10 @@ public final class Bundler {
     private final byte[] publicKey;
     private final long accountId;
     private final long minRateNQTPerFXT;
+    private final BigInteger minRateNQTPerFXTBigInteger;
     private final long totalFeesLimitFQT;
     private final long overpayFQTPerFXT;
+    private final BigInteger overpayFQTPerFXTBigInteger;
     private volatile long currentTotalFeesFQT;
 
     private Bundler(ChildChain childChain, String secretPhrase, long minRateNQTPerFXT, long totalFeesLimitFQT, long overpayFQTPerFXT) {
@@ -135,8 +137,10 @@ public final class Bundler {
         this.publicKey = Crypto.getPublicKey(secretPhrase);
         this.accountId = Account.getId(publicKey);
         this.minRateNQTPerFXT = minRateNQTPerFXT;
+        this.minRateNQTPerFXTBigInteger = BigInteger.valueOf(this.minRateNQTPerFXT);
         this.totalFeesLimitFQT = totalFeesLimitFQT;
         this.overpayFQTPerFXT = overpayFQTPerFXT;
+        this.overpayFQTPerFXTBigInteger = BigInteger.valueOf(this.overpayFQTPerFXT);
         Map<Long, Bundler> chainBundlers = bundlers.get(childChain);
         if (chainBundlers == null) {
             chainBundlers = new ConcurrentHashMap<>();
@@ -198,8 +202,8 @@ public final class Bundler {
                     }
                     long minChildFeeFQT = childTransaction.getMinimumFeeFQT(blockchainHeight);
                     long childFee = childTransaction.getFee();
-                    if (BigInteger.valueOf(childFee).multiply(BigInteger.valueOf(Constants.ONE_FXT))
-                            .compareTo(BigInteger.valueOf(minRateNQTPerFXT).multiply(BigInteger.valueOf(minChildFeeFQT))) < 0) {
+                    if (BigInteger.valueOf(childFee).multiply(Constants.ONE_FXT_BIG_INTEGER)
+                            .compareTo(minRateNQTPerFXTBigInteger.multiply(BigInteger.valueOf(minChildFeeFQT))) < 0) {
                         continue;
                     }
                     if (currentTotalFeesFQT + overpay(totalMinFeeFQT + minChildFeeFQT) > totalFeesLimitFQT && totalFeesLimitFQT > 0) {
@@ -272,8 +276,8 @@ public final class Bundler {
     }
 
     private long overpay(long feeFQT) {
-        return Math.addExact(feeFQT, BigInteger.valueOf(overpayFQTPerFXT).multiply(BigInteger.valueOf(feeFQT))
-                .divide(BigInteger.valueOf(Constants.ONE_FXT)).longValueExact());
+        return Math.addExact(feeFQT, overpayFQTPerFXTBigInteger.multiply(BigInteger.valueOf(feeFQT))
+                .divide(Constants.ONE_FXT_BIG_INTEGER).longValueExact());
     }
 
 }

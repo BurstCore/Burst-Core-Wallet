@@ -16,6 +16,7 @@
 
 package nxt;
 
+import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 
 public final class Constants {
@@ -38,6 +39,7 @@ public final class Constants {
 
     public static final long MAX_BALANCE_FXT = 1000000000;
     public static final long ONE_FXT = 100000000;
+    public static final BigInteger ONE_FXT_BIG_INTEGER = BigInteger.valueOf(ONE_FXT);
     public static final long MAX_BALANCE_NQT = MAX_BALANCE_FXT * ONE_FXT;
     public static final long INITIAL_BASE_TARGET = 153722867;
     public static final long MAX_BASE_TARGET = INITIAL_BASE_TARGET * (isTestnet ? MAX_BALANCE_FXT : 50);

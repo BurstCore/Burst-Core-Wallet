@@ -147,7 +147,7 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
                         childChain.getName(), ((double) minFeeFQT) / Constants.ONE_FXT, FxtChain.FXT.getName()));
             }
             BigInteger[] fee = BigInteger.valueOf(minFeeFQT).multiply(BigInteger.valueOf(builder.feeRateNQTPerFXT))
-                    .divideAndRemainder(BigInteger.valueOf(Constants.ONE_FXT));
+                    .divideAndRemainder(Constants.ONE_FXT_BIG_INTEGER);
             this.fee = fee[1].equals(BigInteger.ZERO) ? fee[0].longValueExact() : fee[0].longValueExact() + 1;
         } else {
             this.fee = builder.fee;
