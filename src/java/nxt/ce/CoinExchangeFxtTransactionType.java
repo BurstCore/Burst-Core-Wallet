@@ -149,7 +149,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
                 throw new NxtException.NotValidException("Coin exchange order has no value: "
                         + attachment.getJSONObject());
             }
-            long askNQT = new BigDecimal(1L)
+            long askNQT = BigDecimal.ONE
                     .divide(new BigDecimal(priceNQT).movePointLeft(chain.getDecimals()), MathContext.DECIMAL128)
                     .movePointRight(exchangeChain.getDecimals()).longValue();
             if (askNQT == 0) {

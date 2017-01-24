@@ -54,7 +54,7 @@ public final class ExchangeCoins extends CreateTransaction {
             return NO_COST_ORDER;
         }
         // Check for a non-zero ask price
-        long askNQT = new BigDecimal(1L)
+        long askNQT = BigDecimal.ONE
                 .divide(new BigDecimal(priceNQT).movePointLeft(chain.getDecimals()), MathContext.DECIMAL128)
                 .movePointRight(exchange.getDecimals()).longValue();
         if (askNQT == 0) {

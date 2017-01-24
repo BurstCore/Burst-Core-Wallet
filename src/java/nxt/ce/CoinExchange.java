@@ -58,7 +58,6 @@ public final class CoinExchange {
         return listeners.removeListener(listener, eventType);
     }
 
-    private static final BigDecimal ASK_CONSTANT = new BigDecimal(1L);
     private static final DbKey.LongKeyFactory<Order> orderDbKeyFactory =
             new DbKey.LongKeyFactory<Order>("id") {
         @Override
@@ -66,6 +65,7 @@ public final class CoinExchange {
             return order.dbKey;
         }
     };
+
     private static final VersionedEntityDbTable<Order> orderTable =
             new VersionedEntityDbTable<Order>("PUBLIC.coin_order_fxt", orderDbKeyFactory) {
         @Override
@@ -430,7 +430,7 @@ public final class CoinExchange {
             Chain chain = Chain.getChain(chainId);
             Chain exchange = Chain.getChain(exchangeId);
             BigDecimal bidValue = new BigDecimal(this.bidPriceNQT).movePointLeft(chain.getDecimals());
-            this.askPriceNQT = ASK_CONSTANT.divide(bidValue, MathContext.DECIMAL128)
+            this.askPriceNQT = BigDecimal.ONE.divide(bidValue, MathContext.DECIMAL128)
                     .movePointRight(exchange.getDecimals()).longValue();
             this.amountNQT = Convert.unitRateToAmount(quantityQNT, attachment.getExchangeChain().getDecimals(),
                                         bidPriceNQT, attachment.getChain().getDecimals());
