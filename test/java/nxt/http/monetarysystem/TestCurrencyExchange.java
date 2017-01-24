@@ -62,7 +62,7 @@ public class TestCurrencyExchange extends BlockchainTest {
                 secretPhrase(BOB.getSecretPhrase()).feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 param("rateNQT", "" + 106).
-                param("units", "200").
+                param("unitsQNT", "200").
                 build();
         JSONObject currencyExchangeResponse = apiCall.invoke();
         Logger.logDebugMessage("currencyExchangeResponse:" + currencyExchangeResponse);
@@ -82,7 +82,7 @@ public class TestCurrencyExchange extends BlockchainTest {
         JSONArray exchanges = (JSONArray)getAllExchangesResponse.get("exchanges");
         JSONObject exchange = (JSONObject) exchanges.get(0);
         Assert.assertEquals("105", exchange.get("rateNQT"));
-        Assert.assertEquals("200", exchange.get("units"));
+        Assert.assertEquals("200", exchange.get("unitsQNT"));
         Assert.assertEquals(currencyId, exchange.get("currency"));
         Assert.assertEquals(initialSellerBalance.getAccountId(), Convert.parseUnsignedLong((String)exchange.get("seller")));
         Assert.assertEquals(initialBuyerBalance.getAccountId(), Convert.parseUnsignedLong((String)exchange.get("buyer")));
@@ -119,7 +119,7 @@ public class TestCurrencyExchange extends BlockchainTest {
                 secretPhrase(ALICE.getSecretPhrase()).feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 param("recipient", Long.toUnsignedString(initialSellerBalance.getAccountId())).
-                param("units", "2000").
+                param("unitsQNT", "2000").
                 build();
         apiCall.invoke();
         generateBlock();
@@ -137,7 +137,7 @@ public class TestCurrencyExchange extends BlockchainTest {
                 secretPhrase(BOB.getSecretPhrase()).feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 param("rateNQT", "" + 90).
-                param("units", "200").
+                param("unitsQNT", "200").
                 build();
         JSONObject currencyExchangeResponse = apiCall.invoke();
         Logger.logDebugMessage("currencyExchangeResponse:" + currencyExchangeResponse);
@@ -158,7 +158,7 @@ public class TestCurrencyExchange extends BlockchainTest {
         JSONArray exchanges = (JSONArray)getAllExchangesResponse.get("exchanges");
         JSONObject exchange = (JSONObject) exchanges.get(0);
         Assert.assertEquals("95", exchange.get("rateNQT"));
-        Assert.assertEquals("200", exchange.get("units"));
+        Assert.assertEquals("200", exchange.get("unitsQNT"));
         Assert.assertEquals(currencyId, exchange.get("currency"));
         Assert.assertEquals(initialSellerBalance.getAccountId(), Convert.parseUnsignedLong((String) exchange.get("seller")));
         Assert.assertEquals(initialBuyerBalance.getAccountId(), Convert.parseUnsignedLong((String)exchange.get("buyer")));
@@ -171,10 +171,10 @@ public class TestCurrencyExchange extends BlockchainTest {
                 param("currency", currencyId).
                 param("buyRateNQT", "" + 95). // buy currency for NXT
                 param("sellRateNQT", "" + 105). // sell currency for NXT
-                param("totalBuyLimit", "10000").
-                param("totalSellLimit", "5000").
-                param("initialBuySupply", "1000").
-                param("initialSellSupply", "500").
+                param("totalBuyLimitQNT", "10000").
+                param("totalSellLimitQNT", "5000").
+                param("initialBuySupplyQNT", "1000").
+                param("initialSellSupplyQNT", "500").
                 param("expirationHeight", "" + Integer.MAX_VALUE).
                 build();
 

@@ -29,8 +29,12 @@ public class TestCurrencyIssuance extends BlockchainTest {
 
     @Test
     public void issueCurrency() {
+        issueCurrencyImpl();
+    }
+
+    public String issueCurrencyImpl() {
         APICall apiCall = new Builder().build();
-        issueCurrencyApi(apiCall);
+        return issueCurrencyApi(apiCall);
     }
 
     @Test
@@ -69,8 +73,8 @@ public class TestCurrencyIssuance extends BlockchainTest {
             param("code", "TSXXX");
             param("description", "Test Currency 1");
             param("type", CurrencyType.EXCHANGEABLE.getCode());
-            param("maxSupply", 100000);
-            param("initialSupply", 100000);
+            param("maxSupplyQNT", 100000);
+            param("initialSupplyQNT", 100000);
             param("issuanceHeight", 0);
             param("algorithm", (byte)0);
             feeNQT(40 * ChildChain.IGNIS.ONE_COIN);
@@ -90,17 +94,17 @@ public class TestCurrencyIssuance extends BlockchainTest {
         }
 
         public Builder maxSupply(long maxSupply) {
-            param("maxSupply", maxSupply);
+            param("maxSupplyQNT", maxSupply);
             return this;
         }
 
         public Builder reserveSupply(long reserveSupply) {
-            param("reserveSupply", reserveSupply);
+            param("reserveSupplyQNT", reserveSupply);
             return this;
         }
 
         public Builder initialSupply(long initialSupply) {
-            param("initialSupply", initialSupply);
+            param("initialSupplyQNT", initialSupply);
             return this;
         }
 

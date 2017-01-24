@@ -51,7 +51,7 @@ public class TestCurrencyMint extends BlockchainTest {
                 feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 param("nonce", 123456).
-                param("units", 1000).
+                param("unitsQNT", 1000).
                 param("counter", 1).
                 build();
         JSONObject mintResponse = apiCall.invoke();
@@ -63,7 +63,7 @@ public class TestCurrencyMint extends BlockchainTest {
                 build();
         JSONObject getCurrencyResponse = apiCall.invoke();
         Logger.logDebugMessage("getCurrencyResponse: " + getCurrencyResponse);
-        Assert.assertEquals("0", getCurrencyResponse.get("currentSupply"));
+        Assert.assertEquals("0", getCurrencyResponse.get("currentSupplyQNT"));
 
         // Successful attempt
         long units = 10;
@@ -81,7 +81,7 @@ public class TestCurrencyMint extends BlockchainTest {
                 feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
                 param("nonce", nonce).
-                param("units", units).
+                param("unitsQNT", units).
                 param("counter", 1).
                 build();
         mintResponse = apiCall.invoke();
@@ -93,12 +93,12 @@ public class TestCurrencyMint extends BlockchainTest {
                 build();
         getCurrencyResponse = apiCall.invoke();
         Logger.logDebugMessage("getCurrencyResponse: " + getCurrencyResponse);
-        Assert.assertEquals("" + units, getCurrencyResponse.get("currentSupply"));
+        Assert.assertEquals("" + units, getCurrencyResponse.get("currentSupplyQNT"));
 
         apiCall = new APICall.Builder("getMintingTarget").
                 param("currency", currencyId).
                 param("account", ALICE.getId()).
-                param("units", "1000").
+                param("unitsQNT", "1000").
                 build();
         JSONObject getMintingTargetResponse = apiCall.invoke();
         Logger.logDebugMessage("getMintingTargetResponse: " + getMintingTargetResponse);

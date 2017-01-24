@@ -106,7 +106,7 @@ public class DeleteCurrencyTest extends BlockchainTest {
                 param("recipient", Long.toUnsignedString(BOB.getId())).
                 param("currency", currencyId).
                 param("code", code).
-                param("units", (String)response.get("maxSupply")).
+                param("unitsQNT", (String)response.get("maxSupplyQNT")).
                 build();
         response = apiCall.invoke();
         Logger.logDebugMessage("transferCurrencyResponse:" + response);

@@ -122,7 +122,7 @@ public class TestCurrencyReserveAndClaim extends BlockchainTest {
                 param("currency", currencyId).
                 build();
         JSONObject response = apiCall.invoke();
-        Assert.assertEquals("24", response.get("currentSupply"));
+        Assert.assertEquals("24", response.get("currentSupplyQNT"));
     }
 
     private void reserveIncreaseImpl(String currencyId, String secret1, String secret2) {
