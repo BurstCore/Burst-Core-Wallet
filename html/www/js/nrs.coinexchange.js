@@ -621,7 +621,8 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.getCoinTradeHistory = function(coinId, refresh) {
         var params = {
-            "chain": coinId,
+            "chain": NRS.getActiveChainId(),
+            "exchange": coinId,
             "firstIndex": 0,
             "lastIndex": 50
         };
@@ -636,8 +637,9 @@ var NRS = (function (NRS, $, undefined) {
                     var total = NRS.multiply(trade.priceNQT, trade.quantityQNT);
                     rows += "<tr>" +
                         "<td>" + NRS.formatTimestamp(trade.timestamp) + "</td>" +
-                        "<td>" + NRS.getTransactionLink(trade.orderFullHash, false, false, currentCoin.id) + "</td>" +
-                        "<td>" + NRS.getTransactionLink(trade.matchFullHash, false, false, NRS.getActiveChainId()) + "</td>" +
+                        "<td>" + NRS.getChainLink(trade.exchange) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(trade.orderFullHash, false, false, trade.chain) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(trade.matchFullHash, false, false, trade.exchange) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, NRS.getActiveChainDecimals()) + "</td>" +
                         "<td class='coin_price numeric'>" + NRS.formatQuantity(trade.priceNQT, currentCoin.decimals) + "</td>" +

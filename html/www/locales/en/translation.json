@@ -1917,5 +1917,7 @@
   "buy_order_description": "Buy __quantity__ __asset_name__ assets at __coin_amount__ __coin__ each.",
   "buy_order_description_help": "Per whole asset bought you will pay __coin_amount__ __coin__, making a total of __total_coin__ __coin__ once everything has been purchased.",
   "sell_order_description": "Sell __quantity__ __asset_name__ assets at __coin_amount__ __coin__ each.",
-  "sell_order_description_help": "Per whole asset sold you will receive __coin_amount__ __coin__, making a total of __total_coin__ __coin__ once everything has been sold."
+  "sell_order_description_help": "Per whole asset sold you will receive __coin_amount__ __coin__, making a total of __total_coin__ __coin__ once everything has been sold.",
+  "total_chain": "Total Chain",
+  "total_exchange": "Total Exchange"
 }

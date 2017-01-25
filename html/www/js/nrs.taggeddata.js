@@ -31,19 +31,18 @@ var NRS = (function(NRS, $) {
             type: NRS.addEllipsis(NRS.unescapeRespStr(response.type), 20),
             channel: NRS.addEllipsis(NRS.unescapeRespStr(response.channel), 20),
             filename: NRS.addEllipsis(NRS.unescapeRespStr(response.filename), 20),
-            dataFormatted: NRS.getTaggedDataLink(response.transaction, response.isText)
+            dataFormatted: NRS.getTaggedDataLink(response.transactionFullHash, response.isText)
         };
     };
 
-    // TODO convert to transactionFullHash
-    NRS.getTaggedDataLink = function(transaction, isText) {
+    NRS.getTaggedDataLink = function(fullHash, isText) {
         if (isText) {
             return "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' " +
                 "data-target='#tagged_data_view_modal' " +
-                "data-transaction='" + NRS.escapeRespStr(transaction) + "'>" + $.t("view") + "</a>";
+                "data-transactionfullhash='" + NRS.escapeRespStr(fullHash) + "'>" + $.t("view") + "</a>";
         } else {
             return NRS.getDownloadLink(
-                NRS.getRequestPath() + "?requestType=downloadTaggedData&transaction=" + NRS.escapeRespStr(transaction) + "&retrieve=true");
+                NRS.getRequestPath() + "?requestType=downloadTaggedData&transactionFullHash=" + NRS.escapeRespStr(fullHash) + "&retrieve=true");
         }
     };
 
