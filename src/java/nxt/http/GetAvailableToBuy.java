@@ -27,7 +27,7 @@ public final class GetAvailableToBuy extends APIServlet.APIRequestHandler {
     static final GetAvailableToBuy instance = new GetAvailableToBuy();
 
     private GetAvailableToBuy() {
-        super(new APITag[] {APITag.MS}, "currency", "units");
+        super(new APITag[] {APITag.MS}, "currency", "unitsQNT");
     }
 
     @Override

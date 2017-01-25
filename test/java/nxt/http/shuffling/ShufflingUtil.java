@@ -103,7 +103,7 @@ class ShufflingUtil {
                 .param("secretPhrase", creator.getSecretPhrase())
                 .param("recipient", BlockchainTest.BOB.getRsAccount())
                 .param("currency", Long.toUnsignedString(shufflingCurrency))
-                .param("units", 100000)
+                .param("unitsQNT", 100000)
                 .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
                 .param("deadline", 1440)
                 .build();
@@ -113,7 +113,7 @@ class ShufflingUtil {
                 .param("secretPhrase", creator.getSecretPhrase())
                 .param("recipient", BlockchainTest.CHUCK.getRsAccount())
                 .param("currency", Long.toUnsignedString(shufflingCurrency))
-                .param("units", 100000)
+                .param("unitsQNT", 100000)
                 .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
                 .param("deadline", 1440)
                 .build();
@@ -123,7 +123,7 @@ class ShufflingUtil {
                 .param("secretPhrase", creator.getSecretPhrase())
                 .param("recipient", BlockchainTest.DAVE.getRsAccount())
                 .param("currency", Long.toUnsignedString(shufflingCurrency))
-                .param("units", 100000)
+                .param("unitsQNT", 100000)
                 .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
                 .param("deadline", 1440)
                 .build();
