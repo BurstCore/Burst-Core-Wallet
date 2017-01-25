@@ -20,7 +20,7 @@
 
 var NRS = (function (NRS, $) {
 
-    NRS.calculateOrderTotalNQT = function(quantityQNT, priceNQT) {
+    NRS.multiply = function(quantityQNT, priceNQT) {
         if (typeof quantityQNT != "object") {
             quantityQNT = new BigInteger(String(quantityQNT));
         }

@@ -105,7 +105,7 @@ QUnit.test("formatWeight", function (assert) {
 });
 
 QUnit.test("calculateOrderTotalNQT", function (assert) {
-    assert.equal(NRS.calculateOrderTotalNQT(12, 34), "408", "multiplication");
+    assert.equal(NRS.multiply(12, 34), "408", "multiplication");
 });
 
 QUnit.test("calculatePercentage", function (assert) {

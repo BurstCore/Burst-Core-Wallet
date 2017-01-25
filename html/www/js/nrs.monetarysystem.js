@@ -417,7 +417,7 @@ var NRS = (function (NRS, $, undefined) {
                         return NRS.formatQuantity(exchange.rateNQT, NRS.getActiveChainDecimals());
                     });
                     var totalNQTDecimals = NRS.getNumberOfDecimals(response.exchanges, "totalNQT", function(exchange) {
-                        return NRS.formatQuantity(NRS.calculateOrderTotalNQT(exchange.unitsQNT, exchange.rateNQT), decimals + NRS.getActiveChainDecimals());
+                        return NRS.formatQuantity(NRS.multiply(exchange.unitsQNT, exchange.rateNQT), decimals + NRS.getActiveChainDecimals());
                     });
                     for (var i = 0; i < response.exchanges.length; i++) {
                         var exchange = response.exchanges[i];
@@ -427,7 +427,7 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.getAccountLink(exchange, "buyer") + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(exchange.unitsQNT, exchange.decimals, false, quantityDecimals) + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(exchange.rateNQT, NRS.getActiveChainDecimals(), false, rateNQTDecimals) + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(NRS.calculateOrderTotalNQT(exchange.unitsQNT, exchange.rateNQT), decimals + NRS.getActiveChainDecimals(), false, totalNQTDecimals) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(NRS.multiply(exchange.unitsQNT, exchange.rateNQT), decimals + NRS.getActiveChainDecimals(), false, totalNQTDecimals) + "</td>" +
                         "</tr>";
                     }
                     historyTable.find("tbody").empty().append(rows);
@@ -458,7 +458,7 @@ var NRS = (function (NRS, $, undefined) {
                         return NRS.formatQuantity(exchange.rateNQT, NRS.getActiveChainDecimals());
                     });
                     var totalNQTDecimals = NRS.getNumberOfDecimals(response.exchanges, "totalNQT", function(exchange) {
-                        return NRS.formatQuantity(NRS.calculateOrderTotalNQT(exchange.unitsQNT, exchange.rateNQT), decimals + NRS.getActiveChainDecimals());
+                        return NRS.formatQuantity(NRS.multiply(exchange.unitsQNT, exchange.rateNQT), decimals + NRS.getActiveChainDecimals());
                     });
                     for (var i = 0; i < response.exchanges.length; i++) {
                         var exchange = response.exchanges[i];
@@ -468,7 +468,7 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.getAccountLink(exchange, "buyer") + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(exchange.unitsQNT, exchange.decimals, false, quantityDecimals) + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(exchange.rateNQT, NRS.getActiveChainDecimals(), false, rateNQTDecimals) + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(NRS.calculateOrderTotalNQT(exchange.unitsQNT, exchange.rateNQT), decimals + NRS.getActiveChainDecimals(), false, totalNQTDecimals) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(NRS.multiply(exchange.unitsQNT, exchange.rateNQT), decimals + NRS.getActiveChainDecimals(), false, totalNQTDecimals) + "</td>" +
                         "</tr>";
                     }
                     historyTable.find("tbody").empty().append(rows);
@@ -496,7 +496,7 @@ var NRS = (function (NRS, $, undefined) {
                 return NRS.formatQuantity(exchangeRequest.rateNQT, NRS.getActiveChainDecimals());
             });
             var totalNQTDecimals = NRS.getNumberOfDecimals(exchangeRequests, "totalNQT", function(exchangeRequest) {
-                return NRS.formatQuantity(NRS.calculateOrderTotalNQT(exchangeRequest.unitsQNT, exchangeRequest.rateNQT), NRS.getActiveChainDecimals() + decimals);
+                return NRS.formatQuantity(NRS.multiply(exchangeRequest.unitsQNT, exchangeRequest.rateNQT), NRS.getActiveChainDecimals() + decimals);
             });
             for (var i = 0; i < exchangeRequests.length; i++) {
                 var exchangeRequest = exchangeRequests[i];
@@ -507,7 +507,7 @@ var NRS = (function (NRS, $, undefined) {
                     "<td>" + type + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(exchangeRequest.unitsQNT, decimals, false, quantityDecimals) + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(exchangeRequest.rateNQT, NRS.getActiveChainDecimals(), false, rateNQTDecimals) + "</td>" +
-                    "<td class='numeric'>" + NRS.formatQuantity(NRS.calculateOrderTotalNQT(exchangeRequest.unitsQNT, exchangeRequest.rateNQT), NRS.getActiveChainDecimals() + decimals, false, totalNQTDecimals) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatQuantity(NRS.multiply(exchangeRequest.unitsQNT, exchangeRequest.rateNQT), NRS.getActiveChainDecimals() + decimals, false, totalNQTDecimals) + "</td>" +
                     "</tr>";
             }
             requestTable.find("tbody").empty().append(rows);
@@ -952,7 +952,7 @@ var NRS = (function (NRS, $, undefined) {
                     return NRS.formatQuantity(exchange.rateNQT, NRS.getActiveChainDecimals());
                 });
                 var totalNQTDecimals = NRS.getNumberOfDecimals(response.exchanges, "totalNQT", function(exchange) {
-                    return NRS.formatQuantity(NRS.calculateOrderTotalNQT(exchange.unitsQNT, exchange.rateNQT), exchange.decimals + NRS.getActiveChainDecimals());
+                    return NRS.formatQuantity(NRS.multiply(exchange.unitsQNT, exchange.rateNQT), exchange.decimals + NRS.getActiveChainDecimals());
                 });
                 var rows = "";
                 for (var i = 0; i < response.exchanges.length; i++) {
@@ -966,7 +966,7 @@ var NRS = (function (NRS, $, undefined) {
                     "<td>" + NRS.getAccountLink(exchange, "buyer") + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(exchange.unitsQNT, exchange.decimals, false, quantityDecimals) + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(exchange.rateNQT, NRS.getActiveChainDecimals(), false, rateNQTDecimals) + "</td>" +
-                    "<td class='numeric'>" + NRS.formatQuantity(NRS.calculateOrderTotalNQT(exchange.unitsQNT, exchange.rateNQT),exchange.decimals + NRS.getActiveChainDecimals(),false,totalNQTDecimals) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatQuantity(NRS.multiply(exchange.unitsQNT, exchange.rateNQT),exchange.decimals + NRS.getActiveChainDecimals(),false,totalNQTDecimals) + "</td>" +
                     "</tr>";
                 }
                 NRS.dataLoaded(rows);

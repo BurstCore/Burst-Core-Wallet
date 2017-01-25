@@ -377,14 +377,14 @@ var NRS = (function(NRS, $) {
 				return NRS.formatQuantity(val.priceNQT, NRS.getActiveChainDecimals());
 			});
 			var amountDecimals = NRS.getNumberOfDecimals(response.trades, "totalNQT", function(val) {
-				return NRS.formatQuantity(NRS.calculateOrderTotalNQT(val.quantityQNT, val.priceNQT), val.decimals + NRS.getActiveChainDecimals());
+				return NRS.formatQuantity(NRS.multiply(val.quantityQNT, val.priceNQT), val.decimals + NRS.getActiveChainDecimals());
 			});
 			if (response.trades && response.trades.length) {
 				var trades = response.trades;
 				for (var i = 0; i < trades.length; i++) {
 					trades[i].priceNQT = new BigInteger(trades[i].priceNQT);
 					trades[i].quantityQNT = new BigInteger(trades[i].quantityQNT);
-					trades[i].totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(trades[i].priceNQT, trades[i].quantityQNT));
+					trades[i].totalNQT = new BigInteger(NRS.multiply(trades[i].priceNQT, trades[i].quantityQNT));
 					var type = (trades[i].buyerRS == NRS.userInfoModal.user ? "buy" : "sell");
 					rows += "<tr>" +
 						"<td><a href='#' data-goto-asset='" + NRS.escapeRespStr(trades[i].asset) + "'>" + NRS.escapeRespStr(trades[i].name) + "</a></td>" +
