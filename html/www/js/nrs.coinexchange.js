@@ -1122,8 +1122,8 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.getTransactionLink(trade.matchFullHash, null, false, matchChain) + "</td>" +
                         "<td>" + NRS.getChainLink(trade.chain) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
-                        "<td class='coin_price numeric'>" + NRS.formatAmount(trade.priceNQT, false, false, priceDecimals) + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(trade.amountNQT, amountDecimals) + "</td>" +
+                        "<td class='coin_price numeric'>" + NRS.formatQuantity(trade.priceNQT, NRS.getActiveChainDecimals(), false, priceDecimals) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(trade.amountNQT, NRS.getActiveChainDecimals(), false, amountDecimals) + "</td>" +
                         "</tr>";
                 }
                 NRS.dataLoaded(rows);

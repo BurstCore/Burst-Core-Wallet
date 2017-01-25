@@ -1436,7 +1436,7 @@ var NRS = (function (NRS, $, undefined) {
             "currency": currency
         }, function (response) {
             var currentReservePerUnitNQT = new BigInteger(response.currentReservePerUnitNQT).multiply(new BigInteger("" + Math.pow(10, response.decimals)));
-            $("#claimRate").html(NRS.formatAmount(currentReservePerUnitNQT) + " [" + NRS.getActiveChainName() + "/" + currencyCode + "]");
+            $("#claimRate").html(NRS.formatAmount(currentReservePerUnitNQT) + " [" + NRS.getActiveChainName() + "/" + currencyCode + "]"); // TODO test
         });
 
         $("#claim_currency_decimals").val($invoker.data("decimals"));

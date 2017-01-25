@@ -681,7 +681,7 @@ var NRS = (function (NRS, $, undefined) {
                 return NRS.formatQuantity(val.priceNQT, NRS.getActiveChainDecimals());
             });
             var amountDecimals = NRS.getNumberOfDecimals(orders, "totalNQT", function(val) {
-                return NRS.formatAmount(NRS.multiply(val.quantityQNT, val.priceNQT));
+                return NRS.formatQuantity(NRS.multiply(val.quantityQNT, val.priceNQT), currentAsset.decimals + NRS.getActiveChainDecimals());
             });
             for (var i = 0; i < orders.length; i++) {
                 order = orders[i];
@@ -817,7 +817,7 @@ var NRS = (function (NRS, $, undefined) {
                     return NRS.formatQuantity(val.priceNQT, NRS.getActiveChainDecimals());
                 });
                 var amountDecimals = NRS.getNumberOfDecimals(trades, "sum", function(val) {
-                    return NRS.formatAmount(NRS.multiply(val.quantityQNT, val.priceNQT));
+                    return NRS.formatQuantity(NRS.multiply(val.quantityQNT, val.priceNQT), val.decimals + NRS.getActiveChainDecimals());
                 });
                 for (var i = 0; i < trades.length; i++) {
                     var trade = trades[i];
@@ -1350,7 +1350,7 @@ var NRS = (function (NRS, $, undefined) {
                     return NRS.formatQuantity(val.priceNQT, NRS.getActiveChainDecimals());
                 });
                 var amountDecimals = NRS.getNumberOfDecimals(trades, "totalNQT", function(val) {
-                    return NRS.formatAmount(NRS.multiply(val.quantityQNT, val.priceNQT));
+                    return NRS.formatQuantity(NRS.multiply(val.quantityQNT, val.priceNQT), val.decimals + NRS.getActiveChainDecimals());
                 });
                 var rows = "";
                 for (var i = 0; i < trades.length; i++) {
@@ -1584,7 +1584,7 @@ var NRS = (function (NRS, $, undefined) {
                 return "";
             }
             var totalNQT = new BigInteger(NRS.multiply(asset.balanceQNT, asset.bid_orders));
-            return NRS.formatAmount(totalNQT);
+            return NRS.formatQuantity(totalNQT, asset.decimals + NRS.getActiveChainDecimals());
         });
         for (var i = 0; i < result.assets.length; i++) {
             var asset = result.assets[i];
@@ -1897,7 +1897,7 @@ var NRS = (function (NRS, $, undefined) {
                 "<td><a href='#' data-goto-asset='" + NRS.escapeRespStr(completeOrder.asset) + "'>" + NRS.escapeRespStr(completeOrder.assetName) + "</a></td>" +
                 "<td>" + NRS.formatQuantity(completeOrder.quantityQNT, completeOrder.decimals) + "</td>" +
                 "<td>" + NRS.formatQuantity(completeOrder.priceNQT, NRS.getActiveChainDecimals()) + "</td>" +
-                "<td>" + NRS.formatAmount(completeOrder.totalNQT) + "</td>" +
+                "<td>" + NRS.formatQuantity(completeOrder.totalNQT, completeOrder.decimals + NRS.getActiveChainDecimals()) + "</td>" +
                 "<td class='cancel'><a href='#' data-toggle='modal' data-target='#cancel_order_modal' data-order='" + NRS.escapeRespStr(completeOrder.order) + "' data-type='" + type + "'>" + $.t("cancel") + "</a></td>" +
             "</tr>";
         }
