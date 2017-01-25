@@ -1022,7 +1022,7 @@ var NRS = (function (NRS, $, undefined) {
         var orderType = $(this).data("type").toLowerCase();
         try {
             var quantityQNT = new BigInteger(NRS.convertToQNT(String($("#" + orderType + "_asset_quantity").val()), currentAsset.decimals));
-            var priceNQT = new BigInteger(NRS.calculatePricePerWholeQNT(NRS.convertToNQT(String($("#" + orderType + "_asset_price").val())), currentAsset.decimals));
+            var priceNQT = new BigInteger(NRS.calculatePricePerWholeQNT(NRS.convertToNQT(String($("#" + orderType + "_asset_price").val())), currentAsset.decimals)); // TODO probably incorrect
 
             if (priceNQT.toString() == "0" || quantityQNT.toString() == "0") {
                 $("#" + orderType + "_asset_total").val("0");
@@ -1047,7 +1047,7 @@ var NRS = (function (NRS, $, undefined) {
         var price = String($("#" + orderType + "_asset_price").val());
         try {
             var quantityQNT = new BigInteger(NRS.convertToQNT(quantity, currentAsset.decimals));
-            var priceNQT = new BigInteger(NRS.calculatePricePerWholeQNT(NRS.convertToNQT(price), currentAsset.decimals));
+            var priceNQT = new BigInteger(NRS.calculatePricePerWholeQNT(NRS.convertToNQT(price), currentAsset.decimals)); // TODO probably incorrect
             var totalNXT = NRS.formatAmount(NRS.calculateOrderTotalNQT(quantityQNT, priceNQT, currentAsset.decimals), false, true);
         } catch (err) {
             $.growl($.t("error_invalid_input", { input: "quantity " + quantity + " price " + price + " decimals " + currentAsset.decimals }), {

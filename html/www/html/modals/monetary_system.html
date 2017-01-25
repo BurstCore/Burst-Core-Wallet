@@ -37,7 +37,7 @@
                     <div class="form-group">
                         <label for="transfer_currency_units" data-i18n="units">UNITS</label>
                         <div class="input-group">
-                            <input type="number" name="units" id="transfer_currency_units" class="form-control" step="any" min="0" placeholder="Units" data-i18n="[placeholder]units" tabindex="3">
+                            <input type="number" name="unitsQNT" id="transfer_currency_units" class="form-control" step="any" min="0" placeholder="Units" data-i18n="[placeholder]units" tabindex="3">
                             <span class="input-group-addon" id="transfer_currency_units_code"></span>
                         </div>
                     </div>
@@ -81,7 +81,7 @@
                         <label data-i18n="exchange_description">EXCHANGE DESCRIPTION</label>
                         <p id="currency_order_description"></p>
                         <input type="hidden" name="currency" id="currency_order_currency" value="" />
-                        <input type="hidden" name="units" id="currency_order_units" value="" />
+                        <input type="hidden" name="unitsQNT" id="currency_order_units" value="" />
                         <input type="hidden" name="rateNQT" id="currency_order_rate" value="" />
                         <input type="hidden" name="deadline" id="currency_order_deadline" data-default="24" value="24" />
                     </div>
@@ -152,7 +152,7 @@
                         </div>
                         <div class="form-group advanced optional_reserve">
                             <label for="issue_currency_min_reserve" data-i18n="reserve_supply">UNITS TO RESERVE</label>
-                            <input type="number" name="reserveSupply" id="issue_currency_min_reserve_supply" class="form-control" min="1" placeholder="Number of Units" data-i18n="reserve_supply" tabindex="8" disabled>
+                            <input type="number" name="reserveSupplyQNT" id="issue_currency_min_reserve_supply" class="form-control" min="1" placeholder="Number of Units" data-i18n="reserve_supply" tabindex="8" disabled>
                         </div>
                         <div class="input-group">
                             <input type="checkbox" name="type" id="issue_currency_claimable" value="8" />
@@ -188,12 +188,12 @@
                     <div class="row">
                         <div class="col-xs-4 col-sm-4 col-md-4">
                             <label for="issue_currency_initial_supply" data-i18n="initial_supply">INITIAL SUPPLY</label>
-                            <input type="number" name="initialSupply" id="issue_currency_initial_supply" class="form-control" min="0" placeholder="Initial Supply" data-i18n="Initial_supply" tabindex="15">
+                            <input type="number" name="initialSupplyQNT" id="issue_currency_initial_supply" class="form-control" min="0" placeholder="Initial Supply" data-i18n="Initial_supply" tabindex="15">
                         </div>
                         <div class="col-xs-4 col-sm-4 col-md-4">
                             <div class="form-group">
                             <label for="issue_currency_max_supply" data-i18n="total_supply">TOTAL SUPPLY</label>
-                            <input type="number" name="maxSupply" id="issue_currency_max_supply" class="form-control" min="1" placeholder="Total Supply" data-i18n="total_supply" tabindex="16">
+                            <input type="number" name="maxSupplyQNT" id="issue_currency_max_supply" class="form-control" min="1" placeholder="Total Supply" data-i18n="total_supply" tabindex="16">
                         </div>
                         </div>
                         <div class="col-xs-4 col-sm-4 col-md-4">
@@ -283,7 +283,7 @@
                             </label>
                             <div class="col-sm-8">
                                 <div class="input-group">
-                                    <input id="buy_currency_units_initial" type="text" name="initialBuySupply" value="0" class="form-control" data-type="buy" tabindex="2" />
+                                    <input id="buy_currency_units_initial" type="text" name="initialBuySupplyQNT" value="0" class="form-control" data-type="buy" tabindex="2" />
                                     <span class="input-group-addon"><span class="currency_code"></span></span>
                                 </div>
                             </div>
@@ -294,7 +294,7 @@
                             </label>
                             <div class="col-sm-8">
                                 <div class="input-group">
-                                    <input id="buy_currency_units_total" type="text" name="totalBuyLimit" value="0" class="form-control" data-type="buy" tabindex="3" />
+                                    <input id="buy_currency_units_total" type="text" name="totalBuyLimitQNT" value="0" class="form-control" data-type="buy" tabindex="3" />
                                     <span class="input-group-addon"><span class="currency_code"></span></span>
                                 </div>
                             </div>
@@ -306,7 +306,7 @@
                             <div class="col-sm-8">
                                 <div class="input-group">
                                     <input id="buy_currency_offer_rate" type="text" value="0" name="buyRateNQT" class="form-control" data-type="buy" tabindex="4" />
-                                    <span class="input-group-addon"><span class="currency_code"></span><span> / </span><span class="coin-symbol"></span>
+                                    <span class="input-group-addon"><span class="currency_code"></span><span> / </span><span class="coin-symbol"></span></span>
                                 </div>
                             </div>
                         </div>
@@ -317,7 +317,7 @@
                             </label>
                             <div class="col-sm-8">
                                 <div class="input-group">
-                                    <input id="sell_currency_units_initial" type="text" name="initialSellSupply" value="0" class="form-control" data-type="sell" tabindex="5" />
+                                    <input id="sell_currency_units_initial" type="text" name="initialSellSupplyQNT" value="0" class="form-control" data-type="sell" tabindex="5" />
                                     <span class="input-group-addon"><span class="currency_code"></span></span>
                                 </div>
                             </div>
@@ -328,7 +328,7 @@
                             </label>
                             <div class="col-sm-8">
                                 <div class="input-group">
-                                    <input id="sell_currency_units_total" type="text" name="totalSellLimit" value="0" class="form-control" data-type="sell" tabindex="6" />
+                                    <input id="sell_currency_units_total" type="text" name="totalSellLimitQNT" value="0" class="form-control" data-type="sell" tabindex="6" />
                                     <span class="input-group-addon"><span class="currency_code"></span></span>
                                 </div>
                             </div>
@@ -340,7 +340,7 @@
                             <div class="col-sm-8">
                                 <div class="input-group">
                                     <input id="sell_currency_offer_rate" type="text" value="0" name="sellRateNQT" class="form-control" data-type="sell" tabindex="7" />
-                                    <span class="input-group-addon"><span class="currency_code"></span><span> / </span><span class="coin-symbol"></span>
+                                    <span class="input-group-addon"><span class="currency_code"></span><span> / </span><span class="coin-symbol"></span></span>
                                 </div>
                             </div>
                         </div>
@@ -390,7 +390,7 @@
                     <div class="form-group">
                         <label for="claim_currency_amount" data-i18n="currency_units_to_claim">Number of units to claim</label> <i><span id="claimAvailable"></span></i>
                         <label for="claim_currency_amount" data-i18n="currency_claim_rate">Claim rate</label> <i><span id="claimRate"></span></i>
-                        <input type="text" class="form-control" name="units" id="claim_currency_amount" placeholder="Number of units" data-i18n="units" tabindex="1" />
+                        <input type="text" class="form-control" name="unitsQNT" id="claim_currency_amount" placeholder="Number of units" data-i18n="units" tabindex="1" />
                     </div>
                     <div data-replace-with-modal-template="fee_calculation_modal_template"></div>
                     <div data-replace-with-modal-template="secret_phrase_modal_template"></div>

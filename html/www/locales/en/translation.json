@@ -1575,10 +1575,6 @@
   "maximum_rate": "Maximum Rate",
   "no_open_buy_offers": "No open buy offers. You cannot sell this currency now, but you could publish an exchange offer instead, and wait for others to fill it.",
   "no_open_sell_offers": "No open sell offers. You cannot buy this currency now, but you could publish an exchange offer instead, and wait for others to fill it.",
-  "buy_currency_description": "Exchange __total__ NXT for __quantity__ __currency_code__ units at an estimated rate of __rate__",
-  "buy_currency_description_help": "Per currency unit received you will pay __rate__ NXT, making a total of __total_nxt__ NXT according to current exchange offers.",
-  "sell_currency_description": "Exchange __quantity__ __currency_code__ units for __total__ NXT at an estimated rate of __rate__",
-  "sell_currency_description_help": "Per currency unit exchanged, you will receive __rate__ NXT, making a total of __total_nxt__ NXT according to current exchange offers.",
   "data_cloud": "Data Cloud",
   "error_no_file_chosen": "No file chosen",
   "publish_offer_help": "An exchange offer models real world exchange booth, offering to exchange currencies at different buy/sell rates and limits. If you only want to buy, or only to sell, leave the opposite limits at 0, and enter the same buy and sell rates",
@@ -1916,5 +1912,10 @@
   "unconfirmed_coin_balance": "Unconfirmed Coin Balance",
   "coin_balance": "Coin Balance",
   "event_hash": "Event Hash",
-  "no_distribution_accounts_found": "No accounts found. Should never happen"
+  "no_distribution_accounts_found": "No accounts found. Should never happen",
+  "entity": "Entity",
+  "buy_currency_description": "Exchange __total__ __coin__ for __quantity__ __currency_code__ units at an estimated rate of __rate__",
+  "buy_currency_description_help": "Per currency unit received you will pay __rate__ __coin__, making a total of __total_coin__ __coin__ according to current exchange offers.",
+  "sell_currency_description": "Exchange __quantity__ __currency_code__ units for __total__ __coin__ at an estimated rate of __rate__",
+  "sell_currency_description_help": "Per currency unit exchanged, you will receive __rate__ NXT, making a total of __total_coin__ __coin__ according to current exchange offers."
 }

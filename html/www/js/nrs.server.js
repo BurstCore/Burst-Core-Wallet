@@ -1054,11 +1054,11 @@ var NRS = (function (NRS, $, undefined) {
                 pos += length;
                 transaction.type = String(byteArray[pos]);
                 pos++;
-                transaction.initialSupply = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.initialSupplyQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.reserveSupply = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.reserveSupplyQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.maxSupply = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.maxSupplyQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.issuanceHeight = String(converters.byteArrayToSignedInt32(byteArray, pos));
                 pos += 4;
@@ -1075,8 +1075,8 @@ var NRS = (function (NRS, $, undefined) {
                 transaction.decimals = String(byteArray[pos]);
                 pos++;
                 if (transaction.name !== data.name || transaction.code !== data.code || transaction.description !== data.description ||
-                    transaction.type != data.type || transaction.initialSupply !== data.initialSupply || transaction.reserveSupply !== data.reserveSupply ||
-                    transaction.maxSupply !== data.maxSupply || transaction.issuanceHeight !== data.issuanceHeight ||
+                    transaction.type != data.type || transaction.initialSupplyQNT !== data.initialSupplyQNT || transaction.reserveSupplyQNT !== data.reserveSupplyQNT ||
+                    transaction.maxSupplyQNT !== data.maxSupplyQNT || transaction.issuanceHeight !== data.issuanceHeight ||
                     transaction.ruleset !== data.ruleset || transaction.algorithm !== data.algorithm || transaction.decimals !== data.decimals) {
                     return false;
                 }
@@ -1108,9 +1108,9 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.units = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.unitsQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.currency !== data.currency || transaction.units !== data.units) {
+                if (transaction.currency !== data.currency || transaction.unitsQNT !== data.unitsQNT) {
                     return false;
                 }
                 break;
@@ -1120,9 +1120,9 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.units = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.unitsQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.currency !== data.currency || transaction.units !== data.units) {
+                if (transaction.currency !== data.currency || transaction.unitsQNT !== data.unitsQNT) {
                     return false;
                 }
                 break;
@@ -1136,19 +1136,19 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 8;
                 transaction.sellRateNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.totalBuyLimit = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.totalBuyLimitQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.totalSellLimit = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.totalSellLimitQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.initialBuySupply = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.initialBuySupplyQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.initialSellSupply = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.initialSellSupplyQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.expirationHeight = String(converters.byteArrayToSignedInt32(byteArray, pos));
                 pos += 4;
                 if (transaction.currency !== data.currency || transaction.buyRateNQT !== data.buyRateNQT || transaction.sellRateNQT !== data.sellRateNQT ||
-                    transaction.totalBuyLimit !== data.totalBuyLimit || transaction.totalSellLimit !== data.totalSellLimit ||
-                    transaction.initialBuySupply !== data.initialBuySupply || transaction.initialSellSupply !== data.initialSellSupply || transaction.expirationHeight !== data.expirationHeight) {
+                    transaction.totalBuyLimitQNT !== data.totalBuyLimitQNT || transaction.totalSellLimitQNT !== data.totalSellLimitQNT ||
+                    transaction.initialBuySupplyQNT !== data.initialBuySupplyQNT || transaction.initialSellSupplyQNT !== data.initialSellSupplyQNT || transaction.expirationHeight !== data.expirationHeight) {
                     return false;
                 }
                 break;
@@ -1160,9 +1160,9 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 8;
                 transaction.rateNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.units = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.unitsQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.currency !== data.currency || transaction.rateNQT !== data.rateNQT || transaction.units !== data.units) {
+                if (transaction.currency !== data.currency || transaction.rateNQT !== data.rateNQT || transaction.unitsQNT !== data.unitsQNT) {
                     return false;
                 }
                 break;
@@ -1174,9 +1174,9 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 8;
                 transaction.rateNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.units = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.unitsQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.currency !== data.currency || transaction.rateNQT !== data.rateNQT || transaction.units !== data.units) {
+                if (transaction.currency !== data.currency || transaction.rateNQT !== data.rateNQT || transaction.unitsQNT !== data.unitsQNT) {
                     return false;
                 }
                 break;
@@ -1188,11 +1188,11 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 8;
                 transaction.nonce = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.units = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.unitsQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.counter = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.currency !== data.currency || transaction.nonce !== data.nonce || transaction.units !== data.units ||
+                if (transaction.currency !== data.currency || transaction.nonce !== data.nonce || transaction.unitsQNT !== data.unitsQNT ||
                     transaction.counter !== data.counter) {
                     return false;
                 }

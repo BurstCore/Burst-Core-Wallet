@@ -1217,9 +1217,9 @@ NRS.addPagination = function () {
                         $("#account_nr_currencies").html(numberOfCurrencies);
                         var currencyBalancesMap = {};
                         for (i = 0; i < numberOfCurrencies; i++) {
-                            if (currencyBalances[i].units != "0") {
+                            if (currencyBalances[i].unitsQNT != "0") {
                                 currencies.push(currencyBalances[i].currency);
-                                currencyBalancesMap[currencyBalances[i].currency] = currencyBalances[i].units;
+                                currencyBalancesMap[currencyBalances[i].currency] = currencyBalances[i].unitsQNT;
                             }
                         }
                         NRS.sendRequest("getLastExchanges", {
