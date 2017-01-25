@@ -344,10 +344,12 @@ public final class CoinExchange {
             //
             long askAmountNQT = Convert.unitRateToAmount(askOrder.getQuantityQNT(), bidDecimals,
                                                          askPriceNQT, askDecimals);
-            bidQuantityQNT = Math.min(bidOrder.getQuantityQNT(), askAmountNQT);
+            bidQuantityQNT = Math.min(askOrder.getAmountNQT(),
+                                    Math.min(bidOrder.getQuantityQNT(), askAmountNQT));
             long bidAmountNQT = Convert.unitRateToAmount(bidOrder.getQuantityQNT(), askDecimals,
                                                          bidPriceNQT, bidDecimals);
-            askQuantityQNT = Math.min(askOrder.getQuantityQNT(), bidAmountNQT);
+            askQuantityQNT = Math.min(bidOrder.getAmountNQT(),
+                                    Math.min(askOrder.getQuantityQNT(), bidAmountNQT));
             //
             // Create the trade for the bid order
             //
