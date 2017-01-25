@@ -54,13 +54,6 @@ var NRS = (function (NRS, $) {
         return NRS.intToFloat(amount, NRS.getChain(1).decimals, returnAsObject);
     };
 
-    NRS.convertToChainCoin = function(amount, chain, returnAsObject) {
-        if (typeof chain == "number") {
-            chain = NRS.getChain(chain);
-        }
-        return NRS.intToFloat(amount, chain.decimals, returnAsObject);
-    };
-
     NRS.intToFloat = function (amount, decimals, returnAsObject) {
         if (typeof amount != "object") {
             amount = new BigInteger(String(amount));
