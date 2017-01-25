@@ -1196,11 +1196,10 @@ var NRS = (function (NRS, $, undefined) {
                 };
                 data.chain_formatted_html = NRS.getChainLink(transaction.attachment.chain);
                 data.exchange_chain_formatted_html = NRS.getChainLink(transaction.attachment.exchangeChain);
-                var chainDecimals = NRS.constants.CHAIN_PROPERTIES[transaction.attachment.chain].decimals;
-                data.amount_formatted_html = NRS.formatQuantity(transaction.attachment.amountNQT, chainDecimals) + " " + NRS.getChain(transaction.attachment.chain).name;
+                var exchangeChainDecimals = NRS.getChain(transaction.attachment.exchangeChain).decimals;
+                data.amount_formatted_html = NRS.formatQuantity(transaction.attachment.quantityQNT, exchangeChainDecimals) + " " + NRS.getChain(transaction.attachment.exchangeChain).name;
+                var chainDecimals = NRS.getChain(transaction.attachment.chain).decimals;
                 data.price_formatted_html = NRS.formatQuantity(transaction.attachment.priceNQT, chainDecimals)  + " " + NRS.getChain(transaction.attachment.chain).name;
-                var chainAmount = new BigInteger(transaction.attachment.amountNQT).divide(new BigInteger(transaction.attachment.priceNQT));
-                data.exchange_amount_formatted = NRS.formatQuantity(chainAmount, 0)  + " " + NRS.getChain(transaction.attachment.exchangeChain).name;
 
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();

@@ -1284,8 +1284,8 @@ var NRS = (function (NRS, $, undefined) {
                     return false;
                 }
                 pos += 4;
-                var amountNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
-                if (amountNQT !== data.amountNQT) {
+                var quantityQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                if (quantityQNT !== data.quantityQNT) {
                     return false;
                 }
                 pos += 8;
