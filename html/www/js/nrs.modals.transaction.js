@@ -1316,7 +1316,7 @@ var NRS = (function (NRS, $, undefined) {
                     tradeQuantity = tradeQuantity.add(new BigInteger(trade.quantityQNT));
                     tradeTotal = tradeTotal.add(new BigInteger(trade.quantityQNT).multiply(new BigInteger(trade.priceNQT)));
                     rows += "<tr>" +
-                    "<td>" + NRS.getTransactionLink(trade[transactionField], NRS.formatTimestamp(trade.timestamp)) + "<td>" +
+                    "<td>" + NRS.getTransactionLink(trade[transactionField], NRS.formatTimestamp(trade.timestamp)) + "</td>" +
                     "<td>" + NRS.formatQuantity(trade.quantityQNT, asset.decimals) + "</td>" +
                     "<td>" + NRS.formatQuantity(trade.priceNQT, NRS.getActiveChainDecimals()) + "</td>" +
                     "<td>" + NRS.formatQuantity(NRS.multiply(trade.quantityQNT, trade.priceNQT), asset.decimals + NRS.getActiveChainDecimals()) +
