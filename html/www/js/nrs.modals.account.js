@@ -374,10 +374,10 @@ var NRS = (function(NRS, $) {
 				return NRS.formatQuantity(val.quantityQNT, val.decimals);
 			});
 			var priceDecimals = NRS.getNumberOfDecimals(response.trades, "priceNQT", function(val) {
-				return NRS.formatOrderPricePerWholeQNT(val.priceNQT, val.decimals);
+				return NRS.formatQuantity(val.priceNQT, NRS.getActiveChainDecimals());
 			});
 			var amountDecimals = NRS.getNumberOfDecimals(response.trades, "totalNQT", function(val) {
-				return NRS.formatAmount(NRS.calculateOrderTotalNQT(val.quantityQNT, val.priceNQT));
+				return NRS.formatQuantity(NRS.calculateOrderTotalNQT(val.quantityQNT, val.priceNQT), val.decimals + NRS.getActiveChainDecimals());
 			});
 			if (response.trades && response.trades.length) {
 				var trades = response.trades;
@@ -386,7 +386,14 @@ var NRS = (function(NRS, $) {
 					trades[i].quantityQNT = new BigInteger(trades[i].quantityQNT);
 					trades[i].totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(trades[i].priceNQT, trades[i].quantityQNT));
 					var type = (trades[i].buyerRS == NRS.userInfoModal.user ? "buy" : "sell");
-					rows += "<tr><td><a href='#' data-goto-asset='" + NRS.escapeRespStr(trades[i].asset) + "'>" + NRS.escapeRespStr(trades[i].name) + "</a></td><td>" + NRS.formatTimestamp(trades[i].timestamp) + "</td><td style='color:" + (type == "buy" ? "green" : "red") + "'>" + $.t(type) + "</td><td class='numeric'>" + NRS.formatQuantity(trades[i].quantityQNT, trades[i].decimals, false, quantityDecimals) + "</td><td class='asset_price numeric'>" + NRS.formatOrderPricePerWholeQNT(trades[i].priceNQT, trades[i].decimals, priceDecimals) + "</td><td class='numeric' style='color:" + (type == "buy" ? "red" : "green") + "'>" + NRS.formatAmount(trades[i].totalNQT, false, false, amountDecimals) + "</td></tr>";
+					rows += "<tr>" +
+						"<td><a href='#' data-goto-asset='" + NRS.escapeRespStr(trades[i].asset) + "'>" + NRS.escapeRespStr(trades[i].name) + "</a></td>" +
+						"<td>" + NRS.formatTimestamp(trades[i].timestamp) + "</td>" +
+						"<td style='color:" + (type == "buy" ? "green" : "red") + "'>" + $.t(type) + "</td>" +
+						"<td class='numeric'>" + NRS.formatQuantity(trades[i].quantityQNT, trades[i].decimals, false, quantityDecimals) + "</td>" +
+						"<td class='asset_price numeric'>" + NRS.formatQuantity(trades[i].priceNQT, NRS.getActiveChainDecimals(), false, priceDecimals) + "</td>" +
+						"<td class='numeric' style='color:" + (type == "buy" ? "red" : "green") + "'>" + NRS.formatQuantity(trades[i].totalNQT, trades[i].decimals + NRS.getActiveChainDecimals(), false, amountDecimals) + "</td>" +
+						"</tr>";
 				}
 			}
             var infoModalTradeHistoryTable = $("#user_info_modal_trade_history_table");

@@ -157,8 +157,6 @@
   "buy_asset_with_nxt": "Buy __assetName__ with NXT",
   "buy_currency": "Buy Currency",
   "buy_it_q": "Buy it?",
-  "buy_order_description": "Buy __quantity__ __asset_name__ assets at __nxt__ NXT each.",
-  "buy_order_description_help": "Per whole asset bought you will pay __nxt__ NXT, making a total of __total_nxt__ NXT once everything has been purchased.",
   "buy_orders": "Buy Orders",
   "buy_rate_per_unit": "Buy Rate per unit",
   "buy_units_initial": "Buy units (Initial)",
@@ -904,8 +902,6 @@
   "sell_alias": "Sell Alias",
   "sell_asset_for_nxt": "Sell __assetName__ for NXT",
   "sell_currency": "Sell Currency",
-  "sell_order_description": "Sell __quantity__ __asset_name__ assets at __nxt__ NXT each.",
-  "sell_order_description_help": "Per whole asset sold you will receive __nxt__ NXT, making a total of __total_nxt__ NXT once everything has been sold.",
   "sell_orders": "Sell Orders",
   "sell_rate_per_unit": "Sell Rate per unit",
   "sell_to_anyone": "Sell to Anyone",
@@ -1917,5 +1913,9 @@
   "buy_currency_description": "Exchange __total__ __coin__ for __quantity__ __currency_code__ units at an estimated rate of __rate__",
   "buy_currency_description_help": "Per currency unit received you will pay __rate__ __coin__, making a total of __total_coin__ __coin__ according to current exchange offers.",
   "sell_currency_description": "Exchange __quantity__ __currency_code__ units for __total__ __coin__ at an estimated rate of __rate__",
-  "sell_currency_description_help": "Per currency unit exchanged, you will receive __rate__ NXT, making a total of __total_coin__ __coin__ according to current exchange offers."
+  "sell_currency_description_help": "Per currency unit exchanged, you will receive __rate__ NXT, making a total of __total_coin__ __coin__ according to current exchange offers.",
+  "buy_order_description": "Buy __quantity__ __asset_name__ assets at __coin_amount__ __coin__ each.",
+  "buy_order_description_help": "Per whole asset bought you will pay __coin_amount__ __coin__, making a total of __total_coin__ __coin__ once everything has been purchased.",
+  "sell_order_description": "Sell __quantity__ __asset_name__ assets at __coin_amount__ __coin__ each.",
+  "sell_order_description_help": "Per whole asset sold you will receive __coin_amount__ __coin__, making a total of __total_coin__ __coin__ once everything has been sold."
 }

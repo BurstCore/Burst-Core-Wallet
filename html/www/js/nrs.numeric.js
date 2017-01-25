@@ -20,54 +20,14 @@
 
 var NRS = (function (NRS, $) {
 
-    NRS.formatOrderPricePerWholeQNT = function (price, decimals, zeroPad) {
-        price = NRS.calculateOrderPricePerWholeQNT(price, decimals, true);
-        return NRS.format(price, false, zeroPad);
-    };
-
-    NRS.calculateOrderPricePerWholeQNT = function (price, decimals, returnAsObject) {
-        if (typeof price != "object") {
-            price = new BigInteger(String(price));
-        }
-        return NRS.convertToNXT(price.multiply(new BigInteger("" + Math.pow(10, decimals))), returnAsObject);
-    };
-
-    NRS.calculatePricePerWholeQNT = function (price, decimals) {
-        price = String(price);
-
-        if (decimals) {
-            var toRemove = price.slice(-decimals);
-
-            if (!/^[0]+$/.test(toRemove)) {
-                throw $.t("error_invalid_input", { input: "price " + price + " decimals " + decimals });
-            } else {
-                return price.slice(0, -decimals);
-            }
-        } else {
-            return price;
-        }
-    };
-
-    function calculateOrderTotalImpl(quantityQNT, priceNQT) {
+    NRS.calculateOrderTotalNQT = function(quantityQNT, priceNQT) {
         if (typeof quantityQNT != "object") {
             quantityQNT = new BigInteger(String(quantityQNT));
         }
         if (typeof priceNQT != "object") {
             priceNQT = new BigInteger(String(priceNQT));
         }
-        return quantityQNT.multiply(priceNQT);
-    }
-
-    NRS.calculateOrderTotalNQT = function (quantityQNT, priceNQT) {
-        return calculateOrderTotalImpl(quantityQNT, priceNQT).toString();
-    };
-
-    NRS.calculateOrderTotal = function (quantityQNT, priceNQT) {
-        return NRS.calculateOrderTotalDecimals(quantityQNT, priceNQT, NRS.getActiveChainDecimals());
-    };
-
-    NRS.calculateOrderTotalDecimals = function (quantityQNT, priceNQT, decimals) {
-        return NRS.intToFloat(calculateOrderTotalImpl(quantityQNT, priceNQT), decimals);
+        return quantityQNT.multiply(priceNQT).toString();
     };
 
     NRS.calculatePercentage = function (a, b, rounding_mode) {
@@ -91,7 +51,7 @@ var NRS = (function (NRS, $) {
     };
 
     NRS.convertToFXT = function(amount, returnAsObject) {
-        return NRS.intToFloat(amount, 8, returnAsObject);
+        return NRS.intToFloat(amount, NRS.getChain(1).decimals, returnAsObject);
     };
 
     NRS.convertToChainCoin = function(amount, chain, returnAsObject) {

@@ -638,7 +638,7 @@ var NRS = (function (NRS, $, undefined) {
                     var trade = trades[i];
                     var price = new BigInteger(trade.priceNQT);
                     var amount = new BigInteger(trade.amountNQT);
-                    var total = NRS.calculateOrderTotalDecimals(amount, price, NRS.getActiveChainDecimals() + currentCoin.decimals);
+                    var total = NRS.calculateOrderTotalNQT(amount, price, NRS.getActiveChainDecimals() + currentCoin.decimals);
 
                     rows += "<tr>" +
                         "<td>" + NRS.formatTimestamp(trade.timestamp) + "</td>" +
@@ -726,7 +726,7 @@ var NRS = (function (NRS, $, undefined) {
             var amountNQT = new BigInteger(String($tr.data("amount")));
             var totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(amountNQT, priceNQT));
 
-            $("#buy_coin_price").val(NRS.calculateOrderPricePerWholeQNT(priceNQT, currentCoin.decimals));
+            $("#buy_coin_price").val(NRS.convertToQNTf(priceNQT, NRS.getActiveChainDecimals()));
             $("#buy_coin_amount").val(NRS.convertToQNTf(amountNQT, currentCoin.decimals));
             $("#buy_coin_total").val(NRS.convertToNXT(totalNQT));
         } catch (err) {
@@ -840,7 +840,7 @@ var NRS = (function (NRS, $, undefined) {
             displayedQuantity = new BigInteger(quantity);
             var quantityQNT = new BigInteger(NRS.convertToQNT(quantity, currentCoin.decimals));
             var priceNQT = new BigInteger(NRS.convertToQNT(price, NRS.getActiveChainDecimals()));
-            var totalNXT = NRS.formatQuantity(NRS.convertToChainCoin(NRS.calculateOrderTotalNQT(quantityQNT, priceNQT), currentCoin), NRS.getActiveChainDecimals());
+            var totalNXT = NRS.formatQuantity(NRS.calculateOrderTotalNQT(quantityQNT, priceNQT), currentCoin.decimals + NRS.getActiveChainDecimals());
         } catch (err) {
             $.growl($.t("error_invalid_input", { input: "quantity " + quantity + " price " + price + " decimals " + currentCoin.decimals }), {
                 "type": "danger"
@@ -1105,9 +1105,8 @@ var NRS = (function (NRS, $, undefined) {
                 var amountDecimals = NRS.getNumberOfDecimals(trades, "amountNQT", function(val) {
                     return NRS.formatQuantity(val.quantityQNT, exchangeDecimals);
                 });
-                var chainDecimals = NRS.constants.CHAIN_PROPERTIES[NRS.getActiveChainId()].decimals;
                 var priceDecimals = NRS.getNumberOfDecimals(trades, "priceNQT", function(val) {
-                    return NRS.formatOrderPricePerWholeQNT(val.priceNQT, chainDecimals);
+                    return NRS.formatQuantity(val.priceNQT, NRS.getActiveChainDecimals());
                 });
                 var rows = "";
                 for (var i = 0; i < trades.length; i++) {

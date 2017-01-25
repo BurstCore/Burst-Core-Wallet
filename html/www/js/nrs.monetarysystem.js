@@ -949,10 +949,10 @@ var NRS = (function (NRS, $, undefined) {
                     return NRS.formatQuantity(exchange.unitsQNT, exchange.decimals);
                 });
                 var rateNQTDecimals = NRS.getNumberOfDecimals(response.exchanges, "rateNQT", function(exchange) {
-                    return NRS.formatOrderPricePerWholeQNT(exchange.rateNQT, exchange.decimals);
+                    return NRS.formatQuantity(exchange.rateNQT, NRS.getActiveChainDecimals());
                 });
                 var totalNQTDecimals = NRS.getNumberOfDecimals(response.exchanges, "totalNQT", function(exchange) {
-                    return NRS.formatAmount(NRS.calculateOrderTotalNQT(exchange.unitsQNT, exchange.rateNQT));
+                    return NRS.formatQuantity(NRS.calculateOrderTotalNQT(exchange.unitsQNT, exchange.rateNQT), exchange.decimals + NRS.getActiveChainDecimals());
                 });
                 var rows = "";
                 for (var i = 0; i < response.exchanges.length; i++) {
@@ -965,8 +965,8 @@ var NRS = (function (NRS, $, undefined) {
                     "<td>" + NRS.getAccountLink(exchange, "seller") + "</td>" +
                     "<td>" + NRS.getAccountLink(exchange, "buyer") + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(exchange.unitsQNT, exchange.decimals, false, quantityDecimals) + "</td>" +
-                    "<td class='numeric'>" + NRS.formatOrderPricePerWholeQNT(exchange.rateNQT, exchange.decimals, rateNQTDecimals) + "</td>" +
-                    "<td class='numeric'>" + NRS.formatAmount(NRS.calculateOrderTotalNQT(exchange.unitsQNT, exchange.rateNQT, exchange.decimals),false,false,totalNQTDecimals) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatQuantity(exchange.rateNQT, NRS.getActiveChainDecimals(), false, rateNQTDecimals) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatQuantity(NRS.calculateOrderTotalNQT(exchange.unitsQNT, exchange.rateNQT),exchange.decimals + NRS.getActiveChainDecimals(),false,totalNQTDecimals) + "</td>" +
                     "</tr>";
                 }
                 NRS.dataLoaded(rows);
@@ -1407,9 +1407,7 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.forms.currencyReserveIncrease = function ($modal) {
         var data = NRS.getFormData($modal.find("form:first"));
-        var decimals = parseInt(data.decimals, 10);
-        data.amountPerUnitNQT = NRS.calculatePricePerWholeQNT(NRS.convertToNQT(data.amountPerUnitNQT), decimals); // TODO probably incorrect
-
+        data.amountPerUnitNQT = NRS.convertToQNTf(data.amountPerUnitNQT, NRS.getActiveChainDecimals());
         return {
             "data": data
         };

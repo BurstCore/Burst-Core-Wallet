@@ -104,40 +104,8 @@ QUnit.test("formatWeight", function (assert) {
     assert.equal(NRS.formatWeight(12345), "12&#39;345", "number");
 });
 
-QUnit.test("calculateOrderPricePerWholeQNT", function (assert) {
-    assert.equal(NRS.calculateOrderPricePerWholeQNT(100000000, 0), "1", "no.decimals.one");
-    assert.equal(NRS.calculateOrderPricePerWholeQNT(1, 4), "0.0001", "fraction");
-    assert.equal(NRS.calculateOrderPricePerWholeQNT(-123400000000, 8), "-123400000000", "eight.decimals");
-    assert.equal(NRS.calculateOrderPricePerWholeQNT(-123400000000, 4), "-12340000", "four.decimals");
-    assert.equal(NRS.calculateOrderPricePerWholeQNT(-123400000000, 0), "-1234", "no.decimals");
-});
-
-QUnit.test("formatOrderPricePerWholeQNT", function (assert) {
-    assert.equal(NRS.formatOrderPricePerWholeQNT(100000000, 0), "1", "no.decimals.one");
-    assert.equal(NRS.formatOrderPricePerWholeQNT(1, 4), "0.0001", "fraction");
-    assert.equal(NRS.formatOrderPricePerWholeQNT(-123400000000, 8), Number("-123400000000".escapeHTML()).toLocaleString(), "eight.decimals");
-    assert.equal(NRS.formatOrderPricePerWholeQNT(-123400000000, 4), Number("-12340000".escapeHTML()).toLocaleString(), "four.decimals");
-    assert.equal(NRS.formatOrderPricePerWholeQNT(-123400000000, 0), Number("-1234".escapeHTML()).toLocaleString(), "no.decimals");
-});
-
-QUnit.test("calculatePricePerWholeQNT", function (assert) {
-    assert.equal(NRS.calculatePricePerWholeQNT(100000000, 0), "100000000", "no.decimals.one");
-    assert.equal(NRS.calculatePricePerWholeQNT(100000000, 4), "10000", "four.decimals");
-    assert.equal(NRS.calculatePricePerWholeQNT(100000000, 8), "1", "eight.decimals");
-    assert.equal(NRS.calculatePricePerWholeQNT(-123400000000, 8), "-1234".escapeHTML(), "eight.decimals");
-    assert.equal(NRS.calculatePricePerWholeQNT(-123400000000, 4), "-12340000".escapeHTML(), "four.decimals");
-    assert.equal(NRS.calculatePricePerWholeQNT(-123400000000, 0), "-123400000000".escapeHTML(), "no.decimals");
-    assert.throws(function () {
-        NRS.calculatePricePerWholeQNT(100000001, 8);
-    }, "error_invalid_input", "invalid.input");
-});
-
 QUnit.test("calculateOrderTotalNQT", function (assert) {
     assert.equal(NRS.calculateOrderTotalNQT(12, 34), "408", "multiplication");
-});
-
-QUnit.test("calculateOrderTotal", function (assert) {
-    assert.equal(NRS.calculateOrderTotal(12, 34), "0.00000408", "multiplication");
 });
 
 QUnit.test("calculatePercentage", function (assert) {
