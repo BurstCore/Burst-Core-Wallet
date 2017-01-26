@@ -48,6 +48,8 @@ public final class CoinExchange {
         TRADE
     }
 
+    private static final BigDecimal ONE_HALF = BigDecimal.valueOf(5L, 1);
+
     private static final Listeners<Trade, Event> listeners = new Listeners<>();
 
     public static boolean addListener(Listener<Trade> listener, Event eventType) {
@@ -342,14 +344,22 @@ public final class CoinExchange {
             //
             // Calculate the quantities based on the exchange rates
             //
-            long askAmountNQT = new BigDecimal(askOrder.getQuantityQNT()).movePointLeft(bidDecimals)
-                                        .multiply(askPrice).movePointRight(askDecimals).longValue();
-            bidQuantityQNT = Math.min(askOrder.getAmountNQT(),
-                                    Math.min(bidOrder.getQuantityQNT(), askAmountNQT));
-            long bidAmountNQT = new BigDecimal(bidOrder.getQuantityQNT()).movePointLeft(askDecimals)
-                                        .multiply(bidPrice).movePointRight(bidDecimals).longValue();
-            askQuantityQNT = Math.min(bidOrder.getAmountNQT(),
-                                    Math.min(askOrder.getQuantityQNT(), bidAmountNQT));
+            BigDecimal[] amounts = BigDecimal.valueOf(askOrder.getQuantityQNT(), bidDecimals)
+                                        .multiply(askPrice).movePointRight(askDecimals)
+                                        .divideAndRemainder(BigDecimal.ONE, MathContext.DECIMAL128);
+            long askAmountNQT = amounts[0].longValue();
+            if (amounts[1].compareTo(ONE_HALF) >= 0) {
+                askAmountNQT++;
+            }
+            bidQuantityQNT = Math.min(askOrder.getAmountNQT(), Math.min(bidOrder.getQuantityQNT(), askAmountNQT));
+            amounts = BigDecimal.valueOf(bidOrder.getQuantityQNT(), askDecimals)
+                                        .multiply(bidPrice).movePointRight(bidDecimals)
+                                        .divideAndRemainder(BigDecimal.ONE, MathContext.DECIMAL128);
+            long bidAmountNQT = amounts[0].longValue();
+            if (amounts[1].compareTo(ONE_HALF) >= 0) {
+                bidAmountNQT++;
+            }
+            askQuantityQNT = Math.min(bidOrder.getAmountNQT(), Math.min(askOrder.getQuantityQNT(), bidAmountNQT));
             //
             // Create the trade for the bid order
             //
@@ -432,7 +442,7 @@ public final class CoinExchange {
             this.quantityQNT = attachment.getQuantityQNT();
             this.bidPriceNQT = attachment.getPriceNQT();
             this.askPrice = BigDecimal.ONE.divide(
-                    new BigDecimal(bidPriceNQT).movePointLeft(chain.getDecimals()), MathContext.DECIMAL128)
+                    BigDecimal.valueOf(bidPriceNQT, chain.getDecimals()), MathContext.DECIMAL128)
                     .movePointRight(8).divideToIntegralValue(BigDecimal.ONE, MathContext.DECIMAL128).movePointLeft(8);
             this.amountNQT = Convert.unitRateToAmount(quantityQNT, exchangeChain.getDecimals(),
                                         attachment.getPriceNQT(), chain.getDecimals()) + 1;
@@ -517,13 +527,14 @@ public final class CoinExchange {
         }
 
         public final BigDecimal getBidPrice() {
-            return new BigDecimal(bidPriceNQT).movePointLeft(Chain.getChain(chainId).getDecimals());
+            return BigDecimal.valueOf(bidPriceNQT, Chain.getChain(chainId).getDecimals());
         }
 
         public final long getAskPriceNQT() {
-            BigDecimal priceNQT = askPrice.movePointRight(Chain.getChain(exchangeId).getDecimals());
-            long askPriceNQT = priceNQT.longValue();
-            if (priceNQT.remainder(BigDecimal.ONE, MathContext.DECIMAL128).signum() != 0) {
+            BigDecimal[] amounts = askPrice.movePointRight(Chain.getChain(exchangeId).getDecimals())
+                                        .divideAndRemainder(BigDecimal.ONE, MathContext.DECIMAL128);
+            long askPriceNQT = amounts[0].longValue();
+            if (amounts[1].signum() != 0) {
                 askPriceNQT++;
             }
             return askPriceNQT;

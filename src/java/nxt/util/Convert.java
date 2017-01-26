@@ -328,9 +328,8 @@ public final class Convert {
     };
 
     public static long unitRateToAmount(long unitsQNT, int unitsDecimals, long rateNQT, int rateDecimals) {
-        return new BigDecimal(unitsQNT)
-                .movePointLeft(unitsDecimals)
-                .multiply(new BigDecimal(rateNQT).movePointLeft(rateDecimals))
+        return BigDecimal.valueOf(unitsQNT, unitsDecimals)
+                .multiply(BigDecimal.valueOf(rateNQT, rateDecimals))
                 .movePointRight(rateDecimals)
                 .longValue();
     }
