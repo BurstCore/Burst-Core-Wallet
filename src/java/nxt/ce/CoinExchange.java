@@ -31,6 +31,7 @@ import nxt.util.Listener;
 import nxt.util.Listeners;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -225,7 +226,7 @@ public final class CoinExchange {
      * @param   match               Match order
      * @return                      Trade
      */
-    private static Trade addTrade(long exchangeQuantity, long exchangePrice, Order order, Order match) {
+    private static Trade addTrade(long exchangeQuantity, BigDecimal exchangePrice, Order order, Order match) {
         Trade trade = new Trade(exchangeQuantity, exchangePrice, order, match);
         tradeTable.insert(trade);
         listeners.notify(trade, Event.TRADE);
@@ -363,11 +364,11 @@ public final class CoinExchange {
             //
             // Create the trade for the bid order
             //
-            addTrade(bidQuantityQNT, bidPrice.movePointRight(bidDecimals).longValue(), bidOrder, askOrder);
+            addTrade(bidQuantityQNT, bidPrice, bidOrder, askOrder);
             //
             // Create the trade for the ask order
             //
-            addTrade(askQuantityQNT, askPrice.movePointRight(askDecimals).longValue(), askOrder, bidOrder);
+            addTrade(askQuantityQNT, askPrice, askOrder, bidOrder);
             //
             // Update the buyer balances
             //
@@ -600,14 +601,14 @@ public final class CoinExchange {
         private final int height;
         private final int timestamp;
         private final long exchangeQuantityQNT;
-        private final long exchangePriceNQT;
+        private final BigDecimal exchangePrice;
         private final long accountId;
         private final long orderId;
         private final byte[] orderFullHash;
         private final long matchId;
         private final byte[] matchFullHash;
 
-        private Trade(long exchangeQuantityQNT, long exchangePriceNQT, Order order, Order match) {
+        private Trade(long exchangeQuantityQNT, BigDecimal exchangePrice, Order order, Order match) {
             Block block = Nxt.getBlockchain().getLastBlock();
             this.blockId = block.getId();
             this.height = block.getHeight();
@@ -618,7 +619,7 @@ public final class CoinExchange {
             this.orderId = order.getId();
             this.orderFullHash = order.getFullHash();
             this.exchangeQuantityQNT = exchangeQuantityQNT;
-            this.exchangePriceNQT = exchangePriceNQT;
+            this.exchangePrice = exchangePrice;
             this.matchId = match.getId();
             this.matchFullHash = match.getFullHash();
             dbKey = tradeDbKeyFactory.newKey(this.orderFullHash, this.orderId, this.matchFullHash, this.matchId);
@@ -635,7 +636,7 @@ public final class CoinExchange {
             this.orderId = rs.getLong("order_id");
             this.orderFullHash = rs.getBytes("order_full_hash");
             this.exchangeQuantityQNT = rs.getLong("exchange_quantity");
-            this.exchangePriceNQT = rs.getLong("exchange_price");
+            this.exchangePrice = new BigDecimal(new BigInteger(rs.getBytes("exchange_price")), 8);
             this.matchId = rs.getLong("match_id");
             this.matchFullHash = rs.getBytes("match_full_hash");
         }
@@ -652,7 +653,7 @@ public final class CoinExchange {
                 pstmt.setInt(++i, height);
                 pstmt.setInt(++i, timestamp);
                 pstmt.setLong(++i, exchangeQuantityQNT);
-                pstmt.setLong(++i, exchangePriceNQT);
+                pstmt.setBytes(++i, exchangePrice.movePointRight(8).unscaledValue().toByteArray());
                 pstmt.setLong(++i, accountId);
                 pstmt.setLong(++i, orderId);
                 pstmt.setBytes(++i, orderFullHash);
@@ -687,7 +688,11 @@ public final class CoinExchange {
         }
 
         public long getExchangePriceNQT() {
-            return exchangePriceNQT;
+            return exchangePrice.movePointRight(Chain.getChain(chainId).getDecimals()).longValue();
+        }
+
+        public BigDecimal getExchangePrice() {
+            return exchangePrice;
         }
 
         public long getAccountId() {
@@ -717,7 +722,7 @@ public final class CoinExchange {
                     + " order: " + Long.toUnsignedString(orderId)
                     + " match: " + Long.toUnsignedString(matchId)
                     + " account: " + Long.toUnsignedString(accountId)
-                    + " exchangePriceNQT: " + exchangePriceNQT
+                    + " exchangePriceNQT: " + getExchangePriceNQT()
                     + " exchangeQuantityQNT: " + exchangeQuantityQNT
                     + " height: " + height;
         }

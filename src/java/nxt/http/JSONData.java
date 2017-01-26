@@ -375,6 +375,7 @@ public final class JSONData {
         putAccount(json, "account", trade.getAccountId());
         json.put("quantityQNT", String.valueOf(trade.getExchangeQuantityQNT()));
         json.put("priceNQT", String.valueOf(trade.getExchangePriceNQT()));
+        json.put("exchangeRate", trade.getExchangePrice().toPlainString());
         json.put("block", Long.toUnsignedString(trade.getBlockId()));
         json.put("height", trade.getHeight());
         json.put("timestamp", trade.getTimestamp());
