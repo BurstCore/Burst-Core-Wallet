@@ -348,14 +348,21 @@ public final class JSONData {
 
     static JSONObject coinExchangeOrder(CoinExchange.Order order) {
         JSONObject json = new JSONObject();
+        Chain chain = Chain.getChain(order.getChainId());
+        Chain exchangeChain = Chain.getChain(order.getExchangeId());
+        long quantityQNT = order.getQuantityQNT();
+        long bidPriceNQT = order.getBidPriceNQT();
         json.put("order", Long.toUnsignedString(order.getId()));
         json.put("orderFullHash", Convert.toHexString(order.getFullHash()));
-        json.put("chain", order.getChainId());
-        json.put("exchange", order.getExchangeId());
+        json.put("chain", chain.getId());
+        json.put("exchange", exchangeChain.getId());
         putAccount(json, "account", order.getAccountId());
-        json.put("quantityQNT", String.valueOf(order.getQuantityQNT()));
-        json.put("bidNQT", String.valueOf(order.getBidPriceNQT()));
+        json.put("quantityQNT", String.valueOf(quantityQNT));
+        json.put("bidNQT", String.valueOf(bidPriceNQT));
         json.put("askNQT", String.valueOf(order.getAskPriceNQT()));
+        long exchangeQNT = Convert.unitRateToAmount(quantityQNT, exchangeChain.getDecimals(),
+                                        bidPriceNQT, chain.getDecimals());
+        json.put("exchangeQNT", String.valueOf(exchangeQNT));
         return json;
     }
 

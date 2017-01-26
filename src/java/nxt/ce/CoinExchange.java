@@ -461,7 +461,7 @@ public final class CoinExchange {
             this.exchangeId = rs.getInt("exchange_id");
             this.quantityQNT = rs.getLong("quantity");
             this.bidPriceNQT = rs.getLong("bid_price");
-            this.askPrice = new BigDecimal(rs.getLong("ask_price")).movePointLeft(8);
+            this.askPrice = BigDecimal.valueOf(rs.getLong("ask_price"), 8);
             this.amountNQT = rs.getLong("amount");
         }
 
