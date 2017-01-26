@@ -102,7 +102,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
             BalanceHome.Balance balance = attachment.getChain().getBalanceHome().getBalance(senderAccount.getId());
             long amountNQT = Convert.unitRateToAmount(attachment.getQuantityQNT(), attachment.getExchangeChain().getDecimals(),
-                                        attachment.getPriceNQT(), attachment.getChain().getDecimals());
+                                        attachment.getPriceNQT(), attachment.getChain().getDecimals()) + 1;
             if (balance.getUnconfirmedBalance() >= amountNQT) {
                 balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), -amountNQT);
                 return true;
@@ -115,7 +115,7 @@ public abstract class CoinExchangeFxtTransactionType extends FxtTransactionType 
             OrderIssueAttachment attachment = (OrderIssueAttachment)transaction.getAttachment();
             BalanceHome.Balance balance = attachment.getChain().getBalanceHome().getBalance(senderAccount.getId());
             long amountNQT = Convert.unitRateToAmount(attachment.getQuantityQNT(), attachment.getExchangeChain().getDecimals(),
-                                        attachment.getPriceNQT(), attachment.getChain().getDecimals());
+                                        attachment.getPriceNQT(), attachment.getChain().getDecimals()) + 1;
             balance.addToUnconfirmedBalance(getLedgerEvent(), AccountLedger.newEventId(transaction), amountNQT);
         }
 

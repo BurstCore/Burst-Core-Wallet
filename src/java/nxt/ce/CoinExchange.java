@@ -323,8 +323,8 @@ public final class CoinExchange {
             // The bid order exchanges Coin A for Coin B while the ask order exchanges
             // Coin B for Coin A.
             //
-            long bidPriceNQT;               // Coin A / Coin B (price of Coin A)
-            long askPriceNQT;               // Coin B / Coin A (price of Coin B)
+            BigDecimal bidPrice;            // Coin A / Coin B (price of Coin A)
+            BigDecimal askPrice;            // Coin B / Coin A (price of Coin B)
             long bidQuantityQNT;            // Amount of Coin B to exchange
             long askQuantityQNT;            // Amount of Coin A to exchange
             boolean isBuy = (askOrder.getHeight() < bidOrder.getHeight()) ||
@@ -333,31 +333,31 @@ public final class CoinExchange {
                             (askOrder.getTransactionHeight() == bidOrder.getTransactionHeight() &&
                                 askOrder.getTransactionIndex() < bidOrder.getTransactionIndex())));
             if (isBuy) {
-                bidPriceNQT = askOrder.getAskPriceNQT();
-                askPriceNQT = askOrder.getBidPriceNQT();
+                bidPrice = askOrder.getAskPrice();
+                askPrice = askOrder.getBidPrice();
             } else {
-                bidPriceNQT = bidOrder.getBidPriceNQT();
-                askPriceNQT = bidOrder.getAskPriceNQT();
+                bidPrice = bidOrder.getBidPrice();
+                askPrice = bidOrder.getAskPrice();
             }
             //
             // Calculate the quantities based on the exchange rates
             //
-            long askAmountNQT = Convert.unitRateToAmount(askOrder.getQuantityQNT(), bidDecimals,
-                                                         askPriceNQT, askDecimals);
+            long askAmountNQT = new BigDecimal(askOrder.getQuantityQNT()).movePointLeft(bidDecimals)
+                                        .multiply(askPrice).movePointRight(askDecimals).longValue();
             bidQuantityQNT = Math.min(askOrder.getAmountNQT(),
                                     Math.min(bidOrder.getQuantityQNT(), askAmountNQT));
-            long bidAmountNQT = Convert.unitRateToAmount(bidOrder.getQuantityQNT(), askDecimals,
-                                                         bidPriceNQT, bidDecimals);
+            long bidAmountNQT = new BigDecimal(bidOrder.getQuantityQNT()).movePointLeft(askDecimals)
+                                        .multiply(bidPrice).movePointRight(bidDecimals).longValue();
             askQuantityQNT = Math.min(bidOrder.getAmountNQT(),
                                     Math.min(askOrder.getQuantityQNT(), bidAmountNQT));
             //
             // Create the trade for the bid order
             //
-            addTrade(bidQuantityQNT, bidPriceNQT, bidOrder, askOrder);
+            addTrade(bidQuantityQNT, bidPrice.movePointRight(bidDecimals).longValue(), bidOrder, askOrder);
             //
             // Create the trade for the ask order
             //
-            addTrade(askQuantityQNT, askPriceNQT, askOrder, bidOrder);
+            addTrade(askQuantityQNT, askPrice.movePointRight(askDecimals).longValue(), askOrder, bidOrder);
             //
             // Update the buyer balances
             //
@@ -415,7 +415,7 @@ public final class CoinExchange {
         private final int exchangeId;
         private long quantityQNT;
         private final long bidPriceNQT;
-        private final long askPriceNQT;
+        private final BigDecimal askPrice;
         private long amountNQT;
 
         private Order(Transaction transaction, OrderIssueAttachment attachment) {
@@ -425,17 +425,17 @@ public final class CoinExchange {
             this.transactionHeight = transaction.getHeight();
             this.creationHeight = Nxt.getBlockchain().getHeight();
             this.accountId = transaction.getSenderId();
-            this.chainId = attachment.getChain().getId();
-            this.exchangeId = attachment.getExchangeChain().getId();
+            Chain chain = attachment.getChain();
+            this.chainId = chain.getId();
+            Chain exchangeChain = attachment.getExchangeChain();
+            this.exchangeId = exchangeChain.getId();
             this.quantityQNT = attachment.getQuantityQNT();
             this.bidPriceNQT = attachment.getPriceNQT();
-            Chain chain = Chain.getChain(chainId);
-            Chain exchange = Chain.getChain(exchangeId);
-            BigDecimal bidValue = new BigDecimal(this.bidPriceNQT).movePointLeft(chain.getDecimals());
-            this.askPriceNQT = BigDecimal.ONE.divide(bidValue, MathContext.DECIMAL128)
-                    .movePointRight(exchange.getDecimals()).longValue();
-            this.amountNQT = Convert.unitRateToAmount(quantityQNT, attachment.getExchangeChain().getDecimals(),
-                                        bidPriceNQT, attachment.getChain().getDecimals());
+            this.askPrice = BigDecimal.ONE.divide(
+                    new BigDecimal(bidPriceNQT).movePointLeft(chain.getDecimals()), MathContext.DECIMAL128)
+                    .movePointRight(8).divideToIntegralValue(BigDecimal.ONE, MathContext.DECIMAL128).movePointLeft(8);
+            this.amountNQT = Convert.unitRateToAmount(quantityQNT, exchangeChain.getDecimals(),
+                                        attachment.getPriceNQT(), chain.getDecimals()) + 1;
             this.dbKey = orderDbKeyFactory.newKey(this.id);
         }
 
@@ -451,7 +451,7 @@ public final class CoinExchange {
             this.exchangeId = rs.getInt("exchange_id");
             this.quantityQNT = rs.getLong("quantity");
             this.bidPriceNQT = rs.getLong("bid_price");
-            this.askPriceNQT = rs.getLong("ask_price");
+            this.askPrice = new BigDecimal(rs.getLong("ask_price")).movePointLeft(8);
             this.amountNQT = rs.getLong("amount");
         }
 
@@ -468,7 +468,7 @@ public final class CoinExchange {
                 pstmt.setInt(++i, exchangeId);
                 pstmt.setLong(++i, quantityQNT);
                 pstmt.setLong(++i, bidPriceNQT);
-                pstmt.setLong(++i, askPriceNQT);
+                pstmt.setLong(++i, askPrice.movePointRight(8).longValue());
                 pstmt.setLong(++i, amountNQT);
                 pstmt.setBytes(++i, fullHash);
                 pstmt.setInt(++i, creationHeight);
@@ -516,8 +516,21 @@ public final class CoinExchange {
             return bidPriceNQT;
         }
 
+        public final BigDecimal getBidPrice() {
+            return new BigDecimal(bidPriceNQT).movePointLeft(Chain.getChain(chainId).getDecimals());
+        }
+
         public final long getAskPriceNQT() {
+            BigDecimal priceNQT = askPrice.movePointRight(Chain.getChain(exchangeId).getDecimals());
+            long askPriceNQT = priceNQT.longValue();
+            if (priceNQT.remainder(BigDecimal.ONE, MathContext.DECIMAL128).signum() != 0) {
+                askPriceNQT++;
+            }
             return askPriceNQT;
+        }
+
+        public final BigDecimal getAskPrice() {
+            return askPrice;
         }
 
         public final long getQuantityQNT() {
@@ -548,7 +561,7 @@ public final class CoinExchange {
                     + " exchange: " + Chain.getChain(exchangeId).getName()
                     + " quantityQNT: " + quantityQNT
                     + " bidNQT: " + bidPriceNQT
-                    + " askNQT: " + askPriceNQT
+                    + " askNQT: " + getAskPriceNQT()
                     + " height: " + creationHeight
                     + " transactionIndex: " + transactionIndex
                     + " transactionHeight: " + transactionHeight;
