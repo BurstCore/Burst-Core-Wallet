@@ -1040,7 +1040,7 @@ var NRS = (function(NRS, $, undefined) {
 			}, 0);
 
 			$("#poll_account").html(NRS.getAccountLink(poll, "account"));
-			$("#poll_id").html(NRS.getEntityLink(pollId, 4));
+			$("#poll_id").html(NRS.getEntityLink({ request: "getPoll", key: "poll", id: pollId }));
 
 			$("#followed_polls_poll_name").html(NRS.escapeRespStr(poll.name));
 			$("#poll_description").html(String(poll.description).autoLink());
@@ -1215,7 +1215,7 @@ var NRS = (function(NRS, $, undefined) {
 				}
 				var actions = '<a class="view_button btn btn-xs btn-default" href="#" data-view="' + poll.poll + '">' + $.t('view') + '</a>';
 				view.data.push({
-					"title": NRS.getEntityLink(poll.poll, 4, NRS.escapeRespStr(poll.name), true),
+					"title": NRS.getEntityLink({ request: "getPoll", key: "poll", id: poll.poll, text:NRS.escapeRespStr(poll.name)}),
 					"description": description,
 					"sender": NRS.getAccountLink(poll, "account"),
 					"timestamp": NRS.formatTimestamp(poll.timestamp),

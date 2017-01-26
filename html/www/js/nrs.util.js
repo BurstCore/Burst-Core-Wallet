@@ -306,13 +306,34 @@ var NRS = (function (NRS, $, undefined) {
             + NRS.constants.CHAIN_PROPERTIES[chain].name + "</a>";
     };
 
-    NRS.getEntityLink = function(id, type, text, isEscapedText) {
-        // type: 1 - asset, 2 - currency, 3 - data, 4 - poll, 5 - property, 6 - shuffling
-        if (!text) {
-            text = id;
+    NRS.getHoldingLink = function(holding, holdingType, text) {
+        var request;
+        var key;
+        if (holdingType == 2) {
+            request = "getAsset";
+            key = "asset";
+        } else {
+            request = getCurrency;
+            key = "currency";
         }
-        return "<a href='#' class='show_entity_modal_action' data-id='" + String(id).escapeHTML() + "' data-type='" + type + "'>"
-            + (isEscapedText ? text : String(text).escapeHTML()) + "</a>";
+        if (!text) {
+            text = holding;
+        }
+        NRS.getEntityLink({ request: request, id: holding, key: key, text: text })
+    };
+
+    NRS.getEntityLink = function(options) {
+        if (!options.text) {
+            options.text = options.id;
+        }
+        if (!options.chain) {
+            options.chain = NRS.getActiveChainId();
+        }
+        return "<a href='#' class='show_entity_modal_action' " +
+            "data-chain='" + options.chain + "' " +
+            "data-id='" + options.id + "' " +
+            "data-request='" + options.request + "' " +
+            "data-key='" + options.key + "'>" + String(options.text).escapeHTML() + "</a>";
     };
 
     NRS.getBlockLink = function(height, text, isEscapedText) {

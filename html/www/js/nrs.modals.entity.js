@@ -25,51 +25,44 @@ var NRS = (function(NRS, $) {
 			return;
 		}
 		NRS.fetchingModalData = true;
-        var entityId;
-        var entityType;
+        var chain;
+        var id;
+        var request;
+        var key;
         if (typeof $(this).data("id") == "object") {
             var dataObject = $(this).data("id");
-            entityId = dataObject["id"];
-            entityType = dataObject["type"];
+            chain = dataObject["chain"];
+            id = dataObject["id"];
+            request = dataObject["request"];
+            key = dataObject["key"];
         } else {
-            entityId = $(this).data("id");
-            entityType = $(this).data("type");
+            chain = $(this).data("chain");
+            id = $(this).data("id");
+            request = $(this).data("request");
+            key = $(this).data("key");
         }
         if ($(this).data("back") == "true") {
             NRS.modalStack.pop(); // The forward modal
             NRS.modalStack.pop(); // The current modal
         }
-        NRS.showEntityDetailsModal(entityId, entityType);
+        NRS.showEntityDetailsModal(chain, id, request, key);
 	});
 
-	NRS.showEntityDetailsModal = function(id, type) {
+	NRS.showEntityDetailsModal = function (chain, id, request, key) {
         try {
             NRS.setBackLink();
-    		NRS.modalStack.push({ class: "show_entity_modal_action", key: "id", value: { id: id, type: type }});
-            var requestType;
-            var idParam;
-            switch(type) {
-                case 1:
-                    requestType = "getAsset";
-                    idParam = "asset";
-                    break;
-                case 2:
-                    requestType = "getCurrency";
-                    idParam = "currency";
-                    break;
-                case 4:
-                    requestType = "getPoll";
-                    idParam = "poll";
-                    break;
-                case 5:
-                    requestType = "getAccountProperties";
-                    idParam = "property";
-                    break;
-            }
-            $("#entity_details_header").html($.t(idParam) + " " + id);
+    		NRS.modalStack.push({ class: "show_entity_modal_action", key: "id", value: {
+    		    chain: chain,
+                id: id,
+                request: request,
+                key: key
+    		}});
+            $("#entity_details_type").html($.t(key));
+            $("#entity_details_id").html(id);
             data = {};
-            data[idParam] = id;
-            NRS.sendRequest(requestType, data, function(response) {
+            data[key] = id;
+            data["chain"] = chain;
+            NRS.sendRequest(request, data, function(response) {
                 var entity = $.extend({}, response);
                 var detailsTable = $("#entity_details_table");
                 detailsTable.find("tbody").empty().append(NRS.createInfoTable(entity));

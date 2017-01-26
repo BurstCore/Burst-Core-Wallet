@@ -94,7 +94,7 @@ var NRS = (function (NRS, $, undefined) {
                 phasingDetails.quorum = phasingParams.phasingQuorum;
                 phasingDetails.minBalance = phasingParams.phasingMinBalance;
         }
-        var phasingTransactionLink = NRS.getEntityLink(phasingParams.phasingHolding, phasingParams.phasingVotingModel);
+        var phasingTransactionLink = NRS.getHoldingLink(phasingParams.phasingHolding, phasingParams.phasingVotingModel);
         if (NRS.constants.VOTING_MODELS[votingModel] == NRS.constants.VOTING_MODELS.ASSET) {
             phasingDetails.asset_formatted_html = phasingTransactionLink;
         } else if (NRS.constants.VOTING_MODELS[votingModel] == NRS.constants.VOTING_MODELS.CURRENCY) {
@@ -515,7 +515,7 @@ var NRS = (function (NRS, $, undefined) {
                 }, function (asset) {
                     data = {
                         "type": $.t("asset_transfer"),
-                        "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                        "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
                         "asset_name": asset.name,
                         "quantity": [transaction.attachment.quantityQNT, asset.decimals]
                     };
@@ -548,7 +548,7 @@ var NRS = (function (NRS, $, undefined) {
                             data = {
                                 "type": $.t("ask_order_cancellation"),
                                 "order_formatted_html": NRS.getTransactionLink(transaction.fullHash),
-                                "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                                "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
                                 "asset_name": asset.name,
                                 "quantity": [transaction.attachment.quantityQNT, asset.decimals],
                                 "price_formatted_html": NRS.formatQuantity(transaction.attachment.priceNQT, NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name,
@@ -578,7 +578,7 @@ var NRS = (function (NRS, $, undefined) {
                             data = {
                                 "type": $.t("bid_order_cancellation"),
                                 "order_formatted_html": NRS.getTransactionLink(transaction.fullHash),
-                                "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                                "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
                                 "asset_name": asset.name,
                                 "quantity": [transaction.attachment.quantityQNT, asset.decimals],
                                 "price_formatted_html": NRS.formatQuantity(transaction.attachment.priceNQT, NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name,
@@ -607,7 +607,7 @@ var NRS = (function (NRS, $, undefined) {
                         }, function (asset) {
                             data = {
                                 "type": $.t("dividend_payment"),
-                                "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                                "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
                                 "asset_name": asset.name,
                                 "amount_per_share": NRS.intToFloat(transaction.attachment.amountNQT, NRS.getActiveChainDecimals()) + " " + NRS.getChain(transaction.chain).name,
                                 "height": transaction.attachment.height
@@ -632,7 +632,7 @@ var NRS = (function (NRS, $, undefined) {
                 }, function (asset) {
                     data = {
                         "type": $.t("delete_asset_shares"),
-                        "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                        "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
                         "asset_name": asset.name,
                         "quantity": [transaction.attachment.quantityQNT, asset.decimals]
                     };
@@ -1083,7 +1083,7 @@ var NRS = (function (NRS, $, undefined) {
                         requestType = "getCurrency";
                     }
                     NRS.sendRequest(requestType, {"currency": transaction.attachment.holding, "asset": transaction.attachment.holding}, function (response) {
-                        data.holding_formatted_html = NRS.getEntityLink(transaction.attachment.holding, data.holdingType);
+                        data.holding_formatted_html = NRS.getHoldingLink(transaction.attachment.holding, data.holdingType);
                         data.amount_formatted_html = NRS.convertToQNTf(transaction.attachment.amount, response.decimals);
                     }, { isAsync: false });
                 } else {
@@ -1274,7 +1274,7 @@ var NRS = (function (NRS, $, undefined) {
     NRS.formatAssetOrder = function (asset, transaction, isModalVisible) {
         var data = {
             "type": (transaction.subtype == 2 ? $.t("ask_order_placement") : $.t("bid_order_placement")),
-            "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+            "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
             "asset_name": asset.name,
             "quantity": [transaction.attachment.quantityQNT, asset.decimals],
             "price_formatted_html": NRS.formatQuantity(transaction.attachment.priceNQT, NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name,
@@ -1515,7 +1515,7 @@ var NRS = (function (NRS, $, undefined) {
             data["hash"] = attachment.hash;
         }
         if (attachment.taggedData) {
-            data["tagged_data_formatted_html"] = NRS.getEntityLink(attachment.taggedData, 3);
+            data["tagged_data_formatted_html"] = "TODO"; // TODO
             transaction = attachment.taggedData;
         }
         if (attachment.data) {
