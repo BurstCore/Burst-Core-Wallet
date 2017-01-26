@@ -290,14 +290,24 @@ var NRS = (function (NRS, $, undefined) {
         return NRS.escapeRespStr(fullHash).substring(8); // Present the first 8 letters like GIT
     };
 
-    NRS.getTransactionLink = function(id, text, isEscapedText, chain) {
+    NRS.getTransactionLink = function(id, text, isEscapedText, chain, fxtTransaction) {
         if (!text) {
-            text = NRS.fullHashToId(id);
+            if (!id) {
+                text = fxtTransaction;
+            } else {
+                text = NRS.fullHashToId(id);
+            }
         }
         if (!chain) {
             chain = NRS.getActiveChainId();
         }
-        return "<a href='#' class='show_transaction_modal_action' data-fullHash='" + String(id).escapeHTML() + "' data-chain='" + chain +"'>"
+        if (!fxtTransaction) {
+            fxtTransaction = "";
+        }
+        if (!id) {
+            id = "";
+        }
+        return "<a href='#' class='show_transaction_modal_action' data-fullHash='" + id + "' data-chain='" + chain +"' " + "' data-fxttransaction='" + fxtTransaction +"'>"
             + (isEscapedText ? text : String(text).escapeHTML()) + "</a>";
     };
 

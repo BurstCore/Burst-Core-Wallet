@@ -21,16 +21,18 @@
 var NRS = (function (NRS, $, undefined) {
     $('body').on("click", ".show_transaction_modal_action", function (e) {
         e.preventDefault();
-        var transactionFullHash, chain, sharedKey;
+        var transactionFullHash, chain, sharedKey, fxtTransaction;
         if (typeof $(this).data("fullhash") == "object") {
             var dataObject = $(this).data("fullhash");
             transactionFullHash = dataObject["fullhash"];
             chain = dataObject["chain"];
             sharedKey = dataObject["sharedkey"];
+            fxtTransaction = dataObject["fxttransaction"];
         } else {
             transactionFullHash = $(this).data("fullhash");
             chain = $(this).data("chain");
             sharedKey = $(this).data("sharedkey");
+            fxtTransaction = $(this).data("fxttransaction");
         }
         var infoModal = $('#transaction_info_modal');
         var isModalVisible = false;
@@ -41,10 +43,10 @@ var NRS = (function (NRS, $, undefined) {
             NRS.modalStack.pop(); // The forward modal
             NRS.modalStack.pop(); // the current modal
         }
-        NRS.showTransactionModal(transactionFullHash, chain, sharedKey, isModalVisible);
+        NRS.showTransactionModal(transactionFullHash, chain, sharedKey, fxtTransaction, isModalVisible);
     });
 
-    NRS.showTransactionModal = function (transaction, chain, sharedKey, isModalVisible) {
+    NRS.showTransactionModal = function (transaction, chain, sharedKey, fxtTransaction, isModalVisible) {
         if (NRS.fetchingModalData) {
             return;
         }
@@ -59,14 +61,22 @@ var NRS = (function (NRS, $, undefined) {
 
         try {
             if (typeof transaction != "object") {
-                NRS.sendRequest("getTransaction", {
-                    "fullHash": transaction,
-                    "chain": chain
-                }, function (response) {
-                    NRS.processTransactionModalData(response, isModalVisible, sharedKey);
-                });
+                if (fxtTransaction) {
+                    NRS.sendRequest("getFxtTransaction", {
+                        "transaction": fxtTransaction
+                    }, function (response) {
+                        NRS.processTransactionModalData(response, sharedKey, fxtTransaction, isModalVisible);
+                    });
+                } else {
+                    NRS.sendRequest("getTransaction", {
+                        "fullHash": transaction,
+                        "chain": chain
+                    }, function (response) {
+                        NRS.processTransactionModalData(response, sharedKey, fxtTransaction, isModalVisible);
+                    });
+                }
             } else {
-                NRS.processTransactionModalData(transaction, isModalVisible, sharedKey);
+                NRS.processTransactionModalData(transaction, sharedKey, fxtTransaction, isModalVisible);
             }
         } catch (e) {
             NRS.fetchingModalData = false;
@@ -132,10 +142,10 @@ var NRS = (function (NRS, $, undefined) {
         }
     };
 
-    NRS.processTransactionModalData = function (transaction, isModalVisible, sharedKey) {
+    NRS.processTransactionModalData = function (transaction, sharedKey, fxtTransaction, isModalVisible) {
         NRS.setBackLink();
         NRS.modalStack.push({ class: "show_transaction_modal_action", key: "fullhash",
-            value: { fullhash: transaction.fullHash, chain: transaction.chain, "sharedkey": sharedKey }});
+            value: { fullhash: transaction.fullHash, chain: transaction.chain, sharedkey: sharedKey, fxttransaction: fxtTransaction }});
         try {
             var async = false;
 
@@ -145,6 +155,10 @@ var NRS = (function (NRS, $, undefined) {
                 delete transactionDetails.referencedTransaction;
             }
             transactionDetails.entity = NRS.fullHashToId(transactionDetails.fullHash);
+            if (transaction.fxtTransaction) {
+                transactionDetails.fxt_transaction_formatted_html = NRS.getTransactionLink(null, null, false, null, transaction.fxtTransaction);
+                delete transactionDetails.fxtTransaction;
+            }
             if (!transactionDetails.confirmations) {
                 transactionDetails.confirmations = "/";
             }
