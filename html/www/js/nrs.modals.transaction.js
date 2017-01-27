@@ -1547,7 +1547,7 @@ var NRS = (function (NRS, $, undefined) {
             }
         }
         if (transaction.block) {
-            data["link_formatted_html"] = NRS.getTaggedDataLink(transaction.fullHash, attachment.isText);
+            data["link_formatted_html"] = NRS.getTaggedDataLink(transaction.fullHash, transaction.chain, attachment.isText);
         }
         return data;
     };

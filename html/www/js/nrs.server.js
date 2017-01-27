@@ -1211,6 +1211,10 @@ var NRS = (function (NRS, $, undefined) {
                 if (NRS.notOfType(transaction, "TaggedDataUpload")) {
                     return false;
                 }
+                if (byteArray[pos] != 0) {
+                    return false;
+                }
+                pos++;
                 serverHash = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
                 pos += 32;
                 sha256 = CryptoJS.algo.SHA256.create();
