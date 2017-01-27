@@ -24,6 +24,7 @@ import nxt.blockchain.Block;
 import nxt.blockchain.BlockchainProcessor;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.FxtChain;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
@@ -118,6 +119,9 @@ public final class FundingMonitor {
     /** Fund account public key */
     private final byte[] publicKey;
 
+    /** Fee rate for child chain transactions */
+    private final long feeRateNQTPerFXT;
+
     /**
      * Create a monitor
      *
@@ -130,10 +134,11 @@ public final class FundingMonitor {
      * @param   interval            Fund interval
      * @param   accountId           Fund account identifier
      * @param   secretPhrase        Fund account secret phrase
+     * @param   feeRateNQTPerFXT    Fee rate to use for child chain transactions
      */
     private FundingMonitor(Chain chain, HoldingType holdingType, long holdingId, String property,
                                     long amount, long threshold, int interval,
-                                    long accountId, String secretPhrase) {
+                                    long accountId, String secretPhrase, long feeRateNQTPerFXT) {
         this.holdingType = holdingType;
         this.holdingId = holdingId;
         this.chain = chain;
@@ -145,6 +150,7 @@ public final class FundingMonitor {
         this.accountName = Convert.rsAccount(accountId);
         this.secretPhrase = secretPhrase;
         this.publicKey = Crypto.getPublicKey(secretPhrase);
+        this.feeRateNQTPerFXT = feeRateNQTPerFXT;
         if (holdingType == HoldingType.COIN && holdingId != chain.getId()) {
             throw new IllegalArgumentException("Funding monitor for holding type coin must be run on the chain of the coin.");
         }
@@ -248,10 +254,11 @@ public final class FundingMonitor {
      * @param   threshold           Fund threshold
      * @param   interval            Fund interval
      * @param   secretPhrase        Fund account secret phrase
+     * @param   feeRateNQTPerFXT    Fee rate to use for the child chain transactions created
      * @return                      TRUE if the monitor was started
      */
     public static boolean startMonitor(Chain chain, HoldingType holdingType, long holdingId, String property,
-                                    long amount, long threshold, int interval, String secretPhrase) {
+                                    long amount, long threshold, int interval, String secretPhrase, long feeRateNQTPerFXT) {
         //
         // Initialize monitor processing if it hasn't been done yet.  We do this now
         // instead of during NRS initialization so we don't start the monitor thread if it
@@ -263,7 +270,7 @@ public final class FundingMonitor {
         // Create the monitor
         //
         FundingMonitor monitor = new FundingMonitor(chain, holdingType, holdingId, property,
-                amount, threshold, interval, accountId, secretPhrase);
+                amount, threshold, interval, accountId, secretPhrase, feeRateNQTPerFXT);
         Nxt.getBlockchain().readLock();
         try {
             //
@@ -648,6 +655,9 @@ public final class FundingMonitor {
             Transaction.Builder builder = chain.newTransactionBuilder(monitor.publicKey, monitoredAccount.amount, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
+            if (builder instanceof ChildTransaction.Builder) {
+                ((ChildTransaction.Builder)builder).feeRateNQTPerFXT(monitor.feeRateNQTPerFXT);
+            }
             Transaction transaction = builder.build(monitor.secretPhrase);
             if (Math.addExact(monitoredAccount.amount, transaction.getFee()) > balanceHome.getBalance(fundingAccount.getId()).getUnconfirmedBalance()) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
@@ -685,6 +695,9 @@ public final class FundingMonitor {
             Transaction.Builder builder = chain.newTransactionBuilder(monitor.publicKey, 0, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
+            if (builder instanceof ChildTransaction.Builder) {
+                ((ChildTransaction.Builder)builder).feeRateNQTPerFXT(monitor.feeRateNQTPerFXT);
+            }
             Transaction transaction = builder.build(monitor.secretPhrase);
             if (transaction.getFee() > chain.getBalanceHome().getBalance(fundingAccount.getId()).getUnconfirmedBalance()) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds on chain %s; funding transaction discarded",
@@ -722,6 +735,9 @@ public final class FundingMonitor {
             Transaction.Builder builder = chain.newTransactionBuilder(monitor.publicKey, 0, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
+            if (builder instanceof ChildTransaction.Builder) {
+                ((ChildTransaction.Builder)builder).feeRateNQTPerFXT(monitor.feeRateNQTPerFXT);
+            }
             Transaction transaction = builder.build(monitor.secretPhrase);
             if (transaction.getFee() > chain.getBalanceHome().getBalance(fundingAccount.getId()).getUnconfirmedBalance()) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds on chain %s; funding transaction discarded",

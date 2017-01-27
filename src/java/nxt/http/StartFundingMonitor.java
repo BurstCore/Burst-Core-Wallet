@@ -16,6 +16,7 @@
 
 package nxt.http;
 
+import nxt.Constants;
 import nxt.NxtException;
 import nxt.account.Account;
 import nxt.account.FundingMonitor;
@@ -56,8 +57,7 @@ import static nxt.http.JSONResponses.UNKNOWN_ACCOUNT;
  * For example, {"amount":25,"threshold":10,"interval":1440}.  The specified values will
  * override the default values specified when the account monitor is started.
  * <p>
- * NXT amounts are specified with 8 decimal places.  Asset and Currency decimal places
- * are determined by the asset or currency definition.
+ * Coin, Asset and Currency decimal places are determined by the chain, asset or currency definition.
  */
 public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
 
@@ -65,7 +65,7 @@ public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
 
     private StartFundingMonitor() {
         super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "amount", "threshold",
-                "interval", "secretPhrase");
+                "interval", "secretPhrase", "feeRateNQTPerFXT");
     }
 
     /**
@@ -90,6 +90,7 @@ public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
             return JSONResponses.incorrect("threshold", "Minimum funding threshold is " + FundingMonitor.MIN_FUND_THRESHOLD);
         }
         int interval = ParameterParser.getInt(req, "interval", FundingMonitor.MIN_FUND_INTERVAL, Integer.MAX_VALUE, true);
+        long feeRateNQTPerFXT = ParameterParser.getLong(req, "feeRateNQTPerFXT", 1, Constants.MAX_BALANCE_NQT, true);
         String secretPhrase = ParameterParser.getSecretPhrase(req, true);
         switch (holdingType) {
             case ASSET:
@@ -119,7 +120,7 @@ public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
         if (account == null) {
             return UNKNOWN_ACCOUNT;
         }
-        if (FundingMonitor.startMonitor(chain, holdingType, holdingId, property, amount, threshold, interval, secretPhrase)) {
+        if (FundingMonitor.startMonitor(chain, holdingType, holdingId, property, amount, threshold, interval, secretPhrase, feeRateNQTPerFXT)) {
             JSONObject response = new JSONObject();
             response.put("started", true);
             return response;
