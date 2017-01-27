@@ -35,6 +35,7 @@ import nxt.messaging.EncryptedMessageAppendix;
 import nxt.messaging.MessageAppendix;
 import nxt.messaging.PrunableEncryptedMessageAppendix;
 import nxt.messaging.PrunablePlainMessageAppendix;
+import nxt.peer.Peers;
 import nxt.util.Convert;
 import nxt.voting.PhasingAppendix;
 import nxt.voting.PhasingParams;
@@ -59,7 +60,7 @@ import static nxt.http.JSONResponses.UNKNOWN_CHAIN;
 
 abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
-    private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeNQT", "feeRateNQTPerFXT",
+    private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeNQT", "feeRateNQTPerFXT", "minBundlerBalanceFXT",
             "deadline", "referencedTransaction", "broadcast",
             "message", "messageIsText", "messageIsPrunable",
             "messageToEncrypt", "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "encryptedMessageIsPrunable", "compressMessageToEncrypt",
@@ -230,7 +231,6 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             ecBlockId = Nxt.getBlockchain().getBlockIdAtHeight(ecBlockHeight);
         }
         long feeRateNQTPerFXT = ParameterParser.getLong(req, "feeRateNQTPerFXT", 0, Constants.MAX_BALANCE_NQT, false);
-
         JSONObject response = new JSONObject();
 
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
@@ -243,6 +243,12 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             chain = ParameterParser.getChain(req);
         } else {
             chain = txChain;
+        }
+
+        if (feeNQT == 0L && feeRateNQTPerFXT == 0L) {
+            feeRateNQTPerFXT = Peers.getBestBundlerRate(chain, ParameterParser.getLong(req, "minBundlerBalanceFXT", 0, Constants.MAX_BALANCE_FXT, false));
+            broadcast = false;
+            response.put("bundlerRateNQTPerFXT", String.valueOf(feeRateNQTPerFXT));
         }
 
         try {

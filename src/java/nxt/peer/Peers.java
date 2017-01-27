@@ -20,6 +20,7 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.account.Account;
 import nxt.blockchain.Bundler;
+import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
 import nxt.dbschema.Db;
 import nxt.http.API;
@@ -1029,6 +1030,41 @@ public final class Peers {
         rateMap.entrySet().forEach(entry ->
                 bestRates.add(new BundlerRate(entry.getKey(), entry.getValue())));
         return bestRates;
+    }
+
+    /**
+     * Get the best bundler rate for a child chain
+     *
+     * @param   childChain      Child chain
+     * @param   minBalance      Minimum bundler account balance
+     * @return                  List of bundler rates
+     */
+    public static long getBestBundlerRate(Chain childChain, long minBalance) {
+        int now = Nxt.getEpochTime();
+        long minRate = -1;
+        synchronized(bundlerRates) {
+            Iterator<Map.Entry<Long, List<BundlerRate>>> it = bundlerRates.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<Long, List<BundlerRate>> entry = it.next();
+                List<BundlerRate> rates = entry.getValue();
+                Iterator<BundlerRate> rit = rates.iterator();
+                while (rit.hasNext()) {
+                    BundlerRate rate = rit.next();
+                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + 15 * 60)) {
+                        rit.remove();
+                        continue;
+                    }
+                    if (rate.getChain() == childChain && rate.getBalance() >= minBalance &&
+                            (minRate < 0 || rate.getRate() < minRate)) {
+                        minRate = rate.getRate();
+                    }
+                }
+                if (rates.isEmpty()) {
+                    it.remove();
+                }
+            }
+        }
+        return minRate;
     }
 
     /**
