@@ -46,6 +46,13 @@
                         <label for="m_shuffler_start_recipient_account" data-i18n="recipient_account">Recipient Account</label>
                         <input id="m_shuffler_start_recipient_account" class="form-control" placeholder="Recipient Account" data-i18n="[placeholder]recipient_account" readonly>
                     </div>
+                    <div class="form-group">
+                        <label data-i18n="fee_ratio">Fee Ratio</label>
+                        <div class="input-group">
+                            <input name="feeRateNXTPerFXT" class="form-control" placeholder="Fee Ratio" data-i18n="[placeholder]fee_ratio" tabindex="2">
+                            <span class="input-group-addon"><span class="coin-symbol"></span><span> / </span><span class="parent-coin-symbol"></span></span>
+                        </div>
+                    </div>
                     <div data-replace-with-modal-template="secret_phrase_modal_template"></div>
                     <div class="callout callout-info never_hide">
                         <strong><span data-i18n="warning">Warning</span>:</strong>
@@ -79,7 +86,7 @@
                     <div class="form-group">
                         <label for="m_shuffling_create_holding_type" data-18n="holding_type">Holding Type</label>
                         <select name="holdingType" id="m_shuffling_create_holding_type" class="form-control" data-default="0" tabindex="1">
-                            <option selected value="0" data-i18n="nxt_capital_letters" class="coin-symbol"></option>
+                            <option selected value="0" class="coin-symbol"></option>
                             <option value="1" data-i18n="asset">Asset</option>
                             <option value="2" data-i18n="currency">Currency</option>
                         </select>

@@ -1547,7 +1547,6 @@
   "participants": "Participants",
   "shuffler": "Shuffler",
   "shuffling_recipient_passphrase_warning": "Use a strong recipient passphrase and do not forget it !",
-  "shuffling_node_running_warning": "After creating or joining a shuffling, you must keep your node online and your shuffler running, leaving enough funds in your account to cover the 12 NXT shuffling fees, until the shuffling completes! If you don't and miss your turn, you will be charged 1000 NXT.",
   "in_progress": "In Progress",
   "already_joined": "Already Joined",
   "download": "Download",
@@ -1919,5 +1918,7 @@
   "sell_order_description": "Sell __quantity__ __asset_name__ assets at __coin_amount__ __coin__ each.",
   "sell_order_description_help": "Per whole asset sold you will receive __coin_amount__ __coin__, making a total of __total_coin__ __coin__ once everything has been sold.",
   "total_chain": "Total Chain",
-  "total_exchange": "Total Exchange"
+  "total_exchange": "Total Exchange",
+  "shuffling_node_running_warning": "After creating or joining a shuffling, you must keep your node online and your shuffler running, leaving enough funds in your account to cover shuffling fees, until the shuffling completes! If you don't and miss your turn, you will be charged 1000 Ardor.",
+  "fee_ratio": "Fee Ratio"
 }

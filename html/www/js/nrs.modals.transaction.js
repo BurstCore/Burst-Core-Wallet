@@ -1112,7 +1112,7 @@ var NRS = (function (NRS, $, undefined) {
                         for (i = 0; i < response.participants.length; i++) {
                             var participant = response.participants[i];
                             rows += "<tr>" +
-                            "<td>" + NRS.getAccountLink(participant, "account") + "<td>" +
+                            "<td>" + NRS.getAccountLink(participant, "account") + "</td>" +
                             "<td>" + $.t(NRS.getShufflingParticipantState(participant.state).toLowerCase()) + "</td>" +
                             "</tr>";
                         }
