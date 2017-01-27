@@ -79,7 +79,7 @@ var NRS = (function(NRS, $) {
             shufflerIndicatorFormatted = "<i class='fa fa-circle' style='color:" + shufflerColor + ";'></i>";
             if (!isShufflerActive) {
                 startShufflerLinkFormatted = "<a href='#' class='btn btn-xs' data-toggle='modal' data-target='#m_shuffler_start_modal' " +
-                    "data-shuffling='" + response.shuffling + "' " +
+                    "data-shuffling='" + NRS.fullHashToId(response.shufflingFullHash) + "' " +
                     "data-shufflingfullhash='" + response.shufflingFullHash + "'>" + $.t("start") + "</a>";
             }
         } else {
@@ -190,7 +190,7 @@ var NRS = (function(NRS, $) {
         var data = NRS.getFormData($modal.find("form:first"));
         switch (data.holdingType) {
             case '0':
-                delete data.holding;
+                data.holding = NRS.getActiveChainId();
                 break;
             case '1':
                 break;
@@ -420,6 +420,9 @@ var NRS = (function(NRS, $) {
             data.recipientPublicKey = NRS.getPublicKey(converters.stringToHexString(data.recipientSecretPhrase));
             delete data.recipientSecretPhrase;
         }
+        data.feeRateNQTPerFXT = NRS.convertToNQT(data.feeRateNXTPerFXT);
+        delete data.feeRateNXTPerFXT;
+
         return {
             "data": data
         };

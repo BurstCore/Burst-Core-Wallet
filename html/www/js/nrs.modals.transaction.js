@@ -1112,7 +1112,7 @@ var NRS = (function (NRS, $, undefined) {
                         for (i = 0; i < response.participants.length; i++) {
                             var participant = response.participants[i];
                             rows += "<tr>" +
-                            "<td>" + NRS.getAccountLink(participant, "account") + "<td>" +
+                            "<td>" + NRS.getAccountLink(participant, "account") + "</td>" +
                             "<td>" + $.t(NRS.getShufflingParticipantState(participant.state).toLowerCase()) + "</td>" +
                             "</tr>";
                         }
@@ -1135,6 +1135,8 @@ var NRS = (function (NRS, $, undefined) {
                             data["failedTransaction_formatted_html"] = NRS.getAccountLink(shuffler, "recipient");
                             data["failureCause"] = shuffler.failureCause;
                         }
+                        data["fee_ratio_formatted_html"] = NRS.formatQuantity(shuffler.feeRateNQTPerFXT, NRS.getChain(shuffler.chain).decimals) +
+                            " [" + NRS.getChain(shuffler.chain).name + "/" + NRS.getParentChainName() + "]";
                     } else {
                         if (response.errorCode) {
                             data["shuffler"] = $.t("unknown");
@@ -1146,7 +1148,7 @@ var NRS = (function (NRS, $, undefined) {
                 NRS.sendRequest("getShuffling", {
                     "shufflingFullHash": transaction.fullHash
                 }, function (response) {
-                    if (response.shuffling) {
+                    if (response.shufflingFullHash) {
                         data["stage_formatted_html"] = NRS.getShufflingStage(response.stage);
                         data["count"] = response.registrantCount + " / " + response.participantCount;
                         data["blocksRemaining"] = response.blocksRemaining;
@@ -1177,7 +1179,7 @@ var NRS = (function (NRS, $, undefined) {
                     "type": $.t("shuffling_recipients"),
                     "shuffling_state_hash": transaction.attachment.shufflingStateHash
                 };
-                data["shuffling_formatted_html"] = NRS.getEntityLink(transaction.attachment.shuffling, 6);
+                data["shuffling_formatted_html"] = NRS.getTransactionLink(transaction.attachment.shufflingFullHash);
                 data["recipients_formatted_html"] = listPublicKeys(transaction.attachment.recipientPublicKeys);
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();
@@ -1547,7 +1549,7 @@ var NRS = (function (NRS, $, undefined) {
             }
         }
         if (transaction.block) {
-            data["link_formatted_html"] = NRS.getTaggedDataLink(transaction.fullHash, attachment.isText);
+            data["link_formatted_html"] = NRS.getTaggedDataLink(transaction.fullHash, transaction.chain, attachment.isText);
         }
         return data;
     };
