@@ -1920,5 +1920,8 @@
   "total_chain": "Total Chain",
   "total_exchange": "Total Exchange",
   "shuffling_node_running_warning": "After creating or joining a shuffling, you must keep your node online and your shuffler running, leaving enough funds in your account to cover shuffling fees, until the shuffling completes! If you don't and miss your turn, you will be charged 1000 Ardor.",
-  "fee_ratio": "Fee Ratio"
+  "fee_ratio": "Fee Ratio",
+  "recipients": "Recipients",
+  "recipient_public_keys": "Recipient Public Keys",
+  "count": "Count"
 }

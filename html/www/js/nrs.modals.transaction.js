@@ -1148,7 +1148,7 @@ var NRS = (function (NRS, $, undefined) {
                 NRS.sendRequest("getShuffling", {
                     "shufflingFullHash": transaction.fullHash
                 }, function (response) {
-                    if (response.shuffling) {
+                    if (response.shufflingFullHash) {
                         data["stage_formatted_html"] = NRS.getShufflingStage(response.stage);
                         data["count"] = response.registrantCount + " / " + response.participantCount;
                         data["blocksRemaining"] = response.blocksRemaining;
@@ -1179,7 +1179,7 @@ var NRS = (function (NRS, $, undefined) {
                     "type": $.t("shuffling_recipients"),
                     "shuffling_state_hash": transaction.attachment.shufflingStateHash
                 };
-                data["shuffling_formatted_html"] = NRS.getEntityLink(transaction.attachment.shuffling, 6);
+                data["shuffling_formatted_html"] = NRS.getTransactionLink(transaction.attachment.shufflingFullHash);
                 data["recipients_formatted_html"] = listPublicKeys(transaction.attachment.recipientPublicKeys);
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();
