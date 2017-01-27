@@ -553,7 +553,7 @@ var NRS = (function (NRS, $, undefined) {
                 "scrollTop": 0
             }, 0);
             $("#asset_account").html(NRS.getAccountLink(asset, "account"));
-            $("#asset_id").html(NRS.getEntityLink(assetId, 1));
+            $("#asset_id").html(NRS.getEntityLink({ request: "getAsset", key: "asset", id: assetId }));
             $("#asset_decimals").html(NRS.escapeRespStr(asset.decimals));
             $("#asset_name").html(NRS.escapeRespStr(asset.name));
             $("#asset_description").html(String(asset.description).autoLink());

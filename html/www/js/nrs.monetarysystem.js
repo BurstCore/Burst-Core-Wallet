@@ -92,7 +92,7 @@ var NRS = (function (NRS, $, undefined) {
                         $("#MScode").show();
                         $("#currency_account").html(NRS.getAccountLink(response, "account"));
                         currencyId = response.currency;
-                        $("#currency_id").html(NRS.getEntityLink(currencyId, 2));
+                        $("#currency_id").html(NRS.getEntityLink({ id: currencyId, request: "getCurrency", key: "currency" }));
                         $("#currency_name").html(NRS.escapeRespStr(response.name));
                         $("#currency_code").html(NRS.escapeRespStr(response.code));
                         $("#currency_current_supply").html(NRS.convertToQNTf(response.currentSupplyQNT, response.decimals).escapeHTML());
@@ -197,12 +197,12 @@ var NRS = (function (NRS, $, undefined) {
             var minReserve = NRS.escapeRespStr(currency.minReservePerUnitNQT);
             var typeIcons = NRS.getTypeIcons(currency.type);
             rows += "<tr>" +
-            "<td>" + NRS.getEntityLink(currencyId, 2, code) + "</td>" +
-            "<td>" + name + "</td>" +
-            "<td>" + typeIcons + "</td>" +
-            "<td class = 'numeric'>" + NRS.formatQuantity(currency.currentSupplyQNT, currency.decimals, false, currentSupplyDecimals) + "</td>" +
-            "<td class = 'numeric'>" + NRS.formatQuantity(currency.maxSupplyQNT, currency.decimals, false, maxSupplyDecimals) + "</td>" +
-            "<td>";
+                "<td>" + NRS.getEntityLink({ id: currencyId, request: "getCurrency", key: "currency", text: NRS.getCurrencyDN(currency) }) + "</td>" +
+                "<td>" + name + "</td>" +
+                "<td>" + typeIcons + "</td>" +
+                "<td class = 'numeric'>" + NRS.formatQuantity(currency.currentSupplyQNT, currency.decimals, false, currentSupplyDecimals) + "</td>" +
+                "<td class = 'numeric'>" + NRS.formatQuantity(currency.maxSupplyQNT, currency.decimals, false, maxSupplyDecimals) + "</td>" +
+                "<td>";
             //noinspection BadExpressionStatementJS
             rows += "<a href='#' class='btn btn-xs btn-default' onClick='NRS.goToCurrency(&quot;" + code + "&quot;)' " + (!NRS.isExchangeable(currency.type) ? "disabled" : "") + ">" + $.t("exchange") + "</a> ";
             rows += "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#reserve_currency_modal' data-currency='" + currencyId + "' data-name='" + name + "' data-code='" + code + "' data-ressupply='" + resSupply + "' data-decimals='" + decimals + "' data-minreserve='" + minReserve + "' " + (currency.issuanceHeight > NRS.lastBlockHeight && NRS.isReservable(currency.type) ? "" : "disabled") + " >" + $.t("reserve") + "</a> ";
@@ -754,7 +754,7 @@ var NRS = (function (NRS, $, undefined) {
                         var isOfferEnabled = NRS.isExchangeable(currency.type) && (!NRS.isControllable(currency.type) || NRS.account == currency.issuerAccount);
                         //noinspection HtmlUnknownAttribute,BadExpressionStatementJS
                         rows += "<tr>" +
-                        "<td>" + NRS.getEntityLink(currencyId, 2, code) + "</td>" +
+                        "<td>" + NRS.getEntityLink({ id: currencyId, request: "getCurrency", key: "currency", text: NRS.getCurrencyDN(currency) }) + "</td>" +
                         "<td>" + currency.name + "</td>" +
                         "<td>" + typeIcons + "</td>" +
                         "<td class = 'numeric'>" + NRS.formatQuantity(currency.unconfirmedUnitsQNT, currency.decimals, false, unitsDecimals) + "</td>" +
@@ -961,7 +961,7 @@ var NRS = (function (NRS, $, undefined) {
                     "<td>" + NRS.formatTimestamp(exchange.timestamp) + "</td>" +
                     "<td>" + NRS.getTransactionLink(exchange.transactionFullHash) + "</td>" +
                     "<td>" + NRS.getTransactionLink(exchange.offerFullHash) + "</td>" +
-                    "<td>" + NRS.getEntityLink(exchange.currency, 2, exchange.code) + "</td>" +
+                    "<td>" + NRS.getEntityLink({ id: exchange.currency, request: "getCurrency", key: "currency", text: NRS.getCurrencyDN(exchange)}) + "</td>" +
                     "<td>" + NRS.getAccountLink(exchange, "seller") + "</td>" +
                     "<td>" + NRS.getAccountLink(exchange, "buyer") + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(exchange.unitsQNT, exchange.decimals, false, quantityDecimals) + "</td>" +
@@ -1464,6 +1464,13 @@ var NRS = (function (NRS, $, undefined) {
         return {
             "data": data
         };
+    };
+
+    NRS.getCurrencyDN = function(currency) {
+        if (!currency.chain) {
+            currency.chain = NRS.getActiveChainId();
+        }
+        return NRS.getChain(currency.chain).name + "." + currency.code;
     };
 
     return NRS;

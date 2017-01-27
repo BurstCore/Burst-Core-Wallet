@@ -21,16 +21,18 @@
 var NRS = (function (NRS, $, undefined) {
     $('body').on("click", ".show_transaction_modal_action", function (e) {
         e.preventDefault();
-        var transactionFullHash, chain, sharedKey;
+        var transactionFullHash, chain, sharedKey, fxtTransaction;
         if (typeof $(this).data("fullhash") == "object") {
             var dataObject = $(this).data("fullhash");
             transactionFullHash = dataObject["fullhash"];
             chain = dataObject["chain"];
             sharedKey = dataObject["sharedkey"];
+            fxtTransaction = dataObject["fxttransaction"];
         } else {
             transactionFullHash = $(this).data("fullhash");
             chain = $(this).data("chain");
             sharedKey = $(this).data("sharedkey");
+            fxtTransaction = $(this).data("fxttransaction");
         }
         var infoModal = $('#transaction_info_modal');
         var isModalVisible = false;
@@ -41,10 +43,10 @@ var NRS = (function (NRS, $, undefined) {
             NRS.modalStack.pop(); // The forward modal
             NRS.modalStack.pop(); // the current modal
         }
-        NRS.showTransactionModal(transactionFullHash, chain, sharedKey, isModalVisible);
+        NRS.showTransactionModal(transactionFullHash, chain, sharedKey, fxtTransaction, isModalVisible);
     });
 
-    NRS.showTransactionModal = function (transaction, chain, sharedKey, isModalVisible) {
+    NRS.showTransactionModal = function (transaction, chain, sharedKey, fxtTransaction, isModalVisible) {
         if (NRS.fetchingModalData) {
             return;
         }
@@ -59,14 +61,22 @@ var NRS = (function (NRS, $, undefined) {
 
         try {
             if (typeof transaction != "object") {
-                NRS.sendRequest("getTransaction", {
-                    "fullHash": transaction,
-                    "chain": chain
-                }, function (response) {
-                    NRS.processTransactionModalData(response, isModalVisible, sharedKey);
-                });
+                if (fxtTransaction) {
+                    NRS.sendRequest("getFxtTransaction", {
+                        "transaction": fxtTransaction
+                    }, function (response) {
+                        NRS.processTransactionModalData(response, sharedKey, fxtTransaction, isModalVisible);
+                    });
+                } else {
+                    NRS.sendRequest("getTransaction", {
+                        "fullHash": transaction,
+                        "chain": chain
+                    }, function (response) {
+                        NRS.processTransactionModalData(response, sharedKey, fxtTransaction, isModalVisible);
+                    });
+                }
             } else {
-                NRS.processTransactionModalData(transaction, isModalVisible, sharedKey);
+                NRS.processTransactionModalData(transaction, sharedKey, fxtTransaction, isModalVisible);
             }
         } catch (e) {
             NRS.fetchingModalData = false;
@@ -94,7 +104,7 @@ var NRS = (function (NRS, $, undefined) {
                 phasingDetails.quorum = phasingParams.phasingQuorum;
                 phasingDetails.minBalance = phasingParams.phasingMinBalance;
         }
-        var phasingTransactionLink = NRS.getEntityLink(phasingParams.phasingHolding, phasingParams.phasingVotingModel);
+        var phasingTransactionLink = NRS.getHoldingLink(phasingParams.phasingHolding, phasingParams.phasingVotingModel);
         if (NRS.constants.VOTING_MODELS[votingModel] == NRS.constants.VOTING_MODELS.ASSET) {
             phasingDetails.asset_formatted_html = phasingTransactionLink;
         } else if (NRS.constants.VOTING_MODELS[votingModel] == NRS.constants.VOTING_MODELS.CURRENCY) {
@@ -105,7 +115,7 @@ var NRS = (function (NRS, $, undefined) {
         var rows = "";
         if (phasingParams.phasingWhitelist && phasingParams.phasingWhitelist.length > 0) {
             rows = "<table class='table table-striped'><thead><tr>" +
-                "<th>" + $.t("Account") + "</th>" +
+                "<th>" + $.t("account") + "</th>" +
                 "</tr></thead><tbody>";
             for (var i = 0; i < phasingParams.phasingWhitelist.length; i++) {
                 var account = NRS.convertNumericToRSAccountFormat(phasingParams.phasingWhitelist[i]);
@@ -132,10 +142,10 @@ var NRS = (function (NRS, $, undefined) {
         }
     };
 
-    NRS.processTransactionModalData = function (transaction, isModalVisible, sharedKey) {
+    NRS.processTransactionModalData = function (transaction, sharedKey, fxtTransaction, isModalVisible) {
         NRS.setBackLink();
         NRS.modalStack.push({ class: "show_transaction_modal_action", key: "fullhash",
-            value: { fullhash: transaction.fullHash, chain: transaction.chain, "sharedkey": sharedKey }});
+            value: { fullhash: transaction.fullHash, chain: transaction.chain, sharedkey: sharedKey, fxttransaction: fxtTransaction }});
         try {
             var async = false;
 
@@ -145,6 +155,10 @@ var NRS = (function (NRS, $, undefined) {
                 delete transactionDetails.referencedTransaction;
             }
             transactionDetails.entity = NRS.fullHashToId(transactionDetails.fullHash);
+            if (transaction.fxtTransaction) {
+                transactionDetails.fxt_transaction_formatted_html = NRS.getTransactionLink(null, null, false, null, transaction.fxtTransaction);
+                delete transactionDetails.fxtTransaction;
+            }
             if (!transactionDetails.confirmations) {
                 transactionDetails.confirmations = "/";
             }
@@ -515,7 +529,7 @@ var NRS = (function (NRS, $, undefined) {
                 }, function (asset) {
                     data = {
                         "type": $.t("asset_transfer"),
-                        "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                        "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
                         "asset_name": asset.name,
                         "quantity": [transaction.attachment.quantityQNT, asset.decimals]
                     };
@@ -548,7 +562,7 @@ var NRS = (function (NRS, $, undefined) {
                             data = {
                                 "type": $.t("ask_order_cancellation"),
                                 "order_formatted_html": NRS.getTransactionLink(transaction.fullHash),
-                                "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                                "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
                                 "asset_name": asset.name,
                                 "quantity": [transaction.attachment.quantityQNT, asset.decimals],
                                 "price_formatted_html": NRS.formatQuantity(transaction.attachment.priceNQT, NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name,
@@ -578,7 +592,7 @@ var NRS = (function (NRS, $, undefined) {
                             data = {
                                 "type": $.t("bid_order_cancellation"),
                                 "order_formatted_html": NRS.getTransactionLink(transaction.fullHash),
-                                "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                                "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
                                 "asset_name": asset.name,
                                 "quantity": [transaction.attachment.quantityQNT, asset.decimals],
                                 "price_formatted_html": NRS.formatQuantity(transaction.attachment.priceNQT, NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name,
@@ -607,7 +621,7 @@ var NRS = (function (NRS, $, undefined) {
                         }, function (asset) {
                             data = {
                                 "type": $.t("dividend_payment"),
-                                "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                                "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
                                 "asset_name": asset.name,
                                 "amount_per_share": NRS.intToFloat(transaction.attachment.amountNQT, NRS.getActiveChainDecimals()) + " " + NRS.getChain(transaction.chain).name,
                                 "height": transaction.attachment.height
@@ -632,7 +646,7 @@ var NRS = (function (NRS, $, undefined) {
                 }, function (asset) {
                     data = {
                         "type": $.t("delete_asset_shares"),
-                        "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+                        "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
                         "asset_name": asset.name,
                         "quantity": [transaction.attachment.quantityQNT, asset.decimals]
                     };
@@ -1083,7 +1097,7 @@ var NRS = (function (NRS, $, undefined) {
                         requestType = "getCurrency";
                     }
                     NRS.sendRequest(requestType, {"currency": transaction.attachment.holding, "asset": transaction.attachment.holding}, function (response) {
-                        data.holding_formatted_html = NRS.getEntityLink(transaction.attachment.holding, data.holdingType);
+                        data.holding_formatted_html = NRS.getHoldingLink(transaction.attachment.holding, data.holdingType);
                         data.amount_formatted_html = NRS.convertToQNTf(transaction.attachment.amount, response.decimals);
                     }, { isAsync: false });
                 } else {
@@ -1191,18 +1205,7 @@ var NRS = (function (NRS, $, undefined) {
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "CoinExchangeOrderIssue") || NRS.isOfType(transaction, "FxtCoinExchangeOrderIssue")) {
-                data = {
-                    "type": $.t("issue_coin_exchange_order")
-                };
-                data.chain_formatted_html = NRS.getChainLink(transaction.attachment.chain);
-                data.exchange_chain_formatted_html = NRS.getChainLink(transaction.attachment.exchangeChain);
-                var exchangeChainDecimals = NRS.getChain(transaction.attachment.exchangeChain).decimals;
-                data.amount_formatted_html = NRS.formatQuantity(transaction.attachment.quantityQNT, exchangeChainDecimals) + " " + NRS.getChain(transaction.attachment.exchangeChain).name;
-                var chainDecimals = NRS.getChain(transaction.attachment.chain).decimals;
-                data.price_formatted_html = NRS.formatQuantity(transaction.attachment.priceNQT, chainDecimals)  + " " + NRS.getChain(transaction.attachment.chain).name;
-
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
-                infoTable.show();
+                NRS.formatCoinOrder(transaction, isModalVisible);
             } else if (NRS.isOfType(transaction, "CoinExchangeOrderCancel") || NRS.isOfType(transaction, "FxtCoinExchangeOrderCancel")) {
                 data = {
                     "type": $.t("cancel_coin_exchange_order")
@@ -1285,7 +1288,7 @@ var NRS = (function (NRS, $, undefined) {
     NRS.formatAssetOrder = function (asset, transaction, isModalVisible) {
         var data = {
             "type": (transaction.subtype == 2 ? $.t("ask_order_placement") : $.t("bid_order_placement")),
-            "asset_formatted_html": NRS.getEntityLink(transaction.attachment.asset, 1),
+            "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
             "asset_name": asset.name,
             "quantity": [transaction.attachment.quantityQNT, asset.decimals],
             "price_formatted_html": NRS.formatQuantity(transaction.attachment.priceNQT, NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name,
@@ -1305,10 +1308,10 @@ var NRS = (function (NRS, $, undefined) {
             var tradeTotal = BigInteger.ZERO;
             if (response.trades && response.trades.length > 0) {
                 rows = "<table class='table table-striped'><thead><tr>" +
-                "<th>" + $.t("Date") + "</th>" +
-                "<th>" + $.t("Quantity") + "</th>" +
-                "<th>" + $.t("Price") + "</th>" +
-                "<th>" + $.t("Total") + "</th>" +
+                "<th>" + $.t("date") + "</th>" +
+                "<th>" + $.t("quantity") + "</th>" +
+                "<th>" + $.t("price") + "</th>" +
+                "<th>" + $.t("total") + "</th>" +
                 "<tr></thead><tbody>";
                 for (var i = 0; i < response.trades.length; i++) {
                     var trade = response.trades[i];
@@ -1356,10 +1359,10 @@ var NRS = (function (NRS, $, undefined) {
             var exchangedTotal = BigInteger.ZERO;
             if (response.exchanges && response.exchanges.length > 0) {
                 rows = "<table class='table table-striped'><thead><tr>" +
-                "<th>" + $.t("Date") + "</th>" +
-                "<th>" + $.t("Units") + "</th>" +
-                "<th>" + $.t("Rate") + "</th>" +
-                "<th>" + $.t("Total") + "</th>" +
+                "<th>" + $.t("date") + "</th>" +
+                "<th>" + $.t("units") + "</th>" +
+                "<th>" + $.t("rate") + "</th>" +
+                "<th>" + $.t("total") + "</th>" +
                 "<tr></thead><tbody>";
                 for (var i = 0; i < response.exchanges.length; i++) {
                     var exchange = response.exchanges[i];
@@ -1418,11 +1421,11 @@ var NRS = (function (NRS, $, undefined) {
             var exchangedTotal = BigInteger.ZERO;
             if (response.exchanges && response.exchanges.length > 0) {
                 rows = "<table class='table table-striped'><thead><tr>" +
-                "<th>" + $.t("Date") + "</th>" +
-                "<th>" + $.t("Type") + "</th>" +
-                "<th>" + $.t("Units") + "</th>" +
-                "<th>" + $.t("Rate") + "</th>" +
-                "<th>" + $.t("Total") + "</th>" +
+                "<th>" + $.t("date") + "</th>" +
+                "<th>" + $.t("type") + "</th>" +
+                "<th>" + $.t("units") + "</th>" +
+                "<th>" + $.t("rate") + "</th>" +
+                "<th>" + $.t("total") + "</th>" +
                 "<tr></thead><tbody>";
                 for (var i = 0; i < response.exchanges.length; i++) {
                     var exchange = response.exchanges[i];
@@ -1463,6 +1466,61 @@ var NRS = (function (NRS, $, undefined) {
         };
     };
 
+    NRS.formatCoinOrder = function(transaction, isModalVisible) {
+        var data = {
+            "type": $.t("issue_coin_exchange_order")
+        };
+        data.chain_formatted_html = NRS.getChainLink(transaction.attachment.chain);
+        data.exchange_chain_formatted_html = NRS.getChainLink(transaction.attachment.exchangeChain);
+        var exchangeChainDecimals = NRS.getChain(transaction.attachment.exchangeChain).decimals;
+        data.amount_formatted_html = NRS.formatQuantity(transaction.attachment.quantityQNT, exchangeChainDecimals) + " " + NRS.getChain(transaction.attachment.exchangeChain).name;
+        var chainDecimals = NRS.getChain(transaction.attachment.chain).decimals;
+        data.price_formatted_html = NRS.formatQuantity(transaction.attachment.priceNQT, chainDecimals)  + " " + NRS.getChain(transaction.attachment.chain).name;
+        var rows = "";
+        NRS.sendRequest("getCoinExchangeTrades", {
+            chain: transaction.attachment.chain,
+            exchange: transaction.attachment.exchangeChain,
+            orderFullHash: transaction.fullHash
+        }, function (response) {
+            var tradeQuantity = BigInteger.ZERO;
+            var tradeTotal = BigInteger.ZERO;
+            if (response.trades && response.trades.length > 0) {
+                rows = "<table class='table table-striped'><thead><tr>" +
+                    "<th>" + $.t("date") + "</th>" +
+                    "<th>" + $.t("amount") + "</th>" +
+                    "<th>" + $.t("price") + "</th>" +
+                    "<th>" + $.t("total") + "</th>" +
+                    "<tr></thead><tbody>";
+                for (var i = 0; i < response.trades.length; i++) {
+                    var trade = response.trades[i];
+                    tradeQuantity = tradeQuantity.add(new BigInteger(trade.quantityQNT));
+                    tradeTotal = tradeTotal.add(new BigInteger(NRS.multiply(trade.quantityQNT, trade.priceNQT)));
+                    rows += "<tr>" +
+                        "<td>" + NRS.getTransactionLink(trade.matchFullHash, NRS.formatTimestamp(trade.timestamp), false, transaction.attachment.exchangeChain) + "</td>" +
+                        "<td>" + NRS.formatQuantity(trade.quantityQNT, exchangeChainDecimals) + "</td>" +
+                        "<td>" + NRS.formatQuantity(trade.priceNQT, chainDecimals) + "</td>" +
+                        "<td>" + NRS.formatQuantity(NRS.multiply(trade.quantityQNT, trade.priceNQT), chainDecimals + exchangeChainDecimals) +
+                        "</td>" +
+                        "</tr>";
+                }
+                rows += "</tbody></table>";
+                data["trades_formatted_html"] = rows;
+            } else {
+                data["trades"] = $.t("no_matching_trade");
+            }
+            data["total_exchange_formatted_html"] = NRS.formatQuantity(tradeQuantity, exchangeChainDecimals) +  " " + NRS.getChain(transaction.attachment.exchangeChain).name;
+            data["total_chain_formatted_html"] = NRS.formatQuantity(tradeTotal, chainDecimals + exchangeChainDecimals) + " " + NRS.getChain(transaction.chain).name;
+        }, { isAsync: false });
+
+        var infoTable = $("#transaction_info_table");
+        infoTable.find("tbody").append(NRS.createInfoTable(data));
+        infoTable.show();
+        if (!isModalVisible) {
+            $("#transaction_info_modal").modal("show");
+        }
+        NRS.fetchingModalData = false;
+    };
+
     NRS.getTaggedData = function (attachment, subtype, transaction) {
         var data = {
             "type": $.t(NRS.transactionTypes[6].subTypes[subtype].i18nKeyTitle)
@@ -1471,7 +1529,7 @@ var NRS = (function (NRS, $, undefined) {
             data["hash"] = attachment.hash;
         }
         if (attachment.taggedData) {
-            data["tagged_data_formatted_html"] = NRS.getEntityLink(attachment.taggedData, 3);
+            data["tagged_data_formatted_html"] = "TODO"; // TODO
             transaction = attachment.taggedData;
         }
         if (attachment.data) {
@@ -1489,7 +1547,7 @@ var NRS = (function (NRS, $, undefined) {
             }
         }
         if (transaction.block) {
-            data["link_formatted_html"] = NRS.getTaggedDataLink(transaction.transaction, attachment.isText); // TODO full hash
+            data["link_formatted_html"] = NRS.getTaggedDataLink(transaction.fullHash, attachment.isText);
         }
         return data;
     };

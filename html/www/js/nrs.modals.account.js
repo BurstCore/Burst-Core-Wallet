@@ -306,9 +306,8 @@ var NRS = (function(NRS, $) {
 			if (response.accountCurrencies && response.accountCurrencies.length) {
 				for (var i = 0; i < response.accountCurrencies.length; i++) {
 					var currency = response.accountCurrencies[i];
-					var code = NRS.escapeRespStr(currency.code);
 					rows += "<tr>" +
-						"<td>" + NRS.getEntityLink(NRS.escapeRespStr(currency.currency), 2, code) + "</td>" +
+						"<td>" + NRS.getEntityLink({ id: currency.currency, request: "getCurrency", key: "currency", text: NRS.getCurrencyDN(currency) }) + "</td>" +
 						"<td>" + currency.name + "</td>" +
 						"<td class='numeric'>" + NRS.formatQuantity(currency.unconfirmedUnits, currency.decimals, false, unitsDecimals) + "</td>" +
 					"</tr>";
