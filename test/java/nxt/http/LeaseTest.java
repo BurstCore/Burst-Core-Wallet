@@ -17,7 +17,9 @@
 package nxt.http;
 
 import nxt.BlockchainTest;
+import nxt.Constants;
 import nxt.blockchain.ChildChain;
+import nxt.blockchain.FxtChain;
 import nxt.util.Logger;
 import org.json.simple.JSONObject;
 import org.junit.Assert;
@@ -32,14 +34,16 @@ public class LeaseTest extends BlockchainTest {
                 param("secretPhrase", BOB.getSecretPhrase()).
                 param("recipient", ALICE.getStrId()).
                 param("period", "2").
-                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
+                param("feeNQT", "0").
+                param("chain", FxtChain.FXT.getName()).
                 build().invoke();
         Logger.logDebugMessage("leaseBalance: " + response);
         response = new APICall.Builder("leaseBalance").
                 param("secretPhrase", CHUCK.getSecretPhrase()).
                 param("recipient", ALICE.getStrId()).
                 param("period", "3").
-                param("feeNQT", ChildChain.IGNIS.ONE_COIN).
+                param("feeNQT", "0").
+                param("chain", FxtChain.FXT.getName()).
                 build().invoke();
         Logger.logDebugMessage("leaseBalance: " + response);
         generateBlock();
@@ -50,7 +54,7 @@ public class LeaseTest extends BlockchainTest {
                 param("includeEffectiveBalance", "true").
                 build().invoke();
         Logger.logDebugMessage("getLesseeAccount: " + lesseeResponse);
-        Assert.assertEquals(ALICE.getInitialFxtEffectiveBalance(), lesseeResponse.get("effectiveBalanceNXT"));
+        Assert.assertEquals(ALICE.getInitialFxtEffectiveBalance(), lesseeResponse.get("effectiveBalanceFXT"));
 
         // lease is registered
         JSONObject leasedResponse1 = new APICall.Builder("getAccount").
@@ -75,8 +79,8 @@ public class LeaseTest extends BlockchainTest {
                 param("includeEffectiveBalance", "true").
                 build().invoke();
         Logger.logDebugMessage("getLesseeAccount: " + lesseeResponse);
-        Assert.assertEquals((ALICE.getInitialFxtBalance() + BOB.getInitialFxtBalance() + CHUCK.getInitialFxtBalance()) / ChildChain.IGNIS.ONE_COIN - 2,
-                lesseeResponse.get("effectiveBalanceNXT"));
+        Assert.assertEquals((ALICE.getInitialFxtBalance() + BOB.getInitialFxtBalance() + CHUCK.getInitialFxtBalance()) / Constants.ONE_FXT - 4,
+                lesseeResponse.get("effectiveBalanceFXT"));
         generateBlock();
         generateBlock();
         lesseeResponse = new APICall.Builder("getAccount").
@@ -84,8 +88,8 @@ public class LeaseTest extends BlockchainTest {
                 param("includeEffectiveBalance", "true").
                 build().invoke();
         Logger.logDebugMessage("getLesseeAccount: " + lesseeResponse);
-        Assert.assertEquals((ALICE.getInitialFxtBalance() + CHUCK.getInitialFxtBalance()) / ChildChain.IGNIS.ONE_COIN - 1 /* fees */,
-                lesseeResponse.get("effectiveBalanceNXT"));
+        Assert.assertEquals((ALICE.getInitialFxtBalance() + CHUCK.getInitialFxtBalance()) / Constants.ONE_FXT - 2 /* fees */,
+                lesseeResponse.get("effectiveBalanceFXT"));
         generateBlock();
         lesseeResponse = new APICall.Builder("getAccount").
                 param("account", ALICE.getRsAccount()).
@@ -93,6 +97,6 @@ public class LeaseTest extends BlockchainTest {
                 build().invoke();
         Logger.logDebugMessage("getLesseeAccount: " + lesseeResponse);
         Assert.assertEquals((ALICE.getInitialFxtBalance()) / ChildChain.IGNIS.ONE_COIN,
-                lesseeResponse.get("effectiveBalanceNXT"));
+                lesseeResponse.get("effectiveBalanceFXT"));
     }
 }
