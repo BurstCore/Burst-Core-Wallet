@@ -43,7 +43,6 @@ var NRS = (function(NRS, $) {
 
 	NRS.showChainDetailsModal = function(chain) {
         try {
-            // TODO test the back link
             NRS.setBackLink();
     		NRS.modalStack.push({ class: "show_chain_modal_action", key: "chain", value: { chain: chain.id }});
             var chainDetails = $.extend({}, chain);
@@ -54,10 +53,20 @@ var NRS = (function(NRS, $) {
             }
             chainDetails.chain_id = chainDetails.id;
             delete chainDetails.id;
-            var detailsTable = $("#chain_details_table");
-            detailsTable.find("tbody").empty().append(NRS.createInfoTable(chainDetails));
-            detailsTable.show();
-            $("#chain_details_modal").modal("show");
+            NRS.sendRequest("getBundlerRates", {}, function(response) {
+                chainDetails.bundling_rate_formatted_html = "N/A";
+                for (var i=0; i<response.rates.length; i++) {
+                    if (response.rates[i].chain == chain.id) {
+                        chainDetails.bundling_rate_formatted_html = NRS.formatQuantity(response.rates[i].minRateNQTPerFXT, chain.decimals) +
+                            " [" + chain.name + "/" + NRS.getParentChainName() + "]";
+                        break;
+                    }
+                }
+                var detailsTable = $("#chain_details_table");
+                detailsTable.find("tbody").empty().append(NRS.createInfoTable(chainDetails));
+                detailsTable.show();
+                $("#chain_details_modal").modal("show");
+            });
         } finally {
             NRS.fetchingModalData = false;
         }

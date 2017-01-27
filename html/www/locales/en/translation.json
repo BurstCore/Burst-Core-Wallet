@@ -1923,5 +1923,6 @@
   "fee_ratio": "Fee Ratio",
   "recipients": "Recipients",
   "recipient_public_keys": "Recipient Public Keys",
-  "count": "Count"
+  "count": "Count",
+  "bundling_rate": "Bundling Rate"
 }
