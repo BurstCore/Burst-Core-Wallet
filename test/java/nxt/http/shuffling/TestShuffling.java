@@ -167,8 +167,8 @@ public class TestShuffling extends BlockchainTest {
         shufflingAssignee = (String) getShufflingResponse.get("assignee");
         Assert.assertNull(shufflingAssignee);
 
-        Assert.assertEquals(-(ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 12 * ChildChain.IGNIS.ONE_COIN), ALICE.getChainBalanceDiff(chainId));
-        Assert.assertEquals(-(ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 12 * ChildChain.IGNIS.ONE_COIN), ALICE.getChainUnconfirmedBalanceDiff(chainId));
+        Assert.assertEquals(-(ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 12 * ChildChain.IGNIS.ONE_COIN + 1003 * ChildChain.IGNIS.ONE_COIN), ALICE.getChainBalanceDiff(chainId));
+        Assert.assertEquals(-(ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 12 * ChildChain.IGNIS.ONE_COIN + 1003 * ChildChain.IGNIS.ONE_COIN), ALICE.getChainUnconfirmedBalanceDiff(chainId));
         Assert.assertEquals(-(ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 12 * ChildChain.IGNIS.ONE_COIN), BOB.getChainBalanceDiff(chainId));
         Assert.assertEquals(-(ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 12 * ChildChain.IGNIS.ONE_COIN), BOB.getChainUnconfirmedBalanceDiff(chainId));
         Assert.assertEquals(-(ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT + 12 * ChildChain.IGNIS.ONE_COIN), CHUCK.getChainBalanceDiff(chainId));
@@ -185,8 +185,8 @@ public class TestShuffling extends BlockchainTest {
         Assert.assertEquals(ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT, DAVE_RECIPIENT.getChainBalanceDiff(chainId));
         Assert.assertEquals(ChildChain.IGNIS.SHUFFLING_DEPOSIT_NQT, DAVE_RECIPIENT.getChainUnconfirmedBalanceDiff(chainId));
 
-        Assert.assertEquals(48 * ChildChain.IGNIS.ONE_COIN, FORGY.getChainBalanceDiff(chainId));
-        Assert.assertEquals(48 * ChildChain.IGNIS.ONE_COIN, FORGY.getChainUnconfirmedBalanceDiff(chainId));
+        Assert.assertEquals(48 * ChildChain.IGNIS.ONE_COIN + 1003 * ChildChain.IGNIS.ONE_COIN, FORGY.getChainBalanceDiff(chainId));
+        Assert.assertEquals(48 * ChildChain.IGNIS.ONE_COIN + 1003 * ChildChain.IGNIS.ONE_COIN, FORGY.getChainUnconfirmedBalanceDiff(chainId));
 
         Assert.assertEquals(defaultHoldingShufflingAmount, ALICE_RECIPIENT.getAssetQuantityDiff(shufflingAsset));
         Assert.assertEquals(defaultHoldingShufflingAmount, ALICE_RECIPIENT.getUnconfirmedAssetQuantityDiff(shufflingAsset));
@@ -197,14 +197,14 @@ public class TestShuffling extends BlockchainTest {
         Assert.assertEquals(defaultHoldingShufflingAmount, DAVE_RECIPIENT.getAssetQuantityDiff(shufflingAsset));
         Assert.assertEquals(defaultHoldingShufflingAmount, DAVE_RECIPIENT.getUnconfirmedAssetQuantityDiff(shufflingAsset));
 
-        Assert.assertEquals(-defaultHoldingShufflingAmount, ALICE.getAssetQuantityDiff(shufflingAsset));
-        Assert.assertEquals(-defaultHoldingShufflingAmount, ALICE.getUnconfirmedAssetQuantityDiff(shufflingAsset));
-        Assert.assertEquals(-defaultHoldingShufflingAmount, BOB.getAssetQuantityDiff(shufflingAsset));
-        Assert.assertEquals(-defaultHoldingShufflingAmount, BOB.getUnconfirmedAssetQuantityDiff(shufflingAsset));
-        Assert.assertEquals(-defaultHoldingShufflingAmount, CHUCK.getAssetQuantityDiff(shufflingAsset));
-        Assert.assertEquals(-defaultHoldingShufflingAmount, CHUCK.getUnconfirmedAssetQuantityDiff(shufflingAsset));
-        Assert.assertEquals(-defaultHoldingShufflingAmount, DAVE.getAssetQuantityDiff(shufflingAsset));
-        Assert.assertEquals(-defaultHoldingShufflingAmount, DAVE.getUnconfirmedAssetQuantityDiff(shufflingAsset));
+        Assert.assertEquals(1000000 - defaultHoldingShufflingAmount - 3 * 100000, ALICE.getAssetQuantityDiff(shufflingAsset));
+        Assert.assertEquals(1000000 - defaultHoldingShufflingAmount - 3 * 100000, ALICE.getUnconfirmedAssetQuantityDiff(shufflingAsset));
+        Assert.assertEquals(100000 - defaultHoldingShufflingAmount, BOB.getAssetQuantityDiff(shufflingAsset));
+        Assert.assertEquals(100000 - defaultHoldingShufflingAmount, BOB.getUnconfirmedAssetQuantityDiff(shufflingAsset));
+        Assert.assertEquals(100000 - defaultHoldingShufflingAmount, CHUCK.getAssetQuantityDiff(shufflingAsset));
+        Assert.assertEquals(100000 - defaultHoldingShufflingAmount, CHUCK.getUnconfirmedAssetQuantityDiff(shufflingAsset));
+        Assert.assertEquals(100000 - defaultHoldingShufflingAmount, DAVE.getAssetQuantityDiff(shufflingAsset));
+        Assert.assertEquals(100000 - defaultHoldingShufflingAmount, DAVE.getUnconfirmedAssetQuantityDiff(shufflingAsset));
 
     }
 
@@ -343,21 +343,21 @@ public class TestShuffling extends BlockchainTest {
         String shufflingAssignee = (String) getShufflingResponse.get("assignee");
         Assert.assertNull(shufflingAssignee);
 
-        Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN, ALICE.getChainBalanceDiff(chainId));
-        Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN, ALICE.getChainUnconfirmedBalanceDiff(chainId));
+        Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN - 1003 * ChildChain.IGNIS.ONE_COIN, ALICE.getChainBalanceDiff(chainId));
+        Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN - 1003 * ChildChain.IGNIS.ONE_COIN, ALICE.getChainUnconfirmedBalanceDiff(chainId));
         Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN, BOB.getChainBalanceDiff(chainId));
         Assert.assertEquals(-ChildChain.IGNIS.ONE_COIN, BOB.getChainUnconfirmedBalanceDiff(chainId));
 
         Assert.assertNull(ALICE_RECIPIENT.getAccount());
         Assert.assertNull(BOB_RECIPIENT.getAccount());
 
-        Assert.assertEquals(0, ALICE.getAssetQuantityDiff(shufflingAsset));
-        Assert.assertEquals(0, ALICE.getUnconfirmedAssetQuantityDiff(shufflingAsset));
-        Assert.assertEquals(0, BOB.getAssetQuantityDiff(shufflingAsset));
-        Assert.assertEquals(0, BOB.getUnconfirmedAssetQuantityDiff(shufflingAsset));
+        Assert.assertEquals(1000000 - 3 * 100000, ALICE.getAssetQuantityDiff(shufflingAsset));
+        Assert.assertEquals(1000000 - 3 * 100000, ALICE.getUnconfirmedAssetQuantityDiff(shufflingAsset));
+        Assert.assertEquals(100000, BOB.getAssetQuantityDiff(shufflingAsset));
+        Assert.assertEquals(100000, BOB.getUnconfirmedAssetQuantityDiff(shufflingAsset));
 
-        Assert.assertEquals(2 * ChildChain.IGNIS.ONE_COIN, FORGY.getChainBalanceDiff(chainId));
-        Assert.assertEquals(2 * ChildChain.IGNIS.ONE_COIN, FORGY.getChainUnconfirmedBalanceDiff(chainId));
+        Assert.assertEquals(2 * ChildChain.IGNIS.ONE_COIN + 1003 * ChildChain.IGNIS.ONE_COIN, FORGY.getChainBalanceDiff(chainId));
+        Assert.assertEquals(2 * ChildChain.IGNIS.ONE_COIN + 1003 * ChildChain.IGNIS.ONE_COIN, FORGY.getChainUnconfirmedBalanceDiff(chainId));
 
     }
 

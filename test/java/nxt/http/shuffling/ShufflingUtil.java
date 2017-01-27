@@ -59,14 +59,45 @@ class ShufflingUtil {
         APICall apiCall = new APICall.Builder("issueAsset")
                 .param("secretPhrase", creator.getSecretPhrase())
                 .param("name", "phased")
-                .param("description", "pahsed transaction testing")
-                .param("quantityQNT", 100000)
+                .param("description", "shuffling transaction testing")
+                .param("quantityQNT", 1000000)
                 .param("decimals", 2)
                 .param("feeNQT", 1000 * ChildChain.IGNIS.ONE_COIN)
                 .param("deadline", 1440)
                 .build();
         JSONObject response = apiCall.invoke();
         shufflingAsset = Long.parseUnsignedLong(Tester.responseToStringId(response));
+        BlockchainTest.generateBlock();
+        apiCall = new APICall.Builder("transferAsset")
+                .param("secretPhrase", creator.getSecretPhrase())
+                .param("recipient", BlockchainTest.BOB.getRsAccount())
+                .param("asset", Long.toUnsignedString(shufflingAsset))
+                .param("quantityQNT", 100000)
+                .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
+                .param("deadline", 1440)
+                .build();
+        response = apiCall.invoke();
+        Logger.logMessage("transferAssetResponse: " + response.toJSONString());
+        apiCall = new APICall.Builder("transferAsset")
+                .param("secretPhrase", creator.getSecretPhrase())
+                .param("recipient", BlockchainTest.CHUCK.getRsAccount())
+                .param("asset", Long.toUnsignedString(shufflingAsset))
+                .param("quantityQNT", 100000)
+                .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
+                .param("deadline", 1440)
+                .build();
+        response = apiCall.invoke();
+        Logger.logMessage("transferAssetResponse: " + response.toJSONString());
+        apiCall = new APICall.Builder("transferAsset")
+                .param("secretPhrase", creator.getSecretPhrase())
+                .param("recipient", BlockchainTest.DAVE.getRsAccount())
+                .param("asset", Long.toUnsignedString(shufflingAsset))
+                .param("quantityQNT", 100000)
+                .param("feeNQT", ChildChain.IGNIS.ONE_COIN)
+                .param("deadline", 1440)
+                .build();
+        response = apiCall.invoke();
+        Logger.logMessage("transferAssetResponse: " + response.toJSONString());
         BlockchainTest.generateBlock();
         apiCall = new APICall.Builder("shufflingCreate").
                 secretPhrase(creator.getSecretPhrase()).
@@ -86,12 +117,12 @@ class ShufflingUtil {
     static JSONObject createCurrencyShuffling(Tester creator) {
         APICall apiCall = new APICall.Builder("issueCurrency")
                 .param("secretPhrase", creator.getSecretPhrase())
-                .param("name", "phased")
-                .param("code", "PHSD")
+                .param("name", "shfle")
+                .param("code", "SHFL")
                 .param("description", "phased transaction testing")
                 .param("type", 1)
-                .param("initialSupply", 10000000)
-                .param("maxSupply", 10000000)
+                .param("initialSupplyQNT", 10000000)
+                .param("maxSupplyQNT", 10000000)
                 .param("decimals", 2)
                 .param("feeNQT", 1000 * ChildChain.IGNIS.ONE_COIN)
                 .param("deadline", 1440)
