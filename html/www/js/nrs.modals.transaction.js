@@ -1135,6 +1135,8 @@ var NRS = (function (NRS, $, undefined) {
                             data["failedTransaction_formatted_html"] = NRS.getAccountLink(shuffler, "recipient");
                             data["failureCause"] = shuffler.failureCause;
                         }
+                        data["fee_ratio_formatted_html"] = NRS.formatQuantity(shuffler.feeRateNQTPerFXT, NRS.getChain(shuffler.chain).decimals) +
+                            " [" + NRS.getChain(shuffler.chain).name + "/" + NRS.getParentChainName() + "]";
                     } else {
                         if (response.errorCode) {
                             data["shuffler"] = $.t("unknown");
