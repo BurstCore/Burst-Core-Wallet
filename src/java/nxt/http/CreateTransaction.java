@@ -27,6 +27,7 @@ import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.ChildTransactionType;
+import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransactionType;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
@@ -245,7 +246,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             chain = txChain;
         }
 
-        if (feeNQT == 0L && feeRateNQTPerFXT == 0L) {
+        if (feeNQT == 0L && feeRateNQTPerFXT == 0L && chain != FxtChain.FXT) {
             feeRateNQTPerFXT = Peers.getBestBundlerRate(chain, ParameterParser.getLong(req, "minBundlerBalanceFXT", 0, Constants.MAX_BALANCE_FXT, false));
             broadcast = false;
             response.put("bundlerRateNQTPerFXT", String.valueOf(feeRateNQTPerFXT));
