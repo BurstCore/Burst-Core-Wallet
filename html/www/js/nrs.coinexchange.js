@@ -632,11 +632,12 @@ var NRS = (function (NRS, $, undefined) {
                 for (var i = 0; i < trades.length; i++) {
                     var trade = trades[i];
                     var total = NRS.multiply(trade.quantityQNT, NRS.floatToInt(trade.exchangeRate, 8));
+                    var isParentChain = trade.chain == 1 || trade.exchange == 1;
                     rows += "<tr>" +
                         "<td>" + NRS.formatTimestamp(trade.timestamp) + "</td>" +
                         "<td>" + NRS.getChainLink(trade.exchange) + "</td>" +
-                        "<td>" + NRS.getTransactionLink(trade.orderFullHash, false, false, trade.chain) + "</td>" +
-                        "<td>" + NRS.getTransactionLink(trade.matchFullHash, false, false, trade.exchange) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(trade.orderFullHash, false, false, isParentChain ? "1" : trade.chain) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(trade.matchFullHash, false, false, isParentChain ? "1" : trade.exchange) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, NRS.getActiveChainDecimals()) + "</td>" +
                         "<td class='coin_price numeric'>" + String(trade.exchangeRate).escapeHTML() + "</td>" +
