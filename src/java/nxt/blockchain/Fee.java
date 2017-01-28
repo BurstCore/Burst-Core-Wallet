@@ -20,6 +20,8 @@ import nxt.Constants;
 
 public interface Fee {
 
+    public static final long NEW_ACCOUNT_FEE = Constants.ONE_FXT;
+
     long getFee(TransactionImpl transaction, Appendix appendage);
 
     Fee DEFAULT_CHILD_FEE = new Fee.ConstantFee(Constants.ONE_FXT / 10);
