@@ -22,7 +22,9 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public final class FxtChain extends Chain {
 
@@ -39,6 +41,16 @@ public final class FxtChain extends Chain {
     @Override
     public String getDbSchema() {
         return "PUBLIC";
+    }
+
+    @Override
+    public boolean isAllowed(TransactionType transactionType) {
+        return transactionType.getType() < 0;
+    }
+
+    @Override
+    public Set<TransactionType> getDisabledTransactionTypes() {
+        return Collections.emptySet();
     }
 
     @Override

@@ -19,10 +19,12 @@ package nxt.blockchain;
 import nxt.Constants;
 import nxt.NxtException;
 import nxt.ae.AssetDividendHome;
+import nxt.ae.AssetExchangeTransactionType;
 import nxt.ae.OrderHome;
 import nxt.ae.TradeHome;
 import nxt.aliases.AliasHome;
 import nxt.dgs.DigitalGoodsHome;
+import nxt.dgs.DigitalGoodsTransactionType;
 import nxt.ms.CurrencyFounderHome;
 import nxt.ms.ExchangeHome;
 import nxt.ms.ExchangeOfferHome;
@@ -39,11 +41,14 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class ChildChain extends Chain {
 
@@ -52,10 +57,14 @@ public final class ChildChain extends Chain {
 
     private static final Collection<ChildChain> allChildChains = Collections.unmodifiableCollection(childChains.values());
 
-    public static final ChildChain IGNIS = new ChildChain(2, "IGNIS", 8, (Constants.isTestnet ? 7 : 1000) * 100000000);
-    public static final ChildChain BTC = new ChildChain(3, "BTC", 8, 600000);
-    public static final ChildChain USD = new ChildChain(4, "USD", 2, 600);
-    public static final ChildChain EUR = new ChildChain(5, "EUR", 2, 600);
+    public static final ChildChain IGNIS = new ChildChain(2, "IGNIS", 8, (Constants.isTestnet ? 7 : 1000) * 100000000, Collections.emptySet());
+    public static final ChildChain BTC = new ChildChain(3, "BTC", 8, 600000, Collections.emptySet());
+    public static final ChildChain USD = new ChildChain(4, "USD", 2, 600, Collections.emptySet());
+    public static final ChildChain EUR = new ChildChain(5, "EUR", 2, 600, new HashSet<>(Arrays.asList(
+            DigitalGoodsTransactionType.LISTING,
+            AssetExchangeTransactionType.ASK_ORDER_PLACEMENT,
+            AssetExchangeTransactionType.BID_ORDER_PLACEMENT))
+    );
 
     public static ChildChain getChildChain(String name) {
         return childChains.get(name);
@@ -89,8 +98,9 @@ public final class ChildChain extends Chain {
     private final TaggedDataHome taggedDataHome;
     private final TradeHome tradeHome;
     private final VoteHome voteHome;
+    private final Set<TransactionType> disabledTransactionTypes;
 
-    private ChildChain(int id, String name, int decimals, long shufflingDepositNQT) {
+    private ChildChain(int id, String name, int decimals, long shufflingDepositNQT, Set<TransactionType> disabledTransactionTypes) {
         super(id, name, decimals);
         this.SHUFFLING_DEPOSIT_NQT = shufflingDepositNQT;
         this.aliasHome = AliasHome.forChain(this);
@@ -109,6 +119,7 @@ public final class ChildChain extends Chain {
         this.shufflingParticipantHome = ShufflingParticipantHome.forChain(this);
         this.taggedDataHome = TaggedDataHome.forChain(this);
         this.voteHome = VoteHome.forChain(this);
+        this.disabledTransactionTypes = Collections.unmodifiableSet(disabledTransactionTypes);
         childChains.put(name, this);
         childChainsById.put(id, this);
     }
@@ -175,6 +186,16 @@ public final class ChildChain extends Chain {
 
     public VoteHome getVoteHome() {
         return voteHome;
+    }
+
+    @Override
+    public boolean isAllowed(TransactionType transactionType) {
+        return transactionType.getType() >= 0 && !disabledTransactionTypes.contains(transactionType);
+    }
+
+    @Override
+    public Set<TransactionType> getDisabledTransactionTypes() {
+        return disabledTransactionTypes;
     }
 
     @Override

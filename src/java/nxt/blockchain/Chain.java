@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Set;
 
 public abstract class Chain {
 
@@ -98,6 +99,10 @@ public abstract class Chain {
     public PrunableMessageHome getPrunableMessageHome() {
         return prunableMessageHome;
     }
+
+    public abstract boolean isAllowed(TransactionType transactionType);
+
+    public abstract Set<TransactionType> getDisabledTransactionTypes();
 
     public abstract TransactionImpl.BuilderImpl newTransactionBuilder(byte[] senderPublicKey, long amountFQT, long feeFQT, short deadline, Attachment attachment) throws NxtException.NotValidException;
 

@@ -95,7 +95,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public final boolean isAllowed(Chain chain) {
-            return getTransactionType().getType() < 0 ? chain instanceof FxtChain : chain instanceof ChildChain;
+            return chain.isAllowed(getTransactionType());
         }
 
         public final int getFinishValidationHeight(Transaction transaction) {

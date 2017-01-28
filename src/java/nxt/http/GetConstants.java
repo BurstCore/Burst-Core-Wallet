@@ -233,6 +233,9 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                     if (chain instanceof ChildChain) {
                         json.put("SHUFFLING_DEPOSIT_NQT", String.valueOf(((ChildChain) chain).SHUFFLING_DEPOSIT_NQT));
                     }
+                    JSONArray disabledTransactionTypes = new JSONArray();
+                    chain.getDisabledTransactionTypes().forEach(type -> disabledTransactionTypes.add(type.getName()));
+                    json.put("disabledTransactionTypes", disabledTransactionTypes);
                     chainPropertiesJSON.put(chain.getId(), json);
                 });
                 response.put("chainProperties", chainPropertiesJSON);
