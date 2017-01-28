@@ -631,7 +631,7 @@ var NRS = (function (NRS, $, undefined) {
                 var rows = "";
                 for (var i = 0; i < trades.length; i++) {
                     var trade = trades[i];
-                    var total = NRS.multiply(trade.priceNQT, trade.quantityQNT);
+                    var total = NRS.multiply(trade.quantityQNT, NRS.floatToInt(trade.exchangeRate, 8));
                     rows += "<tr>" +
                         "<td>" + NRS.formatTimestamp(trade.timestamp) + "</td>" +
                         "<td>" + NRS.getChainLink(trade.exchange) + "</td>" +
@@ -639,8 +639,8 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.getTransactionLink(trade.matchFullHash, false, false, trade.exchange) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, NRS.getActiveChainDecimals()) + "</td>" +
-                        "<td class='coin_price numeric'>" + NRS.formatQuantity(trade.priceNQT, currentCoin.decimals) + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(total, currentCoin.decimals + NRS.getActiveChainDecimals()) + "</td>" +
+                        "<td class='coin_price numeric'>" + String(trade.exchangeRate).escapeHTML() + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(total, NRS.getActiveChainDecimals() + 8) + "</td>" +
                     "</tr>";
                 }
                 exchangeTradeHistoryTable.find("tbody").empty().append(rows);
@@ -1092,9 +1092,6 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 var trades = response.trades;
                 var exchangeDecimals = NRS.getChain(trades[0].exchange).decimals;
-                var priceDecimals = NRS.getNumberOfDecimals(trades, "priceNQT", function(val) {
-                    return NRS.formatQuantity(val.priceNQT, NRS.getActiveChainDecimals());
-                });
                 var amountDecimals = NRS.getNumberOfDecimals(trades, "quantityQNT", function(val) {
                     return NRS.formatQuantity(val.quantityQNT, exchangeDecimals);
                 });
@@ -1112,7 +1109,7 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.getTransactionLink(trade.matchFullHash, null, false, matchChain) + "</td>" +
                         "<td>" + NRS.getChainLink(trade.exchange) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
-                        "<td class='coin_price numeric'>" + NRS.formatQuantity(trade.priceNQT, NRS.getActiveChainDecimals(), false, priceDecimals) + "</td>" +
+                        "<td class='coin_price numeric'>" + String(trade.exchangeRate).escapeHTML() + "</td>" +
                         "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, NRS.getChain(trade.exchange).decimals, false, amountDecimals) + "</td>" +
                         "</tr>";
                 }
@@ -1155,6 +1152,7 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.getAccountLink(order, "account") + "</td>" +
                         "<td>" + NRS.formatQuantity(order.quantityQNT, decimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.bidNQT, decimals) + "</td>" +
+                        "<td>" + NRS.formatQuantity(order.exchangeQNT, decimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.askNQT, exchangeDecimals) + "</td>" +
                         "<td class='cancel'><a href='#' data-toggle='modal' data-target='#cancel_coin_order_modal' data-order='" + NRS.escapeRespStr(order.order) + "'>" + $.t("cancel") + "</a></td>" +
                     "</tr>";

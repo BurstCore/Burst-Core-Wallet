@@ -1924,5 +1924,11 @@
   "recipients": "Recipients",
   "recipient_public_keys": "Recipient Public Keys",
   "count": "Count",
-  "bundling_rate": "Bundling Rate"
+  "bundling_rate": "Bundling Rate",
+  "coin_exchange_order_issue": "Coin Exchange Order",
+  "coin_exchange_trade": "Coin Exchange Trade",
+  "bid_amount": "Bid Amount",
+  "bid_rate": "Bid Rate",
+  "ask_amount": "Ask Amount",
+  "ask_rate": "Ask Rate"
 }
