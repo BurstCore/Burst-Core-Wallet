@@ -17,12 +17,15 @@
 package nxt.blockchain;
 
 import nxt.NxtException;
+import nxt.http.APIEnum;
+import nxt.http.APITag;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -35,7 +38,8 @@ public final class FxtChain extends Chain {
     public static void init() {}
 
     private FxtChain() {
-        super(1, FXT_NAME, 8);
+        super(1, FXT_NAME, 8, EnumSet.noneOf(APIEnum.class), EnumSet.of(APITag.ALIASES, APITag.AE, APITag.DGS,
+                APITag.DATA, APITag.MESSAGES, APITag.MS, APITag.VS));
     }
 
     @Override

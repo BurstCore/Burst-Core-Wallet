@@ -18,6 +18,8 @@ package nxt.blockchain;
 
 import nxt.NxtException;
 import nxt.account.BalanceHome;
+import nxt.http.APIEnum;
+import nxt.http.APITag;
 import nxt.messaging.PrunableMessageHome;
 import nxt.util.Convert;
 import org.json.simple.JSONObject;
@@ -25,6 +27,8 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -54,8 +58,10 @@ public abstract class Chain {
     private final TransactionHome transactionHome;
     private final BalanceHome balanceHome;
     private final PrunableMessageHome prunableMessageHome;
+    private final Set<APIEnum> disabledAPIs;
+    private final Set<APITag> disabledAPITags;
 
-    Chain(int id, String name, int decimals) {
+    Chain(int id, String name, int decimals, EnumSet<APIEnum> disabledAPIs, EnumSet<APITag> disabledAPITags) {
         this.id = id;
         this.name = name;
         this.decimals = decimals;
@@ -63,6 +69,16 @@ public abstract class Chain {
         this.transactionHome = TransactionHome.forChain(this);
         this.balanceHome = BalanceHome.forChain(this);
         this.prunableMessageHome = PrunableMessageHome.forChain(this);
+        disabledAPIs = disabledAPIs.clone();
+        for (APIEnum api : APIEnum.values()) {
+            if (!Collections.disjoint(api.getHandler().getAPITags(), disabledAPITags)) {
+                disabledAPIs.add(api);
+            }
+        }
+
+        this.disabledAPIs = Collections.unmodifiableSet(disabledAPIs);
+        this.disabledAPITags = Collections.unmodifiableSet(disabledAPITags);
+
     }
 
     public final String getName() {
@@ -103,6 +119,14 @@ public abstract class Chain {
     public abstract boolean isAllowed(TransactionType transactionType);
 
     public abstract Set<TransactionType> getDisabledTransactionTypes();
+
+    public Set<APIEnum> getDisabledAPIs() {
+        return disabledAPIs;
+    }
+
+    public Set<APITag> getDisabledAPITags() {
+        return disabledAPITags;
+    }
 
     public abstract TransactionImpl.BuilderImpl newTransactionBuilder(byte[] senderPublicKey, long amountFQT, long feeFQT, short deadline, Attachment attachment) throws NxtException.NotValidException;
 

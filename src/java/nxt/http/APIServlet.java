@@ -20,6 +20,7 @@ import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
 import nxt.addons.AddOns;
+import nxt.blockchain.Chain;
 import nxt.dbschema.Db;
 import nxt.util.JSON;
 import nxt.util.Logger;
@@ -221,6 +222,16 @@ public final class APIServlet extends HttpServlet {
                     response = ERROR_INCORRECT_REQUEST;
                 }
                 return;
+            }
+
+            if (apiRequestHandler.isChainSpecific()) {
+                Chain chain = ParameterParser.getChain(req, false);
+                if (chain != null) {
+                    if (chain.getDisabledAPIs().contains(APIEnum.fromName(requestType))) {
+                        response = ERROR_DISABLED;
+                        return;
+                    }
+                }
             }
 
             if (Constants.isLightClient && apiRequestHandler.requireFullClient()) {

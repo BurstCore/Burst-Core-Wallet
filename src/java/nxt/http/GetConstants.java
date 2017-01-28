@@ -169,6 +169,23 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 for (Map.Entry<String, APIServlet.APIRequestHandler> handlerEntry : APIServlet.apiRequestHandlers.entrySet()) {
                     JSONObject handlerJSON = JSONData.apiRequestHandler(handlerEntry.getValue());
                     handlerJSON.put("enabled", true);
+
+                    if (handlerEntry.getValue().isChainSpecific()) {
+                        JSONArray disabledForChains = new JSONArray();
+                        APIEnum api = APIEnum.fromName(handlerEntry.getKey());
+                        if (FxtChain.FXT.getDisabledAPIs().contains(api)) {
+                            disabledForChains.add(FxtChain.FXT.getId());
+                        }
+                        ChildChain.getAll().forEach(childChain -> {
+                            if (childChain.getDisabledAPIs().contains(api)) {
+                                disabledForChains.add(childChain.getId());
+                            }
+                        });
+                        if (disabledForChains.size() > 0) {
+                            handlerJSON.put("disabledForChains", disabledForChains);
+                        }
+                    }
+
                     requestTypes.put(handlerEntry.getKey(), handlerJSON);
                 }
                 for (Map.Entry<String, APIServlet.APIRequestHandler> handlerEntry : APIServlet.disabledRequestHandlers.entrySet()) {
@@ -201,6 +218,18 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                     JSONObject tagJSON = new JSONObject();
                     tagJSON.put("name", apiTag.getDisplayName());
                     tagJSON.put("enabled", !API.disabledAPITags.contains(apiTag));
+
+                    JSONArray disabledForChains = new JSONArray();
+                    if (FxtChain.FXT.getDisabledAPITags().contains(apiTag)) {
+                        disabledForChains.add(FxtChain.FXT.getId());
+                    }
+                    ChildChain.getAll().forEach(childChain -> {
+                        if (childChain.getDisabledAPITags().contains(apiTag)) {
+                            disabledForChains.add(childChain.getId());
+                        }
+                    });
+                    tagJSON.put("disabledForChains", disabledForChains);
+
                     apiTags.put(apiTag.name(), tagJSON);
                 }
                 response.put("apiTags", apiTags);
@@ -236,6 +265,11 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                     JSONArray disabledTransactionTypes = new JSONArray();
                     chain.getDisabledTransactionTypes().forEach(type -> disabledTransactionTypes.add(type.getName()));
                     json.put("disabledTransactionTypes", disabledTransactionTypes);
+
+                    JSONArray disabledAPITagsForChain = new JSONArray();
+                    chain.getDisabledAPITags().forEach(tag -> disabledAPITagsForChain.add(tag.name()));
+                    json.put("disabledAPITags", disabledAPITagsForChain);
+
                     chainPropertiesJSON.put(chain.getId(), json);
                 });
                 response.put("chainProperties", chainPropertiesJSON);
