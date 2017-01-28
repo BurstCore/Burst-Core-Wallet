@@ -1919,7 +1919,7 @@
   "sell_order_description_help": "Per whole asset sold you will receive __coin_amount__ __coin__, making a total of __total_coin__ __coin__ once everything has been sold.",
   "total_chain": "Total Chain",
   "total_exchange": "Total Exchange",
-  "shuffling_node_running_warning": "After creating or joining a shuffling, you must keep your node online and your shuffler running, leaving enough funds in your account to cover shuffling fees, until the shuffling completes! If you don't and miss your turn, you will be charged 1000 Ardor.",
+  "shuffling_node_running_warning": "After creating or joining a shuffling, you must keep your node online and your shuffler running, leaving enough funds in your account to cover shuffling fees, until the shuffling completes! If you don't and miss your turn, you will be charged __deposit__ __coin__.",
   "fee_ratio": "Fee Ratio",
   "recipients": "Recipients",
   "recipient_public_keys": "Recipient Public Keys",

@@ -233,6 +233,7 @@ var NRS = (function(NRS, $) {
 
     NRS.pages.active_shufflings = function () {
         NRS.finished_shufflings("finished_shufflings",false);
+
         async.waterfall([
             function(callback) {
                 getShufflers(callback);
@@ -243,7 +244,11 @@ var NRS = (function(NRS, $) {
                     errorMessage: null,
                     isLoading: true,
                     isEmpty: false,
-                    shufflings: []
+                    shufflings: [],
+                    shufflingWarning: $.t("shuffling_node_running_warning", {
+                        deposit: NRS.formatQuantity(NRS.getActiveChain().SHUFFLING_DEPOSIT_NQT, NRS.getActiveChainDecimals()),
+                        coin: NRS.getActiveChainName()
+                    })
                 });
                 var params = {
                     "firstIndex": NRS.pageNumber * NRS.itemsPerPage - NRS.itemsPerPage,
@@ -301,7 +306,11 @@ var NRS = (function(NRS, $) {
                     errorMessage: null,
                     isLoading: true,
                     isEmpty: false,
-                    shufflings: []
+                    shufflings: [],
+                    shufflingWarning: $.t("shuffling_node_running_warning", {
+                        deposit: NRS.formatQuantity(NRS.getActiveChain().SHUFFLING_DEPOSIT_NQT, NRS.getActiveChainDecimals()),
+                        coin: NRS.getActiveChainName()
+                    })
                 });
                 var params = {
                     "firstIndex": NRS.pageNumber * NRS.itemsPerPage - NRS.itemsPerPage,

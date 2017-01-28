@@ -105,6 +105,9 @@ var NRS = (function(NRS, $) {
         NRS.setJSONItem("mobile_settings", NRS.mobileSettings);
         $(".coin-symbol").html(NRS.getActiveChainName());
         $(".parent-coin-symbol").html(NRS.getParentChainName());
+        $(".shuffling-node-running-warning").html($.t("shuffling_node_running_warning",
+            { deposit: NRS.formatQuantity(NRS.getActiveChain().SHUFFLING_DEPOSIT_NQT, NRS.getActiveChainDecimals()), coin: NRS.getActiveChainName() }
+        ));
     };
 
     NRS.getActiveChain = function() {
