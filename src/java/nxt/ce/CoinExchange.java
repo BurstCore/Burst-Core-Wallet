@@ -534,10 +534,7 @@ public final class CoinExchange {
         public final long getAskPriceNQT() {
             BigDecimal[] amounts = askPrice.movePointRight(Chain.getChain(exchangeId).getDecimals())
                                         .divideAndRemainder(BigDecimal.ONE, MathContext.DECIMAL128);
-            long askPriceNQT = amounts[0].longValue();
-            if (amounts[1].signum() != 0) {
-                askPriceNQT++;
-            }
+            long askPriceNQT = amounts[0].longValue() + (amounts[1].signum() != 0 ? 1 : 0);
             return askPriceNQT;
         }
 

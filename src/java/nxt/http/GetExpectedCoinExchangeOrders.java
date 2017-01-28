@@ -55,13 +55,8 @@ public final class GetExpectedCoinExchangeOrders extends APIServlet.APIRequestHa
                 return false;
             }
             OrderIssueAttachment orderIssueAttachment = (OrderIssueAttachment)transaction.getAttachment();
-            if (chain != null && chain != orderIssueAttachment.getChain()) {
-                return false;
-            }
-            if (exchange != null && exchange != orderIssueAttachment.getExchangeChain()) {
-                return false;
-            }
-            return true;
+            return (!((chain != null && chain != orderIssueAttachment.getChain()) ||
+                      (exchange != null && exchange != orderIssueAttachment.getExchangeChain())));
         };
 
         List<? extends Transaction> transactions = Nxt.getBlockchain().getExpectedTransactions(filter);
