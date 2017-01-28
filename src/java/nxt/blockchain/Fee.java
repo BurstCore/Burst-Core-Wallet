@@ -20,7 +20,7 @@ import nxt.Constants;
 
 public interface Fee {
 
-    public static final long NEW_ACCOUNT_FEE = Constants.ONE_FXT;
+    long NEW_ACCOUNT_FEE = Constants.ONE_FXT;
 
     long getFee(TransactionImpl transaction, Appendix appendage);
 
