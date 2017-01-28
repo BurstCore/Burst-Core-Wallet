@@ -137,7 +137,7 @@
                                         </div>
                                         <div class="box-body no-padding" style="display:none">
                                             <div style="background-color:#DFF0D9;color: #666;padding-left:10px;padding-right: 10px;padding-top: 0;padding-bottom:3px;" id="buy_automatic_price">
-                                                <strong data-i18n="balance">Balance</strong>: <span id="your_nxt_balance"></span> <span class="coin-symbol"></span>
+                                                <strong data-i18n="balance">Balance</strong>: <span id="your_coin_balance"></span> <span class="coin-symbol"></span>
                                             </div>
                                         
                                             <form role="form" class="form-horizontal" style="padding: 10px;;max-width:350px;margin-left:auto;margin-right:auto;" autocomplete="off">
@@ -156,7 +156,7 @@
                                                         <div class="col-sm-9">
                                                             <div class="input-group">
                                                                 <input id="buy_coin_price" type="text" value="0" name="buy_coin_price" class="form-control" data-type="buy" />
-                                                                <span class="input-group-addon"><span class="coin-symbol"></span> / <span class="coin_name"></span></span>
+                                                                <span class="input-group-addon"><span class="coin_name"></span> / <span class="coin-symbol"></span></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -191,9 +191,9 @@
                                                     <tr>
                                                         <th></th>
                                                         <th data-i18n="account">Account</th>
-                                                        <th data-i18n="amount" class='numeric'>Amount</th>
-                                                        <th data-i18n="price" class='numeric'>Price</th>
-                                                        <th data-i18n="total" class='numeric'>Total</th>
+                                                        <th id="coin_exchange_counter_coin" class='numeric'></th>
+                                                        <th data-i18n="rate" class='numeric'>Rate</th>
+                                                        <th id="coin_exchange_base_coin" class='numeric'></th>
                                                         <th data-i18n="sum" class='numeric'>Sum</th>
                                                     </tr>
                                                     </thead>
