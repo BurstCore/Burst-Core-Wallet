@@ -47,6 +47,10 @@ public final class StartBundler extends APIServlet.APIRequestHandler {
         if (totalFeesLimitFQT > FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()) {
             return JSONResponses.NOT_ENOUGH_FUNDS;
         }
+        Account account = Account.getAccount(accountId);
+        if (account != null && account.getControls().contains(Account.ControlType.PHASING_ONLY)) {
+            return JSONResponses.error("Accounts under phasing only control cannot run a bundler");
+        }
         Bundler bundler = Bundler.addOrChangeBundler(childChain, secretPhrase, minRateNQTPerFXT, totalFeesLimitFQT, overpayFQTPerFXT);
         Peers.broadcastBundlerRates();
         return JSONData.bundler(bundler);
