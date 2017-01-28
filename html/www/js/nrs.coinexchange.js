@@ -1150,7 +1150,7 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.getTransactionLink(order.orderFullHash, false, false, order.chain) + "</td>" +
                         "<td>" + NRS.getChainLink(order.exchange) + "</td>" +
                         "<td>" + NRS.getAccountLink(order, "account") + "</td>" +
-                        "<td>" + NRS.formatQuantity(order.quantityQNT, decimals) + "</td>" +
+                        "<td>" + NRS.formatQuantity(order.quantityQNT, exchangeDecimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.bidNQT, decimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.exchangeQNT, decimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.askNQT, exchangeDecimals) + "</td>" +

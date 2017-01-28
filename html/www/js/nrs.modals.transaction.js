@@ -1515,7 +1515,7 @@ var NRS = (function (NRS, $, undefined) {
                 data["trades"] = $.t("no_matching_trade");
             }
             data["total_exchange_formatted_html"] = NRS.formatQuantity(tradeQuantity, exchangeChainDecimals) +  " " + NRS.getChain(transaction.attachment.exchangeChain).name;
-            data["total_chain_formatted_html"] = NRS.formatQuantity(tradeTotal, chainDecimals + 8) + " " + NRS.getChain(transaction.chain).name;
+            data["total_chain_formatted_html"] = NRS.formatQuantity(tradeTotal, exchangeChainDecimals + 8) + " " + NRS.getChain(transaction.chain).name;
         }, { isAsync: false });
 
         var infoTable = $("#transaction_info_table");
