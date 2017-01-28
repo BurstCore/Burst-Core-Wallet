@@ -108,7 +108,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     public final T get(DbKey dbKey, int height) {
-        if (height < 0 || height == Nxt.getBlockchain().getHeight()) {
+        if (height < 0 || doesNotExceed(height)) {
             return get(dbKey);
         }
         checkAvailable(height);
@@ -140,7 +140,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     public final T getBy(DbClause dbClause, int height) {
-        if (height < 0 || height == Nxt.getBlockchain().getHeight()) {
+        if (height < 0 || doesNotExceed(height)) {
             return getBy(dbClause);
         }
         checkAvailable(height);
@@ -212,7 +212,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     public final DbIterator<T> getManyBy(DbClause dbClause, int height, int from, int to, String sort) {
-        if (height < 0 || height == Nxt.getBlockchain().getHeight()) {
+        if (height < 0 || doesNotExceed(height)) {
             return getManyBy(dbClause, from, to, sort);
         }
         checkAvailable(height);
@@ -309,7 +309,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     public final DbIterator<T> getAll(int height, int from, int to, String sort) {
-        if (height < 0 || height == Nxt.getBlockchain().getHeight()) {
+        if (height < 0 || doesNotExceed(height)) {
             return getAll(from, to, sort);
         }
         checkAvailable(height);
@@ -358,7 +358,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     public final int getCount(DbClause dbClause, int height) {
-        if (height < 0 || height == Nxt.getBlockchain().getHeight()) {
+        if (height < 0 || doesNotExceed(height)) {
             return getCount(dbClause);
         }
         checkAvailable(height);
@@ -455,6 +455,10 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
             Logger.logDebugMessage("Creating search index on " + schemaTable + " (" + fullTextSearchColumns + ")");
             FullTextTrigger.createIndex(con, schema, table, fullTextSearchColumns);
         }
+    }
+
+    private boolean doesNotExceed(int height) {
+        return Nxt.getBlockchain().getHeight() <= height && ! (isPersistent() && Nxt.getBlockchainProcessor().isScanning());
     }
 
 }
