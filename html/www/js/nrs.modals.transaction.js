@@ -1501,8 +1501,9 @@ var NRS = (function (NRS, $, undefined) {
                     var trade = response.trades[i];
                     tradeQuantity = tradeQuantity.add(new BigInteger(trade.quantityQNT));
                     tradeTotal = tradeTotal.add(new BigInteger(NRS.multiply(trade.quantityQNT, NRS.floatToInt(trade.exchangeRate, 8))));
+                    var linkChain = (transaction.chain == "1" ? "1" : transaction.attachment.exchangeChain);
                     rows += "<tr>" +
-                        "<td>" + NRS.getTransactionLink(trade.matchFullHash, NRS.formatTimestamp(trade.timestamp), false, transaction.attachment.exchangeChain) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(trade.matchFullHash, NRS.formatTimestamp(trade.timestamp), false, linkChain) + "</td>" +
                         "<td>" + NRS.formatQuantity(trade.quantityQNT, exchangeChainDecimals) + "</td>" +
                         "<td>" + String(trade.exchangeRate).escapeHTML() + "</td>" +
                         "<td>" + NRS.formatQuantity(NRS.multiply(trade.quantityQNT, NRS.floatToInt(trade.exchangeRate, 8)), exchangeChainDecimals + 8) +
