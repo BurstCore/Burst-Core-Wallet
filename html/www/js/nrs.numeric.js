@@ -20,6 +20,16 @@
 
 var NRS = (function (NRS, $) {
 
+    NRS.calculatePricePerWholeQNT = function (price, decimals) {
+        price = String(price);
+        var toRemove = price.slice(-decimals);
+        if (!/^[0]+$/.test(toRemove)) {
+            throw $.t("error_invalid_input", "calculatePricePerWholeQNT price " + price + " decimal " + decimals);
+        } else {
+            return price.slice(0, -decimals);
+        }
+    };
+
     NRS.multiply = function(quantityQNT, priceNQT) {
         if (typeof quantityQNT != "object") {
             quantityQNT = new BigInteger(String(quantityQNT));

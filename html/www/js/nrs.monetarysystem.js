@@ -1407,7 +1407,8 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.forms.currencyReserveIncrease = function ($modal) {
         var data = NRS.getFormData($modal.find("form:first"));
-        data.amountPerUnitNQT = NRS.convertToQNTf(data.amountPerUnitNQT, NRS.getActiveChainDecimals());
+        var decimals = parseInt(data.decimals, 10);
+        data.amountPerUnitNQT = NRS.calculatePricePerWholeQNT(NRS.convertToNQT(data.amountPerUnitNQT), decimals);
         return {
             "data": data
         };

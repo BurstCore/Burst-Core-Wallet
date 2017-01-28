@@ -990,8 +990,8 @@ var NRS = (function (NRS, $, undefined) {
                             "type": $.t("reserve_increase"),
                             "code": currency.code,
                             "reserve_units": [resSupply, currency.decimals],
-                            "amount_per_unit_formatted_html": NRS.formatAmount(amountPerUnitNQT) + " " + NRS.getChain(transaction.chain).name,
-                            "reserved_amount_formatted_html": NRS.formatAmount(NRS.multiply(amountPerUnitNQT, NRS.convertToQNTf(resSupply, currency.decimals))) + " " + NRS.getChain(transaction.chain).name
+                            "amount_per_unit_formatted_html": NRS.formatQuantity(amountPerUnitNQT, NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name,
+                            "reserved_amount_formatted_html": NRS.formatQuantity(NRS.multiply(amountPerUnitNQT, NRS.convertToQNTf(resSupply, currency.decimals)), NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name
                         };
                     } else {
                         data = NRS.getUnknownCurrencyData(transaction);
@@ -1003,7 +1003,7 @@ var NRS = (function (NRS, $, undefined) {
                             "type": $.t("reserve_claim"),
                             "code": currency.code,
                             "unitsQNT": [transaction.attachment.unitsQNT, currency.decimals],
-                            "claimed_amount_formatted_html": NRS.formatAmount(NRS.convertToQNTf(NRS.multiply(reservePerUnitNQT, transaction.attachment.unitsQNT), currency.decimals)) + " " + NRS.getChain(transaction.chain).name
+                            "claimed_amount_formatted_html": NRS.formatQuantity(NRS.convertToQNTf(NRS.multiply(reservePerUnitNQT, transaction.attachment.unitsQNT), currency.decimals), NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name
                         };
                     } else {
                         data = NRS.getUnknownCurrencyData(transaction);
