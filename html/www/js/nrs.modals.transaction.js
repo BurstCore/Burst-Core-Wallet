@@ -155,10 +155,10 @@ var NRS = (function (NRS, $, undefined) {
                 delete transactionDetails.referencedTransaction;
             }
             transactionDetails.entity = NRS.fullHashToId(transactionDetails.fullHash);
-            if (transaction.fxtTransaction) {
+            if (transaction.fxtTransaction && transaction.fxtTransaction != 0)   {
                 transactionDetails.fxt_transaction_formatted_html = NRS.getTransactionLink(null, null, false, null, transaction.fxtTransaction);
-                delete transactionDetails.fxtTransaction;
             }
+            delete transactionDetails.fxtTransaction;
             if (!transactionDetails.confirmations) {
                 transactionDetails.confirmations = "/";
             }
@@ -498,7 +498,11 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "AccountPropertyDelete")) {
                 data = {
                     "type": $.t("delete_account_property"),
-                    "property_formatted_html": NRS.getEntityLink(transaction.attachment.property, 5)
+                    // TODO currently we cannot use NRS.getEntityLink() here since there is no one parameter getProperty API
+                    // and we cannot pass more than once param to key and id. In addition we only have the 64 bit id of the
+                    // property not the full hash so we cannot load the setProperty transaction.
+                    // Will solve this one day
+                    "property": transaction.attachment.property
                 };
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();
