@@ -1930,5 +1930,8 @@
   "bid_amount": "Bid Amount",
   "bid_rate": "Bid Rate",
   "ask_amount": "Ask Amount",
-  "ask_rate": "Ask Rate"
+  "ask_rate": "Ask Rate",
+  "reserved_amount": "Reserved Amount",
+  "creation_height": "Creation Height",
+  "types": "Types"
 }
