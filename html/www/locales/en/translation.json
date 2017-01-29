@@ -1935,5 +1935,6 @@
   "creation_height": "Creation Height",
   "types": "Types",
   "claimed_amount": "Claimed Amount",
-  "disabled_transaction_types": "Disabled Transaction Types"
+  "disabled_transaction_types": "Disabled Transaction Types",
+  "fee_not_specified": "Fee not specified, best bundling fee has been calculated"
 }

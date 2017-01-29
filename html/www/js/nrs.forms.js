@@ -385,10 +385,16 @@ var NRS = (function(NRS, $) {
             data.feeNXT = "0";
             $form.find(".error_message").html("").hide();
         } else {
-            delete data.calculateFee;
-            if (!data.feeNXT) {
+			if ((!data.feeNXT || data.feeNXT == 0) && (!data.feeRateNQTPerFXT || data.feeRateNQTPerFXT == 0)) {
+                data.calculateFee = true;
                 data.feeNXT = "0";
-            }
+                $form.find(".error_message").html($.t("fee_not_specified")).show();
+			} else {
+                delete data.calculateFee;
+                if (!data.feeNXT) {
+                    data.feeNXT = "0";
+                }
+			}
         }
 
 		if (data.recipient) {
