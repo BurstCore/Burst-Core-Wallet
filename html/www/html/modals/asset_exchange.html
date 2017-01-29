@@ -397,6 +397,24 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-xs-6 col-sm-6 col-md-6">
+                                <label for="dividend_payment_holding_type" data-18n="holding_type">Holding Type</label>
+                                <select name="holdingType" id="dividend_payment_holding_type" class="form-control" data-default="0" tabindex="1">
+                                    <option selected value="0" class="coin-symbol"></option>
+                                    <option value="1" data-i18n="asset">Asset</option>
+                                    <option value="2" data-i18n="currency">Currency</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12 col-sm-12 col-md-12" aria-hidden="true" id="dividend_payment_asset_id_group" style="display: none;">
+                                <div class="form-group dividend_payment_holding_asset" data-modal-ui-element="add_asset_modal_ui_element"></div>
+                            </div>
+                            <div class="col-xs-12 col-sm-12 col-md-12" aria-hidden="true" id="dividend_payment_ms_currency_group" style="display: none;">
+                                <div class="form-group dividend_payment_holding_currency" data-modal-ui-element="add_currency_modal_ui_element"></div>
+                            </div>
+                        </div>
                         <div class="col-xs-6 col-sm-6 col-md-6">
                             <div class="form-group">
                                 <label for="dividend_payment_height"><span data-i18n="height">HEIGHT</span></label> <i>Current Height: <span class="nrs_current_block"></span></i> <i class="fa fa-exclamation-circle show_popover" data-content="Dividend calculation height must be within the last 1440 blocks." data-i18n="[data-content]dividend_payment_height_help" data-container="body" style="color:red"></i>

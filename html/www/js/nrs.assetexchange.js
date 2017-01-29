@@ -2099,6 +2099,7 @@ var NRS = (function (NRS, $, undefined) {
             "modalId": 'issue_asset_modal'
         };
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
+        $('#dividend_payment_holding_type').change();
     };
 
     NRS.getAssetCallout = function(infoCallout, asset) {

@@ -22,13 +22,17 @@ var NRS = (function(NRS, $) {
 
     NRS.forms.dividendPayment = function($modal) {
         var data = NRS.getFormData($modal.find("form:first"));
+        if (data.holdingType == "0") {
+            data.holding = NRS.getActiveChainId();
+        }
         data.asset = NRS.getCurrentAsset().asset;
         if (!data.amountNXTPerShare) {
             return {
                 "error": $.t("error_amount_per_share_required")
             }
         } else {
-            data.amountNQTPerShare = NRS.convertToNQT(data.amountNXTPerShare);
+            var decimals = data.dividend_payment_decimals ? data.dividend_payment_decimals : NRS.getActiveChainDecimals();
+            data.amountNQTPerShare = NRS.floatToInt(data.amountNXTPerShare, decimals);
         }
         if (!/^\d+$/.test(data.height)) {
             return {
@@ -41,7 +45,38 @@ var NRS = (function(NRS, $) {
         };
     };
 
-    $("#dividend_payment_modal").on("hidden.bs.modal", function() {
+    var dividendPaymentModal = $("#dividend_payment_modal");
+    dividendPaymentModal.on("show.bs.modal", function() {
+        var context = {
+            labelText: "Currency",
+            labelI18n: "currency",
+            inputCodeName: "dividend_payment_ms_code",
+            inputIdName: "holding",
+            inputDecimalsName: "dividend_payment_decimals",
+            helpI18n: "add_currency_modal_help"
+        };
+        NRS.initModalUIElement($(this), '.dividend_payment_holding_currency', 'add_currency_modal_ui_element', context);
+
+        context = {
+            labelText: "Asset",
+            labelI18n: "asset",
+            inputIdName: "holding",
+            inputDecimalsName: "dividend_payment_decimals",
+            helpI18n: "add_asset_modal_help"
+        };
+        NRS.initModalUIElement($(this), '.dividend_payment_holding_asset', 'add_asset_modal_ui_element', context);
+
+        // Activating context help popovers - from some reason this code is activated
+        // after the same event in nrs.modals.js which doesn't happen for create pool thus it's necessary
+        // to explicitly enable the popover here. strange ...
+        $(function () {
+            $("[data-toggle='popover']").popover({
+                "html": true
+            });
+        });
+    });
+
+    dividendPaymentModal.on("hidden.bs.modal", function() {
         $(this).find(".dividend_payment_info").first().hide();
     });
 
@@ -96,6 +131,20 @@ var NRS = (function(NRS, $) {
                     $callout.removeClass(classes).addClass("callout-warning").show();
                 }
             );
+        }
+    });
+
+    $('#dividend_payment_holding_type').change(function () {
+        var holdingType = $("#dividend_payment_holding_type");
+        if(holdingType.val() == "0") {
+            $("#dividend_payment_asset_id_group").css("display", "none");
+            $("#dividend_payment_ms_currency_group").css("display", "none");
+        } if(holdingType.val() == "1") {
+            $("#dividend_payment_asset_id_group").css("display", "inline");
+            $("#dividend_payment_ms_currency_group").css("display", "none");
+        } else if(holdingType.val() == "2") {
+            $("#dividend_payment_asset_id_group").css("display", "none");
+            $("#dividend_payment_ms_currency_group").css("display", "inline");
         }
     });
 
