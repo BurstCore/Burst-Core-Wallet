@@ -1474,5 +1474,19 @@ var NRS = (function (NRS, $, undefined) {
         return NRS.getChain(currency.chain).name + "." + currency.code;
     };
 
+    NRS.getCurrencyCallout = function(infoCallout, currency) {
+        infoCallout.html("");
+        if (currency != null && NRS.isExchangeable(currency.type)) {
+            infoCallout.append("<a href='#' data-goto-currency='" + NRS.escapeRespStr(currency.code) + "'>" + $.t('exchange_booth') + "</a><br/>");
+        }
+        if (currency != null && NRS.isReservable(currency.type)) {
+            infoCallout.append("<a href='#' data-toggle='modal' data-target='#currency_founders_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-name='" + NRS.escapeRespStr(currency.name) + "' data-code='" + NRS.escapeRespStr(currency.code) + "' data-ressupply='" + NRS.escapeRespStr(currency.reserveSupplyQNT) + "' data-initialsupply='" + NRS.escapeRespStr(currency.initialSupplyQNT) + "' data-decimals='" + NRS.escapeRespStr(currency.decimals) + "' data-minreserve='" + NRS.escapeRespStr(currency.minReservePerUnitNQT) + "' data-issueheight='" + NRS.escapeRespStr(currency.issuanceHeight) + "'>View Founders</a><br/>");
+        }
+        if (currency != null) {
+            infoCallout.append("<a href='#' data-toggle='modal' data-target='#currency_distribution_modal' data-code='" + NRS.escapeRespStr(currency.code) + "'  data-i18n='Currency Distribution'>Currency Distribution</a>");
+        }
+        return infoCallout;
+    };
+
     return NRS;
 }(NRS || {}, jQuery));

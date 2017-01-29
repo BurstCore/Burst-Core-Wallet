@@ -2101,5 +2101,10 @@ var NRS = (function (NRS, $, undefined) {
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
     };
 
+    NRS.getAssetCallout = function(infoCallout, asset) {
+        infoCallout.html("<a href='#' data-goto-asset='" + asset.asset + "'>Click here</a> to view this asset in the Asset Exchange.").show();
+        return infoCallout;
+    };
+
     return NRS;
 }(NRS || {}, jQuery));

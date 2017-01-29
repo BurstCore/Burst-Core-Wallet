@@ -521,8 +521,7 @@ var NRS = (function (NRS, $, undefined) {
                         data["quantity"] = [asset.quantityQNT, transaction.attachment.decimals];
                     }
                     data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                    $("#transaction_info_callout").html("<a href='#' data-goto-asset='" + NRS.fullHashToId(transaction.fullHash) + "'>Click here</a> to view this asset in the Asset Exchange.").show();
-
+                    NRS.getAssetCallout($("#transaction_info_callout"), asset);
                     infoTable.find("tbody").append(NRS.createInfoTable(data));
                     infoTable.show();
                 });
@@ -1063,18 +1062,8 @@ var NRS = (function (NRS, $, undefined) {
                         data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
                     }
                     var infoCallout = $("#transaction_info_callout");
-                    infoCallout.html("");
-                    if (currency != null && NRS.isExchangeable(currency.type)) {
-                        infoCallout.append("<a href='#' data-goto-currency='" + NRS.escapeRespStr(currency.code) + "'>" + $.t('exchange_booth') + "</a><br/>");
-                    }
-                    if (currency != null && NRS.isReservable(currency.type)) {
-                        infoCallout.append("<a href='#' data-toggle='modal' data-target='#currency_founders_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-name='" + NRS.escapeRespStr(currency.name) + "' data-code='" + NRS.escapeRespStr(currency.code) + "' data-ressupply='" + NRS.escapeRespStr(currency.reserveSupplyQNT) + "' data-initialsupply='" + NRS.escapeRespStr(currency.initialSupplyQNT) + "' data-decimals='" + NRS.escapeRespStr(currency.decimals) + "' data-minreserve='" + NRS.escapeRespStr(currency.minReservePerUnitNQT) + "' data-issueheight='" + NRS.escapeRespStr(currency.issuanceHeight) + "'>View Founders</a><br/>");
-                    }
-                    if (currency != null) {
-                        infoCallout.append("<a href='#' data-toggle='modal' data-target='#currency_distribution_modal' data-code='" + NRS.escapeRespStr(currency.code) + "'  data-i18n='Currency Distribution'>Currency Distribution</a>");
-                    }
+                    NRS.getCurrencyCallout(infoCallout, currency);
                     infoCallout.show();
-
                     infoTable.find("tbody").append(NRS.createInfoTable(data));
                     infoTable.show();
 
