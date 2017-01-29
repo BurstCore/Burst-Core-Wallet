@@ -1933,5 +1933,6 @@
   "ask_rate": "Ask Rate",
   "reserved_amount": "Reserved Amount",
   "creation_height": "Creation Height",
-  "types": "Types"
+  "types": "Types",
+  "claimed_amount": "Claimed Amount"
 }
