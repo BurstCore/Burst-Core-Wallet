@@ -319,17 +319,33 @@ var NRS = (function (NRS, $, undefined) {
     NRS.getHoldingLink = function(holding, holdingType, text) {
         var request;
         var key;
-        if (holdingType == 2) {
+        if (holdingType == 1) {
             request = "getAsset";
             key = "asset";
         } else {
-            request = getCurrency;
+            request = "getCurrency";
             key = "currency";
         }
         if (!text) {
             text = holding;
         }
-        NRS.getEntityLink({ request: request, id: holding, key: key, text: text })
+        return NRS.getEntityLink({ request: request, id: holding, key: key, text: text })
+    };
+
+    NRS.getLedgerHoldingLink = function(holding, ledgerHoldingType, text) {
+        var request;
+        var key;
+        if (ledgerHoldingType == 3 || ledgerHoldingType == 4) {
+            request = "getAsset";
+            key = "asset";
+        } else {
+            request = "getCurrency";
+            key = "currency";
+        }
+        if (!text) {
+            text = holding;
+        }
+        return NRS.getEntityLink({ request: request, id: holding, key: key, text: text })
     };
 
     NRS.getEntityLink = function(options) {

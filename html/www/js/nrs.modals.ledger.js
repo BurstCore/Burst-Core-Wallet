@@ -60,7 +60,7 @@ var NRS = (function(NRS, $) {
                 if (entryDetails.holdingTypeCode <= 2) {
                     entryDetails.holding_formatted_html = NRS.getChainLink(entry.chain);
                 } else {
-                    entryDetails.holding_formatted_html = NRS.getHoldingLink(entry.holding, entryDetails.holdingType);
+                    entryDetails.holding_formatted_html = NRS.getLedgerHoldingLink(entry.holding, entryDetails.holdingTypeCode);
                 }
                 delete entryDetails.holding;
                 delete entryDetails.holdingTypeCode;
