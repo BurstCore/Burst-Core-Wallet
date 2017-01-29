@@ -205,7 +205,9 @@ var NRS = (function (NRS, $, undefined) {
                 "<td>";
             //noinspection BadExpressionStatementJS
             rows += "<a href='#' class='btn btn-xs btn-default' onClick='NRS.goToCurrency(&quot;" + code + "&quot;)' " + (!NRS.isExchangeable(currency.type) ? "disabled" : "") + ">" + $.t("exchange") + "</a> ";
-            rows += "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#reserve_currency_modal' data-currency='" + currencyId + "' data-name='" + name + "' data-code='" + code + "' data-ressupply='" + resSupply + "' data-decimals='" + decimals + "' data-minreserve='" + minReserve + "' " + (currency.issuanceHeight > NRS.lastBlockHeight && NRS.isReservable(currency.type) ? "" : "disabled") + " >" + $.t("reserve") + "</a> ";
+            if (NRS.getActiveChainId() == currency.chain && currency.issuanceHeight > NRS.lastBlockHeight && NRS.isReservable(currency.type)) {
+                rows += "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#reserve_currency_modal' data-currency='" + currencyId + "' data-name='" + name + "' data-code='" + code + "' data-ressupply='" + resSupply + "' data-decimals='" + decimals + "' data-minreserve='" + minReserve + "'>" + $.t("reserve") + "</a> ";
+            }
             rows += "</td></tr>";
         }
         return rows;
@@ -761,10 +763,11 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" +
                         "<a href='#' class='btn btn-xs btn-default' onClick='NRS.goToCurrency(&quot;" + code + "&quot;)' " + (!NRS.isExchangeable(currency.type) ? "disabled" : "") + ">" + $.t("exchange") + "</a> " +
                         "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#transfer_currency_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-code='" + code + "' data-decimals='" + decimals + "'>" + $.t("transfer") + "</a> " +
-                        "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#publish_exchange_offer_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-code='" + code + "' data-decimals='" + decimals + "' " + (isOfferEnabled ? "" : "disabled") + " >" + $.t("offer") + "</a> " +
-                        "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#claim_currency_modal' data-currency='" + currencyId + "' data-name='" + name + "' data-code='" + code + "' data-decimals='" + decimals + "' " + (currency.issuanceHeight <= NRS.lastBlockHeight && NRS.isClaimable(currency.type) ? "" : "disabled") + " >" + $.t("claim") + "</a> " +
-                        "</td>" +
-                        "</tr>";
+                        "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#publish_exchange_offer_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-code='" + code + "' data-decimals='" + decimals + "' " + (isOfferEnabled ? "" : "disabled") + " >" + $.t("offer") + "</a> ";
+                        if (NRS.getActiveChainId() == currency.chain && currency.issuanceHeight <= NRS.lastBlockHeight && NRS.isClaimable(currency.type)) {
+                            rows += "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#claim_currency_modal' data-currency='" + currencyId + "' data-name='" + name + "' data-code='" + code + "' data-decimals='" + decimals + "'>" + $.t("claim") + "</a> ";
+                        }
+                        rows += "</td></tr>";
                     }
                     var currenciesTable = $('#currencies_table');
                     currenciesTable.find('[data-i18n="type"]').show();
@@ -1476,15 +1479,16 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.getCurrencyCallout = function(infoCallout, currency) {
         infoCallout.html("");
-        if (currency != null && NRS.isExchangeable(currency.type)) {
+        if (currency == null) {
+            return;
+        }
+        if (NRS.isExchangeable(currency.type)) {
             infoCallout.append("<a href='#' data-goto-currency='" + NRS.escapeRespStr(currency.code) + "'>" + $.t('exchange_booth') + "</a><br/>");
         }
-        if (currency != null && NRS.isReservable(currency.type)) {
+        if (NRS.isReservable(currency.type) && NRS.getActiveChainId() == currency.chain) {
             infoCallout.append("<a href='#' data-toggle='modal' data-target='#currency_founders_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-name='" + NRS.escapeRespStr(currency.name) + "' data-code='" + NRS.escapeRespStr(currency.code) + "' data-ressupply='" + NRS.escapeRespStr(currency.reserveSupplyQNT) + "' data-initialsupply='" + NRS.escapeRespStr(currency.initialSupplyQNT) + "' data-decimals='" + NRS.escapeRespStr(currency.decimals) + "' data-minreserve='" + NRS.escapeRespStr(currency.minReservePerUnitNQT) + "' data-issueheight='" + NRS.escapeRespStr(currency.issuanceHeight) + "'>View Founders</a><br/>");
         }
-        if (currency != null) {
-            infoCallout.append("<a href='#' data-toggle='modal' data-target='#currency_distribution_modal' data-code='" + NRS.escapeRespStr(currency.code) + "'  data-i18n='Currency Distribution'>Currency Distribution</a>");
-        }
+        infoCallout.append("<a href='#' data-toggle='modal' data-target='#currency_distribution_modal' data-code='" + NRS.escapeRespStr(currency.code) + "'  data-i18n='Currency Distribution'>Currency Distribution</a>");
         return infoCallout;
     };
 
