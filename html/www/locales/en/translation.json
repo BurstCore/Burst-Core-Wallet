@@ -1934,5 +1934,6 @@
   "reserved_amount": "Reserved Amount",
   "creation_height": "Creation Height",
   "types": "Types",
-  "claimed_amount": "Claimed Amount"
+  "claimed_amount": "Claimed Amount",
+  "disabled_transaction_types": "Disabled Transaction Types"
 }
