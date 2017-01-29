@@ -271,7 +271,11 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             if (attachment.getAmountPerUnitNQT() <= 0) {
                 throw new NxtException.NotValidException("Reserve increase NXT amount must be positive: " + attachment.getAmountPerUnitNQT());
             }
-            CurrencyType.validate(Currency.getCurrency(attachment.getCurrencyId()), transaction);
+            Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+            CurrencyType.validate(currency, transaction);
+            if (currency.getChildChain() != transaction.getChain()) {
+                throw new NxtException.NotValidException("Reserve increase must be submitted on the chain on which the currency was issued");
+            }
         }
 
         @Override
@@ -350,7 +354,11 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
             if (attachment.getUnitsQNT() <= 0) {
                 throw new NxtException.NotValidException("Reserve claim number of units must be positive: " + attachment.getUnitsQNT());
             }
-            CurrencyType.validate(Currency.getCurrency(attachment.getCurrencyId()), transaction);
+            Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+            CurrencyType.validate(currency, transaction);
+            if (currency.getChildChain() != transaction.getChain()) {
+                throw new NxtException.NotValidException("Reserve claim must be submitted on the chain on which the currency was issued");
+            }
         }
 
         @Override
