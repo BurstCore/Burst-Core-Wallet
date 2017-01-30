@@ -93,6 +93,7 @@ var NRS = (function(NRS, $) {
         var $modal = $(this).closest(".modal");
         var amountNXTPerShare = $modal.find("#dividend_payment_amount_per_share").val();
         var height = $modal.find("#dividend_payment_height").val();
+        var holdingType = $modal.find("#dividend_payment_holding_type").val();
         var $callout = $modal.find(".dividend_payment_info").first();
         var classes = "callout-info callout-danger callout-warning";
         if (amountNXTPerShare && /^\d+$/.test(height)) {
@@ -109,12 +110,32 @@ var NRS = (function(NRS, $) {
                             totalQuantityQNT = totalQuantityQNT.add(new BigInteger(accountAsset.quantityQNT));
                         }
                     );
-                    var priceNQT = new BigInteger(NRS.convertToNQT(amountNXTPerShare));
+                    var decimals;
+                    var holding;
+                    switch (holdingType) {
+                        case "0":
+                            decimals = NRS.getActiveChainDecimals();
+                            holding = NRS.getActiveChainName();
+                            holdingType = "";
+                            break;
+                        case "1":
+                            decimals = $modal.find('.aam_ue_asset_decimals_input').val();
+                            holding = $modal.find('.aam_ue_asset_id_input').val();
+                            holdingType = $.t("shares");
+                            break;
+                        case "2":
+                            decimals = $modal.find('.acm_ue_currency_decimals_input').val();
+                            holding = $modal.find('.acm_ue_currency_code_input').val();
+                            holdingType = $.t("units");
+                            break;
+                    }
+                    var priceNQT = new BigInteger(NRS.floatToInt(amountNXTPerShare, decimals));
                     var totalNQT = totalQuantityQNT.multiply(priceNQT);
 
                     $callout.html($.t("dividend_payment_info_preview_success", {
-                        "amountNXT": NRS.intToFloat(totalNQT, NRS.getCurrentAsset().decimals + NRS.getActiveChainDecimals()),
-                        "coin": NRS.getActiveChainName(),
+                        "amount": NRS.intToFloat(totalNQT, parseInt(NRS.getCurrentAsset().decimals) + parseInt(decimals)),
+                        "holding": holding,
+                        "holdingType": holdingType,
                         "totalQuantity": NRS.formatQuantity(totalQuantityQNT, NRS.getCurrentAsset().decimals),
                         "recipientCount": qualifiedDividendRecipients.length
                     }));

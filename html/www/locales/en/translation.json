@@ -1902,7 +1902,6 @@
   "sell_asset_for_coin": "Sell __assetName__ for __coin__",
   "error_invalid_input": "Invalid input: __input__",
   "error_invalid_input_numbers": "Invalid input. Only numbers and a dot are accepted: __input__",
-  "dividend_payment_info_preview_success": "A total of __amountNXT__ __coin__ will be distributed among __recipientCount__ accounts which own a total of __totalQuantity__ shares.",
   "child_block": "Child Block",
   "unconfirmed_coin_balance": "Unconfirmed Coin Balance",
   "coin_balance": "Coin Balance",
@@ -1936,5 +1935,6 @@
   "types": "Types",
   "claimed_amount": "Claimed Amount",
   "disabled_transaction_types": "Disabled Transaction Types",
-  "fee_not_specified": "Fee not specified, best bundling fee has been calculated"
+  "fee_not_specified": "Fee not specified, best bundling fee has been calculated",
+  "dividend_payment_info_preview_success": "A total of __amount__ __holding__ __holdingType__ will be distributed among __recipientCount__ accounts which own a total of __totalQuantity__ shares."
 }
