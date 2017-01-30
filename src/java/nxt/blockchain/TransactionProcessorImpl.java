@@ -82,7 +82,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
 
     };
 
-    private final EntityDbTable<UnconfirmedTransaction> unconfirmedTransactionTable = new EntityDbTable<UnconfirmedTransaction>("public.unconfirmed_transaction", unconfirmedTransactionDbKeyFactory) {
+    final EntityDbTable<UnconfirmedTransaction> unconfirmedTransactionTable = new EntityDbTable<UnconfirmedTransaction>("public.unconfirmed_transaction", unconfirmedTransactionDbKeyFactory) {
 
         @Override
         protected UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

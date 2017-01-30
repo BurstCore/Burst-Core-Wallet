@@ -69,8 +69,9 @@ public abstract class UnconfirmedTransaction implements Transaction {
     }
 
     void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO unconfirmed_transaction (id, transaction_height, "
+        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO unconfirmed_transaction (id, transaction_height, "
                 + "fee, fee_per_byte, is_bundled, expiration, transaction_bytes, arrival_timestamp, chain_id, height) "
+                + "KEY (id, height) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, transaction.getId());
@@ -97,6 +98,7 @@ public abstract class UnconfirmedTransaction implements Transaction {
 
     void setBundled() {
         isBundled = true;
+        TransactionProcessorImpl.getInstance().unconfirmedTransactionTable.insert(this);
     }
 
     boolean isBundled() {
