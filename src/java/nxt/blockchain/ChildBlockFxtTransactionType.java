@@ -124,6 +124,13 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
 
     @Override
     protected boolean applyAttachmentUnconfirmed(FxtTransactionImpl transaction, Account senderAccount) {
+        TransactionProcessorImpl transactionProcessor = TransactionProcessorImpl.getInstance();
+        for (byte[] hash : ((ChildBlockFxtTransactionImpl)transaction).getChildTransactionFullHashes()) {
+            UnconfirmedTransaction unconfirmedTransaction = transactionProcessor.getUnconfirmedTransaction(Convert.fullHashToId(hash));
+            if (unconfirmedTransaction != null) {
+                unconfirmedTransaction.setBundled();
+            }
+        }
         // child transactions applyAttachmentUnconfirmed called when they are accepted in the unconfirmed pool
         return true;
     }

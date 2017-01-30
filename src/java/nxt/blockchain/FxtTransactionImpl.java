@@ -209,7 +209,7 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
     }
 
     @Override
-    final UnconfirmedFxtTransaction newUnconfirmedTransaction(long arrivalTimestamp) {
+    final UnconfirmedFxtTransaction newUnconfirmedTransaction(long arrivalTimestamp, boolean isBundled) {
         return new UnconfirmedFxtTransaction(this, arrivalTimestamp);
     }
 

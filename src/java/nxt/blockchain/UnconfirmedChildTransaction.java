@@ -27,8 +27,8 @@ import java.sql.SQLException;
 
 final class UnconfirmedChildTransaction extends UnconfirmedTransaction implements ChildTransaction {
 
-    UnconfirmedChildTransaction(ChildTransactionImpl transaction, long arrivalTimestamp) {
-        super(transaction, arrivalTimestamp);
+    UnconfirmedChildTransaction(ChildTransactionImpl transaction, long arrivalTimestamp, boolean isBundled) {
+        super(transaction, arrivalTimestamp, isBundled);
     }
 
     UnconfirmedChildTransaction(ResultSet rs) throws SQLException, NxtException.NotValidException {

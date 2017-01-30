@@ -750,7 +750,7 @@ public abstract class TransactionImpl implements Transaction {
 
     abstract void save(Connection con, String schemaTable) throws SQLException;
 
-    abstract UnconfirmedTransaction newUnconfirmedTransaction(long arrivalTime);
+    abstract UnconfirmedTransaction newUnconfirmedTransaction(long arrivalTime, boolean isBundled);
 
     public static TransactionImpl parseTransaction(byte[] transactionBytes) throws NxtException.NotValidException {
         TransactionImpl transaction = newTransactionBuilder(transactionBytes).build();

@@ -45,11 +45,13 @@ public abstract class UnconfirmedTransaction implements Transaction {
     private final DbKey dbKey;
     private final long arrivalTimestamp;
     private final long feePerByte;
+    private volatile boolean isBundled;
 
-    UnconfirmedTransaction(TransactionImpl transaction, long arrivalTimestamp) {
+    UnconfirmedTransaction(TransactionImpl transaction, long arrivalTimestamp, boolean isBundled) {
         this.transaction = transaction;
         this.arrivalTimestamp = arrivalTimestamp;
         this.feePerByte = transaction.getFee() / transaction.getFullSize();
+        this.isBundled = isBundled;
         this.dbKey = TransactionProcessorImpl.getInstance().unconfirmedTransactionDbKeyFactory.newKey(transaction.getId());
     }
 
@@ -59,6 +61,7 @@ public abstract class UnconfirmedTransaction implements Transaction {
             this.transaction.setHeight(rs.getInt("transaction_height"));
             this.arrivalTimestamp = rs.getLong("arrival_timestamp");
             this.feePerByte = rs.getLong("fee_per_byte");
+            this.isBundled = rs.getBoolean("is_bundled");
             this.dbKey = TransactionProcessorImpl.getInstance().unconfirmedTransactionDbKeyFactory.newKey(transaction.getId());
         } catch (NxtException.ValidationException e) {
             throw new RuntimeException(e.toString(), e);
@@ -67,13 +70,14 @@ public abstract class UnconfirmedTransaction implements Transaction {
 
     void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO unconfirmed_transaction (id, transaction_height, "
-                + "fee, fee_per_byte, expiration, transaction_bytes, arrival_timestamp, chain_id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "fee, fee_per_byte, is_bundled, expiration, transaction_bytes, arrival_timestamp, chain_id, height) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, transaction.getId());
             pstmt.setInt(++i, transaction.getHeight());
             pstmt.setLong(++i, transaction.getFee());
             pstmt.setLong(++i, feePerByte);
+            pstmt.setBoolean(++i, isBundled);
             pstmt.setInt(++i, transaction.getExpiration());
             pstmt.setBytes(++i, transaction.prunableBytes());
             pstmt.setLong(++i, arrivalTimestamp);
@@ -91,8 +95,12 @@ public abstract class UnconfirmedTransaction implements Transaction {
         return arrivalTimestamp;
     }
 
-    long getFeePerByte() {
-        return feePerByte;
+    void setBundled() {
+        isBundled = true;
+    }
+
+    boolean isBundled() {
+        return isBundled;
     }
 
     @Override

@@ -435,8 +435,8 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
     }
 
     @Override
-    final UnconfirmedChildTransaction newUnconfirmedTransaction(long arrivalTimestamp) {
-        return new UnconfirmedChildTransaction(this, arrivalTimestamp);
+    final UnconfirmedChildTransaction newUnconfirmedTransaction(long arrivalTimestamp, boolean isBundled) {
+        return new UnconfirmedChildTransaction(this, arrivalTimestamp, isBundled);
     }
 
     static ChildTransactionImpl.BuilderImpl newTransactionBuilder(int chainId, byte version, long amount, long fee, short deadline,

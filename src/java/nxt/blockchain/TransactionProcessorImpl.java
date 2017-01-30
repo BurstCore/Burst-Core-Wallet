@@ -135,8 +135,14 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
     private final PriorityQueue<UnconfirmedTransaction> waitingTransactions = new PriorityQueue<UnconfirmedTransaction>(
             (UnconfirmedTransaction o1, UnconfirmedTransaction o2) -> {
                 int result;
-                if ((result = Boolean.compare(o2.getType() == ChildBlockFxtTransactionType.INSTANCE,
-                        o1.getType() == ChildBlockFxtTransactionType.INSTANCE)) != 0) {
+                if ((result = Boolean.compare(o1.getType() == ChildBlockFxtTransactionType.INSTANCE,
+                        o2.getType() == ChildBlockFxtTransactionType.INSTANCE)) != 0) {
+                    return result;
+                }
+                if ((result = Boolean.compare(o2.getChain() != FxtChain.FXT, o1.getChain() != FxtChain.FXT)) != 0) {
+                    return result;
+                }
+                if ((result = Boolean.compare(o1.isBundled(), o2.isBundled())) != 0) {
                     return result;
                 }
                 if ((result = Integer.compare(o2.getHeight(), o1.getHeight())) != 0) {
@@ -144,9 +150,6 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 }
                 if ((result = Boolean.compare(o2.getReferencedTransactionId() != null,
                         o1.getReferencedTransactionId() != null)) != 0) {
-                    return result;
-                }
-                if ((result = Long.compare(o1.getFeePerByte(), o2.getFeePerByte())) != 0) {
                     return result;
                 }
                 if ((result = Long.compare(o2.getArrivalTimestamp(), o1.getArrivalTimestamp())) != 0) {
@@ -401,7 +404,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 return;
             }
             transaction.validate();
-            UnconfirmedTransaction unconfirmedTransaction = ((TransactionImpl) transaction).newUnconfirmedTransaction(System.currentTimeMillis());
+            UnconfirmedTransaction unconfirmedTransaction = ((TransactionImpl) transaction).newUnconfirmedTransaction(System.currentTimeMillis(), false);
             boolean broadcastLater = BlockchainProcessorImpl.getInstance().isProcessingBlock();
             if (broadcastLater) {
                 waitingTransactions.add(unconfirmedTransaction);
@@ -598,10 +601,10 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 FxtTransactionImpl fxtTransaction = (FxtTransactionImpl)fxt;
                 fxtTransaction.getChildTransactions().forEach(childTransaction -> {
                     childTransaction.unsetBlock();
-                    waitingTransactions.add(childTransaction.newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(childTransaction.getTimestamp()))));
+                    waitingTransactions.add(childTransaction.newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(childTransaction.getTimestamp())), true));
                 });
                 fxtTransaction.unsetBlock();
-                waitingTransactions.add(fxtTransaction.newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(fxtTransaction.getTimestamp()))));
+                waitingTransactions.add(fxtTransaction.newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(fxtTransaction.getTimestamp())), true));
             });
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
@@ -676,7 +679,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
             try {
                 TransactionImpl transaction = (TransactionImpl)inputTransaction;
                 receivedTransactions.add(transaction);
-                UnconfirmedTransaction unconfirmedTransaction = transaction.newUnconfirmedTransaction(arrivalTimestamp);
+                UnconfirmedTransaction unconfirmedTransaction = transaction.newUnconfirmedTransaction(arrivalTimestamp, false);
                 unconfirmedTransaction.validate();
                 displaced.addAll(processTransaction(unconfirmedTransaction));
                 if (broadcastedTransactions.contains(transaction)) {
@@ -797,8 +800,8 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         compare = Integer.compare(t1.getHeight(), t2.getHeight());
         if (compare != 0)
             return compare;
-        // Sort by fee_per_byte DESC
-        compare = Long.compare(t1.getFeePerByte(), t2.getFeePerByte());
+        // Sort by is_bundled DESC
+        compare = Boolean.compare(t1.isBundled(), t2.isBundled());
         if (compare != 0)
             return -compare;
         // Sort by arrival_timestamp ASC

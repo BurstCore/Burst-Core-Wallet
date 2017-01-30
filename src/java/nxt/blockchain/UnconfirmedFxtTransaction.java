@@ -25,7 +25,7 @@ import java.util.List;
 final class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTransaction {
 
     UnconfirmedFxtTransaction(FxtTransactionImpl transaction, long arrivalTimestamp) {
-        super(transaction, arrivalTimestamp);
+        super(transaction, arrivalTimestamp, true);
     }
 
     UnconfirmedFxtTransaction(ResultSet rs) throws SQLException, NxtException.NotValidException {

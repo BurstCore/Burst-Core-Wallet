@@ -355,6 +355,8 @@ public class FxtDbVersion extends DbVersion {
             case 124:
                 apply("ALTER TABLE coin_trade_fxt ALTER COLUMN exchange_price BINARY(16) NOT NULL");
             case 125:
+                apply("ALTER TABLE unconfirmed_transaction ADD COLUMN IF NOT EXISTS is_bundled BOOLEAN NOT NULL DEFAULT FALSE");
+            case 126:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate
