@@ -169,5 +169,38 @@ var NRS = (function(NRS, $) {
         }
     });
 
+    NRS.getAssetDividendHistory = function (assetId, table) {
+        var assetExchangeDividendHistoryTable = $("#" + table + "table");
+        assetExchangeDividendHistoryTable.find("tbody").empty();
+        assetExchangeDividendHistoryTable.parent().addClass("data-loading").removeClass("data-empty");
+        var options = {
+            "asset": assetId
+        };
+        var view = NRS.simpleview.get(table, {
+            errorMessage: null,
+            isLoading: true,
+            isEmpty: false,
+            data: []
+        });
+        NRS.sendRequest("getAssetDividends+", options, function (response) {
+            var dividends = response.dividends;
+            for (var i = 0; i < dividends.length; i++) {
+                var dividend = dividends[i];
+                view.data.push({
+                    "timestamp": NRS.getTransactionLink(dividend.assetDividendFullHash, NRS.formatTimestamp(dividend.timestamp)),
+                    "dividend_height": String(dividend.dividendHeight).escapeHTML(),
+                    "total": NRS.intToFloat(dividend.totalDividend, NRS.getActiveChainDecimals()),
+                    "accounts": NRS.formatQuantity(dividend.numberOfAccounts, false, false, 0),
+                    "amount_per_share": NRS.intToFloat(dividend.amountNQT, NRS.getActiveChainDecimals())
+                })
+            }
+            view.render({
+                isLoading: false,
+                isEmpty: view.data.length == 0
+            });
+            NRS.pageLoaded();
+        });
+    };
+
     return NRS;
 }(NRS || {}, jQuery));
