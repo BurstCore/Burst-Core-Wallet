@@ -529,7 +529,7 @@ var NRS = (function (NRS, $, undefined) {
         }
 
         NRS.loadCoinOrders(coinId, refresh);
-        NRS.getCoinTradeHistory(coinId, refresh);
+        NRS.getCoinTradeHistory(coinId, "everyone", refresh);
     };
 
     function processOrders(orders, coinId, refresh) {
@@ -616,13 +616,17 @@ var NRS = (function (NRS, $, undefined) {
             });
     };
 
-    NRS.getCoinTradeHistory = function(coinId, refresh) {
+    NRS.getCoinTradeHistory = function(coinId, type, refresh) {
         var params = {
             "chain": NRS.getActiveChainId(),
             "exchange": coinId,
             "firstIndex": 0,
             "lastIndex": 50
         };
+
+        if (type == "you") {
+            params["account"] = NRS.accountRS;
+        }
 
         NRS.sendRequest("getCoinExchangeTrades+", params, function(response) {
             var exchangeTradeHistoryTable = $("#coin_exchange_trade_history_table");
@@ -639,9 +643,9 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.getTransactionLink(trade.orderFullHash, false, false, isParentChain ? "1" : trade.chain) + "</td>" +
                         "<td>" + NRS.getTransactionLink(trade.matchFullHash, false, false, isParentChain ? "1" : trade.exchange) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, NRS.getActiveChainDecimals()) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, NRS.getChain(trade.exchange).decimals) + "</td>" +
                         "<td class='coin_price numeric'>" + String(trade.exchangeRate).escapeHTML() + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(total, NRS.getActiveChainDecimals() + 8) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(total, NRS.getChain(trade.exchange).decimals + 8) + "</td>" +
                     "</tr>";
                 }
                 exchangeTradeHistoryTable.find("tbody").empty().append(rows);
@@ -655,7 +659,8 @@ var NRS = (function (NRS, $, undefined) {
 
     $("#coin_exchange_trade_history_type").find(".btn").click(function (e) {
         e.preventDefault();
-        NRS.getCoinTradeHistory(currentCoin.id, true);
+        var type = $(this).data("type");
+        NRS.getCoinTradeHistory(currentCoin.id, type, true);
     });
 
     var coinExchangeSearch = $("#coin_exchange_search");

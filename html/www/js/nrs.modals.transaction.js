@@ -615,32 +615,46 @@ var NRS = (function (NRS, $, undefined) {
                 });
             } else if (NRS.isOfType(transaction, "DividendPayment")) {
                 async = true;
-                NRS.sendRequest("getTransaction", {
-                    "fullHash": transaction.fullHash
-                }, function (transaction) {
-                    if (transaction.attachment.asset) {
-                        NRS.sendRequest("getAsset", {
-                            "asset": transaction.attachment.asset
-                        }, function (asset) {
-                            data = {
-                                "type": $.t("dividend_payment"),
-                                "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
-                                "asset_name": asset.name,
-                                "amount_per_share": NRS.intToFloat(transaction.attachment.amountNQT, NRS.getActiveChainDecimals()) + " " + NRS.getChain(transaction.chain).name,
-                                "height": transaction.attachment.height
-                            };
-                            data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                            infoTable.find("tbody").append(NRS.createInfoTable(data));
-                            infoTable.show();
-
-                            if (!isModalVisible) {
-                                $("#transaction_info_modal").modal("show");
-                            }
-                            NRS.fetchingModalData = false;
-                        });
+                NRS.sendRequest("getAsset", {
+                    "asset": transaction.attachment.asset
+                }, function (asset) {
+                    data = {
+                        "type": $.t("dividend_payment"),
+                        "asset_formatted_html": NRS.getEntityLink({ request: "getAsset", key: "asset", id: transaction.attachment.asset }),
+                        "asset_name": asset.name,
+                        "height": transaction.attachment.height
+                    };
+                    if (transaction.attachment.holdingType != 0) {
+                        var requestType;
+                        var key;
+                        if (transaction.attachment.holdingType == 1) {
+                            requestType = "getAsset";
+                            key = "asset";
+                        } else if (transaction.attachment.holdingType == 2) {
+                            requestType = "getCurrency";
+                            key = "currency";
+                        }
+                        data.holdingType = $.t(key);
+                        var params = {};
+                        params[key] = transaction.attachment.holding;
+                        NRS.sendRequest(requestType, params, function (response) {
+                            data.holding_formatted_html = NRS.getHoldingLink(transaction.attachment.holding, transaction.attachment.holdingType);
+                            data.amount_per_share_formatted_html = NRS.convertToQNTf(transaction.attachment.amountNQT, response.decimals) + " " + response.name;
+                        }, { isAsync: false });
                     } else {
-                        NRS.fetchingModalData = false;
+                        data.holdingType = $.t("coin");
+                        data.holding_formatted_html = NRS.getChainLink(transaction.attachment.holding);
+                        data.amount_per_share = NRS.intToFloat(transaction.attachment.amountNQT, NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name;
                     }
+
+                    data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
+                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.show();
+
+                    if (!isModalVisible) {
+                        $("#transaction_info_modal").modal("show");
+                    }
+                    NRS.fetchingModalData = false;
                 });
             } else if (NRS.isOfType(transaction, "AssetDelete")) {
                 async = true;
