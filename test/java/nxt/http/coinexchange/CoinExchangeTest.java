@@ -28,7 +28,7 @@ public class CoinExchangeTest extends BlockchainTest {
         // Quantity is denominated in USD and price is denominated in IGNIS per whole USD
         APICall apiCall = new APICall.Builder("exchangeCoins").
                 secretPhrase(ALICE.getSecretPhrase()).
-                feeNQT(0).
+                feeNQT(-1).
                 param("feeRateNQTPerFXT", IGNIS.ONE_COIN).
                 param("chain", IGNIS.getId()).
                 param("exchange", USD.getId()).
@@ -53,7 +53,7 @@ public class CoinExchangeTest extends BlockchainTest {
         // Quantity is denominated in IGNIS price is denominated in USD per whole IGNIS
         apiCall = new APICall.Builder("exchangeCoins").
                 secretPhrase(BOB.getSecretPhrase()).
-                feeNQT(0).
+                feeNQT(-1).
                 param("feeRateNQTPerFXT", USD.ONE_COIN).
                 param("chain", USD.getId()).
                 param("exchange", IGNIS.getId()).
@@ -118,7 +118,7 @@ public class CoinExchangeTest extends BlockchainTest {
 
         APICall apiCall = new APICall.Builder("exchangeCoins").
                 secretPhrase(ALICE.getSecretPhrase()).
-                feeNQT(0).
+                feeNQT(-1).
                 param("feeRateNQTPerFXT", IGNIS.ONE_COIN).
                 param("chain", IGNIS.getId()).
                 param("exchange", USD.getId()).
@@ -134,7 +134,7 @@ public class CoinExchangeTest extends BlockchainTest {
 
         apiCall = new APICall.Builder("exchangeCoins").
                 secretPhrase(BOB.getSecretPhrase()).
-                feeNQT(0).
+                feeNQT(-1).
                 param("feeRateNQTPerFXT", USD.ONE_COIN).
                 param("chain", USD.getId()).
                 param("exchange", IGNIS.getId()).
