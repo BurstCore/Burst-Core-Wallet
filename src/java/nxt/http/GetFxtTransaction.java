@@ -20,6 +20,7 @@ import nxt.Nxt;
 import nxt.blockchain.FxtChain;
 import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.Transaction;
+import nxt.util.Convert;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,13 +33,17 @@ public final class GetFxtTransaction extends APIServlet.APIRequestHandler {
     static final GetFxtTransaction instance = new GetFxtTransaction();
 
     private GetFxtTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "includeChildTransactions");
+        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "includeChildTransactions");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", false);
+        if (transactionId == 0) {
+            byte[] transactionFullHash = ParameterParser.getBytes(req, "fullHash", true);
+            transactionId = Convert.fullHashToId(transactionFullHash);
+        }
         boolean includeChildTransactions = "true".equalsIgnoreCase(req.getParameter("includeChildTransactions"));
 
         FxtTransaction transaction;
