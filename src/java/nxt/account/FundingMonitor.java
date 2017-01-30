@@ -652,7 +652,7 @@ public final class FundingMonitor {
         BalanceHome balanceHome = chain.getBalanceHome();
         if (balanceHome.getBalance(targetAccount.getId()).getBalance() < monitoredAccount.threshold) {
             Attachment attachment = chain instanceof ChildChain ? PaymentAttachment.INSTANCE : PaymentFxtAttachment.INSTANCE;
-            Transaction.Builder builder = chain.newTransactionBuilder(monitor.publicKey, monitoredAccount.amount, 0, (short)1440, attachment);
+            Transaction.Builder builder = chain.newTransactionBuilder(monitor.publicKey, monitoredAccount.amount, -1, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             if (builder instanceof ChildTransaction.Builder) {
@@ -692,7 +692,7 @@ public final class FundingMonitor {
                             monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetAsset == null || targetAsset.getQuantityQNT() < monitoredAccount.threshold) {
             Attachment attachment = new AssetTransferAttachment(monitor.holdingId, monitoredAccount.amount);
-            Transaction.Builder builder = chain.newTransactionBuilder(monitor.publicKey, 0, 0, (short)1440, attachment);
+            Transaction.Builder builder = chain.newTransactionBuilder(monitor.publicKey, 0, -1, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             if (builder instanceof ChildTransaction.Builder) {
@@ -732,7 +732,7 @@ public final class FundingMonitor {
                             monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.threshold) {
             Attachment attachment = new CurrencyTransferAttachment(monitor.holdingId, monitoredAccount.amount);
-            Transaction.Builder builder = chain.newTransactionBuilder(monitor.publicKey, 0, 0, (short)1440, attachment);
+            Transaction.Builder builder = chain.newTransactionBuilder(monitor.publicKey, 0, -1, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             if (builder instanceof ChildTransaction.Builder) {

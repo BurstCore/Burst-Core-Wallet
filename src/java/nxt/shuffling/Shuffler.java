@@ -472,7 +472,7 @@ public final class Shuffler {
             }
         }
         try {
-            ChildTransaction.Builder builder = childChain.newTransactionBuilder(Crypto.getPublicKey(secretPhrase), 0, 0, (short) 1440, attachment);
+            ChildTransaction.Builder builder = childChain.newTransactionBuilder(Crypto.getPublicKey(secretPhrase), 0, -1, (short) 1440, attachment);
             builder.feeRateNQTPerFXT(feeRateNQTPerFXT);
             builder.timestamp(Nxt.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(secretPhrase);
