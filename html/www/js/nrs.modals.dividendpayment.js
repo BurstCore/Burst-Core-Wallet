@@ -22,13 +22,17 @@ var NRS = (function(NRS, $) {
 
     NRS.forms.dividendPayment = function($modal) {
         var data = NRS.getFormData($modal.find("form:first"));
+        if (data.holdingType == "0") {
+            data.holding = NRS.getActiveChainId();
+        }
         data.asset = NRS.getCurrentAsset().asset;
         if (!data.amountNXTPerShare) {
             return {
                 "error": $.t("error_amount_per_share_required")
             }
         } else {
-            data.amountNQTPerShare = NRS.convertToNQT(data.amountNXTPerShare);
+            var decimals = data.dividend_payment_decimals ? data.dividend_payment_decimals : NRS.getActiveChainDecimals();
+            data.amountNQTPerShare = NRS.floatToInt(data.amountNXTPerShare, decimals);
         }
         if (!/^\d+$/.test(data.height)) {
             return {
@@ -41,7 +45,38 @@ var NRS = (function(NRS, $) {
         };
     };
 
-    $("#dividend_payment_modal").on("hidden.bs.modal", function() {
+    var dividendPaymentModal = $("#dividend_payment_modal");
+    dividendPaymentModal.on("show.bs.modal", function() {
+        var context = {
+            labelText: "Currency",
+            labelI18n: "currency",
+            inputCodeName: "dividend_payment_ms_code",
+            inputIdName: "holding",
+            inputDecimalsName: "dividend_payment_decimals",
+            helpI18n: "add_currency_modal_help"
+        };
+        NRS.initModalUIElement($(this), '.dividend_payment_holding_currency', 'add_currency_modal_ui_element', context);
+
+        context = {
+            labelText: "Asset",
+            labelI18n: "asset",
+            inputIdName: "holding",
+            inputDecimalsName: "dividend_payment_decimals",
+            helpI18n: "add_asset_modal_help"
+        };
+        NRS.initModalUIElement($(this), '.dividend_payment_holding_asset', 'add_asset_modal_ui_element', context);
+
+        // Activating context help popovers - from some reason this code is activated
+        // after the same event in nrs.modals.js which doesn't happen for create pool thus it's necessary
+        // to explicitly enable the popover here. strange ...
+        $(function () {
+            $("[data-toggle='popover']").popover({
+                "html": true
+            });
+        });
+    });
+
+    dividendPaymentModal.on("hidden.bs.modal", function() {
         $(this).find(".dividend_payment_info").first().hide();
     });
 
@@ -58,6 +93,7 @@ var NRS = (function(NRS, $) {
         var $modal = $(this).closest(".modal");
         var amountNXTPerShare = $modal.find("#dividend_payment_amount_per_share").val();
         var height = $modal.find("#dividend_payment_height").val();
+        var holdingType = $modal.find("#dividend_payment_holding_type").val();
         var $callout = $modal.find(".dividend_payment_info").first();
         var classes = "callout-info callout-danger callout-warning";
         if (amountNXTPerShare && /^\d+$/.test(height)) {
@@ -74,12 +110,32 @@ var NRS = (function(NRS, $) {
                             totalQuantityQNT = totalQuantityQNT.add(new BigInteger(accountAsset.quantityQNT));
                         }
                     );
-                    var priceNQT = new BigInteger(NRS.convertToNQT(amountNXTPerShare));
+                    var decimals;
+                    var holding;
+                    switch (holdingType) {
+                        case "0":
+                            decimals = NRS.getActiveChainDecimals();
+                            holding = NRS.getActiveChainName();
+                            holdingType = "";
+                            break;
+                        case "1":
+                            decimals = $modal.find('.aam_ue_asset_decimals_input').val();
+                            holding = $modal.find('.aam_ue_asset_id_input').val();
+                            holdingType = $.t("shares");
+                            break;
+                        case "2":
+                            decimals = $modal.find('.acm_ue_currency_decimals_input').val();
+                            holding = $modal.find('.acm_ue_currency_code_input').val();
+                            holdingType = $.t("units");
+                            break;
+                    }
+                    var priceNQT = new BigInteger(NRS.floatToInt(amountNXTPerShare, decimals));
                     var totalNQT = totalQuantityQNT.multiply(priceNQT);
 
                     $callout.html($.t("dividend_payment_info_preview_success", {
-                        "amountNXT": NRS.intToFloat(totalNQT, NRS.getCurrentAsset().decimals + NRS.getActiveChainDecimals()),
-                        "coin": NRS.getActiveChainName(),
+                        "amount": NRS.intToFloat(totalNQT, parseInt(NRS.getCurrentAsset().decimals) + parseInt(decimals)),
+                        "holding": holding,
+                        "holdingType": holdingType,
                         "totalQuantity": NRS.formatQuantity(totalQuantityQNT, NRS.getCurrentAsset().decimals),
                         "recipientCount": qualifiedDividendRecipients.length
                     }));
@@ -98,6 +154,53 @@ var NRS = (function(NRS, $) {
             );
         }
     });
+
+    $('#dividend_payment_holding_type').change(function () {
+        var holdingType = $("#dividend_payment_holding_type");
+        if(holdingType.val() == "0") {
+            $("#dividend_payment_asset_id_group").css("display", "none");
+            $("#dividend_payment_ms_currency_group").css("display", "none");
+        } if(holdingType.val() == "1") {
+            $("#dividend_payment_asset_id_group").css("display", "inline");
+            $("#dividend_payment_ms_currency_group").css("display", "none");
+        } else if(holdingType.val() == "2") {
+            $("#dividend_payment_asset_id_group").css("display", "none");
+            $("#dividend_payment_ms_currency_group").css("display", "inline");
+        }
+    });
+
+    NRS.getAssetDividendHistory = function (assetId, table) {
+        var assetExchangeDividendHistoryTable = $("#" + table + "table");
+        assetExchangeDividendHistoryTable.find("tbody").empty();
+        assetExchangeDividendHistoryTable.parent().addClass("data-loading").removeClass("data-empty");
+        var options = {
+            "asset": assetId
+        };
+        var view = NRS.simpleview.get(table, {
+            errorMessage: null,
+            isLoading: true,
+            isEmpty: false,
+            data: []
+        });
+        NRS.sendRequest("getAssetDividends+", options, function (response) {
+            var dividends = response.dividends;
+            for (var i = 0; i < dividends.length; i++) {
+                var dividend = dividends[i];
+                view.data.push({
+                    "timestamp": NRS.getTransactionLink(dividend.assetDividendFullHash, NRS.formatTimestamp(dividend.timestamp)),
+                    "dividend_height": String(dividend.dividendHeight).escapeHTML(),
+                    "total": NRS.intToFloat(dividend.totalDividend, NRS.getActiveChainDecimals()),
+                    "accounts": NRS.formatQuantity(dividend.numberOfAccounts, false, false, 0),
+                    "amount_per_share": NRS.intToFloat(dividend.amountNQT, NRS.getActiveChainDecimals())
+                })
+            }
+            view.render({
+                isLoading: false,
+                isEmpty: view.data.length == 0
+            });
+            NRS.pageLoaded();
+        });
+    };
 
     return NRS;
 }(NRS || {}, jQuery));

@@ -74,18 +74,20 @@ var NRS = (function (NRS, $, undefined) {
             refresh = true;
         }
         NRS.pageNumber = 1;
-        var currencyCode = $.trim($("#currency_search").find("input[name=q]").val());
+        var currencyCode = $.trim(search.find("input[name=q]").val());
+        var chainId = $.trim(search.find("input[name=chain]").val());
         $("#buy_currency_with_nxt").html($.t("buy_currency_param", { currency: currencyCode}));
         $("#buy_currency_offers").html($.t("offers_to_buy_currency_param", { currency: currencyCode}));
         $("#sell_currency_with_nxt").html($.t("sell_currency_param", { currency: currencyCode}));
         $("#sell_currency_offers").html($.t("offers_to_sell_currency_param", { currency: currencyCode}));
-        $(".currency_code").html(NRS.escapeRespStr(currencyCode));
+        $(".currency_code").html(NRS.escapeRespStr(NRS.getCurrencyDNByChain(currencyCode, chainId)));
 
         var currencyId = 0;
         async.waterfall([
             function(callback) {
                 NRS.sendRequest("getCurrency+", {
-                    "code": currencyCode
+                    code: currencyCode,
+                    chain: chainId
                 }, function (response) {
                     if (response && !response.errorDescription) {
                         $("#MSnoCode").hide();
@@ -94,7 +96,7 @@ var NRS = (function (NRS, $, undefined) {
                         currencyId = response.currency;
                         $("#currency_id").html(NRS.getEntityLink({ id: currencyId, request: "getCurrency", key: "currency" }));
                         $("#currency_name").html(NRS.escapeRespStr(response.name));
-                        $("#currency_code").html(NRS.escapeRespStr(response.code));
+                        $("#currency_code").html(NRS.getCurrencyDN(response));
                         $("#currency_current_supply").html(NRS.convertToQNTf(response.currentSupplyQNT, response.decimals).escapeHTML());
                         $("#currency_max_supply").html(NRS.convertToQNTf(response.maxSupplyQNT, response.decimals).escapeHTML());
                         $("#currency_decimals").html(NRS.escapeRespStr(response.decimals));
@@ -203,9 +205,11 @@ var NRS = (function (NRS, $, undefined) {
                 "<td class = 'numeric'>" + NRS.formatQuantity(currency.currentSupplyQNT, currency.decimals, false, currentSupplyDecimals) + "</td>" +
                 "<td class = 'numeric'>" + NRS.formatQuantity(currency.maxSupplyQNT, currency.decimals, false, maxSupplyDecimals) + "</td>" +
                 "<td>";
-            //noinspection BadExpressionStatementJS
-            rows += "<a href='#' class='btn btn-xs btn-default' onClick='NRS.goToCurrency(&quot;" + code + "&quot;)' " + (!NRS.isExchangeable(currency.type) ? "disabled" : "") + ">" + $.t("exchange") + "</a> ";
-            rows += "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#reserve_currency_modal' data-currency='" + currencyId + "' data-name='" + name + "' data-code='" + code + "' data-ressupply='" + resSupply + "' data-decimals='" + decimals + "' data-minreserve='" + minReserve + "' " + (currency.issuanceHeight > NRS.lastBlockHeight && NRS.isReservable(currency.type) ? "" : "disabled") + " >" + $.t("reserve") + "</a> ";
+            var event = "NRS.goToCurrency('" + code + "'," + currency.chain + ")";
+            rows += "<a href='#' class='btn btn-xs btn-default' onClick='" + event + "' " + (!NRS.isExchangeable(currency.type) ? "disabled" : "") + ">" + $.t("exchange") + "</a> ";
+            if (NRS.getActiveChainId() == currency.chain && currency.issuanceHeight > NRS.lastBlockHeight && NRS.isReservable(currency.type)) {
+                rows += "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#reserve_currency_modal' data-currency='" + currencyId + "' data-name='" + name + "' data-code='" + code + "' data-ressupply='" + resSupply + "' data-decimals='" + decimals + "' data-minreserve='" + minReserve + "'>" + $.t("reserve") + "</a> ";
+            }
             rows += "</td></tr>";
         }
         return rows;
@@ -752,19 +756,20 @@ var NRS = (function (NRS, $, undefined) {
                         var decimals = NRS.escapeRespStr(currency.decimals);
                         var typeIcons = NRS.getTypeIcons(currency.type);
                         var isOfferEnabled = NRS.isExchangeable(currency.type) && (!NRS.isControllable(currency.type) || NRS.account == currency.issuerAccount);
-                        //noinspection HtmlUnknownAttribute,BadExpressionStatementJS
+                        var event = "NRS.goToCurrency('" + code + "'," + currency.chain + ")";
                         rows += "<tr>" +
                         "<td>" + NRS.getEntityLink({ id: currencyId, request: "getCurrency", key: "currency", text: NRS.getCurrencyDN(currency) }) + "</td>" +
                         "<td>" + currency.name + "</td>" +
                         "<td>" + typeIcons + "</td>" +
                         "<td class = 'numeric'>" + NRS.formatQuantity(currency.unconfirmedUnitsQNT, currency.decimals, false, unitsDecimals) + "</td>" +
                         "<td>" +
-                        "<a href='#' class='btn btn-xs btn-default' onClick='NRS.goToCurrency(&quot;" + code + "&quot;)' " + (!NRS.isExchangeable(currency.type) ? "disabled" : "") + ">" + $.t("exchange") + "</a> " +
+                        "<a href='#' class='btn btn-xs btn-default' onClick='" + event + "' " + (!NRS.isExchangeable(currency.type) ? "disabled" : "") + ">" + $.t("exchange") + "</a> " +
                         "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#transfer_currency_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-code='" + code + "' data-decimals='" + decimals + "'>" + $.t("transfer") + "</a> " +
-                        "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#publish_exchange_offer_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-code='" + code + "' data-decimals='" + decimals + "' " + (isOfferEnabled ? "" : "disabled") + " >" + $.t("offer") + "</a> " +
-                        "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#claim_currency_modal' data-currency='" + currencyId + "' data-name='" + name + "' data-code='" + code + "' data-decimals='" + decimals + "' " + (currency.issuanceHeight <= NRS.lastBlockHeight && NRS.isClaimable(currency.type) ? "" : "disabled") + " >" + $.t("claim") + "</a> " +
-                        "</td>" +
-                        "</tr>";
+                        "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#publish_exchange_offer_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-code='" + code + "' data-decimals='" + decimals + "' " + (isOfferEnabled ? "" : "disabled") + " >" + $.t("offer") + "</a> ";
+                        if (NRS.getActiveChainId() == currency.chain && currency.issuanceHeight <= NRS.lastBlockHeight && NRS.isClaimable(currency.type)) {
+                            rows += "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#claim_currency_modal' data-currency='" + currencyId + "' data-name='" + name + "' data-code='" + code + "' data-decimals='" + decimals + "'>" + $.t("claim") + "</a> ";
+                        }
+                        rows += "</td></tr>";
                     }
                     var currenciesTable = $('#currencies_table');
                     currenciesTable.find('[data-i18n="type"]').show();
@@ -825,12 +830,13 @@ var NRS = (function (NRS, $, undefined) {
             $visible_modal.modal("hide");
         }
 
-        NRS.goToCurrency($(this).data("goto-currency"));
+        NRS.goToCurrency($(this).data("goto-currency"), $(this).data("chain"));
     });
 
-    NRS.goToCurrency = function (currency) {
+    NRS.goToCurrency = function (currency, chainId) {
         var currencySearch = $("#currency_search");
         currencySearch.find("input[name=q]").val(currency);
+        currencySearch.find("input[name=chain]").val(chainId);
         currencySearch.submit();
         NRS.goToPage("monetary_system");
     };
@@ -1407,7 +1413,8 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.forms.currencyReserveIncrease = function ($modal) {
         var data = NRS.getFormData($modal.find("form:first"));
-        data.amountPerUnitNQT = NRS.convertToQNTf(data.amountPerUnitNQT, NRS.getActiveChainDecimals());
+        var decimals = parseInt(data.decimals, 10);
+        data.amountPerUnitNQT = NRS.calculatePricePerWholeQNT(NRS.convertToNQT(data.amountPerUnitNQT), decimals);
         return {
             "data": data
         };
@@ -1470,7 +1477,26 @@ var NRS = (function (NRS, $, undefined) {
         if (!currency.chain) {
             currency.chain = NRS.getActiveChainId();
         }
-        return NRS.getChain(currency.chain).name + "." + currency.code;
+        return NRS.getCurrencyDNByChain(currency.code, currency.chain);
+    };
+
+    NRS.getCurrencyDNByChain = function(code, chain) {
+        return code + "@" + NRS.getChain(chain).name;
+    };
+
+    NRS.getCurrencyCallout = function(infoCallout, currency) {
+        infoCallout.html("");
+        if (currency == null) {
+            return;
+        }
+        if (NRS.isExchangeable(currency.type)) {
+            infoCallout.append("<a href='#' data-goto-currency='" + NRS.escapeRespStr(currency.code) + "' data-chain='" + NRS.escapeRespStr(currency.chain) + "'>" + $.t('exchange_booth') + "</a><br/>");
+        }
+        if (NRS.isReservable(currency.type) && NRS.getActiveChainId() == currency.chain) {
+            infoCallout.append("<a href='#' data-toggle='modal' data-target='#currency_founders_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-name='" + NRS.escapeRespStr(currency.name) + "' data-code='" + NRS.escapeRespStr(currency.code) + "' data-ressupply='" + NRS.escapeRespStr(currency.reserveSupplyQNT) + "' data-initialsupply='" + NRS.escapeRespStr(currency.initialSupplyQNT) + "' data-decimals='" + NRS.escapeRespStr(currency.decimals) + "' data-minreserve='" + NRS.escapeRespStr(currency.minReservePerUnitNQT) + "' data-issueheight='" + NRS.escapeRespStr(currency.issuanceHeight) + "'>View Founders</a><br/>");
+        }
+        infoCallout.append("<a href='#' data-toggle='modal' data-target='#currency_distribution_modal' data-code='" + NRS.escapeRespStr(currency.code) + "'  data-i18n='Currency Distribution'>Currency Distribution</a>");
+        return infoCallout;
     };
 
     return NRS;

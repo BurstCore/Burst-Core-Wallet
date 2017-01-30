@@ -31,7 +31,7 @@ public final class GetAssetDividends extends APIServlet.APIRequestHandler {
     static final GetAssetDividends instance = new GetAssetDividends();
 
     private GetAssetDividends() {
-        super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex", "timestamp");
+        super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex", "timestamp", "includeHoldingInfo");
     }
 
     @Override
@@ -39,6 +39,7 @@ public final class GetAssetDividends extends APIServlet.APIRequestHandler {
 
         long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
         int timestamp = ParameterParser.getTimestamp(req);
+        boolean includeHoldingInfo = "true".equalsIgnoreCase(req.getParameter("includeHoldingInfo"));
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         ChildChain childChain = ParameterParser.getChildChain(req);
@@ -51,7 +52,7 @@ public final class GetAssetDividends extends APIServlet.APIRequestHandler {
                 if (assetDividend.getTimestamp() < timestamp) {
                     break;
                 }
-                dividendsData.add(JSONData.assetDividend(assetDividend));
+                dividendsData.add(JSONData.assetDividend(assetDividend, includeHoldingInfo));
             }
         }
         response.put("dividends", dividendsData);

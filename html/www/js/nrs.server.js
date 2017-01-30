@@ -127,6 +127,14 @@ var NRS = (function (NRS, $, undefined) {
             });
             return;
         }
+        var feeFields = ["controlMaxFees"];
+        for (i = 0; i < feeFields.length; i++) {
+            field = feeFields[i];
+            if (!data[field]) {
+                continue;
+            }
+            data[field] = NRS.getActiveChainId() + ":" + data[field];
+        }
 
         //Fill phasing parameters when mandatory approval is enabled
         if (requestType != "approveTransaction"

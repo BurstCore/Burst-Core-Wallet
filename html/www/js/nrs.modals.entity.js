@@ -64,6 +64,13 @@ var NRS = (function(NRS, $) {
             data["chain"] = chain;
             NRS.sendRequest(request, data, function(response) {
                 var entity = $.extend({}, response);
+                var callout = $("#entity_info_callout");
+                if (NRS[request + "Callout"]) {
+                    NRS[request + "Callout"](callout, response);
+                    callout.show();
+                } else {
+                    callout.hide();
+                }
                 var detailsTable = $("#entity_details_table");
                 detailsTable.find("tbody").empty().append(NRS.createInfoTable(entity));
                 detailsTable.show();

@@ -756,10 +756,10 @@ public abstract class AssetExchangeTransactionType extends ChildTransactionType 
                 throw new NxtException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
             }
             AssetDividendHome.AssetDividend lastDividend = transaction.getChain().getAssetDividendHome().getLastDividend(attachment.getAssetId());
-            if (lastDividend != null && lastDividend.getHeight() > Nxt.getBlockchain().getHeight() - 60) {
+            if (lastDividend != null && lastDividend.getHeight() > Nxt.getBlockchain().getHeight() - Constants.MIN_DIVIDEND_PAYMENT_INTERVAL) {
                 throw new NxtException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId())
-                        + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + Nxt.getBlockchain().getHeight()
-                        + ", limit is one dividend per 60 blocks");
+                        + " was less than " + Constants.MIN_DIVIDEND_PAYMENT_INTERVAL + " blocks ago at " + lastDividend.getHeight()
+                        + ", current height is " + Nxt.getBlockchain().getHeight());
             }
             HoldingType holdingType = attachment.getHoldingType();
             if (holdingType == HoldingType.COIN) {

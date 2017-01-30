@@ -80,6 +80,8 @@ import nxt.voting.VoteWeighting;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -386,12 +388,25 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("order", Long.toUnsignedString(transaction.getId()));
         json.put("orderFullHash", Convert.toHexString(transaction.getFullHash()));
-        OrderIssueAttachment orderIssueAttachment = (OrderIssueAttachment)transaction.getAttachment();
-        json.put("chain", orderIssueAttachment.getChain().getId());
-        json.put("exchange", orderIssueAttachment.getExchangeChain().getId());
         putAccount(json, "account", transaction.getSenderId());
-        json.put("quantityQNT", String.valueOf(orderIssueAttachment.getQuantityQNT()));
-        json.put("bidNQT", String.valueOf(orderIssueAttachment.getPriceNQT()));
+        OrderIssueAttachment orderIssueAttachment = (OrderIssueAttachment)transaction.getAttachment();
+        Chain chain = orderIssueAttachment.getChain();
+        Chain exchangeChain = orderIssueAttachment.getExchangeChain();
+        long priceNQT = orderIssueAttachment.getPriceNQT();
+        long quantityQNT = orderIssueAttachment.getQuantityQNT();
+        json.put("chain", chain.getId());
+        json.put("exchange", exchangeChain.getId());
+        json.put("quantityQNT", String.valueOf(quantityQNT));
+        json.put("bidNQT", String.valueOf(priceNQT));
+        BigDecimal[] ask = BigDecimal.ONE.divide(
+                    BigDecimal.valueOf(priceNQT, chain.getDecimals()), MathContext.DECIMAL128)
+                    .movePointRight(exchangeChain.getDecimals())
+                    .divideAndRemainder(BigDecimal.ONE, MathContext.DECIMAL128);
+        long askNQT = ask[0].longValue() + (ask[1].signum() != 0 ? 1 : 0);
+        json.put("askNQT", String.valueOf(askNQT));
+        long exchangeQNT = Convert.unitRateToAmount(quantityQNT, exchangeChain.getDecimals(),
+                                        priceNQT, chain.getDecimals());
+        json.put("exchangeQNT", String.valueOf(exchangeQNT));
         putExpectedTransaction(json, transaction);
         return json;
     }
@@ -875,7 +890,7 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject assetDividend(AssetDividendHome.AssetDividend assetDividend) {
+    static JSONObject assetDividend(AssetDividendHome.AssetDividend assetDividend, boolean includeHoldingInfo) {
         JSONObject json = new JSONObject();
         json.put("assetDividendFullHash", Convert.toHexString(assetDividend.getFullHash()));
         json.put("asset", Long.toUnsignedString(assetDividend.getAssetId()));
@@ -886,7 +901,17 @@ public final class JSONData {
         json.put("height", assetDividend.getHeight());
         json.put("timestamp", assetDividend.getTimestamp());
         json.put("holding", Long.toUnsignedString(assetDividend.getHoldingId()));
-        json.put("holdingType", assetDividend.getHoldingType().getCode());
+        HoldingType holdingType = assetDividend.getHoldingType();
+        json.put("holdingType", holdingType.getCode());
+        if (includeHoldingInfo && holdingType != HoldingType.COIN) {
+            JSONObject holdingJson = new JSONObject();
+            if (holdingType == HoldingType.ASSET) {
+                putAssetInfo(holdingJson, assetDividend.getHoldingId());
+            } else if (holdingType == HoldingType.CURRENCY) {
+                putCurrencyInfo(holdingJson, assetDividend.getHoldingId());
+            }
+            json.put("holdingInfo", holdingJson);
+        }
         return json;
     }
 

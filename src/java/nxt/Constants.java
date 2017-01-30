@@ -92,8 +92,8 @@ public final class Constants {
     public static final int MAX_ASSET_NAME_LENGTH = 10;
     public static final int MAX_ASSET_DESCRIPTION_LENGTH = 1000;
     public static final int MAX_SINGLETON_ASSET_DESCRIPTION_LENGTH = 160;
-    public static final int MAX_ASSET_TRANSFER_COMMENT_LENGTH = 1000;
     public static final int MAX_DIVIDEND_PAYMENT_ROLLBACK = 1441;
+    public static final int MIN_DIVIDEND_PAYMENT_INTERVAL = isTestnet ? 3 : 60;
 
     public static final int MAX_POLL_NAME_LENGTH = 100;
     public static final int MAX_POLL_DESCRIPTION_LENGTH = 1000;

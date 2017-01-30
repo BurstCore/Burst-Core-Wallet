@@ -165,7 +165,7 @@ public final class CurrencyTransfer {
         this.currencyId = rs.getLong("currency_id");
         this.senderId = rs.getLong("sender_id");
         this.recipientId = rs.getLong("recipient_id");
-        this.unitsQNT = rs.getLong("unitsQNT");
+        this.unitsQNT = rs.getLong("units");
         this.timestamp = rs.getInt("timestamp");
         this.height = rs.getInt("height");
     }
