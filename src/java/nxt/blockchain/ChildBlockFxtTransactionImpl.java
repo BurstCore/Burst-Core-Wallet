@@ -73,6 +73,9 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
 
     @Override
     public void validate() throws NxtException.ValidationException {
+        if (getDeadline() > 15) {
+            throw new NxtException.NotValidException("ChildBlockTransaction deadline cannot exceed 15 minutes");
+        }
         try {
             getChildTransactions();
         } catch (IllegalStateException e) {
