@@ -890,7 +890,7 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject assetDividend(AssetDividendHome.AssetDividend assetDividend) {
+    static JSONObject assetDividend(AssetDividendHome.AssetDividend assetDividend, boolean includeHoldingInfo) {
         JSONObject json = new JSONObject();
         json.put("assetDividendFullHash", Convert.toHexString(assetDividend.getFullHash()));
         json.put("asset", Long.toUnsignedString(assetDividend.getAssetId()));
@@ -901,7 +901,17 @@ public final class JSONData {
         json.put("height", assetDividend.getHeight());
         json.put("timestamp", assetDividend.getTimestamp());
         json.put("holding", Long.toUnsignedString(assetDividend.getHoldingId()));
-        json.put("holdingType", assetDividend.getHoldingType().getCode());
+        HoldingType holdingType = assetDividend.getHoldingType();
+        json.put("holdingType", holdingType.getCode());
+        if (includeHoldingInfo && holdingType != HoldingType.COIN) {
+            JSONObject holdingJson = new JSONObject();
+            if (holdingType == HoldingType.ASSET) {
+                putAssetInfo(holdingJson, assetDividend.getHoldingId());
+            } else if (holdingType == HoldingType.CURRENCY) {
+                putCurrencyInfo(holdingJson, assetDividend.getHoldingId());
+            }
+            json.put("holdingInfo", holdingJson);
+        }
         return json;
     }
 
