@@ -639,9 +639,9 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.getTransactionLink(trade.orderFullHash, false, false, isParentChain ? "1" : trade.chain) + "</td>" +
                         "<td>" + NRS.getTransactionLink(trade.matchFullHash, false, false, isParentChain ? "1" : trade.exchange) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "account") + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, NRS.getActiveChainDecimals()) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, NRS.getChain(trade.exchange).decimals) + "</td>" +
                         "<td class='coin_price numeric'>" + String(trade.exchangeRate).escapeHTML() + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(total, NRS.getActiveChainDecimals() + 8) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(total, NRS.getChain(trade.exchange).decimals + 8) + "</td>" +
                     "</tr>";
                 }
                 exchangeTradeHistoryTable.find("tbody").empty().append(rows);
