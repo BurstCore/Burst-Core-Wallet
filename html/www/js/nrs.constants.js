@@ -260,7 +260,8 @@ var NRS = (function (NRS, $) {
         var tags = depends.tags;
         if (tags) {
             for (var i=0; i < tags.length; i++) {
-                if (tags[i] && !tags[i].enabled) {
+                if (tags[i] && (!tags[i].enabled || tags[i].disabledForChains
+                    && tags[i].disabledForChains.indexOf(parseInt(NRS.getActiveChainId())) >= 0)) {
                     return false;
                 }
             }
@@ -268,7 +269,8 @@ var NRS = (function (NRS, $) {
         var apis = depends.apis;
         if (apis) {
             for (i=0; i < apis.length; i++) {
-                if (apis[i] && !apis[i].enabled) {
+                if (apis[i] && (!apis[i].enabled || apis[i].disabledForChains
+                    && apis[i].disabledForChains.indexOf(parseInt(NRS.getActiveChainId())) >= 0)) {
                     return false;
                 }
             }
