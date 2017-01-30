@@ -231,7 +231,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         if (ecBlockId == 0 && ecBlockHeight > 0) {
             ecBlockId = Nxt.getBlockchain().getBlockIdAtHeight(ecBlockHeight);
         }
-        long feeRateNQTPerFXT = ParameterParser.getLong(req, "feeRateNQTPerFXT", 0, Constants.MAX_BALANCE_NQT, false);
+        long feeRateNQTPerFXT = ParameterParser.getLong(req, "feeRateNQTPerFXT", -1L, Constants.MAX_BALANCE_NQT, false);
         JSONObject response = new JSONObject();
 
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
@@ -246,7 +246,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             chain = txChain;
         }
 
-        if (feeNQT == 0L && feeRateNQTPerFXT == 0L && chain != FxtChain.FXT) {
+        if (feeNQT < 0L && feeRateNQTPerFXT < 0L && chain != FxtChain.FXT) {
             feeRateNQTPerFXT = Peers.getBestBundlerRate(chain, ParameterParser.getLong(req, "minBundlerBalanceFXT", 0, Constants.MAX_BALANCE_FXT, false));
             broadcast = false;
             response.put("bundlerRateNQTPerFXT", String.valueOf(feeRateNQTPerFXT));

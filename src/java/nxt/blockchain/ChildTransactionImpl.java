@@ -140,9 +140,9 @@ public final class ChildTransactionImpl extends TransactionImpl implements Child
         this.publicKeyAnnouncement = publicKeyAnnouncementAppendix;
         this.encryptToSelfMessage = encryptToSelfMessageAppendix;
         this.phasing = phasingAppendix;
-        if (builder.fee <= 0) {
+        if (builder.fee < 0) {
             long minFeeFQT = getMinimumFeeFQT(Nxt.getBlockchain().getHeight());
-            if (builder.feeRateNQTPerFXT <= 0) {
+            if (builder.feeRateNQTPerFXT < 0) {
                 throw new NxtException.NotValidException(String.format("Please include fee in %s equivalent to at least %f %s",
                         childChain.getName(), ((double) minFeeFQT) / Constants.ONE_FXT, FxtChain.FXT.getName()));
             }
