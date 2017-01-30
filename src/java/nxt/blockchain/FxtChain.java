@@ -38,8 +38,8 @@ public final class FxtChain extends Chain {
     public static void init() {}
 
     private FxtChain() {
-        super(1, FXT_NAME, 8, EnumSet.noneOf(APIEnum.class), EnumSet.of(APITag.ALIASES, APITag.AE, APITag.DGS,
-                APITag.DATA, APITag.MESSAGES, APITag.MS, APITag.VS));
+        super(1, FXT_NAME, 8, EnumSet.of(APIEnum.SEND_MESSAGE), EnumSet.of(APITag.ALIASES, APITag.AE, APITag.DGS,
+                APITag.DATA, APITag.MS, APITag.VS));
     }
 
     @Override
