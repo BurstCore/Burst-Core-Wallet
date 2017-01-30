@@ -25,6 +25,8 @@ import nxt.ae.TradeHome;
 import nxt.aliases.AliasHome;
 import nxt.dgs.DigitalGoodsHome;
 import nxt.dgs.DigitalGoodsTransactionType;
+import nxt.http.APIEnum;
+import nxt.http.APITag;
 import nxt.ms.CurrencyFounderHome;
 import nxt.ms.ExchangeHome;
 import nxt.ms.ExchangeOfferHome;
@@ -44,6 +46,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -57,13 +60,16 @@ public final class ChildChain extends Chain {
 
     private static final Collection<ChildChain> allChildChains = Collections.unmodifiableCollection(childChains.values());
 
-    public static final ChildChain IGNIS = new ChildChain(2, "IGNIS", 8, (Constants.isTestnet ? 7 : 1000) * 100000000, Collections.emptySet());
-    public static final ChildChain BTC = new ChildChain(3, "BTC", 8, 600000, Collections.emptySet());
-    public static final ChildChain USD = new ChildChain(4, "USD", 2, 600, Collections.emptySet());
+    public static final ChildChain IGNIS = new ChildChain(2, "IGNIS", 8, (Constants.isTestnet ? 7 : 1000) * 100000000,
+            Collections.emptySet(), EnumSet.noneOf(APIEnum.class), EnumSet.noneOf(APITag.class));
+    public static final ChildChain BTC = new ChildChain(3, "BTC", 8, 600000,
+            Collections.emptySet(), EnumSet.noneOf(APIEnum.class), EnumSet.noneOf(APITag.class));
+    public static final ChildChain USD = new ChildChain(4, "USD", 2, 600,
+            Collections.emptySet(), EnumSet.noneOf(APIEnum.class), EnumSet.noneOf(APITag.class));
     public static final ChildChain EUR = new ChildChain(5, "EUR", 2, 600, new HashSet<>(Arrays.asList(
             DigitalGoodsTransactionType.LISTING,
             AssetExchangeTransactionType.ASK_ORDER_PLACEMENT,
-            AssetExchangeTransactionType.BID_ORDER_PLACEMENT))
+            AssetExchangeTransactionType.BID_ORDER_PLACEMENT)), EnumSet.noneOf(APIEnum.class), EnumSet.of(APITag.DGS, APITag.AE)
     );
 
     public static ChildChain getChildChain(String name) {
@@ -100,8 +106,9 @@ public final class ChildChain extends Chain {
     private final VoteHome voteHome;
     private final Set<TransactionType> disabledTransactionTypes;
 
-    private ChildChain(int id, String name, int decimals, long shufflingDepositNQT, Set<TransactionType> disabledTransactionTypes) {
-        super(id, name, decimals);
+    private ChildChain(int id, String name, int decimals, long shufflingDepositNQT, Set<TransactionType> disabledTransactionTypes,
+                       EnumSet<APIEnum> disabledAPIs, EnumSet<APITag> disabledAPITags) {
+        super(id, name, decimals, disabledAPIs, disabledAPITags);
         this.SHUFFLING_DEPOSIT_NQT = shufflingDepositNQT;
         this.aliasHome = AliasHome.forChain(this);
         this.assetDividendHome = AssetDividendHome.forChain(this);
