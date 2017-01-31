@@ -601,7 +601,7 @@ var NRS = (function (NRS, $) {
 						return false;
 					}
 				}
-                output += formatMessageArea(title, nrFields, data, _encryptedNote.options, NRS.formatFullHash(_encryptedNote.fullHash));
+                output += formatMessageArea(title, nrFields, data, _encryptedNote.options, _encryptedNote.transaction);
 			}
 		});
 		if (decryptionError) {
