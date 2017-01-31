@@ -426,7 +426,7 @@ public final class Generator implements Comparable<Generator> {
     public static class ActiveGenerator implements Comparable<ActiveGenerator> {
         private final long accountId;
         private long hitTime;
-        private long effectiveBalanceNXT;
+        private long effectiveBalanceFXT;
         private byte[] publicKey;
 
         private ActiveGenerator(long accountId) {
@@ -439,7 +439,7 @@ public final class Generator implements Comparable<Generator> {
         }
 
         public long getEffectiveBalance() {
-            return effectiveBalanceNXT;
+            return effectiveBalanceFXT;
         }
 
         public long getHitTime() {
@@ -460,12 +460,12 @@ public final class Generator implements Comparable<Generator> {
                 hitTime = Long.MAX_VALUE;
                 return;
             }
-            effectiveBalanceNXT = Math.max(account.getEffectiveBalanceFXT(height), 0);
-            if (effectiveBalanceNXT == 0) {
+            effectiveBalanceFXT = Math.max(account.getEffectiveBalanceFXT(height), 0);
+            if (effectiveBalanceFXT == 0) {
                 hitTime = Long.MAX_VALUE;
                 return;
             }
-            BigInteger effectiveBalance = BigInteger.valueOf(effectiveBalanceNXT);
+            BigInteger effectiveBalance = BigInteger.valueOf(effectiveBalanceFXT);
             BigInteger hit = Generator.getHit(publicKey, lastBlock);
             hitTime = Generator.getHitTime(effectiveBalance, hit, lastBlock);
         }
