@@ -536,79 +536,84 @@ var NRS = (function (NRS, $, undefined) {
     };
 
     NRS.verifyTransactionBytes = function (byteArray, requestType, data, attachment, isVerifyECBlock) {
-        var transaction = {};
-        var pos = 0;
-        transaction.chain = String(converters.byteArrayToSignedInt32(byteArray, pos));
-        pos += 4;
-        transaction.type = byteArray[pos++];
-        // Patch until I find the official way of converting JS byte to signed byte
-        if (transaction.type >= 128) {
-            transaction.type -= 256;
-        }
-        transaction.subtype = byteArray[pos++];
-        transaction.version = byteArray[pos++];
-        transaction.timestamp = String(converters.byteArrayToSignedInt32(byteArray, pos));
-        pos += 4;
-        transaction.deadline = String(converters.byteArrayToSignedShort(byteArray, pos));
-        pos += 2;
-        transaction.publicKey = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
-        pos += 32;
-        transaction.recipient = String(converters.byteArrayToBigInteger(byteArray, pos));
-        pos += 8;
-        transaction.amountNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
-        pos += 8;
-        transaction.feeNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
-        pos += 8;
-        transaction.signature = byteArray.slice(pos, pos + 64);
-        pos += 64;
-        transaction.ecBlockHeight = String(converters.byteArrayToSignedInt32(byteArray, pos));
-        pos += 4;
-        transaction.ecBlockId = String(converters.byteArrayToBigInteger(byteArray, pos));
-        pos += 8;
-        transaction.flags = String(converters.byteArrayToSignedInt32(byteArray, pos));
-        pos += 4;
-        if (isVerifyECBlock) {
-            var ecBlock = NRS.constants.LAST_KNOWN_BLOCK;
-            if (ecBlock.id != "0") {
-                if (transaction.ecBlockHeight != ecBlock.height) {
-                    return false;
-                }
-                if (transaction.ecBlockId != ecBlock.id) {
-                    return false;
+        try {
+            var transaction = {};
+            var pos = 0;
+            transaction.chain = String(converters.byteArrayToSignedInt32(byteArray, pos));
+            pos += 4;
+            transaction.type = byteArray[pos++];
+            // Patch until I find the official way of converting JS byte to signed byte
+            if (transaction.type >= 128) {
+                transaction.type -= 256;
+            }
+            transaction.subtype = byteArray[pos++];
+            transaction.version = byteArray[pos++];
+            transaction.timestamp = String(converters.byteArrayToSignedInt32(byteArray, pos));
+            pos += 4;
+            transaction.deadline = String(converters.byteArrayToSignedShort(byteArray, pos));
+            pos += 2;
+            transaction.publicKey = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+            pos += 32;
+            transaction.recipient = String(converters.byteArrayToBigInteger(byteArray, pos));
+            pos += 8;
+            transaction.amountNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+            pos += 8;
+            transaction.feeNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+            pos += 8;
+            transaction.signature = byteArray.slice(pos, pos + 64);
+            pos += 64;
+            transaction.ecBlockHeight = String(converters.byteArrayToSignedInt32(byteArray, pos));
+            pos += 4;
+            transaction.ecBlockId = String(converters.byteArrayToBigInteger(byteArray, pos));
+            pos += 8;
+            transaction.flags = String(converters.byteArrayToSignedInt32(byteArray, pos));
+            pos += 4;
+            if (isVerifyECBlock) {
+                var ecBlock = NRS.constants.LAST_KNOWN_BLOCK;
+                if (ecBlock.id != "0") {
+                    if (transaction.ecBlockHeight != ecBlock.height) {
+                        return false;
+                    }
+                    if (transaction.ecBlockId != ecBlock.id) {
+                        return false;
+                    }
                 }
             }
-        }
 
-        if (transaction.publicKey != NRS.accountInfo.publicKey && transaction.publicKey != data.publicKey) {
-            return false;
-        }
-
-        if (transaction.deadline !== data.deadline) {
-            return false;
-        }
-
-        if (transaction.recipient !== data.recipient) {
-            if (!((data.recipient === undefined || data.recipient == "") && transaction.recipient == "0")) {
+            if (transaction.publicKey != NRS.accountInfo.publicKey && transaction.publicKey != data.publicKey) {
                 return false;
             }
-        }
 
-        if (transaction.amountNQT !== data.amountNQT && !(requestType === "exchangeCoins" && transaction.amountNQT === "0")) {
-            return false;
-        }
-
-        if ("referencedTransactionFullHash" in data) {
-            if (transaction.referencedTransactionFullHash !== data.referencedTransactionFullHash) {
+            if (transaction.deadline !== data.deadline) {
                 return false;
             }
-        } else if (transaction.referencedTransactionFullHash && transaction.referencedTransactionFullHash !== "") {
+
+            if (transaction.recipient !== data.recipient) {
+                if (!((data.recipient === undefined || data.recipient == "") && transaction.recipient == "0")) {
+                    return false;
+                }
+            }
+
+            if (transaction.amountNQT !== data.amountNQT && !(requestType === "exchangeCoins" && transaction.amountNQT === "0")) {
+                return false;
+            }
+
+            if ("referencedTransactionFullHash" in data) {
+                if (transaction.referencedTransactionFullHash !== data.referencedTransactionFullHash) {
+                    return false;
+                }
+            } else if (transaction.referencedTransactionFullHash && transaction.referencedTransactionFullHash !== "") {
+                return false;
+            }
+            //has empty attachment, so no attachmentVersion byte...
+            if (!(requestType == "sendMoney" || requestType == "sendMessage")) {
+                pos++;
+            }
+            return NRS.verifyTransactionTypes(byteArray, transaction, requestType, data, pos, attachment);
+        } catch (e) {
+            NRS.logConsole("Exception in verifyTransactionBytes " + e.message);
             return false;
         }
-        //has empty attachment, so no attachmentVersion byte...
-        if (!(requestType == "sendMoney" || requestType == "sendMessage")) {
-            pos++;
-        }
-        return NRS.verifyTransactionTypes(byteArray, transaction, requestType, data, pos, attachment);
     };
 
     NRS.verifyTransactionTypes = function (byteArray, transaction, requestType, data, pos, attachment) {
@@ -1324,6 +1329,7 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.verifyAppendix = function (byteArray, transaction, requestType, data, pos) {
         var attachmentVersion;
+        var flags;
 
         // MessageAppendix
         if ((transaction.flags & 1) != 0 ||
@@ -1333,12 +1339,18 @@ var NRS = (function (NRS, $, undefined) {
                 return false;
             }
             pos++;
-            var messageLength = converters.byteArrayToSignedInt32(byteArray, pos);
-            transaction.messageIsText = messageLength < 0; // ugly hack??
-            if (messageLength < 0) {
-                messageLength &= NRS.constants.MAX_INT_JAVA;
+            flags = byteArray[pos];
+            pos++;
+            transaction.messageIsText = flags && 1;
+            var messageIsText = (transaction.messageIsText ? "true" : "false");
+            if (messageIsText != data.messageIsText) {
+                return false;
             }
-            pos += 4;
+            var messageLength = converters.byteArrayToSignedShort(byteArray, pos);
+            if (messageLength < 0) {
+                messageLength &= NRS.constants.MAX_SHORT_JAVA;
+            }
+            pos += 2;
             if (transaction.messageIsText) {
                 transaction.message = converters.byteArrayToString(byteArray, pos, messageLength);
             } else {
@@ -1346,10 +1358,6 @@ var NRS = (function (NRS, $, undefined) {
                 transaction.message = converters.byteArrayToHexString(slice);
             }
             pos += messageLength;
-            var messageIsText = (transaction.messageIsText ? "true" : "false");
-            if (messageIsText != data.messageIsText) {
-                return false;
-            }
             if (transaction.message !== data.message) {
                 return false;
             }
