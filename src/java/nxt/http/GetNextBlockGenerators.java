@@ -60,11 +60,11 @@ import java.util.List;
  * </ul>
  * </ul>
  */
-public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandler {
+public final class GetNextBlockGenerators extends APIServlet.APIRequestHandler {
 
-    static final GetNextBlockGeneratorsTemp instance = new GetNextBlockGeneratorsTemp();
+    static final GetNextBlockGenerators instance = new GetNextBlockGenerators();
 
-    private GetNextBlockGeneratorsTemp() {
+    private GetNextBlockGenerators() {
         super(new APITag[] {APITag.FORGING}, "limit");
     }
 
