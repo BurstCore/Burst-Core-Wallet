@@ -1372,20 +1372,22 @@ var NRS = (function (NRS, $, undefined) {
                 return false;
             }
             pos++;
-            var encryptedMessageLength = converters.byteArrayToSignedInt32(byteArray, pos);
-            transaction.messageToEncryptIsText = encryptedMessageLength < 0;
-            if (encryptedMessageLength < 0) {
-                encryptedMessageLength &= NRS.constants.MAX_INT_JAVA;
-            }
-            pos += 4;
-            transaction.encryptedMessageData = converters.byteArrayToHexString(byteArray.slice(pos, pos + encryptedMessageLength));
-            pos += encryptedMessageLength;
-            transaction.encryptedMessageNonce = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
-            pos += 32;
+            flags = byteArray[pos];
+            pos++;
+            transaction.messageToEncryptIsText = flags && 1;
             var messageToEncryptIsText = (transaction.messageToEncryptIsText ? "true" : "false");
             if (messageToEncryptIsText != data.messageToEncryptIsText) {
                 return false;
             }
+            var encryptedMessageLength = converters.byteArrayToSignedShort(byteArray, pos);
+            if (encryptedMessageLength < 0) {
+                encryptedMessageLength &= NRS.constants.MAX_SHORT_JAVA;
+            }
+            pos += 2;
+            transaction.encryptedMessageData = converters.byteArrayToHexString(byteArray.slice(pos, pos + encryptedMessageLength));
+            pos += encryptedMessageLength;
+            transaction.encryptedMessageNonce = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+            pos += 32;
             if (transaction.encryptedMessageData !== data.encryptedMessageData || transaction.encryptedMessageNonce !== data.encryptedMessageNonce) {
                 return false;
             }
@@ -1400,20 +1402,22 @@ var NRS = (function (NRS, $, undefined) {
                 return false;
             }
             pos++;
-            var encryptedToSelfMessageLength = converters.byteArrayToSignedInt32(byteArray, pos);
-            transaction.messageToEncryptToSelfIsText = encryptedToSelfMessageLength < 0;
-            if (encryptedToSelfMessageLength < 0) {
-                encryptedToSelfMessageLength &= NRS.constants.MAX_INT_JAVA;
-            }
-            pos += 4;
-            transaction.encryptToSelfMessageData = converters.byteArrayToHexString(byteArray.slice(pos, pos + encryptedToSelfMessageLength));
-            pos += encryptedToSelfMessageLength;
-            transaction.encryptToSelfMessageNonce = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
-            pos += 32;
+            flags = byteArray[pos];
+            pos++;
+            transaction.messageToEncryptToSelfIsText = flags && 1;
             var messageToEncryptToSelfIsText = (transaction.messageToEncryptToSelfIsText ? "true" : "false");
             if (messageToEncryptToSelfIsText != data.messageToEncryptToSelfIsText) {
                 return false;
             }
+            var encryptedToSelfMessageLength = converters.byteArrayToSignedShort(byteArray, pos);
+            if (encryptedToSelfMessageLength < 0) {
+                encryptedToSelfMessageLength &= NRS.constants.MAX_SHORT_JAVA;
+            }
+            pos += 2;
+            transaction.encryptToSelfMessageData = converters.byteArrayToHexString(byteArray.slice(pos, pos + encryptedToSelfMessageLength));
+            pos += encryptedToSelfMessageLength;
+            transaction.encryptToSelfMessageNonce = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+            pos += 32;
             if (transaction.encryptToSelfMessageData !== data.encryptToSelfMessageData || transaction.encryptToSelfMessageNonce !== data.encryptToSelfMessageNonce) {
                 return false;
             }
@@ -1428,6 +1432,11 @@ var NRS = (function (NRS, $, undefined) {
                 return false;
             }
             pos++;
+            flags = byteArray[pos];
+            pos++;
+            if (flags != 0) {
+                return false;
+            }
             serverHash = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
             pos += 32;
             sha256 = CryptoJS.algo.SHA256.create();
@@ -1458,6 +1467,11 @@ var NRS = (function (NRS, $, undefined) {
                 return false;
             }
             pos++;
+            flags = byteArray[pos];
+            pos++;
+            if (flags != 0) {
+                return false;
+            }
             serverHash = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
             pos += 32;
             sha256 = CryptoJS.algo.SHA256.create();
