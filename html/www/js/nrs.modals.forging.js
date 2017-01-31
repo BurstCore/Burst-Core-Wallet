@@ -77,7 +77,7 @@ var NRS = (function(NRS, $) {
 			$.growl($.t("error_forging_no_public_key"), {
 				"type": "danger"
 			});
-		} else if (NRS.accountInfo.effectiveBalanceNXT == 0) {
+		} else if (NRS.accountInfo.effectiveBalanceFXT == 0) {
 			if (NRS.lastBlockHeight >= NRS.accountInfo.currentLeasingHeightFrom && NRS.lastBlockHeight <= NRS.accountInfo.currentLeasingHeightTo) {
 				$.growl($.t("error_forging_lease"), {
 					"type": "danger"
@@ -103,7 +103,7 @@ var NRS = (function(NRS, $) {
     NRS.getForgingTooltip = function(data) {
         if (!data || data.account == NRS.accountInfo.account) {
             NRS.isAccountForging = true;
-            return $.t("forging_tooltip", {"balance": NRS.accountInfo.effectiveBalanceNXT});
+            return $.t("forging_tooltip", {"balance": NRS.accountInfo.effectiveBalanceFXT});
         }
         return $.t("forging_another_account_tooltip", {"accountRS": data.accountRS });
     };
@@ -137,7 +137,7 @@ var NRS = (function(NRS, $) {
         } else if (NRS.isLeased) {
             status = NRS.constants.NOT_FORGING;
             tooltip = $.t("error_forging_lease");
-        } else if (NRS.accountInfo.effectiveBalanceNXT == 0) {
+        } else if (NRS.accountInfo.effectiveBalanceFXT == 0) {
             status = NRS.constants.NOT_FORGING;
             tooltip = $.t("error_forging_effective_balance");
         } else if (NRS.downloadingBlockchain) {

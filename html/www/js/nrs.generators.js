@@ -118,7 +118,7 @@ var NRS = (function(NRS) {
         var remaining = generator.deadline - (NRS.toEpochTime() - lastBlockTime) + TIME_DRIFT;
         return {
             accountFormatted: NRS.getAccountLink(generator, "account"),
-            balanceFormatted: NRS.formatAmount(generator.effectiveBalanceNXT),
+            balanceFormatted: NRS.formatAmount(generator.effectiveBalanceFXT),
             hitTimeFormatted: NRS.formatTimestamp(generator.hitTime),
             deadline: generator.deadline,
             remaining: remaining
