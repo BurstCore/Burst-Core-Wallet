@@ -1936,5 +1936,6 @@
   "claimed_amount": "Claimed Amount",
   "disabled_transaction_types": "Disabled Transaction Types",
   "fee_not_specified": "Fee not specified, best bundling fee has been calculated",
-  "dividend_payment_info_preview_success": "A total of __amount__ __holding__ __holdingType__ will be distributed among __recipientCount__ accounts which own a total of __totalQuantity__ shares."
+  "dividend_payment_info_preview_success": "A total of __amount__ __holding__ __holdingType__ will be distributed among __recipientCount__ accounts which own a total of __totalQuantity__ shares.",
+  "disabled_api_tags": "Disabled API Tags"
 }
