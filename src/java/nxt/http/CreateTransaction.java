@@ -50,11 +50,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import static nxt.http.JSONResponses.FEATURE_NOT_AVAILABLE;
-import static nxt.http.JSONResponses.INCORRECT_DEADLINE;
 import static nxt.http.JSONResponses.INCORRECT_EC_BLOCK;
 import static nxt.http.JSONResponses.INCORRECT_LINKED_TRANSACTION;
 import static nxt.http.JSONResponses.INCORRECT_WHITELIST;
-import static nxt.http.JSONResponses.MISSING_DEADLINE;
 import static nxt.http.JSONResponses.MISSING_SECRET_PHRASE;
 import static nxt.http.JSONResponses.NOT_ENOUGH_FUNDS;
 import static nxt.http.JSONResponses.UNKNOWN_CHAIN;
@@ -164,7 +162,6 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
     final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
                                             long amountNQT, Attachment attachment, Chain txChain) throws NxtException {
-        String deadlineValue = req.getParameter("deadline");
         ChainTransactionId referencedTransactionId = null;
         String referencedTransactionValue = Convert.emptyToNull(req.getParameter("referencedTransaction"));
         if (referencedTransactionValue != null) {
@@ -208,21 +205,10 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
         if (secretPhrase == null && publicKeyValue == null) {
             return MISSING_SECRET_PHRASE;
-        } else if (deadlineValue == null) {
-            return MISSING_DEADLINE;
         }
 
-        short deadline;
-        try {
-            deadline = Short.parseShort(deadlineValue);
-            if (deadline < 1) {
-                return INCORRECT_DEADLINE;
-            }
-        } catch (NumberFormatException e) {
-            return INCORRECT_DEADLINE;
-        }
-
-        long feeNQT = ParameterParser.getFeeNQT(req);
+        short deadline = (short)ParameterParser.getInt(req, "deadline", 1, Short.MAX_VALUE, 1440);
+        long feeNQT = ParameterParser.getLong(req, "feeNQT", -1L, Constants.MAX_BALANCE_NQT, -1L);
         int ecBlockHeight = ParameterParser.getInt(req, "ecBlockHeight", 0, Integer.MAX_VALUE, false);
         long ecBlockId = Convert.parseUnsignedLong(req.getParameter("ecBlockId"));
         if (ecBlockId != 0 && ecBlockId != Nxt.getBlockchain().getBlockIdAtHeight(ecBlockHeight)) {
@@ -231,7 +217,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         if (ecBlockId == 0 && ecBlockHeight > 0) {
             ecBlockId = Nxt.getBlockchain().getBlockIdAtHeight(ecBlockHeight);
         }
-        long feeRateNQTPerFXT = ParameterParser.getLong(req, "feeRateNQTPerFXT", -1L, Constants.MAX_BALANCE_NQT, false);
+        long feeRateNQTPerFXT = ParameterParser.getLong(req, "feeRateNQTPerFXT", -1L, Constants.MAX_BALANCE_NQT, -1L);
         JSONObject response = new JSONObject();
 
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet

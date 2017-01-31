@@ -92,14 +92,26 @@ public final class ParameterParser {
             }
             return 0;
         }
+        return getInt(name, paramValue, min, max);
+    }
+
+    public static int getInt(HttpServletRequest req, String name, int min, int max, int defaultValue) throws ParameterException {
+        String paramValue = Convert.emptyToNull(req.getParameter(name));
+        if (paramValue == null) {
+            return defaultValue;
+        }
+        return getInt(name, paramValue, min, max);
+    }
+
+    private static int getInt(String paramName, String paramValue, int min, int max) throws ParameterException {
         try {
             int value = Integer.parseInt(paramValue);
             if (value < min || value > max) {
-                throw new ParameterException(incorrect(name, String.format("value %d not in range [%d-%d]", value, min, max)));
+                throw new ParameterException(incorrect(paramName, String.format("value %d not in range [%d-%d]", value, min, max)));
             }
             return value;
         } catch (RuntimeException e) {
-            throw new ParameterException(incorrect(name, String.format("value %s is not numeric", paramValue)));
+            throw new ParameterException(incorrect(paramName, String.format("value %s is not numeric", paramValue)));
         }
     }
 
@@ -112,14 +124,27 @@ public final class ParameterParser {
             }
             return 0;
         }
+        return getLong(name, paramValue, min, max);
+    }
+
+    public static long getLong(HttpServletRequest req, String name, long min, long max,
+                               long defaultValue) throws ParameterException {
+        String paramValue = Convert.emptyToNull(req.getParameter(name));
+        if (paramValue == null) {
+            return defaultValue;
+        }
+        return getLong(name, paramValue, min, max);
+    }
+
+    private static long getLong(String paramName, String paramValue, long min, long max) throws ParameterException {
         try {
             long value = Long.parseLong(paramValue);
             if (value < min || value > max) {
-                throw new ParameterException(incorrect(name, String.format("value %d not in range [%d-%d]", value, min, max)));
+                throw new ParameterException(incorrect(paramName, String.format("value %d not in range [%d-%d]", value, min, max)));
             }
             return value;
         } catch (RuntimeException e) {
-            throw new ParameterException(incorrect(name, String.format("value %s is not numeric", paramValue)));
+            throw new ParameterException(incorrect(paramName, String.format("value %s is not numeric", paramValue)));
         }
     }
 
@@ -253,10 +278,6 @@ public final class ParameterParser {
 
     public static long getAmountNQTPerShare(HttpServletRequest req) throws ParameterException {
         return getLong(req, "amountNQTPerShare", 1L, Constants.MAX_BALANCE_NQT, true);
-    }
-
-    public static long getFeeNQT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "feeNQT", -1L, Constants.MAX_BALANCE_NQT, true);
     }
 
     public static long getPriceNQT(HttpServletRequest req) throws ParameterException {
@@ -537,19 +558,7 @@ public final class ParameterParser {
     }
 
     public static int getHeight(HttpServletRequest req) throws ParameterException {
-        String heightValue = Convert.emptyToNull(req.getParameter("height"));
-        if (heightValue != null) {
-            try {
-                int height = Integer.parseInt(heightValue);
-                if (height < 0 || height > Nxt.getBlockchain().getHeight()) {
-                    throw new ParameterException(INCORRECT_HEIGHT);
-                }
-                return height;
-            } catch (NumberFormatException e) {
-                throw new ParameterException(INCORRECT_HEIGHT);
-            }
-        }
-        return -1;
+        return getInt(req, "height", 0, Nxt.getBlockchain().getHeight(), -1);
     }
 
     public static HoldingType getHoldingType(HttpServletRequest req) throws ParameterException {
