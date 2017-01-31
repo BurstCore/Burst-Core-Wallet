@@ -29,6 +29,7 @@ import nxt.util.Logger;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,14 +37,33 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class Bundler {
 
+    public interface Filter {
+        boolean ok(Bundler bundler, ChildTransaction childTransaction);
+    }
+
     private static final short defaultChildBlockDeadline = (short)Nxt.getIntProperty("nxt.defaultChildBlockDeadline");
+    private static final Filter bundlingFilter;
+    static {
+        String filterClass = Nxt.getStringProperty("nxt.bundlingFilter");
+        if (filterClass != null) {
+            try {
+                bundlingFilter = (Filter) Class.forName(filterClass).newInstance();
+                Logger.logInfoMessage("Loaded " + filterClass + " bundling filter");
+            } catch (ReflectiveOperationException e) {
+                Logger.logErrorMessage(e.getMessage(), e);
+                throw new RuntimeException(e);
+            }
+        } else {
+            bundlingFilter = (bundler, childTransaction) -> true;
+        }
+    }
 
     private static final Map<ChildChain, Map<Long, Bundler>> bundlers = new ConcurrentHashMap<>();
     private static final TransactionProcessorImpl transactionProcessor = TransactionProcessorImpl.getInstance();
 
     public static Bundler getBundler(ChildChain childChain, long accountId) {
-        Map<Long, Bundler> childChainBundlers = bundlers.computeIfAbsent(childChain, k -> new ConcurrentHashMap<>());
-        return childChainBundlers.get(accountId);
+        Map<Long, Bundler> childChainBundlers = bundlers.get(childChain);
+        return childChainBundlers == null ? null : childChainBundlers.get(accountId);
     }
 
     public static synchronized Bundler addOrChangeBundler(ChildChain childChain, String secretPhrase,
@@ -60,8 +80,8 @@ public final class Bundler {
     }
 
     public static List<Bundler> getChildChainBundlers(ChildChain childChain) {
-        Map<Long, Bundler> childChainBundlers = bundlers.computeIfAbsent(childChain, k -> new ConcurrentHashMap<>());
-        return new ArrayList<>(childChainBundlers.values());
+        Map<Long, Bundler> childChainBundlers = bundlers.get(childChain);
+        return childChainBundlers == null ? Collections.emptyList() : new ArrayList<>(childChainBundlers.values());
     }
 
     public static List<Bundler> getAccountBundlers(long accountId) {
@@ -76,14 +96,18 @@ public final class Bundler {
     }
 
     public static List<BundlerRate> getBundlerRates() {
+        if (bundlingFilter != null) {
+            // do not advertise rates when using a custom filter
+            return Collections.emptyList();
+        }
         List<BundlerRate> rates = new ArrayList<>();
         getAllBundlers().forEach(bundler -> rates.add(bundler.getBundlerRate()));
         return rates;
     }
 
     public static Bundler stopBundler(ChildChain childChain, long accountId) {
-        Map<Long, Bundler> childChainBundlers = bundlers.computeIfAbsent(childChain, k -> new ConcurrentHashMap<>());
-        return childChainBundlers.remove(accountId);
+        Map<Long, Bundler> childChainBundlers = bundlers.get(childChain);
+        return childChainBundlers == null ? null : childChainBundlers.remove(accountId);
     }
 
     public static void stopAccountBundlers(long accountId) {
@@ -136,11 +160,7 @@ public final class Bundler {
         this.totalFeesLimitFQT = totalFeesLimitFQT;
         this.overpayFQTPerFXT = overpayFQTPerFXT;
         this.overpayFQTPerFXTBigInteger = BigInteger.valueOf(this.overpayFQTPerFXT);
-        Map<Long, Bundler> chainBundlers = bundlers.get(childChain);
-        if (chainBundlers == null) {
-            chainBundlers = new ConcurrentHashMap<>();
-            bundlers.put(childChain, chainBundlers);
-        }
+        Map<Long, Bundler> chainBundlers = bundlers.computeIfAbsent(childChain, k -> new ConcurrentHashMap<>());
         chainBundlers.put(accountId, this);
     }
 
@@ -207,6 +227,9 @@ public final class Bundler {
                     }
                     int childFullSize = childTransaction.getFullSize();
                     if (payloadLength + childFullSize > Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH) {
+                        continue;
+                    }
+                    if (bundlingFilter != null && !bundlingFilter.ok(this, childTransaction)) {
                         continue;
                     }
                     if (childTransaction.attachmentIsDuplicate(duplicates, true)) {
