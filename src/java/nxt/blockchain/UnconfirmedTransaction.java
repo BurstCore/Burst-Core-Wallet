@@ -101,7 +101,7 @@ public abstract class UnconfirmedTransaction implements Transaction {
         TransactionProcessorImpl.getInstance().unconfirmedTransactionTable.insert(this);
     }
 
-    boolean isBundled() {
+    public boolean isBundled() {
         return isBundled;
     }
 

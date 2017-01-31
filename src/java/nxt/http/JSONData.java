@@ -46,6 +46,7 @@ import nxt.blockchain.ChildTransaction;
 import nxt.blockchain.FxtTransaction;
 import nxt.blockchain.Generator;
 import nxt.blockchain.Transaction;
+import nxt.blockchain.UnconfirmedTransaction;
 import nxt.ce.CoinExchange;
 import nxt.ce.OrderCancelAttachment;
 import nxt.ce.OrderIssueAttachment;
@@ -1021,6 +1022,8 @@ public final class JSONData {
                 json.put("referencedTransaction", referencedTransactionId.getJSON());
             }
             json.put("fxtTransaction", Long.toUnsignedString(((ChildTransaction) transaction).getFxtTransactionId()));
+            if (transaction instanceof UnconfirmedTransaction)
+            json.put("isBundled", ((UnconfirmedTransaction)transaction).isBundled());
         }
         byte[] signature = Convert.emptyToNull(transaction.getSignature());
         if (signature != null) {
