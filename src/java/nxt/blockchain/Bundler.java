@@ -48,7 +48,9 @@ public final class Bundler {
 
     public static synchronized Bundler addOrChangeBundler(ChildChain childChain, String secretPhrase,
                                                           long minRateNQTPerFXT, long totalFeesLimitFQT, long overpayFQTPerFXT) {
-        return new Bundler(childChain, secretPhrase, minRateNQTPerFXT, totalFeesLimitFQT, overpayFQTPerFXT);
+        Bundler bundler = new Bundler(childChain, secretPhrase, minRateNQTPerFXT, totalFeesLimitFQT, overpayFQTPerFXT);
+        bundler.runBundling();
+        return bundler;
     }
 
     public static List<Bundler> getAllBundlers() {
@@ -108,14 +110,7 @@ public final class Bundler {
                 }
             }
             if (hasChildChainTransactions) {
-                List<ChildBlockFxtTransaction> childBlockFxtTransactions = bundler.bundle();
-                childBlockFxtTransactions.forEach(childBlockFxtTransaction -> {
-                    try {
-                        transactionProcessor.broadcast(childBlockFxtTransaction);
-                    } catch (NxtException.ValidationException e) {
-                        Logger.logErrorMessage(e.getMessage(), e);
-                    }
-                });
+                bundler.runBundling();
             }
         })), TransactionProcessor.Event.ADDED_UNCONFIRMED_TRANSACTIONS);
     }
@@ -181,7 +176,7 @@ public final class Bundler {
         return new BundlerRate(childChain, minRateNQTPerFXT, secretPhrase);
     }
 
-    private List<ChildBlockFxtTransaction> bundle() {
+    private void runBundling() {
         int blockchainHeight = Nxt.getBlockchain().getHeight();
         int now = Nxt.getEpochTime();
         List<ChildBlockFxtTransaction> childBlockFxtTransactions = new ArrayList<>();
@@ -240,7 +235,13 @@ public final class Bundler {
                 }
             }
         }
-        return childBlockFxtTransactions;
+        childBlockFxtTransactions.forEach(childBlockFxtTransaction -> {
+            try {
+                transactionProcessor.broadcast(childBlockFxtTransaction);
+            } catch (NxtException.ValidationException e) {
+                Logger.logErrorMessage(e.getMessage(), e);
+            }
+        });
     }
 
     private ChildBlockFxtTransaction bundle(List<ChildTransaction> childTransactions, long feeFQT, int timestamp) throws NxtException.ValidationException {
