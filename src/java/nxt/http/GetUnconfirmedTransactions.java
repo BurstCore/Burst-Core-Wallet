@@ -49,7 +49,7 @@ public final class GetUnconfirmedTransactions extends APIServlet.APIRequestHandl
                     if (chain != null && transaction.getChain() != chain) {
                         return false;
                     }
-                    return accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId());
+                    return accountIds.isEmpty() || accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId());
                 };
 
         JSONArray transactions = new JSONArray();
