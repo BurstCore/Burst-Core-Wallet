@@ -1467,7 +1467,7 @@ NRS.addPagination = function () {
 				}
 				rows += "<tr>" +
 					"<td>" + NRS.getAccountLink({ lessorRS: lessor }, "lessor") + "</td>" +
-					"<td>" + NRS.escapeRespStr(lessorInfo.effectiveBalanceNXT) + "</td>" +
+					"<td>" + NRS.escapeRespStr(lessorInfo.effectiveBalanceFXT) + "</td>" +
 					"<td><label>" + String(blocksLeft).escapeHTML() + " <i class='fa fa-question-circle show_popover' data-toggle='tooltip' title='" + blocksLeftTooltip + "' data-placement='right' style='color:#4CAA6E'></i></label></td>" +
 					"<td><label>" + String(nextLessee).escapeHTML() + " <i class='fa fa-question-circle show_popover' data-toggle='tooltip' title='" + nextTooltip + "' data-placement='right' style='color:#4CAA6E'></i></label></td>" +
 				"</tr>";

@@ -55,16 +55,16 @@ import java.util.List;
  * <li>account - The account identifier
  * <li>accountRS - The account RS identifier
  * <li>deadline - The difference between the generation time and the last block timestamp
- * <li>effectiveBalanceNXT - The account effective balance
+ * <li>effectiveBalanceFXT - The account effective balance
  * <li>hitTime - The generation time for the account
  * </ul>
  * </ul>
  */
-public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandler {
+public final class GetNextBlockGenerators extends APIServlet.APIRequestHandler {
 
-    static final GetNextBlockGeneratorsTemp instance = new GetNextBlockGeneratorsTemp();
+    static final GetNextBlockGenerators instance = new GetNextBlockGenerators();
 
-    private GetNextBlockGeneratorsTemp() {
+    private GetNextBlockGenerators() {
         super(new APITag[] {APITag.FORGING}, "limit");
     }
 
@@ -88,7 +88,7 @@ public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandl
                 }
                 JSONObject resp = new JSONObject();
                 JSONData.putAccount(resp, "account", generator.getAccountId());
-                resp.put("effectiveBalanceNXT", generator.getEffectiveBalance());
+                resp.put("effectiveBalanceFXT", generator.getEffectiveBalance());
                 resp.put("hitTime", generator.getHitTime());
                 resp.put("deadline", (int)generator.getHitTime() - lastBlock.getTimestamp());
                 generators.add(resp);

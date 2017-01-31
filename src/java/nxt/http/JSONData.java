@@ -424,7 +424,8 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         putAccount(json, "issuer", shuffling.getIssuerId());
         json.put("holding", Long.toUnsignedString(shuffling.getHoldingId()));
-        json.put("holdingType", shuffling.getHoldingType().getCode());
+        HoldingType holdingType = shuffling.getHoldingType();
+        json.put("holdingType", holdingType.getCode());
         if (shuffling.getAssigneeAccountId() != 0) {
             putAccount(json, "assignee", shuffling.getAssigneeAccountId());
         }
@@ -442,11 +443,13 @@ public final class JSONData {
         if (recipientPublicKeys.size() > 0) {
             json.put("recipientPublicKeys", recipientPublicKeys);
         }
-        if (includeHoldingInfo && shuffling.getHoldingType() != HoldingType.COIN) {
+        if (includeHoldingInfo) {
             JSONObject holdingJson = new JSONObject();
-            if (shuffling.getHoldingType() == HoldingType.ASSET) {
+            if (holdingType == HoldingType.COIN) {
+                putChainInfo(holdingJson, shuffling.getHoldingId());
+            } else if (holdingType == HoldingType.ASSET) {
                 putAssetInfo(holdingJson, shuffling.getHoldingId());
-            } else if (shuffling.getHoldingType() == HoldingType.CURRENCY) {
+            } else if (holdingType == HoldingType.CURRENCY) {
                 putCurrencyInfo(holdingJson, shuffling.getHoldingId());
             }
             json.put("holdingInfo", holdingJson);
@@ -903,9 +906,11 @@ public final class JSONData {
         json.put("holding", Long.toUnsignedString(assetDividend.getHoldingId()));
         HoldingType holdingType = assetDividend.getHoldingType();
         json.put("holdingType", holdingType.getCode());
-        if (includeHoldingInfo && holdingType != HoldingType.COIN) {
+        if (includeHoldingInfo) {
             JSONObject holdingJson = new JSONObject();
-            if (holdingType == HoldingType.ASSET) {
+            if (holdingType == HoldingType.COIN) {
+                putChainInfo(holdingJson, assetDividend.getHoldingId());
+            } else if (holdingType == HoldingType.ASSET) {
                 putAssetInfo(holdingJson, assetDividend.getHoldingId());
             } else if (holdingType == HoldingType.CURRENCY) {
                 putCurrencyInfo(holdingJson, assetDividend.getHoldingId());
@@ -1273,6 +1278,12 @@ public final class JSONData {
         Asset asset = Asset.getAsset(assetId);
         json.put("name", asset.getName());
         json.put("decimals", asset.getDecimals());
+    }
+
+    private static void putChainInfo(JSONObject json, long chainId) {
+        Chain chain = Chain.getChain((int)chainId);
+        json.put("name", chain.getName());
+        json.put("decimals", chain.getDecimals());
     }
 
     private static void putExpectedTransaction(JSONObject json, Transaction transaction) {

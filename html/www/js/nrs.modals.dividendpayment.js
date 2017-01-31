@@ -170,11 +170,12 @@ var NRS = (function(NRS, $) {
     });
 
     NRS.getAssetDividendHistory = function (assetId, table) {
-        var assetExchangeDividendHistoryTable = $("#" + table + "table");
+        var assetExchangeDividendHistoryTable =     $("#" + table + "table");
         assetExchangeDividendHistoryTable.find("tbody").empty();
         assetExchangeDividendHistoryTable.parent().addClass("data-loading").removeClass("data-empty");
         var options = {
-            "asset": assetId
+            asset: assetId,
+            includeHoldingInfo: true
         };
         var view = NRS.simpleview.get(table, {
             errorMessage: null,
@@ -186,12 +187,22 @@ var NRS = (function(NRS, $) {
             var dividends = response.dividends;
             for (var i = 0; i < dividends.length; i++) {
                 var dividend = dividends[i];
+                var decimals;
+                var holdingLink;
+                if (dividend.holdingType == "0") {
+                    decimals = NRS.getActiveChainDecimals();
+                    holdingLink = NRS.getChainLink(dividend.holding);
+                } else {
+                    decimals = dividend.holdingInfo.decimals;
+                    holdingLink = NRS.getHoldingLink(dividend.holding, dividend.holdingType, dividend.holdingInfo.name);
+                }
                 view.data.push({
                     "timestamp": NRS.getTransactionLink(dividend.assetDividendFullHash, NRS.formatTimestamp(dividend.timestamp)),
                     "dividend_height": String(dividend.dividendHeight).escapeHTML(),
-                    "total": NRS.intToFloat(dividend.totalDividend, NRS.getActiveChainDecimals()),
+                    "total": NRS.intToFloat(dividend.totalDividend, decimals),
                     "accounts": NRS.formatQuantity(dividend.numberOfAccounts, false, false, 0),
-                    "amount_per_share": NRS.intToFloat(dividend.amountNQT, NRS.getActiveChainDecimals())
+                    "amount_per_share": NRS.intToFloat(dividend.amountNQT, decimals),
+                    "holding": holdingLink
                 })
             }
             view.render({

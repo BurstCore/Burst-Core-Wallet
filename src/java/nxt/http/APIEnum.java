@@ -275,7 +275,7 @@ public enum APIEnum {
     SEND_TRANSACTION("sendTransaction", SendTransaction.instance),
     GET_ASSET_DIVIDENDS("getAssetDividends", GetAssetDividends.instance),
     BLACKLIST_API_PROXY_PEER("blacklistAPIProxyPeer", BlacklistAPIProxyPeer.instance),
-    GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", GetNextBlockGeneratorsTemp.instance),
+    GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", GetNextBlockGenerators.instance),
     START_BUNDLER("startBundler", StartBundler.instance),
     STOP_BUNDLER("stopBundler", StopBundler.instance),
     GET_BUNDLERS("getBundlers", GetBundlers.instance),
