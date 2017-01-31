@@ -166,7 +166,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
             }
             if (size() > maxUnconfirmedTransactions) {
                 UnconfirmedTransaction removed = remove();
-                //Logger.logDebugMessage("Dropped unconfirmed transaction " + removed.getJSONObject().toJSONString());
+                Logger.logDebugMessage("Dropped unconfirmed transaction " + removed.getStringId());
             }
             return true;
         }
@@ -614,6 +614,10 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
     void processWaitingTransactions() {
         BlockchainImpl.getInstance().writeLock();
         try {
+            if (unconfirmedTransactionTable.getCount() > 2 * maxUnconfirmedTransactions) {
+                Logger.logDebugMessage("Unconfirmed transaction table size exceeded twice the maximum allowed, re-queueing");
+                requeueAllUnconfirmedTransactions();
+            }
             if (waitingTransactions.size() > 0) {
                 int currentTime = Nxt.getEpochTime();
                 List<Transaction> addedUnconfirmedTransactions = new ArrayList<>();
