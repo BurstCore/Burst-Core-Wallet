@@ -241,6 +241,15 @@ public final class FundingMonitor {
     }
 
     /**
+     * Return the feeRateNQTPerFXT
+     *
+     * @return                      Fee rate NQT per FXT
+     */
+    public long getFeeRateNQTPerFXT() {
+        return feeRateNQTPerFXT;
+    }
+
+    /**
      * Start the monitor
      * <p>
      * One or more funding parameters can be overridden in the account property value

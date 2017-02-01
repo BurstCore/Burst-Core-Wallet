@@ -1131,6 +1131,7 @@ public final class JSONData {
         json.put("amount", String.valueOf(monitor.getAmount()));
         json.put("threshold", String.valueOf(monitor.getThreshold()));
         json.put("interval", monitor.getInterval());
+        json.put("feeRateNQTPerFXT", String.valueOf(monitor.getFeeRateNQTPerFXT()));
         if (includeMonitoredAccounts) {
             JSONArray jsonAccounts = new JSONArray();
             List<FundingMonitor.MonitoredAccount> accountList = FundingMonitor.getMonitoredAccounts(monitor);
