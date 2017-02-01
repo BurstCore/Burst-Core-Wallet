@@ -65,7 +65,7 @@ var NRS = (function(NRS, $) {
 			"titleHTML": '<i class="fa fa-envelope"></i> <span data-i18n="messages">Messages</span>',
 			"page": 'my_messages',
 			"desiredPosition": 90,
-			"depends": {tags: [NRS.constants.API_TAGS.MESSAGES]}
+			"depends": { apis: [NRS.constants.REQUEST_TYPES.sendMessage] }
 		});
 		NRS.appendMenuItemToTSMenuItem('sidebar_messages', {
 			"titleHTML": '<i class="fa fa-comment"></i> <span data-i18n="chat">Chat</span>',

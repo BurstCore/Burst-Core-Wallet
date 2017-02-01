@@ -39,7 +39,7 @@ public final class FxtChain extends Chain {
 
     private FxtChain() {
         super(1, FXT_NAME, 8, EnumSet.of(APIEnum.SEND_MESSAGE), EnumSet.of(APITag.ALIASES, APITag.AE, APITag.DGS,
-                APITag.DATA, APITag.MS, APITag.VS));
+                APITag.DATA, APITag.MS, APITag.SHUFFLING, APITag.VS));
     }
 
     @Override
