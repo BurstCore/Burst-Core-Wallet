@@ -175,7 +175,7 @@ var NRS = (function (NRS) {
     };
 
     NRS.isForgingSupported = function() {
-        return !NRS.isMobileApp() && !(NRS.state && NRS.state.apiProxy);
+        return !NRS.isMobileApp() && !(NRS.state && NRS.state.apiProxy) && NRS.isApiEnabled({ apis: [NRS.constants.REQUEST_TYPES.startForging] });
     };
 
     NRS.isFundingMonitorSupported = function() {
