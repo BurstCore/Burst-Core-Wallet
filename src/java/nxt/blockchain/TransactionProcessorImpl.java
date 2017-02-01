@@ -142,10 +142,15 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 if ((result = Boolean.compare(o2.getChain() != FxtChain.FXT, o1.getChain() != FxtChain.FXT)) != 0) {
                     return result;
                 }
-                if ((result = Boolean.compare(o1.isBundled(), o2.isBundled())) != 0) {
+                if ((result = Integer.compare(o2.getHeight(), o1.getHeight())) != 0) {
                     return result;
                 }
-                if ((result = Integer.compare(o2.getHeight(), o1.getHeight())) != 0) {
+                if (o1.getChain() == FxtChain.FXT && o2.getChain() == FxtChain.FXT) {
+                    if ((result = Long.compare(o1.getFee(), o2.getFee())) != 0) {
+                        return result;
+                    }
+                }
+                if ((result = Boolean.compare(o1.isBundled(), o2.isBundled())) != 0) {
                     return result;
                 }
                 if ((result = Boolean.compare(o2.getReferencedTransactionId() != null,
