@@ -81,7 +81,8 @@ var NRS = (function(NRS, $) {
             "account": NRS.accountRS,
             "adminPassword": NRS.getAdminPassword(),
             "firstIndex": NRS.pageNumber * NRS.itemsPerPage - NRS.itemsPerPage,
-            "lastIndex": NRS.pageNumber * NRS.itemsPerPage
+            "lastIndex": NRS.pageNumber * NRS.itemsPerPage,
+            "holding": NRS.getActiveChainId()
         };
         NRS.sendRequest("getFundingMonitor", params,
             function (response) {
@@ -110,6 +111,16 @@ var NRS = (function(NRS, $) {
                 NRS.pageLoaded();
             }
         )
+    };
+
+    NRS.forms.startFundingMonitor = function($modal) {
+        var data = NRS.getFormData($modal.find("form:first"));
+        data.holding = NRS.getActiveChainId();
+        data.feeRateNQTPerFXT = NRS.convertToNQT(data.feeRateNXTPerFXT);
+        delete data.feeRateNXTPerFXT;
+        return {
+            "data": data
+        };
     };
 
     NRS.forms.startFundingMonitorComplete = function() {
