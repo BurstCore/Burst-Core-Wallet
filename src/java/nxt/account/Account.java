@@ -1177,7 +1177,12 @@ public final class Account {
     }
 
     public long getEffectiveBalanceFXT() {
-        return getEffectiveBalanceFXT(Nxt.getBlockchain().getHeight());
+        Nxt.getBlockchain().readLock();
+        try {
+            return getEffectiveBalanceFXT(Nxt.getBlockchain().getHeight());
+        } finally {
+            Nxt.getBlockchain().readUnlock();
+        }
     }
 
     public long getEffectiveBalanceFXT(int height) {
@@ -1191,16 +1196,11 @@ public final class Account {
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.height <= Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
-        Nxt.getBlockchain().readLock();
-        try {
-            long effectiveBalanceFQT = getLessorsGuaranteedBalanceFQT(height);
-            if (activeLesseeId == 0) {
-                effectiveBalanceFQT += getGuaranteedBalanceFQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
-            }
-	        return effectiveBalanceFQT < Constants.MIN_FORGING_BALANCE_FQT ? 0 : effectiveBalanceFQT / Constants.ONE_FXT;
-        } finally {
-            Nxt.getBlockchain().readUnlock();
+        long effectiveBalanceFQT = getLessorsGuaranteedBalanceFQT(height);
+        if (activeLesseeId == 0) {
+            effectiveBalanceFQT += getGuaranteedBalanceFQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
         }
+        return effectiveBalanceFQT < Constants.MIN_FORGING_BALANCE_FQT ? 0 : effectiveBalanceFQT / Constants.ONE_FXT;
     }
 
     private long getLessorsGuaranteedBalanceFQT(int height) {
