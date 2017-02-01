@@ -48,7 +48,7 @@ final class Genesis {
         MessageDigest digest = Crypto.sha256();
         int count = 0;
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
-                ClassLoader.getSystemResourceAsStream("PUBLIC_KEY" + (Constants.isTestnet ? "-testnet.json" : ".json")), digest))) {
+                ClassLoader.getSystemResourceAsStream("data/PUBLIC_KEY" + (Constants.isTestnet ? "-testnet.json" : ".json")), digest))) {
             JSONArray json = (JSONArray) JSONValue.parseWithException(is);
             Logger.logDebugMessage("Loading public keys");
             for (Object jsonPublicKey : json) {
@@ -69,7 +69,7 @@ final class Genesis {
         for (Chain chain : chains) {
             count = 0;
             try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
-                    ClassLoader.getSystemResourceAsStream(chain.getName() + (Constants.isTestnet ? "-testnet.json" : ".json")), digest))) {
+                    ClassLoader.getSystemResourceAsStream("data/" + chain.getName() + (Constants.isTestnet ? "-testnet.json" : ".json")), digest))) {
                 JSONObject chainBalances = (JSONObject) JSONValue.parseWithException(is);
                 Logger.logDebugMessage("Loading genesis amounts for " + chain.getName());
                 long total = 0;
