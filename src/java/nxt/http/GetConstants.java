@@ -170,18 +170,20 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                     JSONObject handlerJSON = JSONData.apiRequestHandler(handlerEntry.getValue());
                     handlerJSON.put("enabled", true);
 
-                    JSONArray disabledForChains = new JSONArray();
-                    APIEnum api = APIEnum.fromName(handlerEntry.getKey());
-                    if (FxtChain.FXT.getDisabledAPIs().contains(api)) {
-                        disabledForChains.add(FxtChain.FXT.getId());
-                    }
-                    ChildChain.getAll().forEach(childChain -> {
-                        if (childChain.getDisabledAPIs().contains(api)) {
-                            disabledForChains.add(childChain.getId());
+                    if (handlerEntry.getValue().isChainSpecific()) {
+                        JSONArray disabledForChains = new JSONArray();
+                        APIEnum api = APIEnum.fromName(handlerEntry.getKey());
+                        if (FxtChain.FXT.getDisabledAPIs().contains(api)) {
+                            disabledForChains.add(FxtChain.FXT.getId());
                         }
-                    });
-                    if (disabledForChains.size() > 0) {
-                        handlerJSON.put("disabledForChains", disabledForChains);
+                        ChildChain.getAll().forEach(childChain -> {
+                            if (childChain.getDisabledAPIs().contains(api)) {
+                                disabledForChains.add(childChain.getId());
+                            }
+                        });
+                        if (disabledForChains.size() > 0) {
+                            handlerJSON.put("disabledForChains", disabledForChains);
+                        }
                     }
 
                     requestTypes.put(handlerEntry.getKey(), handlerJSON);

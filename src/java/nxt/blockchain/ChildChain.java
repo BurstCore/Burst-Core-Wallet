@@ -52,8 +52,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class ChildChain extends Chain {
 
@@ -110,12 +108,7 @@ public final class ChildChain extends Chain {
 
     private ChildChain(int id, String name, int decimals, long shufflingDepositNQT, Set<TransactionType> disabledTransactionTypes,
                        EnumSet<APIEnum> disabledAPIs, EnumSet<APITag> disabledAPITags) {
-
-        super(id, name, decimals,
-                Stream.concat(Stream.of(APIEnum.START_FORGING, APIEnum.STOP_FORGING), disabledAPIs.stream()).
-                        collect(Collectors.toCollection(() -> EnumSet.noneOf(APIEnum.class))),
-                disabledAPITags);
-
+        super(id, name, decimals, disabledAPIs, disabledAPITags);
         this.SHUFFLING_DEPOSIT_NQT = shufflingDepositNQT;
         this.aliasHome = AliasHome.forChain(this);
         this.assetDividendHome = AssetDividendHome.forChain(this);
