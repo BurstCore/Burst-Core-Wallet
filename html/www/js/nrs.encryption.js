@@ -330,9 +330,9 @@ var NRS = (function (NRS, $) {
 	};
 
 	NRS.tryToDecryptMessage = function(message) {
-		if (_decryptedTransactions && _decryptedTransactions[message.transaction]) {
-			if (_decryptedTransactions[message.transaction].encryptedMessage) {
-				return _decryptedTransactions[message.transaction].encryptedMessage; // cache is saved differently by the info modal vs the messages table
+		if (_decryptedTransactions && _decryptedTransactions[message.fullHash]) {
+			if (_decryptedTransactions[message.fullHash].encryptedMessage) {
+				return _decryptedTransactions[message.fullHash].encryptedMessage; // cache is saved differently by the info modal vs the messages table
 			}
 		}
 		try {
@@ -540,7 +540,6 @@ var NRS = (function (NRS, $) {
 		}
 
 		var rememberPassword = $form.find("input[name=rememberPassword]").is(":checked");
-		var otherAccount = _encryptedNote.account;
 		var output = "";
 		var decryptionError = false;
 		var decryptedFields = {};
@@ -552,8 +551,9 @@ var NRS = (function (NRS, $) {
 			var nonce = "";
 			var nonceField = (typeof title != "string" ? title.nonce : key + "Nonce");
 			if (key == "encryptedMessage" || key == "encryptToSelfMessage") {
-			    if (key == "encryptToSelfMessage") {
-					otherAccount=accountId;
+                var otherAccount = _encryptedNote.account;
+                if (key == "encryptToSelfMessage") {
+					otherAccount = accountId;
 				}
 				encrypted = _encryptedNote.transaction.attachment[key].data;
 				nonce = _encryptedNote.transaction.attachment[key].nonce;
@@ -601,7 +601,7 @@ var NRS = (function (NRS, $) {
 						return false;
 					}
 				}
-                output += formatMessageArea(title, nrFields, data, _encryptedNote.options, NRS.formatFullHash(_encryptedNote.fullHash));
+                output += formatMessageArea(title, nrFields, data, _encryptedNote.options, _encryptedNote.transaction);
 			}
 		});
 		if (decryptionError) {
@@ -647,7 +647,7 @@ var NRS = (function (NRS, $) {
 		var error = 0;
 		for (var i = 0; i < messages.length; i++) {
 			var message = messages[i];
-			if (message.attachment.encryptedMessage && !_decryptedTransactions[message.transaction]) {
+			if (message.attachment.encryptedMessage && !_decryptedTransactions[message.fullHash]) {
 				try {
 					var otherUser = (message.sender == NRS.account ? message.recipient : message.sender);
 					var options = {};
@@ -657,20 +657,20 @@ var NRS = (function (NRS, $) {
 						options.nonce = message.attachment.encryptedMessage.nonce;
 						options.account = otherUser;
                     }
-                    if (_encryptedNote.transaction.goodsIsText) {
+                    if (_encryptedNote && _encryptedNote.transaction && _encryptedNote.transaction.goodsIsText) {
                         options.isText = message.goodsIsText;
                     } else {
                         options.isText = message.attachment.encryptedMessage.isText;
                         options.isCompressed = message.attachment.encryptedMessage.isCompressed;
                     }
                     var decoded = NRS.decryptNote(message.attachment.encryptedMessage.data, options, password);
-					_decryptedTransactions[message.transaction] = {
+					_decryptedTransactions[message.fullHash] = {
 						encryptedMessage: decoded
 					};
 					success++;
 				} catch (err) {
 					if (!useSharedKey) {
-						_decryptedTransactions[message.transaction] = {
+						_decryptedTransactions[message.fullHash] = {
 							"message": $.t("error_decryption_unknown")
 						};
 					}

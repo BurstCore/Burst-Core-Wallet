@@ -20,7 +20,6 @@
 var NRS = (function (NRS) {
 
     var isDesktopApplication = navigator.userAgent.indexOf("JavaFX") >= 0;
-    var isPromiseSupported = (typeof Promise !== "undefined" && Promise.toString().indexOf("[native code]") !== -1);
     var isMobileDevice = window["cordova"] !== undefined;
     var isLocalHost = false;
     var remoteNode = null;
@@ -93,10 +92,6 @@ var NRS = (function (NRS) {
 
     NRS.isShowDummyCheckbox = function() {
         return isDesktopApplication && navigator.userAgent.indexOf("Linux") >= 0; // Correct rendering problem of checkboxes on Linux
-    };
-
-    NRS.isDecodePeerHallmark = function() {
-        return isPromiseSupported;
     };
 
     NRS.getRemoteNodeUrl = function() {
@@ -175,7 +170,7 @@ var NRS = (function (NRS) {
     };
 
     NRS.isForgingSupported = function() {
-        return !NRS.isMobileApp() && !(NRS.state && NRS.state.apiProxy);
+        return !NRS.isMobileApp() && !(NRS.state && NRS.state.apiProxy) && NRS.isApiEnabled({ apis: [NRS.constants.REQUEST_TYPES.startForging] });
     };
 
     NRS.isFundingMonitorSupported = function() {

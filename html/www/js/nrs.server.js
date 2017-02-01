@@ -536,84 +536,89 @@ var NRS = (function (NRS, $, undefined) {
     };
 
     NRS.verifyTransactionBytes = function (byteArray, requestType, data, attachment, isVerifyECBlock) {
-        var transaction = {};
-        var pos = 0;
-        transaction.chain = String(converters.byteArrayToSignedInt32(byteArray, pos));
-        pos += 4;
-        transaction.type = byteArray[pos++];
-        // Patch until I find the official way of converting JS byte to signed byte
-        if (transaction.type >= 128) {
-            transaction.type -= 256;
-        }
-        transaction.subtype = byteArray[pos++];
-        transaction.version = byteArray[pos++];
-        transaction.timestamp = String(converters.byteArrayToSignedInt32(byteArray, pos));
-        pos += 4;
-        transaction.deadline = String(converters.byteArrayToSignedShort(byteArray, pos));
-        pos += 2;
-        transaction.publicKey = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
-        pos += 32;
-        transaction.recipient = String(converters.byteArrayToBigInteger(byteArray, pos));
-        pos += 8;
-        transaction.amountNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
-        pos += 8;
-        transaction.feeNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
-        pos += 8;
-        transaction.signature = byteArray.slice(pos, pos + 64);
-        pos += 64;
-        transaction.ecBlockHeight = String(converters.byteArrayToSignedInt32(byteArray, pos));
-        pos += 4;
-        transaction.ecBlockId = String(converters.byteArrayToBigInteger(byteArray, pos));
-        pos += 8;
-        transaction.flags = String(converters.byteArrayToSignedInt32(byteArray, pos));
-        pos += 4;
-        if (isVerifyECBlock) {
-            var ecBlock = NRS.constants.LAST_KNOWN_BLOCK;
-            if (ecBlock.id != "0") {
-                if (transaction.ecBlockHeight != ecBlock.height) {
-                    return false;
-                }
-                if (transaction.ecBlockId != ecBlock.id) {
-                    return false;
+        try {
+            var transaction = {};
+            var pos = 0;
+            transaction.chain = String(converters.byteArrayToSignedInt32(byteArray, pos));
+            pos += 4;
+            transaction.type = byteArray[pos++];
+            // Patch until I find the official way of converting JS byte to signed byte
+            if (transaction.type >= 128) {
+                transaction.type -= 256;
+            }
+            transaction.subtype = byteArray[pos++];
+            transaction.version = byteArray[pos++];
+            transaction.timestamp = String(converters.byteArrayToSignedInt32(byteArray, pos));
+            pos += 4;
+            transaction.deadline = String(converters.byteArrayToSignedShort(byteArray, pos));
+            pos += 2;
+            transaction.publicKey = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+            pos += 32;
+            transaction.recipient = String(converters.byteArrayToBigInteger(byteArray, pos));
+            pos += 8;
+            transaction.amountNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+            pos += 8;
+            transaction.feeNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+            pos += 8;
+            transaction.signature = byteArray.slice(pos, pos + 64);
+            pos += 64;
+            transaction.ecBlockHeight = String(converters.byteArrayToSignedInt32(byteArray, pos));
+            pos += 4;
+            transaction.ecBlockId = String(converters.byteArrayToBigInteger(byteArray, pos));
+            pos += 8;
+            transaction.flags = String(converters.byteArrayToSignedInt32(byteArray, pos));
+            pos += 4;
+            if (isVerifyECBlock) {
+                var ecBlock = NRS.constants.LAST_KNOWN_BLOCK;
+                if (ecBlock.id != "0") {
+                    if (transaction.ecBlockHeight != ecBlock.height) {
+                        return false;
+                    }
+                    if (transaction.ecBlockId != ecBlock.id) {
+                        return false;
+                    }
                 }
             }
-        }
 
-        if (transaction.publicKey != NRS.accountInfo.publicKey && transaction.publicKey != data.publicKey) {
-            return false;
-        }
-
-        if (transaction.deadline !== data.deadline) {
-            return false;
-        }
-
-        if (transaction.recipient !== data.recipient) {
-            if (!((data.recipient === undefined || data.recipient == "") && transaction.recipient == "0")) {
+            if (transaction.publicKey != NRS.accountInfo.publicKey && transaction.publicKey != data.publicKey) {
                 return false;
             }
-        }
 
-        if (transaction.amountNQT !== data.amountNQT && !(requestType === "exchangeCoins" && transaction.amountNQT === "0")) {
-            return false;
-        }
-
-        if ("referencedTransactionFullHash" in data) {
-            if (transaction.referencedTransactionFullHash !== data.referencedTransactionFullHash) {
+            if (transaction.deadline !== data.deadline) {
                 return false;
             }
-        } else if (transaction.referencedTransactionFullHash && transaction.referencedTransactionFullHash !== "") {
+
+            if (transaction.recipient !== data.recipient) {
+                if (!((data.recipient === undefined || data.recipient == "") && transaction.recipient == "0")) {
+                    return false;
+                }
+            }
+
+            if (transaction.amountNQT !== data.amountNQT && !(requestType === "exchangeCoins" && transaction.amountNQT === "0")) {
+                return false;
+            }
+
+            if ("referencedTransactionFullHash" in data) {
+                if (transaction.referencedTransactionFullHash !== data.referencedTransactionFullHash) {
+                    return false;
+                }
+            } else if (transaction.referencedTransactionFullHash && transaction.referencedTransactionFullHash !== "") {
+                return false;
+            }
+            //has empty attachment, so no attachmentVersion byte...
+            if (!(requestType == "sendMoney" || requestType == "sendMessage")) {
+                pos++;
+            }
+            return NRS.verifyTransactionTypes(byteArray, transaction, requestType, data, pos, attachment);
+        } catch (e) {
+            NRS.logConsole("Exception in verifyTransactionBytes " + e.message);
             return false;
         }
-        //has empty attachment, so no attachmentVersion byte...
-        if (!(requestType == "sendMoney" || requestType == "sendMessage")) {
-            pos++;
-        }
-        return NRS.verifyTransactionTypes(byteArray, transaction, requestType, data, pos, attachment);
     };
 
     NRS.verifyTransactionTypes = function (byteArray, transaction, requestType, data, pos, attachment) {
         var length = 0;
-        var i=0;
+        var i = 0;
         var serverHash, sha256, utfBytes, isText, hashWords, calculatedHash;
         switch (requestType) {
             case "sendMoney":
@@ -1319,22 +1324,33 @@ var NRS = (function (NRS, $, undefined) {
                 return false;
         }
 
-        var position = 1;
+        return NRS.verifyAppendix(byteArray, transaction, requestType, data, pos);
+    };
+
+    NRS.verifyAppendix = function (byteArray, transaction, requestType, data, pos) {
         var attachmentVersion;
-        //non-encrypted message
-        if ((transaction.flags & position) != 0 ||
+        var flags;
+
+        // MessageAppendix
+        if ((transaction.flags & 1) != 0 ||
             ((requestType == "sendMessage" && data.message && !(data.messageIsPrunable === "true")))) {
             attachmentVersion = byteArray[pos];
             if (attachmentVersion < 0 || attachmentVersion > 2) {
                 return false;
             }
             pos++;
-            var messageLength = converters.byteArrayToSignedInt32(byteArray, pos);
-            transaction.messageIsText = messageLength < 0; // ugly hack??
-            if (messageLength < 0) {
-                messageLength &= NRS.constants.MAX_INT_JAVA;
+            flags = byteArray[pos];
+            pos++;
+            transaction.messageIsText = flags && 1;
+            var messageIsText = (transaction.messageIsText ? "true" : "false");
+            if (messageIsText != data.messageIsText) {
+                return false;
             }
-            pos += 4;
+            var messageLength = converters.byteArrayToSignedShort(byteArray, pos);
+            if (messageLength < 0) {
+                messageLength &= NRS.constants.MAX_SHORT_JAVA;
+            }
+            pos += 2;
             if (transaction.messageIsText) {
                 transaction.message = converters.byteArrayToString(byteArray, pos, messageLength);
             } else {
@@ -1342,10 +1358,6 @@ var NRS = (function (NRS, $, undefined) {
                 transaction.message = converters.byteArrayToHexString(slice);
             }
             pos += messageLength;
-            var messageIsText = (transaction.messageIsText ? "true" : "false");
-            if (messageIsText != data.messageIsText) {
-                return false;
-            }
             if (transaction.message !== data.message) {
                 return false;
             }
@@ -1353,29 +1365,29 @@ var NRS = (function (NRS, $, undefined) {
             return false;
         }
 
-        position <<= 1;
-
-        //encrypted note
-        if ((transaction.flags & position) != 0) {
+        // EncryptedMessageAppendix
+        if ((transaction.flags & 2) != 0) {
             attachmentVersion = byteArray[pos];
             if (attachmentVersion < 0 || attachmentVersion > 2) {
                 return false;
             }
             pos++;
-            var encryptedMessageLength = converters.byteArrayToSignedInt32(byteArray, pos);
-            transaction.messageToEncryptIsText = encryptedMessageLength < 0;
-            if (encryptedMessageLength < 0) {
-                encryptedMessageLength &= NRS.constants.MAX_INT_JAVA;
-            }
-            pos += 4;
-            transaction.encryptedMessageData = converters.byteArrayToHexString(byteArray.slice(pos, pos + encryptedMessageLength));
-            pos += encryptedMessageLength;
-            transaction.encryptedMessageNonce = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
-            pos += 32;
+            flags = byteArray[pos];
+            pos++;
+            transaction.messageToEncryptIsText = flags && 1;
             var messageToEncryptIsText = (transaction.messageToEncryptIsText ? "true" : "false");
             if (messageToEncryptIsText != data.messageToEncryptIsText) {
                 return false;
             }
+            var encryptedMessageLength = converters.byteArrayToSignedShort(byteArray, pos);
+            if (encryptedMessageLength < 0) {
+                encryptedMessageLength &= NRS.constants.MAX_SHORT_JAVA;
+            }
+            pos += 2;
+            transaction.encryptedMessageData = converters.byteArrayToHexString(byteArray.slice(pos, pos + encryptedMessageLength));
+            pos += encryptedMessageLength;
+            transaction.encryptedMessageNonce = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+            pos += 32;
             if (transaction.encryptedMessageData !== data.encryptedMessageData || transaction.encryptedMessageNonce !== data.encryptedMessageNonce) {
                 return false;
             }
@@ -1383,9 +1395,108 @@ var NRS = (function (NRS, $, undefined) {
             return false;
         }
 
-        position <<= 1;
+        // EncryptToSelfMessageAppendix
+        if ((transaction.flags & 4) != 0) {
+            attachmentVersion = byteArray[pos];
+            if (attachmentVersion < 0 || attachmentVersion > 2) {
+                return false;
+            }
+            pos++;
+            flags = byteArray[pos];
+            pos++;
+            transaction.messageToEncryptToSelfIsText = flags && 1;
+            var messageToEncryptToSelfIsText = (transaction.messageToEncryptToSelfIsText ? "true" : "false");
+            if (messageToEncryptToSelfIsText != data.messageToEncryptToSelfIsText) {
+                return false;
+            }
+            var encryptedToSelfMessageLength = converters.byteArrayToSignedShort(byteArray, pos);
+            if (encryptedToSelfMessageLength < 0) {
+                encryptedToSelfMessageLength &= NRS.constants.MAX_SHORT_JAVA;
+            }
+            pos += 2;
+            transaction.encryptToSelfMessageData = converters.byteArrayToHexString(byteArray.slice(pos, pos + encryptedToSelfMessageLength));
+            pos += encryptedToSelfMessageLength;
+            transaction.encryptToSelfMessageNonce = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+            pos += 32;
+            if (transaction.encryptToSelfMessageData !== data.encryptToSelfMessageData || transaction.encryptToSelfMessageNonce !== data.encryptToSelfMessageNonce) {
+                return false;
+            }
+        } else if (data.encryptToSelfMessageData) {
+            return false;
+        }
 
-        if ((transaction.flags & position) != 0) {
+        // PrunablePlainMessageAppendix
+        if ((transaction.flags & 8) != 0) {
+            attachmentVersion = byteArray[pos];
+            if (attachmentVersion < 0 || attachmentVersion > 2) {
+                return false;
+            }
+            pos++;
+            flags = byteArray[pos];
+            pos++;
+            if (flags != 0) {
+                return false;
+            }
+            serverHash = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+            pos += 32;
+            sha256 = CryptoJS.algo.SHA256.create();
+            isText = [];
+            if (data.messageIsText == "true") {
+                isText.push(1);
+            } else {
+                isText.push(0);
+            }
+            sha256.update(converters.byteArrayToWordArrayEx(isText));
+            if (data.filebytes) {
+                utfBytes = new Int8Array(data.filebytes);
+            } else {
+                utfBytes = NRS.getUtf8Bytes(data.message);
+            }
+            sha256.update(converters.byteArrayToWordArrayEx(utfBytes));
+            hashWords = sha256.finalize();
+            calculatedHash = converters.wordArrayToByteArrayEx(hashWords);
+            if (serverHash !== converters.byteArrayToHexString(calculatedHash)) {
+                return false;
+            }
+        }
+
+        // PrunableEncryptedMessageAppendix
+        if ((transaction.flags & 16) != 0) {
+            attachmentVersion = byteArray[pos];
+            if (attachmentVersion < 0 || attachmentVersion > 2) {
+                return false;
+            }
+            pos++;
+            flags = byteArray[pos];
+            pos++;
+            if (flags != 0) {
+                return false;
+            }
+            serverHash = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+            pos += 32;
+            sha256 = CryptoJS.algo.SHA256.create();
+            if (data.messageToEncryptIsText == "true") {
+                sha256.update(converters.byteArrayToWordArrayEx([1]));
+            } else {
+                sha256.update(converters.byteArrayToWordArrayEx([0]));
+            }
+            sha256.update(converters.byteArrayToWordArrayEx([1])); // compression
+            if (data.filebytes) {
+                utfBytes = new Int8Array(data.filebytes);
+            } else {
+                utfBytes = converters.hexStringToByteArray(data.encryptedMessageData);
+            }
+            sha256.update(converters.byteArrayToWordArrayEx(utfBytes));
+            sha256.update(converters.byteArrayToWordArrayEx(converters.hexStringToByteArray(data.encryptedMessageNonce)));
+            hashWords = sha256.finalize();
+            calculatedHash = converters.wordArrayToByteArrayEx(hashWords);
+            if (serverHash !== converters.byteArrayToHexString(calculatedHash)) {
+                return false;
+            }
+        }
+
+        // PublicKeyAnnouncementAppendix
+        if ((transaction.flags & 32) != 0) {
             attachmentVersion = byteArray[pos];
             if (attachmentVersion < 0 || attachmentVersion > 2) {
                 return false;
@@ -1400,38 +1511,8 @@ var NRS = (function (NRS, $, undefined) {
             return false;
         }
 
-        position <<= 1;
-
-        if ((transaction.flags & position) != 0) {
-            attachmentVersion = byteArray[pos];
-            if (attachmentVersion < 0 || attachmentVersion > 2) {
-                return false;
-            }
-            pos++;
-            var encryptedToSelfMessageLength = converters.byteArrayToSignedInt32(byteArray, pos);
-            transaction.messageToEncryptToSelfIsText = encryptedToSelfMessageLength < 0;
-            if (encryptedToSelfMessageLength < 0) {
-                encryptedToSelfMessageLength &= NRS.constants.MAX_INT_JAVA;
-            }
-            pos += 4;
-            transaction.encryptToSelfMessageData = converters.byteArrayToHexString(byteArray.slice(pos, pos + encryptedToSelfMessageLength));
-            pos += encryptedToSelfMessageLength;
-            transaction.encryptToSelfMessageNonce = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
-            pos += 32;
-            var messageToEncryptToSelfIsText = (transaction.messageToEncryptToSelfIsText ? "true" : "false");
-            if (messageToEncryptToSelfIsText != data.messageToEncryptToSelfIsText) {
-                return false;
-            }
-            if (transaction.encryptToSelfMessageData !== data.encryptToSelfMessageData || transaction.encryptToSelfMessageNonce !== data.encryptToSelfMessageNonce) {
-                return false;
-            }
-        } else if (data.encryptToSelfMessageData) {
-            return false;
-        }
-
-        position <<= 1;
-
-        if ((transaction.flags & position) != 0) {
+        // PhasingAppendix
+        if ((transaction.flags & 64) != 0) {
             attachmentVersion = byteArray[pos];
             if (attachmentVersion < 0 || attachmentVersion > 2) {
                 return false;
@@ -1464,69 +1545,7 @@ var NRS = (function (NRS, $, undefined) {
             if (algorithm !== "0" && algorithm !== data.phasingHashedSecretAlgorithm) {
                 return false;
             }
-            pos++;
         }
-
-        position <<= 1;
-
-        if ((transaction.flags & position) != 0) {
-            attachmentVersion = byteArray[pos];
-            if (attachmentVersion < 0 || attachmentVersion > 2) {
-                return false;
-            }
-            pos++;
-            serverHash = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
-            pos += 32;
-            sha256 = CryptoJS.algo.SHA256.create();
-            isText = [];
-            if (data.messageIsText == "true") {
-                isText.push(1);
-            } else {
-                isText.push(0);
-            }
-            sha256.update(converters.byteArrayToWordArrayEx(isText));
-            if (data.filebytes) {
-                utfBytes = new Int8Array(data.filebytes);
-            } else {
-                utfBytes = NRS.getUtf8Bytes(data.message);
-            }
-            sha256.update(converters.byteArrayToWordArrayEx(utfBytes));
-            hashWords = sha256.finalize();
-            calculatedHash = converters.wordArrayToByteArrayEx(hashWords);
-            if (serverHash !== converters.byteArrayToHexString(calculatedHash)) {
-                return false;
-            }
-        }
-        position <<= 1;
-
-        if ((transaction.flags & position) != 0) {
-            attachmentVersion = byteArray[pos];
-            if (attachmentVersion < 0 || attachmentVersion > 2) {
-                return false;
-            }
-            pos++;
-            serverHash = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
-            sha256 = CryptoJS.algo.SHA256.create();
-            if (data.messageToEncryptIsText == "true") {
-                sha256.update(converters.byteArrayToWordArrayEx([1]));
-            } else {
-                sha256.update(converters.byteArrayToWordArrayEx([0]));
-            }
-            sha256.update(converters.byteArrayToWordArrayEx([1])); // compression
-            if (data.filebytes) {
-                utfBytes = new Int8Array(data.filebytes);
-            } else {
-                utfBytes = converters.hexStringToByteArray(data.encryptedMessageData);
-            }
-            sha256.update(converters.byteArrayToWordArrayEx(utfBytes));
-            sha256.update(converters.byteArrayToWordArrayEx(converters.hexStringToByteArray(data.encryptedMessageNonce)));
-            hashWords = sha256.finalize();
-            calculatedHash = converters.wordArrayToByteArrayEx(hashWords);
-            if (serverHash !== converters.byteArrayToHexString(calculatedHash)) {
-                return false;
-            }
-        }
-
         return true;
     };
 
