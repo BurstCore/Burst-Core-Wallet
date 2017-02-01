@@ -1255,13 +1255,13 @@ var NRS = (function (NRS, $, undefined) {
                         if (transaction.attachment.message) {
                             transactionInfoOutputBottom.append("<div style='height:5px'></div>");
                         }
-                        if (transaction.attachment.encryptedMessage) {
-                            fieldsToDecrypt.encryptedMessage = $.t("encrypted_message");
-                            account = NRS.getAccountForDecryption(transaction);
-                        }
                         if (transaction.attachment.encryptToSelfMessage && NRS.account == transaction.sender) {
                             fieldsToDecrypt.encryptToSelfMessage = $.t("note_to_self");
                             account = transaction.sender;
+                        }
+                        if (transaction.attachment.encryptedMessage) {
+                            fieldsToDecrypt.encryptedMessage = $.t("encrypted_message");
+                            account = NRS.getAccountForDecryption(transaction);
                         }
                         NRS.tryToDecrypt(transaction, fieldsToDecrypt, account, {
                             "formEl": "#transaction_info_output_bottom",

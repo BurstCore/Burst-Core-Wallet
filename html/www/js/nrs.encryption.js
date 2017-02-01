@@ -540,7 +540,6 @@ var NRS = (function (NRS, $) {
 		}
 
 		var rememberPassword = $form.find("input[name=rememberPassword]").is(":checked");
-		var otherAccount = _encryptedNote.account;
 		var output = "";
 		var decryptionError = false;
 		var decryptedFields = {};
@@ -552,8 +551,9 @@ var NRS = (function (NRS, $) {
 			var nonce = "";
 			var nonceField = (typeof title != "string" ? title.nonce : key + "Nonce");
 			if (key == "encryptedMessage" || key == "encryptToSelfMessage") {
-			    if (key == "encryptToSelfMessage") {
-					otherAccount=accountId;
+                var otherAccount = _encryptedNote.account;
+                if (key == "encryptToSelfMessage") {
+					otherAccount = accountId;
 				}
 				encrypted = _encryptedNote.transaction.attachment[key].data;
 				nonce = _encryptedNote.transaction.attachment[key].nonce;
