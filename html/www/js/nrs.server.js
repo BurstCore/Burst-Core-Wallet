@@ -407,7 +407,7 @@ var NRS = (function (NRS, $, undefined) {
                 NRS.addToConsole(this.url, this.type, this.data, response);
             }
             addAddressData(data);
-            if (secretPhrase && response.unsignedTransactionBytes && !data.doNotSign && !response.errorCode && !response.error && !response.bundlerRateNQTPerFXT) {
+            if (secretPhrase && response.unsignedTransactionBytes && !data.doNotSign && !response.errorCode && !response.error) {
                 var publicKey = NRS.generatePublicKey(secretPhrase);
                 var signature = NRS.signBytes(response.unsignedTransactionBytes, converters.stringToHexString(secretPhrase));
 
@@ -523,7 +523,7 @@ var NRS = (function (NRS, $, undefined) {
         var sigPos = 2 * 69; // 2 * (bytes before signature from TransactionImpl newTransactionBuilder())
         var sigLen = 2 * 64;
         var payload = transactionBytes.substr(0, sigPos) + signature + transactionBytes.substr(sigPos + sigLen);
-        if (data.broadcast == "false") {
+        if (data.broadcast == "false" && !data.calculateFee) {
             response.transactionBytes = payload;
             response.transactionJSON.signature = signature;
             NRS.showRawTransactionModal(response);
