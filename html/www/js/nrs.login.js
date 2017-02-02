@@ -183,19 +183,21 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
 	NRS.switchAccount = function(account, chain) {
-		// Reset security related state
-		NRS.resetEncryptionState();
-		NRS.setServerPassword(null);
-		NRS.setAccountDetailsPassword(null);
-		NRS.rememberPassword = false;
-		NRS.account = "";
-		NRS.accountRS = "";
-		NRS.publicKey = "";
-		NRS.accountInfo = {};
+		// Reset security related state only when switching account not when switching chain
+		if (account != NRS.accountRS) {
+            NRS.setServerPassword(null);
+            NRS.setAccountDetailsPassword(null);
+            NRS.rememberPassword = false;
+            NRS.account = "";
+            NRS.accountRS = "";
+            NRS.publicKey = "";
+            NRS.accountInfo = {};
+        }
 
 		// Reset other functional state
 		$("#account_balance, #account_balance_sidebar, #account_nr_assets, #account_assets_balance, #account_currencies_balance, #account_nr_currencies, #account_purchase_count, #account_pending_sale_count, #account_completed_sale_count, #account_message_count, #account_alias_count").html("0");
 		$("#id_search").find("input[name=q]").val("");
+        NRS.resetEncryptionState();
 		NRS.resetAssetExchangeState();
 		NRS.resetPollsState();
 		NRS.resetMessagesState();
