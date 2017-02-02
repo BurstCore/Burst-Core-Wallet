@@ -472,7 +472,7 @@ var NRS = (function(NRS, $, undefined) {
 					$('#dashboard_link').find('a').addClass("ignore").click();
 
 					var accounts;
-					if ($("#remember_me").is(":checked") || NRS.newlyCreatedAccount) {
+					if (rememberMe.is(":checked") || NRS.newlyCreatedAccount) {
 						rememberAccount(NRS.accountRS);
 					}
 
