@@ -607,11 +607,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 var orders = results[0].concat(results[1]);
                 orders.sort(function (a, b) {
-                    if (coinId == NRS.getActiveChainId()) {
-                        return a.priceNQT - b.priceNQT;
-                    } else {
-                        return b.priceNQT - a.priceNQT;
-                    }
+                    return a.askNQT - b.askNQT;
                 });
                 processOrders(orders, coinId, refresh);
             });
@@ -1139,13 +1135,7 @@ var NRS = (function (NRS, $, undefined) {
             if (response["orders"] && response["orders"].length) {
                 var orders = response["orders"];
                 orders.sort(function (a, b) {
-                    if (NRS.getChainName(a.exchange) > NRS.getChainName(b.exchange)) {
-                        return 1;
-                    } else if (NRS.getChainName(a.exchange) < NRS.getChainName(b.exchange)) {
-                        return -1;
-                    } else {
-                        // todo sort same chain orders
-                    }
+                    return a.bidNQT - b.bidNQT;
                 });
 
                 var rows = "";
