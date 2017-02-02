@@ -549,8 +549,9 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 var statusIcon = NRS.getTransactionStatusIcon(order);
                 var decimals = NRS.getChain(order.chain).decimals;
+                var chain = (order.chain == 1 || order.exchange == 1) ? 1 : order.chain;
                 rows += "<tr data-transaction='" + NRS.escapeRespStr(order.order) + "' data-amount='" + String(order.quantityQNT).escapeHTML() + "' data-price='" + String(order.askNQT).escapeHTML() + "'>" +
-                    "<td>" + NRS.getTransactionLink(order.orderFullHash, statusIcon, true, order.chain) + "</td>" +
+                    "<td>" + NRS.getTransactionLink(order.orderFullHash, statusIcon, true, chain) + "</td>" +
                     "<td>" + NRS.getAccountLink(order, "account") + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(order.quantityQNT, NRS.getActiveChainDecimals()) + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(order.askNQT, NRS.getActiveChainDecimals()) + "</td>" +
@@ -1152,8 +1153,9 @@ var NRS = (function (NRS, $, undefined) {
                     var order = orders[i];
                     var decimals = NRS.getChainDecimals(order.chain);
                     var exchangeDecimals = NRS.getChainDecimals(order.exchange);
+                    var chain = (order.chain == 1 || order.exchange == 1) ? 1 : order.chain;
                     rows += "<tr>" +
-                        "<td>" + NRS.getTransactionLink(order.orderFullHash, false, false, order.chain) + "</td>" +
+                        "<td>" + NRS.getTransactionLink(order.orderFullHash, false, false, chain) + "</td>" +
                         "<td>" + NRS.getChainLink(order.exchange) + "</td>" +
                         "<td>" + NRS.getAccountLink(order, "account") + "</td>" +
                         "<td>" + NRS.formatQuantity(order.quantityQNT, exchangeDecimals) + "</td>" +
