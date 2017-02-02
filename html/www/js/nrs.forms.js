@@ -382,7 +382,7 @@ var NRS = (function(NRS, $) {
 		}
 		// In case the fee field is empty or calculate fee is pressed
 		// The feeCalculationEnabled variable distinguishes between the two cases and displays a message to the user
-        var feeCalculationEnabled = $modal.find(".btn-calculate-fee").length > 0 && !data.feeNXT && !$btn.hasClass("btn-calculate-fee");
+        var feeCalculationEnabled = $modal.find(".btn-calculate-fee").length > 0 && !data.feeNXT && !NRS.isParentChain() && !$btn.hasClass("btn-calculate-fee");
 		if ($btn.hasClass("btn-calculate-fee") || feeCalculationEnabled) {
             data.calculateFee = true;
             data.feeNQT = "-1";
@@ -395,6 +395,9 @@ var NRS = (function(NRS, $) {
             }
         } else {
 			delete data.calculateFee;
+            if (!data.feeNXT && NRS.isParentChain()) {
+                data.feeNXT = "0" ;
+            }
         }
 
 		if (data.recipient) {
