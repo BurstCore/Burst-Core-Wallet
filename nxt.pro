@@ -1,5 +1,5 @@
 -injars classes
--outjars nxt/classes
+-outjars ardor/classes
 
 -libraryjars <java.home>/lib/rt.jar
 -libraryjars <java.home>/lib/jce.jar

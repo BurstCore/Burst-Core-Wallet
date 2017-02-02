@@ -136,7 +136,7 @@ public class DesktopSystemTray {
 
         shutdown.addActionListener(e -> {
             if(JOptionPane.showConfirmDialog (null,
-                    "Sure you want to shutdown NXT?\n\nIf you do, this will stop forging, shufflers and account monitors.\n\n",
+                    "Sure you want to shutdown Ardor?\n\nIf you do, this will stop forging, shufflers and account monitors.\n\n",
                     "Shutdown",
                     JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 Logger.logInfoMessage("Shutdown requested by System Tray");
@@ -211,7 +211,7 @@ public class DesktopSystemTray {
         addDataRow(statusPanel, "Updated", dateFormat.format(new Date()));
         if (statusDialog == null || !statusDialog.isVisible()) {
             JOptionPane pane = new JOptionPane(statusPanel, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, imageIcon);
-            statusDialog = pane.createDialog(wrapper, "NXT Server Status");
+            statusDialog = pane.createDialog(wrapper, "Ardor Server Status");
             statusDialog.setVisible(true);
             statusDialog.dispose();
         } else {

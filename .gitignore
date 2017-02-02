@@ -12,6 +12,8 @@
 /keystore
 /nxt.jar
 /nxtservice.jar
+/ardor.jar
+/ardorservice.jar
 /nxt_test_db
 /README_win.txt
 /nxt.log.lck
@@ -29,8 +31,12 @@ deploy.sh
 /resource/nxtservice.manifest.mf
 /nxt.exe
 /nxtservice.exe
+/ardor.exe
+/ardorservice.exe
 /bundles
 *.patch
 /addons/classes/
 /addons/src/*.java
 /out
+/nxt
+/ardor

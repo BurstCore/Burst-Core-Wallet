@@ -80,7 +80,7 @@ import java.util.Properties;
 public final class Nxt {
 
     public static final String VERSION = "2.0.0e";
-    public static final String APPLICATION = "NRS";
+    public static final String APPLICATION = "Ardor";
 
     private static volatile Time time = new Time.EpochTime();
 
@@ -357,7 +357,7 @@ public final class Nxt {
         Peers.shutdown();
         NetworkHandler.shutdown();
         Db.shutdown();
-        Logger.logShutdownMessage("Nxt server " + VERSION + " stopped.");
+        Logger.logShutdownMessage("Ardor server " + VERSION + " stopped.");
         Logger.shutdown();
         runtimeMode.shutdown();
     }
@@ -410,7 +410,7 @@ public final class Nxt {
                 testSecureRandom();
                 long currentTime = System.currentTimeMillis();
                 Logger.logMessage("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
-                Logger.logMessage("Nxt server " + VERSION + " started successfully.");
+                Logger.logMessage("Ardor server " + VERSION + " started successfully.");
                 Logger.logMessage("Copyright © 2013-2016 The Nxt Core Developers.");
                 Logger.logMessage("Copyright © 2016-2017 Jelurida IP B.V.");
                 Logger.logMessage("THIS IS AN EVALUATION VERSION FOR TESTING ONLY.");
