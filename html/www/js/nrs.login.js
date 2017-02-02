@@ -18,6 +18,7 @@
  * @depends {nrs.js}
  */
 var NRS = (function(NRS, $, undefined) {
+    var loginOptions = {};
 	NRS.newlyCreatedAccount = false;
 
 	NRS.allowLoginViaEnter = function() {
@@ -183,7 +184,29 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
 	NRS.switchAccount = function(account, chain) {
-		// Reset security related state only when switching account not when switching chain
+        // Reset other functional state
+        $("#account_balance, #account_balance_sidebar, #account_nr_assets, #account_assets_balance, #account_currencies_balance, #account_nr_currencies, #account_purchase_count, #account_pending_sale_count, #account_completed_sale_count, #account_message_count, #account_alias_count").html("0");
+        $("#id_search").find("input[name=q]").val("");
+        NRS.resetEncryptionState();
+        NRS.resetAssetExchangeState();
+        NRS.resetPollsState();
+        NRS.resetMessagesState();
+        NRS.forgingStatus = NRS.constants.UNKNOWN;
+        NRS.isAccountForging = false;
+        NRS.selectedContext = null;
+
+        // Reset plugins state
+        NRS.activePlugins = false;
+        NRS.numRunningPlugins = 0;
+        $.each(NRS.plugins, function(pluginId) {
+            NRS.determinePluginLaunchStatus(pluginId);
+        });
+        NRS.mobileSettings.chain = chain;
+
+        // Return to the dashboard and notify the user
+        NRS.goToPage("dashboard");
+
+        // Reset security related state only when switching account not when switching chain
 		if (account != NRS.accountRS) {
             NRS.setServerPassword(null);
             NRS.setAccountDetailsPassword(null);
@@ -192,32 +215,14 @@ var NRS = (function(NRS, $, undefined) {
             NRS.accountRS = "";
             NRS.publicKey = "";
             NRS.accountInfo = {};
+            NRS.login(false, account, function() {
+                $.growl($.t("switched_to_account", { account: account, chain: NRS.constants.CHAIN_PROPERTIES[chain].name }));
+            }, true, false, chain);
+        } else {
+            NRS.login(loginOptions.isPassphraseLogin, loginOptions.id, function() {
+                $.growl($.t("switched_to_chain", { chain: NRS.constants.CHAIN_PROPERTIES[chain].name }));
+            }, true, loginOptions.isSavedPassphrase, chain);
         }
-
-		// Reset other functional state
-		$("#account_balance, #account_balance_sidebar, #account_nr_assets, #account_assets_balance, #account_currencies_balance, #account_nr_currencies, #account_purchase_count, #account_pending_sale_count, #account_completed_sale_count, #account_message_count, #account_alias_count").html("0");
-		$("#id_search").find("input[name=q]").val("");
-        NRS.resetEncryptionState();
-		NRS.resetAssetExchangeState();
-		NRS.resetPollsState();
-		NRS.resetMessagesState();
-		NRS.forgingStatus = NRS.constants.UNKNOWN;
-		NRS.isAccountForging = false;
-		NRS.selectedContext = null;
-
-		// Reset plugins state
-		NRS.activePlugins = false;
-		NRS.numRunningPlugins = 0;
-		$.each(NRS.plugins, function(pluginId) {
-			NRS.determinePluginLaunchStatus(pluginId);
-		});
-        NRS.mobileSettings.chain = chain;
-
-		// Return to the dashboard and notify the user
-		NRS.goToPage("dashboard");
-        NRS.login(false, account, function() {
-            $.growl($.t("switched_to_account", { account: account, chain: NRS.constants.CHAIN_PROPERTIES[chain].name }));
-        }, true, false, chain);
 	};
 
     $("#loginButtons").find(".btn").click(function (e) {
@@ -519,7 +524,10 @@ var NRS = (function(NRS, $, undefined) {
 							)
 						);
 					}
-
+					// Used to switch to another chain
+                    loginOptions.isPassphraseLogin = isPassphraseLogin;
+                    loginOptions.id = id;
+                    loginOptions.isSavedPassphrase = isSavedPassphrase;
                     NRS.updateApprovalRequests();
 				});
 			});
