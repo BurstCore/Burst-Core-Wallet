@@ -99,4 +99,8 @@ public final class SetPhasingOnlyControl extends CreateTransaction {
         return createTransaction(request, account, new SetPhasingOnlyAttachment(phasingParams, maxFees, minDuration, maxDuration));
     }
 
+    @Override
+    protected boolean isChainSpecific() {
+        return false;
+    }
 }

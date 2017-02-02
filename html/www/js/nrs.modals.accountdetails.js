@@ -33,7 +33,14 @@ var NRS = (function(NRS, $, undefined) {
             $("#account_details_modal_passphrase_qr_code").html($.t("passphrase_not_specified"));
         }
 		$("#account_details_modal_balance").show();
-
+        if (NRS.isParentChain()) {
+            $("#account_leasing_nav").show();
+            $("#account_control_nav").hide();
+        } else {
+            $("#account_leasing_nav").hide();
+            $("#account_control_nav").show();
+        }
+        
         var accountBalanceWarning = $("#account_balance_warning");
         if (NRS.accountInfo.errorCode && NRS.accountInfo.errorCode != 5) {
 			$("#account_balance_table").hide();
@@ -94,6 +101,8 @@ var NRS = (function(NRS, $, undefined) {
 		$("#account_details_balance_nav").addClass("active");
 		$("#account_details_modal_account_qr_code").empty();
 		$("#account_details_modal_passphrase_qr_code").empty();
+
+
 	});
 
     NRS.setAccountDetailsPassword = function(password) {
