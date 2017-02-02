@@ -380,22 +380,21 @@ var NRS = (function(NRS, $) {
 		if (!data) {
 			data = NRS.getFormData($form);
 		}
-        if ($btn.hasClass("btn-calculate-fee")) {
+		// In case the fee field is empty or calculate fee is pressed
+		// The feeCalculationEnabled variable distinguishes between the two cases and displays a message to the user
+        var feeCalculationEnabled = $modal.find(".btn-calculate-fee").length > 0 && !data.feeNXT && !$btn.hasClass("btn-calculate-fee");
+		if ($btn.hasClass("btn-calculate-fee") || feeCalculationEnabled) {
             data.calculateFee = true;
-            data.feeNXT = "0";
-            $form.find(".error_message").html("").hide();
-        } else {
-            var feeCalculationEnabled = $modal.find(".btn-calculate-fee");
-			if (feeCalculationEnabled.length > 0 && !data.feeNXT && (!data.feeRateNQTPerFXT || data.feeRateNQTPerFXT == 0)) {
-                data.calculateFee = true;
-                data.feeNXT = "0";
+            data.feeNQT = "-1";
+            data.feeRateNQTPerFXT = "-1";
+            delete data.feeNXT;
+            if (feeCalculationEnabled) {
                 $form.find(".error_message").html($.t("fee_not_specified")).show();
 			} else {
-                delete data.calculateFee;
-                if (!data.feeNXT) {
-                    data.feeNXT = "0";
-                }
-			}
+                $form.find(".error_message").html("").hide();
+            }
+        } else {
+			delete data.calculateFee;
         }
 
 		if (data.recipient) {
