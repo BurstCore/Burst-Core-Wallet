@@ -22,7 +22,9 @@
 -keep class nxt.env.service.NxtService_ServiceManagement
 -keep class * extends nxt.env.DirProvider
 -keep class * extends nxt.addons.AddOn
+-keep class * extends nxt.blockchain.Bundler$Filter
 -keep class nxt.addons.AddOn
+-keep class nxt.blockchain.Bundler$Filter
 -keep,includedescriptorclasses class nxtdesktop.JavaScriptBridge, nxtdesktop.DesktopApplication, nxtdesktop.WalletContextMenu {
     <methods>;
 }
