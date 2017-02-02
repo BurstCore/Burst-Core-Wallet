@@ -263,9 +263,6 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
                 if (referencedTransactionId != null) {
                     return JSONResponses.error("Referenced transactions not allowed for Ardor transactions");
                 }
-                if (feeRateNQTPerFXT != 0) {
-                    return JSONResponses.error("feeRateNQTPerFXT parameter not supported for Ardor transactions");
-                }
                 if (encryptedMessage != null) {
                     return JSONResponses.error("Permanent encrypted message attachments not allowed for Ardor transactions");
                 }
