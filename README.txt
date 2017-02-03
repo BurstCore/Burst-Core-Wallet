@@ -86,7 +86,7 @@ though even if only outgoing connections are allowed, so opening this port is
 optional.
 
 The user interface is available on port 26876. This port also accepts http API
-requests which other Nxt client applications could use.
+requests which other Ardor client applications could use.
 
 The blockchain is stored on disk using the H2 embedded database, inside the
 nxt_db directory. When upgrading, you should not delete the old nxt_db

@@ -64,9 +64,9 @@ public final class ChildChain extends Chain {
             Collections.emptySet(), EnumSet.noneOf(APIEnum.class), EnumSet.noneOf(APITag.class));
     public static final ChildChain BTC = new ChildChain(3, "BTC", 8, 600000,
             Collections.emptySet(), EnumSet.noneOf(APIEnum.class), EnumSet.noneOf(APITag.class));
-    public static final ChildChain USD = new ChildChain(4, "USD", 2, 600,
+    public static final ChildChain USD = new ChildChain(4, "USD", 4, 600,
             Collections.emptySet(), EnumSet.noneOf(APIEnum.class), EnumSet.noneOf(APITag.class));
-    public static final ChildChain EUR = new ChildChain(5, "EUR", 2, 600, new HashSet<>(Arrays.asList(
+    public static final ChildChain EUR = new ChildChain(5, "EUR", 4, 600, new HashSet<>(Arrays.asList(
             DigitalGoodsTransactionType.LISTING,
             AssetExchangeTransactionType.ASK_ORDER_PLACEMENT,
             AssetExchangeTransactionType.BID_ORDER_PLACEMENT)), EnumSet.noneOf(APIEnum.class), EnumSet.of(APITag.DGS, APITag.AE)
