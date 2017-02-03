@@ -13,9 +13,9 @@
 ## Tools and Tips ##
 ### Usable URLs ###
 
-  - **API** - http://localhost:7876/test
-  - **DB Interface** - http://localhost:7876/dbshell
-  - **Java Class Browser** - http://localhost:7876/doc
+  - **API** - http://localhost:26876/test
+  - **DB Interface** - http://localhost:26876/dbshell
+  - **Java Class Browser** - http://localhost:26876/doc
 
 ### Database ###
   
@@ -56,8 +56,7 @@
 
 ### Testing ###
 
-  - [to be filled by Lior, kushti]
-  - all API calls can be tested manually from the auto-generated http://localhost:7876/test page
+  - all API calls can be tested manually from the auto-generated http://localhost:26876/test page
   - many tests need blocks to be generated, see the examples how to fake the forging process
   - write your tests against the http API or the public java API, which are relatively stable
   
@@ -149,7 +148,7 @@ For providing new translation strings on the platform for the community to trans
 
 ### Mobile App ###
 
-The NXT wallet UI run as a mobile app.
+The Ardor wallet UI run as a mobile app.
 
 To build the Android APK application follow these steps (Tested on Windows 7 64 bit):
 1. Install node.js (tested with Node 4.4.7 and npm 2.15.8), Apache Cordova (tested with Cordova 6.3.1) - see https://cordova.apache.org/

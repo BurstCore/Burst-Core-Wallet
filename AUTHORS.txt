@@ -1,5 +1,5 @@
-This is a list of current and past developers working on the Nxt core software,
-in order approximately corresponding to the time they joined the team.
+This is a list of current and past developers working on the Nxt and Ardor core
+software, in order approximately corresponding to the time they joined the team.
 
 
 BCNext

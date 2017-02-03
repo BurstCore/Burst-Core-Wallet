@@ -1,4 +1,4 @@
-Running the Nxt software:
+Running the Ardor software:
 
 Dependencies: Java 8 or later needs to be installed first. Oracle JVM gives
 better performance and has been more tested, but OpenJDK is also supported.
@@ -7,37 +7,37 @@ better performance and has been more tested, but OpenJDK is also supported.
 Using the installer:
 
 An IzPack based installation package is provided. Click on the corresponding
-jar/exe/dmg package, or run "java -jar nxt-client.jar" to start the
-installer. See https://bitbucket.org/JeanLucPicard/nxt/issues/283 for more
-details about the IzPack installer. After installation, use the shortcuts or
-desktop icons to start the Nxt server.
+exe/dmg/sh package, or run ardor-client.sh to start the installer.
+See https://bitbucket.org/JeanLucPicard/nxt/issues/283 for more details about
+the IzPack installer. After installation, use the shortcuts or desktop icons to
+start the Ardor server.
 
 
-Using the nxt-client.zip package:
+Using the ardor-client.zip package:
 
-Unpack the nxt-client.zip package and open a shell in the resulting nxt
+Unpack the ardor-client.zip package and open a shell in the resulting ardor
 directory. Execute the run.sh or start.sh script if using Linux or BSD, run.bat
 if using Windows, or run.command if using Mac.
 
 On Unix, the run.sh script must be run from within the installation directory,
 and uses this directory to search for configuration files, store logs, and for
 the nxt_db blockchain database. The start.sh script can be run from any
-directory, it starts the java process in the background and uses ~/.nxt for
+directory, it starts the java process in the background and uses ~/.ardor for
 configuration files, logs, and the nxt_db database. Unlike run.sh, start.sh
 uses desktop mode, creating a desktop tray icon and opening the JavaFX UI if
 supported.
 
 The initialization takes a few seconds. When it is ready, you should see the
-message "Nxt server 1.x.x started successfully" in the console log. If run in
+message "Ardor server 2.x.x started successfully" in the console log. If run in
 desktop mode, a JavaFX window will open automatically. Otherwise, open a
-browser, without stopping the java process, and go to http://localhost:7876 ,
-where the Nxt UI should now be available.
+browser, without stopping the java process, and go to http://localhost:26876 ,
+where the Ardor UI should now be available.
 
 To stop the application, type Ctrl-C inside the console window, or use the
 stop.sh script if started with start.sh.
 
 Warning: It is better to use only latin characters and no spaces in the path
-to the Nxt installation directory, as the use of special characters may result
+to the Ardor installation directory, as the use of special characters may result
 in permissions denied error in the browser, which is a known jetty issue.
 
 
@@ -59,7 +59,7 @@ safe in the nxt.properties file.
 
 How to contribute?
 
-There are many ways to contribute to Nxt. Here are some examples:
+There are many ways to contribute to Ardor. Here are some examples:
 
  * create pull requests
  * review pull requests
@@ -70,7 +70,7 @@ There are many ways to contribute to Nxt. Here are some examples:
 
 Technical details:
 
-The Nxt software is a client-server application. It consists of a java server
+The Ardor software is a client-server application. It consists of a java server
 process, the one started by the run.sh script, and a javascript user interface
 run in a browser. A JavaFX UI is also available and starts automatically on
 supported configurations. To run a node, forge, update the blockchain, interact
@@ -79,12 +79,13 @@ close the browser but keep the java process running. If you want to keep
 forging, make sure you do not click on "stop forging" when logging out. You can
 also just close the browser without logging out.
 
-The java process communicates with peers on port 7874 tcp by default. If you are
-behind a router or a firewall and want to have your node accept incoming peer
-connections, you should setup port forwarding. The server will still work though
-even if only outgoing connections are allowed, so opening this port is optional.
+The java process communicates with peers on port 26874 tcp by default. If you
+are behind a router or a firewall and want to have your node accept incoming
+peer connections, you should setup port forwarding. The server will still work
+though even if only outgoing connections are allowed, so opening this port is
+optional.
 
-The user interface is available on port 7876. This port also accepts http API
+The user interface is available on port 26876. This port also accepts http API
 requests which other Nxt client applications could use.
 
 The blockchain is stored on disk using the H2 embedded database, inside the
@@ -94,7 +95,7 @@ the new version whenever needed. But there is no harm if you do delete the
 nxt_db, except that it will take some extra time to download the blockchain
 from scratch.
 
-The default Nxt client does not store any wallet-type file on disk. Unlike
+The default Ardor client does not store any wallet-type file on disk. Unlike
 bitcoin, your password is the only thing you need to get access to your account,
 and is the only piece of data you need to backup or remember. This also means
 that anybody can get access to your account with only your password - so make
@@ -106,17 +107,17 @@ which you see in the console window, but also to a file nxt.log, which gets
 overwritten at restart. In case of an error, the nxt.log file may contain
 helpful information, so include its contents when submitting a bug report.
 
-In addition to the default user interface at http://localhost:7876 , the
+In addition to the default user interface at http://localhost:26876 , the
 following urls are available:
 
-http://localhost:7876/test - a list of all available http API requests, very
+http://localhost:26876/test - a list of all available http API requests, very
 useful for client developers and for anyone who wants to execute commands
 directly using the http interface without going through the browser UI.
 
-http://localhost:7876/test?requestType=<specificRequestType> - same as above,
+http://localhost:26876/test?requestType=<specificRequestType> - same as above,
 but only shows the form for the request type specified.
 
-http://localhost:7876/doc - a javadoc documentation for client developers who
+http://localhost:26876/doc - a javadoc documentation for client developers who
 want to use the Java API directly instead of going through the http interface.
 
 
@@ -126,6 +127,6 @@ The source is included in the src subdirectory. To compile it on unix, just run
 the enclosed compile.sh script. This will compile all java classes and put them
 under the classes subdirectory, which is already in the classpath used by the
 run.sh startup script. The compiled class files can optionally be packaged in a
-nxt.jar file using the enclosed jar.sh script, and then nxt.jar should be
+ardor.jar file using the enclosed jar.sh script, and then ardor.jar should be
 included in the classpath instead of the classes subdirectory.
 

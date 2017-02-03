@@ -1,11 +1,11 @@
 ----
-# Welcome to Nxt! #
+# Welcome to Ardor! #
 
 ----
-## What is Nxt? ##
-Nxt is a modern economic system based on cryptography and blockchain technology.
+## What is Ardor? ##
+Ardor is a modern economic system based on cryptography and blockchain technology.
 
-With Nxt, you can manage and interact with
+With Ardor, you can manage and interact with
 
  - your **assets**
  - your **businesses**
@@ -16,7 +16,7 @@ in such a way that no trusted third parties are required anymore.
 ----
 ## Get it! ##
 
-  - *pre-packaged* - `https://bitbucket.org/JeanLucPicard/nxt/downloads/nxt-client-{version}.zip`
+  - *pre-packaged* - `https://bitbucket.org/JeanLucPicard/ardor/downloads/ardor-client-{version}.zip`
 
   - *dependencies*:
     - *general* - Java 8
@@ -24,18 +24,18 @@ in such a way that no trusted third parties are required anymore.
     - *Debian* - `http://www.webupd8.org/2014/03/how-to-install-oracle-java-8-in-debian.html`
     - *FreeBSD* - `pkg install openjdk8`
 
-  - *repository* - `git clone https://bitbucket.org/JeanLucPicard/nxt.git`
+  - *repository* - `git clone https://bitbucket.org/JeanLucPicard/ardor.git`
   
 ----
 ## Run it! ##
 
-  - click on the Nxt icon, or start from the command line:
+  - click on the Ardor icon, or start from the command line:
   - Unix: `./start.sh`
   - Mac: `./run.command`
   - Window: `run.bat`
 
   - wait for the JavaFX wallet window to open
-  - on platforms without JavaFX, open http://localhost:7876/ in a browser
+  - on platforms without JavaFX, open http://localhost:26876/ in a browser
 
 ----
 ## Compile it! ##
@@ -54,17 +54,17 @@ in such a way that no trusted third parties are required anymore.
   - cf. coding guidelines in DEVELOPERS-GUIDE.md
 
 ----
-## Troubleshooting the NRS (Nxt Reference Software) ##
+## Troubleshooting the Ardor Software ##
 
-  - How to Stop the NRS Server?
-    - click on Nxt Stop icon, or run `./stop.sh`
+  - How to Stop the Ardor Server?
+    - click on Ardor Stop icon, or run `./stop.sh`
     - or if started from command line, ctrl+c or close the console window
 
   - UI Errors or Stacktraces?
     - report on BitBucket
 
   - Permissions Denied?
-    - no spaces and only latin characters in the path to the NRS installation directory
+    - no spaces and only latin characters in the path to the Ardor installation directory
     - known jetty issue
 
 ----

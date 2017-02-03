@@ -2,8 +2,8 @@
 CP="lib/*:classes"
 SP=src/java/
 
-/bin/rm -f nxt.jar
-/bin/rm -f nxtservice.jar
+/bin/rm -f ardor.jar
+/bin/rm -f ardorservice.jar
 /bin/rm -rf classes
 /bin/mkdir -p classes/
 /bin/rm -rf addons/classes
