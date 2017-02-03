@@ -19,7 +19,7 @@
         <section class="content-header">
             <h1>{{i18n "bundlers"}}</h1>
             <div style="position:absolute;top:9px;right:9px;">
-                <button type="button" class="btn btn-default" data-toggle="modal" data-target="#start_bundler_modal" data-i18n="start_bundler">Start Bundler</button>
+                <button type="button" class="btn btn-default" data-toggle="modal" data-target="#start_bundler_modal" data-i18n="start_bundler" {{when isParentChain 'disabled'}}>Start Bundler</button>
             </div>
         </section>
         <section class="content">

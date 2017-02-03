@@ -83,7 +83,8 @@ var NRS = (function(NRS, $) {
                 );
                 view.render({
                     isLoading: false,
-                    isEmpty: view.bundlers.length == 0
+                    isEmpty: view.bundlers.length == 0,
+                    isParentChain: NRS.isParentChain()
                 });
                 NRS.pageLoaded();
             }
