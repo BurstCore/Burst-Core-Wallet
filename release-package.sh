@@ -78,8 +78,8 @@ echo "--------------------------------------------------------------------------
 cat changelogs/changelog.txt >> changelog-full.txt
 unix2dos changelog-full.txt
 
-#echo signing jar package
-#../jarsigner.sh ${PACKAGE}.jar
+echo signing jar package
+../jarsigner.sh ${PACKAGE}.jar
 
 echo creating sh package
 echo "#!/bin/sh\nexec java -jar \"\${0}\"\n\n" > ${PACKAGE}.sh
@@ -138,7 +138,7 @@ gpgv ${PACKAGE}.sh.asc ${PACKAGE}.sh
 #gpgv ${PACKAGE}.exe.asc ${PACKAGE}.exe
 gpgv ${CHANGELOG}.asc
 sha256sum -c ${CHANGELOG}.asc
-##jarsigner -verify ${PACKAGE}.zip
-#jarsigner -verify ${PACKAGE}.sh
+#jarsigner -verify ${PACKAGE}.zip
+jarsigner -verify ${PACKAGE}.sh
 
 
