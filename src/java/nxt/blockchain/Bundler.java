@@ -54,7 +54,7 @@ public final class Bundler {
                 throw new RuntimeException(e);
             }
         } else {
-            bundlingFilter = (bundler, childTransaction) -> true;
+            bundlingFilter = null;
         }
     }
 
