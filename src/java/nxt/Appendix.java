@@ -189,7 +189,7 @@ public interface Appendix {
             return new Message(attachmentData);
         }
 
-        private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_NXT, 32) {
+        private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Fee.MIN_FEE, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 return ((Message)appendage).getMessage().length;
@@ -296,7 +296,7 @@ public interface Appendix {
 
         private static final String appendixName = "PrunablePlainMessage";
 
-        private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT/10) {
+        private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Fee.MIN_PRUNABLE_FEE) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendix) {
                 return appendix.getFullSize();
@@ -467,7 +467,7 @@ public interface Appendix {
 
     abstract class AbstractEncryptedMessage extends AbstractAppendix {
 
-        private static final Fee ENCRYPTED_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT, Constants.ONE_NXT, 32) {
+        private static final Fee ENCRYPTED_MESSAGE_FEE = new Fee.SizeBasedFee(Fee.MIN_FEE, Fee.MIN_FEE, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
                 return ((AbstractEncryptedMessage)appendage).getEncryptedDataLength() - 16;
@@ -586,7 +586,7 @@ public interface Appendix {
 
         private static final String appendixName = "PrunableEncryptedMessage";
 
-        private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_NXT/10) {
+        private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Fee.MIN_PRUNABLE_FEE) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendix) {
                 return appendix.getFullSize();
@@ -1195,14 +1195,14 @@ public interface Appendix {
             long fee = 0;
             Phasing phasing = (Phasing)appendage;
             if (!phasing.params.getVoteWeighting().isBalanceIndependent()) {
-                fee += 20 * Constants.ONE_NXT;
+                fee += 20 * Fee.MIN_FEE;
             } else {
-                fee += Constants.ONE_NXT;
+                fee += Fee.MIN_FEE;
             }
             if (phasing.hashedSecret.length > 0) {
-                fee += (1 + (phasing.hashedSecret.length - 1) / 32) * Constants.ONE_NXT;
+                fee += (1 + (phasing.hashedSecret.length - 1) / 32) * Fee.MIN_FEE;
             }
-            fee += Constants.ONE_NXT * phasing.linkedFullHashes.length;
+            fee += Fee.MIN_FEE * phasing.linkedFullHashes.length;
             return fee;
         };
 

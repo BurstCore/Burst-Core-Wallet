@@ -20,7 +20,10 @@ public interface Fee {
 
     long getFee(TransactionImpl transaction, Appendix appendage);
 
-    Fee DEFAULT_FEE = new Fee.ConstantFee(Constants.ONE_NXT);
+    long MIN_FEE = 10L;
+    long MIN_PRUNABLE_FEE = 1L;
+
+    Fee DEFAULT_FEE = new Fee.ConstantFee(MIN_FEE);
 
     Fee NONE = new Fee.ConstantFee(0L);
 
