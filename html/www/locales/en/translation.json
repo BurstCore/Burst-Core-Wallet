@@ -86,7 +86,6 @@
   "animate_forging_indicator": "Animate Forging Indicator",
   "answer": "Answer",
   "answers": "Answers",
-  "app_title": "NXT Wallet",
   "application": "Application",
   "approval_min_balance_needed_warning": "For valid approval the following minimum balance is needed at finish height:",
   "approval_requests": "Approval Requests",
@@ -1925,5 +1924,6 @@
   "dividend_payment_info_preview_success": "A total of __amount__ __holding__ __holdingType__ will be distributed among __recipientCount__ accounts which own a total of __totalQuantity__ shares.",
   "disabled_a_p_i_tags": "Disabled API Tags",
   "switched_to_chain": "Switched to chain __chain__",
-  "is_bundled": "Is Bundled"
+  "is_bundled": "Is Bundled",
+  "app_title": "Ardor Wallet"
 }
