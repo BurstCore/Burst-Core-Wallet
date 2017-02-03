@@ -108,7 +108,7 @@ var NRS = (function(NRS, $) {
 
 	NRS.forms.sendMoneyComplete = function(response, data) {
 		if (!(data["_extra"] && data["_extra"].convertedAccount) && !(data.recipient in NRS.contacts)) {
-			$.growl($.t("success_send_money") + " <a href='#' data-account='" + NRS.getAccountFormatted(data, "recipient") + "' data-toggle='modal' data-target='#add_contact_modal' style='text-decoration:underline'>" + $.t("add_recipient_to_contacts_q") + "</a>", {
+			$.growl($.t("success_send_money", { "coin": NRS.getActiveChainName() }) + " <a href='#' data-account='" + NRS.getAccountFormatted(data, "recipient") + "' data-toggle='modal' data-target='#add_contact_modal' style='text-decoration:underline'>" + $.t("add_recipient_to_contacts_q") + "</a>", {
 				"type": "success"
 			});
 		} else {
@@ -144,7 +144,8 @@ var NRS = (function(NRS, $) {
                             "type": "info",
                             "message": $.t("recipient_info_with_name", {
                                 "name": NRS.unescapeRespStr(response.name),
-                                "nxt": NRS.formatAmount(balance.unconfirmedBalanceNQT, false, true)
+                                "nxt": NRS.formatAmount(balance.unconfirmedBalanceNQT, false, true),
+								"coin": NRS.getActiveChainName()
                             }),
                             "account": response
                         };
@@ -153,7 +154,8 @@ var NRS = (function(NRS, $) {
                         result = {
                             "type": "info",
                             "message": $.t("recipient_info", {
-                                "nxt": NRS.formatAmount(balance.unconfirmedBalanceNQT, false, true)
+                                "nxt": NRS.formatAmount(balance.unconfirmedBalanceNQT, false, true),
+                                "coin": NRS.getActiveChainName()
                             }),
                             "account": response
                         };
@@ -184,7 +186,8 @@ var NRS = (function(NRS, $) {
                         result = {
                             "type": "warning",
                             "message": $.t("recipient_no_public_key_pka", {
-                                "nxt": NRS.formatAmount(balance.unconfirmedBalanceNQT, false, true)
+                                "nxt": NRS.formatAmount(balance.unconfirmedBalanceNQT, false, true),
+                                "coin": NRS.getActiveChainName()
                             }),
                             "account": response,
                             "noPublicKey": true

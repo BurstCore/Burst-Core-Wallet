@@ -922,7 +922,7 @@ var NRS = (function (NRS, $, undefined) {
 					case "No attached message found":
 						return $.t("error_no_attached_message");
 					case "recipient account does not have public key":
-						return $.t("error_recipient_no_public_key");
+						return $.t("error_recipient_no_public_key", { "coin": NRS.getActiveChainName() });
 					default:
 						return response.errorDescription;
 						break;
