@@ -338,4 +338,9 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         return false;
     }
 
+    @Override
+    protected final boolean isChainSpecific() {
+        return true;
+    }
+
 }
