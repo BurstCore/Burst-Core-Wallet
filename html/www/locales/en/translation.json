@@ -1416,7 +1416,6 @@
   "shift_rate": "Shift Rate",
   "send_amount_rate": "Send Rate",
   "diff_percent": "Difference",
-  "exchange_welcome": "Welcome to the Coin Exchange",
   "exchange_greeting_1": "The coin exchange functionality is based on a 3rd party service.",
   "exchange_greeting_2": "Using the exchange may reveal your client IP to this service.",
   "unavailable": "Unavailable",
@@ -1925,5 +1924,6 @@
   "disabled_a_p_i_tags": "Disabled API Tags",
   "switched_to_chain": "Switched to chain __chain__",
   "is_bundled": "Is Bundled",
-  "app_title": "Ardor Wallet"
+  "app_title": "Ardor Wallet",
+  "exchange_welcome": "Welcome to the Cryptocurrency Exchange"
 }
