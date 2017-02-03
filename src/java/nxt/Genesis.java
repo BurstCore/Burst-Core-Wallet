@@ -72,16 +72,16 @@ public final class Genesis {
         }
     }
 
-    public static final Map<Long, Integer> GENESIS_AMOUNTS;
+    public static final Map<Long, Long> GENESIS_AMOUNTS;
     static {
         JSONArray amounts = (JSONArray)genesisParameters.get("genesisAmounts");
         if (amounts.size() != GENESIS_RECIPIENTS.length) {
             throw new RuntimeException("Number of genesis amounts does not match number of genesis recipients");
         }
-        Map<Long,Integer> map = new HashMap<>();
+        Map<Long,Long> map = new HashMap<>();
         long total = 0;
         for (int i = 0; i < amounts.size(); i++) {
-            int amount = ((Long)amounts.get(i)).intValue();
+            long amount = ((Long)amounts.get(i)).longValue();
             if (amount <= 0) {
                 throw new RuntimeException("Invalid genesis recipient amount " + amount);
             }

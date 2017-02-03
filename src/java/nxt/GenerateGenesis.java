@@ -23,11 +23,23 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class GenerateGenesis {
 
@@ -70,13 +82,21 @@ public final class GenerateGenesis {
                     }
                     genesisRecipients[i] = Account.getId(genesisPublicKeys[i]);
                 }
-                Map<Long, Integer> genesisAmounts = new HashMap<>();
-                JSONArray amounts = (JSONArray)inputJSON.get("genesisAmounts");
-                for (int i = 0; i < amounts.size(); i++) {
-                    int amount = ((Long)amounts.get(i)).intValue();
+                Map<Long, Long> genesisAmounts = new HashMap<>();
+                long total = 0;
+                JSONArray amountRatios = (JSONArray)inputJSON.get("genesisRatios");
+                JSONArray amounts = new JSONArray();
+                for (int i = 0; i < amountRatios.size(); i++) {
+                    long amount = ((Long)amountRatios.get(i)).longValue();
+                    total = Math.addExact(total, amount);
+                }
+                for (int i = 0; i < amountRatios.size(); i++) {
+                    long amount = ((Long)amountRatios.get(i)).longValue();
+                    amount = BigInteger.valueOf(Constants.MAX_BALANCE_NXT).multiply(BigInteger.valueOf(amount))
+                            .divide(BigInteger.valueOf(total)).longValueExact();
+                    amounts.add(amount);
                     genesisAmounts.put(genesisRecipients[i], amount);
                 }
-
                 JSONObject outputJSON = new JSONObject();
                 outputJSON.put("genesisPublicKey", Convert.toHexString(creatorPublicKey));
                 String epochBeginning = (String) inputJSON.get("epochBeginning");

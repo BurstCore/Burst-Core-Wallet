@@ -16,6 +16,8 @@
 
 package nxt;
 
+import java.math.BigInteger;
+
 public final class Constants {
 
     public static final boolean isTestnet = Nxt.getBooleanProperty("nxt.isTestnet");
@@ -25,12 +27,12 @@ public final class Constants {
     public static final int MAX_NUMBER_OF_TRANSACTIONS = 255;
     public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int MAX_PAYLOAD_LENGTH = MAX_NUMBER_OF_TRANSACTIONS * MIN_TRANSACTION_SIZE;
-    public static final long MAX_BALANCE_NXT = 1000000000;
     public static final long ONE_NXT = 100000000;
+    public static final long MAX_BALANCE_NXT = Long.MAX_VALUE / (100 * ONE_NXT) * 100;
     public static final long MAX_BALANCE_NQT = MAX_BALANCE_NXT * ONE_NXT;
-    public static final long INITIAL_BASE_TARGET = 153722867;
-    public static final long MAX_BASE_TARGET = MAX_BALANCE_NXT * INITIAL_BASE_TARGET;
-    public static final long MAX_BASE_TARGET_2 = isTestnet ? MAX_BASE_TARGET : INITIAL_BASE_TARGET * 50;
+    public static final long INITIAL_BASE_TARGET = BigInteger.valueOf(153722867).multiply(BigInteger.valueOf(1000000000))
+            .divide(BigInteger.valueOf(MAX_BALANCE_NXT)).longValueExact();
+    public static final long MAX_BASE_TARGET = INITIAL_BASE_TARGET * 50;
     public static final long MIN_BASE_TARGET = INITIAL_BASE_TARGET * 9 / 10;
     public static final int MIN_BLOCKTIME_LIMIT = 53;
     public static final int MAX_BLOCKTIME_LIMIT = 67;
@@ -75,7 +77,7 @@ public final class Constants {
     public static final int MAX_ACCOUNT_PROPERTY_NAME_LENGTH = 32;
     public static final int MAX_ACCOUNT_PROPERTY_VALUE_LENGTH = 160;
 
-    public static final long MAX_ASSET_QUANTITY_QNT = 1000000000L * 100000000L;
+    public static final long MAX_ASSET_QUANTITY_QNT = MAX_BALANCE_NQT;
     public static final int MIN_ASSET_NAME_LENGTH = 3;
     public static final int MAX_ASSET_NAME_LENGTH = 10;
     public static final int MAX_ASSET_DESCRIPTION_LENGTH = 1000;
@@ -104,7 +106,7 @@ public final class Constants {
     public static final int MIN_CURRENCY_CODE_LENGTH = 3;
     public static final int MAX_CURRENCY_CODE_LENGTH = 5;
     public static final int MAX_CURRENCY_DESCRIPTION_LENGTH = 1000;
-    public static final long MAX_CURRENCY_TOTAL_SUPPLY = 1000000000L * 100000000L;
+    public static final long MAX_CURRENCY_TOTAL_SUPPLY = MAX_BALANCE_NQT;
     public static final int MAX_MINTING_RATIO = 10000; // per mint units not more than 0.01% of total supply
     public static final byte MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS = 3;
     public static final byte MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS = 30; // max possible at current block payload limit is 51

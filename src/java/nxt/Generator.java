@@ -73,7 +73,7 @@ public final class Generator implements Comparable<Generator> {
                         final int generationLimit = Nxt.getEpochTime() - delayTime;
                         if (lastBlock.getId() != lastBlockId || sortedForgers == null) {
                             lastBlockId = lastBlock.getId();
-                            if (lastBlock.getTimestamp() > Nxt.getEpochTime() - 600) {
+                            if (lastBlock.getTimestamp() > Nxt.getEpochTime() - 600 && lastBlock.getHeight() != 0) {
                                 Block previousBlock = Nxt.getBlockchain().getBlock(lastBlock.getPreviousBlockId());
                                 for (Generator generator : generators.values()) {
                                     generator.setLastBlock(previousBlock);

@@ -1194,7 +1194,7 @@ public final class Account {
 
     public long getEffectiveBalanceNXT(int height) {
         if (height <= 1440) {
-            Integer amount = Genesis.GENESIS_AMOUNTS.get(id);
+            Long amount = Genesis.GENESIS_AMOUNTS.get(id);
             return amount == null ? 0 : amount;
         }
         if (this.publicKey == null) {
