@@ -45,7 +45,7 @@ public final class DividendPaymentAttachment extends Attachment.AbstractAttachme
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String)attachmentData.get("asset"));
         this.height = ((Long)attachmentData.get("height")).intValue();
-        this.amountNQT = Convert.parseLong(attachmentData.get("amountNQT"));
+        this.amountNQT = Convert.parseLong(attachmentData.get("amountNQTPerShare"));
         this.holdingId = Convert.parseUnsignedLong((String) attachmentData.get("holding"));
         this.holdingType = HoldingType.get(((Long)attachmentData.get("holdingType")).byteValue());
     }
@@ -76,7 +76,7 @@ public final class DividendPaymentAttachment extends Attachment.AbstractAttachme
     protected void putMyJSON(JSONObject attachment) {
         attachment.put("asset", Long.toUnsignedString(assetId));
         attachment.put("height", height);
-        attachment.put("amountNQT", amountNQT);
+        attachment.put("amountNQTPerShare", amountNQT);
         attachment.put("holding", Long.toUnsignedString(holdingId));
         attachment.put("holdingType", holdingType.getCode());
     }

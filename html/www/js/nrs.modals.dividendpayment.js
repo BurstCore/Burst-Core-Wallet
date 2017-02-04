@@ -201,7 +201,7 @@ var NRS = (function(NRS, $) {
                     "dividend_height": String(dividend.dividendHeight).escapeHTML(),
                     "total": NRS.intToFloat(dividend.totalDividend, decimals),
                     "accounts": NRS.formatQuantity(dividend.numberOfAccounts, false, false, 0),
-                    "amount_per_share": NRS.intToFloat(dividend.amountNQT, decimals),
+                    "amount_per_share": NRS.intToFloat(dividend.amountNQTPerShare, decimals),
                     "holding": holdingLink
                 })
             }

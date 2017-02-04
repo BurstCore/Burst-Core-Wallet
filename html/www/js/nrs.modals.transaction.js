@@ -639,12 +639,12 @@ var NRS = (function (NRS, $, undefined) {
                         params[key] = transaction.attachment.holding;
                         NRS.sendRequest(requestType, params, function (response) {
                             data.holding_formatted_html = NRS.getHoldingLink(transaction.attachment.holding, transaction.attachment.holdingType);
-                            data.amount_per_share_formatted_html = NRS.convertToQNTf(transaction.attachment.amountNQT, response.decimals) + " " + response.name;
+                            data.amount_per_share_formatted_html = NRS.convertToQNTf(transaction.attachment.amountNQTPerShare, response.decimals) + " " + response.name;
                         }, { isAsync: false });
                     } else {
                         data.holdingType = $.t("coin");
                         data.holding_formatted_html = NRS.getChainLink(transaction.attachment.holding);
-                        data.amount_per_share = NRS.intToFloat(transaction.attachment.amountNQT, NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name;
+                        data.amount_per_share = NRS.intToFloat(transaction.attachment.amountNQTPerShare, NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name;
                     }
 
                     data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
