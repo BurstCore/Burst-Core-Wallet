@@ -574,7 +574,7 @@ var NRS = (function(NRS, $, undefined) {
 		return html;
 	};
 
-    NRS.getLedgerEntryRow = function(entry, decimalParams) {
+    NRS.getLedgerEntryRow = function (entry) {
         var linkClass;
         var dataToken;
         if (entry.isTransactionEvent) {
@@ -596,21 +596,21 @@ var NRS = (function(NRS, $, undefined) {
             NRS.sendRequest("getAsset", {"asset": entry.holding}, function (response) {
                 balanceType = "asset";
                 balanceEntity = response.name;
-                change = NRS.formatQuantity(change, response.decimals, false, decimalParams.holdingChangeDecimals);
-                balance = NRS.formatQuantity(balance, response.decimals, false, decimalParams.holdingBalanceDecimals);
+                change = NRS.formatQuantity(change, response.decimals);
+                balance = NRS.formatQuantity(balance, response.decimals);
                 holdingIcon = "<i class='fa fa-signal'></i> ";
             }, { isAsync: false });
         } else if (/CURRENCY_BALANCE/i.test(entry.holdingType)) {
             NRS.sendRequest("getCurrency", {"currency": entry.holding}, function (response) {
                 balanceType = "currency";
                 balanceEntity = response.name;
-                change = NRS.formatQuantity(change, response.decimals, false, decimalParams.holdingChangeDecimals);
-                balance = NRS.formatQuantity(balance, response.decimals, false, NRS.getChain(entry.chain).decimals);
+                change = NRS.formatQuantity(change, response.decimals);
+                balance = NRS.formatQuantity(balance, response.decimals);
                 holdingIcon =  "<i class='fa fa-bank'></i> ";
             }, { isAsync: false });
         } else {
-            change = NRS.formatAmount(change, false, false, decimalParams.changeDecimals);
-            balance = NRS.formatAmount(balance, false, false, decimalParams.balanceDecimals);
+            change = NRS.formatQuantity(change, NRS.getChain(entry.holding).decimals);
+            balance = NRS.formatQuantity(balance, NRS.getChain(entry.holding).decimals);
         }
         var sign = "";
 		var color = "";
@@ -798,35 +798,6 @@ var NRS = (function(NRS, $, undefined) {
 		return /ASSET_BALANCE/i.test(entry.holdingType) || /CURRENCY_BALANCE/i.test(entry.holdingType);
 	};
 
-    NRS.getLedgerNumberOfDecimals = function (entries){
-		var decimalParams = {};
-		decimalParams.changeDecimals = NRS.getNumberOfDecimals(entries, "change", function(entry) {
-			if (isHoldingEntry(entry)) {
-				return "";
-			}
-			return NRS.formatAmount(entry.change);
-		});
-		decimalParams.holdingChangeDecimals = NRS.getNumberOfDecimals(entries, "change", function(entry) {
-			if (isHoldingEntry(entry)) {
-				return NRS.formatQuantity(entry.change, entry.holdingInfo.decimals);
-			}
-			return "";
-		});
-		decimalParams.balanceDecimals = NRS.getNumberOfDecimals(entries, "balance", function(entry) {
-			if (isHoldingEntry(entry)) {
-				return "";
-			}
-			return NRS.formatAmount(entry.balance);
-		});
-		decimalParams.holdingBalanceDecimals = NRS.getNumberOfDecimals(entries, "balance", function(entry) {
-			if (isHoldingEntry(entry)) {
-				return NRS.formatQuantity(entry.balance, entry.holdingInfo.decimals);
-			}
-			return "";
-		});
-		return decimalParams;
-	};
-
     NRS.pages.ledger = function() {
 		var rows = "";
         var params = {
@@ -842,10 +813,9 @@ var NRS = (function(NRS, $, undefined) {
                     NRS.hasMorePages = true;
                     response.entries.pop();
                 }
-				var decimalParams = NRS.getLedgerNumberOfDecimals(response.entries);
                 for (var i = 0; i < response.entries.length; i++) {
                     var entry = response.entries[i];
-                    rows += NRS.getLedgerEntryRow(entry, decimalParams);
+                    rows += NRS.getLedgerEntryRow(entry);
                 }
             }
             NRS.dataLoaded(rows);

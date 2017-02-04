@@ -58,7 +58,7 @@ var NRS = (function(NRS, $) {
             }
             if (entryDetails.holding) {
                 if (entryDetails.holdingTypeCode <= 2) {
-                    entryDetails.holding_formatted_html = NRS.getChainLink(entry.chain);
+                    entryDetails.holding_formatted_html = NRS.getChainLink(entry.holding);
                 } else {
                     entryDetails.holding_formatted_html = NRS.getLedgerHoldingLink(entry.holding, entryDetails.holdingTypeCode);
                 }

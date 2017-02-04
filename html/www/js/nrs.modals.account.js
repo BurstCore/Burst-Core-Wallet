@@ -223,10 +223,9 @@ var NRS = (function(NRS, $) {
             var infoModalLedgerTable = $("#user_info_modal_ledger_table");
             if (response.entries && response.entries.length) {
                 var rows = "";
-				var decimalParams = NRS.getLedgerNumberOfDecimals(response.entries);
 				for (var i = 0; i < response.entries.length; i++) {
                     var entry = response.entries[i];
-                    rows += NRS.getLedgerEntryRow(entry, decimalParams);
+                    rows += NRS.getLedgerEntryRow(entry);
                 }
                 infoModalLedgerTable.find("tbody").empty().append(rows);
                 NRS.dataLoadFinished(infoModalLedgerTable);
