@@ -592,6 +592,7 @@ var NRS = (function(NRS, $, undefined) {
         if (change < 0) {
             change = String(change).substring(1);
         }
+        var linkedChain = entry.chain;
         if (/ASSET_BALANCE/i.test(entry.holdingType)) {
             NRS.sendRequest("getAsset", {"asset": entry.holding}, function (response) {
                 balanceType = "asset";
@@ -609,6 +610,7 @@ var NRS = (function(NRS, $, undefined) {
                 holdingIcon =  "<i class='fa fa-bank'></i> ";
             }, { isAsync: false });
         } else {
+        	linkedChain = entry.holding;
             change = NRS.formatQuantity(change, NRS.getChain(entry.holding).decimals);
             balance = NRS.formatQuantity(balance, NRS.getChain(entry.holding).decimals);
         }
@@ -637,7 +639,7 @@ var NRS = (function(NRS, $, undefined) {
         html += "<a class='" + linkClass + "' href='#' data-timestamp='" + NRS.escapeRespStr(entry.timestamp) + "' " + dataToken + ">";
         html += " <i class='fa fa-info'></i></a>";
 		html += '</td>';
-		html += "<td>" + NRS.getChainLink(entry.chain) + "</td>";
+		html += "<td>" + NRS.getChainLink(linkedChain) + "</td>";
 		if (balanceType == "nxt") {
             html += "<td style='vertical-align:middle;" + color + "' class='numeric'>" + sign + change + "</td>";
             html += "<td style='vertical-align:middle;' class='numeric'>" + balance + "</td>";
