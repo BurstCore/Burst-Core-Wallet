@@ -855,11 +855,11 @@ var NRS = (function (NRS, $, undefined) {
         description = $.t("buy_coin_order_description", {
             "amount": NRS.formatQuantity(quantityQNT, currentCoin.decimals, true),
             "base": coinName.html().escapeHTML(),
-            "price": NRS.formatAmountDecimals(priceNQT, false, true, false, NRS.getActiveChainDecimals()),
+            "price": NRS.formatAmount(priceNQT),
             "counter": NRS.getActiveChainName()
         });
         tooltipTitle = $.t("buy_coin_order_description_help", {
-            "price": NRS.formatAmountDecimals(priceNQT, false, true, false, NRS.getActiveChainDecimals()),
+            "price": NRS.formatAmount(priceNQT),
             "base": coinName.html().escapeHTML(),
             "total": totalNXT,
             "counter": NRS.getActiveChainName()
