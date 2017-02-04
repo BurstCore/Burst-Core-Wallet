@@ -187,13 +187,11 @@ var NRS = (function(NRS, $) {
             var dividends = response.dividends;
             for (var i = 0; i < dividends.length; i++) {
                 var dividend = dividends[i];
-                var decimals;
+                var decimals = dividend.holdingInfo.decimals;
                 var holdingLink;
                 if (dividend.holdingType == "0") {
-                    decimals = NRS.getActiveChainDecimals();
                     holdingLink = NRS.getChainLink(dividend.holding);
                 } else {
-                    decimals = dividend.holdingInfo.decimals;
                     holdingLink = NRS.getHoldingLink(dividend.holding, dividend.holdingType, dividend.holdingInfo.name);
                 }
                 view.data.push({
