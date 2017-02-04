@@ -578,7 +578,13 @@ var NRS = (function(NRS, $) {
 
 			if ("feeNXT" in data && NRS.settings["fee_warning"] && NRS.settings["fee_warning"] != "0") {
 				try {
-					var feeNQT = NRS.convertToNQT(data.feeNXT);
+					if (data.fee_decimals) {
+						data.feeNQT = NRS.floatToInt(data.feeNXT, parseInt(data.fee_decimals));
+						delete data.fee_decimals;
+					} else {
+						data.feeNQT = NRS.convertToNQT(data.feeNXT);
+					}
+					delete data.feeNXT;
 				} catch (err) {
 					$form.find(".error_message").html(String(err).escapeHTML() + " (" + $.t("fee") + ")").show();
 					if (formErrorFunction) {
@@ -588,7 +594,7 @@ var NRS = (function(NRS, $) {
 					return;
 				}
 
-				if (new BigInteger(feeNQT).compareTo(new BigInteger(NRS.settings["fee_warning"])) > 0) {
+				if (new BigInteger(data.feeNQT).compareTo(new BigInteger(NRS.settings["fee_warning"])) > 0) {
 					NRS.showedFormWarning = true;
 					$form.find(".error_message").html($.t("error_max_fee_warning", {
 						"nxt": NRS.formatAmount(NRS.settings["fee_warning"]), "coin": NRS.getActiveChainName()
@@ -685,10 +691,11 @@ var NRS = (function(NRS, $) {
 						  originalRequestType, formErrorFunction, errorMessage) {
 		//todo check again.. response.error
 		var formCompleteFunction;
+        var formFeeCalculationFunction = NRS["forms"][originalRequestType + "FeeCalculation"];
 		if (response.fullHash) {
 			NRS.unlockForm($modal, $btn);
 			if (data.calculateFee) {
-				updateFee($modal, response.transactionJSON.feeNQT);
+                updateFee($modal, response.transactionJSON.feeNQT, formFeeCalculationFunction);
 				return;
 			}
 
@@ -738,7 +745,7 @@ var NRS = (function(NRS, $) {
 		} else {
 			if (data.calculateFee) {
 				NRS.unlockForm($modal, $btn, false);
-				updateFee($modal, response.transactionJSON.feeNQT);
+				updateFee($modal, response.transactionJSON.feeNQT, formFeeCalculationFunction);
 				return;
 			}
 			var sentToFunction = false;
@@ -780,9 +787,13 @@ var NRS = (function(NRS, $) {
 		}
 	};
 
-    function updateFee(modal, feeNQT) {
-        var fee = $("#" + modal.attr('id').replace('_modal', '') + "_fee");
-        fee.val(NRS.convertToNXT(feeNQT));
+    function updateFee(modal, feeNQT, formFeeCalculationFunction) {
+        var feeField = $("#" + modal.attr('id').replace('_modal', '') + "_fee");
+        if (typeof formFeeCalculationFunction == 'function') {
+            formFeeCalculationFunction(feeField, feeNQT);
+        } else {
+            feeField.val(NRS.convertToNXT(feeNQT));
+        }
         var recalcIndicator = $("#" + modal.attr('id').replace('_modal', '') + "_recalc");
         recalcIndicator.hide();
     }

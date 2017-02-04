@@ -61,7 +61,6 @@ var NRS = (function (NRS, $, undefined) {
         var field = "N/A";
         try {
             var nxtFields = [
-                ["feeNXT", "feeNQT"],
                 ["amountNXT", "amountNQT"],
                 ["priceNXT", "priceNQT"],
                 ["refundNXT", "refundNQT"],
