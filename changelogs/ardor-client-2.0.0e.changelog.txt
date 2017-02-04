@@ -1,1 +1,117 @@
-//TODO
+This is the first release of the Ardor software, for testnet only. It represents
+the first milestone in the building of the Ardor platform.
+
+
+== New Features ==
+
+The main new user-visible feature is the existence of a single forging chain,
+using the ARDR token, and multiple child chains, each with its own token.
+
+
+== Forging Chain ==
+
+The Ardor chain is used to establish the proof-of-stake consensus, using ARDR
+balances only. It supports only a few transaction types: ordinary payments,
+balance leasing, and coin exchange. Prunable plain or encrypted message
+attachments are also supported, but not permanent or standalone arbitrary
+message transactions.
+
+
+== Child Chains ==
+
+The child chains support all transaction types as previously implemented on the
+Nxt platform, with the exception of balance leasing which is only available on
+the Ardor chain, and tagged data extend transaction which has been removed as
+unnecessary. A child chain can optionally be configured to disable certain
+transaction types, which has been done for testing purposes on the EUR child
+chain, disabling the Asset Exchange and Digital Marketplace.
+
+
+== Coin Exchange ==
+
+To allow trading of child chain coins to each other, and also between child
+chains and the Ardor chain, a new Coin Exchange module has been implemented.
+
+
+== Bundling ==
+
+The bundling process is used to group child chain transactions from a child
+chain into a transaction on the Ardor chain. Bundlers accept the fees from
+those child chain transactions, in the corresponding child chain coin, and
+pay fees in ARDR to the parent chain forgers. Bundlers can be started from
+the cogwheel/bundlers menu, defining the coin to ARDR exchange rate they accept,
+a limit on the total fees in ARDR a bundler will pay, and an optional overpay
+amount.
+
+
+== Peer Networking ==
+
+The peer networking has been fully re-written and optimized to use socket
+connections and binary messages instead of http and JSON.
+The hallmark feature has been removed, hallmarks are no longer supported.
+
+
+== New APIs ==
+
+APIs of the new Coin Exchange feature:
+ExchangeCoins, CancelCoinExchange, GetCoinExchangeOrder, GetCoinExchangeOrders,
+GetCoinExchangeOrderIds, GetCoinExchangeTrade, GetCoinExchangeTrades,
+GetExpectedCoinExchangeOrderCancellations, GetExpectedCoinExchangeOrders,
+GetLastCoinExchangeTrade.
+
+Bundling related APIs:
+BundleTransactions, GetBundlers, GetBundlerRates, StartBundler, StopBundler.
+
+Other new APIs:
+GetBalances, GetEffectiveBalance, GetFxtTransaction.
+
+
+== API changes ==
+
+All APIs that are now chain specific accept a new chain parameter.
+
+Transaction IDs are no longer 64-bit longs but 256-bit hashes, necessitating
+change in all APIs that accept transaction ID parameters or return such in the
+JSON fields.
+
+Prices and rates are now defined relative to a whole unit of the holding being
+bought or sold (asset, currency, coin), not to a QNT indivisible unit.
+
+All "units" parameters in the Monetary System APIs have been renamed to
+unitsQNT.
+
+DividendPayment API accepts holding and holdingType parameters to allow paying
+dividends in another asset or MS currency.
+
+The GetAccount API no longer returns balanceNQT and unconfirmedBalanceNQT, as
+balances are now chain specific. The GetBalance API should be used to get chain
+balances instead, or GetBalances for querying multiple chains.
+
+The following APIs have been removed: ExtendTaggedData, GetPhasingPolls,
+GetTaggedDataExtendTransactions, GetInboundPeers, MarkHost, DecodeHallmark.
+
+
+== Testnet accounts ==
+
+The testnet genesis block has been created based on account balances from the
+Nxt testnet, as of 2017/01/01 (block height 1061208). Users who had testnet
+accounts as of that height should find their ARDR and NXT testnet balances
+imported into this testnet, to ARDR and IGNIS tokens repsectively, plus an
+approximately equivalent amount of BTC, USD, and EUR child chain coins for
+testing. To allow for developers testing and running forging and bundling nodes,
+account holdings have been reduced by 50% which have been allocated to
+developers accounts.
+
+
+== Upgrading from Nxt ==
+
+The Ardor release is not an upgrade and does not in any way affect your existing
+Nxt account or client installation. Both Ardor and Nxt should be possible to run
+simultaneously on the same machine, as long as the hardware capacity allows it.
+
+The included ArdorNxtComparison.pdf document summarizes the major differences
+between the Nxt and Ardor platforms, for those deciding which one is a better
+fit for their use case, or considering a migration from Nxt to Ardor. More
+documentation should be added as Ardor development and features mature and
+stabilize.
+
