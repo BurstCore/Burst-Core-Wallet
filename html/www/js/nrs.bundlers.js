@@ -67,7 +67,8 @@ var NRS = (function(NRS, $) {
                     view.render({
                         errorMessage: getErrorMessage(response),
                         isLoading: false,
-                        isEmpty: false
+                        isEmpty: false,
+                        isParentChain: NRS.isParentChain()
                     });
                     return;
                 }
