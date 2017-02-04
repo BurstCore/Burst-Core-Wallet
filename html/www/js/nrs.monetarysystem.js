@@ -205,8 +205,8 @@ var NRS = (function (NRS, $, undefined) {
                 "<td class = 'numeric'>" + NRS.formatQuantity(currency.currentSupplyQNT, currency.decimals, false, currentSupplyDecimals) + "</td>" +
                 "<td class = 'numeric'>" + NRS.formatQuantity(currency.maxSupplyQNT, currency.decimals, false, maxSupplyDecimals) + "</td>" +
                 "<td>";
-            var event = "NRS.goToCurrency('" + code + "'," + currency.chain + ")";
-            rows += "<a href='#' class='btn btn-xs btn-default' onClick='" + event + "' " + (!NRS.isExchangeable(currency.type) ? "disabled" : "") + ">" + $.t("exchange") + "</a> ";
+            var event = "onClick='NRS.goToCurrency(\"" + code + "\"," + currency.chain + ")'";
+            rows += "<a href='#' class='btn btn-xs btn-default' " + event + " " + (!NRS.isExchangeable(currency.type) ? "disabled" : "") + ">" + $.t("exchange") + "</a> ";
             if (NRS.getActiveChainId() == currency.chain && currency.issuanceHeight > NRS.lastBlockHeight && NRS.isReservable(currency.type)) {
                 rows += "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#reserve_currency_modal' data-currency='" + currencyId + "' data-name='" + name + "' data-code='" + code + "' data-ressupply='" + resSupply + "' data-decimals='" + decimals + "' data-minreserve='" + minReserve + "'>" + $.t("reserve") + "</a> ";
             }
