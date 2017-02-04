@@ -61,7 +61,7 @@ public class TestCurrencyExchange extends BlockchainTest {
         apiCall = new APICall.Builder("currencyBuy").
                 secretPhrase(BOB.getSecretPhrase()).feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
-                param("rateNQT", "" + 106).
+                param("rateNQTPerUnit", "" + 106).
                 param("unitsQNT", "200").
                 build();
         JSONObject currencyExchangeResponse = apiCall.invoke();
@@ -81,7 +81,7 @@ public class TestCurrencyExchange extends BlockchainTest {
         Logger.logDebugMessage("getAllExchangesResponse: " + getAllExchangesResponse);
         JSONArray exchanges = (JSONArray)getAllExchangesResponse.get("exchanges");
         JSONObject exchange = (JSONObject) exchanges.get(0);
-        Assert.assertEquals("105", exchange.get("rateNQT"));
+        Assert.assertEquals("105", exchange.get("rateNQTPerUnit"));
         Assert.assertEquals("200", exchange.get("unitsQNT"));
         Assert.assertEquals(currencyId, exchange.get("currency"));
         Assert.assertEquals(initialSellerBalance.getAccountId(), Convert.parseUnsignedLong((String)exchange.get("seller")));
@@ -136,7 +136,7 @@ public class TestCurrencyExchange extends BlockchainTest {
         apiCall = new APICall.Builder("currencySell").
                 secretPhrase(BOB.getSecretPhrase()).feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("currency", currencyId).
-                param("rateNQT", "" + 90).
+                param("rateNQTPerUnit", "" + 90).
                 param("unitsQNT", "200").
                 build();
         JSONObject currencyExchangeResponse = apiCall.invoke();
@@ -157,7 +157,7 @@ public class TestCurrencyExchange extends BlockchainTest {
         Logger.logDebugMessage("getAllExchangesResponse: " + getAllExchangesResponse);
         JSONArray exchanges = (JSONArray)getAllExchangesResponse.get("exchanges");
         JSONObject exchange = (JSONObject) exchanges.get(0);
-        Assert.assertEquals("95", exchange.get("rateNQT"));
+        Assert.assertEquals("95", exchange.get("rateNQTPerUnit"));
         Assert.assertEquals("200", exchange.get("unitsQNT"));
         Assert.assertEquals(currencyId, exchange.get("currency"));
         Assert.assertEquals(initialSellerBalance.getAccountId(), Convert.parseUnsignedLong((String) exchange.get("seller")));

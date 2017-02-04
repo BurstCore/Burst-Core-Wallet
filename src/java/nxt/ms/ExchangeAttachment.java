@@ -38,7 +38,7 @@ public abstract class ExchangeAttachment extends Attachment.AbstractAttachment i
     ExchangeAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.currencyId = Convert.parseUnsignedLong((String)attachmentData.get("currency"));
-        this.rateNQT = Convert.parseLong(attachmentData.get("rateNQT"));
+        this.rateNQT = Convert.parseLong(attachmentData.get("rateNQTPerUnit"));
         this.unitsQNT = Convert.parseLong(attachmentData.get("unitsQNT"));
     }
 
@@ -63,7 +63,7 @@ public abstract class ExchangeAttachment extends Attachment.AbstractAttachment i
     @Override
     protected void putMyJSON(JSONObject attachment) {
         attachment.put("currency", Long.toUnsignedString(currencyId));
-        attachment.put("rateNQT", rateNQT);
+        attachment.put("rateNQTPerUnit", rateNQT);
         attachment.put("unitsQNT", unitsQNT);
     }
 

@@ -1175,11 +1175,11 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.rateNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.rateNQTPerUnit = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.unitsQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.currency !== data.currency || transaction.rateNQT !== data.rateNQT || transaction.unitsQNT !== data.unitsQNT) {
+                if (transaction.currency !== data.currency || transaction.rateNQTPerUnit !== data.rateNQTPerUnit || transaction.unitsQNT !== data.unitsQNT) {
                     return false;
                 }
                 break;
@@ -1189,11 +1189,11 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.rateNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.rateNQTPerUnit = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.unitsQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.currency !== data.currency || transaction.rateNQT !== data.rateNQT || transaction.unitsQNT !== data.unitsQNT) {
+                if (transaction.currency !== data.currency || transaction.rateNQTPerUnit !== data.rateNQTPerUnit || transaction.unitsQNT !== data.unitsQNT) {
                     return false;
                 }
                 break;

@@ -1229,7 +1229,7 @@ NRS.addPagination = function () {
                                 var currencyTotal = 0;
                                 for (i = 0; i < response.exchanges.length; i++) {
                                     var exchange = response.exchanges[i];
-                                    currencyTotal += currencyBalancesMap[exchange.currency] * exchange.rateNQT / NRS.getOneCoin(decimals);
+                                    currencyTotal += currencyBalancesMap[exchange.currency] * exchange.rateNQTPerUnit / NRS.getOneCoin(decimals);
                                 }
                                 $("#account_currencies_balance").html(NRS.formatStyledAmount(new Big(currencyTotal).toFixed(decimals)));
                             } else {

@@ -1358,7 +1358,7 @@ var NRS = (function (NRS, $, undefined) {
             "type": type == "sell" ? $.t("sell_currency") : $.t("buy_currency"),
             "code": currency.code,
             "unitsQNT": [transaction.attachment.unitsQNT, currency.decimals],
-            "rate": NRS.formatQuantity(transaction.attachment.rateNQT, NRS.getChain(transaction.chain).decimals) + rateUnitsStr
+            "rate": NRS.formatQuantity(transaction.attachment.rateNQTPerUnit, NRS.getChain(transaction.chain).decimals) + rateUnitsStr
         };
         var rows = "";
         NRS.sendRequest("getExchangesByExchangeRequest", {
@@ -1376,12 +1376,12 @@ var NRS = (function (NRS, $, undefined) {
                 for (var i = 0; i < response.exchanges.length; i++) {
                     var exchange = response.exchanges[i];
                     exchangedUnits = exchangedUnits.add(new BigInteger(exchange.unitsQNT));
-                    exchangedTotal = exchangedTotal.add(new BigInteger(exchange.unitsQNT).multiply(new BigInteger(exchange.rateNQT)));
+                    exchangedTotal = exchangedTotal.add(new BigInteger(exchange.unitsQNT).multiply(new BigInteger(exchange.rateNQTPerUnit)));
                     rows += "<tr>" +
                     "<td>" + NRS.getTransactionLink(exchange.offerFullHash, NRS.formatTimestamp(exchange.timestamp)) + "</td>" +
                     "<td>" + NRS.formatQuantity(exchange.unitsQNT, currency.decimals) + "</td>" +
-                    "<td>" + NRS.formatQuantity(exchange.rateNQT, NRS.getChain(transaction.chain).decimals) + "</td>" +
-                    "<td>" + NRS.formatQuantity(NRS.multiply(exchange.unitsQNT, exchange.rateNQT), currency.decimals + NRS.getChain(transaction.chain).decimals) +
+                    "<td>" + NRS.formatQuantity(exchange.rateNQTPerUnit, NRS.getChain(transaction.chain).decimals) + "</td>" +
+                    "<td>" + NRS.formatQuantity(NRS.multiply(exchange.unitsQNT, exchange.rateNQTPerUnit), currency.decimals + NRS.getChain(transaction.chain).decimals) +
                     "</td>" +
                     "</tr>";
                 }
@@ -1439,7 +1439,7 @@ var NRS = (function (NRS, $, undefined) {
                 for (var i = 0; i < response.exchanges.length; i++) {
                     var exchange = response.exchanges[i];
                     exchangedUnits = exchangedUnits.add(new BigInteger(exchange.unitsQNT));
-                    exchangedTotal = exchangedTotal.add(new BigInteger(exchange.unitsQNT).multiply(new BigInteger(exchange.rateNQT)));
+                    exchangedTotal = exchangedTotal.add(new BigInteger(exchange.unitsQNT).multiply(new BigInteger(exchange.rateNQTPerUnit)));
                     var exchangeType = exchange.seller == transaction.sender ? "Buy" : "Sell";
                     if (exchange.seller == exchange.buyer) {
                         exchangeType = "Same";
@@ -1448,8 +1448,8 @@ var NRS = (function (NRS, $, undefined) {
                     "<td>" + NRS.getTransactionLink(exchange.transactionFullHash, NRS.formatTimestamp(exchange.timestamp)) + "</td>" +
                     "<td>" + exchangeType + "</td>" +
                     "<td>" + NRS.formatQuantity(exchange.unitsQNT, currency.decimals) + "</td>" +
-                    "<td>" + NRS.formatQuantity(exchange.rateNQT, NRS.getChain(transaction.chain).decimals) + "</td>" +
-                    "<td>" + NRS.formatQuantity(NRS.multiply(exchange.unitsQNT, exchange.rateNQT), currency.decimals + NRS.getChain(transaction.chain).decimals) +
+                    "<td>" + NRS.formatQuantity(exchange.rateNQTPerUnit, NRS.getChain(transaction.chain).decimals) + "</td>" +
+                    "<td>" + NRS.formatQuantity(NRS.multiply(exchange.unitsQNT, exchange.rateNQTPerUnit), currency.decimals + NRS.getChain(transaction.chain).decimals) +
                     "</td>" +
                     "</tr>";
                 }

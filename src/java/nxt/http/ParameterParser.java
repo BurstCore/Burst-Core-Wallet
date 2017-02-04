@@ -285,7 +285,7 @@ public final class ParameterParser {
     }
 
     public static long getRateNQT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "rateNQT", 1L, Constants.MAX_BALANCE_NQT, true);
+        return getLong(req, "rateNQTPerUnit", 1L, Constants.MAX_BALANCE_NQT, true);
     }
 
     public static PollHome.Poll getPoll(HttpServletRequest req) throws ParameterException {

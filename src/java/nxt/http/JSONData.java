@@ -305,7 +305,7 @@ public final class JSONData {
         json.put("height", offer.getHeight());
         json.put("expirationHeight", offer.getExpirationHeight());
         json.put("currency", Long.toUnsignedString(offer.getCurrencyId()));
-        json.put("rateNQT", String.valueOf(offer.getRateNQT()));
+        json.put("rateNQTPerUnit", String.valueOf(offer.getRateNQT()));
         json.put("limitQNT", String.valueOf(offer.getLimitQNT()));
         json.put("supplyQNT", String.valueOf(offer.getSupplyQNT()));
         return json;
@@ -314,7 +314,7 @@ public final class JSONData {
     static JSONObject expectedBuyOffer(Transaction transaction) {
         JSONObject json = expectedOffer(transaction);
         PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment)transaction.getAttachment();
-        json.put("rateNQT", String.valueOf(attachment.getBuyRateNQT()));
+        json.put("rateNQTPerUnit", String.valueOf(attachment.getBuyRateNQT()));
         json.put("limitQNT", String.valueOf(attachment.getTotalBuyLimitQNT()));
         json.put("supplyQNT", String.valueOf(attachment.getInitialBuySupplyQNT()));
         return json;
@@ -323,7 +323,7 @@ public final class JSONData {
     static JSONObject expectedSellOffer(Transaction transaction) {
         JSONObject json = expectedOffer(transaction);
         PublishExchangeOfferAttachment attachment = (PublishExchangeOfferAttachment)transaction.getAttachment();
-        json.put("rateNQT", String.valueOf(attachment.getSellRateNQT()));
+        json.put("rateNQTPerUnit", String.valueOf(attachment.getSellRateNQT()));
         json.put("limitQNT", String.valueOf(attachment.getTotalSellLimitQNT()));
         json.put("supplyQNT", String.valueOf(attachment.getInitialSellSupplyQNT()));
         return json;
@@ -343,7 +343,7 @@ public final class JSONData {
 
     static JSONObject availableOffers(ExchangeOfferHome.AvailableOffers availableOffers) {
         JSONObject json = new JSONObject();
-        json.put("rateNQT", String.valueOf(availableOffers.getRateNQT()));
+        json.put("rateNQTPerUnit", String.valueOf(availableOffers.getRateNQT()));
         json.put("unitsQNT", String.valueOf(availableOffers.getUnitsQNT()));
         json.put("amountNQT", String.valueOf(availableOffers.getAmountNQT()));
         return json;
@@ -956,7 +956,7 @@ public final class JSONData {
         json.put("transactionFullHash", Convert.toHexString(exchange.getTransactionFullHash()));
         json.put("timestamp", exchange.getTimestamp());
         json.put("unitsQNT", String.valueOf(exchange.getUnitsQNT()));
-        json.put("rateNQT", String.valueOf(exchange.getRateNQT()));
+        json.put("rateNQTPerUnit", String.valueOf(exchange.getRateNQT()));
         json.put("currency", Long.toUnsignedString(exchange.getCurrencyId()));
         json.put("offer", Long.toUnsignedString(exchange.getOfferId()));
         json.put("offerFullHash", Convert.toHexString(exchange.getOfferFullHash()));
@@ -976,7 +976,7 @@ public final class JSONData {
         json.put("subtype", exchangeRequest.isBuy() ? MonetarySystemTransactionType.EXCHANGE_BUY.getSubtype() : MonetarySystemTransactionType.EXCHANGE_SELL.getSubtype());
         json.put("timestamp", exchangeRequest.getTimestamp());
         json.put("unitsQNT", String.valueOf(exchangeRequest.getUnitsQNT()));
-        json.put("rateNQT", String.valueOf(exchangeRequest.getRateNQT()));
+        json.put("rateNQTPerUnit", String.valueOf(exchangeRequest.getRateNQT()));
         json.put("height", exchangeRequest.getHeight());
         if (includeCurrencyInfo) {
             putCurrencyInfo(json, exchangeRequest.getCurrencyId());
@@ -990,7 +990,7 @@ public final class JSONData {
         json.put("subtype", transaction.getType().getSubtype());
         ExchangeAttachment attachment = (ExchangeAttachment)transaction.getAttachment();
         json.put("unitsQNT", String.valueOf(attachment.getUnitsQNT()));
-        json.put("rateNQT", String.valueOf(attachment.getRateNQT()));
+        json.put("rateNQTPerUnit", String.valueOf(attachment.getRateNQT()));
         if (includeCurrencyInfo) {
             putCurrencyInfo(json, attachment.getCurrencyId());
         }
