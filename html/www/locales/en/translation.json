@@ -1920,5 +1920,6 @@
   "sell_rate_help": "The rate per currency unit at which you are willing to sell",
   "max_nxt_decimals": "Maximum coin decimal positions",
   "status_blockchain_downloading_proxy": "The blockchain is currently downloading. You are connected to remote node __peer__",
-  "status_light_client_proxy": "Running as light client. You are connected to remote node __peer__"
+  "status_light_client_proxy": "Running as light client. You are connected to remote node __peer__",
+  "fxt_payment": "Parent Chain Payment"
 }
