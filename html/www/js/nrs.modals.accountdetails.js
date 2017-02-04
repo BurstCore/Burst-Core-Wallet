@@ -66,6 +66,10 @@ var NRS = (function(NRS, $, undefined) {
 			}
 		}
 
+        NRS.setupChainWarning($("#lease_balance_link"), true);
+
+        NRS.setupChainWarning($("a[data-target=\\#set_mandatory_approval_modal]"), false);
+
 		var $invoker = $(e.relatedTarget);
 		var tab = $invoker.data("detailstab");
 		if (tab) {
