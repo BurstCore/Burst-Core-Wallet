@@ -256,7 +256,7 @@ public final class JSONData {
         json.put("asset", Long.toUnsignedString(order.getAssetId()));
         putAccount(json, "account", order.getAccountId());
         json.put("quantityQNT", String.valueOf(order.getQuantityQNT()));
-        json.put("priceNQT", String.valueOf(order.getPriceNQT()));
+        json.put("priceNQTPerShare", String.valueOf(order.getPriceNQT()));
         json.put("height", order.getHeight());
         json.put("transactionIndex", order.getTransactionIndex());
         json.put("transactionHeight", order.getTransactionHeight());
@@ -283,7 +283,7 @@ public final class JSONData {
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "account", transaction.getSenderId());
         json.put("quantityQNT", String.valueOf(attachment.getQuantityQNT()));
-        json.put("priceNQT", String.valueOf(attachment.getPriceNQT()));
+        json.put("priceNQTPerShare", String.valueOf(attachment.getPriceNQT()));
         putExpectedTransaction(json, transaction);
         return json;
     }
@@ -377,7 +377,7 @@ public final class JSONData {
         json.put("exchange", trade.getExchangeId());
         putAccount(json, "account", trade.getAccountId());
         json.put("quantityQNT", String.valueOf(trade.getExchangeQuantityQNT()));
-        json.put("priceNQT", String.valueOf(trade.getExchangePriceNQT()));
+        json.put("priceNQTPerCoin", String.valueOf(trade.getExchangePriceNQT()));
         json.put("exchangeRate", trade.getExchangePrice().toPlainString());
         json.put("block", Long.toUnsignedString(trade.getBlockId()));
         json.put("height", trade.getHeight());
@@ -819,7 +819,7 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("timestamp", trade.getTimestamp());
         json.put("quantityQNT", String.valueOf(trade.getQuantityQNT()));
-        json.put("priceNQT", String.valueOf(trade.getPriceNQT()));
+        json.put("priceNQTPerShare", String.valueOf(trade.getPriceNQT()));
         json.put("asset", Long.toUnsignedString(trade.getAssetId()));
         json.put("askOrderFullHash", Convert.toHexString(trade.getAskOrderFullHash()));
         json.put("bidOrderFullHash", Convert.toHexString(trade.getBidOrderFullHash()));

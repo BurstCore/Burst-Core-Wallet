@@ -35,14 +35,14 @@ public final class PlaceAskOrder extends CreateTransaction {
     static final PlaceAskOrder instance = new PlaceAskOrder();
 
     private PlaceAskOrder() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityQNT", "priceNQT");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityQNT", "priceNQTPerShare");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
 
         Asset asset = ParameterParser.getAsset(req);
-        long priceNQT = ParameterParser.getPriceNQT(req);
+        long priceNQT = ParameterParser.getPriceNQTPerShare(req);
         long quantityQNT = ParameterParser.getQuantityQNT(req);
         Account account = ParameterParser.getSenderAccount(req);
         ChildChain childChain = ParameterParser.getChildChain(req);

@@ -31,7 +31,7 @@ public final class SimulateCoinExchange extends APIServlet.APIRequestHandler {
     static final SimulateCoinExchange instance = new SimulateCoinExchange();
 
     private SimulateCoinExchange() {
-        super(new APITag[] {APITag.CE}, "exchange", "quantityQNT", "priceNQT");
+        super(new APITag[] {APITag.CE}, "exchange", "quantityQNT", "priceNQTPerCoin");
     }
 
     @Override
@@ -42,7 +42,7 @@ public final class SimulateCoinExchange extends APIServlet.APIRequestHandler {
             return JSONResponses.incorrect("exchange", "exchange must specify a different chain");
         }
         long quantityQNT = ParameterParser.getQuantityQNT(req);
-        long priceNQT = ParameterParser.getPriceNQT(req);
+        long priceNQT = ParameterParser.getPriceNQTPerCoin(req);
         // Check for a non-zero funding amount
         long amount = Convert.unitRateToAmount(quantityQNT, exchange.getDecimals(), priceNQT, chain.getDecimals());
         if (amount == 0) {

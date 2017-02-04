@@ -32,7 +32,7 @@ public class CoinExchangeTest extends BlockchainTest {
                 param("chain", IGNIS.getId()).
                 param("exchange", USD.getId()).
                 param("quantityQNT", quantityQNT).
-                param("priceNQT", priceNQT).
+                param("priceNQTPerCoin", priceNQT).
                 build();
         JSONObject response = apiCall.invoke();
         Logger.logDebugMessage("exchangeCoins: " + response);
@@ -56,7 +56,7 @@ public class CoinExchangeTest extends BlockchainTest {
                 param("chain", USD.getId()).
                 param("exchange", IGNIS.getId()).
                 param("quantityQNT", 100 * IGNIS.ONE_COIN + 10 * IGNIS.ONE_COIN).
-                param("priceNQT", USD.ONE_COIN / 4).
+                param("priceNQTPerCoin", USD.ONE_COIN / 4).
                 build();
         response = apiCall.invoke();
         Logger.logDebugMessage("exchangeCoins: " + response);
@@ -86,7 +86,7 @@ public class CoinExchangeTest extends BlockchainTest {
         Assert.assertEquals(USD.getId(), (int)(long)trade.get("chain"));
         Assert.assertEquals(IGNIS.getId(), (int)(long)trade.get("exchange"));
         Assert.assertEquals("" + (100 * IGNIS.ONE_COIN), trade.get("quantityQNT")); // IGNIS bought
-        Assert.assertEquals("" + (long)(0.25 * USD.ONE_COIN), trade.get("priceNQT")); // USD per IGNIS price
+        Assert.assertEquals("" + (long)(0.25 * USD.ONE_COIN), trade.get("priceNQTPerCoin")); // USD per IGNIS price
 
         apiCall = new APICall.Builder("getCoinExchangeTrades").
                 param("chain", IGNIS.getId()).
@@ -101,7 +101,7 @@ public class CoinExchangeTest extends BlockchainTest {
         Assert.assertEquals(IGNIS.getId(), (int)(long)trade.get("chain"));
         Assert.assertEquals(USD.getId(), (int)(long)trade.get("exchange"));
         Assert.assertEquals("" + (25 * USD.ONE_COIN), trade.get("quantityQNT")); // USD bought
-        Assert.assertEquals("" + (4 * IGNIS.ONE_COIN), trade.get("priceNQT")); // IGNIS per USD price
+        Assert.assertEquals("" + (4 * IGNIS.ONE_COIN), trade.get("priceNQTPerCoin")); // IGNIS per USD price
 
         Assert.assertEquals(-100 * IGNIS.ONE_COIN - IGNIS.ONE_COIN / 10, ALICE.getChainBalanceDiff(IGNIS.getId()));
         Assert.assertEquals(25 * USD.ONE_COIN, ALICE.getChainBalanceDiff(USD.getId()));
@@ -120,7 +120,7 @@ public class CoinExchangeTest extends BlockchainTest {
                 param("chain", IGNIS.getId()).
                 param("exchange", USD.getId()).
                 param("quantityQNT", usdToBuy).
-                param("priceNQT", ignisPerWholeUsd).
+                param("priceNQTPerCoin", ignisPerWholeUsd).
                 build();
         JSONObject response = apiCall.invoke();
         String aliceOrder = Tester.responseToStringId(response);
@@ -135,7 +135,7 @@ public class CoinExchangeTest extends BlockchainTest {
                 param("chain", USD.getId()).
                 param("exchange", IGNIS.getId()).
                 param("quantityQNT", ignisToBuy).
-                param("priceNQT", usdPerWholeIgnis).
+                param("priceNQTPerCoin", usdPerWholeIgnis).
                 build();
         response = apiCall.invoke();
         String bobOrder = Tester.responseToStringId(response);

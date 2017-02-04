@@ -284,7 +284,14 @@ public final class ParameterParser {
         return getLong(req, "priceNQT", 1L, Constants.MAX_BALANCE_NQT, true);
     }
 
-    public static long getRateNQT(HttpServletRequest req) throws ParameterException {
+    public static long getPriceNQTPerShare(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "priceNQTPerShare", 1L, Constants.MAX_BALANCE_NQT, true);
+    }
+    public static long getPriceNQTPerCoin(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "priceNQTPerCoin", 1L, Constants.MAX_BALANCE_NQT, true);
+    }
+
+    public static long getRateNQTPerUnit(HttpServletRequest req) throws ParameterException {
         return getLong(req, "rateNQTPerUnit", 1L, Constants.MAX_BALANCE_NQT, true);
     }
 

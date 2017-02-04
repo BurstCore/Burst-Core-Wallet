@@ -869,9 +869,9 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 8;
                 transaction.quantityQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.priceNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.priceNQTPerShare = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.asset !== data.asset || transaction.quantityQNT !== data.quantityQNT || transaction.priceNQT !== data.priceNQT) {
+                if (transaction.asset !== data.asset || transaction.quantityQNT !== data.quantityQNT || transaction.priceNQTPerShare !== data.priceNQTPerShare) {
                     return false;
                 }
                 break;
@@ -1310,8 +1310,8 @@ var NRS = (function (NRS, $, undefined) {
                     return false;
                 }
                 pos += 8;
-                var priceNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
-                if (priceNQT !== data.priceNQT) {
+                var priceNQTPerCoin = String(converters.byteArrayToBigInteger(byteArray, pos));
+                if (priceNQTPerCoin !== data.priceNQTPerCoin) {
                     return false;
                 }
                 pos += 8;

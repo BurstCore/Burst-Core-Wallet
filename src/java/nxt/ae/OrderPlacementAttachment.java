@@ -39,7 +39,7 @@ public abstract class OrderPlacementAttachment extends Attachment.AbstractAttach
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
         this.quantityQNT = Convert.parseLong(attachmentData.get("quantityQNT"));
-        this.priceNQT = Convert.parseLong(attachmentData.get("priceNQT"));
+        this.priceNQT = Convert.parseLong(attachmentData.get("priceNQTPerShare"));
     }
 
     OrderPlacementAttachment(long assetId, long quantityQNT, long priceNQT) {
@@ -64,7 +64,7 @@ public abstract class OrderPlacementAttachment extends Attachment.AbstractAttach
     protected void putMyJSON(JSONObject attachment) {
         attachment.put("asset", Long.toUnsignedString(assetId));
         attachment.put("quantityQNT", quantityQNT);
-        attachment.put("priceNQT", priceNQT);
+        attachment.put("priceNQTPerShare", priceNQT);
     }
 
     public long getAssetId() {

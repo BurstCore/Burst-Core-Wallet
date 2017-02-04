@@ -58,7 +58,7 @@ public final class CurrencySell extends CreateTransaction {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         Currency currency = ParameterParser.getCurrency(req);
-        long rateNQT = ParameterParser.getRateNQT(req);
+        long rateNQT = ParameterParser.getRateNQTPerUnit(req);
         long unitsQNT = ParameterParser.getUnitsQNT(req);
         Account account = ParameterParser.getSenderAccount(req);
         ChildChain childChain = ParameterParser.getChildChain(req);

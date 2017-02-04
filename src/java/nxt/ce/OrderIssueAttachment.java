@@ -70,7 +70,7 @@ public class OrderIssueAttachment extends Attachment.AbstractAttachment {
             throw new NxtException.NotValidException("Exchange chain '" + chainId + "' not defined");
         }
         this.quantityQNT = Convert.parseLong(data.get("quantityQNT"));
-        this.priceNQT = Convert.parseLong(data.get("priceNQT"));
+        this.priceNQT = Convert.parseLong(data.get("priceNQTPerCoin"));
     }
 
     @Override
@@ -91,7 +91,7 @@ public class OrderIssueAttachment extends Attachment.AbstractAttachment {
         attachment.put("chain", chain.getId());
         attachment.put("exchangeChain", exchangeChain.getId());
         attachment.put("quantityQNT", quantityQNT);
-        attachment.put("priceNQT", priceNQT);
+        attachment.put("priceNQTPerCoin", priceNQT);
     }
 
     /**

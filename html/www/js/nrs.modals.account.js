@@ -371,25 +371,25 @@ var NRS = (function(NRS, $) {
 			var quantityDecimals = NRS.getNumberOfDecimals(response.trades, "quantityQNT", function(val) {
 				return NRS.formatQuantity(val.quantityQNT, val.decimals);
 			});
-			var priceDecimals = NRS.getNumberOfDecimals(response.trades, "priceNQT", function(val) {
-				return NRS.formatQuantity(val.priceNQT, NRS.getActiveChainDecimals());
+			var priceDecimals = NRS.getNumberOfDecimals(response.trades, "priceNQTPerShare", function(val) {
+				return NRS.formatQuantity(val.priceNQTPerShare, NRS.getActiveChainDecimals());
 			});
 			var amountDecimals = NRS.getNumberOfDecimals(response.trades, "totalNQT", function(val) {
-				return NRS.formatQuantity(NRS.multiply(val.quantityQNT, val.priceNQT), val.decimals + NRS.getActiveChainDecimals());
+				return NRS.formatQuantity(NRS.multiply(val.quantityQNT, val.priceNQTPerShare), val.decimals + NRS.getActiveChainDecimals());
 			});
 			if (response.trades && response.trades.length) {
 				var trades = response.trades;
 				for (var i = 0; i < trades.length; i++) {
-					trades[i].priceNQT = new BigInteger(trades[i].priceNQT);
+					trades[i].priceNQTPerShare = new BigInteger(trades[i].priceNQTPerShare);
 					trades[i].quantityQNT = new BigInteger(trades[i].quantityQNT);
-					trades[i].totalNQT = new BigInteger(NRS.multiply(trades[i].priceNQT, trades[i].quantityQNT));
+					trades[i].totalNQT = new BigInteger(NRS.multiply(trades[i].priceNQTPerShare, trades[i].quantityQNT));
 					var type = (trades[i].buyerRS == NRS.userInfoModal.user ? "buy" : "sell");
 					rows += "<tr>" +
 						"<td><a href='#' data-goto-asset='" + NRS.escapeRespStr(trades[i].asset) + "'>" + NRS.escapeRespStr(trades[i].name) + "</a></td>" +
 						"<td>" + NRS.formatTimestamp(trades[i].timestamp) + "</td>" +
 						"<td style='color:" + (type == "buy" ? "green" : "red") + "'>" + $.t(type) + "</td>" +
 						"<td class='numeric'>" + NRS.formatQuantity(trades[i].quantityQNT, trades[i].decimals, false, quantityDecimals) + "</td>" +
-						"<td class='asset_price numeric'>" + NRS.formatQuantity(trades[i].priceNQT, NRS.getActiveChainDecimals(), false, priceDecimals) + "</td>" +
+						"<td class='asset_price numeric'>" + NRS.formatQuantity(trades[i].priceNQTPerShare, NRS.getActiveChainDecimals(), false, priceDecimals) + "</td>" +
 						"<td class='numeric' style='color:" + (type == "buy" ? "red" : "green") + "'>" + NRS.formatQuantity(trades[i].totalNQT, trades[i].decimals + NRS.getActiveChainDecimals(), false, amountDecimals) + "</td>" +
 						"</tr>";
 				}

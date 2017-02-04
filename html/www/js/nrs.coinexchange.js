@@ -718,11 +718,11 @@ var NRS = (function (NRS, $, undefined) {
 
         var $tr = $target.closest("tr");
         try {
-            var priceNQT = new BigInteger(String($tr.data("price")));
+            var priceNQTPerCoin = new BigInteger(String($tr.data("price")));
             var amountNQT = new BigInteger(String($tr.data("amount")));
-            var totalNQT = new BigInteger(NRS.multiply(amountNQT, priceNQT));
+            var totalNQT = new BigInteger(NRS.multiply(amountNQT, priceNQTPerCoin));
 
-            $("#buy_coin_price").val(NRS.convertToQNTf(priceNQT, NRS.getActiveChainDecimals()));
+            $("#buy_coin_price").val(NRS.convertToQNTf(priceNQTPerCoin, NRS.getActiveChainDecimals()));
             $("#buy_coin_amount").val(NRS.convertToQNTf(amountNQT, currentCoin.decimals));
             $("#buy_coin_total").val(NRS.convertToNXT(totalNQT));
         } catch (err) {
@@ -806,17 +806,17 @@ var NRS = (function (NRS, $, undefined) {
     buyCoinFields.keyup(function () {
         try {
             var quantityQNT = new BigInteger(NRS.convertToQNT(String($("#buy_coin_quantity").val()), currentCoin.decimals));
-            var priceNQT = new BigInteger(NRS.convertToQNT(String($("#buy_coin_price").val()), currentCoin.decimals));
+            var priceNQTPerCoin = new BigInteger(NRS.convertToQNT(String($("#buy_coin_price").val()), currentCoin.decimals));
 
-            if (priceNQT.toString() == "0" || quantityQNT.toString() == "0") {
+            if (priceNQTPerCoin.toString() == "0" || quantityQNT.toString() == "0") {
                 $("#buy_coin_total").val("0");
             } else {
-                var totalCurrentCoin = quantityQNT.multiply(priceNQT);
+                var totalCurrentCoin = quantityQNT.multiply(priceNQTPerCoin);
                 NRS.logConsole("totalCurrentCoin " + totalCurrentCoin);
                 var total = NRS.intToFloat(totalCurrentCoin, currentCoin.decimals + currentCoin.decimals);
                 $("#buy_coin_total").val(total.toString());
             }
-            NRS.logConsole("quantityQNT " + quantityQNT + " priceNQT " + priceNQT + " total " + total);
+            NRS.logConsole("quantityQNT " + quantityQNT + " priceNQTPerCoin " + priceNQTPerCoin + " total " + total);
         } catch (err) {
             NRS.logConsole("buy error " + err.message);
             $("#buy_coin_total").val("0");
@@ -833,8 +833,8 @@ var NRS = (function (NRS, $, undefined) {
         var price = String($("#buy_coin_price").val());
         try {
             var quantityQNT = NRS.convertToQNT(quantity, currentCoin.decimals);
-            var priceNQT = NRS.convertToQNT(price, NRS.getActiveChainDecimals());
-            var totalNXT = NRS.formatQuantity(NRS.multiply(quantityQNT, priceNQT), currentCoin.decimals + NRS.getActiveChainDecimals());
+            var priceNQTPerCoin = NRS.convertToQNT(price, NRS.getActiveChainDecimals());
+            var totalNXT = NRS.formatQuantity(NRS.multiply(quantityQNT, priceNQTPerCoin), currentCoin.decimals + NRS.getActiveChainDecimals());
         } catch (err) {
             $.growl($.t("error_invalid_input", { input: "quantity " + quantity + " price " + price + " decimals " + currentCoin.decimals }), {
                 "type": "danger"
@@ -842,7 +842,7 @@ var NRS = (function (NRS, $, undefined) {
             return e.preventDefault();
         }
 
-        if (priceNQT.toString() == "0" || quantityQNT.toString() == "0") {
+        if (priceNQTPerCoin.toString() == "0" || quantityQNT.toString() == "0") {
             $.growl($.t("error_amount_price_required"), {
                 "type": "danger"
             });
@@ -855,11 +855,11 @@ var NRS = (function (NRS, $, undefined) {
         description = $.t("buy_coin_order_description", {
             "amount": NRS.formatQuantity(quantityQNT, currentCoin.decimals, true),
             "base": coinName.html().escapeHTML(),
-            "price": NRS.formatAmount(priceNQT),
+            "price": NRS.formatAmount(priceNQTPerCoin),
             "counter": NRS.getActiveChainName()
         });
         tooltipTitle = $.t("buy_coin_order_description_help", {
-            "price": NRS.formatAmount(priceNQT),
+            "price": NRS.formatAmount(priceNQTPerCoin),
             "base": coinName.html().escapeHTML(),
             "total": totalNXT,
             "counter": NRS.getActiveChainName()
@@ -883,7 +883,7 @@ var NRS = (function (NRS, $, undefined) {
 
         $("#coin_order_coin").val(coinId);
         $("#coin_order_quantity").val(quantityQNT);
-        $("#coin_order_price").val(priceNQT);
+        $("#coin_order_price").val(priceNQTPerCoin);
     });
 
     $("#coin_exchange_sidebar_group_context").on("click", "a", function (e) {
@@ -1104,7 +1104,7 @@ var NRS = (function (NRS, $, undefined) {
                     var isArdorTrade = NRS.isParentChain() || trade.exchange == 1;
                     var orderChain = isArdorTrade ? 1 : NRS.getActiveChainId();
                     var matchChain = isArdorTrade ? 1 : trade.exchange;
-                    trade.priceNQT = new BigInteger(trade.priceNQT);
+                    trade.priceNQTPerCoin = new BigInteger(trade.priceNQTPerCoin);
                     trade.amountNQT = new BigInteger(trade.amountNQT);
                     rows += "<tr>" +
                         "<td>" + NRS.formatTimestamp(trade.timestamp) + "</td>" +

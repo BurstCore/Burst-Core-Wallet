@@ -1194,7 +1194,7 @@ NRS.addPagination = function () {
                                 var assetTotal = 0;
                                 for (i = 0; i < response.trades.length; i++) {
                                     var trade = response.trades[i];
-                                    assetTotal += assetBalancesMap[trade.asset] * trade.priceNQT / NRS.getOneCoin(decimals);
+                                    assetTotal += assetBalancesMap[trade.asset] * trade.priceNQTPerShare / NRS.getOneCoin(decimals);
                                 }
                                 $("#account_assets_balance").html(NRS.formatStyledAmount(new Big(assetTotal).toFixed(decimals)));
                                 $("#account_nr_assets").html(response.trades.length);
