@@ -40,7 +40,7 @@ var NRS = (function(NRS, $) {
         "exchange_coin0": "BTC",
         "exchange_coin1": "LTC",
         "exchange_coin2": "ETH",
-		"max_nxt_decimals": "2"
+		"max_nxt_decimals": "4"
 	};
 
 	NRS.defaultColors = {
