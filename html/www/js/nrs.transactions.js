@@ -205,7 +205,6 @@ var NRS = (function(NRS, $, undefined) {
 			"fullHash": fullHash
 		}, function(response) {
 			if (!response.errorCode) {
-				response.fullHash = fullHash; // TODO check if necessary
 				response.confirmations = "/";
 				response.confirmed = false;
 				response.unconfirmed = true;
@@ -665,6 +664,9 @@ var NRS = (function(NRS, $, undefined) {
         typeNavi.append(html);
 
 		for (var typeIndex in NRS.transactionTypes) {
+            if (!NRS.transactionTypes.hasOwnProperty(typeIndex)) {
+            	continue;
+			}
 			var typeDict = NRS.transactionTypes[typeIndex];
 			if (NRS.isParentChain() && typeDict.chainType == "child" ||
                 !NRS.isParentChain() && typeDict.chainType == "parent") {
@@ -674,8 +676,8 @@ var NRS = (function(NRS, $, undefined) {
 			html = '<li role="presentation"><a href="#" data-transaction-type="' + typeIndex + '" ';
 			html += 'data-toggle="popover" data-placement="top" data-content="' + titleString + '" data-container="body">';
 			html += typeDict.iconHTML + '</a></li>';
-			$('#transactions_type_navi').append(html);
-		};
+            typeNavi.append(html);
+		}
 
 		html  = '<li role="presentation"><a href="#" data-transaction-type="unconfirmed" ';
 		html += 'data-toggle="popover" data-placement="top" data-content="Unconfirmed (Account)" data-container="body" data-i18n="[data-content]unconfirmed_account">';
@@ -794,10 +796,6 @@ var NRS = (function(NRS, $, undefined) {
 
 	NRS.incoming.dashboard = function() {
 		NRS.loadPage("dashboard");
-	};
-
-	var isHoldingEntry = function (entry){
-		return /ASSET_BALANCE/i.test(entry.holdingType) || /CURRENCY_BALANCE/i.test(entry.holdingType);
 	};
 
     NRS.pages.ledger = function() {
