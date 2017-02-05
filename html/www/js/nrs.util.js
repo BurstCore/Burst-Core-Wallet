@@ -563,16 +563,6 @@ var NRS = (function (NRS, $, undefined) {
 		return t;
 	};
 
-    NRS.formatStyledAmount = function (strAmount, round) {
-        var locale = NRS.getLocale();
-        var amount = NRS.formatAmount(strAmount, round).split(locale.decimal);
-		if (amount.length == 2) {
-            return amount[0] + "<span style='font-size:12px'>" + locale.decimal + amount[1] + "</span>";
-		} else {
-            return amount[0];
-		}
-	};
-
     NRS.getUnconfirmedTransactionsFromCache = function(type, subtype) {
 		if (!NRS.unconfirmedTransactions.length) {
 			return false;

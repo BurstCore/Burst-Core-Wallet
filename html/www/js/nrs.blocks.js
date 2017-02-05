@@ -296,7 +296,7 @@ var NRS = (function(NRS, $) {
 					$("#blocks_average_fee").html(0).removeClass("loading_dots");
 				}
 			});
-			$("#forged_fees_total").html(NRS.formatStyledAmount(NRS.accountInfo.forgedBalanceFQT)).removeClass("loading_dots");
+			$("#forged_fees_total").html(NRS.formatStyledAmount(NRS.accountInfo.forgedBalanceFQT, false, NRS.getChain(1).decimals)).removeClass("loading_dots");
 			blocksAverageAmount.removeClass("loading_dots");
 			blocksAverageAmount.parent().parent().css('visibility', 'hidden');
 			$("#blocks_page").find(".ion-stats-bars").parent().css('visibility', 'hidden');

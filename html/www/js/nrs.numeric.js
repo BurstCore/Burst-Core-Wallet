@@ -298,8 +298,21 @@ var NRS = (function (NRS, $) {
         return NRS.format(NRS.convertToQNTf(quantity, decimals, true), no_escaping, zeroPad);
     };
 
-    NRS.formatAmount = function (amount, round, no_escaping, zeroPad) {
-        return NRS.formatAmountDecimals(amount, round, no_escaping, zeroPad, NRS.getActiveChainDecimals())
+    NRS.formatStyledAmount = function (strAmount, round, decimals) {
+        var locale = NRS.getLocale();
+        var amount = NRS.formatAmount(strAmount, round, false, false, decimals).split(locale.decimal);
+        if (amount.length == 2) {
+            return amount[0] + "<span style='font-size:12px'>" + locale.decimal + amount[1] + "</span>";
+        } else {
+            return amount[0];
+        }
+    };
+
+    NRS.formatAmount = function (amount, round, no_escaping, zeroPad, decimals) {
+        if (!decimals) {
+            decimals = NRS.getActiveChainDecimals();
+        }
+        return NRS.formatAmountDecimals(amount, round, no_escaping, zeroPad, decimals);
     };
 
     NRS.formatAmountDecimals = function (amount, round, no_escaping, zeroPad, decimals) {
