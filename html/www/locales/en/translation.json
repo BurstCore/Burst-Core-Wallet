@@ -1125,7 +1125,7 @@
   "previous_block_hash": "Previous Block Hash",
   "block_signature": "Block Signature",
   "block_timestamp": "Block Timestamp",
-  "following_plugins_detected": "The following active plugins have been detected:",
+    "following_plugins_detected": "The following active plugins have been detected:",
   "success_add_peer": "Peer added successfully!",
   "peer_already_added": "Peer already added!",
   "activation_per_unit_reserve": "Activation Per Unit Reserve",
@@ -1921,5 +1921,7 @@
   "max_nxt_decimals": "Maximum coin decimal positions",
   "status_blockchain_downloading_proxy": "The blockchain is currently downloading. You are connected to remote node __peer__",
   "status_light_client_proxy": "Running as light client. You are connected to remote node __peer__",
-  "fxt_payment": "Parent Chain Payment"
+  "fxt_payment": "Parent Chain Payment",
+  "parent_chain_feature": "To use this feature, please switch to the ARDR chain.",
+  "child_chain_feature": "Feature not available for ARDR chain. Please switch to a child chain."
 }

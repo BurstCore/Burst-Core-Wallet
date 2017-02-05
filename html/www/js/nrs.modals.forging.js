@@ -87,7 +87,11 @@ var NRS = (function(NRS, $) {
 					"type": "danger"
 				});
 			}
-		} else if (NRS.isAccountForging) {
+		} else if (!NRS.isParentChain()) {
+            $.growl($.t("parent_chain_feature"), {
+                "type": "warning"
+            });
+        } else if (NRS.isAccountForging) {
 			$("#stop_forging_modal").modal("show");
 		} else {
 			$("#start_forging_modal").modal("show");

@@ -885,6 +885,15 @@ var NRS = (function (NRS, $, undefined) {
         $("#coin_order_coin").val(coinId);
         $("#coin_order_quantity").val(quantityQNT);
         $("#coin_order_price").val(priceNQTPerCoin);
+        var fee_coin = $("#coin_order_fee_coin");
+        var feeDecimals = $("input[name=fee_decimals]");
+        if (currentCoin.id == "1") {
+            fee_coin.html(currentCoin.name);
+            feeDecimals.val(currentCoin.decimals);
+        } else {
+            fee_coin.html(NRS.getActiveChainName());
+            feeDecimals.val(NRS.getActiveChainDecimals());
+        }
     });
 
     $("#coin_exchange_sidebar_group_context").on("click", "a", function (e) {
@@ -1000,6 +1009,14 @@ var NRS = (function (NRS, $, undefined) {
             "successMessage": $.t("success_buy_order_coin"),
             "errorMessage": $.t("error_order_coin")
         };
+    };
+
+    NRS.forms.exchangeCoinsFeeCalculation = function(feeField, feeNQT) {
+        if (currentCoin.id == "1") {
+            feeField.val(NRS.intToFloat(feeNQT, currentCoin.decimals));
+        } else {
+            feeField.val(NRS.convertToNXT(feeNQT));
+        }
     };
 
     $("#coin_exchange_group_group").on("change", function () {

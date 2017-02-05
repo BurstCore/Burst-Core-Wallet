@@ -1101,8 +1101,33 @@ NRS.addPagination = function () {
 		}
 	};
 
-	NRS.getAccountInfo = function(firstRun, callback, isAccountSwitch) {
-		NRS.sendRequest("getAccount", {
+    NRS.setupChainWarning = function(target, availableOnParentChain) {
+        if (NRS.isParentChain() == availableOnParentChain) {
+            target.attr('data-toggle', 'modal');
+        } else {
+            target.attr('data-toggle', '');
+        }
+        target.off("click").on("click", function (e) {
+            e.preventDefault();
+            if (availableOnParentChain) {
+                if (!NRS.isParentChain()) {
+                    $.growl($.t("parent_chain_feature"), {
+                        "type": "warning"
+                    });
+                }
+            } else {
+                if (NRS.isParentChain()) {
+                    $.growl($.t("child_chain_feature"), {
+                        "type": "warning"
+                    });
+                }
+            }
+
+        });
+    };
+
+    NRS.getAccountInfo = function(firstRun, callback, isAccountSwitch) {
+        NRS.sendRequest("getAccount", {
 			"account": NRS.account,
 			"includeAssets": true,
 			"includeCurrencies": true,
@@ -1325,11 +1350,13 @@ NRS.addPagination = function () {
 
 				NRS.updateAccountControlStatus();
 
-				if (response.name) {
-					$("#account_name").html(NRS.addEllipsis(NRS.escapeRespStr(response.name), 17)).removeAttr("data-i18n");
+                var accountName = $("#account_name");
+                if (response.name) {
+					accountName.html(NRS.addEllipsis(NRS.escapeRespStr(response.name), 17)).removeAttr("data-i18n");
 				} else {
-					$("#account_name").html($.t("set_account_info"));
+					accountName.html($.t("set_account_info"));
 				}
+                NRS.setupChainWarning(accountName, false);
 			}
 
 			if (firstRun) {
