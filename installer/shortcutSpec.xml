@@ -1,7 +1,7 @@
 <shortcuts>
 	<skipIfNotSupported/>
 	<defaultCurrentUser/>
-	<programGroup defaultName="NXT" location="startMenu"/>
+	<programGroup defaultName="Ardor" location="startMenu"/>
 	<shortcut
 		name="Ardor Server"
 		target="$INSTALL_PATH\ardor.exe"
