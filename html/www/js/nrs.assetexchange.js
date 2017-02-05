@@ -980,7 +980,7 @@ var NRS = (function (NRS, $, undefined) {
         }
         var isQuantityField = /_quantity/i.test($(this).attr("id"));
         var decimals = currentAsset.decimals;
-        var maxFractionLength = (isQuantityField ? decimals : 8 - decimals);
+        var maxFractionLength = (isQuantityField ? decimals : NRS.getActiveChainDecimals());
         NRS.validateDecimals(maxFractionLength, charCode, $(this).val(), e);
     });
 

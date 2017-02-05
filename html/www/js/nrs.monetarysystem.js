@@ -676,7 +676,7 @@ var NRS = (function (NRS, $, undefined) {
             return;
         }
         var isUnitsField = /_units/i.test($(this).attr("id"));
-        var maxFractionLength = (isUnitsField ? decimals : 8 - decimals);
+        var maxFractionLength = (isUnitsField ? decimals : NRS.getActiveChainDecimals());
         return NRS.validateDecimals(maxFractionLength, charCode, $(this).val(), e);
     });
 
@@ -689,7 +689,7 @@ var NRS = (function (NRS, $, undefined) {
             return;
         }
         var isUnitsField = /_units/i.test($(this).attr("id"));
-        var maxFractionLength = (isUnitsField ? decimals : 8 - decimals);
+        var maxFractionLength = (isUnitsField ? decimals : NRS.getActiveChainDecimals());
         return NRS.validateDecimals(maxFractionLength, charCode, $(this).val(), e);
     });
 
@@ -1392,13 +1392,11 @@ var NRS = (function (NRS, $, undefined) {
 
     var reserveCurrencyAmount = $("#reserve_currency_amount");
     reserveCurrencyAmount.keydown(function (e) {
-        var decimals = parseInt($("#reserve_currency_decimals").val(), 10);
-
         var charCode = !e.charCode ? e.which : e.charCode;
         if (NRS.isControlKey(charCode) || e.ctrlKey || e.metaKey) {
             return;
         }
-        return NRS.validateDecimals(8 - decimals, charCode, $(this).val(), e);
+        return NRS.validateDecimals(NRS.getActiveChainDecimals(), charCode, $(this).val(), e);
     });
 
     reserveCurrencyAmount.blur(function () {

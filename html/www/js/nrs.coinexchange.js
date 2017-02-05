@@ -800,7 +800,7 @@ var NRS = (function (NRS, $, undefined) {
         }
         var isQuantityField = /_quantity/i.test($(this).attr("id"));
         var decimals = currentCoin.decimals;
-        var maxFractionLength = (isQuantityField ? decimals : NRS.getActiveChainDecimals() + decimals);
+        var maxFractionLength = (isQuantityField ? decimals : NRS.getActiveChainDecimals());
         NRS.validateDecimals(maxFractionLength, charCode, $(this).val(), e);
     });
 
