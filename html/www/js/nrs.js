@@ -1805,9 +1805,26 @@ NRS.addPagination = function () {
 				if (!response.errorCode) {
 					NRS.showTransactionModal(response, response.chain);
 				} else {
-                    $.growl($.t("error_search_full_hash_not_found", { chain: NRS.getActiveChainName() }), {
-                        "type": "danger"
-                    });
+					if (!NRS.isParentChain()) {
+                        NRS.sendRequest("getTransaction", {
+                            "fullHash": id,
+                            "chain": "1"
+                        }, function(response) {
+                            if (!response.errorCode) {
+                                NRS.showTransactionModal(response, response.chain);
+                            } else {
+                                $.growl($.t("error_search_full_hash_not_found", {
+                                	chain: NRS.getActiveChainName(), parent: NRS.getParentChainName()
+                                }), {
+                                    "type": "danger"
+                                });
+                            }
+                        })
+					} else {
+                        $.growl($.t("error_search_full_hash_not_found_ardor", { chain: NRS.getActiveChainName() }), {
+                            "type": "danger"
+                        });
+					}
 				}
 			});
 		} else {
