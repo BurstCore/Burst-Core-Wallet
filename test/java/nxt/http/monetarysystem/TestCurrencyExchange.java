@@ -169,8 +169,8 @@ public class TestCurrencyExchange extends BlockchainTest {
                 secretPhrase(ALICE.getSecretPhrase()).feeNQT(ChildChain.IGNIS.ONE_COIN).
                 param("deadline", "1440").
                 param("currency", currencyId).
-                param("buyRateNQT", "" + 95). // buy currency for NXT
-                param("sellRateNQT", "" + 105). // sell currency for NXT
+                param("buyRateNQTPerUnit", "" + 95). // buy currency for NXT
+                param("sellRateNQTPerUnit", "" + 105). // sell currency for NXT
                 param("totalBuyLimitQNT", "10000").
                 param("totalSellLimitQNT", "5000").
                 param("initialBuySupplyQNT", "1000").

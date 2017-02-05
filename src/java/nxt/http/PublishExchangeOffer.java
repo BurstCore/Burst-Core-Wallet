@@ -33,8 +33,8 @@ import javax.servlet.http.HttpServletRequest;
  * Parameters
  * <ul>
  * <li>currency - currency id of an active currency
- * <li>buyRateNQT - NXT amount for buying a currency unit specified in NQT
- * <li>sellRateNQT - NXT amount for selling a currency unit specified in NQT
+ * <li>buyRateNQTPerUnit - Coin amount for buying a currency unit specified in NQT
+ * <li>sellRateNQTPerUnit - Coin amount for selling a currency unit specified in NQT
  * <li>initialBuySupplyQNT - Initial number of currency units offered to buy by the publisher
  * <li>initialSellSupplyQNT - Initial number of currency units offered for sell by the publisher
  * <li>totalBuyLimitQNT - Total number of currency units which can be bought from the offer
@@ -44,7 +44,7 @@ import javax.servlet.http.HttpServletRequest;
  *
  * <p>
  * Publishing an exchange offer internally creates a buy offer and a counter sell offer linked together.
- * Typically the buyRateNQT specified would be less than the sellRateNQT thus allowing the publisher to make profit
+ * Typically the buyRateNQTPerUnit specified would be less than the sellRateNQTPerUnit thus allowing the publisher to make profit
  *
  * <p>
  * Each {@link CurrencyBuy} transaction which matches this offer reduces the sell supply and increases the buy supply
@@ -62,15 +62,15 @@ public final class PublishExchangeOffer extends CreateTransaction {
     static final PublishExchangeOffer instance = new PublishExchangeOffer();
 
     private PublishExchangeOffer() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "buyRateNQT", "sellRateNQT",
+        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "buyRateNQTPerUnit", "sellRateNQTPerUnit",
                 "totalBuyLimitQNT", "totalSellLimitQNT", "initialBuySupplyQNT", "initialSellSupplyQNT", "expirationHeight");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
         Currency currency = ParameterParser.getCurrency(req);
-        long buyRateNQT = ParameterParser.getLong(req, "buyRateNQT", 1, Constants.MAX_BALANCE_NQT, true);
-        long sellRateNQT= ParameterParser.getLong(req, "sellRateNQT", 1, Constants.MAX_BALANCE_NQT, true);
+        long buyRateNQT = ParameterParser.getLong(req, "buyRateNQTPerUnit", 1, Constants.MAX_BALANCE_NQT, true);
+        long sellRateNQT= ParameterParser.getLong(req, "sellRateNQTPerUnit", 1, Constants.MAX_BALANCE_NQT, true);
         long totalBuyLimit = ParameterParser.getLong(req, "totalBuyLimitQNT", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
         long totalSellLimit = ParameterParser.getLong(req, "totalSellLimitQNT", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);
         long initialBuySupply = ParameterParser.getLong(req, "initialBuySupplyQNT", 0, Constants.MAX_CURRENCY_TOTAL_SUPPLY, true);

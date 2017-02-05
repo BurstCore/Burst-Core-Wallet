@@ -1413,10 +1413,10 @@ var NRS = (function (NRS, $, undefined) {
                 "code": currency.code,
                 "buy_supply_formatted_html": NRS.formatQuantity(buyOffer.supplyQNT, currency.decimals) + " (initial: " + NRS.formatQuantity(transaction.attachment.initialBuySupplyQNT, currency.decimals) + ")",
                 "buy_limit_formatted_html": NRS.formatQuantity(buyOffer.limitQNT, currency.decimals) + " (initial: " + NRS.formatQuantity(transaction.attachment.totalBuyLimitQNT, currency.decimals) + ")",
-                "buy_rate_formatted_html": NRS.formatQuantity(transaction.attachment.buyRateNQT, NRS.getChain(transaction.chain).decimals) + rateUnitsStr,
+                "buy_rate_formatted_html": NRS.formatQuantity(transaction.attachment.buyRateNQTPerUnit, NRS.getChain(transaction.chain).decimals) + rateUnitsStr,
                 "sell_supply_formatted_html": NRS.formatQuantity(sellOffer.supplyQNT, currency.decimals) + " (initial: " + NRS.formatQuantity(transaction.attachment.initialSellSupplyQNT, currency.decimals) + ")",
                 "sell_limit_formatted_html": NRS.formatQuantity(sellOffer.limitQNT, currency.decimals) + " (initial: " + NRS.formatQuantity(transaction.attachment.totalSellLimitQNT, currency.decimals) + ")",
-                "sell_rate_formatted_html": NRS.formatQuantity(transaction.attachment.sellRateNQT, NRS.getChain(transaction.chain).decimals) + rateUnitsStr,
+                "sell_rate_formatted_html": NRS.formatQuantity(transaction.attachment.sellRateNQTPerUnit, NRS.getChain(transaction.chain).decimals) + rateUnitsStr,
                 "expiration_height": transaction.attachment.expirationHeight
             };
         } else {

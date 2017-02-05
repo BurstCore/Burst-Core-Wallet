@@ -1154,9 +1154,9 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.buyRateNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.buyRateNQTPerUnit = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.sellRateNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.sellRateNQTPerUnit = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.totalBuyLimitQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
@@ -1168,7 +1168,7 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 8;
                 transaction.expirationHeight = String(converters.byteArrayToSignedInt32(byteArray, pos));
                 pos += 4;
-                if (transaction.currency !== data.currency || transaction.buyRateNQT !== data.buyRateNQT || transaction.sellRateNQT !== data.sellRateNQT ||
+                if (transaction.currency !== data.currency || transaction.buyRateNQTPerUnit !== data.buyRateNQTPerUnit || transaction.sellRateNQTPerUnit !== data.sellRateNQTPerUnit ||
                     transaction.totalBuyLimitQNT !== data.totalBuyLimitQNT || transaction.totalSellLimitQNT !== data.totalSellLimitQNT ||
                     transaction.initialBuySupplyQNT !== data.initialBuySupplyQNT || transaction.initialSellSupplyQNT !== data.initialSellSupplyQNT || transaction.expirationHeight !== data.expirationHeight) {
                     return false;

@@ -1349,10 +1349,10 @@ var NRS = (function (NRS, $, undefined) {
         var decimals = parseInt(data.decimals, 10);
         data.initialBuySupplyQNT = NRS.convertToQNT(data.initialBuySupplyQNT, decimals);
         data.totalBuyLimitQNT = NRS.convertToQNT(data.totalBuyLimitQNT, decimals);
-        data.buyRateNQT = NRS.convertToNQT(data.buyRateNQT);
+        data.buyRateNQTPerUnit = NRS.convertToNQT(data.buyRateNQTPerUnit);
         data.initialSellSupplyQNT = NRS.convertToQNT(data.initialSellSupplyQNT, decimals);
         data.totalSellLimitQNT = NRS.convertToQNT(data.totalSellLimitQNT, decimals);
-        data.sellRateNQT = NRS.convertToNQT(data.sellRateNQT);
+        data.sellRateNQTPerUnit = NRS.convertToNQT(data.sellRateNQTPerUnit);
         return {
             "data": data
         };

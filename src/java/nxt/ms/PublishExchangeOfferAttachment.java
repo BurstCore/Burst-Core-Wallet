@@ -49,8 +49,8 @@ public final class PublishExchangeOfferAttachment extends Attachment.AbstractAtt
     public PublishExchangeOfferAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.currencyId = Convert.parseUnsignedLong((String)attachmentData.get("currency"));
-        this.buyRateNQT = Convert.parseLong(attachmentData.get("buyRateNQT"));
-        this.sellRateNQT = Convert.parseLong(attachmentData.get("sellRateNQT"));
+        this.buyRateNQT = Convert.parseLong(attachmentData.get("buyRateNQTPerUnit"));
+        this.sellRateNQT = Convert.parseLong(attachmentData.get("sellRateNQTPerUnit"));
         this.totalBuyLimitQNT = Convert.parseLong(attachmentData.get("totalBuyLimitQNT"));
         this.totalSellLimitQNT = Convert.parseLong(attachmentData.get("totalSellLimitQNT"));
         this.initialBuySupplyQNT = Convert.parseLong(attachmentData.get("initialBuySupplyQNT"));
@@ -91,8 +91,8 @@ public final class PublishExchangeOfferAttachment extends Attachment.AbstractAtt
     @Override
     protected void putMyJSON(JSONObject attachment) {
         attachment.put("currency", Long.toUnsignedString(currencyId));
-        attachment.put("buyRateNQT", buyRateNQT);
-        attachment.put("sellRateNQT", sellRateNQT);
+        attachment.put("buyRateNQTPerUnit", buyRateNQT);
+        attachment.put("sellRateNQTPerUnit", sellRateNQT);
         attachment.put("totalBuyLimitQNT", totalBuyLimitQNT);
         attachment.put("totalSellLimitQNT", totalSellLimitQNT);
         attachment.put("initialBuySupplyQNT", initialBuySupplyQNT);

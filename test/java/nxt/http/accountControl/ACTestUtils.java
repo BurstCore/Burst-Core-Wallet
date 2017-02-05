@@ -48,8 +48,8 @@ public class ACTestUtils {
         public CurrencyExchangeBuilder(String currencyId, String secretPhrase, int height) {
             super("publishExchangeOffer");
             param("currency", currencyId);
-            param("buyRateNQT", 10 * ChildChain.IGNIS.ONE_COIN);
-            param("sellRateNQT", 10 * ChildChain.IGNIS.ONE_COIN);
+            param("buyRateNQTPerUnit", 10 * ChildChain.IGNIS.ONE_COIN);
+            param("sellRateNQTPerUnit", 10 * ChildChain.IGNIS.ONE_COIN);
             param("totalBuyLimit", 0);
             param("totalSellLimit", 50);
             param("initialBuySupply", 0);
