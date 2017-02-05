@@ -151,8 +151,8 @@
             <file src="mint.bat" targetdir="${INSTALL_PATH}" override="true"/>
             <file src="compact.bat" targetdir="${INSTALL_PATH}" override="true"/>
             <parsable targetfile="${INSTALL_PATH}/run.bat"/>
-            <singlefile src="resource/nxt.properties" target="${INSTALL_PATH}/resource/nxt.properties" override="true"/>
-            <singlefile src="resource/nxtservice.properties" target="${INSTALL_PATH}/resource/nxtservice.properties" override="true"/>
+            <singlefile src="resource/ardor.properties" target="${INSTALL_PATH}/resource/ardor.properties" override="true"/>
+            <singlefile src="resource/ardorservice.properties" target="${INSTALL_PATH}/resource/ardorservice.properties" override="true"/>
         </pack>
 
         <pack name="server.unix" os="unix" required="yes">
