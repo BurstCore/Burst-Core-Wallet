@@ -771,11 +771,7 @@ var NRS = (function (NRS, $, undefined) {
                         var callout = "";
                         if (purchase.errorCode) {
                             if (purchase.errorCode == 4) {
-                                if (transactionDetails.block == "unconfirmed") {
-                                    callout = $.t("unconfirmed_transaction");
-                                } else {
-                                    callout = $.t("incorrect_purchase");
-                                }
+                                callout = $.t("incorrect_purchase");
                             } else {
                                 callout = NRS.escapeRespStr(purchase.errorDescription);
                             }
@@ -1271,6 +1267,10 @@ var NRS = (function (NRS, $, undefined) {
 
                     transactionInfoOutputBottom.show();
                 }
+            }
+
+            if (transactionDetails.block == "unconfirmed") {
+                $("#transaction_info_bottom").append("<div class='callout callout-info callout-bottom'>" + $.t("unconfirmed_transaction") + "</div>").show();
             }
 
             if (incorrect) {
