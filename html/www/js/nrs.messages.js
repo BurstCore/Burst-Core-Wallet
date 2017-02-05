@@ -76,7 +76,7 @@ var NRS = (function(NRS, $) {
 
 	NRS.jsondata = NRS.jsondata || {};
 
-	NRS.getMessageDownloadLink = function (transaction, sharedKey) {
+	NRS.getMessageDownloadLink = function(fullHash, sharedKey) {
 		var sharedKeyParam = "";
 		if (sharedKey) {
 			if (NRS.state.apiProxy) {
@@ -85,7 +85,8 @@ var NRS = (function(NRS, $) {
 			}
 			sharedKeyParam = "&sharedKey=" + sharedKey;
 		}
-		var url = NRS.getRequestPath() + "?requestType=downloadPrunableMessage&transaction=" + String(transaction).escapeHTML() + "&retrieve=true&save=true" + sharedKeyParam;
+		var url = NRS.getRequestPath() + "?requestType=downloadPrunableMessage&transactionFullHash=" + String(fullHash).escapeHTML() +
+			"&chain=" + NRS.getActiveChainId() + "&retrieve=true&save=true" + sharedKeyParam;
 		return NRS.getDownloadLink(url);
 	};
 
