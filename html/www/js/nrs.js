@@ -61,9 +61,9 @@ var NRS = (function(NRS, $, undefined) {
 	    is_check_remember_me: false,
 		is_store_remembered_passphrase: (window["cordova"] !== undefined), // too early to use feature detection
 	    is_simulate_app: false,
-        is_testnet: false,
+        is_testnet: true,
         remote_node_address: "",
-        remote_node_port: 7876,
+        remote_node_port: 26876,
         is_remote_node_ssl: false,
         validators_count: 3,
         bootstrap_nodes_count: 5,
@@ -164,12 +164,12 @@ var NRS = (function(NRS, $, undefined) {
                 fallbackLng: "en",
                 fallbackOnEmpty: true,
                 lowerCaseLng: true,
-                detectLngFromLocalStorage: true,
                 resGetPath: "locales/__lng__/translation.json",
                 compatibilityJSON: 'v1',
                 compatibilityAPI: 'v1',
                 debug: true
-            }, function() {
+            }, function(err) {
+
                 NRS.initSettings();
 
                 jqueryI18next.init(i18next, $, {

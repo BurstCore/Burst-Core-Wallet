@@ -123,6 +123,10 @@ var NRS = (function (NRS) {
         remoteNode = null;
     };
 
+    NRS.isMobileForcedRemoteNode = function () {
+        return !!NRS.mobileSettings.remote_node_address;
+    };
+
     NRS.getDownloadLink = function(url, link) {
         if (NRS.isMobileApp()) {
             var script = "NRS.openMobileBrowser(\"" + url + "\");";

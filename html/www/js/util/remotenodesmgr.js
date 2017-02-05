@@ -57,14 +57,16 @@ function isOldVersion(version) {
         if (parseInt(parts[0], 10) < 1) {
             return true;
         }
-        return parseInt(parts[1], 10) < 10;
+        return parseInt(parts[1], 10) < 0;
     } else {
         return true;
     }
 }
 
 function isRemoteNodeConnectable(nodeData, isSslAllowed) {
-    if (nodeData.services instanceof Array && (nodeData.services.indexOf("API") >= 0 || (isSslAllowed && nodeData.services.indexOf("API_SSL") >= 0))) {
+    if (nodeData.services instanceof Array &&
+        (nodeData.services.indexOf("API") >= 0 || (isSslAllowed && nodeData.services.indexOf("API_SSL") >= 0)
+            || NRS.isMobileForcedRemoteNode())) {
         if (!NRS.isRequireCors() || nodeData.services.indexOf("CORS") >= 0) {
             return !isOldVersion(nodeData.version);
         }
@@ -128,6 +130,10 @@ RemoteNodesManager.prototype.addBootstrapNodes = function (resolve, reject) {
         return false;
     }
     var peersData = this.REMOTE_NODES_BOOTSTRAP.peers;
+    if (!(peersData instanceof Array) || peersData.length == 0) {
+        reject();
+        return false;
+    }
     peersData = NRS.getRandomPermutation(peersData);
     var mgr = this;
     mgr.bc.target = NRS.mobileSettings.is_testnet ? 2 : NRS.mobileSettings.bootstrap_nodes_count;
@@ -177,7 +183,8 @@ RemoteNodesManager.prototype.addBootstrapNodes = function (resolve, reject) {
                 return;
             }
             var responseNode = data["_extra"];
-            if (response.blockchainState && response.blockchainState != "UP_TO_DATE" || response.isDownloading) {
+            if (!NRS.isMobileForcedRemoteNode() && (response.blockchainState && response.blockchainState != "UP_TO_DATE"
+                        || response.isDownloading)) {
                 NRS.logConsole("Reject: bootstrap node " + responseNode.address + " blockchain state is " + response.blockchainState);
                 if (countRejections()) {
                     reject();
