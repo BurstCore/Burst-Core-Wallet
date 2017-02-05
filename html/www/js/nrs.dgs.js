@@ -271,25 +271,32 @@ var NRS = (function(NRS, $) {
 		}, function(response) {
 			if (response.purchases && response.purchases.length != null) {
 				$("#dgs_user_purchase_count").html(response.purchases.length).removeClass("loading_dots");
+			} else {
+                $("#dgs_user_purchase_count").html("0").removeClass("loading_dots");
 			}
 		});
 
-		NRS.sendRequest("getDGSGoodsCount+", {
-		}, function(response) {
+		NRS.sendRequest("getDGSGoodsCount+", {}, function(response) {
 			if (response.numberOfGoods) {
 				$("#dgs_product_count").html(response.numberOfGoods).removeClass("loading_dots");
+			} else {
+                $("#dgs_product_count").html("0").removeClass("loading_dots");
 			}
 		});
-		NRS.sendRequest("getDGSPurchaseCount+", {
-		}, function(response) {
+
+		NRS.sendRequest("getDGSPurchaseCount+", {}, function(response) {
 			if (response.numberOfPurchases) {
 				$("#dgs_total_purchase_count").html(response.numberOfPurchases).removeClass("loading_dots");
+			} else {
+                $("#dgs_total_purchase_count").html("0").removeClass("loading_dots");
 			}
 		});
-		NRS.sendRequest("getDGSTagCount+", {
-		}, function(response) {
+
+		NRS.sendRequest("getDGSTagCount+", {}, function(response) {
 			if (response.numberOfTags) {
 				$("#dgs_tag_count").html(response.numberOfTags).removeClass("loading_dots");
+			} else {
+                $("#dgs_tag_count").html("0").removeClass("loading_dots");
 			}
 		});
 
@@ -627,7 +634,7 @@ var NRS = (function(NRS, $) {
 			} else {
 				data.seller = response.seller;
 			}
-		}, false);
+		}, { isAsync: false });
 
 		data.add_message = true;
 		data.encrypt_message = data.feedback_type != "public";
@@ -675,7 +682,7 @@ var NRS = (function(NRS, $) {
 			} else {
 				data.buyer = false;
 			}
-		}, false);
+		}, { isAsync: false });
 
 		if (data.buyer === false) {
 			return {
@@ -706,7 +713,7 @@ var NRS = (function(NRS, $) {
 			} else {
 				data.buyer = false;
 			}
-		}, false);
+		}, { isAsync: false });
 
 		if (data.buyer === false) {
 			return {
@@ -770,7 +777,7 @@ var NRS = (function(NRS, $) {
 			} else {
 				data.deltaQuantity = false;
 			}
-		}, false);
+		}, { isAsync: false });
 
 		if (data.deltaQuantity === false) {
 			return {
