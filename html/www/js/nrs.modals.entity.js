@@ -71,6 +71,17 @@ var NRS = (function(NRS, $) {
                 } else {
                     callout.hide();
                 }
+                if (response.decimals) {
+                    for (var key in response) {
+                        if (!response.hasOwnProperty(key)) {
+                            continue;
+                        }
+                        if (key.endsWith("QNT")) {
+                            entity[key.slice(0, -3)] = NRS.intToFloat(response[key], response.decimals);
+                            delete entity[key];
+                        }
+                    }
+                }
                 var detailsTable = $("#entity_details_table");
                 detailsTable.find("tbody").empty().append(NRS.createInfoTable(entity));
                 detailsTable.show();
