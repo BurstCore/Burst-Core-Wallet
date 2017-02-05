@@ -25,8 +25,8 @@ import nxt.db.DbClause;
 import nxt.db.DbIterator;
 import nxt.db.DbKey;
 import nxt.db.DbUtils;
+import nxt.db.PrunableDbTable;
 import nxt.db.VersionedPersistentDbTable;
-import nxt.db.VersionedPrunableDbTable;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import nxt.util.Search;
@@ -49,7 +49,7 @@ public final class TaggedDataHome {
 
     private final ChildChain childChain;
     private final DbKey.HashKeyFactory<TaggedData> taggedDataKeyFactory;
-    private final VersionedPrunableDbTable<TaggedData> taggedDataTable;
+    private final PrunableDbTable<TaggedData> taggedDataTable;
     private final DbKey.StringKeyFactory<Tag> tagDbKeyFactory;
     private final VersionedPersistentDbTable<Tag> tagTable;
 
@@ -61,7 +61,7 @@ public final class TaggedDataHome {
                 return taggedData.dbKey;
             }
         };
-        this.taggedDataTable = new VersionedPrunableDbTable<TaggedData>(childChain.getSchemaTable("tagged_data"), taggedDataKeyFactory,
+        this.taggedDataTable = new PrunableDbTable<TaggedData>(childChain.getSchemaTable("tagged_data"), taggedDataKeyFactory,
                 "name,description,tags") {
             @Override
             protected TaggedData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -80,7 +80,7 @@ public final class TaggedDataHome {
                 if (Constants.ENABLE_PRUNING) {
                     try (Connection con = taggedDataTable.getConnection();
                          PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
-                                 + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
+                                 + "FROM tagged_data WHERE transaction_timestamp < ?")) {
                         int expiration = Nxt.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME;
                         pstmtSelect.setInt(1, expiration);
                         Map<String, Integer> expiredTags = new HashMap<>();
@@ -306,9 +306,9 @@ public final class TaggedDataHome {
         private final String channel;
         private final boolean isText;
         private final String filename;
-        private int transactionTimestamp;
-        private int blockTimestamp;
-        private int height;
+        private final int transactionTimestamp;
+        private final int blockTimestamp;
+        private final int height;
 
         private TaggedData(Transaction transaction, TaggedDataAttachment attachment) {
             this(transaction, attachment, Nxt.getBlockchain().getLastBlockTimestamp(), Nxt.getBlockchain().getHeight());
@@ -353,9 +353,9 @@ public final class TaggedDataHome {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, full_hash, account_id, name, description, tags, parsed_tags, "
-                    + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
-                    + "KEY (id, full_hash, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO tagged_data (id, full_hash, account_id, name, description, tags, parsed_tags, "
+                    + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
                 pstmt.setBytes(++i, this.transactionFullHash);

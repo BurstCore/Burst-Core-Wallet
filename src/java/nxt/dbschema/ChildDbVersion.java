@@ -291,15 +291,15 @@ public class ChildDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS tagged_data (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, account_id BIGINT NOT NULL, "
                         + "name VARCHAR NOT NULL, description VARCHAR, tags VARCHAR, parsed_tags ARRAY, type VARCHAR, data VARBINARY NOT NULL, "
                         + "is_text BOOLEAN NOT NULL, channel VARCHAR, filename VARCHAR, block_timestamp INT NOT NULL, transaction_timestamp INT NOT NULL, "
-                        + "height INT NOT NULL, FOREIGN KEY (height) REFERENCES PUBLIC.block (height) ON DELETE CASCADE, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                        + "height INT NOT NULL, FOREIGN KEY (height) REFERENCES PUBLIC.block (height) ON DELETE CASCADE)");
             case 95:
-                apply("CREATE INDEX IF NOT EXISTS tagged_data_id_height_idx ON tagged_data (id, height DESC)");
+                apply("CREATE INDEX IF NOT EXISTS tagged_data_id_idx ON tagged_data (id)");
             case 96:
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_expiration_idx ON tagged_data (transaction_timestamp DESC)");
             case 97:
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_account_id_height_idx ON tagged_data (account_id, height DESC)");
             case 98:
-                apply("CREATE INDEX IF NOT EXISTS tagged_data_block_timestamp_height_db_id_idx ON tagged_data (block_timestamp DESC, height DESC, db_id DESC)");
+                apply("CREATE INDEX IF NOT EXISTS tagged_data_block_timestamp_db_id_idx ON tagged_data (block_timestamp DESC, db_id DESC)");
             case 99:
                 apply("CREATE TABLE IF NOT EXISTS data_tag (db_id IDENTITY, tag VARCHAR NOT NULL, tag_count INT NOT NULL, "
                         + "height INT NOT NULL, FOREIGN KEY (height) REFERENCES PUBLIC.block (height) ON DELETE CASCADE, latest BOOLEAN NOT NULL DEFAULT TRUE)");
