@@ -699,7 +699,9 @@ public abstract class TransactionImpl implements Transaction {
             Fee fee = appendage.getFee(this, blockchainHeight);
             totalFee = Math.addExact(totalFee, fee.getFee(this, appendage));
         }
-        if (recipientId != 0 && Account.getAccount(recipientId, blockchainHeight) == null) {
+        if (recipientId != 0
+                && ! (Nxt.getBlockchainProcessor().isScanning() && blockchainHeight < Nxt.getBlockchainProcessor().getInitialScanHeight() - Constants.MAX_ROLLBACK)
+                && Account.getAccount(recipientId, blockchainHeight) == null) {
             totalFee += Fee.NEW_ACCOUNT_FEE;
         }
         return totalFee;
