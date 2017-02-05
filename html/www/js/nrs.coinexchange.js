@@ -32,6 +32,7 @@ var NRS = (function (NRS, $, undefined) {
     NRS.resetCoinExchangeState = function () {
         coins = [];
         coinIds = [];
+        coinBalances = [];
         closedGroups = [];
         coinSearch = false;
         viewingCoin = false; //viewing non-bookmarked coin
