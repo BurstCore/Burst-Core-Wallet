@@ -67,6 +67,8 @@ var NRS = (function(NRS, $) {
             if (blockDetails.timestamp) {
                 blockDetails.blockGenerationTime = NRS.formatTimestamp(blockDetails.timestamp);
             }
+            blockDetails.total_fee_formatted_html = NRS.intToFloat(blockDetails.totalFeeFQT, NRS.getChain(1).decimals) + " " + NRS.getParentChainName();
+            delete blockDetails.totalFeeFQT;
             var detailsTable = $("#block_info_details_table");
             detailsTable.find("tbody").empty().append(NRS.createInfoTable(blockDetails));
             detailsTable.show();

@@ -275,8 +275,7 @@ var NRS = (function(NRS, $) {
 			rows += "<tr>" +
                 "<td><a href='#' data-block='" + NRS.escapeRespStr(block.height) + "' data-blockid='" + NRS.escapeRespStr(block.block) + "' class='block show_block_modal_action'" + (block.numberOfTransactions > 0 ? " style='font-weight:bold'" : "") + ">" + NRS.escapeRespStr(block.height) + "</a></td>" +
                 "<td>" + NRS.formatTimestamp(block.timestamp) + "</td>" +
-                "<td>" + NRS.formatAmount(block.totalAmountNQT) + "</td>" +
-                "<td>" + NRS.formatAmount(block.totalFeeNQT) + "</td>" +
+                "<td>" + NRS.intToFloat(block.totalFeeFQT, NRS.getChain(1).decimals) + "</td>" +
                 "<td>" + NRS.formatAmount(block.numberOfTransactions) + "</td>" +
                 "<td>" + NRS.getAccountLink(block, "generator") + "</td>" +
 				"<td>" + NRS.baseTargetPercent(block).pad(4) + " %</td>" +
