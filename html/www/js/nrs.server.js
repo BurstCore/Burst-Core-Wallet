@@ -902,13 +902,19 @@ var NRS = (function (NRS, $, undefined) {
                 if (NRS.notOfType(transaction, "DividendPayment")) {
                     return false;
                 }
+                transaction.holding = String(converters.byteArrayToBigInteger(byteArray, pos));
+                pos += 8;
+                transaction.holdingType = String(byteArray[pos]);
+                pos ++;
                 transaction.asset = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.height = String(converters.byteArrayToSignedInt32(byteArray, pos));
                 pos += 4;
                 transaction.amountNQTPerShare = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.asset !== data.asset ||
+                if (transaction.holding !== data.holding ||
+                    transaction.holdingType !== data.holdingType ||
+                    transaction.asset !== data.asset ||
                     transaction.height !== data.height ||
                     transaction.amountNQTPerShare !== data.amountNQTPerShare) {
                     return false;
