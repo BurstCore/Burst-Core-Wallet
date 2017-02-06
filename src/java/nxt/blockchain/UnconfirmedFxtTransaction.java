@@ -20,7 +20,9 @@ import nxt.NxtException;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 final class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements FxtTransaction {
 
@@ -52,4 +54,17 @@ final class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements 
         getTransaction().setChildTransactions(childTransactions, blockHash);
     }
 
+    @Override
+    public void validate() throws NxtException.ValidationException {
+        super.validate();
+        if (! getChildTransactions().isEmpty()) {
+            Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+            for (ChildTransactionImpl childTransaction : getTransaction().getChildTransactions()) {
+                if (childTransaction.attachmentIsDuplicate(duplicates, true)) {
+                    throw new NxtException.NotValidException("ChildBlock transaction " + getTransaction().getStringId()
+                            + " includes child transactions that are duplicates");
+                }
+            }
+        }
+    }
 }
