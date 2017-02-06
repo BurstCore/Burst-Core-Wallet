@@ -89,10 +89,6 @@ balance (default set in nxt.minBundlerBalanceFXT is 1000 ARDR).
 The GetBundlerRates API can be used to retrieve known bundlers rates, again
 with optional filtering by minimum bundler effective balance.
 
-There is a limit of one ChildBlock per Ardor block for each child chain. Ardor
-fees from ChildBlocks are shared in 1:1:1:1 ration between the block forger and
-the previous three block forgers.
-
 
 == Peer Networking ==
 
@@ -245,6 +241,8 @@ payload size limit.
 A ChildBlock can contain up to 100 (one hundred) child transactions, subject
 to a total payload limit of 128 kbytes. Prunable child transaction parts are
 also counted towards the payload size limit.
+
+There is a limit of one ChildBlock per Ardor block for each child chain.
 
 As in Nxt, it is up to a block forger which transactions to include in a block
 and how to sort them. The default forger behaviour is to select transactions
