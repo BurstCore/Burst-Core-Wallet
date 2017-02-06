@@ -81,6 +81,7 @@ public class FxtDbVersion extends DbVersion {
             case 17:
                 apply("CREATE TABLE IF NOT EXISTS unconfirmed_transaction (db_id IDENTITY, id BIGINT NOT NULL, expiration INT NOT NULL, "
                         + "transaction_height INT NOT NULL, fee BIGINT NOT NULL, fee_per_byte BIGINT NOT NULL, arrival_timestamp BIGINT NOT NULL, "
+                        + "is_bundled BOOLEAN NOT NULL DEFAULT FALSE, "
                         + "transaction_bytes VARBINARY NOT NULL, chain_id INT NOT NULL, height INT NOT NULL)");
             case 18:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS unconfirmed_transaction_id_idx ON unconfirmed_transaction (id)");
@@ -296,9 +297,9 @@ public class FxtDbVersion extends DbVersion {
             case 102:
                 apply("CREATE TABLE IF NOT EXISTS coin_order_fxt (db_id IDENTITY, id BIGINT NOT NULL,"
                         + "account_id BIGINT NOT NULL, chain_id INT NOT NULL, exchange_id INT NOT NULL, "
-                        + "full_hash BINARY(32) NOT NULL,"
-                        + "quantity BIGINT NOT NULL, bid_price BIGINT NOT NULL, ask_price BIGINT NOT NULL,"
-                        + "creation_height INT NOT NULL, height INT NOT NULL, transaction_height INT NOT NULL,"
+                        + "full_hash BINARY(32) NOT NULL, amount BIGINT NOT NULL, "
+                        + "quantity BIGINT NOT NULL, bid_price BIGINT NOT NULL, ask_price BIGINT NOT NULL, "
+                        + "creation_height INT NOT NULL, height INT NOT NULL, transaction_height INT NOT NULL, "
                         + "transaction_index SMALLINT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 103:
                 apply("CREATE INDEX IF NOT EXISTS coin_order_fxt_id_idx ON coin_order_fxt (id, height DESC)");
@@ -311,9 +312,9 @@ public class FxtDbVersion extends DbVersion {
             case 107:
                 apply("CREATE TABLE IF NOT EXISTS coin_trade_fxt (db_id IDENTITY, "
                         + "chain_id INT NOT NULL, exchange_id INT NOT NULL, account_id BIGINT NOT NULL, "
-                        + "block_id BIGINT NOT NULL, height INT NOT NULL, timestamp INT NOT NULL,"
-                        + "exchange_quantity BIGINT NOT NULL, exchange_price BIGINT NOT NULL,"
-                        + "order_id BIGINT NOT NULL, order_full_hash BINARY(32) NOT NULL,"
+                        + "block_id BIGINT NOT NULL, height INT NOT NULL, timestamp INT NOT NULL, "
+                        + "exchange_quantity BIGINT NOT NULL, exchange_price BINARY(16) NOT NULL, "
+                        + "order_id BIGINT NOT NULL, order_full_hash BINARY(32) NOT NULL, "
                         + "match_id BIGINT NOT NULL, match_full_hash BINARY(32) NOT NULL)");
             case 108:
                 apply("CREATE INDEX IF NOT EXISTS coin_trade_fxt_chain_idx ON coin_trade_fxt (chain_id)");
@@ -349,14 +350,6 @@ public class FxtDbVersion extends DbVersion {
             case 121:
                 apply("CREATE INDEX IF NOT EXISTS prunable_message_block_timestamp_dbid_idx ON prunable_message (block_timestamp DESC, db_id DESC)");
             case 122:
-                apply("ALTER TABLE coin_order_fxt ADD COLUMN IF NOT EXISTS amount BIGINT NOT NULL DEFAULT 0");
-            case 123:
-                apply("TRUNCATE TABLE coin_trade_fxt");
-            case 124:
-                apply("ALTER TABLE coin_trade_fxt ALTER COLUMN exchange_price BINARY(16) NOT NULL");
-            case 125:
-                apply("ALTER TABLE unconfirmed_transaction ADD COLUMN IF NOT EXISTS is_bundled BOOLEAN NOT NULL DEFAULT FALSE");
-            case 126:
                 return;
             default:
                 throw new RuntimeException("Forging chain database inconsistent with code, at update " + nextUpdate

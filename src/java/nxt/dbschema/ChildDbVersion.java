@@ -94,7 +94,7 @@ public class ChildDbVersion extends DbVersion {
             case 20:
                 apply("CREATE TABLE IF NOT EXISTS bid_order (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, account_id BIGINT NOT NULL, "
                         + "asset_id BIGINT NOT NULL, price BIGINT NOT NULL, transaction_index SMALLINT NOT NULL, "
-                        + "transaction_height INT NOT NULL, "
+                        + "transaction_height INT NOT NULL, amount BIGINT NOT NULL, "
                         + "quantity BIGINT NOT NULL, creation_height INT NOT NULL, height INT NOT NULL, "
                         + "latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 21:
@@ -162,13 +162,13 @@ public class ChildDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS tag_in_stock_count_idx ON tag (in_stock_count DESC, height DESC)");
             case 45:
                 apply("CREATE TABLE IF NOT EXISTS currency_founder (db_id IDENTITY, currency_id BIGINT NOT NULL, "
-                        + "account_id BIGINT NOT NULL, amount BIGINT NOT NULL, "
+                        + "account_id BIGINT NOT NULL, amount_per_unit BIGINT NOT NULL, amount BIGINT NOT NULL, "
                         + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 46:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS currency_founder_currency_id_idx ON currency_founder (currency_id, account_id, height DESC)");
             case 47:
                 apply("CREATE TABLE IF NOT EXISTS buy_offer (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, currency_id BIGINT NOT NULL, account_id BIGINT NOT NULL,"
-                        + "rate BIGINT NOT NULL, unit_limit BIGINT NOT NULL, supply BIGINT NOT NULL, expiration_height INT NOT NULL,"
+                        + "rate BIGINT NOT NULL, unit_limit BIGINT NOT NULL, supply BIGINT NOT NULL, expiration_height INT NOT NULL, amount BIGINT NOT NULL, "
                         + "creation_height INT NOT NULL, transaction_index SMALLINT NOT NULL, transaction_height INT NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 48:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS buy_offer_id_idx ON buy_offer (id, height DESC)");
@@ -393,7 +393,7 @@ public class ChildDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS shuffling_blocks_remaining_height_idx ON shuffling (blocks_remaining, height DESC)");
             case 138:
                 apply("CREATE TABLE IF NOT EXISTS asset_dividend (db_id IDENTITY, id BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
-                        + "asset_id BIGINT NOT NULL, "
+                        + "asset_id BIGINT NOT NULL, holding_id BIGINT NOT NULL, holding_type TINYINT NOT NULL, "
                         + "amount BIGINT NOT NULL, dividend_height INT NOT NULL, total_dividend BIGINT NOT NULL, "
                         + "num_accounts BIGINT NOT NULL, timestamp INT NOT NULL, height INT NOT NULL)");
             case 139:
@@ -403,18 +403,6 @@ public class ChildDbVersion extends DbVersion {
             case 141:
                 apply("CREATE INDEX IF NOT EXISTS asset_dividend_height_idx ON asset_dividend (height)");
             case 142:
-                apply("ALTER TABLE bid_order ADD COLUMN IF NOT EXISTS amount BIGINT NOT NULL DEFAULT 0");
-            case 143:
-                apply("ALTER TABLE buy_offer ADD COLUMN IF NOT EXISTS amount BIGINT NOT NULL DEFAULT 0");
-            case 144:
-                apply("ALTER TABLE currency_founder ALTER COLUMN amount RENAME TO amount_per_unit");
-            case 145:
-                apply("ALTER TABLE currency_founder ADD COLUMN IF NOT EXISTS amount BIGINT NOT NULL DEFAULT 0");
-            case 146:
-                apply("ALTER TABLE asset_dividend ADD COLUMN IF NOT EXISTS holding_id BIGINT NOT NULL DEFAULT 0");
-            case 147:
-                apply("ALTER TABLE asset_dividend ADD COLUMN IF NOT EXISTS holding_type TINYINT NOT NULL DEFAULT 0");
-            case 148:
                 return;
             default:
                 throw new RuntimeException("Child chain " + schema + " database inconsistent with code, at update " + nextUpdate
