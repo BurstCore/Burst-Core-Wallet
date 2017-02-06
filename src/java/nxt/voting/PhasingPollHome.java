@@ -478,7 +478,7 @@ public final class PhasingPollHome {
                      " WHERE phasing_poll.id = transaction.id AND transaction.sender_id = ? " +
                      " AND phasing_poll.full_hash = transaction.full_hash " +
                      " AND phasing_poll_result.id IS NULL AND phasing_poll_result.full_hash IS NULL " +
-                     " AND phasing_poll.finish_height > ? ORDER BY transaction.height DESC, transaction.transaction_index DESC ")) {
+                     " AND phasing_poll.finish_height > ?")) {
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
