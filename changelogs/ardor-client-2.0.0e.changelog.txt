@@ -236,6 +236,56 @@ a child chain, there is no phasing transactions fees total limit on it for the
 controlled account.
 
 
+== Transaction selection, sorting, limits and fees ==
+
+An Ardor chain block can contain up to 10 (ten) transactions, this including
+both native Ardor transactions and ChildBlock transactions. There is no total
+payload size limit.
+
+A ChildBlock can contain up to 100 (one hundred) child transactions, subject
+to a total payload limit of 128 kbytes. Prunable child transaction parts are
+also counted towards the payload size limit.
+
+As in Nxt, it is up to a block forger which transactions to include in a block
+and how to sort them. The default forger behaviour is to select transactions
+ordered by Ardor fee (not fee per byte as in Nxt, since there is no block
+payload limit), and then sort them based on arrival timestamp.
+
+It is also up to the ChildBlock bundler which child transactions to include in
+a ChildBlock, and this selection can be customized by defining a custom filter
+in the nxt.bundlingFilter property. The default bundler behaviour is to select
+child transactions ordered by fee per byte, up to the count and payload limits
+of a child block, creating several child blocks if necessary. Within a child
+block, child transactions are sorted based on their full hash, but executed
+based on sorting them after adding the block hash to the child transaction hash,
+i.e. the execution order of child transactions within a block is deterministic
+but not predictable and not controllable by the bundler or by the forger. This
+is in order to prevent front-running of asset exchange and other trading orders.
+
+Ardor fees from ChildBlock transactions paid to the block forger are shared with
+the previous three block forgers in 1:1:1:1 ratio. Other Ardor chain fees are
+fully kept by the block forger, and child block transaction fees (in child chain
+coins) are fully kept by the ChildBlock bundler.
+
+The back fees sharing which was applied in Nxt for some other transactions types
+such as currency or asset issuance has been removed, however the limitations of
+one such transaction per block for scarce blockchain resources are preserved.
+
+Default fee for Ardor chain transactions is 10 ARDR. Default fee for child chain
+transactions is 0.1 ARDR. A ChildBlock must contain at least one child chain
+transaction, but there is no minimum ChildBlock fee requirement, i.e. such a
+ChildBlock with a single transaction in it would require only 0.1 ARDR fee if
+this is the minimum fee for the child transaction it contains.
+
+Fees for child chain transaction types have been scaled depending on their
+impact on the blockchain, e.g. asset issuance fees are still 1000 ARDR as assets
+are global and kept permanently. There is a 1 ARDR extra fee added to
+transactions that create a new account.
+
+The above fees and limits are set for the current testnet only and are subject
+to change before the production mainnet release.
+
+
 == Testnet accounts ==
 
 The testnet genesis block has been created based on account balances from the
