@@ -558,7 +558,7 @@ var NRS = (function(NRS, $, undefined) {
 		html += "<td class='confirmations' style='vertical-align:middle;text-align:center;font-size:12px;'>";
 		html += "<span class='show_popover' data-content='" + (t.confirmed ? NRS.formatAmount(t.confirmations) + " " + $.t("confirmations") : $.t("unconfirmed_transaction")) + "' ";
 		html += "data-container='body' data-placement='left'>";
-		html += (!t.confirmed ? "-" : (t.confirmations > 1440 ? (NRS.formatAmount('144000000000') + "+") : NRS.formatAmount(t.confirmations))) + "</span></td>";
+		html += (!t.confirmed ? "-" : (t.confirmations > 1440 ? (NRS.formatAmount('144000000000', false, false, false, NRS.getChain(1).decimals) + "+") : NRS.formatAmount(t.confirmations))) + "</span></td>";
 		if (actions && actions.length != undefined) {
 			html += '<td class="td_transaction_actions" style="vertical-align:middle;text-align:right;">';
 			if (actions.indexOf('approve') > -1) {
