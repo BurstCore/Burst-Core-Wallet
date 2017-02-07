@@ -85,7 +85,7 @@ var NRS = (function (NRS, $, undefined) {
     };
 
     NRS.getPhasingDetails = function(phasingDetails, phasingParams) {
-        var votingModel = NRS.getVotingModelName(parseInt(phasingParams.phasingVotingModel));
+        var votingModel = NRS.getVotingModelName(parseInt(phasingParams.phasingVotingModel)).toLowerCase();
         phasingDetails.votingModel = $.t(votingModel);
         switch (votingModel) {
             case 'ASSET':
@@ -110,7 +110,7 @@ var NRS = (function (NRS, $, undefined) {
         } else if (NRS.constants.VOTING_MODELS[votingModel] == NRS.constants.VOTING_MODELS.CURRENCY) {
             phasingDetails.currency_formatted_html = phasingTransactionLink;
         }
-        var minBalanceModel = NRS.getMinBalanceModelName(parseInt(phasingParams.phasingMinBalanceModel));
+        var minBalanceModel = NRS.getMinBalanceModelName(parseInt(phasingParams.phasingMinBalanceModel)).toLowerCase();
         phasingDetails.minBalanceModel = $.t(minBalanceModel);
         var rows = "";
         if (phasingParams.phasingWhitelist && phasingParams.phasingWhitelist.length > 0) {
@@ -208,6 +208,7 @@ var NRS = (function (NRS, $, undefined) {
                 approveTransactionButton.attr('disabled', 'disabled');
             } else {
                 approveTransactionButton.removeAttr('disabled');
+                approveTransactionButton.data("chain", transaction.chain);
                 approveTransactionButton.data("fullhash", transaction.fullHash);
                 approveTransactionButton.data("timestamp", transaction.timestamp);
                 approveTransactionButton.data("minBalanceFormatted", "");
@@ -480,9 +481,10 @@ var NRS = (function (NRS, $, undefined) {
                 data = {
                     "type": $.t("transaction_approval")
                 };
-                for (i = 0; i < transaction.attachment.transactionFullHashes.length; i++) {
+                var phasedTransactions = transaction.attachment.phasedTransactions;
+                for (i = 0; i < phasedTransactions.length; i++) {
                     data["transaction" + (i + 1) + "_formatted_html"] =
-                        NRS.getTransactionLink(transaction.attachment.transactionFullHashes[i]);
+                        NRS.getTransactionLink(phasedTransactions[i].transactionFullHash, false, phasedTransactions[i].chain);
                 }
 
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
@@ -1578,10 +1580,11 @@ var NRS = (function (NRS, $, undefined) {
     $(document).on("click", ".approve_transaction_btn", function (e) {
         e.preventDefault();
         var approveTransactionModal = $('#approve_transaction_modal');
-        approveTransactionModal.find('.at_transaction_full_hash_display').text($(this).data("transaction"));
+        var phasedTransaction = $(this).data("chain") + ":" + $(this).data("fullhash");
+        approveTransactionModal.find('.at_phased_transaction_display').text(phasedTransaction);
         approveTransactionModal.find('.at_transaction_timestamp').text(NRS.formatTimestamp($(this).data("timestamp")));
         $("#approve_transaction_button").data("transaction", $(this).data("transaction"));
-        approveTransactionModal.find('#at_transaction_full_hash').val($(this).data("fullhash"));
+        approveTransactionModal.find('#at_phased_transaction').val(phasedTransaction);
 
         var mbFormatted = $(this).data("minBalanceFormatted");
         var minBalanceWarning = $('#at_min_balance_warning');
