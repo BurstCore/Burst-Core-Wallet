@@ -761,7 +761,10 @@ public final class JSONData {
             whitelistJson.add(whitelisted);
         }
         json.put("whitelist", whitelistJson);
-        json.put("maxFees", String.valueOf(phasingOnly.getMaxFees()));
+        Map<Integer,Long> maxFees = phasingOnly.getMaxFees();
+        JSONObject maxFeesJSON = new JSONObject();
+        maxFees.entrySet().forEach(entry -> maxFeesJSON.put(entry.getKey(), String.valueOf(entry.getValue())));
+        json.put("maxFees", maxFeesJSON);
         json.put("minDuration", phasingOnly.getMinDuration());
         json.put("maxDuration", phasingOnly.getMaxDuration());
         putVoteWeighting(json, phasingOnly.getPhasingParams().getVoteWeighting());
