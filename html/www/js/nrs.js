@@ -1158,168 +1158,238 @@ NRS.addPagination = function () {
 				}
 
                 if (NRS.isDisplayOptionalDashboardTiles()) {
-                    // only show if happened within last week and not during account switch
-                    var showAssetDifference = !isAccountSwitch &&
-                        ((!NRS.downloadingBlockchain || (NRS.blocks && NRS.blocks[0] && NRS.state && NRS.state.time - NRS.blocks[0].timestamp < 60 * 60 * 24 * 7)));
+                    $(".optional_dashboard_tile").show();
+                    for (var j = 1; j <= 8; j++) {
+                        var tileSelector = j <= 4 ? ".dashboard_first_row_tile_" + j : ".dashboard_second_row_tile_" + (j - 4);
+                        var destinationSelector = j <= 4 ? ".dashboard_first_row" : ".dashboard_second_row";
+                        var tile = $(tileSelector);
+                        tile.detach().appendTo(destinationSelector);
 
-                    // When switching account this query returns error
-                    if (!isAccountSwitch) {
-                        NRS.storageSelect("data", [{
-                            "id": "asset_balances"
-                        }], function (error, asset_balance) {
-                            if (asset_balance && asset_balance.length) {
-                                var previous_balances = asset_balance[0].contents;
-                                if (!NRS.accountInfo.assetBalances) {
-                                    NRS.accountInfo.assetBalances = [];
-                                }
-                                var current_balances = JSON.stringify(NRS.accountInfo.assetBalances);
-                                if (previous_balances != current_balances) {
-                                    if (previous_balances != "undefined" && typeof previous_balances != "undefined") {
-                                        previous_balances = JSON.parse(previous_balances);
-                                    } else {
-                                        previous_balances = [];
-                                    }
-                                    NRS.storageUpdate("data", {
-                                        contents: current_balances
-                                    }, [{
-                                        id: "asset_balances"
-                                    }]);
-                                    if (showAssetDifference) {
-                                        NRS.checkAssetDifferences(NRS.accountInfo.assetBalances, previous_balances);
-                                    }
-                                }
-                            } else {
-                                NRS.storageInsert("data", "id", {
-                                    id: "asset_balances",
-                                    contents: JSON.stringify(NRS.accountInfo.assetBalances)
-                                });
-                            }
-                        });
+                        tile.removeClass("col-lg-4 col-lg-6").addClass("col-lg-3");
                     }
-                    var decimals = NRS.getActiveChainDecimals();
-                    var i;
-                    if ((firstRun || isAccountSwitch) && response.assetBalances) {
-                        var assets = [];
-                        var assetBalances = response.assetBalances;
-                        var assetBalancesMap = {};
-                        for (i = 0; i < assetBalances.length; i++) {
-                            if (assetBalances[i].balanceQNT != "0") {
-                                assets.push(assetBalances[i].asset);
-                                assetBalancesMap[assetBalances[i].asset] = assetBalances[i].balanceQNT;
-                            }
-                        }
-                        NRS.sendRequest("getLastTrades", {
-                            "assets": assets
-                        }, function (response) {
-                            if (response.trades && response.trades.length) {
-                                var assetTotal = 0;
-                                for (i = 0; i < response.trades.length; i++) {
-                                    var trade = response.trades[i];
-                                    assetTotal += assetBalancesMap[trade.asset] * trade.priceNQTPerShare / NRS.getOneCoin(decimals);
+                    var hasApiAE = NRS.isApiEnabled({ tags: [ NRS.constants.API_TAGS.AE ] });
+                    var hasApiMS = NRS.isApiEnabled({ tags: [ NRS.constants.API_TAGS.MS ] });
+                    var hasApiAliases = NRS.isApiEnabled({ tags: [ NRS.constants.API_TAGS.ALIASES ] });
+                    var hasApiMsg = NRS.isApiEnabled({ apis: [NRS.constants.REQUEST_TYPES.sendMessage] });
+                    var hasApiDGS = NRS.isApiEnabled({ tags: [ NRS.constants.API_TAGS.DGS ] });
+                    var firstRowTiles = 4;
+                    var secondRowTiles = 4;
+
+                    if (hasApiAE) {
+                        // only show if happened within last week and not during account switch
+                        var showAssetDifference = !isAccountSwitch &&
+                            ((!NRS.downloadingBlockchain || (NRS.blocks && NRS.blocks[0] && NRS.state && NRS.state.time - NRS.blocks[0].timestamp < 60 * 60 * 24 * 7)));
+
+                        // When switching account this query returns error
+                        if (!isAccountSwitch) {
+                            NRS.storageSelect("data", [{
+                                "id": "asset_balances"
+                            }], function (error, asset_balance) {
+                                if (asset_balance && asset_balance.length) {
+                                    var previous_balances = asset_balance[0].contents;
+                                    if (!NRS.accountInfo.assetBalances) {
+                                        NRS.accountInfo.assetBalances = [];
+                                    }
+                                    var current_balances = JSON.stringify(NRS.accountInfo.assetBalances);
+                                    if (previous_balances != current_balances) {
+                                        if (previous_balances != "undefined" && typeof previous_balances != "undefined") {
+                                            previous_balances = JSON.parse(previous_balances);
+                                        } else {
+                                            previous_balances = [];
+                                        }
+                                        NRS.storageUpdate("data", {
+                                            contents: current_balances
+                                        }, [{
+                                            id: "asset_balances"
+                                        }]);
+                                        if (showAssetDifference) {
+                                            NRS.checkAssetDifferences(NRS.accountInfo.assetBalances, previous_balances);
+                                        }
+                                    }
+                                } else {
+                                    NRS.storageInsert("data", "id", {
+                                        id: "asset_balances",
+                                        contents: JSON.stringify(NRS.accountInfo.assetBalances)
+                                    });
                                 }
-                                $("#account_assets_balance").html(NRS.formatStyledAmount(new Big(assetTotal).toFixed(decimals)));
-                                $("#account_nr_assets").html(response.trades.length);
-                            } else {
+                            });
+                        }
+                        var decimals = NRS.getActiveChainDecimals();
+                        var i;
+                        if ((firstRun || isAccountSwitch) && response.assetBalances) {
+                            var assets = [];
+                            var assetBalances = response.assetBalances;
+                            var assetBalancesMap = {};
+                            for (i = 0; i < assetBalances.length; i++) {
+                                if (assetBalances[i].balanceQNT != "0") {
+                                    assets.push(assetBalances[i].asset);
+                                    assetBalancesMap[assetBalances[i].asset] = assetBalances[i].balanceQNT;
+                                }
+                            }
+                            NRS.sendRequest("getLastTrades", {
+                                "assets": assets
+                            }, function (response) {
+                                if (response.trades && response.trades.length) {
+                                    var assetTotal = 0;
+                                    for (i = 0; i < response.trades.length; i++) {
+                                        var trade = response.trades[i];
+                                        assetTotal += assetBalancesMap[trade.asset] * trade.priceNQTPerShare / NRS.getOneCoin(decimals);
+                                    }
+                                    $("#account_assets_balance").html(NRS.formatStyledAmount(new Big(assetTotal).toFixed(decimals)));
+                                    $("#account_nr_assets").html(response.trades.length);
+                                } else {
+                                    $("#account_assets_balance").html(0);
+                                    $("#account_nr_assets").html(0);
+                                }
+                            });
+                        } else {
+                            if (!response.assetBalances) {
                                 $("#account_assets_balance").html(0);
                                 $("#account_nr_assets").html(0);
                             }
-                        });
-                    } else {
-                        if (!response.assetBalances) {
-                            $("#account_assets_balance").html(0);
-                            $("#account_nr_assets").html(0);
                         }
+                    } else {
+                        $("#dashboard_assets_val_div").hide();
+                        firstRowTiles--;
                     }
 
-                    if (response.accountCurrencies) {
-                        var currencies = [];
-                        var currencyBalances = response.accountCurrencies;
-                        var numberOfCurrencies = currencyBalances.length;
-                        $("#account_nr_currencies").html(numberOfCurrencies);
-                        var currencyBalancesMap = {};
-                        for (i = 0; i < numberOfCurrencies; i++) {
-                            if (currencyBalances[i].unitsQNT != "0") {
-                                currencies.push(currencyBalances[i].currency);
-                                currencyBalancesMap[currencyBalances[i].currency] = currencyBalances[i].unitsQNT;
-                            }
-                        }
-                        NRS.sendRequest("getLastExchanges", {
-                            "currencies": currencies
-                        }, function (response) {
-                            if (response.exchanges && response.exchanges.length) {
-                                var currencyTotal = 0;
-                                for (i = 0; i < response.exchanges.length; i++) {
-                                    var exchange = response.exchanges[i];
-                                    currencyTotal += currencyBalancesMap[exchange.currency] * exchange.rateNQTPerUnit / NRS.getOneCoin(decimals);
+                    if (hasApiMS) {
+                        if (response.accountCurrencies) {
+                            var currencies = [];
+                            var currencyBalances = response.accountCurrencies;
+                            var numberOfCurrencies = currencyBalances.length;
+                            $("#account_nr_currencies").html(numberOfCurrencies);
+                            var currencyBalancesMap = {};
+                            for (i = 0; i < numberOfCurrencies; i++) {
+                                if (currencyBalances[i].unitsQNT != "0") {
+                                    currencies.push(currencyBalances[i].currency);
+                                    currencyBalancesMap[currencyBalances[i].currency] = currencyBalances[i].unitsQNT;
                                 }
-                                $("#account_currencies_balance").html(NRS.formatStyledAmount(new Big(currencyTotal).toFixed(decimals)));
+                            }
+                            NRS.sendRequest("getLastExchanges", {
+                                "currencies": currencies
+                            }, function (response) {
+                                if (response.exchanges && response.exchanges.length) {
+                                    var currencyTotal = 0;
+                                    for (i = 0; i < response.exchanges.length; i++) {
+                                        var exchange = response.exchanges[i];
+                                        currencyTotal += currencyBalancesMap[exchange.currency] * exchange.rateNQTPerUnit / NRS.getOneCoin(decimals);
+                                    }
+                                    $("#account_currencies_balance").html(NRS.formatStyledAmount(new Big(currencyTotal).toFixed(decimals)));
+                                } else {
+                                    $("#account_currencies_balance").html(0);
+                                }
+                            });
+                        } else {
+                            $("#account_currencies_balance").html(0);
+                            $("#account_nr_currencies").html(0);
+                        }
+                    } else {
+                        $("#dashboard_currencies_val_div").hide();
+                        firstRowTiles--;
+                    }
+
+                    if (hasApiMsg) {
+                        /* Display message count in top and limit to 100 for now because of possible performance issues*/
+                        NRS.sendRequest("getBlockchainTransactions+", {
+                            "account": NRS.account,
+                            "type": 1,
+                            "subtype": 0,
+                            "firstIndex": 0,
+                            "lastIndex": 99
+                        }, function (response) {
+                            var accountMessageCount = $("#account_message_count");
+                            if (response.transactions && response.transactions.length) {
+                                if (response.transactions.length > 99) {
+                                    accountMessageCount.empty().append("99+");
+                                } else {
+                                    accountMessageCount.empty().append(response.transactions.length);
+                                }
                             } else {
-                                $("#account_currencies_balance").html(0);
+                                accountMessageCount.empty().append("0");
                             }
                         });
                     } else {
-                        $("#account_currencies_balance").html(0);
-                        $("#account_nr_currencies").html(0);
+                        $("#dashboard_messages_div").hide();
+                        secondRowTiles--;
                     }
 
-                    /* Display message count in top and limit to 100 for now because of possible performance issues*/
-                    NRS.sendRequest("getBlockchainTransactions+", {
-                        "account": NRS.account,
-                        "type": 1,
-                        "subtype": 0,
-                        "firstIndex": 0,
-                        "lastIndex": 99
-                    }, function (response) {
-                        var accountMessageCount = $("#account_message_count");
-                        if (response.transactions && response.transactions.length) {
-                            if (response.transactions.length > 99) {
-                                accountMessageCount.empty().append("99+");
+                    if (hasApiAliases) {
+                        NRS.sendRequest("getAliasCount+", {
+                            "account": NRS.account
+                        }, function (response) {
+                            var accountAliasCount = $("#account_alias_count");
+                            if (response.numberOfAliases != null) {
+                                accountAliasCount.empty().append(response.numberOfAliases);
                             } else {
-                                accountMessageCount.empty().append(response.transactions.length);
+                                accountAliasCount.empty().append("0");
                             }
-                        } else {
-                            accountMessageCount.empty().append("0");
-                        }
-                    });
+                        });
+                    } else {
+                        $("#dashboard_aliases_div").hide();
+                        secondRowTiles--;
+                    }
 
-                    NRS.sendRequest("getAliasCount+", {
-                        "account": NRS.account
-                    }, function (response) {
-                        var accountAliasCount = $("#account_alias_count");
-                        if (response.numberOfAliases != null) {
-                            accountAliasCount.empty().append(response.numberOfAliases);
-                        } else {
-							accountAliasCount.empty().append("0");
-						}
-                    });
+                    if (hasApiDGS) {
+                        NRS.sendRequest("getDGSPurchaseCount+", {
+                            "buyer": NRS.account
+                        }, function (response) {
+                            if (response.numberOfPurchases != null) {
+                                $("#account_purchase_count").empty().append(response.numberOfPurchases);
+                            }
+                        });
 
-                    NRS.sendRequest("getDGSPurchaseCount+", {
-                        "buyer": NRS.account
-                    }, function (response) {
-                        if (response.numberOfPurchases != null) {
-                            $("#account_purchase_count").empty().append(response.numberOfPurchases);
-                        }
-                    });
+                        NRS.sendRequest("getDGSPendingPurchases+", {
+                            "seller": NRS.account
+                        }, function (response) {
+                            if (response.purchases && response.purchases.length) {
+                                $("#account_pending_sale_count").empty().append(response.purchases.length);
+                            } else {
+                                $("#account_pending_sale_count").empty().append("0");
+                            }
+                        });
 
-                    NRS.sendRequest("getDGSPendingPurchases+", {
-                        "seller": NRS.account
-                    }, function (response) {
-                        if (response.purchases && response.purchases.length) {
-                            $("#account_pending_sale_count").empty().append(response.purchases.length);
-                        } else {
-                            $("#account_pending_sale_count").empty().append("0");
-                        }
-                    });
+                        NRS.sendRequest("getDGSPurchaseCount+", {
+                            "seller": NRS.account,
+                            "completed": true
+                        }, function (response) {
+                            if (response.numberOfPurchases != null) {
+                                $("#account_completed_sale_count").empty().append(response.numberOfPurchases);
+                            }
+                        });
+                    } else {
+                        $("#dashboard_purchased_products_div").hide();
+                        firstRowTiles--;
 
-                    NRS.sendRequest("getDGSPurchaseCount+", {
-                        "seller": NRS.account,
-                        "completed": true
-                    }, function (response) {
-                        if (response.numberOfPurchases != null) {
-                            $("#account_completed_sale_count").empty().append(response.numberOfPurchases);
+                        $("#dashboard_pending_products_div").hide();
+                        secondRowTiles--;
+                    }
+
+                    if (firstRowTiles + secondRowTiles <= 4) {
+                        //make everything on one row
+                        $(".dashboard_second_row > div:visible").detach().appendTo(".dashboard_first_row");
+                        firstRowTiles = firstRowTiles + secondRowTiles;
+                        secondRowTiles = 0;
+                    } else {
+                        if (firstRowTiles - secondRowTiles > 1) {
+                            $(".dashboard_first_row > div:visible").last().detach().appendTo(".dashboard_second_row");
+                            firstRowTiles--;
+                            secondRowTiles++;
+                        } else if (secondRowTiles - firstRowTiles > 1) {
+                            $(".dashboard_second_row > div:visible").first().detach().appendTo(".dashboard_first_row");
+                            firstRowTiles++;
+                            secondRowTiles--;
                         }
-                    });
-                    $(".optional_dashboard_tile").show();
+                    }
+
+                    if (firstRowTiles < 4) {
+                        $(".dashboard_first_row > div:visible").removeClass("col-lg-3")
+                            .addClass("col-lg-" + (firstRowTiles < 3 ? "6" : "4" ));
+                    }
+                    if (secondRowTiles < 4) {
+                        $(".dashboard_second_row > div:visible").removeClass("col-lg-3")
+                            .addClass("col-lg-" + (secondRowTiles < 3 ? "6" : "4"))
+                    }
                 } else {
                     // Hide the optional tiles and move the block info tile to the first row
                     $(".optional_dashboard_tile").hide();
