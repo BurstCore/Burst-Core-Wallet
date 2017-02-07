@@ -168,14 +168,11 @@ var NRS = (function(NRS, $, undefined) {
                 compatibilityJSON: 'v1',
                 compatibilityAPI: 'v1',
                 debug: true
-            }, function(err) {
-
+            }, function() {
                 NRS.initSettings();
-
                 jqueryI18next.init(i18next, $, {
                     handleName: "i18n"
                 });
-
                 initSpinner();
                 NRS.spinner.spin($("#center")[0]);
                 NRS.loadMobileSettings();
@@ -185,7 +182,6 @@ var NRS = (function(NRS, $, undefined) {
                 } else {
                     initImpl();
                 }
-
                 $("[data-i18n]").i18n();
                 NRS.initClipboard();
             });
@@ -1550,7 +1546,13 @@ NRS.addPagination = function () {
 						data.maximum_duration_short = response.maxDuration;
 					}
 					if (response.maxFees) {
-						data.maximum_fees = NRS.convertToNXT(response.maxFees);
+                        data.maximum_fees_formatted_html = "";
+					    for (var chain in response.maxFees) {
+					        if (!response.maxFees.hasOwnProperty(chain)) {
+					            continue;
+                            }
+                            data.maximum_fees_formatted_html = NRS.getChain(chain).name.concat(":", NRS.formatQuantity(response.maxFees[chain], NRS.getChain(chain).decimals), "<br>");
+                        }
 					}
 					infoTable.find("tbody").append(NRS.createInfoTable(data));
 					infoTable.show();
