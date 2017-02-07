@@ -564,6 +564,7 @@ var NRS = (function(NRS, $, undefined) {
 			if (actions.indexOf('approve') > -1) {
                 html += "<a class='btn btn-xs btn-default approve_transaction_btn' href='#' data-toggle='modal' data-target='#approve_transaction_modal' ";
 				html += "data-fullhash='" + NRS.escapeRespStr(t.fullHash) + "' ";
+				html += "data-chain='" + NRS.escapeRespStr(t.chain) + "' ";
 				html += "data-timestamp='" + t.timestamp + "' " + "data-votingmodel='" + t.attachment.phasingVotingModel + "' ";
 				html += "data-fee='1' data-min-balance-formatted=''>" + $.t('approve') + "</a>";
 			}
