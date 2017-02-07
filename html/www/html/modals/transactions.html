@@ -27,14 +27,14 @@
                     <div class="form-group">
                         <p>
                             <span data-i18n="transaction_id">Transaction ID</span>
-                            <span class="at_transaction_full_hash_display"></span>&nbsp; 
+                            <span class="at_phased_transaction_display"></span>&nbsp;
                             (<span class="at_transaction_timestamp"></span>)
                         </p>
                         <div id="at_revealed_secret_div" class="form-group">
                             <label for="at_revealed_secret" data-i18n="reveal_secret">Reveal Secret</label>
                             <input type="password" tabindex="1" id="at_revealed_secret" name="revealedSecretText" value=""/>
                         </div>
-                        <input type="hidden" id="at_transaction_full_hash" name="transactionFullHash" value="" />
+                        <input type="hidden" id="at_phased_transaction" name="phasedTransaction" value="" />
                         <div class="alert alert-warning" id="at_min_balance_warning" role="alert" style="margin-left:0;">
                             <span data-i18n="approval_min_balance_needed_warning">
                                 For valid approval the following min balance is needed at finish height:
