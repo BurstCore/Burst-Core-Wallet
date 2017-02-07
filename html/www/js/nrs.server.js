@@ -132,7 +132,11 @@ var NRS = (function (NRS, $, undefined) {
             if (!data[field]) {
                 continue;
             }
-            data[field] = NRS.getActiveChainId() + ":" + data[field];
+            if (data[field] == "0") {
+                delete data[field];
+            } else {
+                data[field] = NRS.getActiveChainId() + ":" + data[field];
+            }
         }
 
         //Fill phasing parameters when mandatory approval is enabled
@@ -786,9 +790,11 @@ var NRS = (function (NRS, $, undefined) {
                     return false;
                 }
                 pos++;
-                transaction.transactionFullHash = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+                var phasedTransaction = converters.byteArrayToSignedInt32(byteArray, pos);
+                pos += 4;
+                phasedTransaction += ":" + converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
                 pos += 32;
-                if (transaction.transactionFullHash !== data.transactionFullHash) {
+                if (phasedTransaction !== data.phasedTransaction) {
                     return false;
                 }
                 transaction.revealedSecretLength = converters.byteArrayToSignedInt32(byteArray, pos);
@@ -1056,7 +1062,33 @@ var NRS = (function (NRS, $, undefined) {
                 if (NRS.notOfType(transaction, "SetPhasingOnly")) {
                     return false;
                 }
-                return validateCommonPhasingData(byteArray, pos, data, "control") != -1;
+                pos = validateCommonPhasingData(byteArray, pos, data, "control");
+                if (pos == -1) {
+                    return false;
+                }
+                var maxFeesSize = byteArray[pos];
+                pos++;
+                for (i = 0; i < maxFeesSize; i++) {
+                    // for now the client can only submit 0 or 1 control fees
+                    // in case this is ever enhanced, we'll need to revisit this code
+                    var controlMaxFees = String(converters.byteArrayToSignedInt32(byteArray, pos));
+                    pos += 4;
+                    controlMaxFees += ":" + String(converters.byteArrayToBigInteger(byteArray, pos));
+                    pos += 8;
+                    if (controlMaxFees != data.controlMaxFees) {
+                        return false;
+                    }
+                }
+                var minDuration = converters.byteArrayToSignedShort(byteArray, pos);
+                pos += 2;
+                if (data.minDuration && minDuration != data.minDuration) {
+                    return false;
+                }
+                var maxDuration = converters.byteArrayToSignedShort(byteArray, pos);
+                pos += 2;
+                if (data.minDuration && maxDuration != data.maxDuration) {
+                    return false;
+                }
                 break;
             case "issueCurrency":
                 if (NRS.notOfType(transaction, "CurrencyIssuance")) {
