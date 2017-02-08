@@ -440,6 +440,7 @@ var NRS = (function(NRS, $, undefined) {
 						}
 					}, isAccountSwitch);
 					NRS.initSidebarMenu();
+                    NRS.initHeader();
 					NRS.unlock();
 
 					if (NRS.isOutdated) {
