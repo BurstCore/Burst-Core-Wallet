@@ -364,7 +364,7 @@ var NRS = (function(NRS, $, undefined) {
 	}
 
     NRS.initClipboard = function() {
-        var clipboard = new Clipboard('#copy_account_id');
+        var clipboard = new Clipboard('.copy_link');
         function onCopySuccess(e) {
             NRS.logConsole('Action:' + e.action);
             NRS.logConsole('Text:' + e.text);
@@ -1870,6 +1870,20 @@ NRS.addPagination = function () {
 					});
 				}
 			});
+		} else if (/^\d+:[0-9a-fA-F]{64}$/.test(id)) {
+		    var tokens = id.split(":");
+            NRS.sendRequest("getTransaction", {
+                "chain": tokens[0],
+                "fullHash": tokens[1]
+            }, function(response) {
+                if (!response.errorCode) {
+                    NRS.showTransactionModal(response, response.chain);
+                } else {
+                    $.growl($.t("error_search_full_hash_not_found_ardor", { chain: tokens[0] }), {
+                        "type": "danger"
+                    });
+                }
+            })
 		} else if (/^[0-9a-fA-F]{64}$/.test(id)) {
 			NRS.sendRequest("getTransaction", {
 				"fullHash": id

@@ -43,6 +43,7 @@ var NRS = (function (NRS, $, undefined) {
             NRS.modalStack.pop(); // The forward modal
             NRS.modalStack.pop(); // the current modal
         }
+        $("#transaction_info_data").html(chain + ":" + transactionFullHash);
         NRS.showTransactionModal(transactionFullHash, chain, sharedKey, fxtTransaction, isModalVisible);
     });
 

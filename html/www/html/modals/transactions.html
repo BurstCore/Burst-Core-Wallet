@@ -71,6 +71,7 @@
                 <h4 class="modal-title">
                     <a href='#' class="fa fa-arrow-circle-left back-link"></a>
                     <span data-i18n="transaction">Transaction</span>&nbsp;<span data-i18n="info">Info</span>
+                    <span><a class='btn btn-default btn-xs copy_link' href="#" data-clipboard-target="#transaction_info_data"><span class="fa fa-copy"></span></a></span>
                 </h4>
             </div>
             <div class="modal-body">
@@ -125,6 +126,8 @@
                 </div>
             </div>
             <div class="modal-footer" style="margin-top:0;">
+                <!-- store the transaction id in a hidden place so it can be copied -->
+                <span id="transaction_info_data" style="font-size: x-small; color: white"></span>
                 <button type="button" class="btn btn-primary" data-dismiss="modal" data-i18n="close">Close</button>
             </div>
         </div>
