@@ -546,7 +546,7 @@ var NRS = (function (NRS, $, undefined) {
                 order = orders[i];
                 sum = sum.add(new BigInteger(order.exchangeQNT));
                 if (i == 0 && !refresh) {
-                    $("#buy_coin_price").val(NRS.formatQuantity(order.askNQT, NRS.getActiveChainDecimals()));
+                    $("#buy_coin_price").val(NRS.convertToQNTf(order.askNQT, NRS.getActiveChainDecimals()));
                 }
                 var statusIcon = NRS.getTransactionStatusIcon(order);
                 var decimals = NRS.getChain(order.chain).decimals;
