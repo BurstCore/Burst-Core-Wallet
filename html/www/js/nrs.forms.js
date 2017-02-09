@@ -384,6 +384,7 @@ var NRS = (function(NRS, $) {
 		// The feeCalculationEnabled variable distinguishes between the two cases and displays a message to the user
         var feeCalculationEnabled = $modal.find(".btn-calculate-fee").length > 0 && !data.feeNXT && !NRS.isParentChain() && !$btn.hasClass("btn-calculate-fee");
 		if ($btn.hasClass("btn-calculate-fee") || feeCalculationEnabled) {
+            NRS.logConsole("Calculate fee request feeCalculationEnabled is " + feeCalculationEnabled);
             data.calculateFee = true;
             data.feeNQT = "-1";
             data.feeRateNQTPerFXT = "-1";

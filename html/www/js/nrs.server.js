@@ -332,7 +332,7 @@ var NRS = (function (NRS, $, undefined) {
         var formData = null;
 
         var config = NRS.getFileUploadConfig(requestType, data);
-        if (config && $(config.selector)[0].files[0]) {
+        if (config && $(config.selector)[0] && $(config.selector)[0].files[0]) {
             // inspired by http://stackoverflow.com/questions/5392344/sending-multipart-formdata-with-jquery-ajax
             contentType = false;
             processData = false;
@@ -473,6 +473,7 @@ var NRS = (function (NRS, $, undefined) {
                                 callback(null);
                             }
                         ], function () {
+                            NRS.logConsole("before showRawTransactionModal response.broadcasted == false && !data.calculateFee");
                             NRS.showRawTransactionModal(response);
                         });
                     } else {
@@ -533,6 +534,7 @@ var NRS = (function (NRS, $, undefined) {
         if (data.broadcast == "false") {
             response.transactionBytes = payload;
             response.transactionJSON.signature = signature;
+            NRS.logConsole("before showRawTransactionModal data.broadcast == false");
             NRS.showRawTransactionModal(response);
         } else {
             if (extra) {
@@ -1731,4 +1733,8 @@ var NRS = (function (NRS, $, undefined) {
     }
 
     return NRS;
-}(NRS || {}, jQuery));
+}(Object.assign(NRS || {}, isNode ? global.client : {}), jQuery));
+
+if (isNode) {
+    module.exports = NRS;
+}
