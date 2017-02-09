@@ -473,6 +473,7 @@ var NRS = (function (NRS, $, undefined) {
                                 callback(null);
                             }
                         ], function () {
+                            NRS.logConsole("before showRawTransactionModal response.broadcasted == false && !data.calculateFee");
                             NRS.showRawTransactionModal(response);
                         });
                     } else {
@@ -533,6 +534,7 @@ var NRS = (function (NRS, $, undefined) {
         if (data.broadcast == "false") {
             response.transactionBytes = payload;
             response.transactionJSON.signature = signature;
+            NRS.logConsole("before showRawTransactionModal data.broadcast == false");
             NRS.showRawTransactionModal(response);
         } else {
             if (extra) {
