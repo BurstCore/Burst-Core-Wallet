@@ -19,6 +19,7 @@
  * @depends {nrs.modals.js}
  */
 var NRS = (function(NRS, $) {
+    var _password = null;
     var tokenModal = $("#token_modal");
     tokenModal.on("show.bs.modal", function(e) {
 		$("#generate_token_output, #decode_token_output, #generate_token_output_qr_code").html("").hide();
@@ -110,6 +111,8 @@ var NRS = (function(NRS, $) {
                 outputQrCodeContainer.hide();
 				return;
 			}
+		} else {
+        	secretPhrase = _password;
 		}
         var token = NRS.generateToken(website, secretPhrase);
         tokenOutput.html($.t("generated_token_is") + "<br/><br/><textarea id='generated_token_is' readonly style='width:100%' rows='3'>" + token + "</textarea><br>" +
@@ -120,5 +123,9 @@ var NRS = (function(NRS, $) {
         e.preventDefault();
     });
 
-	return NRS;
+    NRS.setTokenPassword = function(password) {
+        _password = password;
+    };
+
+    return NRS;
 }(NRS || {}, jQuery));
