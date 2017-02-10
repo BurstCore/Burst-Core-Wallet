@@ -1677,6 +1677,16 @@ body > .header .logo .icon {
 .btn.btn-primary.hover {
   background-color: #367fa9;
 }
+.btn.btn-primary.btn-lockscreen {
+  background-color: #fff;
+  border-color: #dadada;
+  color: #000
+}
+.btn.btn-primary.btn-lockscreen:hover,
+.btn.btn-primary.btn-lockscreen:active,
+.btn.btn-primary.btn-lockscreen.hover {
+  background-color: #dadada;
+}
 .btn.btn-success {
   background-color: #00a65a;
   border-color: #008d4c;
@@ -2008,7 +2018,7 @@ body > .header .logo .icon {
   text-transform: uppercase;
 }
 #registration_link a, #custom_passphrase_link a {
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.8);
 }
 #registration_link a:hover, #custom_passphrase_link a {
   color: rgba(255,255,255,1.0);
@@ -2017,7 +2027,7 @@ body > .header .logo .icon {
 
 #login_panel #remember_me_container label,
 #lockscreen_active_plugins_warning label
-{ opacity: 0.53; }
+{ opacity: 0.8; }
 
 #login_panel #remember_me_container label:hover,
 #lockscreen_active_plugins_warning label:hover
@@ -3006,7 +3016,7 @@ label .popover-content {
 
 .chain-selector label {
     color: #fff;
-    opacity: 0.5;
+    opacity: 0.8;
     font-weight: normal;
 }
 
