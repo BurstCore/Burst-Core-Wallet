@@ -150,6 +150,7 @@
             <file src="run.bat" targetdir="${INSTALL_PATH}" override="true"/>
             <file src="mint.bat" targetdir="${INSTALL_PATH}" override="true"/>
             <file src="compact.bat" targetdir="${INSTALL_PATH}" override="true"/>
+            <file src="html/www/favicon.ico" targetdir="${INSTALL_PATH}" override="true"/>
             <parsable targetfile="${INSTALL_PATH}/run.bat"/>
             <singlefile src="resource/ardor.properties" target="${INSTALL_PATH}/resource/ardor.properties" override="true"/>
             <singlefile src="resource/ardorservice.properties" target="${INSTALL_PATH}/resource/ardorservice.properties" override="true"/>
