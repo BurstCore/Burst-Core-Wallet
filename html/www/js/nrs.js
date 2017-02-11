@@ -1227,13 +1227,15 @@ NRS.addPagination = function () {
                                 }
                             }
                             NRS.sendRequest("getLastTrades", {
-                                "assets": assets
+                                "assets": assets,
+                                "includeAssetInfo": true
                             }, function (response) {
                                 if (response.trades && response.trades.length) {
                                     var assetTotal = 0;
                                     for (i = 0; i < response.trades.length; i++) {
                                         var trade = response.trades[i];
-                                        assetTotal += assetBalancesMap[trade.asset] * trade.priceNQTPerShare / NRS.getOneCoin(decimals);
+                                        var quantity = NRS.convertToQNTf(assetBalancesMap[trade.asset], trade.decimals);
+                                        assetTotal += quantity * trade.priceNQTPerShare / NRS.getOneCoin(decimals);
                                     }
                                     $("#account_assets_balance").html(NRS.formatStyledAmount(new Big(assetTotal).toFixed(decimals)));
                                     $("#account_nr_assets").html(response.trades.length);
@@ -1962,7 +1964,7 @@ NRS.addPagination = function () {
 	return NRS;
 }(NRS || {}, jQuery));
 
-$(document).ready(function() {
-	console.log("document.ready");
-	NRS.init();
-});
+    $(document).ready(function() {
+        console.log("document.ready");
+        NRS.init();
+    });
