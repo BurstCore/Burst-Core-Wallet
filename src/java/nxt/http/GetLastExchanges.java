@@ -30,16 +30,17 @@ public final class GetLastExchanges extends APIServlet.APIRequestHandler {
     static final GetLastExchanges instance = new GetLastExchanges();
 
     private GetLastExchanges() {
-        super(new APITag[] {APITag.MS}, "currencies", "currencies", "currencies"); // limit to 3 for testing
+        super(new APITag[] {APITag.MS}, "currencies", "currencies", "currencies", "includeCurrencyInfo"); // limit to 3 for testing
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long[] currencyIds = ParameterParser.getUnsignedLongs(req, "currencies");
         ChildChain childChain = ParameterParser.getChildChain(req);
+        boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
         JSONArray exchangesJSON = new JSONArray();
         List<ExchangeHome.Exchange> exchanges = childChain.getExchangeHome().getLastExchanges(currencyIds);
-        exchanges.forEach(exchange -> exchangesJSON.add(JSONData.exchange(exchange, false)));
+        exchanges.forEach(exchange -> exchangesJSON.add(JSONData.exchange(exchange, includeCurrencyInfo)));
         JSONObject response = new JSONObject();
         response.put("exchanges", exchangesJSON);
         return response;
