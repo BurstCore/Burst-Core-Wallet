@@ -197,74 +197,79 @@ public final class Bundler {
     }
 
     private void runBundling() {
-        int blockchainHeight = Nxt.getBlockchain().getHeight();
-        int now = Nxt.getEpochTime();
-        List<ChildBlockFxtTransaction> childBlockFxtTransactions = new ArrayList<>();
-        try (FilteringIterator<UnconfirmedTransaction> unconfirmedTransactions = new FilteringIterator<>(
-                TransactionProcessorImpl.getInstance().getUnconfirmedChildTransactions(childChain),
-                transaction -> transaction.getTransaction().hasAllReferencedTransactions(transaction.getTimestamp(), 0))) {
-            while (unconfirmedTransactions.hasNext()) {
-                List<ChildTransaction> childTransactions = new ArrayList<>();
-                long totalMinFeeFQT = 0;
-                int payloadLength = 0;
-                Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
-                while (unconfirmedTransactions.hasNext()
-                        && childTransactions.size() < Constants.MAX_NUMBER_OF_CHILD_TRANSACTIONS
-                        && payloadLength < Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH) {
-                    ChildTransactionImpl childTransaction = (ChildTransactionImpl) unconfirmedTransactions.next().getTransaction();
-                    if (childTransaction.getExpiration() < now + 60 * defaultChildBlockDeadline || childTransaction.getTimestamp() > now) {
-                        continue;
+        BlockchainImpl.getInstance().writeLock();
+        try {
+            int blockchainHeight = Nxt.getBlockchain().getHeight();
+            int now = Nxt.getEpochTime();
+            List<ChildBlockFxtTransaction> childBlockFxtTransactions = new ArrayList<>();
+            try (FilteringIterator<UnconfirmedTransaction> unconfirmedTransactions = new FilteringIterator<>(
+                    TransactionProcessorImpl.getInstance().getUnconfirmedChildTransactions(childChain),
+                    transaction -> transaction.getTransaction().hasAllReferencedTransactions(transaction.getTimestamp(), 0))) {
+                while (unconfirmedTransactions.hasNext()) {
+                    List<ChildTransaction> childTransactions = new ArrayList<>();
+                    long totalMinFeeFQT = 0;
+                    int payloadLength = 0;
+                    Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+                    while (unconfirmedTransactions.hasNext()
+                            && childTransactions.size() < Constants.MAX_NUMBER_OF_CHILD_TRANSACTIONS
+                            && payloadLength < Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH) {
+                        ChildTransactionImpl childTransaction = (ChildTransactionImpl) unconfirmedTransactions.next().getTransaction();
+                        if (childTransaction.getExpiration() < now + 60 * defaultChildBlockDeadline || childTransaction.getTimestamp() > now) {
+                            continue;
+                        }
+                        long minChildFeeFQT = childTransaction.getMinimumFeeFQT(blockchainHeight);
+                        long childFee = childTransaction.getFee();
+                        if (BigInteger.valueOf(childFee).multiply(Constants.ONE_FXT_BIG_INTEGER)
+                                .compareTo(minRateNQTPerFXTBigInteger.multiply(BigInteger.valueOf(minChildFeeFQT))) < 0) {
+                            continue;
+                        }
+                        if (currentTotalFeesFQT + overpay(totalMinFeeFQT + minChildFeeFQT) > totalFeesLimitFQT && totalFeesLimitFQT > 0) {
+                            Logger.logDebugMessage("Bundler " + Long.toUnsignedString(accountId) + " will exceed total fees limit, not bundling");
+                            continue;
+                        }
+                        int childFullSize = childTransaction.getFullSize();
+                        if (payloadLength + childFullSize > Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH) {
+                            continue;
+                        }
+                        if (bundlingFilter != null && !bundlingFilter.ok(this, childTransaction)) {
+                            continue;
+                        }
+                        if (childTransaction.attachmentIsDuplicate(duplicates, true)) {
+                            continue;
+                        }
+                        childTransactions.add(childTransaction);
+                        totalMinFeeFQT += minChildFeeFQT;
+                        payloadLength += childFullSize;
                     }
-                    long minChildFeeFQT = childTransaction.getMinimumFeeFQT(blockchainHeight);
-                    long childFee = childTransaction.getFee();
-                    if (BigInteger.valueOf(childFee).multiply(Constants.ONE_FXT_BIG_INTEGER)
-                            .compareTo(minRateNQTPerFXTBigInteger.multiply(BigInteger.valueOf(minChildFeeFQT))) < 0) {
-                        continue;
-                    }
-                    if (currentTotalFeesFQT + overpay(totalMinFeeFQT + minChildFeeFQT) > totalFeesLimitFQT && totalFeesLimitFQT > 0) {
-                        Logger.logDebugMessage("Bundler " + Long.toUnsignedString(accountId) + " will exceed total fees limit, not bundling");
-                        continue;
-                    }
-                    int childFullSize = childTransaction.getFullSize();
-                    if (payloadLength + childFullSize > Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH) {
-                        continue;
-                    }
-                    if (bundlingFilter != null && !bundlingFilter.ok(this, childTransaction)) {
-                        continue;
-                    }
-                    if (childTransaction.attachmentIsDuplicate(duplicates, true)) {
-                        continue;
-                    }
-                    childTransactions.add(childTransaction);
-                    totalMinFeeFQT += minChildFeeFQT;
-                    payloadLength += childFullSize;
-                }
-                if (childTransactions.size() > 0) {
-                    long totalFeeFQT = overpay(totalMinFeeFQT);
-                    if (totalFeeFQT > FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()) {
-                        Logger.logInfoMessage("Bundler account " + Long.toUnsignedString(accountId)
-                                + " does not have sufficient balance to cover total Ardor fees " + totalFeeFQT);
-                    } else if (!hasBetterChildBlockFxtTransaction(childTransactions, totalFeeFQT)) {
-                        try {
-                            ChildBlockFxtTransaction childBlockFxtTransaction = bundle(childTransactions, totalFeeFQT, now);
-                            currentTotalFeesFQT += totalFeeFQT;
-                            childBlockFxtTransactions.add(childBlockFxtTransaction);
-                        } catch (NxtException.NotCurrentlyValidException e) {
-                            Logger.logDebugMessage(e.getMessage(), e);
-                        } catch (NxtException.ValidationException e) {
-                            Logger.logInfoMessage(e.getMessage(), e);
+                    if (childTransactions.size() > 0) {
+                        long totalFeeFQT = overpay(totalMinFeeFQT);
+                        if (totalFeeFQT > FxtChain.FXT.getBalanceHome().getBalance(accountId).getUnconfirmedBalance()) {
+                            Logger.logInfoMessage("Bundler account " + Long.toUnsignedString(accountId)
+                                    + " does not have sufficient balance to cover total Ardor fees " + totalFeeFQT);
+                        } else if (!hasBetterChildBlockFxtTransaction(childTransactions, totalFeeFQT)) {
+                            try {
+                                ChildBlockFxtTransaction childBlockFxtTransaction = bundle(childTransactions, totalFeeFQT, now);
+                                currentTotalFeesFQT += totalFeeFQT;
+                                childBlockFxtTransactions.add(childBlockFxtTransaction);
+                            } catch (NxtException.NotCurrentlyValidException e) {
+                                Logger.logDebugMessage(e.getMessage(), e);
+                            } catch (NxtException.ValidationException e) {
+                                Logger.logInfoMessage(e.getMessage(), e);
+                            }
                         }
                     }
                 }
             }
+            childBlockFxtTransactions.forEach(childBlockFxtTransaction -> {
+                try {
+                    transactionProcessor.broadcast(childBlockFxtTransaction);
+                } catch (NxtException.ValidationException e) {
+                    Logger.logErrorMessage(e.getMessage(), e);
+                }
+            });
+        } finally {
+            BlockchainImpl.getInstance().writeUnlock();
         }
-        childBlockFxtTransactions.forEach(childBlockFxtTransaction -> {
-            try {
-                transactionProcessor.broadcast(childBlockFxtTransaction);
-            } catch (NxtException.ValidationException e) {
-                Logger.logErrorMessage(e.getMessage(), e);
-            }
-        });
     }
 
     private ChildBlockFxtTransaction bundle(List<ChildTransaction> childTransactions, long feeFQT, int timestamp) throws NxtException.ValidationException {
