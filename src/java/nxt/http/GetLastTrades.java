@@ -30,16 +30,17 @@ public final class GetLastTrades extends APIServlet.APIRequestHandler {
     static final GetLastTrades instance = new GetLastTrades();
 
     private GetLastTrades() {
-        super(new APITag[] {APITag.AE}, "assets", "assets", "assets"); // limit to 3 for testing
+        super(new APITag[] {APITag.AE}, "assets", "assets", "assets", "includeAssetInfo"); // limit to 3 for testing
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long[] assetIds = ParameterParser.getUnsignedLongs(req, "assets");
         ChildChain childChain = ParameterParser.getChildChain(req);
+        boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
         JSONArray tradesJSON = new JSONArray();
         List<TradeHome.Trade> trades = childChain.getTradeHome().getLastTrades(assetIds);
-        trades.forEach(trade -> tradesJSON.add(JSONData.trade(trade, false)));
+        trades.forEach(trade -> tradesJSON.add(JSONData.trade(trade, includeAssetInfo)));
         JSONObject response = new JSONObject();
         response.put("trades", tradesJSON);
         return response;
