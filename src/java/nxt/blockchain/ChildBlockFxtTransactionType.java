@@ -119,6 +119,10 @@ public final class ChildBlockFxtTransactionType extends FxtTransactionType {
             if (payloadLength > Constants.MAX_CHILDBLOCK_PAYLOAD_LENGTH) {
                 throw new NxtException.NotValidException("ChildBlock transaction payload exceeds maximum: " + payloadLength);
             }
+            if (childTransaction.getChain().getId() != childChain.getId()) {
+                throw new NxtException.NotValidException("Child transaction " + childTransaction.getStringId() + " belongs to a different child chain");
+            }
+
         }
     }
 

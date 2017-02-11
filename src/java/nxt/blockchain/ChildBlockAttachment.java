@@ -96,9 +96,6 @@ public class ChildBlockAttachment extends Attachment.AbstractAttachment implemen
         this.hash = null;
         for (int i = 0; i < childTransactionFullHashes.length; i++) {
             ChildTransactionImpl childTransaction = (ChildTransactionImpl)childTransactions.get(i);
-            if (childTransaction.getChain().getId() != this.chainId) {
-                throw new NxtException.NotValidException("Child transactions belong to different child chains");
-            }
             childTransactionFullHashes[i] = childTransaction.getFullHash();
         }
         Arrays.sort(this.childTransactionFullHashes, Convert.byteArrayComparator);
