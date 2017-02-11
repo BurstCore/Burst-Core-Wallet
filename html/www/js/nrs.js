@@ -1269,13 +1269,15 @@ NRS.addPagination = function () {
                                 }
                             }
                             NRS.sendRequest("getLastExchanges", {
-                                "currencies": currencies
+                                "currencies": currencies,
+                                "includeCurrencyInfo": true
                             }, function (response) {
                                 if (response.exchanges && response.exchanges.length) {
                                     var currencyTotal = 0;
                                     for (i = 0; i < response.exchanges.length; i++) {
                                         var exchange = response.exchanges[i];
-                                        currencyTotal += currencyBalancesMap[exchange.currency] * exchange.rateNQTPerUnit / NRS.getOneCoin(decimals);
+                                        var units = NRS.convertToQNTf(currencyBalancesMap[exchange.currency], exchange.decimals);
+                                        currencyTotal += units * exchange.rateNQTPerUnit / NRS.getOneCoin(decimals);
                                     }
                                     $("#account_currencies_balance").html(NRS.formatStyledAmount(new Big(currencyTotal).toFixed(decimals)));
                                 } else {
