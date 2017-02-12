@@ -544,6 +544,7 @@ public final class JSONData {
     static JSONObject goods(DigitalGoodsHome.Goods goods, boolean includeCounts) {
         JSONObject json = new JSONObject();
         json.put("goods", Long.toUnsignedString(goods.getId()));
+        json.put("goodsFullHash", Convert.toHexString(goods.getFullHash()));
         json.put("name", goods.getName());
         json.put("description", goods.getDescription());
         json.put("quantity", goods.getQuantity());
@@ -778,6 +779,7 @@ public final class JSONData {
         DigitalGoodsHome.Goods goods = purchase.getDGSHome().getGoods(purchase.getGoodsId());
         json.put("name", goods.getName());
         json.put("hasImage", goods.hasImage());
+        json.put("goodsFullHash", Convert.toHexString(goods.getFullHash()));
         putAccount(json, "seller", purchase.getSellerId());
         json.put("priceNQT", String.valueOf(purchase.getPriceNQT()));
         json.put("quantity", purchase.getQuantity());
