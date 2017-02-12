@@ -425,7 +425,8 @@ var NRS = (function (NRS, $, undefined) {
                     var messageStyle = "info";
 
                     NRS.sendRequest("getAlias", {
-                        "aliasName": transaction.attachment.alias
+                        "aliasName": transaction.attachment.alias,
+                        "chain": transaction.chain
                     }, function (response) {
                         NRS.fetchingModalData = false;
 
@@ -695,7 +696,8 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsDelisting")) {
                 async = true;
                 NRS.sendRequest("getDGSGood", {
-                    "goods": transaction.attachment.goods
+                    "goods": transaction.attachment.goods,
+                    "chain": transaction.chain
                 }, function (goods) {
                     data = {
                         "type": $.t("marketplace_removal"),
@@ -714,7 +716,8 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsPriceChange")) {
                 async = true;
                 NRS.sendRequest("getDGSGood", {
-                    "goods": transaction.attachment.goods
+                    "goods": transaction.attachment.goods,
+                    "chain": transaction.chain
                 }, function (goods) {
                     data = {
                         "type": $.t("marketplace_item_price_change"),
@@ -734,7 +737,8 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsQuantityChange")) {
                 async = true;
                 NRS.sendRequest("getDGSGood", {
-                    "goods": transaction.attachment.goods
+                    "goods": transaction.attachment.goods,
+                    "chain": transaction.chain
                 }, function (goods) {
                     data = {
                         "type": $.t("marketplace_item_quantity_change"),
@@ -754,7 +758,8 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsPurchase")) {
                 async = true;
                 NRS.sendRequest("getDGSGood", {
-                    "goods": transaction.attachment.goods
+                    "goods": transaction.attachment.goods,
+                    "chain": transaction.chain
                 }, function (goods) {
                     data = {
                         "type": $.t("marketplace_purchase"),
@@ -769,7 +774,8 @@ var NRS = (function (NRS, $, undefined) {
                     infoTable.show();
 
                     NRS.sendRequest("getDGSPurchase", {
-                        "purchase": NRS.fullHashToId(transaction.fullHash)
+                        "purchase": NRS.fullHashToId(transaction.fullHash),
+                        "chain": transaction.chain
                     }, function (purchase) {
                         var callout = "";
                         if (purchase.errorCode) {
@@ -807,10 +813,12 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsDelivery")) {
                 async = true;
                 NRS.sendRequest("getDGSPurchase", {
-                    "purchase": transaction.attachment.purchase
+                    "purchase": transaction.attachment.purchase,
+                    "chain": transaction.chain
                 }, function (purchase) {
                     NRS.sendRequest("getDGSGood", {
-                        "goods": purchase.goods
+                        "goods": purchase.goods,
+                        "chain": transaction.chain
                     }, function (goods) {
                         data = {
                             "type": $.t("marketplace_delivery"),
@@ -869,10 +877,12 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsFeedback")) {
                 async = true;
                 NRS.sendRequest("getDGSPurchase", {
-                    "purchase": transaction.attachment.purchase
+                    "purchase": transaction.attachment.purchase,
+                    "chain": transaction.chain
                 }, function (purchase) {
                     NRS.sendRequest("getDGSGood", {
-                        "goods": purchase.goods
+                        "goods": purchase.goods,
+                        "chain": transaction.chain
                     }, function (goods) {
                         data = {
                             "type": $.t("marketplace_feedback"),
@@ -886,7 +896,8 @@ var NRS = (function (NRS, $, undefined) {
 
                         if (purchase.seller == NRS.account || purchase.buyer == NRS.account) {
                             NRS.sendRequest("getDGSPurchase", {
-                                "purchase": transaction.attachment.purchase
+                                "purchase": transaction.attachment.purchase,
+                                "chain": transaction.chain
                             }, function (purchase) {
                                 var callout;
                                 if (purchase.buyer == NRS.account) {
@@ -919,10 +930,12 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsRefund")) {
                 async = true;
                 NRS.sendRequest("getDGSPurchase", {
-                    "purchase": transaction.attachment.purchase
+                    "purchase": transaction.attachment.purchase,
+                    "chain": transaction.chain
                 }, function (purchase) {
                     NRS.sendRequest("getDGSGood", {
-                        "goods": purchase.goods
+                        "goods": purchase.goods,
+                        "chain": transaction.chain
                     }, function (goods) {
                         data = {
                             "type": $.t("marketplace_refund"),
@@ -1109,7 +1122,10 @@ var NRS = (function (NRS, $, undefined) {
                 } else {
                     data.amount = transaction.attachment.amount;
                 }
-                NRS.sendRequest("getShufflingParticipants", { "shufflingFullHash": transaction.fullHash }, function (response) {
+                NRS.sendRequest("getShufflingParticipants", {
+                    "shufflingFullHash": transaction.fullHash,
+                    "chain": transaction.chain
+                }, function (response) {
                     if (response.participants && response.participants.length > 0) {
                         var rows = "<table class='table table-striped'><thead><tr>" +
                         "<th>" + $.t("participant") + "</th>" +
@@ -1152,7 +1168,8 @@ var NRS = (function (NRS, $, undefined) {
                     }
                 }, { isAsync: false });
                 NRS.sendRequest("getShuffling", {
-                    "shufflingFullHash": transaction.fullHash
+                    "shufflingFullHash": transaction.fullHash,
+                    "chain": transaction.chain
                 }, function (response) {
                     if (response.shufflingFullHash) {
                         data["stage_formatted_html"] = NRS.getShufflingStage(response.stage);
@@ -1308,7 +1325,7 @@ var NRS = (function (NRS, $, undefined) {
         };
         data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
         var rows = "";
-        var params;
+        var params = { "chain": transaction.chain };
         if (NRS.isOfType(transaction, "AskOrderPlacement")) {
             params = {"askOrderFullHash": transaction.fullHash};
         } else {
@@ -1365,7 +1382,8 @@ var NRS = (function (NRS, $, undefined) {
         };
         var rows = "";
         NRS.sendRequest("getExchangesByExchangeRequest", {
-            "transaction": NRS.fullHashToId(transaction.fullHash)
+            "transaction": NRS.fullHashToId(transaction.fullHash),
+            "chain": transaction.chain
         }, function (response) {
             var exchangedUnits = BigInteger.ZERO;
             var exchangedTotal = BigInteger.ZERO;
@@ -1404,7 +1422,8 @@ var NRS = (function (NRS, $, undefined) {
         var buyOffer;
         var sellOffer;
         NRS.sendRequest("getOffer", {
-            "offer": NRS.fullHashToId(transaction.fullHash)
+            "offer": NRS.fullHashToId(transaction.fullHash),
+            "chain": transaction.chain
         }, function (response) {
             buyOffer = response.buyOffer;
             sellOffer = response.sellOffer;
@@ -1427,7 +1446,8 @@ var NRS = (function (NRS, $, undefined) {
         }
         var rows = "";
         NRS.sendRequest("getExchangesByOffer", {
-            "offer": NRS.fullHashToId(transaction.fullHash)
+            "offer": NRS.fullHashToId(transaction.fullHash),
+            "chain": transaction.chain
         }, function (response) {
             var exchangedUnits = BigInteger.ZERO;
             var exchangedTotal = BigInteger.ZERO;
