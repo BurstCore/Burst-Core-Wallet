@@ -430,7 +430,11 @@ var NRS = (function (NRS, $, undefined) {
                 exchangeSidebar.find("a[data-asset=" + assetSearch[0] + "]").addClass("active").trigger("click");
             }
         } else if (active) {
-            exchangeSidebar.find("a[data-asset=" + active + "]").addClass("active");
+            var activeAsset = exchangeSidebar.find("a[data-asset=" + active + "]");
+            activeAsset.addClass("active");
+            if (!callback) {
+                activeAsset.trigger("click");
+            }
         }
 
         if (isSearch || assets.length >= 10) {
