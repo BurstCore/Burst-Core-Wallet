@@ -877,7 +877,6 @@ final class PeerImpl implements Peer {
                     handshakePending = true;
                 }
                 if (!connectCondition.await(NetworkHandler.peerConnectTimeout, TimeUnit.SECONDS)) {
-                    Logger.logDebugMessage("Connect to " + host + " timed out");
                     disconnectPeer();
                 }
             }

@@ -603,7 +603,6 @@ public final class NetworkHandler implements Runnable {
         if (peer == null || peer.getChannel() == null) {
             return;                     // Channel has been closed
         }
-        String hostAddress = peer.getConnectionAddress().getAddress().getHostAddress();
         SocketChannel channel = peer.getChannel();
         try {
             channel.finishConnect();
@@ -614,12 +613,7 @@ public final class NetworkHandler implements Runnable {
                     sendGetInfoMessage(peer);
                 });
             }
-        } catch (SocketException exc) {
-            Logger.logDebugMessage(String.format("%s: Peer %s", exc.getMessage(), hostAddress));
-            Peers.peersService.execute(() -> peer.connectComplete(false));
         } catch (IOException exc) {
-            Logger.logDebugMessage("Connection failed to " + hostAddress + ": " +
-                    (exc.getMessage() != null ? exc.getMessage() : exc.toString()));
             Peers.peersService.execute(() -> peer.connectComplete(false));
         }
     }
