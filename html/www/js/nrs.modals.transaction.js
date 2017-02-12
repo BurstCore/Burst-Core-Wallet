@@ -435,11 +435,11 @@ var NRS = (function (NRS, $, undefined) {
                                 messageStyle = "danger";
                             } else if (transaction.recipient == NRS.account) {
                                 message = $.t("alias_sale_direct_offer", {
-                                    "nxt": NRS.formatAmount(transaction.attachment.priceNQT), "coin": NRS.getActiveChainName()
+                                    "nxt": NRS.formatAmount(transaction.attachment.priceNQT), "coin": NRS.getChain(transaction.chain).name
                                 }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                             } else if (typeof transaction.recipient == "undefined") {
                                 message = $.t("alias_sale_indirect_offer", {
-                                    "nxt": NRS.formatAmount(transaction.attachment.priceNQT), "coin": NRS.getActiveChainName()
+                                    "nxt": NRS.formatAmount(transaction.attachment.priceNQT), "coin": NRS.getChain(transaction.chain).name
                                 }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                             } else if (transaction.senderRS == NRS.accountRS) {
                                 if (transaction.attachment.priceNQT != "0") {
@@ -1332,8 +1332,8 @@ var NRS = (function (NRS, $, undefined) {
                     rows += "<tr>" +
                     "<td>" + NRS.getTransactionLink(trade[transactionField], NRS.formatTimestamp(trade.timestamp)) + "</td>" +
                     "<td>" + NRS.formatQuantity(trade.quantityQNT, asset.decimals) + "</td>" +
-                    "<td>" + NRS.formatQuantity(trade.priceNQTPerShare, NRS.getActiveChainDecimals()) + "</td>" +
-                    "<td>" + NRS.formatQuantity(NRS.multiply(trade.quantityQNT, trade.priceNQTPerShare), asset.decimals + NRS.getActiveChainDecimals()) +
+                    "<td>" + NRS.formatQuantity(trade.priceNQTPerShare, NRS.getChain(transaction.chain).decimals) + "</td>" +
+                    "<td>" + NRS.formatQuantity(NRS.multiply(trade.quantityQNT, trade.priceNQTPerShare), asset.decimals + NRS.getChain(transaction.chain).decimals) +
                     "</td>" +
                     "</tr>";
                 }
@@ -1343,7 +1343,7 @@ var NRS = (function (NRS, $, undefined) {
                 data["trades"] = $.t("no_matching_trade");
             }
             data["quantity_traded"] = [tradeQuantity, asset.decimals];
-            data["total_traded"] = NRS.formatQuantity(tradeTotal, asset.decimals + NRS.getActiveChainDecimals()) + " " + NRS.getChain(transaction.chain).name;
+            data["total_traded"] = NRS.formatQuantity(tradeTotal, asset.decimals + NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name;
         }, { isAsync: false });
 
         var infoTable = $("#transaction_info_table");
