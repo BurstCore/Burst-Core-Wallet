@@ -372,7 +372,11 @@ var NRS = (function (NRS, $, undefined) {
                 exchangeSidebar.find("a[data-coin=" + coinSearch[0] + "]").addClass("active").trigger("click");
             }
         } else if (active) {
-            exchangeSidebar.find("a[data-coin=" + active + "]").addClass("active");
+            var activeCoin = exchangeSidebar.find("a[data-coin=" + active + "]");
+            activeCoin.addClass("active");
+            if (!callback) {
+                activeCoin.trigger("click");
+            }
         }
 
         if (isSearch || coins.length >= 10) {
