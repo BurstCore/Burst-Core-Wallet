@@ -25,7 +25,7 @@ exports.load = function(callback) {
             console.log("Started");
 
             // Load the necessary node modules and assign them to the global scope
-            // the NXT client was note designed with modularity in mind there we have
+            // the NXT client was not designed with modularity in mind therefore we have
             // to include every 3rd party library function in the global scope
             global.jQuery = require("jquery")(window);
             global.$ = global.jQuery;
@@ -67,6 +67,7 @@ exports.load = function(callback) {
             global.client = Object.assign(client, require('./nrs.constants'));
             global.client = Object.assign(client, require('./nrs.console'));
             global.client = Object.assign(client, require('./nrs.util'));
+            global.client = Object.assign(client, require('./nrs.numeric'));
             client.getRemoteNodeUrl = function () {
                 return options.url;
             };

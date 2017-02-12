@@ -851,10 +851,10 @@ var NRS = (function (NRS, $, undefined) {
 			case 5:
                 match = response.errorDescription.match(/Unknown (.*)/i);
 				if (match && match[1]) {
-					return $.t("error_unknown_name", {
+                    return $.t("error_unknown_name", {
 						"name": NRS.getTranslatedFieldName(match[1]).toLowerCase()
 					}).capitalize();
-				}
+                }
 
 				if (response.errorDescription == "Account is not forging") {
 					return $.t("error_not_forging");
@@ -930,12 +930,12 @@ var NRS = (function (NRS, $, undefined) {
 			nameKey = nameKey.substring(1);
 		}
 
-		if ($.i18n.exists(nameKey)) {
+		if ($.i18n && $.i18n.exists(nameKey)) {
 			return $.t(nameKey).escapeHTML();
 		} else {
 			return nameKey.replace(/_/g, " ").escapeHTML();
 		}
-	};
+    };
 
     NRS.isControlKey = function (charCode) {
         return !(charCode >= 32 || charCode == 10 || charCode == 13);
@@ -1224,8 +1224,10 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.getMandatoryParams = function() {
         return {
-            feeNQT: "-1",
-            deadline: "1440"
+            feeNQT: "100000000",
+            feeRateNQTPerFXT: "1",
+            deadline: "1440",
+            chain: "2"
         }
     };
 

@@ -297,6 +297,81 @@ var NRS = (function (NRS, $) {
         return false;
     };
 
+    NRS.setActiveChain = function(chain) {
+        NRS.mobileSettings.chain = chain;
+        NRS.setJSONItem("mobile_settings", NRS.mobileSettings);
+        $(".coin-symbol").html(NRS.getActiveChainName());
+        $(".parent-coin-symbol").html(NRS.getParentChainName());
+        $(".shuffling-node-running-warning").html($.t("shuffling_node_running_warning",
+            { deposit: NRS.formatQuantity(NRS.getActiveChain().SHUFFLING_DEPOSIT_NQT, NRS.getActiveChainDecimals()), coin: NRS.getActiveChainName() }
+        ));
+    };
+
+    NRS.getActiveChain = function() {
+        return NRS.constants.CHAIN_PROPERTIES[NRS.mobileSettings.chain];
+    };
+
+    NRS.getActiveChainId = function() {
+        if (!(NRS.mobileSettings && NRS.mobileSettings.chain)) {
+            NRS.mobileSettings = {};
+            NRS.mobileSettings.chain = "2";
+        }
+        return NRS.mobileSettings.chain;
+    };
+
+    NRS.isParentChain = function() {
+        return NRS.getActiveChainId() == 1;
+    };
+
+    NRS.getActiveChainName = function() {
+        return String(NRS.constants.CHAIN_PROPERTIES[NRS.getActiveChainId()].name).escapeHTML();
+    };
+
+    NRS.getParentChainName = function() {
+        return String(NRS.constants.CHAIN_PROPERTIES[1].name).escapeHTML();
+    };
+
+    NRS.getActiveChainDecimals = function() {
+        return parseInt(NRS.constants.CHAIN_PROPERTIES[NRS.getActiveChainId()].decimals);
+    };
+    NRS.getActiveChainOneCoin = function() {
+        return NRS.constants.CHAIN_PROPERTIES[NRS.getActiveChainId()].ONE_COIN;
+    };
+
+    NRS.getChain = function(chain) {
+        return NRS.constants.CHAIN_PROPERTIES[chain];
+    };
+
+    NRS.getChainName = function(chain) {
+        return String(NRS.constants.CHAIN_PROPERTIES[chain].name);
+    };
+
+    NRS.getChainDecimals = function(chain) {
+        return String(NRS.constants.CHAIN_PROPERTIES[chain].decimals);
+    };
+
+    NRS.getChainIdByName = function(name) {
+        for (var chain in NRS.constants.CHAIN_PROPERTIES) {
+            if (!NRS.constants.CHAIN_PROPERTIES.hasOwnProperty(chain)) {
+                continue;
+            }
+            if (NRS.constants.CHAIN_PROPERTIES[chain].name == name) {
+                return chain;
+            }
+        }
+        return -1;
+    };
+
+    NRS.createChainSelect = function() {
+        // Build chain select box for login page
+        var chains = $('select[name="chain"]');
+        chains.empty();
+        $.each(NRS.constants.CHAIN_PROPERTIES, function(id, chain) {
+            chains.append('<option value="' + id + '">' + chain.name + '</option>');
+        });
+        chains.val(NRS.getActiveChainId());
+    };
+
     return NRS;
 }(Object.assign(NRS || {}, isNode ? global.client : {}), jQuery));
 

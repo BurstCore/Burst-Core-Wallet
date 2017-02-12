@@ -6,16 +6,18 @@ loader.load(function(NRS) {
     var quantity = 123.45;
     var price = 1.2;
     var data = {
-        asset: "", // TODO enter testnet asset id
+        asset: "15467338033207775517",
         quantityQNT: NRS.convertToQNT(quantity, decimals),
-        priceNQT: NRS.calculatePricePerWholeQNT(NRS.convertToNQT(price), decimals),
-        secretPhrase: config.secretPhrase
+        priceNQTPerShare: NRS.calculatePricePerWholeQNT(NRS.convertToNQT(price), decimals),
+        secretPhrase: config.secretPhrase,
+        chain: config.chain
     };
     data = Object.assign(
         data,
         NRS.getMandatoryParams()
     );
     NRS.sendRequest("placeBidOrder", data, function (response) {
+        NRS.logConsole("callback1");
         NRS.logConsole(JSON.stringify(response));
     });
 });
