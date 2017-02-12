@@ -37,6 +37,7 @@ final class AddPeers  {
                 for (int i=0; i<addresses.size(); i++) {
                     PeerImpl newPeer = (PeerImpl)Peers.findOrCreatePeer(addresses.get(i), true);
                     if (newPeer != null) {
+                        newPeer.setShareAddress(true);
                         if (Peers.addPeer(newPeer)) {
                             newPeer.setServices(services.get(i));
                         }
