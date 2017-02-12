@@ -19,18 +19,10 @@
  */
 var NRS = (function(NRS, $) {
 
-    function widgetVisibility(widget, depends) {
-        if (NRS.isApiEnabled(depends)) {
-            widget.show();
-        } else {
-            widget.hide();
-        }
-    }
+
 
     $(window).on('load', function() {
-        widgetVisibility($("#header_send_money"), { apis: [NRS.constants.REQUEST_TYPES.sendMoney] });
-        widgetVisibility($("#header_transfer_currency"), { apis: [NRS.constants.REQUEST_TYPES.transferCurrency] });
-        widgetVisibility($("#header_send_message"), { apis: [NRS.constants.REQUEST_TYPES.sendMessage] });
+
         if (!NRS.isFundingMonitorSupported()) {
             $("#funding_monitor_menu_item").hide();
         }

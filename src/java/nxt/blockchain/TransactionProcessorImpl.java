@@ -782,12 +782,12 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
                 FxtTransaction poolTransaction = (FxtTransaction)unconfirmedTransactions.next().getTransaction();
                 if (poolTransaction.getType() == ChildBlockFxtTransactionType.INSTANCE
                         && ((ChildBlockFxtTransaction)poolTransaction).getChildChain() == transaction.getChildChain())  {
+                    try {
+                        poolTransaction.validate();
+                    } catch (NxtException.ValidationException e) {
+                        continue;
+                    }
                     if (poolTransaction.getFee() >= transaction.getFee()) { // transaction with same or higher fee already in the pool
-                        try {
-                            poolTransaction.validate();
-                        } catch (NxtException.ValidationException e) {
-                            continue;
-                        }
                         if (((ChildBlockFxtTransactionImpl)poolTransaction).containsAll(transaction.getChildTransactions())) {
                             throw new NxtException.NotCurrentlyValidException("A ChildBlockTransaction with same or higher fee "
                                     + "and including the same child transactions is already in the pool");

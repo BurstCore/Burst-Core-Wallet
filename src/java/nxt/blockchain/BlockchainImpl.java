@@ -32,7 +32,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -205,22 +204,7 @@ public final class BlockchainImpl implements Blockchain {
 
     @Override
     public List<Long> getBlockIdsAfter(long blockId, int limit) {
-        // Check the block cache
-        List<Long> result = new ArrayList<>(BlockDb.BLOCK_CACHE_SIZE);
-        synchronized(BlockDb.blockCache) {
-            BlockImpl block = BlockDb.blockCache.get(blockId);
-            if (block != null) {
-                Collection<BlockImpl> cacheMap = BlockDb.heightMap.tailMap(block.getHeight() + 1).values();
-                for (BlockImpl cacheBlock : cacheMap) {
-                    if (result.size() >= limit) {
-                        break;
-                    }
-                    result.add(cacheBlock.getId());
-                }
-                return result;
-            }
-        }
-        // Search the database
+        List<Long> result = new ArrayList<>();
         try (Connection con = BlockDb.getConnection();
                 PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block "
                             + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
@@ -243,22 +227,7 @@ public final class BlockchainImpl implements Blockchain {
         if (limit <= 0) {
             return Collections.emptyList();
         }
-        // Check the block cache
-        List<BlockImpl> result = new ArrayList<>(BlockDb.BLOCK_CACHE_SIZE);
-        synchronized(BlockDb.blockCache) {
-            BlockImpl block = BlockDb.blockCache.get(blockId);
-            if (block != null) {
-                Collection<BlockImpl> cacheMap = BlockDb.heightMap.tailMap(block.getHeight() + 1).values();
-                for (BlockImpl cacheBlock : cacheMap) {
-                    if (result.size() >= limit) {
-                        break;
-                    }
-                    result.add(cacheBlock);
-                }
-                return result;
-            }
-        }
-        // Search the database
+        List<BlockImpl> result = new ArrayList<>();
         try (Connection con = BlockDb.getConnection();
                 PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
                         + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
@@ -281,23 +250,7 @@ public final class BlockchainImpl implements Blockchain {
         if (blockList.isEmpty()) {
             return Collections.emptyList();
         }
-        // Check the block cache
-        List<BlockImpl> result = new ArrayList<>(BlockDb.BLOCK_CACHE_SIZE);
-        synchronized(BlockDb.blockCache) {
-            BlockImpl block = BlockDb.blockCache.get(blockId);
-            if (block != null) {
-                Collection<BlockImpl> cacheMap = BlockDb.heightMap.tailMap(block.getHeight() + 1).values();
-                int index = 0;
-                for (BlockImpl cacheBlock : cacheMap) {
-                    if (result.size() >= blockList.size() || cacheBlock.getId() != blockList.get(index++)) {
-                        break;
-                    }
-                    result.add(cacheBlock);
-                }
-                return result;
-            }
-        }
-        // Search the database
+        List<BlockImpl> result = new ArrayList<>();
         try (Connection con = BlockDb.getConnection();
                 PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
                         + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "

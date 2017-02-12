@@ -440,6 +440,7 @@ var NRS = (function(NRS, $, undefined) {
 						}
 					}, isAccountSwitch);
 					NRS.initSidebarMenu();
+                    NRS.initHeader();
 					NRS.unlock();
 
 					if (NRS.isOutdated) {
@@ -651,6 +652,7 @@ var NRS = (function(NRS, $, undefined) {
 		NRS.setServerPassword(password);
         NRS.setAccountDetailsPassword(password);
         NRS.setAdvancedModalPassword(password);
+        NRS.setTokenPassword(password);
 		if (NRS.mobileSettings.is_store_remembered_passphrase) {
 			NRS.setStrItem("savedPassphrase", password);
 		} else {

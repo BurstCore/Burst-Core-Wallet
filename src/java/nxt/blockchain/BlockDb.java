@@ -16,7 +16,6 @@
 
 package nxt.blockchain;
 
-import nxt.Nxt;
 import nxt.db.DbUtils;
 import nxt.db.Table;
 import nxt.dbschema.Db;
@@ -28,60 +27,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 public final class BlockDb {
 
     private static final Table blockTable = new Table("PUBLIC.BLOCK");
-
-    /** Block cache */
-    static final int BLOCK_CACHE_SIZE = 10;
-    static final Map<Long, BlockImpl> blockCache = new HashMap<>();
-    static final SortedMap<Integer, BlockImpl> heightMap = new TreeMap<>();
-    static final Map<Long, FxtTransactionImpl> fxtTransactionCache = new HashMap<>();
-    static final Map<ChainTransactionId, ChildTransactionImpl> childTransactionCache = new HashMap<>();
-    static final Blockchain blockchain = Nxt.getBlockchain();
-    static {
-        Nxt.getBlockchainProcessor().addListener((block) -> {
-            synchronized (blockCache) {
-                int height = block.getHeight();
-                Iterator<BlockImpl> it = blockCache.values().iterator();
-                while (it.hasNext()) {
-                    Block cacheBlock = it.next();
-                    int cacheHeight = cacheBlock.getHeight();
-                    if (cacheHeight <= height - BLOCK_CACHE_SIZE || cacheHeight >= height) {
-                        cacheBlock.getFxtTransactions().forEach(fxtTransaction -> {
-                            fxtTransactionCache.remove(fxtTransaction.getId());
-                            fxtTransaction.getChildTransactions().forEach(childTransaction -> childTransactionCache.remove(ChainTransactionId.getChainTransactionId(childTransaction)));
-                        });
-                        heightMap.remove(cacheHeight);
-                        it.remove();
-                    }
-                }
-                block.getFxtTransactions().forEach(fxtTransaction -> {
-                    fxtTransactionCache.put(fxtTransaction.getId(), (FxtTransactionImpl)fxtTransaction);
-                    fxtTransaction.getChildTransactions().forEach(childTransaction -> childTransactionCache.put(ChainTransactionId.getChainTransactionId(childTransaction), (ChildTransactionImpl)childTransaction));
-                });
-                heightMap.put(height, (BlockImpl)block);
-                blockCache.put(block.getId(), (BlockImpl)block);
-            }
-        }, BlockchainProcessor.Event.BLOCK_PUSHED);
-    }
-
-    static private void clearBlockCache() {
-        synchronized (blockCache) {
-            blockCache.clear();
-            heightMap.clear();
-            fxtTransactionCache.clear();
-            childTransactionCache.clear();
-        }
-    }
 
     static Connection getConnection() throws SQLException {
         return blockTable.getConnection();
@@ -92,14 +43,6 @@ public final class BlockDb {
     }
 
     static BlockImpl findBlock(long blockId, boolean loadTransactions) {
-        // Check the block cache
-        synchronized (blockCache) {
-            BlockImpl block = blockCache.get(blockId);
-            if (block != null) {
-                return block;
-            }
-        }
-        // Search the database
         try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE id = ?")) {
             pstmt.setLong(1, blockId);
@@ -120,14 +63,6 @@ public final class BlockDb {
     }
 
     static boolean hasBlock(long blockId, int height) {
-        // Check the block cache
-        synchronized(blockCache) {
-            BlockImpl block = blockCache.get(blockId);
-            if (block != null) {
-                return block.getHeight() <= height;
-            }
-        }
-        // Search the database
         try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT height FROM block WHERE id = ?")) {
             pstmt.setLong(1, blockId);
@@ -140,14 +75,6 @@ public final class BlockDb {
     }
 
     static long findBlockIdAtHeight(int height) {
-        // Check the cache
-        synchronized(blockCache) {
-            BlockImpl block = heightMap.get(height);
-            if (block != null) {
-                return block.getId();
-            }
-        }
-        // Search the database
         try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
@@ -163,14 +90,6 @@ public final class BlockDb {
     }
 
     public static BlockImpl findBlockAtHeight(int height) {
-        // Check the cache
-        synchronized(blockCache) {
-            BlockImpl block = heightMap.get(height);
-            if (block != null) {
-                return block;
-            }
-        }
-        // Search the database
         try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
@@ -295,13 +214,6 @@ public final class BlockDb {
                     pstmt.setLong(2, block.getPreviousBlockId());
                     pstmt.executeUpdate();
                 }
-                BlockImpl previousBlock;
-                synchronized (blockCache) {
-                    previousBlock = blockCache.get(block.getPreviousBlockId());
-                }
-                if (previousBlock != null) {
-                    previousBlock.setNextBlockId(block.getId());
-                }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -370,8 +282,6 @@ public final class BlockDb {
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        } finally {
-            clearBlockCache();
         }
     }
 
@@ -418,8 +328,6 @@ public final class BlockDb {
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        } finally {
-            clearBlockCache();
         }
     }
 

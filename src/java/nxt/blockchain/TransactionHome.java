@@ -48,14 +48,6 @@ public final class TransactionHome {
     }
 
     static FxtTransactionImpl findFxtTransaction(long transactionId) {
-        // Check the block cache
-        synchronized (BlockDb.blockCache) {
-            FxtTransactionImpl transaction = BlockDb.fxtTransactionCache.get(transactionId);
-            if (transaction != null) {
-                return transaction;
-            }
-        }
-        // Search the database
         try (Connection con = Db.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction_fxt WHERE id = ? ORDER BY height DESC")) {
             pstmt.setLong(1, transactionId);
@@ -80,22 +72,6 @@ public final class TransactionHome {
 
     public TransactionImpl findTransaction(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
-        // Check the cache
-        synchronized(BlockDb.blockCache) {
-            if (chain == FxtChain.FXT) {
-                TransactionImpl transaction = BlockDb.fxtTransactionCache.get(transactionId);
-                if (transaction != null) {
-                    return (transaction.getHeight() <= height &&
-                            Arrays.equals(transaction.getFullHash(), fullHash) ? transaction : null);
-                }
-            } else {
-                TransactionImpl transaction = BlockDb.childTransactionCache.get(new ChainTransactionId(chain.getId(), fullHash));
-                if (transaction != null && transaction.getHeight() <= height) {
-                    return transaction;
-                }
-            }
-        }
-        // Search the database
         try (Connection con = transactionTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
@@ -120,14 +96,6 @@ public final class TransactionHome {
     }
 
     static boolean hasFxtTransaction(long transactionId, int height) {
-        // Check the block cache
-        synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.fxtTransactionCache.get(transactionId);
-            if (transaction != null) {
-                return (transaction.getHeight() <= height);
-            }
-        }
-        // Search the database
         try (Connection con = Db.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT height FROM transaction_fxt WHERE id = ? ORDER BY height DESC")) {
             pstmt.setLong(1, transactionId);
@@ -161,22 +129,6 @@ public final class TransactionHome {
     }
 
     public boolean hasTransaction(byte[] fullHash, long transactionId, int height) {
-        // Check the block cache
-        synchronized(BlockDb.blockCache) {
-            if (chain == FxtChain.FXT) {
-                TransactionImpl transaction = BlockDb.fxtTransactionCache.get(transactionId);
-                if (transaction != null) {
-                    return (transaction.getHeight() <= height &&
-                            Arrays.equals(transaction.getFullHash(), fullHash));
-                }
-            } else {
-                TransactionImpl transaction = BlockDb.childTransactionCache.get(new ChainTransactionId(chain.getId(), fullHash));
-                if (transaction != null) {
-                    return transaction.getHeight() <= height;
-                }
-            }
-        }
-        // Search the database
         try (Connection con = transactionTable.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT full_hash, height FROM " + transactionTable.getSchemaTable() + " WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
@@ -237,14 +189,6 @@ public final class TransactionHome {
     }
 
     static List<FxtTransactionImpl> findBlockTransactions(long blockId) {
-        // Check the block cache
-        synchronized(BlockDb.blockCache) {
-            BlockImpl block = BlockDb.blockCache.get(blockId);
-            if (block != null) {
-                return block.getFxtTransactions();
-            }
-        }
-        // Search the database
         try (Connection con = Db.getConnection()) {
             return findBlockTransactions(con, blockId);
         } catch (SQLException e) {

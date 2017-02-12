@@ -209,6 +209,18 @@ var NRS = (function(NRS, $) {
         parentMenu.append(menuHTML);
     };
 
+    function widgetVisibility(widget, depends) {
+        if (NRS.isApiEnabled(depends)) {
+            widget.show();
+        } else {
+            widget.hide();
+        }
+    }
+    NRS.initHeader = function() {
+        widgetVisibility($("#header_send_money"), { apis: [NRS.constants.REQUEST_TYPES.sendMoney] });
+        widgetVisibility($("#header_send_message"), { apis: [NRS.constants.REQUEST_TYPES.sendMessage] });
+    };
+
     NRS.getUrlParameter = function (param) {
 		var url = window.location.search.substring(1);
 		var urlParams = url.split('&');

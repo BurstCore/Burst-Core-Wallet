@@ -1227,13 +1227,15 @@ NRS.addPagination = function () {
                                 }
                             }
                             NRS.sendRequest("getLastTrades", {
-                                "assets": assets
+                                "assets": assets,
+                                "includeAssetInfo": true
                             }, function (response) {
                                 if (response.trades && response.trades.length) {
                                     var assetTotal = 0;
                                     for (i = 0; i < response.trades.length; i++) {
                                         var trade = response.trades[i];
-                                        assetTotal += assetBalancesMap[trade.asset] * trade.priceNQTPerShare / NRS.getOneCoin(decimals);
+                                        var quantity = NRS.convertToQNTf(assetBalancesMap[trade.asset], trade.decimals);
+                                        assetTotal += quantity * trade.priceNQTPerShare / NRS.getOneCoin(decimals);
                                     }
                                     $("#account_assets_balance").html(NRS.formatStyledAmount(new Big(assetTotal).toFixed(decimals)));
                                     $("#account_nr_assets").html(response.trades.length);
@@ -1267,13 +1269,15 @@ NRS.addPagination = function () {
                                 }
                             }
                             NRS.sendRequest("getLastExchanges", {
-                                "currencies": currencies
+                                "currencies": currencies,
+                                "includeCurrencyInfo": true
                             }, function (response) {
                                 if (response.exchanges && response.exchanges.length) {
                                     var currencyTotal = 0;
                                     for (i = 0; i < response.exchanges.length; i++) {
                                         var exchange = response.exchanges[i];
-                                        currencyTotal += currencyBalancesMap[exchange.currency] * exchange.rateNQTPerUnit / NRS.getOneCoin(decimals);
+                                        var units = NRS.convertToQNTf(currencyBalancesMap[exchange.currency], exchange.decimals);
+                                        currencyTotal += units * exchange.rateNQTPerUnit / NRS.getOneCoin(decimals);
                                     }
                                     $("#account_currencies_balance").html(NRS.formatStyledAmount(new Big(currencyTotal).toFixed(decimals)));
                                 } else {
