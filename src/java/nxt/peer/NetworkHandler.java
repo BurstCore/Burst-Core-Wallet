@@ -699,7 +699,10 @@ public final class NetworkHandler implements Runnable {
                     if (count <= 0) {
                         if (count < 0) {
                             Logger.logDebugMessage("Connection with " + peer.getHost() + " closed by peer");
-                            peer.getKeyEvent().update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                            KeyEvent keyEvent = peer.getKeyEvent();
+                            if (keyEvent != null) {
+                                keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                            }
                             Peers.peersService.execute(peer::disconnectPeer);
                         }
                         break;
@@ -756,7 +759,10 @@ public final class NetworkHandler implements Runnable {
             }
         } catch (IOException exc) {
             Logger.logDebugMessage(String.format("%s: Peer %s", exc.getMessage(), peer.getHost()));
-            peer.getKeyEvent().update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+            KeyEvent keyEvent = peer.getKeyEvent();
+            if (keyEvent != null) {
+                keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+            }
             Peers.peersService.execute(peer::disconnectPeer);
         }
     }
@@ -823,7 +829,10 @@ public final class NetworkHandler implements Runnable {
             }
         } catch (IOException exc) {
             Logger.logDebugMessage(String.format("%s: Peer %s", exc.getMessage(), peer.getHost()));
-            peer.getKeyEvent().update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+            KeyEvent keyEvent = peer.getKeyEvent();
+            if (keyEvent != null) {
+                keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+            }
             Peers.peersService.execute(peer::disconnectPeer);
         }
     }
