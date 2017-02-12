@@ -746,7 +746,7 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Get the network section key event
+     * Get the network selection key event
      *
      * @return                          Selection key event
      */
