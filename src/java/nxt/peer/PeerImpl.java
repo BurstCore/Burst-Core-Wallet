@@ -1060,8 +1060,8 @@ final class PeerImpl implements Peer {
         if (response instanceof NetworkMessage.ErrorMessage) {
             NetworkMessage.ErrorMessage error = (NetworkMessage.ErrorMessage)response;
             if (error.isSevereError()) {
-                Logger.logDebugMessage(String.format("Error returned by %s for %s[%d] message",
-                        host, error.getErrorName(), error.getMessageId()));
+                Logger.logDebugMessage(String.format("Error returned by %s for %s[%d] message: %s",
+                        host, error.getErrorName(), error.getMessageId(), error.getErrorMessage()));
                 disconnectPeer();
             }
             return null;
