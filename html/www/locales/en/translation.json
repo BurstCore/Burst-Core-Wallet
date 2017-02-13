@@ -1940,5 +1940,6 @@
   "group_coin_help": "Choose a group for this coin.",
   "coin_exchange_history": "Coin Exchange History",
   "success_coin_group_add": "Coin added to group successfully.",
-  "success_coin_group_removal": "Coin removed from group successfully."
+  "success_coin_group_removal": "Coin removed from group successfully.",
+  "poll": "Poll"
 }

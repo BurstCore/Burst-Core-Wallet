@@ -74,6 +74,7 @@ var NRS = (function(NRS, $, undefined) {
 					NRS.hasMorePages = true;
 					response.polls.pop();
 				}
+                var rows = "";
 				for (var i = 0; i < response.polls.length; i++) {
 					var poll = response.polls[i];
 					if (NRS.currentPage != "polls") {
@@ -82,13 +83,12 @@ var NRS = (function(NRS, $, undefined) {
 					}
 					polls[poll.poll] = poll;
 
-					var rows = "";
 					var pollDescription = String(poll.description);
 					if (pollDescription.length > 100) {
 						pollDescription = pollDescription.substring(0, 100) + "...";
 					}
 					rows += "<tr>";
-					rows += "<td>" + NRS.escapeRespStr(poll.poll) + "</td>";
+					rows += "<td>" + NRS.getEntityLink({ text: poll.name, request: "getPoll", key: "poll", id: poll.poll }) + "</td>";
 					rows += "<td>" + NRS.escapeRespStr(pollDescription) + "</td>";
 					rows += "<td>" + NRS.getAccountLink(poll, "account") + "</td>";
 					rows += "<td>" + NRS.formatTimestamp(poll.timestamp) + "</td>";
@@ -97,11 +97,11 @@ var NRS = (function(NRS, $, undefined) {
 					rows += "<a href='#' class='follow_button btn btn-xs btn-default' data-follow='" + poll.poll + "'>" + $.t('vote_follow_btn_short') + "</a> ";
 					rows += "<a href='#' class='view_button btn btn-xs btn-default' data-view='" + poll.poll + "'>" + $.t('view') + "</a></nobr></td>";
 					rows += "</tr>";
-					NRS.dataLoaded(rows);
-					_setFollowButtonStates();
-					_setVoteButtonStates();
 				}
-			} else {
+                NRS.dataLoaded(rows);
+                _setFollowButtonStates();
+                _setVoteButtonStates();
+            } else {
 				NRS.dataLoaded();
 			}
 		});
@@ -119,6 +119,7 @@ var NRS = (function(NRS, $, undefined) {
 		}, function(response) {
 			if (response.polls && response.polls.length) {
 				var polls = {};
+                var rows = "";
 				for (var i = 0; i < response.polls.length; i++) {
 					var poll = response.polls[i];
 					if (NRS.currentPage != "my_polls") {
@@ -126,13 +127,12 @@ var NRS = (function(NRS, $, undefined) {
 						return;
 					}
 					polls[poll.poll] = poll;
-                    var rows = "";
 					var pollDescription = String(poll.description);
 					if (pollDescription.length > 100) {
 						pollDescription = pollDescription.substring(0, 100) + "...";
 					}
 					rows += "<tr>";
-					rows += "<td>" + NRS.escapeRespStr(poll.poll) + "</td>";
+					rows += "<td>" + NRS.getEntityLink({ text: poll.name, request: "getPoll", key: "poll", id: poll.poll }) + "</td>";
 					rows += "<td>" + NRS.escapeRespStr(pollDescription) + "</td>";
 					rows += "<td>" + NRS.getAccountLink(poll, "account") + "</td>";
 					rows += "<td>" + NRS.formatTimestamp(poll.timestamp) + "</td>";
@@ -145,11 +145,11 @@ var NRS = (function(NRS, $, undefined) {
 					}
 					rows += "<a href='#' class='follow_button btn btn-xs btn-default' data-follow='" + poll.poll + "'>" + $.t('vote_follow_btn_short') + "</a></td>";
 					rows += "</tr>";
-					NRS.dataLoaded(rows);
-					_setFollowButtonStates();
-					_setVoteButtonStates();
 				}
-			} else {
+                NRS.dataLoaded(rows);
+                _setFollowButtonStates();
+                _setVoteButtonStates();
+            } else {
 				NRS.dataLoaded();
 			}
 		});
