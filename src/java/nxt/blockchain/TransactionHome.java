@@ -52,10 +52,8 @@ public final class TransactionHome {
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction_fxt WHERE id = ? ORDER BY height DESC")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    if (rs.getInt("height") <= Integer.MAX_VALUE) {
-                        return (FxtTransactionImpl)TransactionImpl.loadTransaction(FxtChain.FXT, rs);
-                    }
+                if (rs.next()) {
+                    return (FxtTransactionImpl)TransactionImpl.loadTransaction(FxtChain.FXT, rs);
                 }
                 return null;
             }
