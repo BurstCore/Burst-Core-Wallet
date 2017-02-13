@@ -607,7 +607,10 @@ public final class NetworkHandler implements Runnable {
         try {
             channel.finishConnect();
             if (peer.getState() != Peer.State.CONNECTED) {
-                peer.getKeyEvent().update(SelectionKey.OP_READ, SelectionKey.OP_CONNECT);
+                KeyEvent keyEvent = peer.getKeyEvent();
+                if (keyEvent != null) {
+                    keyEvent.update(SelectionKey.OP_READ, SelectionKey.OP_CONNECT);
+                }
                 Peers.peersService.execute(() -> {
                     peer.connectComplete(true);
                     sendGetInfoMessage(peer);
@@ -720,14 +723,20 @@ public final class NetworkHandler implements Runnable {
                     if (!Arrays.equals(hdrBytes, MESSAGE_HEADER_MAGIC)) {
                         Logger.logDebugMessage("Incorrect message header received from " + peer.getHost());
                         Logger.logDebugMessage("  " + Arrays.toString(hdrBytes));
-                        peer.getKeyEvent().update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                        KeyEvent keyEvent = peer.getKeyEvent();
+                        if (keyEvent != null) {
+                            keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                        }
                         Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     }
                     if ( length < 1 || length > MAX_MESSAGE_SIZE) {
                         Logger.logDebugMessage("Message length " + length + " for message from " + peer.getHost()
                                 + " is not valid");
-                        peer.getKeyEvent().update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                        KeyEvent keyEvent = peer.getKeyEvent();
+                        if (keyEvent != null) {
+                            keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                        }
                         Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     }
@@ -751,7 +760,10 @@ public final class NetworkHandler implements Runnable {
                     buffer.position(MESSAGE_HEADER_LENGTH);
                     int inputCount = peer.incrementInputCount();
                     if (inputCount >= MAX_PENDING_MESSAGES) {
-                        peer.getKeyEvent().update(0, SelectionKey.OP_READ);
+                        KeyEvent keyEvent = peer.getKeyEvent();
+                        if (keyEvent != null) {
+                            keyEvent.update(0, SelectionKey.OP_READ);
+                        }
                     }
                     MessageHandler.processMessage(peer, buffer);
                     break;
@@ -788,7 +800,10 @@ public final class NetworkHandler implements Runnable {
                 if (buffer == null) {
                     NetworkMessage message = peer.getQueuedMessage();
                     if (message == null) {
-                        peer.getKeyEvent().update(0, SelectionKey.OP_WRITE);
+                        KeyEvent keyEvent = peer.getKeyEvent();
+                        if (keyEvent != null) {
+                            keyEvent.update(0, SelectionKey.OP_WRITE);
+                        }
                         break;
                     }
                     int length = message.getLength();
@@ -802,13 +817,19 @@ public final class NetworkHandler implements Runnable {
                     } catch (BufferOverflowException exc) {
                         Logger.logErrorMessage("Buffer is too short for '" + message.getMessageName()
                                 + "' message to " + peer.getHost());
-                        peer.getKeyEvent().update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                        KeyEvent keyEvent = peer.getKeyEvent();
+                        if (keyEvent != null) {
+                            keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                        }
                         Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     } catch (Exception exc) {
                         Logger.logErrorMessage("Unable to process '" + message.getMessageName()
                                 + "' message to " + peer.getHost());
-                        peer.getKeyEvent().update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                        KeyEvent keyEvent = peer.getKeyEvent();
+                        if (keyEvent != null) {
+                            keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                        }
                         Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     }
