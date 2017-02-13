@@ -16,7 +16,6 @@
 
 package nxt.blockchain;
 
-import nxt.Nxt;
 import nxt.NxtException;
 import nxt.db.Table;
 import nxt.dbschema.Db;
@@ -90,7 +89,7 @@ public final class TransactionHome {
     }
 
     static boolean hasFxtTransaction(long transactionId) {
-        return hasFxtTransaction(transactionId, Nxt.getBlockchain().getHeight());
+        return hasFxtTransaction(transactionId, Integer.MAX_VALUE);
     }
 
     static boolean hasFxtTransaction(long transactionId, int height) {

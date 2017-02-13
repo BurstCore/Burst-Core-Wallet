@@ -604,12 +604,24 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         try {
             transactions.forEach(fxt -> {
                 FxtTransactionImpl fxtTransaction = (FxtTransactionImpl)fxt;
-                fxtTransaction.getChildTransactions().forEach(childTransaction -> {
-                    childTransaction.unsetBlock();
-                    waitingTransactions.add(childTransaction.newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(childTransaction.getTimestamp())), true));
-                });
-                fxtTransaction.unsetBlock();
-                waitingTransactions.add(fxtTransaction.newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(fxtTransaction.getTimestamp())), true));
+                if (! TransactionHome.hasFxtTransaction(fxtTransaction.getId(), Integer.MAX_VALUE)) {
+                    boolean keep = true;
+                    if (fxtTransaction instanceof ChildBlockFxtTransactionImpl) {
+                        TransactionHome transactionHome = ((ChildBlockFxtTransactionImpl) fxtTransaction).getChildChain().getTransactionHome();
+                        for (ChildTransactionImpl childTransaction : fxtTransaction.getChildTransactions()) {
+                            if (! transactionHome.hasTransaction(childTransaction)) {
+                                childTransaction.unsetBlock();
+                                waitingTransactions.add(childTransaction.newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(childTransaction.getTimestamp())), true));
+                            } else {
+                                keep = false;
+                            }
+                        }
+                    }
+                    if (keep) {
+                        fxtTransaction.unsetBlock();
+                        waitingTransactions.add(fxtTransaction.newUnconfirmedTransaction(Math.min(currentTime, Convert.fromEpochTime(fxtTransaction.getTimestamp())), true));
+                    }
+                }
             });
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
