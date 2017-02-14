@@ -569,7 +569,6 @@ public final class NetworkHandler implements Runnable {
             InetSocketAddress remoteAddress = new InetSocketAddress(address, peer.getPort());
             SocketChannel channel = SocketChannel.open();
             channel.configureBlocking(false);
-            channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
             channel.bind(null);
             channel.connect(remoteAddress);
             peer.setConnectionAddress(remoteAddress);
@@ -648,7 +647,6 @@ public final class NetworkHandler implements Runnable {
                     Peers.peersService.execute(peer::disconnectPeer);
                 } else {
                     channel.configureBlocking(false);
-                    channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                     peer.setConnectionAddress(remoteAddress);
                     peer.setChannel(channel);
                     connectionMap.put(remoteAddress.getAddress(), peer);
