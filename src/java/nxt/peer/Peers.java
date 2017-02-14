@@ -695,7 +695,7 @@ public final class Peers {
     private static final Runnable getMorePeersThread = () -> {
         try {
             Peer peer = getAnyPeer(getConnectedPeers());
-            if (peer != null) {
+            if (peer != null && peer.getState() == Peer.State.CONNECTED) {
                 //
                 // Request a list of connected peers (the response is asynchronous)
                 //
