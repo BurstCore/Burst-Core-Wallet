@@ -644,7 +644,8 @@ public final class NetworkHandler implements Runnable {
                     Logger.logDebugMessage("Peer is blacklisted: Connection rejected from " + hostAddress);
                 } else if (connectionMap.get(remoteAddress.getAddress()) != null) {
                     channel.close();
-                    Logger.logDebugMessage("Connection already established with " + hostAddress);
+                    Logger.logDebugMessage("Connection already established with " + hostAddress + ", disconnecting");
+                    Peers.peersService.execute(peer::disconnectPeer);
                 } else {
                     channel.configureBlocking(false);
                     channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
