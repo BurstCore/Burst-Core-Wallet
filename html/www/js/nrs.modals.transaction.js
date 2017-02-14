@@ -1224,7 +1224,7 @@ var NRS = (function (NRS, $, undefined) {
                 };
                 var childTransactions = "";
                 for (i = 0; i < transaction.attachment.childTransactionFullHashes.length; i++) {
-                    childTransactions = NRS.getTransactionLink(transaction.attachment.childTransactionFullHashes[i], null, false, transaction.attachment.chain) + "<p>";
+                    childTransactions += NRS.getTransactionLink(transaction.attachment.childTransactionFullHashes[i], null, false, transaction.attachment.chain) + "<br>";
                 }
                 data.transactions_formatted_html = childTransactions;
                 infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
