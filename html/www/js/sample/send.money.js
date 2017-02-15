@@ -12,7 +12,7 @@ loader.load(function(NRS) {
     // Compose the request data
     data = Object.assign(
         data,
-        NRS.getMandatoryParams(),
+        config.mandatoryParams,
         NRS.encryptMessage(NRS, "note to myself", config.secretPhrase, NRS.getPublicKey(converters.stringToHexString(config.secretPhrase)), true),
         NRS.encryptMessage(NRS, "message to recipient", config.secretPhrase, config.recipientPublicKey, false)
     );

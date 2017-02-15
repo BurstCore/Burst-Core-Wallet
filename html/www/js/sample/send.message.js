@@ -9,7 +9,7 @@ loader.load(function(NRS) {
     };
     data = Object.assign(
         data,
-        NRS.getMandatoryParams(),
+        config.mandatoryParams,
         NRS.encryptMessage(NRS, "message to recipient", config.secretPhrase, config.recipientPublicKey, false)
     );
     NRS.sendRequest("sendMessage", data, function (response) {

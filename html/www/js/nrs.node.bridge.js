@@ -1,7 +1,8 @@
 const options = {
     url: "http://localhost:26876", // URL of NXT remote node
     secretPhrase: "", // Secret phrase of the current account
-    isTestNet: false // Select testnet or mainnet
+    isTestNet: false, // Select testnet or mainnet
+    chain: "2" // Default to IGNIS chain
 };
 
 exports.init = function(params) {
@@ -11,6 +12,7 @@ exports.init = function(params) {
     options.url = params.url;
     options.secretPhrase = params.secretPhrase;
     options.isTestNet = params.isTestNet;
+    options.chain = params.chain;
     return this;
 };
 
@@ -56,11 +58,13 @@ exports.load = function(callback) {
             // The main challenge is that in node every JavaScript file is a module with it's own scope
             // however the NXT client relies on a global browser scope which defines the NRS object
             // The idea here is to gradually compose the NRS object by adding functions from each
-            // JavaScript files into the existing global.client scope
+            // JavaScript file into the existing global.client scope
             // In addition we initialize some client specific functions which typically rely on the browser or
             // the login page.
             global.client = {};
             global.client.isTestNet = options.isTestNet;
+            global.client.mobileSettings = {};
+            global.client.mobileSettings.chain = options.chain;
             global.client = Object.assign(client, require('./nrs.encryption'));
             global.client = Object.assign(client, require('./nrs.feature.detection'));
             global.client = Object.assign(client, require('./nrs.transactions.types'));
@@ -68,13 +72,13 @@ exports.load = function(callback) {
             global.client = Object.assign(client, require('./nrs.console'));
             global.client = Object.assign(client, require('./nrs.util'));
             global.client = Object.assign(client, require('./nrs.numeric'));
-            client.getRemoteNodeUrl = function () {
+            global.client.getRemoteNodeUrl = function () {
                 return options.url;
             };
-            client.account = client.getAccountId(options.secretPhrase);
-            client.accountRS = converters.convertNumericToRSAccountFormat(client.account);
+            global.client.account = client.getAccountId(options.secretPhrase);
+            global.client.accountRS = converters.convertNumericToRSAccountFormat(client.account);
             global.client = Object.assign(client, require('./nrs'));
-            client.accountInfo = {};
+            global.client.accountInfo = {};
             global.client = Object.assign(client, require('./nrs.server'));
             global.client = Object.assign(client, require('./nrs.constants'));
             global.client.constants = {};
@@ -83,6 +87,7 @@ exports.load = function(callback) {
             // return the correct constants.
             var constants = require('./data/constants');
             global.client.processConstants(constants);
+            global.client.options;
             callback(global.client);
         } catch (e) {
             console.log(e.message);

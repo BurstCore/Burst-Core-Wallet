@@ -5,7 +5,7 @@ try {
 }
 
 try {
-    loader = require("nxt-blockchain"); // when using the NPM module
+    loader = require("ardor-blockchain"); // when using the NPM module
 } catch(e) {
     console.log("Development mode");
 }

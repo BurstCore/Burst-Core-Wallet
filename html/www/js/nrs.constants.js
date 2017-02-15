@@ -312,10 +312,6 @@ var NRS = (function (NRS, $) {
     };
 
     NRS.getActiveChainId = function() {
-        if (!(NRS.mobileSettings && NRS.mobileSettings.chain)) {
-            NRS.mobileSettings = {};
-            NRS.mobileSettings.chain = "2";
-        }
         return NRS.mobileSettings.chain;
     };
 

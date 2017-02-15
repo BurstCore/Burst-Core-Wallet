@@ -14,7 +14,7 @@ loader.load(function(NRS) {
     };
     data = Object.assign(
         data,
-        NRS.getMandatoryParams()
+        config.mandatoryParams
     );
     NRS.sendRequest("placeAskOrder", data, function (response) {
         NRS.logConsole("callback1");
