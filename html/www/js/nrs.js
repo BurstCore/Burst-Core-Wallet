@@ -868,6 +868,11 @@ NRS.addPagination = function () {
 					a.attr('href', '#');
 					a.attr('data-toggle', 'modal');
 					a.attr('data-target', modalId);
+                    var actionClass = modal.data("actionclass");
+                    if (actionClass) {
+                        a.addClass(actionClass);
+                    }
+
 					Object.keys(attributes).forEach(function (key) {
 						a.attr(key, attributes[key]);
 					});

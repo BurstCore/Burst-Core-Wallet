@@ -577,7 +577,7 @@ var NRS = (function(NRS, $) {
 			if (url.lastIndexOf("#") == url.length-1) {
 				url = url.substr(0, url.length - 1);
 			}
-			url += "?account=" + NRS.accountRS + "&chain=" + NRS.getActiveChainId() +
+			url += "?account=" + NRS.accountRS + "&chain=" + NRS.getActiveChainName() +
 				"&modal=transaction_info_modal" +
 				"&fullHash=" + fullHash +
 				"&sharedKey=" + sharedKey;
