@@ -16,6 +16,7 @@
 
 package nxt.dbschema;
 
+import nxt.blockchain.BlockchainProcessorImpl;
 import nxt.db.BasicDb;
 import nxt.db.DbVersion;
 
@@ -403,6 +404,11 @@ public class ChildDbVersion extends DbVersion {
             case 141:
                 apply("CREATE INDEX IF NOT EXISTS asset_dividend_height_idx ON asset_dividend (height)");
             case 142:
+                apply("ALTER TABLE goods ADD COLUMN IF NOT EXISTS full_hash BINARY(32)");
+            case 143:
+                BlockchainProcessorImpl.getInstance().scheduleScan(0, false);
+                apply(null);
+            case 144:
                 return;
             default:
                 throw new RuntimeException("Child chain " + schema + " database inconsistent with code, at update " + nextUpdate

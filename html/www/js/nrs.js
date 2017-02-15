@@ -1165,7 +1165,7 @@ NRS.addPagination = function () {
                         var tile = $(tileSelector);
                         tile.detach().appendTo(destinationSelector);
 
-                        tile.removeClass("col-lg-4 col-lg-6").addClass("col-lg-3");
+                        tile.removeClass("col-lg-4 col-lg-6").addClass("col-lg-3 visible-tile");
                     }
                     var hasApiAE = NRS.isApiEnabled({ tags: [ NRS.constants.API_TAGS.AE ] });
                     var hasApiMS = NRS.isApiEnabled({ tags: [ NRS.constants.API_TAGS.MS ] });
@@ -1251,7 +1251,7 @@ NRS.addPagination = function () {
                             }
                         }
                     } else {
-                        $("#dashboard_assets_val_div").hide();
+                        $("#dashboard_assets_val_div").hide().removeClass('visible-tile');
                         firstRowTiles--;
                     }
 
@@ -1289,7 +1289,7 @@ NRS.addPagination = function () {
                             $("#account_nr_currencies").html(0);
                         }
                     } else {
-                        $("#dashboard_currencies_val_div").hide();
+                        $("#dashboard_currencies_val_div").hide().removeClass('visible-tile');
                         firstRowTiles--;
                     }
 
@@ -1314,7 +1314,7 @@ NRS.addPagination = function () {
                             }
                         });
                     } else {
-                        $("#dashboard_messages_div").hide();
+                        $("#dashboard_messages_div").hide().removeClass('visible-tile');
                         secondRowTiles--;
                     }
 
@@ -1330,7 +1330,7 @@ NRS.addPagination = function () {
                             }
                         });
                     } else {
-                        $("#dashboard_aliases_div").hide();
+                        $("#dashboard_aliases_div").hide().removeClass('visible-tile');
                         secondRowTiles--;
                     }
 
@@ -1362,36 +1362,36 @@ NRS.addPagination = function () {
                             }
                         });
                     } else {
-                        $("#dashboard_purchased_products_div").hide();
+                        $("#dashboard_purchased_products_div").hide().removeClass('visible-tile');
                         firstRowTiles--;
 
-                        $("#dashboard_pending_products_div").hide();
+                        $("#dashboard_pending_products_div").hide().removeClass('visible-tile');
                         secondRowTiles--;
                     }
 
                     if (firstRowTiles + secondRowTiles <= 4) {
                         //make everything on one row
-                        $(".dashboard_second_row > div:visible").detach().appendTo(".dashboard_first_row");
+                        $(".dashboard_second_row > div.visible-tile").detach().appendTo(".dashboard_first_row");
                         firstRowTiles = firstRowTiles + secondRowTiles;
                         secondRowTiles = 0;
                     } else {
                         if (firstRowTiles - secondRowTiles > 1) {
-                            $(".dashboard_first_row > div:visible").last().detach().appendTo(".dashboard_second_row");
+                            $(".dashboard_first_row > div.visible-tile").last().detach().appendTo(".dashboard_second_row");
                             firstRowTiles--;
                             secondRowTiles++;
                         } else if (secondRowTiles - firstRowTiles > 1) {
-                            $(".dashboard_second_row > div:visible").first().detach().appendTo(".dashboard_first_row");
+                            $(".dashboard_second_row > div.visible-tile").first().detach().appendTo(".dashboard_first_row");
                             firstRowTiles++;
                             secondRowTiles--;
                         }
                     }
 
                     if (firstRowTiles < 4) {
-                        $(".dashboard_first_row > div:visible").removeClass("col-lg-3")
+                        $(".dashboard_first_row > div.visible-tile").removeClass("col-lg-3")
                             .addClass("col-lg-" + (firstRowTiles < 3 ? "6" : "4" ));
                     }
                     if (secondRowTiles < 4) {
-                        $(".dashboard_second_row > div:visible").removeClass("col-lg-3")
+                        $(".dashboard_second_row > div.visible-tile").removeClass("col-lg-3")
                             .addClass("col-lg-" + (secondRowTiles < 3 ? "6" : "4"))
                     }
                 } else {

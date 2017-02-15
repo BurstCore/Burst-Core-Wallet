@@ -16,7 +16,6 @@
 
 package nxt.blockchain;
 
-import nxt.Nxt;
 import nxt.NxtException;
 import nxt.db.Table;
 import nxt.dbschema.Db;
@@ -52,10 +51,8 @@ public final class TransactionHome {
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction_fxt WHERE id = ? ORDER BY height DESC")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    if (rs.getInt("height") <= Integer.MAX_VALUE) {
-                        return (FxtTransactionImpl)TransactionImpl.loadTransaction(FxtChain.FXT, rs);
-                    }
+                if (rs.next()) {
+                    return (FxtTransactionImpl)TransactionImpl.loadTransaction(FxtChain.FXT, rs);
                 }
                 return null;
             }
@@ -92,7 +89,7 @@ public final class TransactionHome {
     }
 
     static boolean hasFxtTransaction(long transactionId) {
-        return hasFxtTransaction(transactionId, Nxt.getBlockchain().getHeight());
+        return hasFxtTransaction(transactionId, Integer.MAX_VALUE);
     }
 
     static boolean hasFxtTransaction(long transactionId, int height) {

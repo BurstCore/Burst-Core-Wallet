@@ -17,6 +17,8 @@ package nxt.peer;
 
 import nxt.Nxt;
 import nxt.blockchain.Block;
+import nxt.blockchain.Blockchain;
+import nxt.util.Logger;
 
 final class GetBlock {
 
@@ -32,7 +34,18 @@ final class GetBlock {
     static NetworkMessage processRequest(PeerImpl peer, NetworkMessage.GetBlockMessage request) {
         long blockId = request.getBlockId();
         byte[] excludedTransactions = request.getExcludedTransactions();
-        Block block = Nxt.getBlockchain().getBlock(blockId, true);
-        return new NetworkMessage.BlocksMessage(request.getMessageId(), block, excludedTransactions);
+        NetworkMessage message;
+        Blockchain blockchain = Nxt.getBlockchain();
+        blockchain.readLock();
+        try {
+            Block block = blockchain.getBlock(blockId, true);
+            message = new NetworkMessage.BlocksMessage(request.getMessageId(), block, excludedTransactions);
+        } catch (Exception e) {
+            Logger.logDebugMessage("Failed to get block " + Long.toUnsignedString(blockId), e);
+            throw e;
+        } finally {
+            blockchain.readUnlock();
+        }
+        return message;
     }
 }

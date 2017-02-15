@@ -1830,7 +1830,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    private void scheduleScan(int height, boolean validate) {
+    public void scheduleScan(int height, boolean validate) {
         try (Connection con = Db.getConnection();
              PreparedStatement pstmt = con.prepareStatement("UPDATE scan SET rescan = TRUE, height = ?, validate = ?")) {
             pstmt.setInt(1, height);
@@ -1990,20 +1990,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                 Logger.logDebugMessage(e.toString(), e);
                                 Logger.logDebugMessage("Applying block " + Long.toUnsignedString(currentBlockId) + " at height "
                                         + (currentBlock == null ? 0 : currentBlock.getHeight()) + " failed, deleting from database");
-                                try {
-                                    if (currentBlock != null) {
-                                        currentBlock.loadTransactions();
-                                        TransactionProcessorImpl.getInstance().processLater(currentBlock.getFxtTransactions());
-                                    }
-                                    while (rs.next()) {
-                                        currentBlock = BlockDb.loadBlock(con, rs, true);
-                                        currentBlock.loadTransactions();
-                                        TransactionProcessorImpl.getInstance().processLater(currentBlock.getFxtTransactions());
-
-                                    }
-                                } catch (RuntimeException e2) {
-                                    Logger.logErrorMessage(e2.toString(), e2);
-                                }
                                 BlockImpl lastBlock = BlockDb.deleteBlocksFrom(currentBlockId);
                                 blockchain.setLastBlock(lastBlock);
                                 popOffTo(lastBlock);

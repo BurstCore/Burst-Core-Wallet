@@ -180,7 +180,7 @@ var NRS = (function (NRS, $, undefined) {
             }
             $("#transaction_info_tab_link").tab("show");
 
-            $("#transaction_info_details_table").find("tbody").empty().append(NRS.createInfoTable(transactionDetails, true));
+            $("#transaction_info_details_table").find("tbody").empty().append(NRS.createInfoTable(transactionDetails, { fixed: true, chain: transaction.chain }));
             var infoTable = $("#transaction_info_table");
             infoTable.find("tbody").empty();
 
@@ -225,7 +225,7 @@ var NRS = (function (NRS, $, undefined) {
                 phasingDetails.finishHeight = finishHeight;
                 phasingDetails.finishIn = ((finishHeight - NRS.lastBlockHeight) > 0) ? (finishHeight - NRS.lastBlockHeight) + " " + $.t("blocks") : $.t("finished");
                 NRS.getPhasingDetails(phasingDetails, transaction.attachment);
-                $("#phasing_info_details_table").find("tbody").empty().append(NRS.createInfoTable(phasingDetails, true));
+                $("#phasing_info_details_table").find("tbody").empty().append(NRS.createInfoTable(phasingDetails, { fixed: true, chain: transaction.chain }));
                 $("#phasing_info_details_link").show();
             } else {
                 $("#phasing_info_details_link").hide();
@@ -243,7 +243,7 @@ var NRS = (function (NRS, $, undefined) {
                     "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
                 };
 
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "ArbitraryMessage")) {
                 var $output = $("#transaction_info_output_top");
@@ -320,7 +320,7 @@ var NRS = (function (NRS, $, undefined) {
                     "data_formatted_html": transaction.attachment.uri.autoLink()
                 };
                 data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "PollCreation")) {
                 data = {
@@ -362,7 +362,7 @@ var NRS = (function (NRS, $, undefined) {
                     data["sender"] = NRS.getAccountTitle(transaction, "sender");
                 }
                 data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "VoteCasting")) {
                 var vote = "";
@@ -385,7 +385,7 @@ var NRS = (function (NRS, $, undefined) {
                     "vote": vote
                 };
                 data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "AccountInfo")) {
                 data = {
@@ -393,7 +393,7 @@ var NRS = (function (NRS, $, undefined) {
                     "name": transaction.attachment.name,
                     "description": transaction.attachment.description
                 };
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "AliasSell")) {
                 var type = $.t("alias_sale");
@@ -425,7 +425,8 @@ var NRS = (function (NRS, $, undefined) {
                     var messageStyle = "info";
 
                     NRS.sendRequest("getAlias", {
-                        "aliasName": transaction.attachment.alias
+                        "aliasName": transaction.attachment.alias,
+                        "chain": transaction.chain
                     }, function (response) {
                         NRS.fetchingModalData = false;
 
@@ -435,11 +436,11 @@ var NRS = (function (NRS, $, undefined) {
                                 messageStyle = "danger";
                             } else if (transaction.recipient == NRS.account) {
                                 message = $.t("alias_sale_direct_offer", {
-                                    "nxt": NRS.formatAmount(transaction.attachment.priceNQT), "coin": NRS.getActiveChainName()
+                                    "nxt": NRS.formatAmount(transaction.attachment.priceNQT), "coin": NRS.getChain(transaction.chain).name
                                 }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                             } else if (typeof transaction.recipient == "undefined") {
                                 message = $.t("alias_sale_indirect_offer", {
-                                    "nxt": NRS.formatAmount(transaction.attachment.priceNQT), "coin": NRS.getActiveChainName()
+                                    "nxt": NRS.formatAmount(transaction.attachment.priceNQT), "coin": NRS.getChain(transaction.chain).name
                                 }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                             } else if (transaction.senderRS == NRS.accountRS) {
                                 if (transaction.attachment.priceNQT != "0") {
@@ -456,7 +457,7 @@ var NRS = (function (NRS, $, undefined) {
                     }
                 }
 
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "AliasBuy")) {
                 data = {
@@ -467,7 +468,7 @@ var NRS = (function (NRS, $, undefined) {
                     "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
                 };
 
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "AliasDelete")) {
                 data = {
@@ -476,7 +477,7 @@ var NRS = (function (NRS, $, undefined) {
                     "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
                 };
 
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "PhasingVoteCasting")) {
                 data = {
@@ -488,7 +489,7 @@ var NRS = (function (NRS, $, undefined) {
                         NRS.getTransactionLink(phasedTransactions[i].transactionFullHash, false, phasedTransactions[i].chain);
                 }
 
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "AccountProperty")) {
                 data = {
@@ -496,7 +497,7 @@ var NRS = (function (NRS, $, undefined) {
                     "property": transaction.attachment.property,
                     "value": transaction.attachment.value
                 };
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "AccountPropertyDelete")) {
                 data = {
@@ -507,7 +508,7 @@ var NRS = (function (NRS, $, undefined) {
                     // Will solve this one day
                     "property": transaction.attachment.property
                 };
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "AssetIssuance")) {
                 NRS.sendRequest("getAsset", {
@@ -525,7 +526,7 @@ var NRS = (function (NRS, $, undefined) {
                     }
                     data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
                     NRS.getAssetCallout($("#transaction_info_callout"), asset);
-                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                     infoTable.show();
                 });
             } else if (NRS.isOfType(transaction, "AssetTransfer")) {
@@ -542,7 +543,7 @@ var NRS = (function (NRS, $, undefined) {
 
                     data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
                     data["recipient"] = transaction.recipientRS ? transaction.recipientRS : transaction.recipient;
-                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                     infoTable.show();
                     if (!isModalVisible) {
                         $("#transaction_info_modal").modal("show");
@@ -575,7 +576,7 @@ var NRS = (function (NRS, $, undefined) {
                                 "total_formatted_html": NRS.formatQuantity(NRS.multiply(transaction.attachment.quantityQNT, transaction.attachment.priceNQTPerShare), asset.decimals + NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name
                             };
                             data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                            infoTable.find("tbody").append(NRS.createInfoTable(data));
+                            infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                             infoTable.show();
                             if (!isModalVisible) {
                                 $("#transaction_info_modal").modal("show");
@@ -605,7 +606,7 @@ var NRS = (function (NRS, $, undefined) {
                                 "total_formatted_html": NRS.formatQuantity(NRS.multiply(transaction.attachment.quantityQNT, transaction.attachment.priceNQTPerShare), asset.decimals + NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name
                             };
                             data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                            infoTable.find("tbody").append(NRS.createInfoTable(data));
+                            infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                             infoTable.show();
                             if (!isModalVisible) {
                                 $("#transaction_info_modal").modal("show");
@@ -651,7 +652,7 @@ var NRS = (function (NRS, $, undefined) {
                     }
 
                     data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                     infoTable.show();
 
                     if (!isModalVisible) {
@@ -672,7 +673,7 @@ var NRS = (function (NRS, $, undefined) {
                     };
 
                     data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
-                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                     infoTable.show();
 
                     if (!isModalVisible) {
@@ -690,12 +691,13 @@ var NRS = (function (NRS, $, undefined) {
                     "seller": NRS.getAccountFormatted(transaction, "sender")
                 };
 
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "DigitalGoodsDelisting")) {
                 async = true;
                 NRS.sendRequest("getDGSGood", {
-                    "goods": transaction.attachment.goods
+                    "goods": transaction.attachment.goods,
+                    "chain": transaction.chain
                 }, function (goods) {
                     data = {
                         "type": $.t("marketplace_removal"),
@@ -703,7 +705,7 @@ var NRS = (function (NRS, $, undefined) {
                         "seller": NRS.getAccountFormatted(goods, "seller")
                     };
 
-                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                     infoTable.show();
 
                     if (!isModalVisible) {
@@ -714,7 +716,8 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsPriceChange")) {
                 async = true;
                 NRS.sendRequest("getDGSGood", {
-                    "goods": transaction.attachment.goods
+                    "goods": transaction.attachment.goods,
+                    "chain": transaction.chain
                 }, function (goods) {
                     data = {
                         "type": $.t("marketplace_item_price_change"),
@@ -723,7 +726,7 @@ var NRS = (function (NRS, $, undefined) {
                         "seller": NRS.getAccountFormatted(goods, "seller")
                     };
 
-                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                     infoTable.show();
 
                     if (!isModalVisible) {
@@ -734,7 +737,8 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsQuantityChange")) {
                 async = true;
                 NRS.sendRequest("getDGSGood", {
-                    "goods": transaction.attachment.goods
+                    "goods": transaction.attachment.goods,
+                    "chain": transaction.chain
                 }, function (goods) {
                     data = {
                         "type": $.t("marketplace_item_quantity_change"),
@@ -743,7 +747,7 @@ var NRS = (function (NRS, $, undefined) {
                         "seller": NRS.getAccountFormatted(goods, "seller")
                     };
 
-                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                     infoTable.show();
 
                     if (!isModalVisible) {
@@ -754,7 +758,8 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsPurchase")) {
                 async = true;
                 NRS.sendRequest("getDGSGood", {
-                    "goods": transaction.attachment.goods
+                    "goods": transaction.attachment.goods,
+                    "chain": transaction.chain
                 }, function (goods) {
                     data = {
                         "type": $.t("marketplace_purchase"),
@@ -765,11 +770,12 @@ var NRS = (function (NRS, $, undefined) {
                         "seller": NRS.getAccountFormatted(goods, "seller")
                     };
 
-                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                     infoTable.show();
 
                     NRS.sendRequest("getDGSPurchase", {
-                        "purchase": NRS.fullHashToId(transaction.fullHash)
+                        "purchase": NRS.fullHashToId(transaction.fullHash),
+                        "chain": transaction.chain
                     }, function (purchase) {
                         var callout = "";
                         if (purchase.errorCode) {
@@ -807,10 +813,12 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsDelivery")) {
                 async = true;
                 NRS.sendRequest("getDGSPurchase", {
-                    "purchase": transaction.attachment.purchase
+                    "purchase": transaction.attachment.purchase,
+                    "chain": transaction.chain
                 }, function (purchase) {
                     NRS.sendRequest("getDGSGood", {
-                        "goods": purchase.goods
+                        "goods": purchase.goods,
+                        "chain": transaction.chain
                     }, function (goods) {
                         data = {
                             "type": $.t("marketplace_delivery"),
@@ -841,7 +849,7 @@ var NRS = (function (NRS, $, undefined) {
                             }, NRS.getAccountForDecryption(purchase, "buyer", "seller"));
                         }
 
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
+                        infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                         infoTable.show();
 
                         var callout;
@@ -869,10 +877,12 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsFeedback")) {
                 async = true;
                 NRS.sendRequest("getDGSPurchase", {
-                    "purchase": transaction.attachment.purchase
+                    "purchase": transaction.attachment.purchase,
+                    "chain": transaction.chain
                 }, function (purchase) {
                     NRS.sendRequest("getDGSGood", {
-                        "goods": purchase.goods
+                        "goods": purchase.goods,
+                        "chain": transaction.chain
                     }, function (goods) {
                         data = {
                             "type": $.t("marketplace_feedback"),
@@ -881,12 +891,13 @@ var NRS = (function (NRS, $, undefined) {
                             "seller": NRS.getAccountFormatted(purchase, "seller")
                         };
 
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
+                        infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                         infoTable.show();
 
                         if (purchase.seller == NRS.account || purchase.buyer == NRS.account) {
                             NRS.sendRequest("getDGSPurchase", {
-                                "purchase": transaction.attachment.purchase
+                                "purchase": transaction.attachment.purchase,
+                                "chain": transaction.chain
                             }, function (purchase) {
                                 var callout;
                                 if (purchase.buyer == NRS.account) {
@@ -919,10 +930,12 @@ var NRS = (function (NRS, $, undefined) {
             } else if (NRS.isOfType(transaction, "DigitalGoodsRefund")) {
                 async = true;
                 NRS.sendRequest("getDGSPurchase", {
-                    "purchase": transaction.attachment.purchase
+                    "purchase": transaction.attachment.purchase,
+                    "chain": transaction.chain
                 }, function (purchase) {
                     NRS.sendRequest("getDGSGood", {
-                        "goods": purchase.goods
+                        "goods": purchase.goods,
+                        "chain": transaction.chain
                     }, function (goods) {
                         data = {
                             "type": $.t("marketplace_refund"),
@@ -933,7 +946,7 @@ var NRS = (function (NRS, $, undefined) {
                         data["refund"] = transaction.attachment.refundNQT;
                         data["buyer"] = NRS.getAccountFormatted(purchase, "buyer");
                         data["seller"] = NRS.getAccountFormatted(purchase, "seller");
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
+                        infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                         infoTable.show();
                         if (!isModalVisible) {
                             $("#transaction_info_modal").modal("show");
@@ -949,14 +962,14 @@ var NRS = (function (NRS, $, undefined) {
                     "lessee": transaction.recipientRS ? transaction.recipientRS : transaction.recipient
                 };
 
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "SetPhasingOnly")) {
                 data = {
                     "type": $.t("phasing_only")
                 };
                 NRS.getPhasingDetails(data, transaction.attachment.phasingControlParams);
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (transaction.type == 5) { // Currency
                 async = true;
@@ -1077,7 +1090,7 @@ var NRS = (function (NRS, $, undefined) {
                     var infoCallout = $("#transaction_info_callout");
                     NRS.getCurrencyCallout(infoCallout, currency);
                     infoCallout.show();
-                    infoTable.find("tbody").append(NRS.createInfoTable(data));
+                    infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                     infoTable.show();
 
                     if (!isModalVisible) {
@@ -1087,7 +1100,7 @@ var NRS = (function (NRS, $, undefined) {
                 }
             } else if (NRS.isOfType(transaction, "TaggedDataUpload")) {
                 data = NRS.getTaggedData(transaction.attachment, 0, transaction);
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "ShufflingCreation")) {
                 data = {
@@ -1109,7 +1122,10 @@ var NRS = (function (NRS, $, undefined) {
                 } else {
                     data.amount = transaction.attachment.amount;
                 }
-                NRS.sendRequest("getShufflingParticipants", { "shufflingFullHash": transaction.fullHash }, function (response) {
+                NRS.sendRequest("getShufflingParticipants", {
+                    "shufflingFullHash": transaction.fullHash,
+                    "chain": transaction.chain
+                }, function (response) {
                     if (response.participants && response.participants.length > 0) {
                         var rows = "<table class='table table-striped'><thead><tr>" +
                         "<th>" + $.t("participant") + "</th>" +
@@ -1152,7 +1168,8 @@ var NRS = (function (NRS, $, undefined) {
                     }
                 }, { isAsync: false });
                 NRS.sendRequest("getShuffling", {
-                    "shufflingFullHash": transaction.fullHash
+                    "shufflingFullHash": transaction.fullHash,
+                    "chain": transaction.chain
                 }, function (response) {
                     if (response.shufflingFullHash) {
                         data["stage_formatted_html"] = NRS.getShufflingStage(response.stage);
@@ -1168,17 +1185,17 @@ var NRS = (function (NRS, $, undefined) {
                         }
                     }
                 }, { isAsync: false });
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "ShufflingRegistration")) {
                 data = { "type": $.t("shuffling_registration") };
                 NRS.mergeMaps(transaction.attachment, data, { "version.ShufflingRegistration": true });
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "ShufflingProcessing")) {
                 data = { "type": $.t("shuffling_processing") };
                 NRS.mergeMaps(transaction.attachment, data, { "version.ShufflingProcessing": true });
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "ShufflingRecipients")) {
                 data = {
@@ -1187,17 +1204,17 @@ var NRS = (function (NRS, $, undefined) {
                 };
                 data["shuffling_formatted_html"] = NRS.getTransactionLink(transaction.attachment.shufflingFullHash);
                 data["recipients_formatted_html"] = listPublicKeys(transaction.attachment.recipientPublicKeys);
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "ShufflingVerification")) {
                 data = { "type": $.t("shuffling_verification") };
                 NRS.mergeMaps(transaction.attachment, data, { "version.ShufflingVerification": true });
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "ShufflingCancellation")) {
                 data = { "type": $.t("shuffling_cancellation") };
                 NRS.mergeMaps(transaction.attachment, data, { "version.ShufflingCancellation": true });
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "ChildChainBlock")) {
                 data = {
@@ -1207,10 +1224,10 @@ var NRS = (function (NRS, $, undefined) {
                 };
                 var childTransactions = "";
                 for (i = 0; i < transaction.attachment.childTransactionFullHashes.length; i++) {
-                    childTransactions = NRS.getTransactionLink(transaction.attachment.childTransactionFullHashes[i], null, false, transaction.attachment.chain) + "<p>";
+                    childTransactions += NRS.getTransactionLink(transaction.attachment.childTransactionFullHashes[i], null, false, transaction.attachment.chain) + "<br>";
                 }
                 data.transactions_formatted_html = childTransactions;
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             } else if (NRS.isOfType(transaction, "CoinExchangeOrderIssue") || NRS.isOfType(transaction, "FxtCoinExchangeOrderIssue")) {
                 NRS.formatCoinOrder(transaction, isModalVisible);
@@ -1219,7 +1236,7 @@ var NRS = (function (NRS, $, undefined) {
                     "type": $.t("cancel_coin_exchange_order")
                 };
                 data.order_formatted_html = NRS.getTransactionLink(transaction.attachment.orderHash);
-                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
                 infoTable.show();
             }
 
@@ -1308,7 +1325,7 @@ var NRS = (function (NRS, $, undefined) {
         };
         data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
         var rows = "";
-        var params;
+        var params = { "chain": transaction.chain };
         if (NRS.isOfType(transaction, "AskOrderPlacement")) {
             params = {"askOrderFullHash": transaction.fullHash};
         } else {
@@ -1332,8 +1349,8 @@ var NRS = (function (NRS, $, undefined) {
                     rows += "<tr>" +
                     "<td>" + NRS.getTransactionLink(trade[transactionField], NRS.formatTimestamp(trade.timestamp)) + "</td>" +
                     "<td>" + NRS.formatQuantity(trade.quantityQNT, asset.decimals) + "</td>" +
-                    "<td>" + NRS.formatQuantity(trade.priceNQTPerShare, NRS.getActiveChainDecimals()) + "</td>" +
-                    "<td>" + NRS.formatQuantity(NRS.multiply(trade.quantityQNT, trade.priceNQTPerShare), asset.decimals + NRS.getActiveChainDecimals()) +
+                    "<td>" + NRS.formatQuantity(trade.priceNQTPerShare, NRS.getChain(transaction.chain).decimals) + "</td>" +
+                    "<td>" + NRS.formatQuantity(NRS.multiply(trade.quantityQNT, trade.priceNQTPerShare), asset.decimals + NRS.getChain(transaction.chain).decimals) +
                     "</td>" +
                     "</tr>";
                 }
@@ -1343,11 +1360,11 @@ var NRS = (function (NRS, $, undefined) {
                 data["trades"] = $.t("no_matching_trade");
             }
             data["quantity_traded"] = [tradeQuantity, asset.decimals];
-            data["total_traded"] = NRS.formatQuantity(tradeTotal, asset.decimals + NRS.getActiveChainDecimals()) + " " + NRS.getChain(transaction.chain).name;
+            data["total_traded"] = NRS.formatQuantity(tradeTotal, asset.decimals + NRS.getChain(transaction.chain).decimals) + " " + NRS.getChain(transaction.chain).name;
         }, { isAsync: false });
 
         var infoTable = $("#transaction_info_table");
-        infoTable.find("tbody").append(NRS.createInfoTable(data));
+        infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
         infoTable.show();
         if (!isModalVisible) {
             $("#transaction_info_modal").modal("show");
@@ -1365,7 +1382,8 @@ var NRS = (function (NRS, $, undefined) {
         };
         var rows = "";
         NRS.sendRequest("getExchangesByExchangeRequest", {
-            "transaction": NRS.fullHashToId(transaction.fullHash)
+            "transaction": NRS.fullHashToId(transaction.fullHash),
+            "chain": transaction.chain
         }, function (response) {
             var exchangedUnits = BigInteger.ZERO;
             var exchangedTotal = BigInteger.ZERO;
@@ -1404,7 +1422,8 @@ var NRS = (function (NRS, $, undefined) {
         var buyOffer;
         var sellOffer;
         NRS.sendRequest("getOffer", {
-            "offer": NRS.fullHashToId(transaction.fullHash)
+            "offer": NRS.fullHashToId(transaction.fullHash),
+            "chain": transaction.chain
         }, function (response) {
             buyOffer = response.buyOffer;
             sellOffer = response.sellOffer;
@@ -1427,7 +1446,8 @@ var NRS = (function (NRS, $, undefined) {
         }
         var rows = "";
         NRS.sendRequest("getExchangesByOffer", {
-            "offer": NRS.fullHashToId(transaction.fullHash)
+            "offer": NRS.fullHashToId(transaction.fullHash),
+            "chain": transaction.chain
         }, function (response) {
             var exchangedUnits = BigInteger.ZERO;
             var exchangedTotal = BigInteger.ZERO;
@@ -1526,7 +1546,7 @@ var NRS = (function (NRS, $, undefined) {
         }, { isAsync: false });
 
         var infoTable = $("#transaction_info_table");
-        infoTable.find("tbody").append(NRS.createInfoTable(data));
+        infoTable.find("tbody").append(NRS.createInfoTable(data, { chain: transaction.chain }));
         infoTable.show();
         if (!isModalVisible) {
             $("#transaction_info_modal").modal("show");

@@ -145,9 +145,8 @@ class MessageHandler implements Runnable {
                     if (count == 0) {
                         try {
                             NetworkHandler.KeyEvent event = peer.getKeyEvent();
-                            if ((event.getKey().interestOps() & SelectionKey.OP_READ) == 0) {
+                            if (event != null && (event.getKey().interestOps() & SelectionKey.OP_READ) == 0) {
                                 event.update(SelectionKey.OP_READ, 0);
-                                NetworkHandler.wakeup();
                             }
                         } catch (IllegalStateException exc) {
                             Logger.logErrorMessage("Unable to update network selection key", exc);

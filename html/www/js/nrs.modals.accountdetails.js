@@ -50,9 +50,9 @@ var NRS = (function(NRS, $, undefined) {
 			} else {
 				$("#account_balance_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.balanceNQT)) + " " + NRS.getActiveChainName());
 				$("#account_balance_unconfirmed_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.unconfirmedBalanceNQT)) + " " + NRS.getActiveChainName());
-				$("#account_balance_effective_balance").html(NRS.formatAmount(NRS.accountInfo.effectiveBalanceFXT) + " " + NRS.getParentChainName());
-				$("#account_balance_guaranteed_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.guaranteedBalanceFQT)) + " " + NRS.getParentChainName());
-				$("#account_balance_forged_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.forgedBalanceFQT)) + " " + NRS.getParentChainName());
+				$("#account_balance_effective_balance").html(NRS.formatAmount(NRS.accountInfo.effectiveBalanceFXT, false, false, false, 0) + " " + NRS.getParentChainName());
+				$("#account_balance_guaranteed_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.guaranteedBalanceFQT), false, false, false, NRS.getChain("1").decimals) + " " + NRS.getParentChainName());
+				$("#account_balance_forged_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.forgedBalanceFQT), false, false, false, NRS.getChain("1").decimals) + " " + NRS.getParentChainName());
 
 				accountBalancePublicKey.html(NRS.escapeRespStr(NRS.accountInfo.publicKey));
 				$("#account_balance_account_rs").html(NRS.getAccountLink(NRS.accountInfo, "account", undefined, undefined, true));
@@ -78,7 +78,7 @@ var NRS = (function(NRS, $, undefined) {
 	});
 
 	function _showTab(tab){
-		var tabListItem = $("#account_details_modal li[data-tab=" + tab + "]");
+		var tabListItem = $("#account_details_modal").find("li[data-tab=" + tab + "]");
 		tabListItem.siblings().removeClass("active");
 		tabListItem.addClass("active");
 		$(".account_details_modal_content").hide();

@@ -419,7 +419,7 @@ var NRS = (function(NRS, $, undefined) {
         if (response.attachment) {
             delete details.attachment;
         }
-        $("#parse_transaction_output_table").find("tbody").empty().append(NRS.createInfoTable(details, true));
+        $("#parse_transaction_output_table").find("tbody").empty().append(NRS.createInfoTable(details, { fixed: true }));
 		$("#parse_transaction_output").show();
 	};
 
@@ -430,7 +430,7 @@ var NRS = (function(NRS, $, undefined) {
 
 	NRS.forms.calculateFullHashComplete = function(response) {
 		$("#calculate_full_hash_form").find(".error_message").hide();
-		$("#calculate_full_hash_output_table").find("tbody").empty().append(NRS.createInfoTable(response, true));
+		$("#calculate_full_hash_output_table").find("tbody").empty().append(NRS.createInfoTable(response, { fixed: true }));
 		$("#calculate_full_hash_output").show();
 	};
 

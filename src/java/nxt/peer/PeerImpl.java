@@ -746,7 +746,7 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Get the network section key event
+     * Get the network selection key event
      *
      * @return                          Selection key event
      */
@@ -805,7 +805,8 @@ final class PeerImpl implements Peer {
      * @return                          Updated message count
      */
     synchronized int decrementInputCount() {
-        return --inputCount;
+        inputCount = (inputCount > 0 ? --inputCount : 0);
+        return inputCount;
     }
 
     /**
@@ -877,7 +878,6 @@ final class PeerImpl implements Peer {
                     handshakePending = true;
                 }
                 if (!connectCondition.await(NetworkHandler.peerConnectTimeout, TimeUnit.SECONDS)) {
-                    Logger.logDebugMessage("Connect to " + host + " timed out");
                     disconnectPeer();
                 }
             }
@@ -1061,8 +1061,8 @@ final class PeerImpl implements Peer {
         if (response instanceof NetworkMessage.ErrorMessage) {
             NetworkMessage.ErrorMessage error = (NetworkMessage.ErrorMessage)response;
             if (error.isSevereError()) {
-                Logger.logDebugMessage(String.format("Error returned by %s for %s[%d] message",
-                        host, error.getErrorName(), error.getMessageId()));
+                Logger.logDebugMessage(String.format("Error returned by %s for %s[%d] message: %s",
+                        host, error.getErrorName(), error.getMessageId(), error.getErrorMessage()));
                 disconnectPeer();
             }
             return null;

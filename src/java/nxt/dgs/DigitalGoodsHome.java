@@ -364,6 +364,7 @@ public final class DigitalGoodsHome {
 
         private final long id;
         private final DbKey dbKey;
+        private final byte[] fullHash;
         private final long sellerId;
         private final String name;
         private final String description;
@@ -378,6 +379,7 @@ public final class DigitalGoodsHome {
         private Goods(ChildTransactionImpl transaction, ListingAttachment attachment) {
             this.id = transaction.getId();
             this.dbKey = goodsDbKeyFactory.newKey(this.id);
+            this.fullHash = transaction.getFullHash();
             this.sellerId = transaction.getSenderId();
             this.name = attachment.getName();
             this.description = attachment.getDescription();
@@ -393,6 +395,7 @@ public final class DigitalGoodsHome {
         private Goods(ResultSet rs, DbKey dbKey) throws SQLException {
             this.id = rs.getLong("id");
             this.dbKey = dbKey;
+            this.fullHash = rs.getBytes("full_hash");
             this.sellerId = rs.getLong("seller_id");
             this.name = rs.getString("name");
             this.description = rs.getString("description");
@@ -406,11 +409,12 @@ public final class DigitalGoodsHome {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO goods (id, seller_id, name, "
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO goods (id, full_hash, seller_id, name, "
                     + "description, tags, parsed_tags, timestamp, quantity, price, delisted, has_image, height, latest) KEY (id, height) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
+                DbUtils.setBytes(pstmt, ++i, this.fullHash);
                 pstmt.setLong(++i, this.sellerId);
                 pstmt.setString(++i, this.name);
                 pstmt.setString(++i, this.description);
@@ -428,6 +432,10 @@ public final class DigitalGoodsHome {
 
         public long getId() {
             return id;
+        }
+
+        public byte[] getFullHash() {
+            return fullHash;
         }
 
         public long getSellerId() {

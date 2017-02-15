@@ -1258,7 +1258,7 @@ var NRS = (function(NRS, $) {
 			if (!response.hasImage) {
 				image = missingImage;
 			} else {
-				image = NRS.getRequestPath() + "?requestType=downloadPrunableMessage&transaction=" + response.goods + "&retrieve=true";
+				image = NRS.getRequestPath() + "?requestType=downloadPrunableMessage&chain=" + NRS.getActiveChainId() + "&transactionFullHash=" + response.goodsFullHash + "&retrieve=true";
 			}
 			$("#dgs_product_picture_modal").attr("src", image);
 			$("#dgs_product_picture_modal_goods_name").html(NRS.escapeRespStr(response.name));
@@ -1272,7 +1272,7 @@ var NRS = (function(NRS, $) {
             picture.src = missingImage;
             image = '<img style="max-height:100%;max-width:100%;" id="dgs_product_picture" src="'+ picture.src + '"/>';
         } else {
-            picture.src = NRS.getRequestPath() + "?requestType=downloadPrunableMessage&transaction=" + input.goods + "&retrieve=true";
+            picture.src = NRS.getRequestPath() + "?requestType=downloadPrunableMessage&chain=" + NRS.getActiveChainId() + "&transactionFullHash=" + input.goodsFullHash + "&retrieve=true";
             image = '<a href="#" data-toggle="modal" data-target="#dgs_show_picture_modal" data-goods="' + input.goods + '"><img style="max-height:100%;max-width:100%;" id="dgs_product_picture" src="'+ picture.src + '"/></a>';
         }
         return image;

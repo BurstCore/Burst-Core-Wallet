@@ -70,7 +70,7 @@ var NRS = (function(NRS, $) {
             blockDetails.total_fee_formatted_html = NRS.intToFloat(blockDetails.totalFeeFQT, NRS.getChain(1).decimals) + " " + NRS.getParentChainName();
             delete blockDetails.totalFeeFQT;
             var detailsTable = $("#block_info_details_table");
-            detailsTable.find("tbody").empty().append(NRS.createInfoTable(blockDetails));
+            detailsTable.find("tbody").empty().append(NRS.createInfoTable(blockDetails), { chain: "1" });
             detailsTable.show();
             var transactionsTable = $("#block_info_transactions_table");
             if (block.transactions.length) {
