@@ -1,6 +1,6 @@
 {
   "name": "ardor-blockchain",
-  "version": "2.0.0",
+  "version": "0.2.1",
   "description": "Client API library for the Ardor Blockchain",
   "main": "nrs.node.bridge.js",
   "directories": {
@@ -8,10 +8,6 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://bitbucket.org/JeanLucPicard/nxt.git"
   },
   "keywords": [
     "blockchain",

@@ -1,23 +1,23 @@
 Sample Ardor APIs for Node JS
 =============================
 
-The Node JS module performs local signing and encryption using the same code used by the official NXT wallet.
+The Node JS module performs local signing and encryption using the same code used by the official Ardor wallet.<br>
 
-Therefore:
-Your passphrase is never sent to the remote node when submitting a transaction. 
-Transaction bytes returned by the remote node are parsed and validated against the submitted data.
-Encryption is done locally.
+Therefore:<br>
+Your passphrase is never sent to the remote node when submitting a transaction.<br>
+Transaction bytes returned by the remote node are parsed and validated against the submitted data.<br>
+Encryption is done locally.<br>
+<br>
+To use the Node JS module:<br>
+- No need to install the NXT software or download the blockchain<br>
+- Install Node JS and NPM from https://nodejs.org/en/<br>
+- From the command prompt type:<br>
+npm install ardor-blockchain<br>
+cd node_modules/ardor-blockchain/sample<br>
+- Configure the remote node, NXT account and default chain by editing the config.json file<br>
+- Run the samples using Node JS, for example:<br>
+node send.money.js<br>
 
-To use the Node JS module:
-- No need to install the NXT software or download the blockchain
-- Install Node JS and NPM from https://nodejs.org/en/
-- From the command prompt type:
-npm install ardor-blockchain
-cd node_modules/ardor-blockchain/sample
-- Configure the remote node, NXT account and default chain by editing the config.json file
-- Run the samples using Node JS, for example:
-node send.money.js
-
-Warning:
-Your passphrase is sent to the remote node only when invoking the /startForging API or other specific APIs which require sending the passphrase to the remote node. 
-We recommend that you do not use these APIs in your Node JS code.
+Warning:<br>
+Your passphrase is sent to the remote node only when invoking the /startForging API or other specific APIs which require sending the passphrase to the remote node.<br>
+We recommend that you do not use these APIs in your Node JS code.<br>
