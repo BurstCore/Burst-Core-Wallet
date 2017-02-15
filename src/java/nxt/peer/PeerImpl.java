@@ -805,7 +805,8 @@ final class PeerImpl implements Peer {
      * @return                          Updated message count
      */
     synchronized int decrementInputCount() {
-        return --inputCount;
+        inputCount = (inputCount > 0 ? --inputCount : 0);
+        return inputCount;
     }
 
     /**
