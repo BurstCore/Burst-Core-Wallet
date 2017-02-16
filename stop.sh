@@ -1,16 +1,17 @@
 #!/bin/sh
-if [ -e ~/.nxt/nxt.pid ]; then
-    PID=`cat ~/.nxt/nxt.pid`
+APPLICATION="nxt"
+if [ -e ~/.${APPLICATION}/nxt.pid ]; then
+    PID=`cat ~/.${APPLICATION}/nxt.pid`
     ps -p $PID > /dev/null
     STATUS=$?
     echo "stopping"
     while [ $STATUS -eq 0 ]; do
-        kill `cat ~/.nxt/nxt.pid` > /dev/null
+        kill `cat ~/.${APPLICATION}/nxt.pid` > /dev/null
         sleep 5
         ps -p $PID > /dev/null
         STATUS=$?
     done
-    rm -f ~/.nxt/nxt.pid
+    rm -f ~/.${APPLICATION}/nxt.pid
     echo "Nxt server stopped"
 fi
 

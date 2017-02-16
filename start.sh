@@ -1,6 +1,7 @@
 #!/bin/sh
-if [ -e ~/.nxt/nxt.pid ]; then
-    PID=`cat ~/.nxt/nxt.pid`
+APPLICATION="nxt"
+if [ -e ~/.${APPLICATION}/nxt.pid ]; then
+    PID=`cat ~/.${APPLICATION}/nxt.pid`
     ps -p $PID > /dev/null
     STATUS=$?
     if [ $STATUS -eq 0 ]; then
@@ -8,7 +9,7 @@ if [ -e ~/.nxt/nxt.pid ]; then
         exit 1
     fi
 fi
-mkdir -p ~/.nxt/
+mkdir -p ~/.${APPLICATION}/
 DIR=`dirname "$0"`
 cd "${DIR}"
 if [ -x jre/bin/java ]; then
@@ -17,5 +18,5 @@ else
     JAVA=java
 fi
 nohup ${JAVA} -cp classes:lib/*:conf:addons/classes:addons/lib/* -Dnxt.runtime.mode=desktop nxt.Nxt > /dev/null 2>&1 &
-echo $! > ~/.nxt/nxt.pid
+echo $! > ~/.${APPLICATION}/nxt.pid
 cd - > /dev/null

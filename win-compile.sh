@@ -1,9 +1,10 @@
 #!/bin/sh
 CP="lib/*;classes"
 SP=src/java/
+APPLICATION="nxt"
 
-/bin/rm -f nxt.jar
-/bin/rm -f nxtservice.jar
+/bin/rm -f ${APPLICATION}.jar
+/bin/rm -f ${APPLICATION}service.jar
 /bin/rm -rf classes
 /bin/mkdir -p classes/
 /bin/rm -rf addons/classes

@@ -119,7 +119,7 @@ public class DesktopApplication extends Application {
                     String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
                     window.setMember("javaFxLanguage", language);
                     webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
-                    stage.setTitle("NXT Desktop - " + webEngine.getLocation());
+                    stage.setTitle(Nxt.APPLICATION + " Desktop - " + webEngine.getLocation());
                     if (newState == Worker.State.SUCCEEDED) {
                         nrs = (JSObject) webEngine.executeScript("NRS");
                         updateClientState("Desktop Wallet started");
