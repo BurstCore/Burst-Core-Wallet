@@ -739,7 +739,7 @@ var NRS = (function (NRS, $, undefined) {
         }
 
         try {
-            var balanceNQT = NRS.floatToInt(NRS.accountInfo.unconfirmedBalanceNQT, currentCoin.decimals);
+            var balanceNQT = new BigInteger(NRS.floatToInt(NRS.accountInfo.unconfirmedBalanceNQT, currentCoin.decimals));
         } catch (err) {
             return;
         }
