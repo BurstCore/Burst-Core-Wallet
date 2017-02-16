@@ -51,7 +51,7 @@ import java.util.Properties;
 public final class Nxt {
 
     public static final String VERSION = "1.11.3";
-    public static final String APPLICATION = "NRS";
+    public static final String APPLICATION = "Nxt";
 
     private static volatile Time time = new Time.EpochTime();
 
@@ -66,7 +66,7 @@ public final class Nxt {
     static {
         redirectSystemStreams("out");
         redirectSystemStreams("err");
-        System.out.println("Initializing Nxt server version " + Nxt.VERSION);
+        System.out.println("Initializing " + Nxt.APPLICATION + " server version " + Nxt.VERSION);
         printCommandLineArguments();
         runtimeMode = RuntimeEnvironment.getRuntimeMode();
         System.out.printf("Runtime mode %s\n", runtimeMode.getClass().getName());
@@ -320,7 +320,7 @@ public final class Nxt {
         BlockchainProcessorImpl.getInstance().shutdown();
         Peers.shutdown();
         Db.shutdown();
-        Logger.logShutdownMessage("Nxt server " + VERSION + " stopped.");
+        Logger.logShutdownMessage(Nxt.APPLICATION + " server " + VERSION + " stopped.");
         Logger.shutdown();
         runtimeMode.shutdown();
     }
@@ -387,7 +387,7 @@ public final class Nxt {
                 testSecureRandom();
                 long currentTime = System.currentTimeMillis();
                 Logger.logMessage("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
-                Logger.logMessage("Nxt server " + VERSION + " started successfully.");
+                Logger.logMessage(Nxt.APPLICATION + " server " + VERSION + " started successfully.");
                 Logger.logMessage("Copyright © 2013-2016 The Nxt Core Developers.");
                 Logger.logMessage("Copyright © 2016-2017 Jelurida IP B.V.");
                 Logger.logMessage("Distributed under GPLv2, with ABSOLUTELY NO WARRANTY.");
