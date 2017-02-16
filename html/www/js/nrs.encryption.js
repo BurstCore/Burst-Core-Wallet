@@ -722,7 +722,6 @@ var NRS = (function (NRS, $) {
 		var encrypted = CryptoJS.AES.encrypt(text, key, {
 			iv: converters.byteArrayToWordArray(ivBytes)
 		});
-
 		var ivOut = converters.wordArrayToByteArray(encrypted.iv);
 		var ciphertextOut = converters.wordArrayToByteArray(encrypted.ciphertext);
 		return ivOut.concat(ciphertextOut);

@@ -18,7 +18,6 @@
  * @depends {nrs.js}
  */
 var NRS = (function (NRS) {
-
     var isDesktopApplication = navigator.userAgent.indexOf("JavaFX") >= 0;
     var isMobileDevice = window["cordova"] !== undefined;
     var isLocalHost = false;
