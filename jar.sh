@@ -1,5 +1,5 @@
 #!/bin/sh
-APPLICATION="nxt"
+APPLICATION="jrs"
 java -cp classes nxt.tools.ManifestGenerator
 /bin/rm -f ${APPLICATION}.jar
 jar cfm ${APPLICATION}.jar resource/nxt.manifest.mf -C classes . || exit 1

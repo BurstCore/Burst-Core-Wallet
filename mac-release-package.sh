@@ -5,7 +5,7 @@ then
 	echo VERSION not defined
 	exit 1
 fi
-APPLICATION="nxt"
+APPLICATION="jrs"
 PACKAGE=${APPLICATION}-client-${VERSION}
 echo PACKAGE="${PACKAGE}"
 CHANGELOG=nxt-client-${VERSION}.changelog.txt

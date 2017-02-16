@@ -1,7 +1,7 @@
 #!/bin/sh
 CP="lib/*:classes"
 SP=src/java/
-APPLICATION="nxt"
+APPLICATION="jrs"
 
 /bin/rm -f ${APPLICATION}.jar
 /bin/rm -f ${APPLICATION}service.jar
