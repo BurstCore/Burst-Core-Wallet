@@ -897,23 +897,24 @@ var NRS = (function (NRS, $, undefined) {
         try {
             var priceNQTPerShare = new BigInteger(String($tr.data("price")));
             var quantityQNT = new BigInteger(String($tr.data("quantity")));
-            var totalNQT = new BigInteger(NRS.multiply(quantityQNT, priceNQTPerShare));
+            var totalNQTQNT = new BigInteger(NRS.multiply(quantityQNT, priceNQTPerShare));
 
             $("#" + type + "_asset_price").val(NRS.convertToQNTf(priceNQTPerShare, NRS.getActiveChainDecimals()));
             $("#" + type + "_asset_quantity").val(NRS.convertToQNTf(quantityQNT, currentAsset.decimals));
-            $("#" + type + "_asset_total").val(NRS.convertToNXT(totalNQT));
+            $("#" + type + "_asset_total").val(NRS.intToFloat(totalNQTQNT, NRS.getActiveChainDecimals() + currentAsset.decimals));
         } catch (err) {
             return;
         }
 
         if (type == "buy") {
             try {
-                var balanceNQT = new BigInteger(NRS.accountInfo.unconfirmedBalanceNQT);
+                var balanceNQTQNT = new BigInteger(NRS.floatToInt(NRS.accountInfo.unconfirmedBalanceNQT, currentAsset.decimals));
             } catch (err) {
+                NRS.logConsole("asset_exchange_bid_orders_table click " + err.message);
                 return;
             }
-
-            if (totalNQT.compareTo(balanceNQT) > 0) {
+            NRS.logConsole("asset_exchange_bid_orders_table click total " + totalNQTQNT + " balance " + balanceNQTQNT);
+            if (totalNQTQNT.compareTo(balanceNQTQNT) > 0) {
                 $("#" + type + "_asset_total").css({
                     "background": "#ED4348",
                     "color": "white"
