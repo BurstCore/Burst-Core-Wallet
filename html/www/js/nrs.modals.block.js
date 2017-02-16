@@ -85,11 +85,12 @@ var NRS = (function(NRS, $) {
                     if (transaction.amountNQT) {
                         transaction.amount = new BigInteger(transaction.amountNQT);
                         transaction.fee = new BigInteger(transaction.feeNQT);
+                        var decimals = NRS.getChain(transaction.chain).decimals;
                         rows += "<tr>" +
                         "<td>" + NRS.getTransactionLink(transaction.fullHash, NRS.formatTimestamp(transaction.timestamp), false, transaction.chain) + "</td>" +
                         "<td>" + NRS.getTransactionIconHTML(transaction.type, transaction.subtype) + "</td>" +
-                        "<td>" + NRS.formatAmount(transaction.amount) + "</td>" +
-                        "<td>" + NRS.formatAmount(transaction.fee) + "</td>" +
+                        "<td>" + NRS.formatQuantity(transaction.amount, decimals) + "</td>" +
+                        "<td>" + NRS.formatQuantity(transaction.fee, decimals) + "</td>" +
                         "<td>" + NRS.getAccountLink(transaction, "sender") + "</td>" +
                         "<td>" + NRS.getAccountLink(transaction, "recipient") + "</td>" +
                         "</tr>";
