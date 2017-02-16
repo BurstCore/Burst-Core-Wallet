@@ -349,6 +349,8 @@ var NRS = (function(NRS, $, undefined) {
         	$am.find('.approve_whitelist_accounts').show();
         }
         $('.modal .approve_modal .approve_min_balance_model_group:visible select').trigger('change');
+
+        $('li.show_popover').popover('hide');
     });
 
 	$('body').on('change', '.modal .approve_modal .approve_min_balance_model_group select', function() {
