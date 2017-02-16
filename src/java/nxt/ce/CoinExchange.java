@@ -569,8 +569,8 @@ public final class CoinExchange {
                     + " chain: " + Chain.getChain(chainId).getName()
                     + " exchange: " + Chain.getChain(exchangeId).getName()
                     + " quantityQNT: " + quantityQNT
-                    + " bidNQT: " + bidPriceNQT
-                    + " askNQT: " + getAskPriceNQT()
+                    + " bidNQTPerCoin: " + bidPriceNQT
+                    + " askNQTPerCoin: " + getAskPriceNQT()
                     + " height: " + creationHeight
                     + " transactionIndex: " + transactionIndex
                     + " transactionHeight: " + transactionHeight;

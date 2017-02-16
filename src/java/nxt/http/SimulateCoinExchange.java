@@ -58,8 +58,8 @@ public final class SimulateCoinExchange extends APIServlet.APIRequestHandler {
         // Return the response
         JSONObject response = new JSONObject();
         response.put("quantityQNT",  quantityQNT);
-        response.put("bidNQT",  priceNQT);
-        response.put("askNQT",  askNQT);
+        response.put("bidNQTPerCoin",  priceNQT);
+        response.put("askNQTPerCoin",  askNQT);
         return response;
     }
 

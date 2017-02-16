@@ -361,8 +361,8 @@ public final class JSONData {
         json.put("exchange", exchangeChain.getId());
         putAccount(json, "account", order.getAccountId());
         json.put("quantityQNT", String.valueOf(quantityQNT));
-        json.put("bidNQT", String.valueOf(bidPriceNQT));
-        json.put("askNQT", String.valueOf(order.getAskPriceNQT()));
+        json.put("bidNQTPerCoin", String.valueOf(bidPriceNQT));
+        json.put("askNQTPerCoin", String.valueOf(order.getAskPriceNQT()));
         long exchangeQNT = Convert.unitRateToAmount(quantityQNT, exchangeChain.getDecimals(),
                                         bidPriceNQT, chain.getDecimals());
         json.put("exchangeQNT", String.valueOf(exchangeQNT));
@@ -398,13 +398,13 @@ public final class JSONData {
         json.put("chain", chain.getId());
         json.put("exchange", exchangeChain.getId());
         json.put("quantityQNT", String.valueOf(quantityQNT));
-        json.put("bidNQT", String.valueOf(priceNQT));
+        json.put("bidNQTPerCoin", String.valueOf(priceNQT));
         BigDecimal[] ask = BigDecimal.ONE.divide(
                     BigDecimal.valueOf(priceNQT, chain.getDecimals()), MathContext.DECIMAL128)
                     .movePointRight(exchangeChain.getDecimals())
                     .divideAndRemainder(BigDecimal.ONE, MathContext.DECIMAL128);
         long askNQT = ask[0].longValue() + (ask[1].signum() != 0 ? 1 : 0);
-        json.put("askNQT", String.valueOf(askNQT));
+        json.put("askNQTPerCoin", String.valueOf(askNQT));
         long exchangeQNT = Convert.unitRateToAmount(quantityQNT, exchangeChain.getDecimals(),
                                         priceNQT, chain.getDecimals());
         json.put("exchangeQNT", String.valueOf(exchangeQNT));
