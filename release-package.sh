@@ -67,7 +67,7 @@ echo package installer Jar
 echo create installer zip
 cd -
 zip -q -X -r ${PACKAGE}.zip ardor -x \*/.idea/\* \*/.gitignore \*/.git/\* \*/\*.log \*.iml ardor/conf/nxt.properties ardor/conf/logging.properties ardor/conf/localstorage/\*
-rm -rf nxt
+rm -rf ardor
 
 echo creating full changelog
 echo "${PACKAGE}:" > changelog-full.txt
