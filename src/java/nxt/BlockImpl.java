@@ -382,13 +382,13 @@ final class BlockImpl implements Block {
                 }
                 totalBackFees += backFees[i];
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(this.height - i - 1).getGeneratorId());
-                Logger.logDebugMessage("Back fees %f NXT to forger at height %d", ((double)backFees[i])/Constants.ONE_NXT, this.height - i - 1);
+                Logger.logDebugMessage("Back fees %f %s to forger at height %d", ((double)backFees[i])/Constants.ONE_NXT, Constants.COIN, this.height - i - 1);
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
                 previousGeneratorAccount.addToForgedBalanceNQT(backFees[i]);
             }
         }
         if (totalBackFees != 0) {
-            Logger.logDebugMessage("Fee reduced by %f NXT at height %d", ((double)totalBackFees)/Constants.ONE_NXT, this.height);
+            Logger.logDebugMessage("Fee reduced by %f %s at height %d", ((double)totalBackFees)/Constants.ONE_NXT, Constants.COIN, this.height);
         }
         generatorAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.BLOCK_GENERATED, getId(), totalFeeNQT - totalBackFees);
         generatorAccount.addToForgedBalanceNQT(totalFeeNQT - totalBackFees);
