@@ -767,7 +767,6 @@ public final class NetworkHandler implements Runnable {
                     if (inputCount >= MAX_PENDING_MESSAGES) {
                         KeyEvent keyEvent = peer.getKeyEvent();
                         if (keyEvent != null) {
-                            Logger.logDebugMessage("Suspending read from " + peer.getHost());
                             keyEvent.update(0, SelectionKey.OP_READ);
                         }
                     }

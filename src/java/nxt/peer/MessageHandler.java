@@ -146,7 +146,6 @@ class MessageHandler implements Runnable {
                         try {
                             NetworkHandler.KeyEvent event = peer.getKeyEvent();
                             if (event != null && (event.getKey().interestOps() & SelectionKey.OP_READ) == 0) {
-                                Logger.logDebugMessage("Resuming read from " + peer.getHost());
                                 event.update(SelectionKey.OP_READ, 0);
                             }
                         } catch (IllegalStateException exc) {
