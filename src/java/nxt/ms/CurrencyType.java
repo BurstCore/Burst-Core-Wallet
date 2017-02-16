@@ -322,6 +322,12 @@ public enum CurrencyType {
         if (code.contains(childChain.getName().toUpperCase()) || childChain.getName().toLowerCase().equals(normalizedName)) {
             throw new NxtException.NotValidException("Currency name already used");
         }
+        if (code.contains("NXT") || code.contains("NEXT") || "nxt".equals(normalizedName) || "next".equals(normalizedName)) {
+            throw new NxtException.NotValidException("Currency name already used");
+        }
+        if (code.contains("IGNIS") || "ignis".equals(normalizedName)) {
+            throw new NxtException.NotValidException("Currency name already used");
+        }
         Currency currency;
         if ((currency = Currency.getCurrencyByName(childChain, normalizedName)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
             throw new NxtException.NotCurrentlyValidException("Currency name already used: " + normalizedName);
