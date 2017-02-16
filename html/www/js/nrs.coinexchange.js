@@ -1179,9 +1179,13 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.formatQuantity(order.quantityQNT, exchangeDecimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.bidNQT, decimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.exchangeQNT, decimals) + "</td>" +
-                        "<td>" + NRS.formatQuantity(order.askNQT, exchangeDecimals) + "</td>" +
-                        "<td class='cancel'><a href='#' data-toggle='modal' data-target='#cancel_coin_order_modal' data-order='" + NRS.escapeRespStr(order.order) + "'>" + $.t("cancel") + "</a></td>" +
-                    "</tr>";
+                        "<td>" + NRS.formatQuantity(order.askNQT, exchangeDecimals) + "</td>";
+                    if (order.account == NRS.account) {
+                        rows += "<td class='cancel'><a href='#' data-toggle='modal' data-target='#cancel_coin_order_modal' data-order='" + NRS.escapeRespStr(order.order) + "'>" + $.t("cancel") + "</a></td>";
+                    } else {
+                        rows += "<td></td>";
+                    }
+                    rows += "</tr>";
                 }
                 NRS.dataLoaded(rows);
             } else {
