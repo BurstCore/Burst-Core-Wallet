@@ -201,8 +201,8 @@ import java.util.List;
  *       <td>Change in the currency balance.  The currency identifier is the 'holding'.</td>
  *     </tr>
  *     <tr>
- *       <td>NXT_BALANCE</td>
- *       <td>Change in the NXT balance for the account.  There is no 'holding'.</td>
+ *       <td>COIN_BALANCE</td>
+ *       <td>Change in the coin balance for the account.  The chain identifier is the 'holding'.</td>
  *     </tr>
  *     <tr>
  *       <td>UNCONFIRMED_ASSET_BALANCE</td>
@@ -213,8 +213,8 @@ import java.util.List;
  *       <td>Change in the unconfirmed currency balance.  The currency identifier is the 'holding'.</td>
  *     </tr>
  *     <tr>
- *       <td>UNCONFIRMED_NXT_BALANCE</td>
- *       <td>Change in the unconfirmed NXT balance for the account.  There is no 'holding'.</td>
+ *       <td>UNCONFIRMED_COIN_BALANCE</td>
+ *       <td>Change in the unconfirmed coin balance for the account.  The chain identifier is the 'holding'.</td>
  *     </tr>
  *   </tbody>
  * </table>

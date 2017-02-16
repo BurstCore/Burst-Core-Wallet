@@ -30,12 +30,12 @@ import javax.servlet.http.HttpServletRequest;
 import static nxt.http.JSONResponses.NO_COST_ORDER;
 
 /**
- * Buy currency for NXT
+ * Buy currency for coin
  * <p>
  * Parameters
  * <ul>
  * <li>currency - currency id
- * <li>rateNQT - exchange rate between NXT amount and currency units
+ * <li>rateNQTPerUnit - exchange rate between coin amount and currency units
  * <li>unitsQNT - number of units to buy
  * </ul>
  *

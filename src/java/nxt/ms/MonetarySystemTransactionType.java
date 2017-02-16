@@ -269,7 +269,7 @@ public abstract class MonetarySystemTransactionType extends ChildTransactionType
         public void validateAttachment(ChildTransactionImpl transaction) throws NxtException.ValidationException {
             ReserveIncreaseAttachment attachment = (ReserveIncreaseAttachment) transaction.getAttachment();
             if (attachment.getAmountPerUnitNQT() <= 0) {
-                throw new NxtException.NotValidException("Reserve increase NXT amount must be positive: " + attachment.getAmountPerUnitNQT());
+                throw new NxtException.NotValidException("Reserve increase coin amount must be positive: " + attachment.getAmountPerUnitNQT());
             }
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             CurrencyType.validate(currency, transaction);

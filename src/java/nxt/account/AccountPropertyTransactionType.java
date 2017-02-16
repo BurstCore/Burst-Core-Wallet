@@ -187,7 +187,7 @@ public abstract class AccountPropertyTransactionType extends ChildTransactionTyp
                 throw new NxtException.NotValidException("Invalid account property: " + attachment.getJSONObject());
             }
             if (transaction.getAmount() != 0) {
-                throw new NxtException.NotValidException("Account property transaction cannot be used to send NXT");
+                throw new NxtException.NotValidException("Account property transaction cannot be used to send money");
             }
         }
 
@@ -259,7 +259,7 @@ public abstract class AccountPropertyTransactionType extends ChildTransactionTyp
                         + " does not belong to " + Long.toUnsignedString(transaction.getRecipientId()));
             }
             if (transaction.getAmount() != 0) {
-                throw new NxtException.NotValidException("Account property transaction cannot be used to send NXT");
+                throw new NxtException.NotValidException("Account property transaction cannot be used to send money");
             }
         }
 

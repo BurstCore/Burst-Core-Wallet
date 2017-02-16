@@ -49,7 +49,7 @@ import java.util.concurrent.Semaphore;
 /**
  * Monitor account balances based on account properties
  * <p>
- * NXT, ASSET and CURRENCY balances can be monitored.  If a balance falls below the threshold, a transaction
+ * COIN, ASSET and CURRENCY balances can be monitored.  If a balance falls below the threshold, a transaction
  * will be submitted to transfer units from the funding account to the monitored account.  A transfer will
  * remain pending if the number of blocks since the previous transfer transaction is less than the monitor
  * interval.
