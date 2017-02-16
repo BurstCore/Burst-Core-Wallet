@@ -555,7 +555,7 @@ var NRS = (function (NRS, $, undefined) {
                 var statusIcon = NRS.getTransactionStatusIcon(order);
                 var decimals = NRS.getChain(order.chain).decimals;
                 var chain = (order.chain == 1 || order.exchange == 1) ? 1 : order.chain;
-                rows += "<tr data-transaction='" + NRS.escapeRespStr(order.order) + "' data-amount='" + String(order.quantityQNT).escapeHTML() + "' data-price='" + String(order.askNQT).escapeHTML() + "'>" +
+                rows += "<tr data-transaction='" + NRS.escapeRespStr(order.order) + "' data-amount='" + String(order.exchangeQNT).escapeHTML() + "' data-price='" + String(order.askNQT).escapeHTML() + "'>" +
                     "<td>" + NRS.getTransactionLink(order.orderFullHash, statusIcon, true, chain) + "</td>" +
                     "<td>" + NRS.getAccountLink(order, "account") + "</td>" +
                     "<td class='numeric'>" + NRS.formatQuantity(order.quantityQNT, NRS.getActiveChainDecimals()) + "</td>" +
@@ -723,23 +723,28 @@ var NRS = (function (NRS, $, undefined) {
 
         var $tr = $target.closest("tr");
         try {
-            var priceNQTPerCoin = new BigInteger(String($tr.data("price")));
-            var amountNQT = new BigInteger(String($tr.data("amount")));
+            var priceStr = String($tr.data("price"));
+            var priceNQTPerCoin = new BigInteger(priceStr);
+            var amountStr = String($tr.data("amount"));
+            NRS.logConsole("Selected rate " + priceStr + " amount " + amountStr + " balance " + NRS.accountInfo.unconfirmedBalanceNQT);
+            var amountNQT = new BigInteger(amountStr);
             var totalNQT = new BigInteger(NRS.multiply(amountNQT, priceNQTPerCoin));
 
+            $("#buy_coin_quantity").val(NRS.convertToQNTf(amountNQT, currentCoin.decimals));
             $("#buy_coin_price").val(NRS.convertToQNTf(priceNQTPerCoin, NRS.getActiveChainDecimals()));
-            $("#buy_coin_amount").val(NRS.convertToQNTf(amountNQT, currentCoin.decimals));
-            $("#buy_coin_total").val(NRS.convertToNXT(totalNQT));
+            $("#buy_coin_total").val(NRS.intToFloat(totalNQT, currentCoin.decimals + NRS.getActiveChainDecimals()));
         } catch (err) {
+            NRS.logConsole("coin_exchange_ask_orders_table click error: " + err.message);
             return;
         }
 
         try {
-            var balanceNQT = new BigInteger(NRS.accountInfo.unconfirmedBalanceNQT);
+            var balanceNQT = new BigInteger(NRS.floatToInt(NRS.accountInfo.unconfirmedBalanceNQT, currentCoin.decimals));
         } catch (err) {
             return;
         }
-
+        NRS.logConsole("Selected totalNQT " + NRS.intToFloat(totalNQT, currentCoin.decimals + NRS.getActiveChainDecimals()) +
+            " balanceNQT " + NRS.intToFloat(balanceNQT.toString(), currentCoin.decimals + NRS.getActiveChainDecimals()));
         if (totalNQT.compareTo(balanceNQT) > 0) {
             $("#buy_coin_total").css({
                 "background": "#ED4348",
@@ -763,7 +768,8 @@ var NRS = (function (NRS, $, undefined) {
     $("#buy_automatic_price").on("click", function () {
         try {
             var coinPrice = $("#buy_coin_price");
-            var price = new Big(NRS.convertToNQT(String(coinPrice.val())));            var balanceNQT = new Big(NRS.accountInfo.unconfirmedBalanceNQT);
+            var price = new Big(NRS.convertToNQT(String(coinPrice.val())));
+            var balanceNQT = new Big(NRS.accountInfo.unconfirmedBalanceNQT);
             var maxQuantity = new Big(NRS.convertToQNTf(currentCoin.amountNQT, currentCoin.decimals));
             if (balanceNQT.cmp(new Big("0")) <= 0) {
                 return;
@@ -1173,9 +1179,13 @@ var NRS = (function (NRS, $, undefined) {
                         "<td>" + NRS.formatQuantity(order.quantityQNT, exchangeDecimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.bidNQT, decimals) + "</td>" +
                         "<td>" + NRS.formatQuantity(order.exchangeQNT, decimals) + "</td>" +
-                        "<td>" + NRS.formatQuantity(order.askNQT, exchangeDecimals) + "</td>" +
-                        "<td class='cancel'><a href='#' data-toggle='modal' data-target='#cancel_coin_order_modal' data-order='" + NRS.escapeRespStr(order.order) + "'>" + $.t("cancel") + "</a></td>" +
-                    "</tr>";
+                        "<td>" + NRS.formatQuantity(order.askNQT, exchangeDecimals) + "</td>";
+                    if (order.account == NRS.account) {
+                        rows += "<td class='cancel'><a href='#' data-toggle='modal' data-target='#cancel_coin_order_modal' data-order='" + NRS.escapeRespStr(order.order) + "'>" + $.t("cancel") + "</a></td>";
+                    } else {
+                        rows += "<td></td>";
+                    }
+                    rows += "</tr>";
                 }
                 NRS.dataLoaded(rows);
             } else {

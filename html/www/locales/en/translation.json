@@ -279,7 +279,6 @@
   "edit": "Edit",
   "effective_balance": "Effective Balance",
   "email_address": "Email Address",
-  "enable_news_section": "Enable News Section",
   "encrypt_message": "Encrypt Message",
   "encrypted_goods_data_no_permission": "Goods data is encrypted and cannot be read by you.",
   "encrypted_message": "Encrypted Message",
@@ -638,8 +637,6 @@
   "new_price": "New Price",
   "new_q_create_account": "New? Create Your Account!",
   "new_quantity": "New Quantity",
-  "news": "News",
-  "news_section_disabled": "The news section is currently disabled.",
   "next": "Next",
   "next_lessee": "Next Lessee",
   "next_lessee_status": "The next lease period is scheduled from block __start__ to block __end__, the lessee account is __account__",
@@ -1941,5 +1938,6 @@
   "coin_exchange_history": "Coin Exchange History",
   "success_coin_group_add": "Coin added to group successfully.",
   "success_coin_group_removal": "Coin removed from group successfully.",
-  "poll": "Poll"
+  "poll": "Poll",
+  "compatibility": "Compatibility"
 }

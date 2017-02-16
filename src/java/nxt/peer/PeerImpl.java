@@ -77,8 +77,10 @@ final class PeerImpl implements Peer {
     /** Application version */
     private volatile String version;
 
+    /** Disabled APIs */
     private volatile EnumSet<APIEnum> disabledAPIs;
 
+    /** API server idle timeout */
     private volatile int apiServerIdleTimeout;
 
     /** Old application version */
@@ -99,10 +101,14 @@ final class PeerImpl implements Peer {
     /** Peer services */
     private volatile long services;
 
+    /** Current blockchain state */
     private volatile BlockchainState blockchainState;
 
     /** Peer state */
     private volatile State state = State.NON_CONNECTED;
+
+    /** Peer disconnect is pending */
+    private volatile boolean disconnectPending;
 
     /** Peer downloaded volume */
     private volatile long downloadedVolume;
@@ -428,46 +434,76 @@ final class PeerImpl implements Peer {
     }
 
     /**
-     * Check if address should be shared
+     * Get disabled APIs
      *
-     * @return                          TRUE if address should be shared
+     * @return                          Disabled APIs
      */
     @Override
     public Set<APIEnum> getDisabledAPIs() {
         return Collections.unmodifiableSet(disabledAPIs);
     }
 
+    /**
+     * Set disabled APIs
+     *
+     * @param   apiSetBase64            Disabled APIs
+     */
     void setDisabledAPIs(String apiSetBase64) {
         disabledAPIs = APIEnum.base64StringToEnumSet(apiSetBase64);
     }
 
+    /**
+     * Get server idle timeout
+     *
+     * @return                          Server idle timeout
+     */
     @Override
     public int getApiServerIdleTimeout() {
         return apiServerIdleTimeout;
     }
 
+    /**
+     * Set server idle timeout
+     *
+     * @param   apiServerIdleTimeout    Server idle timeout
+     */
     void setApiServerIdleTimeout(int apiServerIdleTimeout) {
         this.apiServerIdleTimeout = apiServerIdleTimeout;
     }
 
+    /**
+     * Get blockchain state
+     *
+     * @return                          Blockchain state
+     */
     @Override
     public BlockchainState getBlockchainState() {
         return blockchainState;
     }
 
+    /**
+     * Set blockchain state
+     *
+     * @param   blockchainState         Blockchain state
+     */
     void setBlockchainState(BlockchainState blockchainState) {
         this.blockchainState = blockchainState;
     }
 
+    /**
+     * Get peer address share mode
+     *
+     * @return                          TRUE if peer address should be shared
+     */
     @Override
     public boolean shareAddress() {
         return shareAddress;
     }
 
     /**
-     * Set address share
+     * Set address share mode
      *
-     * @param   shareAddress            TRUE if address shoiuld be shared
+     * @param   shareAddress            TRUE if address should be shared
      */
     void setShareAddress(boolean shareAddress) {
         this.shareAddress = shareAddress;
@@ -933,10 +969,27 @@ final class PeerImpl implements Peer {
     }
 
     /**
+     * Indicate disconnect is pending
+     */
+    synchronized void setDisconnectPending() {
+        disconnectPending = true;
+    }
+
+    /**
+     * Check if disconnect is pending
+     *
+     * @return                      TRUE if disconnect is pending
+     */
+    synchronized boolean isDisconnectPending() {
+        return disconnectPending;
+    }
+
+    /**
      * Disconnect the peer
      */
     @Override
     public void disconnectPeer() {
+        disconnectPending = true;
         connectLock.lock();
         try {
             if (state == State.CONNECTED) {
@@ -965,6 +1018,7 @@ final class PeerImpl implements Peer {
             keyEvent = null;
             connectionAddress = null;
         } finally {
+            disconnectPending = false;
             connectLock.unlock();
         }
     }
@@ -979,7 +1033,9 @@ final class PeerImpl implements Peer {
      */
     synchronized NetworkMessage getQueuedMessage() {
         NetworkMessage message;
-        if (handshakePending) {
+        if (disconnectPending) {
+            message = null;
+        } else if (handshakePending) {
             message = handshakeMessage;
             handshakeMessage = null;
         } else {
@@ -1001,7 +1057,7 @@ final class PeerImpl implements Peer {
         boolean sendMessage = false;
         boolean disconnect = false;
         synchronized(this) {
-            if (state == State.CONNECTED) {
+            if (state == State.CONNECTED && !disconnectPending) {
                 if (handshakePending && message instanceof NetworkMessage.GetInfoMessage) {
                     handshakeMessage = message;
                     sendMessage = true;
@@ -1021,10 +1077,12 @@ final class PeerImpl implements Peer {
         }
         if (sendMessage) {
             try {
-                keyEvent.update(SelectionKey.OP_WRITE, 0);
-                if (Peers.isLogLevelEnabled(Peers.LOG_LEVEL_NAMES)) {
-                    Logger.logDebugMessage(String.format("%s[%d] message sent to %s",
-                            message.getMessageName(), message.getMessageId(), host));
+                if (keyEvent != null) {
+                    keyEvent.update(SelectionKey.OP_WRITE, 0);
+                    if (Peers.isLogLevelEnabled(Peers.LOG_LEVEL_NAMES)) {
+                        Logger.logDebugMessage(String.format("%s[%d] message sent to %s",
+                                message.getMessageName(), message.getMessageId(), host));
+                    }
                 }
             } catch (IllegalStateException exc) {
                 Logger.logErrorMessage("Unable to update network selection key", exc);
@@ -1042,7 +1100,7 @@ final class PeerImpl implements Peer {
      */
     @Override
     public NetworkMessage sendRequest(NetworkMessage message) {
-        if (state != State.CONNECTED) {
+        if (state != State.CONNECTED || disconnectPending) {
             return null;
         }
         ResponseEntry entry = new ResponseEntry();

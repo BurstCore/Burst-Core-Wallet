@@ -2759,16 +2759,6 @@ tr.tentative-crossed td , tr.tentative-crossed td a {
 	 animation-delay: 500ms;
 }
 
-.rss_news.data-loading {
-	height: 200px;
-	text-align: center;
-}
-
-.rss_news.data-loading img {
-	margin-top: 84px;
-}
-
-
 #message_text {
 	height: 65%;
 	outline: none;
@@ -2804,10 +2794,6 @@ tr.tentative-crossed td , tr.tentative-crossed td a {
 	-ms-user-select: none; /* IE10+ */
 	-o-user-select: none;
 	user-select: none;
-}
-
-.rss_news .list-group {
-	margin-bottom:0 !important;
 }
 
 a.list-group-item-header {

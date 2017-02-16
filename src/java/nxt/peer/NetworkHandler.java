@@ -31,7 +31,6 @@ import java.net.InetSocketAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.StandardSocketOptions;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
@@ -499,6 +498,9 @@ public final class NetworkHandler implements Runnable {
          * @param   removeOps           Operations to be removed
          */
         void update(int addOps, int removeOps) {
+            if (peer.isDisconnectPending()) {
+                return;
+            }
             if (Thread.currentThread() == listenerThread) {
                 if (key.isValid()) {
                     key.interestOps((key.interestOps() | addOps) & (~removeOps));
@@ -644,6 +646,7 @@ public final class NetworkHandler implements Runnable {
                 } else if (connectionMap.get(remoteAddress.getAddress()) != null) {
                     channel.close();
                     Logger.logDebugMessage("Connection already established with " + hostAddress + ", disconnecting");
+                    peer.setDisconnectPending();
                     Peers.peersService.execute(peer::disconnectPeer);
                 } else {
                     channel.configureBlocking(false);
@@ -705,6 +708,7 @@ public final class NetworkHandler implements Runnable {
                             if (keyEvent != null) {
                                 keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
                             }
+                            peer.setDisconnectPending();
                             Peers.peersService.execute(peer::disconnectPeer);
                         }
                         break;
@@ -726,6 +730,7 @@ public final class NetworkHandler implements Runnable {
                         if (keyEvent != null) {
                             keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
                         }
+                        peer.setDisconnectPending();
                         Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     }
@@ -736,6 +741,7 @@ public final class NetworkHandler implements Runnable {
                         if (keyEvent != null) {
                             keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
                         }
+                        peer.setDisconnectPending();
                         Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     }
@@ -774,6 +780,7 @@ public final class NetworkHandler implements Runnable {
             if (keyEvent != null) {
                 keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
             }
+            peer.setDisconnectPending();
             Peers.peersService.execute(peer::disconnectPeer);
         }
     }
@@ -820,6 +827,7 @@ public final class NetworkHandler implements Runnable {
                         if (keyEvent != null) {
                             keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
                         }
+                        peer.setDisconnectPending();
                         Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     } catch (Exception exc) {
@@ -829,6 +837,7 @@ public final class NetworkHandler implements Runnable {
                         if (keyEvent != null) {
                             keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
                         }
+                        peer.setDisconnectPending();
                         Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     }
@@ -853,6 +862,7 @@ public final class NetworkHandler implements Runnable {
             if (keyEvent != null) {
                 keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
             }
+            peer.setDisconnectPending();
             Peers.peersService.execute(peer::disconnectPeer);
         }
     }
