@@ -316,16 +316,16 @@ public enum CurrencyType {
                 throw new NxtException.NotValidException("Invalid currency code: " + code + " code must be all upper case");
             }
         }
-        if (code.contains("ARDOR") || code.contains("ARDR") || "ardor".equals(normalizedName) || "ardr".equals(normalizedName)) {
+        if (code.equals("ARDOR") || code.contains("ARDR") || "ardor".equals(normalizedName) || "ardr".equals(normalizedName)) {
             throw new NxtException.NotValidException("Currency name already used");
         }
-        if (code.contains(childChain.getName().toUpperCase()) || childChain.getName().toLowerCase().equals(normalizedName)) {
+        if (code.equals(childChain.getName().toUpperCase()) || childChain.getName().toLowerCase().equals(normalizedName)) {
             throw new NxtException.NotValidException("Currency name already used");
         }
         if (code.contains("NXT") || code.contains("NEXT") || "nxt".equals(normalizedName) || "next".equals(normalizedName)) {
             throw new NxtException.NotValidException("Currency name already used");
         }
-        if (code.contains("IGNIS") || "ignis".equals(normalizedName)) {
+        if (code.equals("IGNIS") || "ignis".equals(normalizedName)) {
             throw new NxtException.NotValidException("Currency name already used");
         }
         Currency currency;
