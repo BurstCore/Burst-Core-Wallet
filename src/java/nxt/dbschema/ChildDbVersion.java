@@ -406,7 +406,7 @@ public class ChildDbVersion extends DbVersion {
             case 142:
                 apply("ALTER TABLE goods ADD COLUMN IF NOT EXISTS full_hash BINARY(32)");
             case 143:
-                BlockchainProcessorImpl.getInstance().scheduleScan(0, false);
+                BlockchainProcessorImpl.getInstance().scheduleScan(0, true);
                 apply(null);
             case 144:
                 return;
