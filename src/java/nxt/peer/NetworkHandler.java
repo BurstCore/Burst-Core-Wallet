@@ -94,7 +94,7 @@ public final class NetworkHandler implements Runnable {
     private static final int MESSAGE_HEADER_LENGTH = MESSAGE_HEADER_MAGIC.length + 4;
 
     /** Maximum message size */
-    private static final int MAX_MESSAGE_SIZE = 1024 * 1024;
+    static final int MAX_MESSAGE_SIZE = 1024 * 1024;
 
     /** Server port */
     private static final int serverPort = Constants.isTestnet ? TESTNET_PEER_PORT :

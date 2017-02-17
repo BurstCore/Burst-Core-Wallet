@@ -2254,11 +2254,15 @@ public abstract class NetworkMessage {
             this.messageId = messageId;
             blockBytes = new ArrayList<>(blocks.size());
             totalBlockLength = 0;
-            blocks.forEach((block) -> {
+            for (Block block : blocks) {
                 BlockBytes bytes = new BlockBytes(block);
+                if (getLength() + bytes.getLength() > NetworkHandler.MAX_MESSAGE_SIZE) {
+                    ((ArrayList)blockBytes).trimToSize();
+                    break;
+                }
                 blockBytes.add(bytes);
                 totalBlockLength += bytes.getLength();
-            });
+            }
         }
 
         /**
@@ -2712,11 +2716,15 @@ public abstract class NetworkMessage {
             this.messageId = messageId;
             this.transactionBytes = new ArrayList<>(transactions.size());
             totalTransactionLength = 0;
-            transactions.forEach((tx) -> {
+            for (Transaction tx : transactions) {
                 TransactionBytes bytes = new TransactionBytes(tx);
+                if (getLength() + bytes.getLength() > NetworkHandler.MAX_MESSAGE_SIZE) {
+                    ((ArrayList)transactionBytes).trimToSize();
+                    break;
+                }
                 transactionBytes.add(bytes);
                 totalTransactionLength += bytes.getLength();
-            });
+            }
         }
 
         /**
