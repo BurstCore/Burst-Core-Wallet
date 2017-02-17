@@ -34,6 +34,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -190,7 +191,7 @@ public class FxtTransactionImpl extends TransactionImpl implements FxtTransactio
     }
 
     @Override
-    public List<ChildTransactionImpl> getChildTransactions() {
+    public Collection<ChildTransactionImpl> getChildTransactions() {
         return Collections.emptyList();
     }
 

@@ -20,6 +20,7 @@ import nxt.NxtException;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,7 @@ final class UnconfirmedFxtTransaction extends UnconfirmedTransaction implements 
     }
 
     @Override
-    public List<? extends ChildTransaction> getChildTransactions() {
+    public Collection<? extends ChildTransaction> getChildTransactions() {
         return getTransaction().getChildTransactions();
     }
 

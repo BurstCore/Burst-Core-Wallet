@@ -86,7 +86,7 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
     }
 
     @Override
-    public synchronized List<ChildTransactionImpl> getChildTransactions() {
+    public synchronized Collection<ChildTransactionImpl> getChildTransactions() {
         ChildBlockAttachment childBlockAttachment = (ChildBlockAttachment)getAttachment();
         if (this.childTransactions == null) {
             byte[][] hashes = childBlockAttachment.getChildTransactionFullHashes();

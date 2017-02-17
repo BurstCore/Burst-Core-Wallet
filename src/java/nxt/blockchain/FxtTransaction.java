@@ -18,6 +18,7 @@ package nxt.blockchain;
 
 import nxt.NxtException;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface FxtTransaction extends Transaction {
@@ -30,7 +31,7 @@ public interface FxtTransaction extends Transaction {
 
     }
 
-    List<? extends ChildTransaction> getChildTransactions();
+    Collection<? extends ChildTransaction> getChildTransactions();
 
     List<? extends ChildTransaction> getSortedChildTransactions();
 
