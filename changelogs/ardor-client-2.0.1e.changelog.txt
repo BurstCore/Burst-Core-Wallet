@@ -7,3 +7,5 @@ blockchain download.
 
 Removed obsolete news page, added About modal.
 
+This release will force a rescan, deleting blocks after height 11619.
+
