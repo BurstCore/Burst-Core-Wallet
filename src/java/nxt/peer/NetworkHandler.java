@@ -54,6 +54,7 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -372,6 +373,8 @@ public final class NetworkHandler implements Runnable {
             while (!networkShutdown) {
                 processEvents();
             }
+        } catch (RejectedExecutionException exc) {
+            Logger.logInfoMessage("Server shutdown started, Network listener stopping");
         } catch (Throwable exc) {
             Logger.logErrorMessage("Network listener abnormally terminated", exc);
             networkShutdown = true;

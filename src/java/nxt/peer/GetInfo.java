@@ -71,7 +71,9 @@ final class GetInfo {
         if (version == null) {
             version = "?";
         }
-        peer.setVersion(version.trim());
+        if (!peer.setVersion(version.trim())) {
+            return null;
+        }
 
         String platform = message.getApplicationPlatform();
         if (platform == null) {
