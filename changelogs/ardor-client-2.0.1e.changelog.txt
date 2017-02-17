@@ -1,0 +1,9 @@
+This is a bugfix release, for testnet only.
+
+Added Node JS module, see html/www/js/README.
+
+Multiple bugs fixed and improvements added in client UI, peer networking,
+blockchain download.
+
+Removed obsolete news page, added About modal.
+
