@@ -337,9 +337,6 @@ public abstract class TransactionImpl implements Transaction {
     public BlockImpl getBlock() {
         if (block == null && blockId != 0) {
             block = BlockchainImpl.getInstance().getBlock(blockId);
-            if (block == null) {
-                throw new IllegalStateException("Block " + blockId + " not found in database for transaction " + getStringId());
-            }
         }
         return block;
     }

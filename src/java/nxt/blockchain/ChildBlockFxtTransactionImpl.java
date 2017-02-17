@@ -20,7 +20,6 @@ import nxt.Nxt;
 import nxt.NxtException;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
-import nxt.util.Logger;
 
 import java.security.MessageDigest;
 import java.sql.Connection;
@@ -93,9 +92,6 @@ final class ChildBlockFxtTransactionImpl extends FxtTransactionImpl implements C
             if (getSignature() != null && TransactionHome.hasFxtTransaction(this.getId(), Nxt.getBlockchain().getHeight() + 1)) {
                 TransactionHome transactionHome = ChildChain.getChildChain(childBlockAttachment.getChainId()).getTransactionHome();
                 List<ChildTransactionImpl> list = transactionHome.findChildTransactions(this.getId());
-                if (this.getBlock() == null) {
-                    Logger.logDebugMessage("Block is null for transaction " + getStringId() + " blockId " + Long.toUnsignedString(this.getBlockId()));
-                }
                 for (ChildTransactionImpl childTransaction : list) {
                     childTransaction.setBlock(this.getBlock());
                 }

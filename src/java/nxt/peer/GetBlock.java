@@ -18,7 +18,6 @@ package nxt.peer;
 import nxt.Nxt;
 import nxt.blockchain.Block;
 import nxt.blockchain.Blockchain;
-import nxt.util.Logger;
 
 final class GetBlock {
 
@@ -40,9 +39,6 @@ final class GetBlock {
         try {
             Block block = blockchain.getBlock(blockId, true);
             message = new NetworkMessage.BlocksMessage(request.getMessageId(), block, excludedTransactions);
-        } catch (Exception e) {
-            Logger.logDebugMessage("Failed to get block " + Long.toUnsignedString(blockId), e);
-            throw e;
         } finally {
             blockchain.readUnlock();
         }
