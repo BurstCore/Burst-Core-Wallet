@@ -332,8 +332,7 @@ final class PeerImpl implements Peer {
                 if (versionChanged) {
                     Logger.logDebugMessage(String.format("Blacklisting %s version %s", getHost(), version));
                 }
-                blacklistingCause = "Old version: " + version;
-                Peers.notifyListeners(this, Peers.Event.BLACKLIST);
+                blacklist("Old version: " + version);
             }
         }
         return !isOldVersion;
