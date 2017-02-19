@@ -1680,7 +1680,7 @@ var NRS = (function (NRS, $, undefined) {
     };
 
     NRS.isRsAccount = function(account) {
-        NRS.isRsAccountImpl(account, NRS.constants.ACCOUNT_RS_MATCH ? NRS.constants.ACCOUNT_RS_MATCH : NRS.getRsAccountRegex("NXT"));
+        return NRS.isRsAccountImpl(account, NRS.constants.ACCOUNT_RS_MATCH ? NRS.constants.ACCOUNT_RS_MATCH : NRS.getRsAccountRegex("NXT"));
     };
 
     NRS.isRsAccountImpl = function(account, regex) {
@@ -1688,7 +1688,7 @@ var NRS = (function (NRS, $, undefined) {
     };
 
     NRS.isNumericAccount = function(account) {
-        NRS.isNumericAccountImpl(account, NRS.constants.ACCOUNT_NUMERIC_MATCH);
+        return NRS.isNumericAccountImpl(account, NRS.constants.ACCOUNT_NUMERIC_MATCH);
     };
 
     NRS.isNumericAccountImpl = function(account, regex) {
