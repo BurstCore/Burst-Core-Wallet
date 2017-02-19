@@ -1679,6 +1679,32 @@ var NRS = (function (NRS, $, undefined) {
         }
     };
 
+    NRS.isRsAccount = function(account) {
+        NRS.isRsAccountImpl(account, NRS.constants.ACCOUNT_RS_MATCH);
+    };
+
+    NRS.isRsAccountImpl = function(account, regex) {
+        return regex.test(account);
+    };
+
+    NRS.isNumericAccount = function(account) {
+        NRS.isNumericAccountImpl(account, NRS.constants.ACCOUNT_NUMERIC_MATCH);
+    };
+
+    NRS.isNumericAccountImpl = function(account, regex) {
+        return regex.test(account);
+    };
+
+    NRS.getAccountMask = function(c) {
+        switch(c) {
+            case "*":
+                return NRS.constants.ACCOUNT_MASK_ASTERIX;
+            case "_":
+                return NRS.constants.ACCOUNT_MASK_ASTERIX;
+            default:
+                return NRS.constants.ACCOUNT_MASK_PREFIX;
+        }
+    };
 
     return NRS;
 }(Object.assign(NRS || {}, isNode ? global.client : {}), jQuery));

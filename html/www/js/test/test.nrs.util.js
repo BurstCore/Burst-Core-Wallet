@@ -254,3 +254,14 @@ QUnit.test("numberOfDecimals", function (assert) {
         return NRS.formatAmount(val.price);
     }), 3, "with.callback");
 });
+
+QUnit.test("accountMatching", function (assert) {
+    var regex = NRS.getRsAccountRegex("NXT");
+    assert.equal(NRS.isRsAccountImpl("NXT-XK4R-7VJU-6EQG-7R335", regex), true, "valid.account");
+    assert.equal(NRS.isRsAccountImpl("Nxt-xk4r-7VJU-6EQG-7R335", regex), true, "not.case.sensitive");
+    assert.equal(NRS.isRsAccountImpl("NXT-XK4R-7VJU-6EQG-7R336", regex), true, "nor.rs.valid.still.valid");
+    assert.equal(NRS.isRsAccountImpl("5873880488492319831", regex), false, "numeric.no.match");
+    regex = NRS.getNumericAccountRegex();
+    assert.equal(NRS.isNumericAccountImpl("NXT-XK4R-7VJU-6EQG-7R335", regex), false, "non.numeric.no.match");
+    assert.equal(NRS.isNumericAccountImpl("5873880488492319831", regex), true, "numeric.match");
+});
