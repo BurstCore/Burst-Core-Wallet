@@ -87,7 +87,7 @@ var NRS = (function(NRS, $) {
 			};
 		}
 
-		if (NRS.isNumericAccount(data.name) || /^NXT\-/i.test(data.name)) {
+		if (NRS.isNumericAccount(data.name) || NRS.isRsAccount(data.name)) {
 			return {
 				"error": $.t("error_contact_name_alpha")
 			};
@@ -110,7 +110,7 @@ var NRS = (function(NRS, $) {
 			}
 		}
 		var address;
-		if (/^NXT\-/i.test(data.account_id)) {
+		if (NRS.isRsAccount(data.account_id)) {
 			data.account_rs = data.account_id;
 			address = new NxtAddress();
 			if (address.set(data.account_rs)) {
@@ -200,7 +200,7 @@ var NRS = (function(NRS, $) {
 		var contactId = parseInt($invoker.data("contact"), 10);
 		if (!contactId && NRS.selectedContext) {
 			var accountId = NRS.selectedContext.data("account");
-			var dbKey = (/^NXT\-/i.test(accountId) ? "accountRS" : "account");
+			var dbKey = (NRS.isRsAccount(accountId) ? "accountRS" : "account");
 			var dbQuery = {};
 			dbQuery[dbKey] = accountId;
 			NRS.storageSelect("contacts", [dbQuery], function(error, contact) {
@@ -255,7 +255,7 @@ var NRS = (function(NRS, $) {
 			};
 		}
 		var address;
-		if (/^NXT\-/i.test(data.account_id)) {
+		if (NRS.isRsAccount(data.account_id)) {
 			data.account_rs = data.account_id;
 			address = new NxtAddress();
 			if (address.set(data.account_rs)) {

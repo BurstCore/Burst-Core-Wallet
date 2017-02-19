@@ -103,7 +103,7 @@
                         var addressStart = curValUpper.indexOf('NXT-', 4);
                         if (addressStart > 0) {
                             var insertedAddress = curValUpper.substr(addressStart, 24);
-                            if (/NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/.test(insertedAddress)) {
+                            if (NRS.isRsAccount(insertedAddress)) {
                                 //since pasting into a msked field will first trigger androidInputEvent, search for inserted address and use it
                                 input.val(insertedAddress);
                             }
@@ -229,11 +229,11 @@
                     setTimeout(function() {
                         var newInput = input.val();
                         var pastedData = newInput.substring(4).toUpperCase();
-                        if (/NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/i.test(pastedData)) {
+                        if (NRS.isRsAccount(pastedData)) {
                             var newAddress = String(pastedData.match("NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}"));
                             input.val(newAddress);
                             checkVal(true);
-                        } else if (/^NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/i.test(newInput) || /^NXT[A-Z0-9]{17}/i.test(newInput)) {
+                        } else if (NRS.isRsAccount(newInput) || /^NXT[A-Z0-9]{17}/i.test(newInput)) {
                             input.mask("NXT-****-****-****-*****").trigger("checkRecipient")/*.unbind(".remask")*/;
                         }
                     }, 0);

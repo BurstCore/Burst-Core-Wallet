@@ -1151,7 +1151,7 @@ var NRS = (function(NRS, $) {
 
 		if (seller == "") {
 			NRS.pages.dgs_search();
-		} else if (/^(NXT\-)/i.test(seller)) {
+		} else if (NRS.isRsAccount(seller)) {
 			var address = new NxtAddress();
 
 			if (!address.set(seller)) {

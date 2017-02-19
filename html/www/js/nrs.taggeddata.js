@@ -242,7 +242,7 @@ var NRS = (function(NRS, $) {
 
 		if (account == "") {
 			NRS.pages.tagged_data_search();
-		} else if (/^(NXT\-)/i.test(account)) {
+		} else if (NRS.isRsAccount(account)) {
 			var address = new NxtAddress();
 			if (!address.set(account)) {
 				$.growl($.t("error_invalid_account"), {

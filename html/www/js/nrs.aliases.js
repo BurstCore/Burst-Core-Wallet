@@ -389,7 +389,7 @@ var NRS = (function (NRS, $, undefined) {
 
         if (data.type == "account") {
             if (!(/acct:(.*)@nxt/.test(data.aliasURI)) && !(/nacc:(.*)/.test(data.aliasURI))) {
-                if (/^(NXT\-)/i.test(data.aliasURI)) {
+                if (NRS.isRsAccount(data.aliasURI)) {
                     var address = new NxtAddress();
 
                     if (!address.set(data.aliasURI)) {
@@ -461,7 +461,7 @@ var NRS = (function (NRS, $, undefined) {
                     } else {
                         uri = "";
                     }
-                } else if (!/^NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/i.test(uri)) {
+                } else if (!NRS.isRsAccount(uri)) {
                     uri = NRS.accountRS;
                 }
 

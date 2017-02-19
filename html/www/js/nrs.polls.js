@@ -829,7 +829,7 @@ var NRS = (function(NRS, $, undefined) {
 			};
 		}
 
-		if (!NRS.isNumericAccount(data.id) && !/^NXT\-/i.test(data.id)) {
+		if (!NRS.isNumericAccount(data.id) && !NRS.isRsAccount(data.id)) {
 			return {
 				"error": $.t("error_poll_id_invalid")
 			};

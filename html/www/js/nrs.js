@@ -1725,7 +1725,7 @@ NRS.addPagination = function () {
 
 		var id = $.trim($("#id_search").find("input[name=q]").val());
 
-		if (/NXT\-/i.test(id)) {
+		if (NRS.isRsAccount(id)) {
 			NRS.sendRequest("getAccount", {
 				"account": id
 			}, function(response, input) {
