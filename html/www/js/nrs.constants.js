@@ -88,7 +88,7 @@ var NRS = (function (NRS, $) {
     };
 
     NRS.getRsAccountRegex = function(accountPrefix) {
-        return new RegExp("^" + accountPrefix + "\\-[A-Z0-9]{4}\\-[A-Z0-9]{4}\\-[A-Z0-9]{4}\\-[A-Z0-9]{5}", "i");
+        return new RegExp("^" + accountPrefix + "-[A-Z0-9_]{4}-[A-Z0-9_]{4}-[A-Z0-9_]{4}-[A-Z0-9_]{5}", "i");
     };
 
     NRS.getNumericAccountRegex = function() {
