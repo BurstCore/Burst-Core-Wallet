@@ -230,7 +230,7 @@
                         var newInput = input.val();
                         var pastedData = newInput.substring(4).toUpperCase();
                         if (NRS.isRsAccount(pastedData)) {
-                            var newAddress = String(pastedData.match("NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}"));
+                            var newAddress = String(pastedData.match("NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}")); // TODO looks like a bug
                             input.val(newAddress);
                             checkVal(true);
                         } else if (NRS.isRsAccount(newInput) || /^NXT[A-Z0-9]{17}/i.test(newInput)) {
