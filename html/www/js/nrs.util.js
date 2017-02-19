@@ -845,7 +845,7 @@ var NRS = (function (NRS, $, undefined) {
                     value = NRS.formatQuantity(value, 0);
                 }
             } else if (key == "price" || key == "total" || key == "amount" || key == "fee" || key == "refund" || key == "discount") {
-                value = NRS.formatAmount(new BigInteger(String(value))) + " NXT";
+                value = NRS.formatAmount(new BigInteger(String(value))) + " " + NRS.constants.COIN_SYMBOL;
             } else if (key == "sender" || key == "recipient" || key == "account" || key == "seller" || key == "buyer" || key == "lessee") {
                 value = "<a href='#' data-user='" + NRS.escapeRespStr(value) + "' class='show_account_modal_action'>" + NRS.getAccountTitle(value) + "</a>";
             } else if (key == "request_processing_time") { /* Skip from displaying request processing time */

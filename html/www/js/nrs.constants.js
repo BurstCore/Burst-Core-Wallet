@@ -119,6 +119,7 @@ var NRS = (function (NRS, $) {
             NRS.loadTransactionTypeConstants(response);
             NRS.constants.PROXY_NOT_FORWARDED_REQUESTS = response.proxyNotForwardedRequests;
             NRS.constants.COIN_SYMBOL = response.coinSymbol;
+            $(".coin-symbol").html(response.coinSymbol);
             NRS.constants.ACCOUNT_PREFIX = response.accountPrefix;
             NRS.constants.ACCOUNT_RS_MATCH = NRS.getRsAccountRegex(response.accountPrefix);
             NRS.constants.ACCOUNT_NUMERIC_MATCH = NRS.getNumericAccountRegex();

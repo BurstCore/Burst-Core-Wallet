@@ -299,7 +299,7 @@ var NRS = (function(NRS, $) {
         }, function (response) {
             var fee = NRS.convertToNXT(NRS.escapeRespStr(response.feeNQT));
             $('#extend_data_fee').val(fee);
-            $('#extend_data_fee_label').html(String(fee) + " NXT");
+            $('#extend_data_fee_label').html(String(fee) + " " + NRS.constants.COIN_SYMBOL);
         })
     });
 
