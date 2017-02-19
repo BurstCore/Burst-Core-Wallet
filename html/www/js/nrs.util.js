@@ -1680,7 +1680,7 @@ var NRS = (function (NRS, $, undefined) {
     };
 
     NRS.isRsAccount = function(account) {
-        NRS.isRsAccountImpl(account, NRS.constants.ACCOUNT_RS_MATCH);
+        NRS.isRsAccountImpl(account, NRS.constants.ACCOUNT_RS_MATCH ? NRS.constants.ACCOUNT_RS_MATCH : NRS.getRsAccountRegex("NXT"));
     };
 
     NRS.isRsAccountImpl = function(account, regex) {
@@ -1702,7 +1702,7 @@ var NRS = (function (NRS, $, undefined) {
             case "_":
                 return NRS.constants.ACCOUNT_MASK_ASTERIX;
             default:
-                return NRS.constants.ACCOUNT_MASK_PREFIX;
+                return NRS.constants.ACCOUNT_MASK_PREFIX ? NRS.constants.ACCOUNT_MASK_PREFIX : "NXT-";
         }
     };
 
