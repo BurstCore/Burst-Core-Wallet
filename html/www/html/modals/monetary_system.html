@@ -147,7 +147,7 @@
                             <label for="issue_currency_reservable" style="font-weight:normal;" tabindex="6" data-i18n="reservable">Reservable</label>
                         </div>
                         <div class="form-group advanced optional_reserve">
-                            <label for="issue_currency_min_reserve" data-i18n="min_reserve_v2">MINIMUM AMOUNT OF NXT PER WHOLE UNIT NEEDED TO ACTIVATE CURRENCY</label>
+                            <label for="issue_currency_min_reserve" data-i18n="min_reserve_v2">MINIMUM AMOUNT OF COIN PER WHOLE UNIT NEEDED TO ACTIVATE CURRENCY</label>
                             <input name="minReservePerUnitNQT" id="issue_currency_min_reserve" class="form-control" placeholder="Minimum Amount Per Unit" data-i18n="minimum_reserve" tabindex="7" disabled>
                         </div>
                         <div class="form-group advanced optional_reserve">
@@ -306,7 +306,7 @@
                             <div class="col-sm-8">
                                 <div class="input-group">
                                     <input id="buy_currency_offer_rate" type="text" value="0" name="buyRateNQT" class="form-control" data-type="buy" tabindex="4" />
-                                    <span class="input-group-addon"><span class="currency_code"></span> / NXT</span>
+                                    <span class="input-group-addon"><span class="currency_code"></span> / <span class="coin-symbol"></span></span>
                                 </div>
                             </div>
                         </div>
@@ -340,7 +340,7 @@
                             <div class="col-sm-8">
                                 <div class="input-group">
                                     <input id="sell_currency_offer_rate" type="text" value="0" name="sellRateNQT" class="form-control" data-type="sell" tabindex="7" />
-                                    <span class="input-group-addon"><span class="currency_code"></span> / NXT</span>
+                                    <span class="input-group-addon"><span class="currency_code"></span> / <span class="coin-symbol"></span></span>
                                 </div>
                             </div>
                         </div>
@@ -434,13 +434,13 @@
                         <label for="reserve_currency_initialSupply_text" data-i18n="initial_supply_included">Initial Supply Included</label> <i><span id="reserve_currency_initialSupply_text"></span></i>
                         </p>
                         <p>
-                        <label for="reserve_currency_minReserve_text" data-i18n="target_reserve">Target Amount [NXT]</label> <i><span id="reserve_currency_minReserve_text"></span></i>
-                        <label for="reserve_currency_currentReserve_text" data-i18n="current_reserve">Reserved Amount [NXT]</label> <i><span id="reserve_currency_currentReserve_text"></span></i>
+                        <label for="reserve_currency_minReserve_text" data-i18n="target_reserve">Target Amount</label> <i><span id="reserve_currency_minReserve_text"></span></i>
+                        <label for="reserve_currency_currentReserve_text" data-i18n="current_reserve">Reserved Amount</label> <i><span id="reserve_currency_currentReserve_text"></span></i>
                         </p>
                     </div>
                     <div class="form-group">
-                        <label for="reserve_currency_amount" data-i18n="amount_per_currency_unit">Amount of NXT to reserve</label>
-                        <input type="text" class="form-control" id="reserve_currency_amount" placeholder="NXT amount" data-i18n="amount" tabindex="1" />
+                        <label for="reserve_currency_amount" data-i18n="amount_per_currency_unit">Amount of coin to reserve</label>
+                        <input type="text" class="form-control" id="reserve_currency_amount" placeholder="amount" data-i18n="amount" tabindex="1" />
                     </div>
                     <div class="form-group">
                         <label for="reserve_currency_total" data-i18n="amount_nxt_reserved">Reserve per Unit</label>
