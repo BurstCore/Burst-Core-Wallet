@@ -393,7 +393,7 @@ var NRS = (function(NRS, $) {
 
 		if (data.recipient) {
 			data.recipient = $.trim(data.recipient);
-			if (/^\d+$/.test(data.recipient)) {
+			if (NRS.isNumericAccount(data.recipient)) {
 				$form.find(".error_message").html($.t("error_numeric_ids_not_allowed")).show();
 				if (formErrorFunction) {
 					formErrorFunction(false, data);
@@ -402,7 +402,7 @@ var NRS = (function(NRS, $) {
 				return;
 			} else if (!/^NXT\-[A-Z0-9]+\-[A-Z0-9]+\-[A-Z0-9]+\-[A-Z0-9]+/i.test(data.recipient)) {
 				var convertedAccountId = $modal.find("input[name=converted_account_id]").val();
-				if (!convertedAccountId || (!/^\d+$/.test(convertedAccountId) && !/^NXT\-[A-Z0-9]+\-[A-Z0-9]+\-[A-Z0-9]+\-[A-Z0-9]+/i.test(convertedAccountId))) {
+				if (!convertedAccountId || (!NRS.isNumericAccount(convertedAccountId) && !/^NXT\-[A-Z0-9]+\-[A-Z0-9]+\-[A-Z0-9]+\-[A-Z0-9]+/i.test(convertedAccountId))) {
 					$form.find(".error_message").html($.t("error_account_id")).show();
 					if (formErrorFunction) {
 						formErrorFunction(false, data);

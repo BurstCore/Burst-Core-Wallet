@@ -159,7 +159,7 @@ var NRS = (function (NRS, $, undefined) {
             };
         }
 
-        if (!/^\d+$/.test(data.id) && !/^NXT\-/i.test(data.id)) {
+        if (!NRS.isNumericAccount(data.id) && !/^NXT\-/i.test(data.id)) {
             return {
                 "error": $.t("error_asset_or_account_id_invalid")
             };
@@ -1137,7 +1137,7 @@ var NRS = (function (NRS, $, undefined) {
             return {
                 "error": $.t("error_description_required")
             };
-        } else if (!/^\d+$/.test(data.quantity)) {
+        } else if (!NRS.isNumericAccount(data.quantity)) {
             return {
                 "error": $.t("error_whole_quantity")
             };

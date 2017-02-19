@@ -1739,7 +1739,7 @@ NRS.addPagination = function () {
 				}
 			});
 		} else {
-			if (!/^\d+$/.test(id)) {
+			if (!NRS.isNumericAccount(id)) {
 				$.growl($.t("error_search_invalid"), {
 					"type": "danger"
 				});

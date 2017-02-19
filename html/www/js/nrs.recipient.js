@@ -248,7 +248,7 @@ var NRS = (function(NRS, $) {
 					callout.removeClass(classes).addClass("callout-danger").html($.t("recipient_malformed")).show();
 				}
 			}
-		} else if (!(/^\d+$/.test(account))) {
+		} else if (!NRS.isNumericAccount(account)) {
 			if (account.charAt(0) != '@') {
 				NRS.storageSelect("contacts", [{
 					"name": account
@@ -322,7 +322,7 @@ var NRS = (function(NRS, $) {
 					if (match && match[1]) {
 						match[1] = String(match[1]).toUpperCase();
 
-						if (/^\d+$/.test(match[1])) {
+						if (NRS.isNumericAccount(match[1])) {
 							var address = new NxtAddress();
 
 							if (address.set(match[1])) {

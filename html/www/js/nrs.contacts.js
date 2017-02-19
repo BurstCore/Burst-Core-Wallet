@@ -87,7 +87,7 @@ var NRS = (function(NRS, $) {
 			};
 		}
 
-		if (/^\d+$/.test(data.name) || /^NXT\-/i.test(data.name)) {
+		if (NRS.isNumericAccount(data.name) || /^NXT\-/i.test(data.name)) {
 			return {
 				"error": $.t("error_contact_name_alpha")
 			};

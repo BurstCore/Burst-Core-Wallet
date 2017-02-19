@@ -399,7 +399,7 @@ var NRS = (function (NRS, $, undefined) {
                     } else {
                         data.aliasURI = "acct:" + data.aliasURI + "@nxt";
                     }
-                } else if (/^\d+$/.test(data.aliasURI)) {
+                } else if (NRS.isNumericAccount(data.aliasURI)) {
                     return {
                         "error": $.t("error_numeric_ids_not_allowed")
                     };
@@ -453,7 +453,7 @@ var NRS = (function (NRS, $, undefined) {
                     uri = match[1];
                 }
 
-                if (/^\d+$/.test(uri)) {
+                if (NRS.isNumericAccount(uri)) {
                     var address = new NxtAddress();
 
                     if (address.set(uri)) {
