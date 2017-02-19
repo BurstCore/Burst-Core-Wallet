@@ -100,7 +100,7 @@
                         input.caret(pos.end, pos.end);
                     } else {
                         var curValUpper = curVal.toUpperCase();
-                        var addressStart = curValUpper.indexOf('NXT-', 4);
+                        var addressStart = curValUpper.indexOf(NRS.getAccountMask(), 4);
                         if (addressStart > 0) {
                             var insertedAddress = curValUpper.substr(addressStart, 24);
                             if (NRS.isRsAccount(insertedAddress)) {
@@ -146,7 +146,7 @@
 
                         if (settings.unmask !== false) {
                             //backspace, remove
-                            if ((pos.begin == 0 && pos.end == 24) || (currentInput == "NXT-____-____-____-_____" && pos.begin == 4)) {
+                            if ((pos.begin == 0 && pos.end == 24) || (currentInput == NRS.getAccountMask("_") && pos.begin == 4)) {
                                 input.val("");
                                 $(this).trigger("unmask");
                                 return;
@@ -223,7 +223,7 @@
                 }), defaultBuffer = buffer.join(""), focusText = input.val();
                 input.bind("keyup.remask", function(e) {
                     if (input.val().toLowerCase() == "nxt-") {
-                        input.val("").mask("NXT-****-****-****-*****")./*unbind(".remask").*/trigger("focus");
+                        input.val("").mask(NRS.getAccountMask("*"))./*unbind(".remask").*/trigger("focus");
                     }
                 }).bind("paste.remask", function(e) {
                     setTimeout(function() {
@@ -234,7 +234,7 @@
                             input.val(newAddress);
                             checkVal(true);
                         } else if (NRS.isRsAccount(newInput) || /^NXT[A-Z0-9]{17}/i.test(newInput)) {
-                            input.mask("NXT-****-****-****-*****").trigger("checkRecipient")/*.unbind(".remask")*/;
+                            input.mask(NRS.getAccountMask("*")).trigger("checkRecipient")/*.unbind(".remask")*/;
                         }
                     }, 0);
                 });

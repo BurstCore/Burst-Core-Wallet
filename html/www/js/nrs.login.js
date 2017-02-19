@@ -49,7 +49,7 @@ var NRS = (function(NRS, $, undefined) {
 		$("#account_phrase_custom_panel, #account_phrase_generator_panel, #welcome_panel, #custom_passphrase_link").hide();
 		$("#account_phrase_custom_panel").find(":input:not(:button):not([type=submit])").val("");
 		$("#account_phrase_generator_panel").find(":input:not(:button):not([type=submit])").val("");
-        $("#login_account_other").mask("NXT-****-****-****-*****");
+        $("#login_account_other").mask(NRS.getAccountMask("*"));
 		if (NRS.isMobileApp()) {
             $(".mobile-only").show();
         }

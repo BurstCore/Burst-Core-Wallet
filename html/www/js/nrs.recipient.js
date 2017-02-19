@@ -32,7 +32,7 @@ var NRS = (function(NRS, $) {
 			var value = $(this).val();
 			var modal = $(this).closest(".modal");
 
-			if (value && value != "NXT-____-____-____-_____") {
+			if (value && value != NRS.getAccountMask("_")) {
 				NRS.checkRecipient(value, modal);
 			} else {
 				modal.find(".account_info").hide();

@@ -441,7 +441,7 @@ var NRS = (function (NRS, $, undefined) {
         } else if (type == "account") {
             $("#register_alias_uri_label").html($.t("account_id"));
             registerAliasUri.prop("placeholder", $.t("account_id"));
-            registerAliasUri.val("").mask("NXT-****-****-****-*****");
+            registerAliasUri.val("").mask(NRS.getAccountMask("*"));
 
             if (uri) {
                 var match = uri.match(/acct:(.*)@nxt/i);
