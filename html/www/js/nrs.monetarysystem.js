@@ -756,14 +756,14 @@ var NRS = (function (NRS, $, undefined) {
                         var decimals = NRS.escapeRespStr(currency.decimals);
                         var typeIcons = NRS.getTypeIcons(currency.type);
                         var isOfferEnabled = NRS.isExchangeable(currency.type) && (!NRS.isControllable(currency.type) || NRS.account == currency.issuerAccount);
-                        var event = "NRS.goToCurrency('" + code + "'," + currency.chain + ")";
+                        var event = "onClick='NRS.goToCurrency(\"" + code + "\"," + currency.chain + ")'";
                         rows += "<tr>" +
                         "<td>" + NRS.getEntityLink({ id: currencyId, request: "getCurrency", key: "currency", text: NRS.getCurrencyDN(currency) }) + "</td>" +
                         "<td>" + currency.name + "</td>" +
                         "<td>" + typeIcons + "</td>" +
                         "<td class = 'numeric'>" + NRS.formatQuantity(currency.unconfirmedUnitsQNT, currency.decimals, false, unitsDecimals) + "</td>" +
                         "<td>" +
-                        "<a href='#' class='btn btn-xs btn-default' onClick='" + event + "' " + (!NRS.isExchangeable(currency.type) ? "disabled" : "") + ">" + $.t("exchange") + "</a> " +
+                        "<a href='#' class='btn btn-xs btn-default'" + event + (!NRS.isExchangeable(currency.type) ? " disabled" : "") + ">" + $.t("exchange") + "</a> " +
                         "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#transfer_currency_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-code='" + code + "' data-decimals='" + decimals + "'>" + $.t("transfer") + "</a> " +
                         "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#publish_exchange_offer_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-code='" + code + "' data-decimals='" + decimals + "' " + (isOfferEnabled ? "" : "disabled") + " >" + $.t("offer") + "</a> ";
                         if (NRS.getActiveChainId() == currency.chain && currency.issuanceHeight <= NRS.lastBlockHeight && NRS.isClaimable(currency.type)) {
