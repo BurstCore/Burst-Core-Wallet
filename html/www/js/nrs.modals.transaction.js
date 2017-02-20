@@ -455,11 +455,11 @@ var NRS = (function (NRS, $, undefined) {
                                         messageStyle = "danger";
                                     } else if (transaction.recipient == NRS.account) {
                                         message = $.t("alias_sale_direct_offer", {
-                                            "nxt": NRS.formatAmount(transaction.attachment.priceNQT)
+                                            "amount": NRS.formatAmount(transaction.attachment.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
                                         }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                                     } else if (typeof transaction.recipient == "undefined") {
                                         message = $.t("alias_sale_indirect_offer", {
-                                            "nxt": NRS.formatAmount(transaction.attachment.priceNQT)
+                                            "amount": NRS.formatAmount(transaction.attachment.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
                                         }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                                     } else if (transaction.senderRS == NRS.accountRS) {
                                         if (transaction.attachment.priceNQT != "0") {

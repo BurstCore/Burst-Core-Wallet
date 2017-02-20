@@ -321,7 +321,7 @@ var NRS = (function(NRS, $, undefined) {
 			$('#create_poll_min_balance').attr('disabled', false);
 		}
 		if ((pollType == 0 && mbType == 1) || pollType == 1) {
-			$('#min_voting_balance_label_unit').html($.t('nxt_capital_letters'));
+			$('#min_voting_balance_label_unit').html(NRS.constants.COIN_SYMBOL);
 			$('#create_poll_min_balance').attr('name', 'minBalanceNXT');
 		}
 		if ((pollType == 0 && mbType == 2) || pollType == 2) {

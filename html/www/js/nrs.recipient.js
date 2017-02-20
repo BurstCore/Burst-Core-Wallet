@@ -140,7 +140,8 @@ var NRS = (function(NRS, $) {
 						"type": "info",
 						"message": $.t("recipient_info_with_name", {
 							"name" : NRS.unescapeRespStr(response.name),
-							"nxt": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true)
+							"amount": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true),
+                            "symbol": NRS.constants.COIN_SYMBOL
 						}),
 						"account": response
 					};
@@ -149,7 +150,8 @@ var NRS = (function(NRS, $) {
 					result = {
 						"type": "info",
 						"message": $.t("recipient_info", {
-							"nxt": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true)
+							"amount": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true),
+                            "symbol": NRS.constants.COIN_SYMBOL
 						}),
 						"account": response
 					};
@@ -180,7 +182,8 @@ var NRS = (function(NRS, $) {
 					result = {
 						"type": "warning",
 						"message": $.t("recipient_no_public_key_pka", {
-							"nxt": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true)
+							"amount": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true),
+                            "symbol": NRS.constants.COIN_SYMBOL
 						}),
 						"account": response,
 						"noPublicKey": true

@@ -562,10 +562,10 @@ var NRS = (function (NRS, $, undefined) {
             $("#buy_asset_button").data("asset", assetId);
             $("#view_asset_distribution_link").data("asset", assetId);
             $("#sell_asset_for_nxt").html($.t("sell_asset_for_nxt", {
-                "assetName": NRS.escapeRespStr(asset.name)
+                "assetName": NRS.escapeRespStr(asset.name), "symbol": NRS.constants.COIN_SYMBOL
             }));
             $("#buy_asset_with_nxt").html($.t("buy_asset_with_nxt", {
-                "assetName": NRS.escapeRespStr(asset.name)
+                "assetName": NRS.escapeRespStr(asset.name), "symbol": NRS.constants.COIN_SYMBOL
             }));
             $("#sell_asset_price, #buy_asset_price").val("");
             $("#sell_asset_quantity, #sell_asset_total, #buy_asset_quantity, #buy_asset_total").val("0");
@@ -1081,21 +1081,25 @@ var NRS = (function (NRS, $, undefined) {
             description = $.t("buy_order_description", {
                 "quantity": NRS.formatQuantity(quantityQNT, currentAsset.decimals, true),
                 "asset_name": $("#asset_name").html().escapeHTML(),
-                "nxt": NRS.formatAmount(priceNQTPerWholeQNT)
+                "amount": NRS.formatAmount(priceNQTPerWholeQNT),
+                "symbol": NRS.constants.COIN_SYMBOL
             });
             tooltipTitle = $.t("buy_order_description_help", {
-                "nxt": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
-                "total_nxt": totalNXT
+                "amount": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
+                "total": totalNXT,
+                "symbol": NRS.constants.COIN_SYMBOL
             });
         } else {
             description = $.t("sell_order_description", {
                 "quantity": NRS.formatQuantity(quantityQNT, currentAsset.decimals, true),
                 "asset_name": $("#asset_name").html().escapeHTML(),
-                "nxt": NRS.formatAmount(priceNQTPerWholeQNT)
+                "amount": NRS.formatAmount(priceNQTPerWholeQNT),
+                "symbol": NRS.constants.COIN_SYMBOL
             });
             tooltipTitle = $.t("sell_order_description_help", {
-                "nxt": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
-                "total_nxt": totalNXT
+                "amount": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
+                "total": totalNXT,
+                "symbol": NRS.constants.COIN_SYMBOL
             });
         }
 

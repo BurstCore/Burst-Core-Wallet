@@ -18,7 +18,7 @@
  * @depends {nrs.js}
  * @depends {nrs.modals.js}
  */
-var NRS = (function(NRS, $, undefined) {
+var NRS = (function(NRS, $) {
 
     NRS.forms.dividendPayment = function($modal) {
         var data = NRS.getFormData($modal.find("form:first"));
@@ -90,13 +90,12 @@ var NRS = (function(NRS, $, undefined) {
                     );
                     var priceNQT = new BigInteger(NRS.calculatePricePerWholeQNT(NRS.convertToNQT(amountNXTPerShare), NRS.getCurrentAsset().decimals));
                     var totalNXT = NRS.calculateOrderTotal(totalQuantityQNT, priceNQT);
-                    $callout.html($.t("dividend_payment_info_preview_success",
-                            {
-                                "amountNXT": totalNXT,
-                                "totalQuantity": NRS.formatQuantity(totalQuantityQNT, NRS.getCurrentAsset().decimals),
-                                "recipientCount": qualifiedDividendRecipients.length
-                            })
-                    );
+                    $callout.html($.t("dividend_payment_info_preview_success", {
+                        "amount": totalNXT,
+                        "symbol": NRS.constants.COIN_SYMBOL,
+                        "totalQuantity": NRS.formatQuantity(totalQuantityQNT, NRS.getCurrentAsset().decimals),
+                        "recipientCount": qualifiedDividendRecipients.length
+                    }));
                     $callout.removeClass(classes).addClass("callout-info").show();
                 },
                 function (response) {

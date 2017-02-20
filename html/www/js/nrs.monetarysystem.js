@@ -607,24 +607,28 @@ var NRS = (function (NRS, $, undefined) {
         if (exchangeType == "buy") {
             description = $.t("buy_currency_description", {
                 "total": totalNXT,
+                "symbol": NRS.constants.COIN_SYMBOL,
                 "quantity": NRS.formatQuantity(unitsQNT, currencyDecimals, true),
                 "currency_code": $("#currency_code").html().escapeHTML(),
                 "rate": effectiveRate
             });
             tooltipTitle = $.t("buy_currency_description_help", {
                 "rate": effectiveRate,
-                "total_nxt": totalNXT
+                "total": totalNXT,
+                "symbol": NRS.constants.COIN_SYMBOL
             });
         } else {
             description = $.t("sell_currency_description", {
                 "total": totalNXT,
+                "symbol": NRS.constants.COIN_SYMBOL,
                 "quantity": NRS.formatQuantity(unitsQNT, currencyDecimals, true),
                 "currency_code": $("#currency_code").html().escapeHTML(),
                 "rate": effectiveRate
             });
             tooltipTitle = $.t("sell_currency_description_help", {
                 "rate": effectiveRate,
-                "total_nxt": totalNXT
+                "total": totalNXT,
+                "symbol": NRS.constants.COIN_SYMBOL
             });
         }
 
