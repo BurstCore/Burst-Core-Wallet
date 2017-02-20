@@ -21,7 +21,6 @@ var NRS = (function(NRS, $) {
 	NRS.defaultSettings = {
 		"submit_on_enter": "0",
 		"animate_forging": "1",
-        "news": "-1",
         "marketplace": "-1",
         "exchange": "-1",
         "console_log": "0",
@@ -254,9 +253,6 @@ var NRS = (function(NRS, $) {
 				}
 			}
 		}
-        if (NRS.settings["news"] != -1) {
-            $("#settings_news_initial").remove();
-        }
         if (NRS.settings["marketplace"] != -1) {
             $("#settings_marketplace_initial").remove();
         }
@@ -560,14 +556,6 @@ var NRS = (function(NRS, $) {
 				forgingIndicator.addClass("animated");
 			} else {
 				forgingIndicator.removeClass("animated");
-			}
-		}
-
-		if (!key || key == "news") {
-			if (NRS.settings["news"] == "0") {
-				$("#news_link").hide();
-			} else if (NRS.settings["news"] == "1") {
-				$("#news_link").show();
 			}
 		}
 
