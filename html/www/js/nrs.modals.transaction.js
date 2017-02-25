@@ -455,11 +455,11 @@ var NRS = (function (NRS, $, undefined) {
                                         messageStyle = "danger";
                                     } else if (transaction.recipient == NRS.account) {
                                         message = $.t("alias_sale_direct_offer", {
-                                            "nxt": NRS.formatAmount(transaction.attachment.priceNQT)
+                                            "amount": NRS.formatAmount(transaction.attachment.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
                                         }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                                     } else if (typeof transaction.recipient == "undefined") {
                                         message = $.t("alias_sale_indirect_offer", {
-                                            "nxt": NRS.formatAmount(transaction.attachment.priceNQT)
+                                            "amount": NRS.formatAmount(transaction.attachment.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
                                         }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                                     } else if (transaction.senderRS == NRS.accountRS) {
                                         if (transaction.attachment.priceNQT != "0") {
@@ -618,8 +618,8 @@ var NRS = (function (NRS, $, undefined) {
                                         "asset_formatted_html": NRS.getTransactionLink(transaction.attachment.asset),
                                         "asset_name": asset.name,
                                         "quantity": [transaction.attachment.quantityQNT, asset.decimals],
-                                        "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " NXT",
-                                        "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " NXT"
+                                        "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " " + NRS.constants.COIN_SYMBOL,
+                                        "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " " + NRS.constants.COIN_SYMBOL
                                     };
                                     data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
                                     infoTable.find("tbody").append(NRS.createInfoTable(data));
@@ -647,8 +647,8 @@ var NRS = (function (NRS, $, undefined) {
                                         "asset_formatted_html": NRS.getTransactionLink(transaction.attachment.asset),
                                         "asset_name": asset.name,
                                         "quantity": [transaction.attachment.quantityQNT, asset.decimals],
-                                        "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " NXT",
-                                        "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " NXT"
+                                        "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " " + NRS.constants.COIN_SYMBOL,
+                                        "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " " + NRS.constants.COIN_SYMBOL
                                     };
                                     data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
                                     infoTable.find("tbody").append(NRS.createInfoTable(data));
@@ -675,7 +675,7 @@ var NRS = (function (NRS, $, undefined) {
                                         "type": $.t("dividend_payment"),
                                         "asset_formatted_html": NRS.getTransactionLink(transaction.attachment.asset),
                                         "asset_name": asset.name,
-                                        "amount_per_share": NRS.formatOrderPricePerWholeQNT(transaction.attachment.amountNQTPerQNT, asset.decimals) + " NXT",
+                                        "amount_per_share": NRS.formatOrderPricePerWholeQNT(transaction.attachment.amountNQTPerQNT, asset.decimals) + " " + NRS.constants.COIN_SYMBOL,
                                         "height": transaction.attachment.height
                                     };
                                     data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
@@ -757,7 +757,7 @@ var NRS = (function (NRS, $, undefined) {
                             data = {
                                 "type": $.t("marketplace_item_price_change"),
                                 "item_name": goods.name,
-                                "new_price_formatted_html": NRS.formatAmount(transaction.attachment.priceNQT) + " NXT",
+                                "new_price_formatted_html": NRS.formatAmount(transaction.attachment.priceNQT) + " " + NRS.constants.COIN_SYMBOL,
                                 "seller": NRS.getAccountFormatted(goods, "seller")
                             };
 
@@ -861,7 +861,7 @@ var NRS = (function (NRS, $, undefined) {
 
                                 if (purchase.quantity != "1") {
                                     var orderTotal = NRS.formatAmount(new BigInteger(String(purchase.quantity)).multiply(new BigInteger(String(purchase.priceNQT))));
-                                    data["total_formatted_html"] = orderTotal + " NXT";
+                                    data["total_formatted_html"] = orderTotal + " " + NRS.constants.COIN_SYMBOL;
                                 }
 
                                 if (transaction.attachment.discountNQT) {
@@ -964,7 +964,7 @@ var NRS = (function (NRS, $, undefined) {
                                     "item_name": goods.name
                                 };
                                 var orderTotal = new BigInteger(String(purchase.quantity)).multiply(new BigInteger(String(purchase.priceNQT)));
-                                data["order_total_formatted_html"] = NRS.formatAmount(orderTotal) + " NXT";
+                                data["order_total_formatted_html"] = NRS.formatAmount(orderTotal) + " " + NRS.constants.COIN_SYMBOL;
                                 data["refund"] = transaction.attachment.refundNQT;
                                 data["buyer"] = NRS.getAccountFormatted(purchase, "buyer");
                                 data["seller"] = NRS.getAccountFormatted(purchase, "seller");
@@ -1035,7 +1035,7 @@ var NRS = (function (NRS, $, undefined) {
                             "max_units": [transaction.attachment.maxSupply, transaction.attachment.decimals],
                             "decimals": transaction.attachment.decimals,
                             "issuance_height": transaction.attachment.issuanceHeight,
-                            "min_reserve_per_unit_formatted_html": NRS.formatAmount(minReservePerUnitNQT) + " NXT",
+                            "min_reserve_per_unit_formatted_html": NRS.formatAmount(minReservePerUnitNQT) + " " + NRS.constants.COIN_SYMBOL,
                             "minDifficulty": transaction.attachment.minDifficulty,
                             "maxDifficulty": transaction.attachment.maxDifficulty,
                             "algorithm": transaction.attachment.algorithm
@@ -1043,7 +1043,7 @@ var NRS = (function (NRS, $, undefined) {
                         if (currency) {
                             data["current_units"] = NRS.convertToQNTf(currency.currentSupply, currency.decimals);
                             var currentReservePerUnitNQT = new BigInteger(currency.currentReservePerUnitNQT).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
-                            data["current_reserve_per_unit_formatted_html"] = NRS.formatAmount(currentReservePerUnitNQT) + " NXT";
+                            data["current_reserve_per_unit_formatted_html"] = NRS.formatAmount(currentReservePerUnitNQT) + " " + NRS.constants.COIN_SYMBOL;
                         } else {
                             data["status"] = "Currency Deleted or not Issued";
                         }
@@ -1056,8 +1056,8 @@ var NRS = (function (NRS, $, undefined) {
                                 "type": $.t("reserve_increase"),
                                 "code": currency.code,
                                 "reserve_units": [resSupply, currency.decimals],
-                                "amount_per_unit_formatted_html": NRS.formatAmount(amountPerUnitNQT) + " NXT",
-                                "reserved_amount_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(amountPerUnitNQT, NRS.convertToQNTf(resSupply, currency.decimals))) + " NXT"
+                                "amount_per_unit_formatted_html": NRS.formatAmount(amountPerUnitNQT) + " " + NRS.constants.COIN_SYMBOL,
+                                "reserved_amount_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(amountPerUnitNQT, NRS.convertToQNTf(resSupply, currency.decimals))) + " " + NRS.constants.COIN_SYMBOL
                             };
                         } else {
                             data = NRS.getUnknownCurrencyData(transaction);
@@ -1070,7 +1070,7 @@ var NRS = (function (NRS, $, undefined) {
                                 "type": $.t("reserve_claim"),
                                 "code": currency.code,
                                 "units": [transaction.attachment.units, currency.decimals],
-                                "claimed_amount_formatted_html": NRS.formatAmount(NRS.convertToQNTf(NRS.calculateOrderTotalNQT(reservePerUnitNQT, transaction.attachment.units), currency.decimals)) + " NXT"
+                                "claimed_amount_formatted_html": NRS.formatAmount(NRS.convertToQNTf(NRS.calculateOrderTotalNQT(reservePerUnitNQT, transaction.attachment.units), currency.decimals)) + " " + NRS.constants.COIN_SYMBOL
                             };
                         } else {
                             data = NRS.getUnknownCurrencyData(transaction);
@@ -1366,8 +1366,8 @@ var NRS = (function (NRS, $, undefined) {
             "asset_formatted_html": NRS.getTransactionLink(transaction.attachment.asset),
             "asset_name": asset.name,
             "quantity": [transaction.attachment.quantityQNT, asset.decimals],
-            "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " NXT",
-            "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " NXT"
+            "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " " + NRS.constants.COIN_SYMBOL,
+            "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " " + NRS.constants.COIN_SYMBOL
         };
         data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
         var rows = "";
@@ -1406,7 +1406,7 @@ var NRS = (function (NRS, $, undefined) {
                 data["trades"] = $.t("no_matching_trade");
             }
             data["quantity_traded"] = [tradeQuantity, asset.decimals];
-            data["total_traded"] = NRS.formatAmount(tradeTotal, false, true) + " NXT";
+            data["total_traded"] = NRS.formatAmount(tradeTotal, false, true) + " " + NRS.constants.COIN_SYMBOL;
         }, { isAsync: false });
 
         var infoTable = $("#transaction_info_table");
@@ -1419,7 +1419,7 @@ var NRS = (function (NRS, $, undefined) {
     };
 
     NRS.formatCurrencyExchange = function (currency, transaction, type) {
-        var rateUnitsStr = " [ " + currency.code + " / NXT ]";
+        var rateUnitsStr = " [ " + currency.code + " / "  + NRS.constants.COIN_SYMBOL + " ]";
         var data = {
             "type": type == "sell" ? $.t("sell_currency") : $.t("buy_currency"),
             "code": currency.code,
@@ -1457,13 +1457,13 @@ var NRS = (function (NRS, $, undefined) {
                 data["exchanges"] = $.t("no_matching_exchange_offer");
             }
             data["units_exchanged"] = [exchangedUnits, currency.decimals];
-            data["total_exchanged"] = NRS.formatAmount(exchangedTotal, false, true) + " [NXT]";
+            data["total_exchanged"] = NRS.formatAmount(exchangedTotal, false, true) + " [" + NRS.constants.COIN_SYMBOL + "]";
         }, { isAsync: false });
         return data;
     };
 
     NRS.formatCurrencyOffer = function (currency, transaction) {
-        var rateUnitsStr = " [ " + currency.code + " / NXT ]";
+        var rateUnitsStr = " [ " + currency.code + " / " + +  + NRS.constants.COIN_SYMBOL + " ]";
         var buyOffer;
         var sellOffer;
         NRS.sendRequest("getOffer", {
@@ -1525,7 +1525,7 @@ var NRS = (function (NRS, $, undefined) {
                 data["exchanges"] = $.t("no_matching_exchange_request");
             }
             data["units_exchanged"] = [exchangedUnits, currency.decimals];
-            data["total_exchanged"] = NRS.formatAmount(exchangedTotal, false, true) + " [NXT]";
+            data["total_exchanged"] = NRS.formatAmount(exchangedTotal, false, true) + " [" + NRS.constants.COIN_SYMBOL + "]";
         }, { isAsync: false });
         return data;
     };

@@ -393,16 +393,16 @@ var NRS = (function(NRS, $) {
 
 		if (data.recipient) {
 			data.recipient = $.trim(data.recipient);
-			if (/^\d+$/.test(data.recipient)) {
+			if (NRS.isNumericAccount(data.recipient)) {
 				$form.find(".error_message").html($.t("error_numeric_ids_not_allowed")).show();
 				if (formErrorFunction) {
 					formErrorFunction(false, data);
 				}
 				NRS.unlockForm($modal, $btn);
 				return;
-			} else if (!/^NXT\-[A-Z0-9]+\-[A-Z0-9]+\-[A-Z0-9]+\-[A-Z0-9]+/i.test(data.recipient)) {
+			} else if (!NRS.isRsAccount(data.recipient)) {
 				var convertedAccountId = $modal.find("input[name=converted_account_id]").val();
-				if (!convertedAccountId || (!/^\d+$/.test(convertedAccountId) && !/^NXT\-[A-Z0-9]+\-[A-Z0-9]+\-[A-Z0-9]+\-[A-Z0-9]+/i.test(convertedAccountId))) {
+				if (!convertedAccountId || (!NRS.isNumericAccount(convertedAccountId) && !NRS.isRsAccount(convertedAccountId))) {
 					$form.find(".error_message").html($.t("error_account_id")).show();
 					if (formErrorFunction) {
 						formErrorFunction(false, data);
@@ -557,7 +557,7 @@ var NRS = (function(NRS, $) {
 				if (new BigInteger(amountNQT).compareTo(new BigInteger(NRS.settings["amount_warning"])) > 0) {
 					NRS.showedFormWarning = true;
 					$form.find(".error_message").html($.t("error_max_amount_warning", {
-						"nxt": NRS.formatAmount(NRS.settings["amount_warning"])
+						"amount": NRS.formatAmount(NRS.settings["amount_warning"]), "symbol": NRS.constants.COIN_SYMBOL
 					})).show();
 					if (formErrorFunction) {
 						formErrorFunction(false, data);
@@ -582,7 +582,7 @@ var NRS = (function(NRS, $) {
 				if (new BigInteger(feeNQT).compareTo(new BigInteger(NRS.settings["fee_warning"])) > 0) {
 					NRS.showedFormWarning = true;
 					$form.find(".error_message").html($.t("error_max_fee_warning", {
-						"nxt": NRS.formatAmount(NRS.settings["fee_warning"])
+						"amount": NRS.formatAmount(NRS.settings["fee_warning"]), "symbol": NRS.constants.COIN_SYMBOL
 					})).show();
 					if (formErrorFunction) {
 						formErrorFunction(false, data);

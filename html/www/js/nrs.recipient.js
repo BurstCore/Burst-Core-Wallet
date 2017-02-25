@@ -32,7 +32,7 @@ var NRS = (function(NRS, $) {
 			var value = $(this).val();
 			var modal = $(this).closest(".modal");
 
-			if (value && value != "NXT-____-____-____-_____") {
+			if (value && value != NRS.getAccountMask("_")) {
 				NRS.checkRecipient(value, modal);
 			} else {
 				modal.find(".account_info").hide();
@@ -56,7 +56,7 @@ var NRS = (function(NRS, $) {
 		}
 		if (account) {
 			var $inputField = $(this).find("input[name=recipient], input[name=account_id]").not("[type=hidden]");
-			if (!/NXT\-/i.test(account)) {
+			if (!NRS.isRsAccount(account)) {
 				$inputField.addClass("noMask");
 			}
 			$inputField.val(account).trigger("checkRecipient");
@@ -140,7 +140,8 @@ var NRS = (function(NRS, $) {
 						"type": "info",
 						"message": $.t("recipient_info_with_name", {
 							"name" : NRS.unescapeRespStr(response.name),
-							"nxt": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true)
+							"amount": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true),
+                            "symbol": NRS.constants.COIN_SYMBOL
 						}),
 						"account": response
 					};
@@ -149,7 +150,8 @@ var NRS = (function(NRS, $) {
 					result = {
 						"type": "info",
 						"message": $.t("recipient_info", {
-							"nxt": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true)
+							"amount": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true),
+                            "symbol": NRS.constants.COIN_SYMBOL
 						}),
 						"account": response
 					};
@@ -159,7 +161,7 @@ var NRS = (function(NRS, $) {
 					if (response.errorCode == 4) {
 						result = {
 							"type": "danger",
-							"message": $.t("recipient_malformed") + (!/^(NXT\-)/i.test(accountId) ? " " + $.t("recipient_alias_suggestion") : ""),
+							"message": $.t("recipient_malformed") + (!NRS.isRsAccount(accountId) ? " " + $.t("recipient_alias_suggestion") : ""),
 							"account": null
 						};
 					} else if (response.errorCode == 5) {
@@ -180,7 +182,8 @@ var NRS = (function(NRS, $) {
 					result = {
 						"type": "warning",
 						"message": $.t("recipient_no_public_key_pka", {
-							"nxt": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true)
+							"amount": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true),
+                            "symbol": NRS.constants.COIN_SYMBOL
 						}),
 						"account": response,
 						"noPublicKey": true
@@ -209,7 +212,7 @@ var NRS = (function(NRS, $) {
 		account = $.trim(account);
 
 		//solomon reed. Btw, this regex can be shortened..
-		if (/^(NXT\-)?[A-Z0-9]+\-[A-Z0-9]+\-[A-Z0-9]+\-[A-Z0-9]+/i.test(account)) {
+		if (NRS.isRsAccount(account)) {
 			var address = new NxtAddress();
 
 			if (address.set(account)) {
@@ -248,7 +251,7 @@ var NRS = (function(NRS, $) {
 					callout.removeClass(classes).addClass("callout-danger").html($.t("recipient_malformed")).show();
 				}
 			}
-		} else if (!(/^\d+$/.test(account))) {
+		} else if (!NRS.isNumericAccount(account)) {
 			if (account.charAt(0) != '@') {
 				NRS.storageSelect("contacts", [{
 					"name": account
@@ -322,7 +325,7 @@ var NRS = (function(NRS, $) {
 					if (match && match[1]) {
 						match[1] = String(match[1]).toUpperCase();
 
-						if (/^\d+$/.test(match[1])) {
+						if (NRS.isNumericAccount(match[1])) {
 							var address = new NxtAddress();
 
 							if (address.set(match[1])) {

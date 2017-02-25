@@ -159,13 +159,13 @@ var NRS = (function (NRS, $, undefined) {
             };
         }
 
-        if (!/^\d+$/.test(data.id) && !/^NXT\-/i.test(data.id)) {
+        if (!NRS.isNumericAccount(data.id) && !NRS.isRsAccount(data.id)) {
             return {
                 "error": $.t("error_asset_or_account_id_invalid")
             };
         }
 
-        if (/^NXT\-/i.test(data.id)) {
+        if (NRS.isRsAccount(data.id)) {
             NRS.sendRequest("getAssetsByIssuer", {
                 "account": data.id
             }, function (response) {
@@ -562,10 +562,10 @@ var NRS = (function (NRS, $, undefined) {
             $("#buy_asset_button").data("asset", assetId);
             $("#view_asset_distribution_link").data("asset", assetId);
             $("#sell_asset_for_nxt").html($.t("sell_asset_for_nxt", {
-                "assetName": NRS.escapeRespStr(asset.name)
+                "assetName": NRS.escapeRespStr(asset.name), "symbol": NRS.constants.COIN_SYMBOL
             }));
             $("#buy_asset_with_nxt").html($.t("buy_asset_with_nxt", {
-                "assetName": NRS.escapeRespStr(asset.name)
+                "assetName": NRS.escapeRespStr(asset.name), "symbol": NRS.constants.COIN_SYMBOL
             }));
             $("#sell_asset_price, #buy_asset_price").val("");
             $("#sell_asset_quantity, #sell_asset_total, #buy_asset_quantity, #buy_asset_total").val("0");
@@ -883,7 +883,7 @@ var NRS = (function (NRS, $, undefined) {
             $("#asset_exchange_clear_search").hide();
         } else {
             assetSearch = [];
-            if (/NXT\-/i.test(input)) {
+            if (NRS.isRsAccount(input)) {
                 $.each(assets, function (key, asset) {
                     if (asset.accountRS.toLowerCase() == input || asset.accountRS.toLowerCase().indexOf(input) !== -1) {
                         assetSearch.push(asset.asset);
@@ -1081,26 +1081,30 @@ var NRS = (function (NRS, $, undefined) {
             description = $.t("buy_order_description", {
                 "quantity": NRS.formatQuantity(quantityQNT, currentAsset.decimals, true),
                 "asset_name": $("#asset_name").html().escapeHTML(),
-                "nxt": NRS.formatAmount(priceNQTPerWholeQNT)
+                "amount": NRS.formatAmount(priceNQTPerWholeQNT),
+                "symbol": NRS.constants.COIN_SYMBOL
             });
             tooltipTitle = $.t("buy_order_description_help", {
-                "nxt": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
-                "total_nxt": totalNXT
+                "amount": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
+                "total": totalNXT,
+                "symbol": NRS.constants.COIN_SYMBOL
             });
         } else {
             description = $.t("sell_order_description", {
                 "quantity": NRS.formatQuantity(quantityQNT, currentAsset.decimals, true),
                 "asset_name": $("#asset_name").html().escapeHTML(),
-                "nxt": NRS.formatAmount(priceNQTPerWholeQNT)
+                "amount": NRS.formatAmount(priceNQTPerWholeQNT),
+                "symbol": NRS.constants.COIN_SYMBOL
             });
             tooltipTitle = $.t("sell_order_description_help", {
-                "nxt": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
-                "total_nxt": totalNXT
+                "amount": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
+                "total": totalNXT,
+                "symbol": NRS.constants.COIN_SYMBOL
             });
         }
 
         $("#asset_order_description").html(description);
-        $("#asset_order_total").html(totalNXT + " NXT");
+        $("#asset_order_total").html(totalNXT + " " + NRS.constants.COIN_SYMBOL);
 
         var assetOrderTotalTooltip = $("#asset_order_total_tooltip");
         if (quantity != "1") {
@@ -1137,7 +1141,7 @@ var NRS = (function (NRS, $, undefined) {
             return {
                 "error": $.t("error_description_required")
             };
-        } else if (!/^\d+$/.test(data.quantity)) {
+        } else if (!NRS.isNumericAccount(data.quantity)) {
             return {
                 "error": $.t("error_whole_quantity")
             };

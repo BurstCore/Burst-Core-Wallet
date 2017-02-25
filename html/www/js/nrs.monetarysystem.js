@@ -607,29 +607,33 @@ var NRS = (function (NRS, $, undefined) {
         if (exchangeType == "buy") {
             description = $.t("buy_currency_description", {
                 "total": totalNXT,
+                "symbol": NRS.constants.COIN_SYMBOL,
                 "quantity": NRS.formatQuantity(unitsQNT, currencyDecimals, true),
                 "currency_code": $("#currency_code").html().escapeHTML(),
                 "rate": effectiveRate
             });
             tooltipTitle = $.t("buy_currency_description_help", {
                 "rate": effectiveRate,
-                "total_nxt": totalNXT
+                "total": totalNXT,
+                "symbol": NRS.constants.COIN_SYMBOL
             });
         } else {
             description = $.t("sell_currency_description", {
                 "total": totalNXT,
+                "symbol": NRS.constants.COIN_SYMBOL,
                 "quantity": NRS.formatQuantity(unitsQNT, currencyDecimals, true),
                 "currency_code": $("#currency_code").html().escapeHTML(),
                 "rate": effectiveRate
             });
             tooltipTitle = $.t("sell_currency_description_help", {
                 "rate": effectiveRate,
-                "total_nxt": totalNXT
+                "total": totalNXT,
+                "symbol": NRS.constants.COIN_SYMBOL
             });
         }
 
         $("#currency_order_description").html(description);
-        $("#currency_order_total").html(totalNXT + " NXT");
+        $("#currency_order_total").html(totalNXT + " " + NRS.constants.COIN_SYMBOL);
 
         var totalTooltip = $("#currency_order_total_tooltip");
         if (units != "1") {
@@ -1434,7 +1438,7 @@ var NRS = (function (NRS, $, undefined) {
             "currency": currency
         }, function (response) {
             var currentReservePerUnitNQT = new BigInteger(response.currentReservePerUnitNQT).multiply(new BigInteger("" + Math.pow(10, response.decimals)));
-            $("#claimRate").html(NRS.formatAmount(currentReservePerUnitNQT) + " [NXT/" + currencyCode + "]");
+            $("#claimRate").html(NRS.formatAmount(currentReservePerUnitNQT) + " [" + NRS.constants.COIN_SYMBOL + "/" + currencyCode + "]");
         });
 
         $("#claim_currency_decimals").val($invoker.data("decimals"));

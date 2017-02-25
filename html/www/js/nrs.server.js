@@ -139,7 +139,7 @@ var NRS = (function (NRS, $, undefined) {
                 callback({
                     "errorCode": 1,
                     "errorDescription": $.t("error_fee_exceeds_max_account_control_fee", {
-                        "maxFee": NRS.convertToNXT(phasingControl.maxFees)
+                        "maxFee": NRS.convertToNXT(phasingControl.maxFees), "symbol": NRS.constants.COIN_SYMBOL
                     })
                 });
                 return;
@@ -458,7 +458,9 @@ var NRS = (function (NRS, $, undefined) {
                         }
                         callback(response, data);
                         if (data.referencedTransactionFullHash && !response.errorCode) {
-                            $.growl($.t("info_referenced_transaction_hash"), {
+                            $.growl($.t("info_referenced_transaction_hash", {
+                                "symbol": NRS.constants.COIN_SYMBOL
+                            }), {
                                 "type": "info"
                             });
                         }
@@ -1541,7 +1543,9 @@ var NRS = (function (NRS, $, undefined) {
                 originalResponse.fullHash = response.fullHash;
                 callback(originalResponse, originalData);
                 if (originalData.referencedTransactionFullHash) {
-                    $.growl($.t("info_referenced_transaction_hash"), {
+                    $.growl($.t("info_referenced_transaction_hash", {
+                        "symbol": NRS.constants.COIN_SYMBOL
+                    }), {
                         "type": "info"
                     });
                 }
@@ -1583,7 +1587,7 @@ var NRS = (function (NRS, $, undefined) {
     function addAddressData(data) {
         if (typeof data == "object" && ("recipient" in data)) {
             var address = new NxtAddress();
-            if (/^NXT\-/i.test(data.recipient)) {
+            if (NRS.isRsAccount(data.recipient)) {
                 data.recipientRS = data.recipient;
                 if (address.set(data.recipient)) {
                     data.recipient = address.account_id();

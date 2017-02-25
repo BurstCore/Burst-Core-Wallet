@@ -193,7 +193,7 @@ QUnit.test("getAccountLink", function (assert) {
     assert.equal(NRS.getAccountLink({ entityRS: "NXT-XK4R-7VJU-6EQG-7R335" }, "entity"), "<a href='#' data-user='NXT-XK4R-7VJU-6EQG-7R335' class='show_account_modal_action user-info'>foo</a>", "contact");
     NRS.accountRS = "NXT-XK4R-7VJU-6EQG-7R335";
     assert.equal(NRS.getAccountLink({ entityRS: "NXT-XK4R-7VJU-6EQG-7R335" }, "entity"), "<a href='#' data-user='NXT-XK4R-7VJU-6EQG-7R335' class='show_account_modal_action user-info'>You</a>", "you");
-    assert.equal(NRS.getAccountLink({ entityRS: "NXT-XK4R-7VJU-6EQG-7R335" }, "entity", "NXT-XK4R-7VJU-6EQG-7R335", "My Precious"), "<a href='#' data-user='NXT-XK4R-7VJU-6EQG-7R335' class='show_account_modal_action user-info'>My Precious</a>", "force.account.name");
+    assert.equal(NRS.getAccountLink({ entityRS: "NXT-XK4R-7VJU-6EQG-7R335" }, "entity", "NXT-XK4R-7VJU-6EQG-7R335", "account"), "<a href='#' data-user='NXT-XK4R-7VJU-6EQG-7R335' class='show_account_modal_action user-info'>Account</a>", "force.account.name");
     assert.equal(NRS.getAccountLink({ entityRS: "NXT-XK4R-7VJU-6EQG-7R335" }, "entity", undefined, undefined, true), "<a href='#' data-user='NXT-XK4R-7VJU-6EQG-7R335' class='show_account_modal_action user-info'>NXT-XK4R-7VJU-6EQG-7R335</a>", "maintain.rs.format");
     assert.equal(NRS.getAccountLink({ entityRS: "NXT-XK4R-7VJU-6EQG-7R335" }, "entity", undefined, undefined, undefined, "btn btn-xs"), "<a href='#' data-user='NXT-XK4R-7VJU-6EQG-7R335' class='show_account_modal_action user-info btn btn-xs'>You</a>", "add.class");
     NRS.contacts = null;
@@ -253,4 +253,16 @@ QUnit.test("numberOfDecimals", function (assert) {
     assert.equal(NRS.getNumberOfDecimals(rows, "price", function(val) {
         return NRS.formatAmount(val.price);
     }), 3, "with.callback");
+});
+
+QUnit.test("accountMatching", function (assert) {
+    var regex = NRS.getRsAccountRegex("NXT");
+    assert.equal(NRS.isRsAccountImpl("NXT-XK4R-7VJU-6EQG-7R335", regex), true, "valid.account");
+    assert.equal(NRS.isRsAccountImpl("Nxt-xk4r-7VJU-6EQG-7R335", regex), true, "not.case.sensitive");
+    assert.equal(NRS.isRsAccountImpl("NXT-XK4R-7VJU-6EQG-7R336", regex), true, "nor.rs.valid.still.valid");
+    assert.equal(NRS.isRsAccountImpl("5873880488492319831", regex), false, "numeric.no.match");
+    assert.equal(NRS.isRsAccountImpl("NXT-____-____-____-_____", regex), true, "underscore_mask_again");
+    regex = NRS.getNumericAccountRegex();
+    assert.equal(NRS.isNumericAccountImpl("NXT-XK4R-7VJU-6EQG-7R335", regex), false, "non.numeric.no.match");
+    assert.equal(NRS.isNumericAccountImpl("5873880488492319831", regex), true, "numeric.match");
 });

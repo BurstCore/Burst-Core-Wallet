@@ -845,7 +845,7 @@ var NRS = (function (NRS, $, undefined) {
                     value = NRS.formatQuantity(value, 0);
                 }
             } else if (key == "price" || key == "total" || key == "amount" || key == "fee" || key == "refund" || key == "discount") {
-                value = NRS.formatAmount(new BigInteger(String(value))) + " NXT";
+                value = NRS.formatAmount(new BigInteger(String(value))) + " " + NRS.constants.COIN_SYMBOL;
             } else if (key == "sender" || key == "recipient" || key == "account" || key == "seller" || key == "buyer" || key == "lessee") {
                 value = "<a href='#' data-user='" + NRS.escapeRespStr(value) + "' class='show_account_modal_action'>" + NRS.getAccountTitle(value) + "</a>";
             } else if (key == "request_processing_time") { /* Skip from displaying request processing time */
@@ -1290,7 +1290,7 @@ var NRS = (function (NRS, $, undefined) {
 					case "No attached message found":
 						return $.t("error_no_attached_message");
 					case "recipient account does not have public key":
-						return $.t("error_recipient_no_public_key");
+						return $.t("error_recipient_no_public_key", { "symbol": NRS.constants.COIN_SYMBOL });
 					default:
 						return response.errorDescription;
 						break;
@@ -1679,6 +1679,32 @@ var NRS = (function (NRS, $, undefined) {
         }
     };
 
+    NRS.isRsAccount = function(account) {
+        return NRS.isRsAccountImpl(account, NRS.constants.ACCOUNT_RS_MATCH ? NRS.constants.ACCOUNT_RS_MATCH : NRS.getRsAccountRegex("NXT"));
+    };
+
+    NRS.isRsAccountImpl = function(account, regex) {
+        return regex.test(account);
+    };
+
+    NRS.isNumericAccount = function(account) {
+        return NRS.isNumericAccountImpl(account, NRS.constants.ACCOUNT_NUMERIC_MATCH);
+    };
+
+    NRS.isNumericAccountImpl = function(account, regex) {
+        return regex.test(account);
+    };
+
+    NRS.getAccountMask = function(c) {
+        switch(c) {
+            case "*":
+                return NRS.constants.ACCOUNT_MASK_ASTERIX;
+            case "_":
+                return NRS.constants.ACCOUNT_MASK_UNDERSCORE;
+            default:
+                return NRS.constants.ACCOUNT_MASK_PREFIX ? NRS.constants.ACCOUNT_MASK_PREFIX : "NXT-";
+        }
+    };
 
     return NRS;
 }(Object.assign(NRS || {}, isNode ? global.client : {}), jQuery));

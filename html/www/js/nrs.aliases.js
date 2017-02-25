@@ -389,7 +389,7 @@ var NRS = (function (NRS, $, undefined) {
 
         if (data.type == "account") {
             if (!(/acct:(.*)@nxt/.test(data.aliasURI)) && !(/nacc:(.*)/.test(data.aliasURI))) {
-                if (/^(NXT\-)/i.test(data.aliasURI)) {
+                if (NRS.isRsAccount(data.aliasURI)) {
                     var address = new NxtAddress();
 
                     if (!address.set(data.aliasURI)) {
@@ -399,7 +399,7 @@ var NRS = (function (NRS, $, undefined) {
                     } else {
                         data.aliasURI = "acct:" + data.aliasURI + "@nxt";
                     }
-                } else if (/^\d+$/.test(data.aliasURI)) {
+                } else if (NRS.isNumericAccount(data.aliasURI)) {
                     return {
                         "error": $.t("error_numeric_ids_not_allowed")
                     };
@@ -441,7 +441,7 @@ var NRS = (function (NRS, $, undefined) {
         } else if (type == "account") {
             $("#register_alias_uri_label").html($.t("account_id"));
             registerAliasUri.prop("placeholder", $.t("account_id"));
-            registerAliasUri.val("").mask("NXT-****-****-****-*****");
+            registerAliasUri.val("").mask(NRS.getAccountMask("*"));
 
             if (uri) {
                 var match = uri.match(/acct:(.*)@nxt/i);
@@ -453,7 +453,7 @@ var NRS = (function (NRS, $, undefined) {
                     uri = match[1];
                 }
 
-                if (/^\d+$/.test(uri)) {
+                if (NRS.isNumericAccount(uri)) {
                     var address = new NxtAddress();
 
                     if (address.set(uri)) {
@@ -461,7 +461,7 @@ var NRS = (function (NRS, $, undefined) {
                     } else {
                         uri = "";
                     }
-                } else if (!/^NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/i.test(uri)) {
+                } else if (!NRS.isRsAccount(uri)) {
                     uri = NRS.accountRS;
                 }
 
@@ -507,11 +507,11 @@ var NRS = (function (NRS, $, undefined) {
                     if ("priceNQT" in response) {
                         if (response.buyer == NRS.account) {
                             message = $.t("alias_sale_direct_offer", {
-                                "nxt": NRS.formatAmount(response.priceNQT)
+                                "amount": NRS.formatAmount(response.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
                             }) + " <a href='#' data-alias='" + NRS.escapeRespStr(response.aliasName) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                         } else if (typeof response.buyer == "undefined") {
                             message = $.t("alias_sale_indirect_offer", {
-                                "nxt": NRS.formatAmount(response.priceNQT)
+                                "amount": NRS.formatAmount(response.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
                             }) + " <a href='#' data-alias='" + NRS.escapeRespStr(response.aliasName) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                         } else {
                             message = $.t("error_alias_sale_different_account");
@@ -580,11 +580,11 @@ var NRS = (function (NRS, $, undefined) {
                 if ("priceNQT" in response) {
                     if (response.buyer == NRS.account) {
                         $("#alias_sale_callout").html($.t("alias_sale_direct_offer", {
-                            "nxt": NRS.formatAmount(response.priceNQT)
+                            "amount": NRS.formatAmount(response.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
                         }) + " <a href='#' data-alias='" + NRS.escapeRespStr(response.aliasName) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>").show();
                     } else if (typeof response.buyer == "undefined") {
                         $("#alias_sale_callout").html($.t("alias_sale_indirect_offer", {
-                            "nxt": NRS.formatAmount(response.priceNQT)
+                            "amount": NRS.formatAmount(response.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
                         }) + " <a href='#' data-alias='" + NRS.escapeRespStr(response.aliasName) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>").show();
                     } else {
                         $("#alias_sale_callout").html($.t("error_alias_sale_different_account")).show();

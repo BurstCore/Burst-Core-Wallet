@@ -87,6 +87,14 @@ var NRS = (function (NRS, $) {
         }
     };
 
+    NRS.getRsAccountRegex = function(accountPrefix) {
+        return new RegExp("^" + accountPrefix + "-[A-Z0-9_]{4}-[A-Z0-9_]{4}-[A-Z0-9_]{4}-[A-Z0-9_]{5}", "i");
+    };
+
+    NRS.getNumericAccountRegex = function() {
+        return new RegExp("^\\d+$");
+    };
+
     NRS.processConstants = function(response, resolve) {
         if (response.genesisAccountId) {
             NRS.constants.SERVER = response;
@@ -110,6 +118,14 @@ var NRS = (function (NRS, $) {
             NRS.constants.LAST_KNOWN_BLOCK.id = response.genesisBlockId;
             NRS.loadTransactionTypeConstants(response);
             NRS.constants.PROXY_NOT_FORWARDED_REQUESTS = response.proxyNotForwardedRequests;
+            NRS.constants.COIN_SYMBOL = response.coinSymbol;
+            $(".coin-symbol").html(response.coinSymbol);
+            NRS.constants.ACCOUNT_PREFIX = response.accountPrefix;
+            NRS.constants.ACCOUNT_RS_MATCH = NRS.getRsAccountRegex(response.accountPrefix);
+            NRS.constants.ACCOUNT_NUMERIC_MATCH = NRS.getNumericAccountRegex();
+            NRS.constants.ACCOUNT_MASK_ASTERIX = response.accountPrefix + "-****-****-****-*****";
+            NRS.constants.ACCOUNT_MASK_UNDERSCORE = response.accountPrefix + "-____-____-____-_____";
+            NRS.constants.ACCOUNT_MASK_PREFIX = response.accountPrefix + "-";
             console.log("done loading server constants");
             if (resolve) {
                 resolve();

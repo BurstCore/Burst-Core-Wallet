@@ -347,7 +347,7 @@ var NRS = (function(NRS, $, undefined) {
 				// has to be enabled by activating this code on the specific widget
 				$("[data-toggle='tooltip']").tooltip();
 
-				$("#dgs_search_account_center").mask("NXT-****-****-****-*****");
+				$("#dgs_search_account_center").mask(NRS.getAccountMask("*"));
 				console.log("done initialization");
 				if (NRS.getUrlParameter("account")) {
 					NRS.login(false, NRS.getUrlParameter("account"));
@@ -1725,7 +1725,7 @@ NRS.addPagination = function () {
 
 		var id = $.trim($("#id_search").find("input[name=q]").val());
 
-		if (/NXT\-/i.test(id)) {
+		if (NRS.isRsAccount(id)) {
 			NRS.sendRequest("getAccount", {
 				"account": id
 			}, function(response, input) {
@@ -1739,7 +1739,7 @@ NRS.addPagination = function () {
 				}
 			});
 		} else {
-			if (!/^\d+$/.test(id)) {
+			if (!NRS.isNumericAccount(id)) {
 				$.growl($.t("error_search_invalid"), {
 					"type": "danger"
 				});

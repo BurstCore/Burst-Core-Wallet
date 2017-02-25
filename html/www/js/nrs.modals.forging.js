@@ -103,7 +103,7 @@ var NRS = (function(NRS, $) {
     NRS.getForgingTooltip = function(data) {
         if (!data || data.account == NRS.accountInfo.account) {
             NRS.isAccountForging = true;
-            return $.t("forging_tooltip", {"balance": NRS.accountInfo.effectiveBalanceNXT});
+            return $.t("forging_tooltip", {"balance": NRS.accountInfo.effectiveBalanceNXT, "symbol": NRS.constants.COIN_SYMBOL});
         }
         return $.t("forging_another_account_tooltip", {"accountRS": data.accountRS });
     };

@@ -49,7 +49,7 @@ var NRS = (function(NRS, $, undefined) {
 		$("#account_phrase_custom_panel, #account_phrase_generator_panel, #welcome_panel, #custom_passphrase_link").hide();
 		$("#account_phrase_custom_panel").find(":input:not(:button):not([type=submit])").val("");
 		$("#account_phrase_generator_panel").find(":input:not(:button):not([type=submit])").val("");
-        $("#login_account_other").mask("NXT-****-****-****-*****");
+        $("#login_account_other").mask(NRS.getAccountMask("*"));
 		if (NRS.isMobileApp()) {
             $(".mobile-only").show();
         }
@@ -533,8 +533,8 @@ var NRS = (function(NRS, $, undefined) {
 			html += "</p>";
 			html += "<p data-i18n='plugin_security_notice_trusted_sources'>";
 			html += "Make sure to only run plugins downloaded from trusted sources, otherwise ";
-			html += "you can loose your NXT! In doubt don't run plugins with accounts ";
-			html += "used to store larger amounts of NXT now or in the future.";
+			html += "you can loose your " + NRS.constants.COIN_SYMBOL + "! In doubt don't run plugins with accounts ";
+			html += "used to store larger amounts of " + NRS.constants.COIN_SYMBOL + " now or in the future.";
 			html += "</p>";
 			html += "</div>";
 
