@@ -1700,7 +1700,7 @@ var NRS = (function (NRS, $, undefined) {
             case "*":
                 return NRS.constants.ACCOUNT_MASK_ASTERIX;
             case "_":
-                return NRS.constants.ACCOUNT_MASK_ASTERIX;
+                return NRS.constants.ACCOUNT_MASK_UNDERSCORE;
             default:
                 return NRS.constants.ACCOUNT_MASK_PREFIX ? NRS.constants.ACCOUNT_MASK_PREFIX : "NXT-";
         }

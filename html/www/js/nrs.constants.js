@@ -124,7 +124,7 @@ var NRS = (function (NRS, $) {
             NRS.constants.ACCOUNT_RS_MATCH = NRS.getRsAccountRegex(response.accountPrefix);
             NRS.constants.ACCOUNT_NUMERIC_MATCH = NRS.getNumericAccountRegex();
             NRS.constants.ACCOUNT_MASK_ASTERIX = response.accountPrefix + "-****-****-****-*****";
-            NRS.constants.ACCOUNT_MASK_UNDERSCORE = response.accountPrefix + "-****-****-****-*****";
+            NRS.constants.ACCOUNT_MASK_UNDERSCORE = response.accountPrefix + "-____-____-____-_____";
             NRS.constants.ACCOUNT_MASK_PREFIX = response.accountPrefix + "-";
             console.log("done loading server constants");
             if (resolve) {
