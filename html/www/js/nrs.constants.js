@@ -87,8 +87,11 @@ var NRS = (function (NRS, $) {
         }
     };
 
-    NRS.getRsAccountRegex = function(accountPrefix) {
-        return new RegExp("^" + accountPrefix + "-[A-Z0-9_]{4}-[A-Z0-9_]{4}-[A-Z0-9_]{4}-[A-Z0-9_]{5}", "i");
+    NRS.getRsAccountRegex = function(accountPrefix, withoutSeparator) {
+        if (withoutSeparator) {
+            return new RegExp("^" + accountPrefix + "-[A-Z0-9]{17}", "i");
+        }
+        return new RegExp(NRS.constants.ACCOUNT_REGEX_STR, "i");
     };
 
     NRS.getNumericAccountRegex = function() {
@@ -106,7 +109,6 @@ var NRS = (function (NRS, $) {
             NRS.constants.MAX_TAGGED_DATA_DATA_LENGTH = response.maxTaggedDataDataLength;
             NRS.constants.MAX_PRUNABLE_MESSAGE_LENGTH = response.maxPrunableMessageLength;
             NRS.constants.GENESIS = response.genesisAccountId;
-            NRS.constants.GENESIS_RS = converters.convertNumericToRSAccountFormat(response.genesisAccountId);
             NRS.constants.EPOCH_BEGINNING = response.epochBeginning;
             NRS.constants.REQUEST_TYPES = response.requestTypes;
             NRS.constants.API_TAGS = response.apiTags;
@@ -121,11 +123,14 @@ var NRS = (function (NRS, $) {
             NRS.constants.COIN_SYMBOL = response.coinSymbol;
             $(".coin-symbol").html(response.coinSymbol);
             NRS.constants.ACCOUNT_PREFIX = response.accountPrefix;
+            NRS.constants.ACCOUNT_REGEX_STR = "^" + response.accountPrefix + "-[A-Z0-9_]{4}-[A-Z0-9_]{4}-[A-Z0-9_]{4}-[A-Z0-9_]{5}";
             NRS.constants.ACCOUNT_RS_MATCH = NRS.getRsAccountRegex(response.accountPrefix);
             NRS.constants.ACCOUNT_NUMERIC_MATCH = NRS.getNumericAccountRegex();
             NRS.constants.ACCOUNT_MASK_ASTERIX = response.accountPrefix + "-****-****-****-*****";
             NRS.constants.ACCOUNT_MASK_UNDERSCORE = response.accountPrefix + "-____-____-____-_____";
             NRS.constants.ACCOUNT_MASK_PREFIX = response.accountPrefix + "-";
+            NRS.constants.GENESIS_RS = converters.convertNumericToRSAccountFormat(response.genesisAccountId);
+
             console.log("done loading server constants");
             if (resolve) {
                 resolve();
