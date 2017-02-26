@@ -222,7 +222,7 @@
                     return "?" != c ? defs[c] ? getPlaceholder(i) : c : void 0;
                 }), defaultBuffer = buffer.join(""), focusText = input.val();
                 input.bind("keyup.remask", function(e) {
-                    if (input.val().toLowerCase() == "nxt-") {
+                    if (input.val().toUpperCase() == NRS.constants.ACCOUNT_MASK_PREFIX) {
                         input.val("").mask(NRS.getAccountMask("*"))./*unbind(".remask").*/trigger("focus");
                     }
                 }).bind("paste.remask", function(e) {
@@ -230,10 +230,10 @@
                         var newInput = input.val();
                         var pastedData = newInput.substring(4).toUpperCase();
                         if (NRS.isRsAccount(pastedData)) {
-                            var newAddress = String(pastedData.match("NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}")); // TODO looks like a bug
+                            var newAddress = String(pastedData.match(new RegExp(NRS.constants.ACCOUNT_REGEX_STR, "i")));
                             input.val(newAddress);
                             checkVal(true);
-                        } else if (NRS.isRsAccount(newInput) || /^NXT[A-Z0-9]{17}/i.test(newInput)) {
+                        } else if (NRS.isRsAccount(newInput) || NRS.getRsAccountRegex(NRS.constants.ACCOUNT_PREFIX, true).test(newInput)) {
                             input.mask(NRS.getAccountMask("*")).trigger("checkRecipient")/*.unbind(".remask")*/;
                         }
                     }, 0);
