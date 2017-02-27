@@ -160,7 +160,7 @@ public class DesktopApplication extends Application {
                             Logger.logInfoMessage("Cannot start JavaFx debugger", e);
                         }
                     }
-                });
+               });
 
         // Invoked by the webEngine popup handler
         // The invisible webView does not show the link, instead it opens a browser window
