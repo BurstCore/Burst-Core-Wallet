@@ -69,14 +69,14 @@ cd -
 zip -q -X -r ${PACKAGE}.zip ${APPLICATION} -x \*/.idea/\* \*/.gitignore \*/.git/\* \*/\*.log \*.iml ${APPLICATION}/conf/nxt.properties ${APPLICATION}/conf/logging.properties ${APPLICATION}/conf/localstorage/\*
 rm -rf ${APPLICATION}
 
-echo creating full changelog
-echo "${PACKAGE}:" > changelog-full.txt
-echo >> changelog-full.txt
-cat changelogs/${CHANGELOG} >> changelog-full.txt
-echo >> changelog-full.txt
-echo "--------------------------------------------------------------------------------" >> changelog-full.txt
-cat changelogs/changelog.txt >> changelog-full.txt
-unix2dos changelog-full.txt
+#echo creating full changelog
+#echo "${PACKAGE}:" > changelog-full.txt
+#echo >> changelog-full.txt
+#cat changelogs/${CHANGELOG} >> changelog-full.txt
+#echo >> changelog-full.txt
+#echo "--------------------------------------------------------------------------------" >> changelog-full.txt
+#cat changelogs/changelog.txt >> changelog-full.txt
+#unix2dos changelog-full.txt
 
 #echo signing zip package
 #../jarsigner.sh ${PACKAGE}.zip
