@@ -6,7 +6,7 @@
     <info>
         <appname>NXT</appname>
         <appversion>@{runtime.nxt.version}</appversion>
-        <url>https://nxt.org</url>
+        <url>http://jelurida.com</url>
         <run-privileged condition="izpack.windowsinstall"/>
     </info>
 
