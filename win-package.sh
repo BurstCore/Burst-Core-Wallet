@@ -5,7 +5,8 @@ then
 	echo VERSION not defined
 	exit 1
 fi
-PACKAGE=nxt-client-${VERSION}.zip
+APPLICATION="nxt-eval"
+PACKAGE=${APPLICATION}-client-${VERSION}.zip
 echo PACKAGE="${PACKAGE}"
 
 FILES="changelogs classes conf html lib src resource addons"
@@ -25,22 +26,22 @@ echo javadoc
 rm -rf html/doc/*
 ./win-javadoc.sh
 
-rm -rf nxt
+rm -rf ${APPLICATION}
 rm -rf ${PACKAGE}
-mkdir -p nxt/
-mkdir -p nxt/logs
+mkdir -p ${APPLICATION}/
+mkdir -p ${APPLICATION}/logs
 echo copy resources
-cp -a ${FILES} nxt
+cp -a ${FILES} ${APPLICATION}
 echo gzip
-for f in `find nxt/html -name *.gz`
+for f in `find ${APPLICATION}/html -name *.gz`
 do
 	rm -f "$f"
 done
-for f in `find nxt/html -name *.html -o -name *.js -o -name *.css -o -name *.json -o -name *.ttf -o -name *.svg -o -name *.otf`
+for f in `find ${APPLICATION}/html -name *.html -o -name *.js -o -name *.css -o -name *.json -o -name *.ttf -o -name *.svg -o -name *.otf`
 do
 	gzip -9c "$f" > "$f".gz
 done
 echo zip
-zip -q -X -r ${PACKAGE} nxt -x \*/.idea/\* \*/.gitignore \*/.git/\* \*/\*.log \*.iml nxt/conf/nxt.properties nxt/conf/logging.properties nxt/conf/localstorage/\*
-rm -rf nxt
+zip -q -X -r ${PACKAGE} ${APPLICATION} -x \*/.idea/\* \*/.gitignore \*/.git/\* \*/\*.log \*.iml ${APPLICATION}/conf/nxt.properties ${APPLICATION}/conf/logging.properties ${APPLICATION}/conf/localstorage/\*
+rm -rf ${APPLICATION}
 echo done

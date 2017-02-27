@@ -5,10 +5,11 @@ then
 	echo VERSION not defined
 	exit 1
 fi
-PACKAGE=nxt-eval-client-${VERSION}
+APPLICATION="nxt-eval"
+PACKAGE=${APPLICATION}-client-${VERSION}
 echo PACKAGE="${PACKAGE}"
 CHANGELOG=nxt-eval-client-${VERSION}.txt
-OBFUSCATE=$2
+OBFUSCATE="obfuscate"
 
 FILES="changelogs conf html lib resource contrib"
 FILES="${FILES} nxt.exe nxtservice.exe"
@@ -21,14 +22,14 @@ unix2dos *.bat
 echo compile
 ./compile.sh
 rm -rf html/doc/*
-rm -rf nxt
+rm -rf ${APPLICATION}
 rm -rf ${PACKAGE}.jar
 rm -rf ${PACKAGE}.sh
 rm -rf ${PACKAGE}.exe
 rm -rf ${PACKAGE}.zip
-mkdir -p nxt/
-mkdir -p nxt/logs
-mkdir -p nxt/addons/src
+mkdir -p ${APPLICATION}/
+mkdir -p ${APPLICATION}/logs
+mkdir -p ${APPLICATION}/addons/src
 
 if [ "${OBFUSCATE}" = "obfuscate" ]; 
 then
@@ -45,18 +46,18 @@ fi
 echo copy resources
 cp installer/lib/JavaExe.exe nxt.exe
 cp installer/lib/JavaExe.exe nxtservice.exe
-cp -a ${FILES} nxt
-cp -a logs/placeholder.txt nxt/logs
+cp -a ${FILES} ${APPLICATION}
+cp -a logs/placeholder.txt ${APPLICATION}/logs
 echo gzip
-for f in `find nxt/html -name *.gz`
+for f in `find ${APPLICATION}/html -name *.gz`
 do
 	rm -f "$f"
 done
-for f in `find nxt/html -name *.html -o -name *.js -o -name *.css -o -name *.json  -o -name *.ttf -o -name *.svg -o -name *.otf`
+for f in `find ${APPLICATION}/html -name *.html -o -name *.js -o -name *.css -o -name *.json  -o -name *.ttf -o -name *.svg -o -name *.otf`
 do
 	gzip -9c "$f" > "$f".gz
 done
-cd nxt
+cd ${APPLICATION}
 echo generate jar files
 ../jar.sh
 echo package installer Jar
@@ -65,8 +66,8 @@ echo package installer Jar
 #../installer/build-exe.bat ${PACKAGE}
 echo create installer zip
 cd -
-zip -q -X -r ${PACKAGE}.zip nxt -x \*/.idea/\* \*/.gitignore \*/.git/\* \*/\*.log \*.iml nxt/conf/nxt.properties nxt/conf/logging.properties nxt/conf/localstorage/\*
-rm -rf nxt
+zip -q -X -r ${PACKAGE}.zip ${APPLICATION} -x \*/.idea/\* \*/.gitignore \*/.git/\* \*/\*.log \*.iml ${APPLICATION}/conf/nxt.properties ${APPLICATION}/conf/logging.properties ${APPLICATION}/conf/localstorage/\*
+rm -rf ${APPLICATION}
 
 #echo creating full changelog
 #echo "${PACKAGE}:" > changelog-full.txt
