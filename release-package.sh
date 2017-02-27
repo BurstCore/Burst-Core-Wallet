@@ -21,6 +21,8 @@ FILES="${FILES} nxt.policy nxtdesktop.policy Ardor_Wallet.url Dockerfile"
 unix2dos *.bat
 echo compile
 ./compile.sh
+echo updating constants.js
+./constants-export.sh > /dev/null 2>&1
 rm -rf html/doc/*
 rm -rf ardor
 rm -rf ${PACKAGE}.jar
