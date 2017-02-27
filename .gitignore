@@ -12,6 +12,8 @@
 /keystore
 /nxt.jar
 /nxtservice.jar
+/jrs.jar
+/jrsservice.jar
 /nxt_test_db
 /README_win.txt
 /nxt.log.lck
@@ -29,6 +31,8 @@ deploy.sh
 /resource/nxtservice.manifest.mf
 /nxt.exe
 /nxtservice.exe
+/jrs.exe
+/jrsservice.exe
 /bundles
 *.patch
 /addons/classes/
