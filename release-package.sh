@@ -81,8 +81,8 @@ unix2dos changelog-full.txt
 #echo signing zip package
 #../jarsigner.sh ${PACKAGE}.zip
 
-echo signing jar package
-../jarsigner.sh ${PACKAGE}.jar
+#echo signing jar package
+#../jarsigner.sh ${PACKAGE}.jar
 
 echo creating sh package
 echo "#!/bin/sh\nexec java -jar \"\${0}\"\n\n" > ${PACKAGE}.sh
@@ -90,58 +90,58 @@ cat ${PACKAGE}.jar >> ${PACKAGE}.sh
 chmod a+rx ${PACKAGE}.sh
 rm -f ${PACKAGE}.jar
 
-echo creating change log ${CHANGELOG}
-echo "Release $1" > ${CHANGELOG}
-echo >> ${CHANGELOG}
-echo "https://bitbucket.org/JeanLucPicard/nxt/downloads/${PACKAGE}.zip" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
-echo "sha256:" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
-sha256sum ${PACKAGE}.zip >> ${CHANGELOG}
-
-echo >> ${CHANGELOG}
-echo "https://bitbucket.org/JeanLucPicard/nxt/downloads/${PACKAGE}.sh" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
-echo "sha256:" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
-sha256sum ${PACKAGE}.sh >> ${CHANGELOG}
-
-echo >> ${CHANGELOG}
-echo "https://bitbucket.org/JeanLucPicard/nxt/downloads/${PACKAGE}.exe" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
+#echo creating change log ${CHANGELOG}
+#echo "Release $1" > ${CHANGELOG}
+#echo >> ${CHANGELOG}
+#echo "https://bitbucket.org/JeanLucPicard/nxt/downloads/${PACKAGE}.zip" >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
 #echo "sha256:" >> ${CHANGELOG}
-#sha256sum ${PACKAGE}.exe >> ${CHANGELOG}
-echo "https://bitbucket.org/JeanLucPicard/nxt/downloads/nxt-installer-${VERSION}.dmg" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
+#sha256sum ${PACKAGE}.zip >> ${CHANGELOG}
 
-echo "The exe, dmg, and sh packages must have a digital signature by \"Stichting NXT\"." >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
+#echo "https://bitbucket.org/JeanLucPicard/nxt/downloads/${PACKAGE}.sh" >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
+#echo "sha256:" >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
+#sha256sum ${PACKAGE}.sh >> ${CHANGELOG}
 
-if [ "${OBFUSCATE}" = "obfuscate" ];
-then
-echo >> ${CHANGELOG}
-echo >> ${CHANGELOG}
-echo "This is an experimental release for testing only. Source code is not provided." >> ${CHANGELOG}
-fi
-echo >> ${CHANGELOG}
-echo >> ${CHANGELOG}
-echo "Change log:" >> ${CHANGELOG}
-echo >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
+#echo "https://bitbucket.org/JeanLucPicard/nxt/downloads/${PACKAGE}.exe" >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
+##echo "sha256:" >> ${CHANGELOG}
+##sha256sum ${PACKAGE}.exe >> ${CHANGELOG}
+#echo "https://bitbucket.org/JeanLucPicard/nxt/downloads/nxt-installer-${VERSION}.dmg" >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
 
-cat changelogs/${CHANGELOG} >> ${CHANGELOG}
-echo >> ${CHANGELOG}
+#echo "The exe, dmg, and sh packages must have a digital signature by \"Stichting NXT\"." >> ${CHANGELOG}
 
-gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.zip
-gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.sh
-#gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.exe
+#if [ "${OBFUSCATE}" = "obfuscate" ];
+#then
+#echo >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
+#echo "This is an experimental release for testing only. Source code is not provided." >> ${CHANGELOG}
+#fi
+#echo >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
+#echo "Change log:" >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
 
-gpg --clearsign --sign-with 0x811D6940E1E4240C ${CHANGELOG}
-rm -f ${CHANGELOG}
-gpgv ${PACKAGE}.zip.asc ${PACKAGE}.zip
-gpgv ${PACKAGE}.sh.asc ${PACKAGE}.sh
-#gpgv ${PACKAGE}.exe.asc ${PACKAGE}.exe
-gpgv ${CHANGELOG}.asc
-sha256sum -c ${CHANGELOG}.asc
-#jarsigner -verify ${PACKAGE}.zip
-jarsigner -verify ${PACKAGE}.sh
+#cat changelogs/${CHANGELOG} >> ${CHANGELOG}
+#echo >> ${CHANGELOG}
+
+#gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.zip
+#gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.sh
+##gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.exe
+
+#gpg --clearsign --sign-with 0x811D6940E1E4240C ${CHANGELOG}
+#rm -f ${CHANGELOG}
+#gpgv ${PACKAGE}.zip.asc ${PACKAGE}.zip
+#gpgv ${PACKAGE}.sh.asc ${PACKAGE}.sh
+##gpgv ${PACKAGE}.exe.asc ${PACKAGE}.exe
+#gpgv ${CHANGELOG}.asc
+#sha256sum -c ${CHANGELOG}.asc
+##jarsigner -verify ${PACKAGE}.zip
+#jarsigner -verify ${PACKAGE}.sh
 
 
