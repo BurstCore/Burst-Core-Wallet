@@ -1,0 +1,16 @@
+This is a testing and evaluation version based on NRS release 1.11.3.
+
+It contains the following modifications:
+
+There are 10 hardcoded genesis recipient accounts with passwords "0" to "9"
+and 100,000,000 NXT initial balance each.
+
+The genesis account with a password of "Nxt" is allowed to send transactions
+even though its balance is negative.
+
+The software is configured to run as testnet only, ignoring the value of the
+nxt.isTestnet property.
+
+All modifications specific to the current Nxt public blockchain have been
+removed.
+
