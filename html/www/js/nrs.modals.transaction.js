@@ -43,7 +43,6 @@ var NRS = (function (NRS, $, undefined) {
             NRS.modalStack.pop(); // The forward modal
             NRS.modalStack.pop(); // the current modal
         }
-        $("#transaction_info_data").html(chain + ":" + transactionFullHash);
         NRS.showTransactionModal(transactionFullHash, chain, sharedKey, fxtTransaction, isModalVisible);
     });
 
@@ -147,6 +146,7 @@ var NRS = (function (NRS, $, undefined) {
         NRS.setBackLink();
         NRS.modalStack.push({ class: "show_transaction_modal_action", key: "fullhash",
             value: { fullhash: transaction.fullHash, chain: transaction.chain, sharedkey: sharedKey, fxttransaction: fxtTransaction }});
+        $("#transaction_info_data").html(transaction.chain + ":" + transaction.fullHash);
         try {
             var async = false;
 
