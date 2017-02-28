@@ -1939,5 +1939,6 @@
   "success_coin_group_add": "Coin added to group successfully.",
   "success_coin_group_removal": "Coin removed from group successfully.",
   "poll": "Poll",
-  "compatibility": "Compatibility"
+  "compatibility": "Compatibility",
+  "about_ardor": "About Ardor"
 }
