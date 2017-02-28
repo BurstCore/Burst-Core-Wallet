@@ -910,7 +910,8 @@ var NRS = (function (NRS, $, undefined) {
     $("#publish_exchange_offer_modal").on("show.bs.modal", function (e) {
         var $invoker = $(e.relatedTarget);
 
-        $("#publish_exchange_offer_currency").val($invoker.data("currency"));
+        var currency = $invoker.data("currency");
+        $("#publish_exchange_offer_currency").val(currency);
         $("#publish_exchange_offer_decimals").val($invoker.data("decimals"));
         $(".currency_code").html(String($invoker.data("code")).escapeHTML());
 
@@ -925,7 +926,7 @@ var NRS = (function (NRS, $, undefined) {
         NRS.initModalUIElement($(this), '.exchange_offer_expiration_height', 'block_height_modal_ui_element', context);
 
         NRS.sendRequest("getAccountCurrencies", {
-            "currency": $invoker.data("currency"),
+            "currency": currency,
             "account": NRS.accountRS,
             "includeCurrencyInfo": true
         }, function (response) {
