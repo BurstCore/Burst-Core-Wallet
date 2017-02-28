@@ -1,9 +1,9 @@
 <shortcuts>
 	<skipIfNotSupported/>
 	<defaultCurrentUser/>
-	<programGroup defaultName="NXT" location="startMenu"/>
+	<programGroup defaultName="NXT-EVAL" location="startMenu"/>
 	<shortcut
-		name="Nxt Server"
+		name="Nxt Evaluation Server"
 		target="$INSTALL_PATH\nxt.exe"
 		commandLine=""
 		workingDirectory="$INSTALL_PATH"
@@ -18,8 +18,8 @@
 		startup="no">
 	</shortcut>	
 	<shortcut
-		name="Nxt Wallet"
-		target="http://localhost:7876/index.html"
+		name="Nxt Evaluation Wallet"
+		target="http://localhost:6876/index.html"
 		commandLine=""
 		workingDirectory="$INSTALL_PATH"
         description="Launch NXT wallet in browser"

@@ -5,10 +5,10 @@
                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                   xsi:schemaLocation="http://izpack.org/schema/shortcuts http://izpack.org/schema/5.0/izpack-shortcuts-5.0.xsd">
 
-    <programGroup defaultName="NXT" location="applications"/>
+    <programGroup defaultName="NXT-EVAL" location="applications"/>
 
     <shortcut
-            name="Nxt Start"
+            name="Nxt Evaluation Start"
             programGroup="yes"
             desktop="yes"
             target="$INSTALL_PATH/start.sh"
@@ -22,7 +22,7 @@
     </shortcut>
 
     <shortcut
-            name="Nxt Stop"
+            name="Nxt Evaluation Stop"
             programGroup="yes"
             desktop="yes"
             target="$INSTALL_PATH/stop.sh"
@@ -51,7 +51,7 @@
     -->
 
     <shortcut
-            name="Nxt Uninstaller"
+            name="Nxt Evaluation Uninstaller"
             programGroup="yes"
             desktop="no"
             target="java"
