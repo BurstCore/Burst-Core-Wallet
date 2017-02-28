@@ -8,7 +8,7 @@ fi
 APPLICATION="nxt-eval"
 PACKAGE=${APPLICATION}-client-${VERSION}
 echo PACKAGE="${PACKAGE}"
-CHANGELOG=nxt-eval-client-${VERSION}.txt
+CHANGELOG=nxt-eval-client-${VERSION}.changelog.txt
 OBFUSCATE="obfuscate"
 
 FILES="changelogs conf html lib resource contrib"
@@ -83,8 +83,8 @@ rm -rf ${APPLICATION}
 #echo signing zip package
 #../jarsigner.sh ${PACKAGE}.zip
 
-#echo signing jar package
-#../jarsigner.sh ${PACKAGE}.jar
+echo signing jar package
+../jarsigner.sh ${PACKAGE}.jar
 
 echo creating sh package
 echo "#!/bin/sh\nexec java -jar \"\${0}\"\n\n" > ${PACKAGE}.sh
@@ -93,7 +93,7 @@ chmod a+rx ${PACKAGE}.sh
 rm -f ${PACKAGE}.jar
 
 echo creating change log ${CHANGELOG}
-echo "Release $1" > ${CHANGELOG}
+echo "Evaluation Release $1" > ${CHANGELOG}
 echo >> ${CHANGELOG}
 echo "sha256:" >> ${CHANGELOG}
 echo >> ${CHANGELOG}
@@ -108,25 +108,25 @@ echo >> ${CHANGELOG}
 echo >> ${CHANGELOG}
 echo "This is an evaluation version for testing only." >> ${CHANGELOG}
 echo >> ${CHANGELOG}
-#echo >> ${CHANGELOG}
-#echo "Change log:" >> ${CHANGELOG}
-#echo >> ${CHANGELOG}
+echo >> ${CHANGELOG}
+echo "Change log:" >> ${CHANGELOG}
+echo >> ${CHANGELOG}
 
-#cat changelogs/${CHANGELOG} >> ${CHANGELOG}
-#echo >> ${CHANGELOG}
+cat changelogs/${CHANGELOG} >> ${CHANGELOG}
+echo >> ${CHANGELOG}
 
-#gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.zip
-#gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.sh
-##gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.exe
+gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.zip
+gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.sh
+#gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.exe
 
-#gpg --clearsign --sign-with 0x811D6940E1E4240C ${CHANGELOG}
-#rm -f ${CHANGELOG}
-#gpgv ${PACKAGE}.zip.asc ${PACKAGE}.zip
-#gpgv ${PACKAGE}.sh.asc ${PACKAGE}.sh
-##gpgv ${PACKAGE}.exe.asc ${PACKAGE}.exe
-#gpgv ${CHANGELOG}.asc
-sha256sum -c ${CHANGELOG}
-##jarsigner -verify ${PACKAGE}.zip
-#jarsigner -verify ${PACKAGE}.sh
+gpg --clearsign --sign-with 0x811D6940E1E4240C ${CHANGELOG}
+rm -f ${CHANGELOG}
+gpgv ${PACKAGE}.zip.asc ${PACKAGE}.zip
+gpgv ${PACKAGE}.sh.asc ${PACKAGE}.sh
+#gpgv ${PACKAGE}.exe.asc ${PACKAGE}.exe
+gpgv ${CHANGELOG}.asc
+sha256sum -c ${CHANGELOG}.asc
+#jarsigner -verify ${PACKAGE}.zip
+jarsigner -verify ${PACKAGE}.sh
 
 
