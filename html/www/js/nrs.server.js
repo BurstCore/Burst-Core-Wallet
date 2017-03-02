@@ -1572,12 +1572,25 @@ var NRS = (function (NRS, $, undefined) {
             }
             var linkedFullHashesLength = byteArray[pos];
             pos++;
-            for (i = 0; i < linkedFullHashesLength; i++) {
-                var fullHash = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
-                pos += 32;
-                if (fullHash !== data.phasingLinkedFullHash[i]) {
+            if (linkedFullHashesLength > 1) {
+                NRS.logConsole("currently only 1 full hash is supported");
+                return false;
+            }
+            if (linkedFullHashesLength == 1) {
+                var tokens = String(data.phasingLinkedTransaction).split(":");
+                if (tokens.length != 2) {
                     return false;
                 }
+                var chain = tokens[0];
+                if (chain != String(converters.byteArrayToSignedInt32(byteArray, pos))) {
+                    return false;
+                }
+                pos += 4;
+                var fullHash = tokens[1];
+                if (fullHash != converters.byteArrayToHexString(byteArray.slice(pos, pos + 32))) {
+                    return false;
+                }
+                pos += 32;
             }
             var hashedSecretLength = byteArray[pos];
             pos++;
