@@ -126,16 +126,16 @@ var NRS = (function (NRS, $, undefined) {
             rows = "-";
         }
         phasingDetails.whitelist_formatted_html = rows;
-        if (phasingParams.phasingLinkedFullHashes && phasingParams.phasingLinkedFullHashes.length > 0) {
+        if (phasingParams.phasingLinkedTransactions && phasingParams.phasingLinkedTransactions.length > 0) {
             rows = "<table class='table table-striped'><tbody>";
-            for (i = 0; i < phasingParams.phasingLinkedFullHashes.length; i++) {
-                rows += "<tr><td>" + phasingParams.phasingLinkedFullHashes[i] + "</td></tr>";
+            for (i = 0; i < phasingParams.phasingLinkedTransactions.length; i++) {
+                rows += "<tr><td>" + phasingParams.phasingLinkedTransactions[i].chain + ":" + phasingParams.phasingLinkedTransactions[i].transactionFullHash + "</td></tr>";
             }
             rows += "</tbody></table>";
         } else {
             rows = "-";
         }
-        phasingDetails.full_hash_formatted_html = rows;
+        phasingDetails.transactions_formatted_html = rows;
         if (phasingParams.phasingHashedSecret) {
             phasingDetails.hashedSecret = phasingParams.phasingHashedSecret;
             phasingDetails.hashAlgorithm = NRS.getHashAlgorithm(phasingParams.phasingHashedSecretAlgorithm);
@@ -177,6 +177,9 @@ var NRS = (function (NRS, $, undefined) {
             } else {
                 transactionDetails.height_formatted_html = NRS.getBlockLink(transactionDetails.height);
                 delete transactionDetails.height;
+            }
+            if (transactionDetails.referencedTransaction) {
+                transactionDetails.referencedTransaction = transactionDetails.referencedTransaction.chain + ":" + transactionDetails.referencedTransaction.transactionFullHash;
             }
             $("#transaction_info_tab_link").tab("show");
 

@@ -1940,5 +1940,6 @@
   "success_coin_group_removal": "Coin removed from group successfully.",
   "poll": "Poll",
   "compatibility": "Compatibility",
-  "about_ardor": "About Ardor"
+  "about_ardor": "About Ardor",
+  "referenced_transaction":	"Referenced Transaction"
 }
