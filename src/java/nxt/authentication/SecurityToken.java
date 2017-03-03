@@ -26,49 +26,49 @@ public interface SecurityToken {
      *
      * @return                  Expiration time or zero if the token does not expire
      */
-    public int getTokenExpiration();
+    int getTokenExpiration();
 
     /**
      * Get peer account identifier
      *
      * @return                  Peer account identifier
      */
-    public long getPeerAccountId();
+    long getPeerAccountId();
 
     /**
      * Get peer account public key
      *
      * @return                  Peer account public key
      */
-    public byte[] getPeerAccountPublicKey();
+    byte[] getPeerAccountPublicKey();
 
     /**
      * Get peer announced address
      *
      * @return                  Peer announced address or null if there is no announced address
      */
-    public String getPeerAccountAddress();
+    String getPeerAccountAddress();
 
     /**
      * Get the session key
      *
      * @return                  Session key or null if there is no session key
      */
-    public byte[] getSessionKey();
+    byte[] getSessionKey();
 
     /**
      * Get the serialized token length
      *
      * @return                  Serialized token length
      */
-    public int getLength();
+    int getLength();
 
     /**
      * Get the serialized token
      *
      * @return                  Serialized token
      */
-    public byte[] getBytes();
+    byte[] getBytes();
 
     /**
      * Add the serialized token to a buffer
@@ -76,7 +76,7 @@ public interface SecurityToken {
      * @param   buffer          Byte buffer
      * @return                  Byte buffer
      */
-    public default ByteBuffer getBytes(ByteBuffer buffer) {
+    default ByteBuffer getBytes(ByteBuffer buffer) {
         buffer.put(getBytes());
         return buffer;
     }
