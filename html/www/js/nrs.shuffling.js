@@ -402,10 +402,6 @@ var NRS = (function(NRS, $) {
     var shufflerStartModal = $("#m_shuffler_start_modal");
     shufflerStartModal.on("show.bs.modal", function(e) {
         var $invoker = $(e.relatedTarget);
-        var shufflingId = $invoker.data("shuffling");
-        if (shufflingId) {
-            $("#shuffler_start_shuffling_id").html(shufflingId);
-        }
         var shufflingFullHash = $invoker.data("shufflingfullhash");
         if (shufflingFullHash) {
             $("#shuffler_start_shuffling_full_hash").val(shufflingFullHash);
@@ -440,7 +436,6 @@ var NRS = (function(NRS, $) {
     NRS.forms.shufflingCreateComplete = function(response) {
         $.growl($.t("shuffling_created"));
         // After shuffling created we show the start shuffler modal
-        $("#shuffler_start_shuffling_id").html(NRS.fullHashToId(response.fullHash));
         $("#shuffler_start_shuffling_full_hash").val(response.fullHash);
         $('#m_shuffler_start_modal').modal("show");
     };
