@@ -17,6 +17,8 @@ package nxt.peer;
 
 import nxt.Nxt;
 import nxt.NxtException.NotValidException;
+import nxt.authentication.SecurityToken;
+import nxt.authentication.SecurityTokenFactory;
 import nxt.blockchain.Block;
 import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildBlockFxtTransaction;
@@ -354,9 +356,13 @@ public abstract class NetworkMessage {
      * <li>Disabled APIs (string)
      * <li>APIServer idle timeout (integer)
      * <li>Blockchain state (integer)
+     * <li>Security token (variable length)
      * </ul>
      */
     public static class GetInfoMessage extends NetworkMessage {
+
+        /** Authentication security token factory */
+        private static final SecurityTokenFactory securityTokenFactory = SecurityTokenFactory.getSecurityTokenFactory();
 
         /** Application name */
         private final byte[] appNameBytes;
@@ -387,6 +393,9 @@ public abstract class NetworkMessage {
 
         /** APIServer idle timeout */
         private final int apiServerIdleTimeout;
+
+        /** Authentication security token */
+        private final SecurityToken securityToken;
 
         /** Blockchain state */
         private Peer.BlockchainState blockchainState;
@@ -432,6 +441,7 @@ public abstract class NetworkMessage {
             this.services = 0;
             this.disabledAPIsBytes = null;
             this.apiServerIdleTimeout = 0;
+            this.securityToken = null;
             this.blockchainState = Peer.BlockchainState.UP_TO_DATE;
         }
 
@@ -448,11 +458,13 @@ public abstract class NetworkMessage {
          * @param   services            Available application services
          * @param   disabledAPIs        Disabled API names
          * @param   apiServerIdleTimeout API server idle timeout
+         * @param   peerPublicKey       Peer public key or null
          */
         public GetInfoMessage(String appName, String appVersion, String appPlatform,
                               boolean shareAddress, String announcedAddress,
                               int apiPort, int sslPort, long services,
-                              String disabledAPIs, int apiServerIdleTimeout) {
+                              String disabledAPIs, int apiServerIdleTimeout,
+                              byte[] peerPublicKey) {
             super("GetInfo");
             this.appNameBytes = appName.getBytes(UTF8);
             this.appVersionBytes = appVersion.getBytes(UTF8);
@@ -465,6 +477,11 @@ public abstract class NetworkMessage {
             this.disabledAPIsBytes = (disabledAPIs != null ? disabledAPIs.getBytes(UTF8) : Convert.EMPTY_BYTE);
             this.apiServerIdleTimeout = apiServerIdleTimeout;
             this.blockchainState = Peer.BlockchainState.UP_TO_DATE;
+            if (peerPublicKey != null && securityTokenFactory != null) {
+                this.securityToken = securityTokenFactory.getSecurityToken(peerPublicKey);
+            } else {
+                this.securityToken = null;
+            }
         }
 
         /**
@@ -491,6 +508,21 @@ public abstract class NetworkMessage {
                 throw new NetworkException("Blockchain state '" + state + "' is not valid");
             }
             this.blockchainState = Peer.BlockchainState.values()[state];
+            if (bytes.hasRemaining()) {
+                int length = bytes.getShort();
+                if (length != 0) {
+                    if (securityTokenFactory != null) {
+                        this.securityToken = securityTokenFactory.getSecurityToken(bytes);
+                    } else {
+                        bytes.position(bytes.position() + length);
+                        this.securityToken = null;
+                    }
+                } else {
+                    this.securityToken = null;
+                }
+            } else {
+                this.securityToken = null;
+            }
         }
 
         /**
@@ -509,7 +541,8 @@ public abstract class NetworkMessage {
                     + 2 + 2 + 8
                     + getEncodedArrayLength(disabledAPIsBytes)
                     + 4
-                    + 4;
+                    + 4
+                    + 2 + (securityToken != null ? securityToken.getLength() : 0);
         }
 
         /**
@@ -530,6 +563,12 @@ public abstract class NetworkMessage {
             encodeArray(bytes, disabledAPIsBytes);
             bytes.putInt(apiServerIdleTimeout);
             bytes.putInt(blockchainState.ordinal());
+            if (securityToken != null) {
+                bytes.putShort((short)securityToken.getLength());
+                securityToken.getBytes(bytes);
+            } else {
+                bytes.putShort((short)0);
+            }
         }
 
         /**
@@ -638,6 +677,15 @@ public abstract class NetworkMessage {
          */
         public synchronized void setBlockchainState(Peer.BlockchainState blockchainState) {
             this.blockchainState = blockchainState;
+        }
+
+        /**
+         * Get the authentication security token
+         *
+         * @return                      Authentication security token or null
+         */
+        public SecurityToken getSecurityToken() {
+            return securityToken;
         }
     }
 

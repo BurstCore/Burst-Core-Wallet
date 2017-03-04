@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 /**
  * Generate an authentication security token for a permissioned blockchain
  */
-public class SecurityTokenFactory {
+public abstract class SecurityTokenFactory {
 
     private static final SecurityTokenFactory securityTokenFactory;
     static {
@@ -36,8 +36,6 @@ public class SecurityTokenFactory {
             securityTokenFactory = null;
         }
     }
-
-    private SecurityTokenFactory() {}
 
     /**
      * Get the security token factory
@@ -54,9 +52,7 @@ public class SecurityTokenFactory {
      * @param   publicKey           Public key
      * @return                      Security token
      */
-    public SecurityToken getSecurityToken(byte[] publicKey) {
-        return securityTokenFactory.getSecurityToken(publicKey);
-    }
+    public abstract SecurityToken getSecurityToken(byte[] publicKey);
 
     /**
      * Create a new security token
@@ -64,7 +60,5 @@ public class SecurityTokenFactory {
      * @param   buffer              Byte buffer
      * @return                      Security token
      */
-    public SecurityToken getSecurityToken(ByteBuffer buffer) {
-        return securityTokenFactory.getSecurityToken(buffer);
-    }
+    public abstract SecurityToken getSecurityToken(ByteBuffer buffer);
 }

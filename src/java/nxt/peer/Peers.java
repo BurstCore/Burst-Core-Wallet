@@ -119,9 +119,11 @@ public final class Peers {
     /** Minimum bundler effective balance */
     static final int minBundlerBalanceFXT = Nxt.getIntProperty("nxt.minBundlerBalanceFXT");
 
+    /** Peer credentials */
+    static final String peerSecretPhrase = Nxt.getStringProperty("nxt.credentials.secretPhrase");
+
     /** Local peer services */
     static final List<Peer.Service> myServices;
-
     static {
         List<Peer.Service> services = new ArrayList<>();
         if (!Constants.ENABLE_PRUNING && Constants.INCLUDE_EXPIRED_PRUNABLE) {

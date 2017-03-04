@@ -16,9 +16,14 @@
 
 package nxt.peer;
 
+import nxt.Constants;
 import nxt.Nxt;
 import nxt.NxtException;
+import nxt.authentication.Role;
+import nxt.authentication.RoleMapperFactory;
+import nxt.authentication.SecurityToken;
 import nxt.blockchain.Transaction;
+import nxt.crypto.Crypto;
 import nxt.util.Logger;
 
 import java.util.Collections;
@@ -95,14 +100,47 @@ final class GetInfo {
             Peers.notifyListeners(peer, Peers.Event.CHANGE_SERVICES);
         }
         //
+        // Authenticate the peer (peer must have WRITER permission)
+        //
+        SecurityToken securityToken = null;
+        if (Constants.isPermissioned) {
+            securityToken = message.getSecurityToken();
+            if (securityToken == null) {
+                Logger.logDebugMessage("GetInfo: No security token provided by peer " + peer.getHost());
+                peer.disconnectPeer();
+                return null;
+            }
+            long peerId = securityToken.getPeerAccountId();
+            if (!RoleMapperFactory.getRoleMapper().isUserInRole(peerId, Role.WRITER)) {
+                Logger.logDebugMessage("GetInfo: Peer " + peer.getHost() + " does not have WRITER permission");
+                peer.disconnectPeer();
+                return null;
+            }
+        }
+        //
         // Indicate the connection handshake is complete.  For an inbound connection, we need
         // to send our GetInfo message.  For an outbound connection, we have already sent our
         // GetInfo message.
         //
-        peer.handshakeComplete();
         if (peer.isInbound()) {
-            NetworkHandler.sendGetInfoMessage(peer);
+            if (securityToken != null) {
+                byte[] sessionKey = new byte[32];
+                Crypto.getSecureRandom().nextBytes(sessionKey);
+                peer.setSessionKey(sessionKey);
+                NetworkHandler.sendGetInfoMessage(peer, securityToken.getPeerPublicKey(), sessionKey);
+            } else {
+                NetworkHandler.sendGetInfoMessage(peer);
+            }
+        } else if (securityToken != null) {
+            byte[] sessionKey = securityToken.getSessionKey(Peers.peerSecretPhrase, securityToken.getPeerPublicKey());
+            if (sessionKey == null) {
+                Logger.logDebugMessage("GetInfo: Peer " + peer.getHost() + " did not provide a session key");
+                peer.disconnectPeer();
+                return null;
+            }
+            peer.setSessionKey(sessionKey);
         }
+        peer.handshakeComplete();
         //
         // Send our bundler rates
         //
