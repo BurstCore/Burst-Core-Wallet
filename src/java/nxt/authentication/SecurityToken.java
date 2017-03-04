@@ -22,13 +22,6 @@ import java.nio.ByteBuffer;
 public interface SecurityToken {
 
     /**
-     * Get the security token expiration
-     *
-     * @return                  Expiration time or zero if the token does not expire
-     */
-    int getTokenExpiration();
-
-    /**
      * Get peer account identifier
      *
      * @return                  Peer account identifier
@@ -36,25 +29,27 @@ public interface SecurityToken {
     long getPeerAccountId();
 
     /**
-     * Get peer account public key
+     * Get peer public key
      *
-     * @return                  Peer account public key
+     * @return                  Peer public key
      */
-    byte[] getPeerAccountPublicKey();
-
-    /**
-     * Get peer announced address
-     *
-     * @return                  Peer announced address or null if there is no announced address
-     */
-    String getPeerAccountAddress();
+    byte[] getPeerPublicKey();
 
     /**
      * Get the session key
      *
+     * @param   secretPhrase    Server credentials secret phrase
      * @return                  Session key or null if there is no session key
      */
-    byte[] getSessionKey();
+    byte[] getSessionKey(String secretPhrase);
+
+    /**
+     * Set the session key
+     *
+     * @param   secretPhrase    Server credentials secret phrase
+     * @param   sessionKey      Session key
+     */
+    void setSessionKey(String secretPhrase, byte[] sessionKey);
 
     /**
      * Get the serialized token length
