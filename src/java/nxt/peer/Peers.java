@@ -19,11 +19,15 @@ package nxt.peer;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.account.Account;
+import nxt.authentication.Role;
+import nxt.authentication.RoleMapperFactory;
 import nxt.blockchain.Bundler;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
+import nxt.crypto.Crypto;
 import nxt.dbschema.Db;
 import nxt.http.API;
+import nxt.util.Convert;
 import nxt.util.Filter;
 import nxt.util.Listener;
 import nxt.util.Listeners;
@@ -197,6 +201,16 @@ public final class Peers {
         final List<String> defaultPeers = Constants.isTestnet ?
                 Nxt.getStringListProperty("nxt.defaultTestnetPeers") : Nxt.getStringListProperty("nxt.defaultPeers");
         final List<Future<String>> unresolvedPeers = Collections.synchronizedList(new ArrayList<>());
+        //
+        // Check peer permission
+        //
+        if (Constants.isPermissioned && peerSecretPhrase != null) {
+            byte[] publicKey = Crypto.getPublicKey(peerSecretPhrase);
+            long accountId = Account.getId(publicKey);
+            if (!RoleMapperFactory.getRoleMapper().isUserInRole(accountId, Role.WRITER)) {
+                Logger.logWarningMessage("WARNING: Account " + Convert.rsAccount(accountId) + " does not have WRITER permission");
+            }
+        }
         //
         // Build the peer list
         //
