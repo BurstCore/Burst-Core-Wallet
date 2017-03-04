@@ -39,17 +39,19 @@ public interface SecurityToken {
      * Get the session key
      *
      * @param   secretPhrase    Server credentials secret phrase
+     * @param   peerPublicKey   Peer public key
      * @return                  Session key or null if there is no session key
      */
-    byte[] getSessionKey(String secretPhrase);
+    byte[] getSessionKey(String secretPhrase, byte[] peerPublicKey);
 
     /**
      * Set the session key
      *
      * @param   secretPhrase    Server credentials secret phrase
+     * @param   peerPublicKey   Peer public key
      * @param   sessionKey      Session key
      */
-    void setSessionKey(String secretPhrase, byte[] sessionKey);
+    void setSessionKey(String secretPhrase, byte[] peerPublicKey, byte[] sessionKey);
 
     /**
      * Get the serialized token length
