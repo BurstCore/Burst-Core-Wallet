@@ -45,17 +45,14 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static nxt.http.JSONResponses.FEATURE_NOT_AVAILABLE;
 import static nxt.http.JSONResponses.INCORRECT_EC_BLOCK;
-import static nxt.http.JSONResponses.INCORRECT_LINKED_TRANSACTION;
 import static nxt.http.JSONResponses.INCORRECT_WHITELIST;
 import static nxt.http.JSONResponses.MISSING_SECRET_PHRASE;
 import static nxt.http.JSONResponses.NOT_ENOUGH_FUNDS;
-import static nxt.http.JSONResponses.UNKNOWN_CHAIN;
 
 abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
@@ -108,23 +105,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
                 true);
 
         PhasingParams phasingParams = parsePhasingParams(req, "phasing");
-        String[] phasingLinkedTransactionsValues = req.getParameterValues("phasingLinkedTransaction");
-        List<ChainTransactionId> linkedTransactionIds = new ArrayList<>();
-        if (phasingLinkedTransactionsValues != null) {
-            for (String phasingLinkedTransactionsValue : phasingLinkedTransactionsValues) {
-                String[] s = phasingLinkedTransactionsValue.split(":");
-                int chainId = Integer.parseInt(s[0]);
-                Chain chain = Chain.getChain(chainId);
-                if (chain == null) {
-                    throw new ParameterException(UNKNOWN_CHAIN);
-                }
-                byte[] hash = Convert.parseHexString(s[1]);
-                if (hash == null || hash.length != 32) {
-                    throw new ParameterException(INCORRECT_LINKED_TRANSACTION);
-                }
-                linkedTransactionIds.add(new ChainTransactionId(chainId, hash));
-            }
-        }
+        List<ChainTransactionId> linkedTransactionIds = ParameterParser.getChainTransactionIds(req, "phasingLinkedTransaction");
         byte[] hashedSecret = Convert.parseHexString(Convert.emptyToNull(req.getParameter("phasingHashedSecret")));
         byte algorithm = ParameterParser.getByte(req, "phasingHashedSecretAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
 
@@ -162,14 +143,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
     final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
                                             long amountNQT, Attachment attachment, Chain txChain) throws NxtException {
-        ChainTransactionId referencedTransactionId = null;
-        String referencedTransactionValue = Convert.emptyToNull(req.getParameter("referencedTransaction"));
-        if (referencedTransactionValue != null) {
-            String[] s = referencedTransactionValue.split(":");
-            int chainId = Integer.parseInt(s[0]);
-            byte[] hash = Convert.parseHexString(s[1]);
-            referencedTransactionId = new ChainTransactionId(chainId, hash);
-        }
+        ChainTransactionId referencedTransactionId = ParameterParser.getChainTransactionId(req, "referencedTransaction");
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         String publicKeyValue = Convert.emptyToNull(req.getParameter("publicKey"));
         boolean broadcast = !"false".equalsIgnoreCase(req.getParameter("broadcast")) && secretPhrase != null;

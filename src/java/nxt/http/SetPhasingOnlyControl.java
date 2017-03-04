@@ -82,6 +82,9 @@ public final class SetPhasingOnlyControl extends CreateTransaction {
         if (maxFeeValues != null && maxFeeValues.length > 0) {
             for (String chainMaxFee : maxFeeValues) {
                 String[] s = chainMaxFee.split(":");
+                if (s.length != 2) {
+                    return JSONResponses.incorrect("controlMaxFees");
+                }
                 int chainId = Integer.parseInt(s[0]);
                 ChildChain chain = ChildChain.getChildChain(chainId);
                 if (chain == null) {
