@@ -17,9 +17,11 @@ package nxt.peer;
 
 import nxt.Constants;
 import nxt.Nxt;
+import nxt.crypto.Crypto;
 import nxt.util.Logger;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.SelectionKey;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -47,7 +49,9 @@ class MessageHandler implements Runnable {
      * @param   bytes                   Message bytes
      */
     static void processMessage(PeerImpl peer, ByteBuffer bytes) {
-        messageQueue.offer(new QueueEntry(peer, bytes));
+        bytes.position(bytes.position() - 4);
+        int msgLength = bytes.getInt();
+        messageQueue.offer(new QueueEntry(peer, bytes, (msgLength & 0x80000000) != 0));
     }
 
     /**
@@ -56,7 +60,7 @@ class MessageHandler implements Runnable {
     static void shutdown() {
         if (!messageShutdown) {
             messageShutdown = true;
-            messageQueue.offer(new QueueEntry(null, null));
+            messageQueue.offer(new QueueEntry(null, null, false));
         }
     }
 
@@ -88,10 +92,26 @@ class MessageHandler implements Runnable {
                 if (peer.getState() != Peer.State.CONNECTED) {
                     continue;
                 }
+                if (peer.isHandshakePending() && entry.isEncrypted()) {
+                    peer.queueInputMessage(entry.getBytes());
+                    continue;
+                }
                 NetworkMessage message = null;
                 NetworkMessage response;
                 try {
-                    message = NetworkMessage.getMessage(entry.getBytes());
+                    ByteBuffer buffer = entry.getBytes();
+                    if (entry.isEncrypted()) {
+                        byte[] sessionKey = peer.getSessionKey();
+                        if (sessionKey == null) {
+                            throw new IllegalStateException("Encrypted message received without a session key");
+                        }
+                        byte[] encryptedBytes = new byte[buffer.limit() - buffer.position()];
+                        buffer.get(encryptedBytes);
+                        byte[] msgBytes = Crypto.aesDecrypt(encryptedBytes, sessionKey);
+                        buffer = ByteBuffer.wrap(msgBytes);
+                        buffer.order(ByteOrder.LITTLE_ENDIAN);
+                    }
+                    message = NetworkMessage.getMessage(buffer);
                     if (Peers.isLogLevelEnabled(Peers.LOG_LEVEL_NAMES)) {
                         Logger.logDebugMessage(String.format("%s[%d] message received from %s",
                                 message.getMessageName(), message.getMessageId(), peer.getHost()));
@@ -171,15 +191,20 @@ class MessageHandler implements Runnable {
         /** Message buffer */
         private final ByteBuffer bytes;
 
+        /** Message is encrypted */
+        private final boolean isEncrypted;
+
         /**
          * Construct a queue entry
          *
          * @param   peer                Peer
          * @param   bytes               Message bytes
+         * @param   isEncrypted         TRUE if message is encrypted
          */
-        private QueueEntry(PeerImpl peer, ByteBuffer bytes) {
+        private QueueEntry(PeerImpl peer, ByteBuffer bytes, boolean isEncrypted) {
             this.peer = peer;
             this.bytes = bytes;
+            this.isEncrypted = isEncrypted;
         }
 
         /**
@@ -193,9 +218,20 @@ class MessageHandler implements Runnable {
 
         /**
          * Get the message bytes
+         *
+         * @return                      Message buffer
          */
         private ByteBuffer getBytes() {
             return bytes;
+        }
+
+        /**
+         * Check if the message is encrypted
+         *
+         * @return                      TRUE if the message is encrypted
+         */
+        private boolean isEncrypted() {
+            return isEncrypted;
         }
     }
 }

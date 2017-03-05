@@ -19,11 +19,15 @@ package nxt.peer;
 import nxt.Constants;
 import nxt.Nxt;
 import nxt.account.Account;
+import nxt.authentication.Role;
+import nxt.authentication.RoleMapperFactory;
 import nxt.blockchain.Bundler;
 import nxt.blockchain.Chain;
 import nxt.blockchain.ChildChain;
+import nxt.crypto.Crypto;
 import nxt.dbschema.Db;
 import nxt.http.API;
+import nxt.util.Convert;
 import nxt.util.Filter;
 import nxt.util.Listener;
 import nxt.util.Listeners;
@@ -119,9 +123,11 @@ public final class Peers {
     /** Minimum bundler effective balance */
     static final int minBundlerBalanceFXT = Nxt.getIntProperty("nxt.minBundlerBalanceFXT");
 
+    /** Peer credentials */
+    static final String peerSecretPhrase = Nxt.getStringProperty("nxt.credentials.secretPhrase", null, true);
+
     /** Local peer services */
     static final List<Peer.Service> myServices;
-
     static {
         List<Peer.Service> services = new ArrayList<>();
         if (!Constants.ENABLE_PRUNING && Constants.INCLUDE_EXPIRED_PRUNABLE) {
@@ -195,6 +201,21 @@ public final class Peers {
         final List<String> defaultPeers = Constants.isTestnet ?
                 Nxt.getStringListProperty("nxt.defaultTestnetPeers") : Nxt.getStringListProperty("nxt.defaultPeers");
         final List<Future<String>> unresolvedPeers = Collections.synchronizedList(new ArrayList<>());
+        //
+        // Check peer permission
+        //
+        // In the case of a new peer, the peer account might not exist yet.  So we will allow
+        // it to create outbound connections in order to download the blockchain.  Note that this
+        // means the default peers defined in nxt-default.properties must have accounts that are
+        // defined in the genesis block in order for a new peer to accept the connection.
+        //
+        if (Constants.isPermissioned && peerSecretPhrase != null) {
+            byte[] publicKey = Crypto.getPublicKey(peerSecretPhrase);
+            long accountId = Account.getId(publicKey);
+            if (!RoleMapperFactory.getRoleMapper().isUserInRole(accountId, Role.WRITER)) {
+                Logger.logWarningMessage("WARNING: Account " + Convert.rsAccount(accountId) + " does not have WRITER permission");
+            }
+        }
         //
         // Build the peer list
         //
