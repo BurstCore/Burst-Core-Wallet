@@ -124,7 +124,7 @@ public final class Peers {
     static final int minBundlerBalanceFXT = Nxt.getIntProperty("nxt.minBundlerBalanceFXT");
 
     /** Peer credentials */
-    static final String peerSecretPhrase = Nxt.getStringProperty("nxt.credentials.secretPhrase");
+    static final String peerSecretPhrase = Nxt.getStringProperty("nxt.credentials.secretPhrase", null, true);
 
     /** Local peer services */
     static final List<Peer.Service> myServices;
