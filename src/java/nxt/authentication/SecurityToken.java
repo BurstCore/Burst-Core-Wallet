@@ -73,8 +73,5 @@ public interface SecurityToken {
      * @param   buffer          Byte buffer
      * @return                  Byte buffer
      */
-    default ByteBuffer getBytes(ByteBuffer buffer) {
-        buffer.put(getBytes());
-        return buffer;
-    }
+    ByteBuffer getBytes(ByteBuffer buffer);
 }

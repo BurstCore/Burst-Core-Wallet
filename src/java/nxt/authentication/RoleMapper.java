@@ -55,5 +55,4 @@ public interface RoleMapper {
      * @return                      TRUE if the account has the specified user role
      */
     boolean isUserInRole(long accountId, Role role);
-
 }

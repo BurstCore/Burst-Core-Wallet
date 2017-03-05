@@ -17,7 +17,6 @@ package nxt.peer;
 
 import nxt.Constants;
 import nxt.Nxt;
-import nxt.authentication.SecurityToken;
 import nxt.crypto.Crypto;
 import nxt.http.API;
 import nxt.http.APIEnum;
@@ -911,6 +910,8 @@ public final class NetworkHandler implements Runnable {
     /**
      * Send our GetInfo message
      *
+     * We will send the default GetInfo message for a non-permissioned blockchain
+     *
      * @param   peer                    Target peer
      */
     static void sendGetInfoMessage(PeerImpl peer) {
@@ -920,6 +921,9 @@ public final class NetworkHandler implements Runnable {
 
     /**
      * Send our GetInfo message
+     *
+     * We will construct a GetInfo message containing the appropriate security
+     * token for the target peer
      *
      * @param   peer                    Target peer
      * @param   peerPublicKey           Peer public key

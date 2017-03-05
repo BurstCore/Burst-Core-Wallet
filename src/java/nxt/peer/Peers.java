@@ -204,6 +204,11 @@ public final class Peers {
         //
         // Check peer permission
         //
+        // In the case of a new peer, the peer account might not exist yet.  So we will allow
+        // it to create outbound connections in order to download the blockchain.  Note that this
+        // means the default peers defined in nxt-default.properties must have accounts that are
+        // defined in the genesis block in order for a new peer to accept the connection.
+        //
         if (Constants.isPermissioned && peerSecretPhrase != null) {
             byte[] publicKey = Crypto.getPublicKey(peerSecretPhrase);
             long accountId = Account.getId(publicKey);

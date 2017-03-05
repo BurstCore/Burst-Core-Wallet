@@ -50,6 +50,9 @@ public class RoleMapperFactory {
         return roleMapper;
     }
 
+    /**
+     * Dummy role mapper for a non-permissioned blockchain
+     */
     public static class NullRoleMapper implements RoleMapper {
 
         @Override
