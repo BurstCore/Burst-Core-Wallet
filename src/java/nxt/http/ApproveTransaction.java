@@ -22,20 +22,15 @@ import nxt.NxtException;
 import nxt.account.Account;
 import nxt.blockchain.Attachment;
 import nxt.blockchain.ChainTransactionId;
-import nxt.blockchain.ChildChain;
 import nxt.util.Convert;
-import nxt.voting.PhasingPollHome;
 import nxt.voting.PhasingVoteCastingAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.List;
 
 import static nxt.http.JSONResponses.MISSING_PHASED_TRANSACTION;
 import static nxt.http.JSONResponses.TOO_MANY_PHASING_VOTES;
-import static nxt.http.JSONResponses.UNKNOWN_CHAIN;
-import static nxt.http.JSONResponses.UNKNOWN_PHASED_TRANSACTION;
 
 public class ApproveTransaction extends CreateTransaction {
     static final ApproveTransaction instance = new ApproveTransaction();
@@ -47,39 +42,12 @@ public class ApproveTransaction extends CreateTransaction {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
-        String[] phasedTransactionValues = req.getParameterValues("phasedTransaction");
-
-        if (phasedTransactionValues == null || phasedTransactionValues.length == 0) {
+        List<ChainTransactionId> phasedTransactionIds = ParameterParser.getChainTransactionIds(req, "phasedTransaction");
+        if (phasedTransactionIds.isEmpty()) {
             return MISSING_PHASED_TRANSACTION;
         }
-
-        if (phasedTransactionValues.length > Constants.MAX_PHASING_VOTE_TRANSACTIONS) {
+        if (phasedTransactionIds.size() > Constants.MAX_PHASING_VOTE_TRANSACTIONS) {
             return TOO_MANY_PHASING_VOTES;
-        }
-
-        List<ChainTransactionId> phasedTransactionIds = new ArrayList<>(phasedTransactionValues.length);
-        for (String phasedTransactionValue : phasedTransactionValues) {
-            try {
-                String[] s = phasedTransactionValue.split(":");
-                if (s.length != 2) {
-                    return JSONResponses.incorrect("phasedTransaction",
-                            "value must be in the form 'chainId:fullHash'");
-                }
-                int chainId = Integer.parseInt(s[0]);
-                ChildChain childChain = ChildChain.getChildChain(chainId);
-                if (childChain == null) {
-                    return UNKNOWN_CHAIN;
-                }
-                byte[] hash = Convert.parseHexString(s[1]);
-                PhasingPollHome.PhasingPoll phasingPoll = childChain.getPhasingPollHome().getPoll(hash);
-                if (phasingPoll == null) {
-                    return UNKNOWN_PHASED_TRANSACTION;
-                }
-                phasedTransactionIds.add(new ChainTransactionId(chainId, hash));
-            } catch (NumberFormatException exc) {
-                return JSONResponses.incorrect("phasedTransaction",
-                        "value '" + phasedTransactionValue + "' is not valid");
-            }
         }
 
         byte[] secret;

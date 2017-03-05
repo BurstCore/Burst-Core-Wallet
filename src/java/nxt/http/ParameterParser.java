@@ -25,6 +25,7 @@ import nxt.ae.Asset;
 import nxt.aliases.AliasHome;
 import nxt.blockchain.Appendix;
 import nxt.blockchain.Chain;
+import nxt.blockchain.ChainTransactionId;
 import nxt.blockchain.ChildChain;
 import nxt.blockchain.Transaction;
 import nxt.crypto.Crypto;
@@ -58,6 +59,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
 
@@ -582,6 +584,47 @@ public final class ParameterParser {
             throw new ParameterException(MISSING_PROPERTY);
         }
         return property;
+    }
+
+    public static ChainTransactionId getChainTransactionId(HttpServletRequest req, String name) throws ParameterException {
+        String value = Convert.emptyToNull(req.getParameter(name));
+        if (value == null) {
+            return null;
+        }
+        return getChainTransactionId(name, value);
+    }
+
+    public static List<ChainTransactionId> getChainTransactionIds(HttpServletRequest req, String name) throws ParameterException {
+        String[] values = req.getParameterValues(name);
+        if (values == null) {
+            return Collections.emptyList();
+        }
+        List<ChainTransactionId> result = new ArrayList<>();
+        for (String value : values) {
+            result.add(getChainTransactionId(name, value));
+        }
+        return result;
+    }
+
+    private static ChainTransactionId getChainTransactionId(String name, String value) throws ParameterException {
+        String[] s = value.split(":");
+        if (s.length != 2) {
+            throw new ParameterException(JSONResponses.incorrect(name, "must be in chainId:fullHash format"));
+        }
+        try {
+            int chainId = Integer.parseInt(s[0]);
+            Chain chain = Chain.getChain(chainId);
+            if (chain == null) {
+                throw new ParameterException(UNKNOWN_CHAIN);
+            }
+            byte[] hash = Convert.parseHexString(s[1]);
+            if (hash == null || hash.length != 32) {
+                throw new ParameterException(JSONResponses.incorrect(name, "invalid fullHash length"));
+            }
+            return new ChainTransactionId(chainId, hash);
+        } catch (NumberFormatException e) {
+            throw new ParameterException(JSONResponses.incorrect(name, "must be in chainId:fullHash format"));
+        }
     }
 
     public static String getSearchQuery(HttpServletRequest req) throws ParameterException {
