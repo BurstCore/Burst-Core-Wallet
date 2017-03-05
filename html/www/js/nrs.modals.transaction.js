@@ -247,6 +247,7 @@ var NRS = (function (NRS, $, undefined) {
             var message;
             var fieldsToDecrypt = {};
             var i;
+            var transactionInfoBottom = $("#transaction_info_bottom");
             if (NRS.isOfType(transaction, "FxtPayment") || NRS.isOfType(transaction, "OrdinaryPayment")) {
                 data = {
                     "type": $.t("ordinary_payment"),
@@ -466,7 +467,7 @@ var NRS = (function (NRS, $, undefined) {
                     }, { isAsync: false });
 
                     if (message) {
-                        $("#transaction_info_bottom").html("<div class='callout callout-bottom callout-" + messageStyle + "'>" + message + "</div>").show();
+                        transactionInfoBottom.html("<div class='callout callout-bottom callout-" + messageStyle + "'>" + message + "</div>").show();
                     }
                 }
 
@@ -1305,7 +1306,12 @@ var NRS = (function (NRS, $, undefined) {
             }
 
             if (transactionDetails.block == "unconfirmed") {
-                $("#transaction_info_bottom").append("<div class='callout callout-info callout-bottom'>" + $.t("unconfirmed_transaction") + "</div>").show();
+                if (transactionDetails.isBundled) {
+                    transactionInfoBottom.append("<div class='callout callout-info callout-bottom'>" + $.t("unconfirmed_transaction") + "</div>");
+                } else {
+                    transactionInfoBottom.append("<div class='callout callout-info callout-bottom'>" + $.t("not_bundled") + "</div>");
+                }
+                transactionInfoBottom.show();
             }
 
             if (incorrect) {
