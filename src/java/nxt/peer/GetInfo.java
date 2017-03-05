@@ -126,8 +126,8 @@ final class GetInfo {
             if (securityToken != null) {
                 byte[] sessionKey = new byte[32];
                 Crypto.getSecureRandom().nextBytes(sessionKey);
-                peer.setSessionKey(sessionKey);
                 NetworkHandler.sendGetInfoMessage(peer, securityToken.getPeerPublicKey(), sessionKey);
+                peer.setSessionKey(sessionKey);
             } else {
                 NetworkHandler.sendGetInfoMessage(peer);
             }
