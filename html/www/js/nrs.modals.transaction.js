@@ -1648,6 +1648,7 @@ var NRS = (function (NRS, $, undefined) {
         bundleTransactionModal.find('#bundle_transaction_child_fee').val(NRS.formatQuantity(feeNQT, NRS.getChainDecimals(chain)));
         bundleTransactionModal.find('#bundle_transaction_chain_name').html(NRS.getChain(chain).name);
         bundleTransactionModal.find('#bundle_transaction_chain_id').val(chain); // only necessary to validate local signing
+        $("#bundle_transaction_fee_coin").html(NRS.getParentChainName());
     });
 
     $("#approve_transaction_button").on("click", function () {
