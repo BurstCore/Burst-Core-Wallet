@@ -294,6 +294,7 @@ public enum APIEnum {
     GET_BALANCES("getBalances", GetBalances.instance),
     SIMULATE_COIN_EXCHANGE("simulateCoinExchange", SimulateCoinExchange.instance),
     GET_EFFECTIVE_BALANCE("getEffectiveBalance", GetEffectiveBalance.instance),
+    BLACKLIST_BUNDLER("blacklistBundler", BlacklistBundler.instance),
     GET_ALL_BUNDLER_RATES("getAllBundlerRates", GetAllBundlerRates.instance);
 
     private static final Map<String, APIEnum> apiByName = new HashMap<>();

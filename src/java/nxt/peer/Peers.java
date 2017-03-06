@@ -54,6 +54,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import nxt.util.Convert;
 
 public final class Peers {
 
@@ -121,6 +122,21 @@ public final class Peers {
 
     /** Minimum bundler fee limit */
     static final int minBundlerFeeLimitFXT = Nxt.getIntProperty("nxt.minBundlerFeeLimitFXT");
+
+    /** Blacklisted bundler accounts */
+    private static final Set<Long> blacklistedBundlerAccounts = new HashSet<>();
+    static {
+        List<String> accountList = Nxt.getStringListProperty("nxt.blacklistedBundlerAccounts");
+        accountList.forEach(account -> {
+            try {
+                long accountId = Convert.parseAccountId(account);
+                blacklistedBundlerAccounts.add(accountId);
+                Logger.logInfoMessage("Bundler " + Convert.rsAccount(accountId) + " blacklisted");
+            } catch (Exception exc) {
+                Logger.logDebugMessage("'" + account + "' is not a valid bundler account");
+            }
+        });
+    }
 
     /** Local peer services */
     static final List<Peer.Service> myServices;
@@ -1027,7 +1043,8 @@ public final class Peers {
         }
         List<BundlerRate> bestRates = new ArrayList<>();
         rateMap.entrySet().forEach(entry ->
-                bestRates.add(new BundlerRate(entry.getKey(), entry.getValue().getRate(), entry.getValue().getFeeLimit())));
+                bestRates.add(new BundlerRate(entry.getKey(), entry.getValue().getAccountId(),
+                        entry.getValue().getRate(), entry.getValue().getFeeLimit())));
         return bestRates;
     }
 
@@ -1135,6 +1152,32 @@ public final class Peers {
         }
         if (!rates.isEmpty()) {
             peer.sendMessage(new NetworkMessage.BundlerRateMessage(rates));
+        }
+    }
+
+    /**
+     * Check if bundler is blacklisted
+     *
+     * @param   accountId           Bundler account
+     * @return                      TRUE if the bundler is blacklisted
+     */
+    public static boolean isBundlerBlacklisted(long accountId) {
+        boolean isBlacklisted;
+        synchronized(blacklistedBundlerAccounts) {
+            isBlacklisted = blacklistedBundlerAccounts.contains(accountId);
+        }
+        return isBlacklisted;
+    }
+
+    /**
+     * Blacklist a bundler
+     *
+     * @param   accountId           Bundler account
+     */
+    public static void blacklistBundler(long accountId) {
+        synchronized(blacklistedBundlerAccounts) {
+            blacklistedBundlerAccounts.add(accountId);
+            Logger.logInfoMessage("Bundler " + Convert.rsAccount(accountId) + " blacklisted");
         }
     }
 

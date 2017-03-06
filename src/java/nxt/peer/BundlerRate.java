@@ -72,7 +72,7 @@ public final class BundlerRate {
                 }
                 currentAccountId = accountId;
             }
-            if (publicKey == null) {
+            if (publicKey == null || Peers.isBundlerBlacklisted(accountId)) {
                 continue;
             }
             if (!Crypto.verify(rate.getSignature(), rate.getUnsignedBytes(), rate.getPublicKey()) ||
@@ -120,13 +120,14 @@ public final class BundlerRate {
      * Create an unsigned bundler rate
      *
      * @param   chain                   Child chain
+     * @param   accountId               Account identifier
      * @param   rate                    Bundler rate
      * @param   feeLimit                Current fee limit
      */
-    public BundlerRate(ChildChain chain, long rate, long feeLimit) {
+    public BundlerRate(ChildChain chain, long accountId, long rate, long feeLimit) {
         this.chain = chain;
         this.publicKey = emptyPublicKey;
-        this.accountId = 0;
+        this.accountId = accountId;
         this.rate = rate;
         this.feeLimit = feeLimit;
         this.timestamp = 0;

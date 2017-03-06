@@ -41,6 +41,7 @@ public final class GetBundlerRates extends APIServlet.APIRequestHandler {
         rates.forEach(rate -> {
             JSONObject rateJSON = new JSONObject();
             rateJSON.put("chain", rate.getChain().getId());
+            JSONData.putAccount(rateJSON, "account", rate.getAccountId());
             rateJSON.put("minRateNQTPerFXT", String.valueOf(rate.getRate()));
             rateJSON.put("currentFeeLimitFQT", String.valueOf(rate.getFeeLimit()));
             ratesJSON.add(rateJSON);
