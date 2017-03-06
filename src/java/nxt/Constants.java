@@ -27,7 +27,7 @@ public final class Constants {
             -34, -1, 1, -111, -35, -107, 126, 71, 125, -33, 29, -105, -110, 8, -68, 44
     };
     public static final long CREATOR_ID = -5818567296047414575L;
-    public static final long EPOCH_BEGINNING = 1483228800000L;
+    public static final long EPOCH_BEGINNING = 1488810000000L;
     public static final int MAX_NUMBER_OF_TRANSACTIONS = 255;
     public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int MAX_PAYLOAD_LENGTH = MAX_NUMBER_OF_TRANSACTIONS * MIN_TRANSACTION_SIZE;
