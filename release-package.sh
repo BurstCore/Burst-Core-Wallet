@@ -95,18 +95,24 @@ rm -f ${PACKAGE}.jar
 echo creating change log ${CHANGELOG}
 echo "Evaluation Release $1" > ${CHANGELOG}
 echo >> ${CHANGELOG}
+echo "https://bitbucket.org/Jelurida/nxt-evaluation/downloads/${PACKAGE}.zip" >> ${CHANGELOG}
+echo >> ${CHANGELOG}
 echo "sha256:" >> ${CHANGELOG}
 echo >> ${CHANGELOG}
 sha256sum ${PACKAGE}.zip >> ${CHANGELOG}
 
 echo >> ${CHANGELOG}
+echo "https://bitbucket.org/Jelurida/nxt-evaluation/downloads/${PACKAGE}.sh" >> ${CHANGELOG}
+echo >> ${CHANGELOG}
+echo "sha256:" >> ${CHANGELOG}
+echo >> ${CHANGELOG}
 sha256sum ${PACKAGE}.sh >> ${CHANGELOG}
 
 echo >> ${CHANGELOG}
-
+echo "https://bitbucket.org/Jelurida/nxt-evaluation/downloads/${PACKAGE}.exe" >> ${CHANGELOG}
 echo >> ${CHANGELOG}
 echo >> ${CHANGELOG}
-echo "This is an evaluation version for testing only." >> ${CHANGELOG}
+echo "This is an evaluation version for testing only. Source code is not provided." >> ${CHANGELOG}
 echo >> ${CHANGELOG}
 echo >> ${CHANGELOG}
 echo "Change log:" >> ${CHANGELOG}
@@ -115,11 +121,11 @@ echo >> ${CHANGELOG}
 cat changelogs/${CHANGELOG} >> ${CHANGELOG}
 echo >> ${CHANGELOG}
 
-gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.zip
-gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.sh
-#gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.exe
+gpg --detach-sign --armour --sign-with 0xC654D7FCFF18FD55 ${PACKAGE}.zip
+gpg --detach-sign --armour --sign-with 0xC654D7FCFF18FD55 ${PACKAGE}.sh
+#gpg --detach-sign --armour --sign-with 0xC654D7FCFF18FD55 ${PACKAGE}.exe
 
-gpg --clearsign --sign-with 0x811D6940E1E4240C ${CHANGELOG}
+gpg --clearsign --sign-with 0xC654D7FCFF18FD55 ${CHANGELOG}
 rm -f ${CHANGELOG}
 gpgv ${PACKAGE}.zip.asc ${PACKAGE}.zip
 gpgv ${PACKAGE}.sh.asc ${PACKAGE}.sh
