@@ -63,6 +63,49 @@
     </div>
 </div>
 
+<div class="modal fade" id="bundle_transaction_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" data-i18n="bundle_transaction">Bundle Transaction</h4>
+            </div>
+            <div class="modal-body">
+                <form role="form" autocomplete="off">
+                    <div class="callout callout-danger error_message" style="display:none"></div>
+                    <div class="form-group">
+                        <div class="form-group">
+                            <label for="bundle_transaction_fullHash" data-i18n="full_hash">Full Hash</label>
+                            <input class="form-control" id="bundle_transaction_fullHash" name="transactionFullHash" readonly/>
+                        </div>
+                        <div class="form-group">
+                            <label for="bundle_transaction_child_fee" data-i18n="child_chain_fee">Child Chain Fee</label>
+                            <div class="input-group">
+                                <input class="form-control" id="bundle_transaction_child_fee" readonly/>
+                                <span class="input-group-addon" id="bundle_transaction_chain_name"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div data-replace-with-modal-template="fee_calculation_modal_template"></div>
+                    <div data-replace-with-modal-template="secret_phrase_modal_template"></div>
+                    <div data-replace-with-modal-template="advanced_broadcast_template"></div>
+
+                    <input type="hidden" name="chain" value="1"/>
+                    <input type="hidden" name="childChain" id="bundle_transaction_chain_id">
+                    <input type="hidden" name="request_type" value="bundleTransactions"/>
+                    <input type="hidden" name="deadline" value="0.2"/>
+                </form>
+            </div>
+            <div class="modal-footer" style="margin-top:0;">
+                <div class="advanced_info"><a href="#" data-i18n="advanced">advanced</a></div>
+
+                <button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" data-loading-text="Submitting..." data-i18n="bundle;[data-loading-text]submitting">Bundle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="transaction_info_modal" tabindex="-1" role="dialog" aria-hidden="true" data-actionclass="show_transaction_modal_action">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -105,6 +148,7 @@
                                     <button type="button" id="transaction_info_modal_send_message" class="btn btn-default btn-lg btn-block" data-toggle="modal" data-target="#send_message_modal" data-account="" data-i18n="send_message_to_sender">Send Message to Sender</button>
                                     <button type="button" id="transaction_info_modal_add_as_contact" class="btn btn-default btn-lg btn-block" data-toggle="modal" data-target="#add_contact_modal" data-account="" data-i18n="add_sender_as_contact">Add Sender as Contact</button>
                                     <button type="button" id="transaction_info_modal_approve_transaction" class="btn btn-default btn-lg btn-block approve_transaction_btn" data-toggle="modal" data-target="#approve_transaction_modal" data-i18n="approve_transaction">Approve Transaction</button>
+                                    <button type="button" id="transaction_info_modal_bundle" class="btn btn-default btn-lg btn-block bundle_btn" data-toggle="modal" data-target="#bundle_transaction_modal" data-i18n="bundle">Bundle</button>
                                 </div>
                             </div>
                         </div>

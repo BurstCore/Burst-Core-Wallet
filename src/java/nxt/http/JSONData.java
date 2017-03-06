@@ -1027,8 +1027,9 @@ public final class JSONData {
                 json.put("referencedTransaction", referencedTransactionId.getJSON());
             }
             json.put("fxtTransaction", Long.toUnsignedString(((ChildTransaction) transaction).getFxtTransactionId()));
-            if (transaction instanceof UnconfirmedTransaction)
-            json.put("isBundled", ((UnconfirmedTransaction)transaction).isBundled());
+            if (transaction instanceof UnconfirmedTransaction) {
+                json.put("isBundled", ((UnconfirmedTransaction)transaction).isBundled());
+            }
         }
         byte[] signature = Convert.emptyToNull(transaction.getSignature());
         if (signature != null) {

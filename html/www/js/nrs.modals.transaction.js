@@ -19,7 +19,8 @@
  * @depends {nrs.modals.js}
  */
 var NRS = (function (NRS, $, undefined) {
-    $('body').on("click", ".show_transaction_modal_action", function (e) {
+    var $body = $('body');
+    $body.on("click", ".show_transaction_modal_action", function (e) {
         e.preventDefault();
         var transactionFullHash, chain, sharedKey, fxtTransaction;
         if (typeof $(this).data("fullhash") == "object") {
@@ -218,6 +219,15 @@ var NRS = (function (NRS, $, undefined) {
                 approveTransactionButton.data("minBalanceFormatted", "");
                 approveTransactionButton.data("votingmodel", transaction.attachment.phasingVotingModel);
             }
+            var bundleButton = $("#transaction_info_modal_bundle");
+            if (transaction.chain == "1" || transaction.confirmations || transaction.isBundled) {
+                bundleButton.attr('disabled', 'disabled');
+            } else {
+                bundleButton.removeAttr('disabled');
+                bundleButton.data("chain", transaction.chain);
+                bundleButton.data("full_hash", transaction.fullHash);
+                bundleButton.data("fee_nqt", transaction.feeNQT);
+            }
 
             $("#transaction_info_actions").show();
             $("#transaction_info_actions_tab").find("button").data("account", accountButton);
@@ -237,6 +247,7 @@ var NRS = (function (NRS, $, undefined) {
             var message;
             var fieldsToDecrypt = {};
             var i;
+            var transactionInfoBottom = $("#transaction_info_bottom");
             if (NRS.isOfType(transaction, "FxtPayment") || NRS.isOfType(transaction, "OrdinaryPayment")) {
                 data = {
                     "type": $.t("ordinary_payment"),
@@ -456,7 +467,7 @@ var NRS = (function (NRS, $, undefined) {
                     }, { isAsync: false });
 
                     if (message) {
-                        $("#transaction_info_bottom").html("<div class='callout callout-bottom callout-" + messageStyle + "'>" + message + "</div>").show();
+                        transactionInfoBottom.html("<div class='callout callout-bottom callout-" + messageStyle + "'>" + message + "</div>").show();
                     }
                 }
 
@@ -1295,7 +1306,12 @@ var NRS = (function (NRS, $, undefined) {
             }
 
             if (transactionDetails.block == "unconfirmed") {
-                $("#transaction_info_bottom").append("<div class='callout callout-info callout-bottom'>" + $.t("unconfirmed_transaction") + "</div>").show();
+                if (transactionDetails.isBundled) {
+                    transactionInfoBottom.append("<div class='callout callout-info callout-bottom'>" + $.t("unconfirmed_transaction") + "</div>");
+                } else {
+                    transactionInfoBottom.append("<div class='callout callout-info callout-bottom'>" + $.t("not_bundled") + "</div>");
+                }
+                transactionInfoBottom.show();
             }
 
             if (incorrect) {
@@ -1603,7 +1619,7 @@ var NRS = (function (NRS, $, undefined) {
         return rows;
     }
 
-    $(document).on("click", ".approve_transaction_btn", function (e) {
+    $body.on("click", ".approve_transaction_btn", function (e) {
         e.preventDefault();
         var approveTransactionModal = $('#approve_transaction_modal');
         var phasedTransaction = $(this).data("chain") + ":" + $(this).data("fullhash");
@@ -1626,6 +1642,19 @@ var NRS = (function (NRS, $, undefined) {
         } else {
             revealSecretDiv.hide();
         }
+    });
+
+    $body.on("click", ".bundle_btn", function (e) {
+        e.preventDefault();
+        var bundleTransactionModal = $('#bundle_transaction_modal');
+        var fullHash = $(this).data("full_hash");
+        bundleTransactionModal.find('#bundle_transaction_fullHash').val(fullHash);
+        var feeNQT = $(this).data("fee_nqt");
+        var chain = $(this).data("chain");
+        bundleTransactionModal.find('#bundle_transaction_child_fee').val(NRS.formatQuantity(feeNQT, NRS.getChainDecimals(chain)));
+        bundleTransactionModal.find('#bundle_transaction_chain_name').html(NRS.getChain(chain).name);
+        bundleTransactionModal.find('#bundle_transaction_chain_id').val(chain); // only necessary to validate local signing
+        $("#bundle_transaction_fee_coin").html(NRS.getParentChainName());
     });
 
     $("#approve_transaction_button").on("click", function () {

@@ -1363,6 +1363,28 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 pos += 32;
                 break;
+            case "bundleTransactions":
+                var isPrunable = byteArray[pos];
+                if (isPrunable != 0) {
+                    return false;
+                }
+                pos++;
+                chain = String(converters.byteArrayToSignedInt32(byteArray, pos));
+                if (chain != data.childChain) {
+                    return false;
+                }
+                pos += 4;
+                serverHash = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
+                sha256 = CryptoJS.algo.SHA256.create();
+                // We assume here that only one transaction was bundled
+                sha256.update(converters.byteArrayToWordArrayEx(converters.hexStringToByteArray(data.transactionFullHash)));
+                hashWords = sha256.finalize();
+                calculatedHash = converters.wordArrayToByteArrayEx(hashWords);
+                if (serverHash !== converters.byteArrayToHexString(calculatedHash)) {
+                    return false;
+                }
+                pos += 32;
+                break;
             default:
                 //invalid requestType..
                 return false;
