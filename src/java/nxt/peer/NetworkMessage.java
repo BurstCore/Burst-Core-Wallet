@@ -62,9 +62,6 @@ public abstract class NetworkMessage {
     /** Current protocol level - change this whenever a message format changes */
     private static final int PROTOCOL_LEVEL = 1;
 
-    /** Minimum protocol level - message with a lower protocol level will be rejected */
-    private static final int MIN_PROTOCOL_LEVEL = 1;
-
     /** Maximum byte array length */
     public static final int MAX_ARRAY_LENGTH = 48 * 1024;
 
@@ -140,7 +137,7 @@ public abstract class NetworkMessage {
     private NetworkMessage(String messageName, ByteBuffer bytes) throws BufferUnderflowException, NetworkException {
         this.messageNameBytes = messageName.getBytes(UTF8);
         this.protocolLevel = (int)bytes.getShort() & 0xffff;
-        if (this.protocolLevel < MIN_PROTOCOL_LEVEL) {
+        if (this.protocolLevel != PROTOCOL_LEVEL) {
             throw new NetworkException("Protocol level " + this.protocolLevel + " is not accepted");
         }
     }
