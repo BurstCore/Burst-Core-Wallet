@@ -81,7 +81,7 @@ public final class Peers {
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 100;
 
     /** Bundler rate broadcast interval */
-    static final int BUNDLER_RATE_BROADCAST_INTERVAL = 60 * 60;
+    static final int BUNDLER_RATE_BROADCAST_INTERVAL = 30 * 60;
 
     /** Communication log levels */
     public static final int LOG_LEVEL_NAMES = 1;
@@ -818,10 +818,8 @@ public final class Peers {
         if (version == null) {
             return true;
         }
-        if (version.endsWith("e")) {
-            version = version.substring(0, version.length() - 1);
-        }
-        String[] versions = version.split("\\.");
+        String[] versions = (version.endsWith("e") ?
+                version.substring(0, version.length() - 1).split("\\.") : version.split("\\."));
         for (int i = 0; i < minVersion.length && i < versions.length; i++) {
             try {
                 int v = Integer.parseInt(versions[i]);
@@ -860,10 +858,8 @@ public final class Peers {
         if (version == null) {
             return true;
         }
-        if (version.endsWith("e")) {
-            version = version.substring(0, version.length() - 1);
-        }
-        String[] versions = version.split("\\.");
+        String[] versions = (version.endsWith("e") ?
+                version.substring(0, version.length() - 1).split("\\.") : version.split("\\."));
         for (int i = 0; i < MAX_VERSION.length && i < versions.length; i++) {
             try {
                 int v = Integer.parseInt(versions[i]);
@@ -1002,7 +998,7 @@ public final class Peers {
      */
     public static List<BundlerRate> getBestBundlerRates(long minBalance) {
         int now = Nxt.getEpochTime();
-        Map<ChildChain, Long> rateMap = new HashMap<>();
+        Map<ChildChain, BundlerRate> rateMap = new HashMap<>();
         synchronized(bundlerRates) {
             Iterator<Map.Entry<Long, List<BundlerRate>>> it = bundlerRates.entrySet().iterator();
             while (it.hasNext()) {
@@ -1015,10 +1011,10 @@ public final class Peers {
                         rit.remove();
                         continue;
                     }
-                    Long prevRate = rateMap.get(rate.getChain());
+                    BundlerRate prevRate = rateMap.get(rate.getChain());
                     if (rate.getBalance() >= minBalance &&
-                            (prevRate == null || rate.getRate() < prevRate)) {
-                        rateMap.put(rate.getChain(), rate.getRate());
+                            (prevRate == null || rate.getRate() < prevRate.getRate())) {
+                        rateMap.put(rate.getChain(), rate);
                     }
                 }
                 if (rates.isEmpty()) {
@@ -1028,8 +1024,41 @@ public final class Peers {
         }
         List<BundlerRate> bestRates = new ArrayList<>();
         rateMap.entrySet().forEach(entry ->
-                bestRates.add(new BundlerRate(entry.getKey(), entry.getValue())));
+                bestRates.add(new BundlerRate(entry.getKey(), entry.getValue().getRate(), entry.getValue().getFeeLimit())));
         return bestRates;
+    }
+
+    /**
+     * Get all bundler rates
+     *
+     * @param   minBalance      Minimum bundler account balance
+     * @return                  List of bundler rates
+     */
+    public static List<BundlerRate> getAllBundlerRates(long minBalance) {
+        List<BundlerRate> allRates = new ArrayList<>();
+        int now = Nxt.getEpochTime();
+        synchronized(bundlerRates) {
+            Iterator<Map.Entry<Long, List<BundlerRate>>> it = bundlerRates.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<Long, List<BundlerRate>> entry = it.next();
+                List<BundlerRate> rates = entry.getValue();
+                Iterator<BundlerRate> rit = rates.iterator();
+                while (rit.hasNext()) {
+                    BundlerRate rate = rit.next();
+                    if (rate.getTimestamp() < now - (BUNDLER_RATE_BROADCAST_INTERVAL + 15 * 60)) {
+                        rit.remove();
+                        continue;
+                    }
+                    if (rate.getBalance() >= minBalance) {
+                        allRates.add(rate);
+                    }
+                }
+                if (rates.isEmpty()) {
+                    it.remove();
+                }
+            }
+        }
+        return allRates;
     }
 
     /**
@@ -1037,7 +1066,7 @@ public final class Peers {
      *
      * @param   childChain      Child chain
      * @param   minBalance      Minimum bundler account balance
-     * @return                  List of bundler rates
+     * @return                  Best bundler rate or -1 if there are no rates
      */
     public static long getBestBundlerRate(Chain childChain, long minBalance) {
         int now = Nxt.getEpochTime();

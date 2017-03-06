@@ -58,7 +58,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class NetworkMessage {
 
     /** Current protocol level - change this whenever a message format changes */
-    private static final int PROTOCOL_LEVEL = 1;
+    private static final int PROTOCOL_LEVEL = 2;
 
     /** Maximum byte array length */
     public static final int MAX_ARRAY_LENGTH = 48 * 1024;
@@ -136,7 +136,7 @@ public abstract class NetworkMessage {
         this.messageNameBytes = messageName.getBytes(UTF8);
         this.protocolLevel = (int)bytes.getShort() & 0xffff;
         if (this.protocolLevel != PROTOCOL_LEVEL) {
-            throw new NetworkException("Protocol level " + this.protocolLevel + " is not accepted");
+            throw new NetworkProtocolException("Protocol level " + this.protocolLevel + " is not accepted");
         }
     }
 

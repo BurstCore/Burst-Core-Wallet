@@ -77,13 +77,12 @@ public final class BundlerRate {
                 currentAccountId = accountId;
             }
             if (publicKey == null) {
-                return null;
+                continue;
             }
             if (!Crypto.verify(rate.getSignature(), rate.getUnsignedBytes(), rate.getPublicKey()) ||
                         !Arrays.equals(rate.getPublicKey(), publicKey)) {
                 Logger.logDebugMessage("Bundler rate for account "
                         + Long.toUnsignedString(accountId) + " failed signature verification");
-                return null;
             } else if (balance >= Peers.minBundlerBalanceFXT) {
                 rate.setBalance(balance);
                 validRates.add(rate);
@@ -101,6 +100,9 @@ public final class BundlerRate {
 
     /** Bundler rate */
     private final long rate;
+
+    /** Current fee limit */
+    private final long feeLimit;
 
     /** Bundler account */
     private final long accountId;
@@ -122,12 +124,14 @@ public final class BundlerRate {
      *
      * @param   chain                   Child chain
      * @param   rate                    Bundler rate
+     * @param   feeLimit                Current fee limit
      */
-    public BundlerRate(ChildChain chain, long rate) {
+    public BundlerRate(ChildChain chain, long rate, long feeLimit) {
         this.chain = chain;
         this.publicKey = emptyPublicKey;
         this.accountId = 0;
         this.rate = rate;
+        this.feeLimit = feeLimit;
         this.timestamp = 0;
         this.signature = emptySignature;
     }
@@ -137,13 +141,15 @@ public final class BundlerRate {
      *
      * @param   chain                   Child chain
      * @param   rate                    Bundler rate
+     * @param   feeLimit                Current fee limit
      * @param   secretPhrase            Bundler account secret phrase
      */
-    public BundlerRate(ChildChain chain, long rate, String secretPhrase) {
+    public BundlerRate(ChildChain chain, long rate, long feeLimit, String secretPhrase) {
         this.chain = chain;
         this.publicKey = Crypto.getPublicKey(secretPhrase);
         this.accountId = Account.getId(publicKey);
         this.rate = rate;
+        this.feeLimit = feeLimit;
         this.timestamp = (Nxt.getEpochTime() / 600) * 600;
         this.signature = Crypto.sign(getUnsignedBytes(), secretPhrase);
     }
@@ -165,6 +171,7 @@ public final class BundlerRate {
         buffer.get(this.publicKey);
         this.accountId = Account.getId(this.publicKey);
         this.rate = buffer.getLong();
+        this.feeLimit = buffer.getLong();
         this.timestamp = buffer.getInt();
         this.signature = new byte[64];
         buffer.get(this.signature);
@@ -176,7 +183,7 @@ public final class BundlerRate {
      * @return                          Encoded length
      */
     public int getLength() {
-        return 4 + 32 + 8 + 4 + 64;
+        return 4 + 32 + 8 + 8 + 4 + 64;
     }
 
     /**
@@ -189,6 +196,7 @@ public final class BundlerRate {
         buffer.putInt(chain.getId())
               .put(publicKey)
               .putLong(rate)
+              .putLong(feeLimit)
               .putInt(timestamp)
               .put(signature);
     }
@@ -205,6 +213,7 @@ public final class BundlerRate {
         buffer.putInt(chain.getId())
               .put(publicKey)
               .putLong(rate)
+              .putLong(feeLimit)
               .putInt(timestamp);
         return bytes;
     }
@@ -243,6 +252,15 @@ public final class BundlerRate {
      */
     public long getRate() {
         return rate;
+    }
+
+    /**
+     * Get the fee limit
+     *
+     * @return                          Fee limit
+     */
+    public long getFeeLimit() {
+        return feeLimit;
     }
 
     /**

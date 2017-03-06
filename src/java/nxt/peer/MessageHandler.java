@@ -121,6 +121,9 @@ class MessageHandler implements Runnable {
                             }
                         }
                     }
+                } catch (NetworkProtocolException exc) {
+                    Logger.logDebugMessage("Unable to process message from " + peer.getHost() + ": " + exc.getMessage());
+                    peer.disconnectPeer();
                 } catch (Exception exc) {
                     String errorMessage = (Peers.hideErrorDetails ? exc.getClass().getName() :
                             (exc.getMessage() != null ? exc.getMessage() : exc.toString()));

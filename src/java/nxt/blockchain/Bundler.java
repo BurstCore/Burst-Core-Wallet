@@ -193,7 +193,8 @@ public final class Bundler {
     }
 
     public final BundlerRate getBundlerRate() {
-        return new BundlerRate(childChain, minRateNQTPerFXT, secretPhrase);
+        return new BundlerRate(childChain, minRateNQTPerFXT,
+                (totalFeesLimitFQT != 0 ? totalFeesLimitFQT : Long.MAX_VALUE) - currentTotalFeesFQT, secretPhrase);
     }
 
     private void runBundling() {
