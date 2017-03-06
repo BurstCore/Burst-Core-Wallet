@@ -119,6 +119,9 @@ public final class Peers {
     /** Minimum bundler effective balance */
     static final int minBundlerBalanceFXT = Nxt.getIntProperty("nxt.minBundlerBalanceFXT");
 
+    /** Minimum bundler fee limit */
+    static final int minBundlerFeeLimitFXT = Nxt.getIntProperty("nxt.minBundlerFeeLimitFXT");
+
     /** Local peer services */
     static final List<Peer.Service> myServices;
 

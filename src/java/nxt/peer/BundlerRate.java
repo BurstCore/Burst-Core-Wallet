@@ -27,6 +27,7 @@ import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import nxt.Constants;
 
 public final class BundlerRate {
 
@@ -67,11 +68,6 @@ public final class BundlerRate {
                                 + Long.toUnsignedString(accountId) + " does not have a public key");
                     } else {
                         balance = account.getEffectiveBalanceFXT();
-                        if (balance < Peers.minBundlerBalanceFXT) {
-                            Logger.logDebugMessage("Effective balance for bundler account "
-                                    + Long.toUnsignedString(accountId)
-                                    + " is less than the minimum of " + Peers.minBundlerBalanceFXT);
-                        }
                     }
                 }
                 currentAccountId = accountId;
@@ -83,7 +79,8 @@ public final class BundlerRate {
                         !Arrays.equals(rate.getPublicKey(), publicKey)) {
                 Logger.logDebugMessage("Bundler rate for account "
                         + Long.toUnsignedString(accountId) + " failed signature verification");
-            } else if (balance >= Peers.minBundlerBalanceFXT) {
+            } else if (balance >= Peers.minBundlerBalanceFXT &&
+                    rate.getFeeLimit() >= Peers.minBundlerFeeLimitFXT * Constants.ONE_FXT) {
                 rate.setBalance(balance);
                 validRates.add(rate);
             }
