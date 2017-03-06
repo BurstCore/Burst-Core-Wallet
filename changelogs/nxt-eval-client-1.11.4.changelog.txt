@@ -11,6 +11,8 @@ even though its balance is negative.
 The software is configured to run as testnet only, ignoring the value of the
 nxt.isTestnet property.
 
+The peer networking port has been hardcoded to 5874.
+
 All modifications specific to the current Nxt public blockchain have been
 removed.
 
