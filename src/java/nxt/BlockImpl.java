@@ -48,7 +48,7 @@ final class BlockImpl implements Block {
 
     private byte[] blockSignature;
     private BigInteger cumulativeDifficulty = BigInteger.ZERO;
-    private long baseTarget = Constants.INITIAL_BASE_TARGET;
+    private long baseTarget = Constants.isTestnet ? Constants.INITIAL_BASE_TARGET * 10 : Constants.INITIAL_BASE_TARGET;
     private volatile long nextBlockId;
     private int height = -1;
     private volatile long id;
