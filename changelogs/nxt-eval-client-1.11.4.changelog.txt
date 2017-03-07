@@ -1,4 +1,5 @@
-This is a testing and evaluation version based on NRS release 1.11.4.
+This Private Blockchain Evaluation Kit is a testing and evaluation version
+based on NRS release 1.11.4.
 
 It contains the following modifications:
 
