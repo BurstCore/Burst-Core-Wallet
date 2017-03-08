@@ -123,6 +123,7 @@ var NRS = (function (NRS, $) {
             NRS.constants.COIN_SYMBOL = response.coinSymbol;
             $(".coin-symbol").html(response.coinSymbol);
             NRS.constants.ACCOUNT_PREFIX = response.accountPrefix;
+            NRS.constants.PROJECT_NAME = response.projectName;
             NRS.constants.ACCOUNT_REGEX_STR = "^" + response.accountPrefix + "-[A-Z0-9_]{4}-[A-Z0-9_]{4}-[A-Z0-9_]{4}-[A-Z0-9_]{5}";
             NRS.constants.ACCOUNT_RS_MATCH = NRS.getRsAccountRegex(response.accountPrefix);
             NRS.constants.ACCOUNT_NUMERIC_MATCH = NRS.getNumericAccountRegex();
