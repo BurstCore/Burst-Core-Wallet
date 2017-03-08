@@ -124,7 +124,7 @@ public class DesktopApplication extends Application {
                     String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
                     window.setMember("javaFxLanguage", language);
                     webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
-                    stage.setTitle("NXT Desktop - " + webEngine.getLocation());
+                    stage.setTitle(Constants.PROJECT_NAME + " Desktop - " + webEngine.getLocation());
                     nrs = (JSObject) webEngine.executeScript("NRS");
                     updateClientState("Desktop Wallet started");
                     BlockchainProcessor blockchainProcessor = Nxt.getBlockchainProcessor();

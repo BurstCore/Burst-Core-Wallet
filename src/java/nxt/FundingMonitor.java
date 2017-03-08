@@ -620,8 +620,8 @@ public final class FundingMonitor {
                 Nxt.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = Nxt.getBlockchain().getHeight();
                 Logger.logDebugMessage(String.format("%s funding transaction %s for %f %s submitted from %s to %s",
-                        Constants.COIN, transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_NXT,
-                        Constants.COIN, monitor.accountName, monitoredAccount.accountName));
+                        Constants.COIN_SYMBOL, transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_NXT,
+                        Constants.COIN_SYMBOL, monitor.accountName, monitoredAccount.accountName));
             }
         }
     }
