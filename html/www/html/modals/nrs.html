@@ -68,22 +68,22 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" data-i18n="nrs_info">NRS Info</h4>
+                <h4 class="modal-title" data-i18n="nrs_info">Info</h4>
             </div>
             <div class="modal-body">
                 <ul class="nav nav-pills nav-justified" style="margin-bottom:10px">
-                    <li class="active" id="nrs_modal_state_nav" data-tab="state"><a href="#" data-i18n="nrs_state">NRS State</a></li>
-                    <li data-tab="update"><a href="#" data-i18n="nrs_update">NRS Update</a></li>
+                    <li class="active" id="nrs_modal_state_nav" data-tab="state"><a href="#" data-i18n="nrs_state">State</a></li>
+                    <li data-tab="update"><a href="#" data-i18n="nrs_update">Update</a></li>
                 </ul>
 
                 <div id="nrs_modal_update" class="nrs_modal_content" style="display:none">
                     <div id="nrs_update_explanation" class="nrs_message">
                         <span id="nrs_update_explanation_blockchain_sync" data-i18n="update_blockchain_downloading">The blockchain is still downloading, check again after it's up to date.</span>
                         <span id="nrs_update_explanation_wait" data-i18n="checking_for_updates">Checking for updates...</span>
-                        <span id="nrs_update_explanation_testnet" data-i18n="update_testnet">NRS cannot be updated whilst connected to the testnet.</span>
+                        <span id="nrs_update_explanation_testnet" data-i18n="update_testnet">Version cannot be updated whilst connected to the testnet.</span>
                         <span id="nrs_update_explanation_up_to_date" data-i18n="update_up_to_date">You have the latest release already. There is no need to update.</span>
                         <span id="nrs_update_explanation_new_release">
-                            <span data-i18n="update_available">A new NRS release is available. It is recommended that you update.</span>
+                            <span data-i18n="update_available">A new release is available. It is recommended that you update.</span>
                             <br /><br />
                             <button type="button" class="btn btn-success ignore" onclick="NRS.downloadClientUpdate('release', 'zip')">
                                 <span data-i18n="download_nrs_zip">Zip file</span>

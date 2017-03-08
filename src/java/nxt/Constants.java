@@ -24,7 +24,9 @@ public final class Constants {
     public static final boolean isOffline = Nxt.getBooleanProperty("nxt.isOffline");
     public static final boolean isLightClient = Nxt.getBooleanProperty("nxt.isLightClient");
 
-    public static final String COIN = "JUP";
+    public static final String COIN_SYMBOL = Nxt.getStringProperty("nxt.coinSymbol");
+    public static final String ACCOUNT_PREFIX = Nxt.getStringProperty("nxt.accountPrefix");
+    public static final String PROJECT_NAME = Nxt.getStringProperty("nxt.projectName");
     public static final int MAX_NUMBER_OF_TRANSACTIONS = 255;
     public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int MAX_PAYLOAD_LENGTH = MAX_NUMBER_OF_TRANSACTIONS * MIN_TRANSACTION_SIZE;

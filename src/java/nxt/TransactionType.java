@@ -1285,7 +1285,7 @@ public abstract class TransactionType {
                     throw new NxtException.NotValidException("Invalid account property: " + attachment.getJSONObject());
                 }
                 if (transaction.getAmountNQT() != 0) {
-                    throw new NxtException.NotValidException("Account property transaction cannot be used to send " + Constants.COIN);
+                    throw new NxtException.NotValidException("Account property transaction cannot be used to send " + Constants.COIN_SYMBOL);
                 }
                 if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
                     throw new NxtException.NotValidException("Setting Genesis account properties not allowed");
@@ -1353,7 +1353,7 @@ public abstract class TransactionType {
                             + " does not belong to " + Long.toUnsignedString(transaction.getRecipientId()));
                 }
                 if (transaction.getAmountNQT() != 0) {
-                    throw new NxtException.NotValidException("Account property transaction cannot be used to send " + Constants.COIN);
+                    throw new NxtException.NotValidException("Account property transaction cannot be used to send " + Constants.COIN_SYMBOL);
                 }
                 if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
                     throw new NxtException.NotValidException("Deleting Genesis account properties not allowed");
@@ -2839,7 +2839,7 @@ public abstract class TransactionType {
                 long maxFees = attachment.getMaxFees();
                 long maxFeesLimit = (attachment.getPhasingParams().getVoteWeighting().isBalanceIndependent() ? 3 : 22) * Constants.ONE_NXT;
                 if (maxFees < 0 || (maxFees > 0 && maxFees < maxFeesLimit) || maxFees > Constants.MAX_BALANCE_NQT) {
-                    throw new NxtException.NotValidException(String.format("Invalid max fees %f %s", ((double)maxFees)/Constants.ONE_NXT, Constants.COIN));
+                    throw new NxtException.NotValidException(String.format("Invalid max fees %f %s", ((double)maxFees)/Constants.ONE_NXT, Constants.COIN_SYMBOL));
                 }
                 short minDuration = attachment.getMinDuration();
                 if (minDuration < 0 || (minDuration > 0 && minDuration < 3) || minDuration >= Constants.MAX_PHASING_DURATION) {

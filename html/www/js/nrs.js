@@ -219,6 +219,7 @@ var NRS = (function(NRS, $, undefined) {
 			NRS.loadServerConstants(resolve);
 		});
 		loadConstantsPromise.then(function() {
+            document.title = NRS.constants.PROJECT_NAME;
 			var getStatePromise = new Promise(function(resolve) {
 				console.log("calling getState");
 				NRS.sendRequest("getState", {

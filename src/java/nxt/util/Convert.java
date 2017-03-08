@@ -104,15 +104,15 @@ public final class Convert {
             return 0;
         }
         account = account.toUpperCase();
-        if (account.startsWith(Constants.COIN)) {
-            return Crypto.rsDecode(account.substring(Constants.COIN.length() + 1));
+        if (account.startsWith(Constants.ACCOUNT_PREFIX)) {
+            return Crypto.rsDecode(account.substring(Constants.ACCOUNT_PREFIX.length() + 1));
         } else {
             return Long.parseUnsignedLong(account);
         }
     }
 
     public static String rsAccount(long accountId) {
-        return Constants.COIN + "-" + Crypto.rsEncode(accountId);
+        return Constants.ACCOUNT_PREFIX + "-" + Crypto.rsEncode(accountId);
     }
 
     public static long fullHashToId(byte[] hash) {
