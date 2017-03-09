@@ -132,14 +132,14 @@ rm -f ${PACKAGE}.jar
 #cat changelogs/${CHANGELOG} >> ${CHANGELOG}
 #echo >> ${CHANGELOG}
 
-#gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.zip
-#gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.sh
-##gpg --detach-sign --armour --sign-with 0x811D6940E1E4240C ${PACKAGE}.exe
+gpg --detach-sign --armour --sign-with 0xC654D7FCFF18FD55 ${PACKAGE}.zip
+gpg --detach-sign --armour --sign-with 0xC654D7FCFF18FD55 ${PACKAGE}.sh
+##gpg --detach-sign --armour --sign-with 0xC654D7FCFF18FD55 ${PACKAGE}.exe
 
-#gpg --clearsign --sign-with 0x811D6940E1E4240C ${CHANGELOG}
+#gpg --clearsign --sign-with 0xC654D7FCFF18FD55 ${CHANGELOG}
 #rm -f ${CHANGELOG}
-#gpgv ${PACKAGE}.zip.asc ${PACKAGE}.zip
-#gpgv ${PACKAGE}.sh.asc ${PACKAGE}.sh
+gpgv ${PACKAGE}.zip.asc ${PACKAGE}.zip
+gpgv ${PACKAGE}.sh.asc ${PACKAGE}.sh
 ##gpgv ${PACKAGE}.exe.asc ${PACKAGE}.exe
 #gpgv ${CHANGELOG}.asc
 #sha256sum -c ${CHANGELOG}.asc
