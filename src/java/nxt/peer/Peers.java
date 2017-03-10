@@ -664,6 +664,15 @@ public final class Peers {
                 connectList.forEach(peer -> peersService.execute(peer::connectPeer));
             }
             //
+            // Check for dead inbound connections
+            //
+            getConnectedPeers().forEach(peer -> {
+                if (((PeerImpl)peer).isHandshakePending() && peer.isInbound()
+                        && peer.getLastUpdated() < now - NetworkHandler.peerConnectTimeout) {
+                    peer.disconnectPeer();
+                }
+            });
+            //
             // Remove peers if we have too many
             //
             if (peers.size() > maxNumberOfKnownPeers) {

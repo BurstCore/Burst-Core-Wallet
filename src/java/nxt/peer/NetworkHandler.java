@@ -660,6 +660,7 @@ public final class NetworkHandler implements Runnable {
                     channel.configureBlocking(false);
                     peer.setConnectionAddress(remoteAddress);
                     peer.setChannel(channel);
+                    peer.setLastUpdated(Nxt.getEpochTime());
                     connectionMap.put(remoteAddress.getAddress(), peer);
                     inboundCount.incrementAndGet();
                     Peers.addPeer(peer);
