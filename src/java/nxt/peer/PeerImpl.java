@@ -125,11 +125,20 @@ final class PeerImpl implements Peer {
     /** Selection key event */
     private NetworkHandler.KeyEvent keyEvent;
 
-    /** Output message list */
-    private final ConcurrentLinkedQueue<NetworkMessage> outputQueue = new ConcurrentLinkedQueue<>();
+    /** Session key */
+    private byte[] sessionKey;
+
+    /** Output message queue */
+    private final ConcurrentLinkedQueue<ByteBuffer> outputQueue = new ConcurrentLinkedQueue<>();
+
+    /** Pending output message queue */
+    private final ConcurrentLinkedQueue<NetworkMessage> pendingOutputQueue = new ConcurrentLinkedQueue<>();
+
+    /** Pending input message queue */
+    private final ConcurrentLinkedQueue<ByteBuffer> pendingInputQueue = new ConcurrentLinkedQueue<>();
 
     /** Handshake message */
-    private NetworkMessage handshakeMessage;
+    private ByteBuffer handshakeMessage;
 
     /** Input buffer */
     private ByteBuffer inputBuffer;
@@ -882,10 +891,11 @@ final class PeerImpl implements Peer {
     void setInbound() {
         connectLock.lock();
         try {
-            if (state != State.CONNECTED) {
+            if (state != State.CONNECTED && keyEvent != null) {
                 isInbound = true;
                 handshakePending = true;
                 setState(State.CONNECTED);
+                keyEvent.update(SelectionKey.OP_READ, 0);
                 Logger.logInfoMessage("Connection from " + host + " accepted");
             }
         } finally {
@@ -952,18 +962,46 @@ final class PeerImpl implements Peer {
     }
 
     /**
+     * Check if the connection handshake is in progress
+     *
+     * @return                          TRUE if the handshake is in progress
+     */
+    synchronized boolean isHandshakePending() {
+        return handshakePending;
+    }
+
+    /**
      * Connection handshake has completed
      *
      * Send any queued messages
      */
-    void handshakeComplete() {
+    synchronized void handshakeComplete() {
         handshakePending = false;
+        while (!pendingInputQueue.isEmpty()) {
+            MessageHandler.processMessage(this, pendingInputQueue.poll());
+        }
+        while (!pendingOutputQueue.isEmpty()) {
+            outputQueue.offer(NetworkHandler.getMessageBytes(this, pendingOutputQueue.poll()));
+        }
         if (!outputQueue.isEmpty()) {
             try {
                 keyEvent.update(SelectionKey.OP_WRITE, 0);
             } catch (IllegalStateException exc) {
                 Logger.logErrorMessage("Unable to update network selection key", exc);
             }
+        }
+    }
+
+    /**
+     * Queue input messages until the handshake is complete
+     *
+     * @param   buffer              Message buffer
+     */
+    synchronized void queueInputMessage(ByteBuffer buffer) {
+        if (handshakePending) {
+            pendingInputQueue.offer(buffer);
+        } else {
+            MessageHandler.processMessage(this, buffer);
         }
     }
 
@@ -1001,6 +1039,8 @@ final class PeerImpl implements Peer {
             }
             NetworkHandler.closeConnection(this);
             outputQueue.clear();
+            pendingOutputQueue.clear();
+            pendingInputQueue.clear();
             for (ResponseEntry entry : responseMap.values()) {
                 entry.responseSignal(null);
             }
@@ -1016,10 +1056,29 @@ final class PeerImpl implements Peer {
             channel = null;
             keyEvent = null;
             connectionAddress = null;
+            sessionKey = null;
         } finally {
             disconnectPending = false;
             connectLock.unlock();
         }
+    }
+
+    /**
+     * Get the session key
+     *
+     * @return                          Session key or null if messages are not encrypted
+     */
+    byte[] getSessionKey() {
+        return sessionKey;
+    }
+
+    /**
+     * Set the session key
+     *
+     * @return                          Session key
+     */
+    void setSessionKey(byte[] sessionKey) {
+        this.sessionKey = sessionKey;
     }
 
     /**
@@ -1030,13 +1089,15 @@ final class PeerImpl implements Peer {
      *
      * @return                          Next message or null
      */
-    synchronized NetworkMessage getQueuedMessage() {
-        NetworkMessage message;
+    synchronized ByteBuffer getQueuedMessage() {
+        ByteBuffer message;
         if (disconnectPending) {
             message = null;
-        } else if (handshakePending) {
+        } else if (handshakeMessage != null) {
             message = handshakeMessage;
             handshakeMessage = null;
+        } else if (handshakePending) {
+            message = null;
         } else {
             message = outputQueue.poll();
         }
@@ -1054,25 +1115,29 @@ final class PeerImpl implements Peer {
     @Override
     public void sendMessage(NetworkMessage message) {
         boolean sendMessage = false;
+        boolean serializeMessage = false;
         boolean disconnect = false;
         synchronized(this) {
             if (state == State.CONNECTED && !disconnectPending) {
                 if (handshakePending && message instanceof NetworkMessage.GetInfoMessage) {
-                    handshakeMessage = message;
+                    handshakeMessage = NetworkHandler.getMessageBytes(this, message);
                     sendMessage = true;
                 } else if (outputQueue.size() >= NetworkHandler.MAX_PENDING_MESSAGES) {
                     Logger.logErrorMessage("Too many pending messages for " + host);
                     disconnect = true;
+                } else if (handshakePending) {
+                    pendingOutputQueue.offer(message);
                 } else {
-                    outputQueue.add(message);
-                    if (!handshakePending) {
-                        sendMessage = true;
-                    }
+                    serializeMessage = true;
+                    sendMessage = true;
                 }
             } else {
                 Logger.logDebugMessage("Flushing " + message.getMessageName() + " message because "
                         + host + " is not connected");
             }
+        }
+        if (serializeMessage && !disconnectPending) {
+            outputQueue.offer(NetworkHandler.getMessageBytes(this, message));
         }
         if (sendMessage) {
             try {

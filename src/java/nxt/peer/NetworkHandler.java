@@ -17,6 +17,7 @@ package nxt.peer;
 
 import nxt.Constants;
 import nxt.Nxt;
+import nxt.crypto.Crypto;
 import nxt.http.API;
 import nxt.http.APIEnum;
 import nxt.util.Convert;
@@ -34,7 +35,6 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.CancelledKeyException;
@@ -79,10 +79,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class NetworkHandler implements Runnable {
 
     /** Default peer port */
-    static final int DEFAULT_PEER_PORT = 27874;
+    static final int DEFAULT_PEER_PORT = (Constants.isPermissioned ? 27873 : 27874);
 
     /** Testnet peer port */
-    static final int TESTNET_PEER_PORT = 26874;
+    static final int TESTNET_PEER_PORT = (Constants.isPermissioned ? 26873 : 26874);
 
     /** Maximum number of pending messages for a single peer */
     static final int MAX_PENDING_MESSAGES = 25;
@@ -285,9 +285,14 @@ public final class NetworkHandler implements Runnable {
                 });
                 disabledAPIs = APIEnum.enumSetToBase64String(disabledAPISet);
             }
+            if (Constants.isPermissioned && Peers.peerSecretPhrase == null) {
+                networkShutdown = true;
+                throw new RuntimeException("Peer credentials not specified for permissioned blockchain");
+            }
             getInfoMessage = new NetworkMessage.GetInfoMessage(Nxt.APPLICATION, Nxt.VERSION, platform,
                     shareAddress, announcedAddress, API.openAPIPort, API.openAPISSLPort, services,
-                    disabledAPIs, API.apiServerIdleTimeout);
+                    disabledAPIs, API.apiServerIdleTimeout,
+                    (Constants.isPermissioned ? Crypto.getPublicKey(Peers.peerSecretPhrase) : null));
             try {
                 //
                 // Create the selector for listening for network events
@@ -655,10 +660,11 @@ public final class NetworkHandler implements Runnable {
                     channel.configureBlocking(false);
                     peer.setConnectionAddress(remoteAddress);
                     peer.setChannel(channel);
+                    peer.setLastUpdated(Nxt.getEpochTime());
                     connectionMap.put(remoteAddress.getAddress(), peer);
                     inboundCount.incrementAndGet();
                     Peers.addPeer(peer);
-                    KeyEvent event = new KeyEvent(peer, channel, SelectionKey.OP_READ);
+                    KeyEvent event = new KeyEvent(peer, channel, 0);
                     SelectionKey key = event.register();
                     if (key == null) {
                         Logger.logErrorMessage("Unable to register socket channel for " + peer.getHost());
@@ -692,7 +698,7 @@ public final class NetworkHandler implements Runnable {
                 //
                 // Allocate a header buffer if no read is in progress
                 //   4-byte msgic bytes
-                //   4-byte message length
+                //   4-byte message length (High-order bit set if message is encrypted)
                 //
                 if (buffer == null) {
                     buffer = ByteBuffer.wrap(new byte[MESSAGE_HEADER_LENGTH]);
@@ -725,7 +731,8 @@ public final class NetworkHandler implements Runnable {
                     buffer.position(0);
                     byte[] hdrBytes = new byte[MESSAGE_HEADER_MAGIC.length];
                     buffer.get(hdrBytes);
-                    int length = buffer.getInt();
+                    int msgLength = buffer.getInt();
+                    int length = msgLength & 0x7fffffff;
                     if (!Arrays.equals(hdrBytes, MESSAGE_HEADER_MAGIC)) {
                         Logger.logDebugMessage("Incorrect message header received from " + peer.getHost());
                         Logger.logDebugMessage("  " + Arrays.toString(hdrBytes));
@@ -737,7 +744,7 @@ public final class NetworkHandler implements Runnable {
                         Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     }
-                    if ( length < 1 || length > MAX_MESSAGE_SIZE) {
+                    if (length < 1 || length > MAX_MESSAGE_SIZE + 32) {
                         Logger.logDebugMessage("Message length " + length + " for message from " + peer.getHost()
                                 + " is not valid");
                         KeyEvent keyEvent = peer.getKeyEvent();
@@ -752,7 +759,7 @@ public final class NetworkHandler implements Runnable {
                     buffer = ByteBuffer.wrap(msgBytes);
                     buffer.order(ByteOrder.LITTLE_ENDIAN);
                     buffer.put(hdrBytes);
-                    buffer.putInt(length);
+                    buffer.putInt(msgLength);
                     peer.setInputBuffer(buffer);
                 }
                 //
@@ -789,6 +796,41 @@ public final class NetworkHandler implements Runnable {
     }
 
     /**
+     * Get the message bytes
+     *
+     * @param   peer                    Peer
+     * @param   message                 Network message
+     * @return                          Serialized message
+     */
+    static ByteBuffer getMessageBytes(PeerImpl peer, NetworkMessage message) {
+        ByteBuffer buffer;
+        byte[] sessionKey = peer.getSessionKey();
+        int length = message.getLength();
+        if (sessionKey != null) {
+            buffer = ByteBuffer.allocate(MESSAGE_HEADER_LENGTH + length + 32);
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
+            message.getBytes(buffer);
+            int byteLength = buffer.position();
+            byte[] msgBytes = new byte[byteLength];
+            buffer.position(0);
+            buffer.get(msgBytes);
+            byte[] encryptedBytes = Crypto.aesEncrypt(msgBytes, sessionKey);
+            buffer.position(0);
+            buffer.put(MESSAGE_HEADER_MAGIC);
+            buffer.putInt(encryptedBytes.length | 0x80000000);
+            buffer.put(encryptedBytes);
+        } else {
+            buffer = ByteBuffer.allocate(MESSAGE_HEADER_LENGTH + length);
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
+            buffer.put(MESSAGE_HEADER_MAGIC);
+            buffer.putInt(length);
+            message.getBytes(buffer);
+        }
+        buffer.flip();
+        return buffer;
+    }
+
+    /**
      * Process OP_WRITE event (ready to write data)
      *
      * @param   writeKey                Network selection key
@@ -807,41 +849,12 @@ public final class NetworkHandler implements Runnable {
                 // if there are no more messages to write.
                 //
                 if (buffer == null) {
-                    NetworkMessage message = peer.getQueuedMessage();
-                    if (message == null) {
+                    buffer = peer.getQueuedMessage();
+                    if (buffer == null) {
                         KeyEvent keyEvent = peer.getKeyEvent();
                         if (keyEvent != null) {
                             keyEvent.update(0, SelectionKey.OP_WRITE);
                         }
-                        break;
-                    }
-                    int length = message.getLength();
-                    buffer = ByteBuffer.allocate(MESSAGE_HEADER_LENGTH + length);
-                    buffer.order(ByteOrder.LITTLE_ENDIAN);
-                    buffer.put(MESSAGE_HEADER_MAGIC);
-                    buffer.putInt(length);
-                    try {
-                        message.getBytes(buffer);
-                        buffer.flip();
-                    } catch (BufferOverflowException exc) {
-                        Logger.logErrorMessage("Buffer is too short for '" + message.getMessageName()
-                                + "' message to " + peer.getHost());
-                        KeyEvent keyEvent = peer.getKeyEvent();
-                        if (keyEvent != null) {
-                            keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-                        }
-                        peer.setDisconnectPending();
-                        Peers.peersService.execute(peer::disconnectPeer);
-                        break;
-                    } catch (Exception exc) {
-                        Logger.logErrorMessage("Unable to process '" + message.getMessageName()
-                                + "' message to " + peer.getHost());
-                        KeyEvent keyEvent = peer.getKeyEvent();
-                        if (keyEvent != null) {
-                            keyEvent.update(0, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-                        }
-                        peer.setDisconnectPending();
-                        Peers.peersService.execute(peer::disconnectPeer);
                         break;
                     }
                     peer.setOutputBuffer(buffer);
@@ -898,6 +911,8 @@ public final class NetworkHandler implements Runnable {
     /**
      * Send our GetInfo message
      *
+     * We will send the default GetInfo message for a non-permissioned blockchain
+     *
      * @param   peer                    Target peer
      */
     static void sendGetInfoMessage(PeerImpl peer) {
@@ -906,9 +921,33 @@ public final class NetworkHandler implements Runnable {
     }
 
     /**
+     * Send our GetInfo message
+     *
+     * We will construct a GetInfo message containing the appropriate security
+     * token for the target peer
+     *
+     * @param   peer                    Target peer
+     * @param   peerPublicKey           Peer public key
+     * @param   sessionKey              Session key
+     */
+    static void sendGetInfoMessage(PeerImpl peer, byte[] peerPublicKey, byte[] sessionKey) {
+        if (!Constants.isPermissioned) {
+            throw new IllegalStateException("Session key not supported");
+        }
+        NetworkMessage.GetInfoMessage message = new NetworkMessage.GetInfoMessage(
+                Nxt.APPLICATION, Nxt.VERSION, getInfoMessage.getApplicationPlatform(),
+                getInfoMessage.getShareAddress(), getInfoMessage.getAnnouncedAddress(),
+                getInfoMessage.getApiPort(), getInfoMessage.getSslPort(), getInfoMessage.getServices(),
+                getInfoMessage.getDisabledAPIs(), getInfoMessage.getApiServerIdleTimeout(),
+                getInfoMessage.getSecurityToken().getPeerPublicKey());
+        message.getSecurityToken().setSessionKey(Peers.peerSecretPhrase, peerPublicKey, sessionKey);
+        peer.sendMessage(message);
+    }
+
+    /**
      * Check if the network has finished initialization
      *
-     * @return                          TRUE if the network is availble
+     * @return                          TRUE if the network is available
      */
     public static boolean isNetworkStarted() {
         return networkStarted;

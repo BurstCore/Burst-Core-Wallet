@@ -13,7 +13,6 @@
  * Removal or modification of this copyright notice is prohibited.
  *
  */
-
 package nxt;
 
 import java.math.BigInteger;
@@ -24,6 +23,17 @@ public final class Constants {
     public static final boolean isTestnet = Nxt.getBooleanProperty("nxt.isTestnet");
     public static final boolean isOffline = Nxt.getBooleanProperty("nxt.isOffline");
     public static final boolean isLightClient = Nxt.getBooleanProperty("nxt.isLightClient");
+    public static final boolean isPermissioned = Nxt.getBooleanProperty("nxt.isPermissioned");
+    static {
+        if (isPermissioned) {
+            try {
+                Class.forName("com.jelurida.blockchain.authentication.BlockchainRoleMapper");
+            } catch (ClassNotFoundException e) {
+                throw new ExceptionInInitializerError("BlockchainRoleMapper class required for a permissioned blockchain");
+            }
+        }
+    }
+    public static final String ROLE_MAPPING_ACCOUNT_PROPERTY = "ROLE_MAPPING";
 
     public static final int MAX_NUMBER_OF_FXT_TRANSACTIONS = 10;
     public static final int MAX_NUMBER_OF_CHILD_TRANSACTIONS = 100;
