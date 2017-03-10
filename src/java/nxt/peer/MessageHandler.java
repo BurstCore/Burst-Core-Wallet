@@ -107,7 +107,7 @@ class MessageHandler implements Runnable {
                         }
                         byte[] encryptedBytes = new byte[buffer.limit() - buffer.position()];
                         buffer.get(encryptedBytes);
-                        byte[] msgBytes = Crypto.aesDecrypt(encryptedBytes, sessionKey);
+                        byte[] msgBytes = Crypto.aesGCMDecrypt(encryptedBytes, sessionKey);
                         buffer = ByteBuffer.wrap(msgBytes);
                         buffer.order(ByteOrder.LITTLE_ENDIAN);
                     }

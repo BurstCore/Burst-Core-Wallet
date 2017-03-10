@@ -814,7 +814,7 @@ public final class NetworkHandler implements Runnable {
             byte[] msgBytes = new byte[byteLength];
             buffer.position(0);
             buffer.get(msgBytes);
-            byte[] encryptedBytes = Crypto.aesEncrypt(msgBytes, sessionKey);
+            byte[] encryptedBytes = Crypto.aesGCMEncrypt(msgBytes, sessionKey);
             buffer.position(0);
             buffer.put(MESSAGE_HEADER_MAGIC);
             buffer.putInt(encryptedBytes.length | 0x80000000);
