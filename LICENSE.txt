@@ -3,7 +3,7 @@ Copyright © 2016-2017 Jelurida IP B.V.
 
 This is an experimental version for evaluation only. A temporary permission is
 granted to use this software only for testing purposes, and only until 14 days
-after the release of the next non-experimental Ardor version, or until March 31,
+after the release of the next non-experimental Ardor version, or until May 31,
 2017, whichever is earlier. Any type of use of this software, or works derived
 from it, after this deadline, is not allowed. Production use, sub-licensing,
 and redistribution is prohibited.
