@@ -515,6 +515,7 @@ public final class NetworkHandler implements Runnable {
                 }
             } else {
                 synchronized(this) {
+                    cyclicBarrier.reset();
                     this.addOps = addOps;
                     this.removeOps = removeOps;
                     keyEventQueue.add(this);
@@ -524,7 +525,6 @@ public final class NetworkHandler implements Runnable {
                     } catch (BrokenBarrierException | InterruptedException | TimeoutException exc) {
                         throw new IllegalStateException("Thread interrupted while waiting for key event completion");
                     }
-                    cyclicBarrier.reset();
                 }
             }
         }
