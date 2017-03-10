@@ -664,7 +664,7 @@ public final class NetworkHandler implements Runnable {
                     connectionMap.put(remoteAddress.getAddress(), peer);
                     inboundCount.incrementAndGet();
                     Peers.addPeer(peer);
-                    KeyEvent event = new KeyEvent(peer, channel, SelectionKey.OP_READ);
+                    KeyEvent event = new KeyEvent(peer, channel, 0);
                     SelectionKey key = event.register();
                     if (key == null) {
                         Logger.logErrorMessage("Unable to register socket channel for " + peer.getHost());

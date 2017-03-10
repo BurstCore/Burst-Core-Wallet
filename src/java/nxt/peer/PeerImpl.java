@@ -891,10 +891,11 @@ final class PeerImpl implements Peer {
     void setInbound() {
         connectLock.lock();
         try {
-            if (state != State.CONNECTED) {
+            if (state != State.CONNECTED && keyEvent != null) {
                 isInbound = true;
                 handshakePending = true;
                 setState(State.CONNECTED);
+                keyEvent.update(SelectionKey.OP_READ, 0);
                 Logger.logInfoMessage("Connection from " + host + " accepted");
             }
         } finally {
