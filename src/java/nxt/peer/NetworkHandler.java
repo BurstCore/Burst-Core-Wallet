@@ -697,7 +697,7 @@ public final class NetworkHandler implements Runnable {
             while (true) {
                 //
                 // Allocate a header buffer if no read is in progress
-                //   4-byte msgic bytes
+                //   4-byte magic bytes
                 //   4-byte message length (High-order bit set if message is encrypted)
                 //
                 if (buffer == null) {

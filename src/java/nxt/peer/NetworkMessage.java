@@ -1056,7 +1056,7 @@ public abstract class NetworkMessage {
         }
 
         /**
-         * Construct a CumulaltiveDifficulty message
+         * Construct a CumulativeDifficulty message
          */
         private CumulativeDifficultyMessage() {
             super("CumulativeDifficulty");
