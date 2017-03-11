@@ -490,14 +490,66 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
     function getConfirmationData(t) {
-    	if (!t.confirmed) {
-    		if (!t.isBundled) {
-    			return "-";
-			} else {
-    			return "+";
+    	var info = getConfirmationInfo(t);
+        var html = "<span class='show_popover' data-content='" + info.popover + "' data-container='body' data-placement='left'>";
+        html += info.markup;
+        html += "</span>";
+        return html;
+    }
+
+    function getConfirmationInfo(t) {
+    	var info = {};
+        var ul = "<ul class='confirmations-bar-ul'>";
+    	var li_not_bundled_pulse = "<li class='confirmations-bar-li confirmations-bar-li-not-bundled confirmations-pulse'>";
+        var li_bundled = "<li class='confirmations-bar-li confirmations-bar-li-bundled'>";
+        var li_unconfirmed = "<li class='confirmations-bar-li confirmations-bar-li-unconfirmed'>";
+        var li_unconfirmed_pulse = "<li class='confirmations-bar-li confirmations-bar-li-unconfirmed confirmations-pulse'>";
+    	var li_confirmed = "<li class='confirmations-bar-li confirmations-bar-li-confirmed'>";
+    	var li_confirmations_wait = "<li class='confirmations-bar-li confirmations-bar-li-confirmations-wait'>";
+    	var li_confirmations_wait_pulse = "<li class='confirmations-bar-li confirmations-bar-li-confirmations-wait confirmations-pulse'>";
+    	var li_confirmations_set = "<li class='confirmations-bar-li confirmations-bar-li-confirmations-set'>";
+    	if (!t.isBundled && t.confirmations == "/") {
+    		ul += li_not_bundled_pulse;
+    		ul += li_unconfirmed;
+    		for (var i=0; i<10; i++) {
+    			ul += li_confirmations_wait;
 			}
+            ul += "</ul>";
+    		info.markup = ul;
+    		info.popover = $.t("not_bundled");
+    		return info;
 		}
-        return t.confirmations > 1440 ? (NRS.formatAmount('144000000000', false, false, false, NRS.getChain(1).decimals) + "+") : NRS.formatAmount(t.confirmations);
+		if (t.confirmations == "/") {
+			ul += li_bundled + li_unconfirmed_pulse;
+			for (i=0; i<10; i++) {
+				ul += li_confirmations_wait;
+			}
+            ul += "</ul>";
+            info.markup = ul;
+            info.popover = $.t("unconfirmed");
+            return info;
+		}
+		if (t.confirmations < 10) {
+            ul += li_bundled + li_confirmed;
+            if (t.confirmations >= 1) {
+                for (i=0; i < t.confirmations; i++) {
+                    ul += li_confirmations_set;
+                }
+			}
+            ul += li_confirmations_wait_pulse;
+            if (t.confirmations < 9) {
+                for (i=t.confirmations+1; i<10; i++) {
+                    ul += li_confirmations_wait;
+                }
+			}
+            ul += "</ul>";
+            ul += "</ul>";
+            info.markup = ul;
+		} else {
+            info.markup = t.confirmations > 1440 ? (NRS.formatAmount('144000000000', false, false, false, NRS.getChain(1).decimals) + "+") : NRS.formatAmount(t.confirmations);
+        }
+        info.popover = t.confirmations + " " + $.t("confirmations");
+		return info;
     }
 
     NRS.getTransactionRowHTML = function(t, actions, decimals) {
@@ -567,9 +619,8 @@ var NRS = (function(NRS, $, undefined) {
 		html += "<td class='td_transaction_phasing' style='min-width:100px;vertical-align:middle;text-align:center;'></td>";
 		html += "<td style='vertical-align:middle;text-align:center;'>" + (t.confirmed ? NRS.getBlockLink(t.height, null, true) : "-") + "</td>";
 		html += "<td class='confirmations' style='vertical-align:middle;text-align:center;font-size:12px;'>";
-		html += "<span class='show_popover' data-content='" + (t.confirmed ? NRS.formatAmount(t.confirmations) + " " + $.t("confirmations") : $.t("unconfirmed_transaction")) + "' ";
-		html += "data-container='body' data-placement='left'>";
-		html += getConfirmationData(t) + "</span></td>";
+		html += getConfirmationData(t);
+		html += "</td>";
 		if (actions && actions.length != undefined) {
 			html += '<td class="td_transaction_actions" style="vertical-align:middle;text-align:right;">';
 			if (actions.indexOf('approve') > -1) {

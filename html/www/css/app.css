@@ -1224,6 +1224,71 @@ body > .header .logo .icon {
   background-image: -moz-linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
   background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
 }
+
+.confirmations-bar-ul {
+  margin: auto;
+  height: 10px;
+  width: 144px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  list-style: none;
+  padding: 0;
+}
+
+.confirmations-bar-li {
+  display: block;
+  float: left;
+  width: 10px;
+  height: 10px;
+  margin-right: 2px;
+}
+
+.confirmations-bar-li-bundled {
+  background: cyan;
+  opacity: 1;
+}
+
+.confirmations-bar-li-not-bundled {
+  background: cyan;
+  opacity: 0.2;
+}
+
+.confirmations-bar-li-confirmed {
+  background: lime;
+  opacity: 1;
+}
+
+.confirmations-bar-li-unconfirmed {
+  background: lime;
+  opacity: 0.2;
+}
+
+.confirmations-bar-li-confirmations-set {
+  background: green;
+  opacity: 1;
+}
+
+.confirmations-bar-li-confirmations-wait {
+  background: green;
+  opacity: 0.2;
+}
+
+.confirmations-pulse {
+  -webkit-animation: confirmations 1s alternate infinite;
+  -moz-animation: confirmations 1s alternate infinite;
+}
+
+@keyframes confirmations {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+
 /*
     Component: Small boxes
 */
