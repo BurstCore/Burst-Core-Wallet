@@ -1945,5 +1945,6 @@
   "shuffling_fullhash": "Shuffling Full Hash",
   "not_bundled": "Not Bundled",
   "bundle_transaction": "Bundle Transaction",
-  "child_chain_fee": "Child Chain Fee"
+  "child_chain_fee": "Child Chain Fee",
+  "bundler": "Bundler"
 }
