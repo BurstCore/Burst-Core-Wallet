@@ -508,7 +508,8 @@ var NRS = (function(NRS, $, undefined) {
     	var li_confirmations_wait = "<li class='confirmations-bar-li confirmations-bar-li-confirmations-wait'>";
     	var li_confirmations_wait_pulse = "<li class='confirmations-bar-li confirmations-bar-li-confirmations-wait confirmations-pulse'>";
     	var li_confirmations_set = "<li class='confirmations-bar-li confirmations-bar-li-confirmations-set'>";
-    	if (!t.isBundled && t.confirmations == "/") {
+    	var isUnconfirmed = !t.confirmations || t.confirmations == "/";
+    	if (!t.isBundled && isUnconfirmed && !NRS.isParentChain()) {
     		ul += li_not_bundled_pulse;
     		ul += li_unconfirmed;
     		for (var i=0; i<10; i++) {
@@ -519,8 +520,11 @@ var NRS = (function(NRS, $, undefined) {
     		info.popover = $.t("not_bundled");
     		return info;
 		}
-		if (t.confirmations == "/") {
-			ul += li_bundled + li_unconfirmed_pulse;
+		if (!NRS.isParentChain()) {
+            ul += li_bundled;
+		}
+		if (isUnconfirmed) {
+			ul += li_unconfirmed_pulse;
 			for (i=0; i<10; i++) {
 				ul += li_confirmations_wait;
 			}
@@ -530,7 +534,7 @@ var NRS = (function(NRS, $, undefined) {
             return info;
 		}
 		if (t.confirmations < 10) {
-            ul += li_bundled + li_confirmed;
+            ul += li_confirmed;
             if (t.confirmations >= 1) {
                 for (i=0; i < t.confirmations; i++) {
                     ul += li_confirmations_set;
