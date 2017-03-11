@@ -1,6 +1,28 @@
-This is a bugfix release, for testnet only.
+This release introduces an incompatible networking change in bundler rates
+propagation and is therefore a mandatory update for all Ardor testnet nodes.
 
-Added peer authentication and encryption framework for the peer networking.
+Improvements in bundler rates handling and APIs:
+
+The GetBundlerRates API now also returns the bundler account and the remaining
+fee limit for each bundler as currentFeeLimitFQT.
+
+The new GetAllBundlerRates API returns all bundler rates known to the node, for
+all child chains, subject to optional minBundlerBalanceFXT limit on the bundler
+effective Ardor balance.
+
+The new BlacklistBundler API allows manual blacklisting of bundler accounts.
+Rates advertised by such accounts will not be added to the local list of known
+rates each node maintains. Blacklisting of bundler accounts is also possible
+using the new nxt.blacklistedBundlerAccounts property.
+
+Bundler rates are now broadcasted every 30 min instead of once an hour.
+
+The new nxt.minBundlerFeeLimitFXT property allows skipping bundler rates that
+are announced by bundlers with lower remaining current fee limit, default 10
+Ardor.
+
+Added peer authentication and encryption framework for the peer networking, to
+be used for permissioned blockchains.
 
 Added Bundle action for child chain transactions in the UI.
 
