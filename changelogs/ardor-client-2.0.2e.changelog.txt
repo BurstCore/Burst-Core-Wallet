@@ -24,7 +24,8 @@ Ardor.
 Added peer authentication and encryption framework for the peer networking, to
 be used for permissioned blockchains.
 
-Added Bundle action for child chain transactions in the UI.
+Added Bundle action for child chain transactions in the UI. Added visual
+representation of transaction bundling and confirmation status.
 
 Client UI and peer networking bugfixes and improvements.
 
