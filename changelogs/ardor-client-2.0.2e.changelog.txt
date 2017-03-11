@@ -1,0 +1,10 @@
+This is a bugfix release, for testnet only.
+
+Added peer authentication and encryption framework for the peer networking.
+
+Added Bundle action for child chain transactions in the UI.
+
+Client UI and peer networking bugfixes and improvements.
+
+Updated H2 to version 1.4.194.
+
