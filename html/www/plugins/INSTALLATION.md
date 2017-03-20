@@ -4,7 +4,7 @@
 ----
 # Installation #
 
-1. Download the plugin from a trusted source
+1. Download the plugin from Sigwo Technologies.
 2. Extract the plugin in the ``plugins`` folder of your client
 3. Run the NRS client
 4. Plugin status info can be found on the plugin settings page
