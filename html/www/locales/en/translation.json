@@ -1852,7 +1852,6 @@
   "nrs_update": "Update",
   "download_nrs": "Download",
   "nrs_update_available": "A new release is available. It is recommended that you update.",
-  "nrs_version": "Version",
   "pnc_compatible_msg": "Plugin compatible with current version",
   "pnc_compatible_unknown_msg": "Plugin compatibility with current version unknown",
   "update_available": "A new release is available. It is recommended that you update.",
