@@ -217,6 +217,9 @@ var NRS = (function(NRS, $, undefined) {
         document.title = constants.PROJECT_NAME;
         $("#nrs_version_info").text(constants.PROJECT_NAME + " " + $.t("version"));
         $(".help-about").text($.t("about") + " " + constants.PROJECT_NAME);
+        if (constants.PROJECT_NAME != "NXT") {
+            $(".branding-message").html("<p>" + constants.PROJECT_NAME + " " + $.t("branding_message") + "<p>");
+		}
 	}
 
     function initImpl() {
