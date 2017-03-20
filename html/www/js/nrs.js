@@ -216,6 +216,7 @@ var NRS = (function(NRS, $, undefined) {
     function applyBranding(constants) {
         document.title = constants.PROJECT_NAME;
         $("#nrs_version_info").text(constants.PROJECT_NAME + " " + $.t("version"));
+        $(".help-about").text($.t("about") + " " + constants.PROJECT_NAME);
 	}
 
     function initImpl() {
