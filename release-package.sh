@@ -8,7 +8,7 @@ fi
 APPLICATION="jrs"
 PACKAGE=${APPLICATION}-client-${VERSION}
 echo PACKAGE="${PACKAGE}"
-CHANGELOG=nxt-client-${VERSION}.changelog.txt
+CHANGELOG=${PACKAGE}.changelog.txt
 OBFUSCATE=$2
 
 FILES="changelogs conf html lib resource contrib"
