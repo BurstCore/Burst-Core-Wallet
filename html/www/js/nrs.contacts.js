@@ -63,7 +63,7 @@ var NRS = (function(NRS, $) {
 						"<td>" + (contact.email ? contact.email.escapeHTML() : "-") + "</td>" +
 						"<td>" + contactDescription.escapeHTML() + "</td>" +
 						"<td style='white-space:nowrap'>" +
-						"<a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#send_money_modal' data-contact='" + String(contact.name).escapeHTML() + "'>" + $.t("send_nxt") + "</a>&nbsp;" +
+						"<a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#send_money_modal' data-contact='" + String(contact.name).escapeHTML() + "'>" + $.t("send") + " " + NRS.constants.COIN_SYMBOL + "</a>&nbsp;" +
 						"<a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#send_message_modal' data-contact='" + String(contact.name).escapeHTML() + "'>" + $.t("message") + "</a>&nbsp;" +
 						"<a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#delete_contact_modal' data-contact='" + String(contact.id).escapeHTML() + "'>" + $.t("delete") + "</a>" +
 						"</td>" +

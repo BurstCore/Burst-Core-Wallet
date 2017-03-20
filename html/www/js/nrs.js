@@ -213,13 +213,23 @@ var NRS = (function(NRS, $, undefined) {
         })
     }
 
+    function applyBranding(constants) {
+        document.title = constants.PROJECT_NAME;
+        $("#nrs_version_info").text(constants.PROJECT_NAME + " " + $.t("version"));
+        $(".help-about").text($.t("about") + " " + constants.PROJECT_NAME);
+        $(".modal-title-info").text(constants.PROJECT_NAME + " " + $.t("info"));
+        if (constants.PROJECT_NAME != "NXT") {
+            $(".branding-message").html("<p>" + constants.PROJECT_NAME + " " + $.t("branding_message") + "<p>");
+		}
+	}
+
     function initImpl() {
 		var loadConstantsPromise = new Promise(function(resolve) {
 			console.log("load server constants");
 			NRS.loadServerConstants(resolve);
 		});
 		loadConstantsPromise.then(function() {
-            document.title = NRS.constants.PROJECT_NAME;
+            applyBranding(NRS.constants);
 			var getStatePromise = new Promise(function(resolve) {
 				console.log("calling getState");
 				NRS.sendRequest("getState", {

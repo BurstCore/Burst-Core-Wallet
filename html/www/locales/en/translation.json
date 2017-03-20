@@ -736,7 +736,6 @@
   "nrs_safari_no_account_based_db": "Storing user data for multiple accounts currently not supported in Safari.",
   "numeric_account_id": "Numeric Account ID",
   "nxt_account_id": "Account ID",
-  "nxt_token_generation_validation": "Token Generation / Validation",
   "offer": "Offer",
   "official_hash": "Official Hash",
   "old_browser_warning": "You are using an old browser which this application does not support.",
@@ -1852,9 +1851,10 @@
   "nrs_update": "Update",
   "download_nrs": "Download",
   "nrs_update_available": "A new release is available. It is recommended that you update.",
-  "nrs_version": "Version",
   "pnc_compatible_msg": "Plugin compatible with current version",
   "pnc_compatible_unknown_msg": "Plugin compatibility with current version unknown",
   "update_available": "A new release is available. It is recommended that you update.",
-  "update_testnet": "Version cannot be updated whilst connected to the testnet."
+  "update_testnet": "Version cannot be updated whilst connected to the testnet.",
+  "token_generation_validation": "Token Generation / Validation",
+  "branding_message": "is a customized version of the Nxt Reference Software (NRS)"
 }
