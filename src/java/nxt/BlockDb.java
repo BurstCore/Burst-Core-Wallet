@@ -239,9 +239,11 @@ final class BlockDb {
             byte[] blockSignature = rs.getBytes("block_signature");
             byte[] payloadHash = rs.getBytes("payload_hash");
             long id = rs.getLong("id");
+            Long nonce = rs.getLong("nonce");
+            byte[] blockATs = rs.getBytes("ats");
             return new BlockImpl(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
                     generatorId, generationSignature, blockSignature, previousBlockHash,
-                    cumulativeDifficulty, baseTarget, nextBlockId, height, id, loadTransactions ? TransactionDb.findBlockTransactions(con, id) : null);
+                    cumulativeDifficulty, baseTarget, nextBlockId, height, id, loadTransactions ? TransactionDb.findBlockTransactions(con, id) : null, nonce, blockATs);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -251,7 +253,7 @@ final class BlockDb {
         try {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, timestamp, previous_block_id, "
                     + "total_amount, total_fee, payload_length, previous_block_hash, cumulative_difficulty, "
-                    + "base_target, height, generation_signature, block_signature, payload_hash, generator_id) "
+                    + "base_target, height, generation_signature, block_signature, payload_hash, generator_id, nonce, ats) "
                     + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, block.getId());
@@ -269,6 +271,8 @@ final class BlockDb {
                 pstmt.setBytes(++i, block.getBlockSignature());
                 pstmt.setBytes(++i, block.getPayloadHash());
                 pstmt.setLong(++i, block.getGeneratorId());
+                pstmt.setLong(++i, block.getNonce());
+                pstmt.setBytes(++i, block.getBlockATs());
                 pstmt.executeUpdate();
                 TransactionDb.saveTransactions(con, block.getTransactions());
             }
