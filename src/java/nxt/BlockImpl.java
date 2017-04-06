@@ -20,6 +20,8 @@ import nxt.AccountLedger.LedgerEvent;
 import nxt.crypto.Crypto;
 import nxt.util.Convert;
 import nxt.util.Logger;
+import nxt.util.MiningPlot;
+import nxt.peer.Peer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -31,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import fr.cryptohash.Shabal256;
 
 final class BlockImpl implements Block {
 
@@ -56,17 +60,22 @@ final class BlockImpl implements Block {
     private volatile long generatorId;
     private volatile byte[] bytes = null;
 
+    // BURST-specific from here on
+    private Long nonce;
+    private BigInteger pocTime = null;
+    private final byte[] blockATs;
+    private Peer downloadedFrom = null;
 
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<TransactionImpl> transactions, String secretPhrase) {
+              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<TransactionImpl> transactions, String secretPhrase, Long nonce, byte[] blockATs) {
         this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
-                generatorPublicKey, generationSignature, null, previousBlockHash, transactions);
+                generatorPublicKey, generationSignature, null, previousBlockHash, transactions, nonce, blockATs);
         blockSignature = Crypto.sign(bytes(), secretPhrase);
         bytes = null;
     }
 
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<TransactionImpl> transactions) {
+              byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<TransactionImpl> transactions, Long nonce, byte[] blockATs) {
         this.version = version;
         this.timestamp = timestamp;
         this.previousBlockId = previousBlockId;
@@ -81,14 +90,16 @@ final class BlockImpl implements Block {
         if (transactions != null) {
             this.blockTransactions = Collections.unmodifiableList(transactions);
         }
+        this.nonce = nonce;
+        this.blockATs = blockATs;
     }
 
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength,
               byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
               byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id,
-              List<TransactionImpl> blockTransactions) {
+              List<TransactionImpl> blockTransactions, Long nonce, byte[] blockATs) {
         this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
-                null, generationSignature, blockSignature, previousBlockHash, null);
+                null, generationSignature, blockSignature, previousBlockHash, null, nonce, blockATs);
         this.cumulativeDifficulty = cumulativeDifficulty;
         this.baseTarget = baseTarget;
         this.nextBlockId = nextBlockId;
@@ -257,6 +268,8 @@ final class BlockImpl implements Block {
         JSONArray transactionsData = new JSONArray();
         getTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
         json.put("transactions", transactionsData);
+        json.put("nonce", Long.toUnsignedString(nonce));
+        json.put("blockATs", Convert.toHexString( blockATs ));
         return json;
     }
 
@@ -273,12 +286,14 @@ final class BlockImpl implements Block {
             byte[] generationSignature = Convert.parseHexString((String) blockData.get("generationSignature"));
             byte[] blockSignature = Convert.parseHexString((String) blockData.get("blockSignature"));
             byte[] previousBlockHash = version == 1 ? null : Convert.parseHexString((String) blockData.get("previousBlockHash"));
+            Long nonce = Convert.parseUnsignedLong((String) blockData.get("nonce"));
             List<TransactionImpl> blockTransactions = new ArrayList<>();
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
                 blockTransactions.add(TransactionImpl.parseTransaction((JSONObject) transactionData));
             }
+            byte[] blockATs = Convert.parseHexString((String) blockData.get("blockATs"));
             BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash, generatorPublicKey,
-                    generationSignature, blockSignature, previousBlockHash, blockTransactions);
+                    generationSignature, blockSignature, previousBlockHash, blockTransactions, nonce, blockATs);
             if (!block.checkSignature()) {
                 throw new NxtException.NotValidException("Invalid block signature");
             }
@@ -296,7 +311,7 @@ final class BlockImpl implements Block {
 
     byte[] bytes() {
         if (bytes == null) {
-            ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 8 + 4 + (version < 3 ? (4 + 4) : (8 + 8)) + 4 + 32 + 32 + (32 + 32) + (blockSignature != null ? 64 : 0));
+            ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 8 + 4 + (version < 3 ? (4 + 4) : (8 + 8)) + 4 + 32 + 32 + (32 + 32) + 8 + (blockATs != null ? blockATs.length : 0) + (blockSignature != null ? 64 : 0));
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.putInt(version);
             buffer.putInt(timestamp);
@@ -316,6 +331,9 @@ final class BlockImpl implements Block {
             if (version > 1) {
                 buffer.put(previousBlockHash);
             }
+            buffer.putLong(nonce);
+            if(blockATs != null)
+                buffer.put(blockATs);
             if (blockSignature != null) {
                 buffer.put(blockSignature);
             }
@@ -383,9 +401,7 @@ final class BlockImpl implements Block {
 
     }
 
-    private static final long[] badBlocks = new long[] {
-            5113090348579089956L, 8032405266942971936L, 7702042872885598917L, -407022268390237559L, -3320029330888410250L,
-            -6568770202903512165L, 4288642518741472722L, 5315076199486616536L, -6175599071600228543L};
+    private static final long[] badBlocks = new long[] {};
     static {
         Arrays.sort(badBlocks);
     }
@@ -486,6 +502,63 @@ final class BlockImpl implements Block {
             baseTarget = prevBaseTarget;
         }
         cumulativeDifficulty = previousBlock.cumulativeDifficulty.add(Convert.two64.divide(BigInteger.valueOf(baseTarget)));
+    }
+
+    // BURST-specific from here on
+
+    @Override
+    public boolean isVerified() {
+        return pocTime != null;
+    }
+
+    @Override
+    public Peer getPeer() {
+        return downloadedFrom;
+    }
+
+    @Override
+    public void setPeer(Peer peer) {
+        downloadedFrom = peer;
+    }
+
+    @Override
+    public byte[] getBlockHash() {
+        return Crypto.sha256().digest(bytes());
+    }
+
+    @Override
+    public Long getNonce() {
+        return nonce;
+    }
+
+    @Override
+    public int getScoopNum() {
+        ByteBuffer posbuf = ByteBuffer.allocate(32 + 8);
+        posbuf.put(generationSignature);
+        posbuf.putLong(getHeight());
+
+        Shabal256 md = new Shabal256();
+        md.update(posbuf.array());
+        BigInteger hashnum = new BigInteger(1, md.digest());
+        return hashnum.mod(BigInteger.valueOf(MiningPlot.SCOOPS_PER_PLOT)).intValue();
+    }
+
+    @Override
+    public byte[] getBlockATs() {
+        return blockATs;
+    }
+
+    @Override
+    public long getBlockReward() {
+        if (this.height == 0 || this.height >= 1944000) {
+            return 0;
+        }
+        int month = this.height / 10800;
+        long reward = BigInteger.valueOf(10000)
+                .multiply(BigInteger.valueOf(95).pow(month))
+                .divide(BigInteger.valueOf(100).pow(month)).longValue() * Constants.ONE_NXT;
+        
+        return reward;
     }
 
 }

@@ -16,6 +16,8 @@
 
 package nxt;
 
+import nxt.peer.Peer;
+
 import org.json.simple.JSONObject;
 
 import java.math.BigInteger;
@@ -64,5 +66,23 @@ public interface Block {
     byte[] getBytes();
 
     JSONObject getJSONObject();
+
+    // BURST-specific from here on
+
+    boolean isVerified();
+
+    Peer getPeer();
+
+    void setPeer(Peer peer);
+
+    byte[] getBlockHash();
+
+    Long getNonce();
+
+    int getScoopNum();
+
+    byte[] getBlockATs();
+
+    long getBlockReward();
 
 }

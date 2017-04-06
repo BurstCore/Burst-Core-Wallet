@@ -1391,7 +1391,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 digest.update(transaction.bytes());
             }
             BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 128, digest.digest(),
-                    Genesis.CREATOR_PUBLIC_KEY, new byte[64], Genesis.GENESIS_BLOCK_SIGNATURE, null, transactions);
+                    Genesis.CREATOR_PUBLIC_KEY, new byte[64], Genesis.GENESIS_BLOCK_SIGNATURE, null, transactions, null, null); // XXX temporary null scoop and blockATs
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
             return true;
@@ -1893,7 +1893,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         byte[] previousBlockHash = Crypto.sha256().digest(previousBlock.bytes());
 
         BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountNQT, totalFeeNQT, payloadLength,
-                payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase);
+                payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase, null, null); // XXX temporary null scoop and blockATs
 
         try {
             pushBlock(block);
