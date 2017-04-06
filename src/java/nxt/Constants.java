@@ -159,7 +159,16 @@ public final class Constants {
     // LAST_KNOWN_BLOCK must also be set in html/www/js/nrs.constants.js
     public static final int LAST_KNOWN_BLOCK = CHECKSUM_BLOCK_22;
 
-    public static final int[] MIN_VERSION = new int[] {1, 10, 1};
+    // Automated Transaction Constants
+    public static final int MAX_AUTOMATED_TRANSACTION_NAME_LENGTH = 30;
+	public static final int MAX_AUTOMATED_TRANSACTION_DESCRIPTION_LENGTH = 1000 ;
+	protected static final int AUTOMATED_TRANSACTION_BLOCK = 49200;
+	public static final int AT_BLOCK_PAYLOAD = MAX_PAYLOAD_LENGTH/2;
+	public static final int AT_FIX_BLOCK_2 = 67000;
+	public static final int AT_FIX_BLOCK_3 = 92000;
+    public static final int AT_FIX_BLOCK_4 = 255000;
+    
+    public static final int[] MIN_VERSION = new int[] {1, 2};
     public static final int[] MIN_PROXY_VERSION = new int[] {1, 10, 1};
 
     static final long UNCONFIRMED_POOL_DEPOSIT_NQT = (isTestnet ? 50 : 100) * ONE_NXT;
