@@ -37,7 +37,6 @@ public enum APIEnum {
     CURRENCY_SELL("currencySell", CurrencySell.instance),
     CURRENCY_RESERVE_INCREASE("currencyReserveIncrease", CurrencyReserveIncrease.instance),
     CURRENCY_RESERVE_CLAIM("currencyReserveClaim", CurrencyReserveClaim.instance),
-    CURRENCY_MINT("currencyMint", CurrencyMint.instance),
     DECRYPT_FROM("decryptFrom", DecryptFrom.instance),
     DELETE_ASSET_SHARES("deleteAssetShares", DeleteAssetShares.instance),
     DGS_LISTING("dgsListing", DGSListing.instance),
@@ -182,7 +181,6 @@ public enum APIEnum {
     GET_ORDER_TRADES("getOrderTrades", GetOrderTrades.instance),
     GET_ACCOUNT_EXCHANGE_REQUESTS("getAccountExchangeRequests", GetAccountExchangeRequests.instance),
     GET_EXPECTED_EXCHANGE_REQUESTS("getExpectedExchangeRequests", GetExpectedExchangeRequests.instance),
-    GET_MINTING_TARGET("getMintingTarget", GetMintingTarget.instance),
     GET_ALL_SHUFFLINGS("getAllShufflings", GetAllShufflings.instance),
     GET_ACCOUNT_SHUFFLINGS("getAccountShufflings", GetAccountShufflings.instance),
     GET_ASSIGNED_SHUFFLINGS("getAssignedShufflings", GetAssignedShufflings.instance),
@@ -281,7 +279,10 @@ public enum APIEnum {
     SEND_TRANSACTION("sendTransaction", SendTransaction.instance),
     GET_ASSET_DIVIDENDS("getAssetDividends", GetAssetDividends.instance),
     BLACKLIST_API_PROXY_PEER("blacklistAPIProxyPeer", BlacklistAPIProxyPeer.instance),
-    GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", GetNextBlockGeneratorsTemp.instance);
+    GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", GetNextBlockGeneratorsTemp.instance),
+    GET_MINING_INFO("getMiningInfo", GetMiningInfo.instance),
+    SUBMIT_NONCE("submitNonce", SUBMIT_NONCE.instance)
+    ;
 
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 
