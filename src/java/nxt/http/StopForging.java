@@ -22,6 +22,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static nxt.http.JSONResponses.NOT_FORGING;
 
 public final class StopForging extends APIServlet.APIRequestHandler {
 
@@ -34,6 +35,7 @@ public final class StopForging extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
+        /* Unused in BURST but could be appropriated later for mining?
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         JSONObject response = new JSONObject();
         if (secretPhrase != null) {
@@ -46,6 +48,9 @@ public final class StopForging extends APIServlet.APIRequestHandler {
             response.put("stopped", count);
         }
         return response;
+        */
+        
+        return NOT_FORGING;
     }
 
     @Override

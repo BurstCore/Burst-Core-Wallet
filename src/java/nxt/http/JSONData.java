@@ -1012,6 +1012,7 @@ public final class JSONData {
         return json;
     }
 
+    /* Unused in BURST
     static JSONObject generator(Generator generator, int elapsedTime) {
         JSONObject response = new JSONObject();
         long deadline = generator.getDeadline();
@@ -1021,6 +1022,7 @@ public final class JSONData {
         response.put("remaining", Math.max(deadline - elapsedTime, 0));
         return response;
     }
+    */
 
     static JSONObject accountMonitor(FundingMonitor monitor, boolean includeMonitoredAccounts) {
         JSONObject json = new JSONObject();

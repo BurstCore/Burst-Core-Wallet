@@ -1,5 +1,6 @@
 package nxt.http;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 import javax.servlet.http.HttpServletRequest;
@@ -75,26 +76,25 @@ public final class SubmitNonce extends APIServlet.APIRequestHandler {
             }
         }
 
-        boolean nonceAccepted = false;
+        BigInteger POCTime = null;
         if (accountId == null || secretAccount == null) {
-            nonceAccepted = Generator.submitNonce(secret, nonce);
+            POCTime = Generator.submitNonce(secret, nonce);
         } else {
             byte[] publicKey = Account.getPublicKey(Convert.parseUnsignedLong(accountId));
             if (publicKey == null) {
                 response.put("result", "Passthrough mining requires public key in blockchain");
                 return response;
             }
-            nonceAccepted = Generator.submitNonce(secret, nonce, publicKey);
+            POCTime = Generator.submitNonce(secret, nonce, publicKey);
         }
 
-        if (!nonceAccepted) {
-            response.put("result", "failed to create generator");
+        if (POCTime == null) {
+            response.put("result", "Failed to submit nonce to Generator");
             return response;
         }
 
-        //response.put("result", "deadline: " + generator.getDeadline());
         response.put("result", "success");
-        response.put("deadline", Generator.getPOCTime());
+        response.put("deadline", POCTime);
 
         return response;
     }

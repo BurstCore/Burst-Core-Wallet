@@ -22,6 +22,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static nxt.http.JSONResponses.NOT_FORGING;
 
 public final class StartForging extends APIServlet.APIRequestHandler {
 
@@ -34,6 +35,7 @@ public final class StartForging extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
+        /* Unused in BURST but could be appropriated later for mining?
         String secretPhrase = ParameterParser.getSecretPhrase(req, true);
         Generator generator = Generator.startForging(secretPhrase);
 
@@ -41,7 +43,9 @@ public final class StartForging extends APIServlet.APIRequestHandler {
         response.put("deadline", generator.getDeadline());
         response.put("hitTime", generator.getHitTime());
         return response;
-
+        */
+        
+        return NOT_FORGING;
     }
 
     @Override

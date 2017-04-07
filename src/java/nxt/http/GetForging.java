@@ -41,6 +41,7 @@ public final class GetForging extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
+        /* Unused in BURST
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         int elapsedTime = Nxt.getEpochTime() - Nxt.getBlockchain().getLastBlock().getTimestamp();
         if (secretPhrase != null) {
@@ -61,6 +62,9 @@ public final class GetForging extends APIServlet.APIRequestHandler {
             response.put("generators", generators);
             return response;
         }
+        */
+        
+        return NOT_FORGING;
     }
 
     @Override

@@ -154,12 +154,14 @@ public class DesktopSystemTray {
 
     private void displayStatus() {
         Block lastBlock = Nxt.getBlockchain().getLastBlock();
+        /* Unused in BURST
         Collection<Generator> allGenerators = Generator.getAllGenerators();
 
         StringBuilder generators = new StringBuilder();
         for (Generator generator : allGenerators) {
             generators.append(Convert.rsAccount(generator.getAccountId())).append(' ');
         }
+        */
         Object optionPaneBackground = UIManager.get("OptionPane.background");
         UIManager.put("OptionPane.background", Color.WHITE);
         Object panelBackground = UIManager.get("Panel.background");
@@ -192,10 +194,12 @@ public class DesktopSystemTray {
             addDataRow(statusPanel, "Timestamp", String.valueOf(lastBlock.getTimestamp()));
             addDataRow(statusPanel, "Time", String.valueOf(new Date(Convert.fromEpochTime(lastBlock.getTimestamp()))));
             addDataRow(statusPanel, "Seconds passed", String.valueOf(Nxt.getEpochTime() - lastBlock.getTimestamp()));
+            /* Unused in BURST
             addDataRow(statusPanel, "Forging", String.valueOf(allGenerators.size() > 0));
             if (allGenerators.size() > 0) {
                 addDataRow(statusPanel, "Forging accounts", generators.toString());
             }
+            */
         }
 
         addEmptyRow(statusPanel);
