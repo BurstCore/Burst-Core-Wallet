@@ -178,7 +178,7 @@ public final class Constants {
 	public static final int AT_FIX_BLOCK_3 = 92000;
     public static final int AT_FIX_BLOCK_4 = 255000;
     
-    public static final int[] MIN_VERSION = new int[] {1, 2};
+    public static final int[] MIN_VERSION = new int[] {1, 10, 1};
     public static final int[] MIN_PROXY_VERSION = new int[] {1, 10, 1};
 
     static final long UNCONFIRMED_POOL_DEPOSIT_NQT = (isTestnet ? 50 : 100) * ONE_NXT;
@@ -189,10 +189,10 @@ public final class Constants {
     public static final long EPOCH_BEGINNING;
     static {
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        calendar.set(Calendar.YEAR, 2013);
-        calendar.set(Calendar.MONTH, Calendar.NOVEMBER);
-        calendar.set(Calendar.DAY_OF_MONTH, 24);
-        calendar.set(Calendar.HOUR_OF_DAY, 12);
+        calendar.set(Calendar.YEAR, 2014);
+        calendar.set(Calendar.MONTH, Calendar.AUGUST);
+        calendar.set(Calendar.DAY_OF_MONTH, 11);
+        calendar.set(Calendar.HOUR_OF_DAY, 2);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);

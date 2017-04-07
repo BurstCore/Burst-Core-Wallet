@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -768,7 +769,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     if (--count <= 0)
                         break;
                 }
-            } catch (RuntimeException | NxtException.NotValidException e) {
+            } catch (RuntimeException | NxtException.NotValidException | BlockchainProcessor.BlockOutOfOrderException e) {
                 Logger.logDebugMessage("Failed to parse block: " + e.toString(), e);
                 peer.blacklist(e);
                 stop = start + blockList.size();
@@ -1103,6 +1104,12 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     }
 
+    // blockCache for faster sync
+    public static final Map<Long, Block> blockCache = new HashMap<Long, Block>();
+    public static final Map<Long, Long> reverseCache = new HashMap<Long, Long>();
+    public static final List<Long> unverified = new LinkedList<Long>();
+    private static int blockCacheSize = 0;
+
     @Override
     public boolean addListener(Listener<Block> listener, BlockchainProcessor.Event eventType) {
         return blockListeners.addListener(listener, eventType);
@@ -1391,7 +1398,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 digest.update(transaction.bytes());
             }
             BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 128, digest.digest(),
-                    Genesis.CREATOR_PUBLIC_KEY, new byte[64], Genesis.GENESIS_BLOCK_SIGNATURE, null, transactions, null, null); // XXX temporary null scoop and blockATs
+                    Genesis.CREATOR_PUBLIC_KEY, new byte[64], Genesis.GENESIS_BLOCK_SIGNATURE, null, transactions, 0L, null); // nonce 0 and no ATs
             genesisBlock.setPrevious(null);
             addBlock(genesisBlock);
             return true;

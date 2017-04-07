@@ -15,13 +15,13 @@ import nxt.at.AT_Controller;
 import nxt.at.AT_Exception;
 import nxt.at.AT_Machine_State;
 import nxt.at.AT_Transaction;
-import nxt.db.Db;
 import nxt.db.DbKey;
 import nxt.db.DbUtils;
 import nxt.db.VersionedEntityDbTable;
 import nxt.util.Convert;
 import nxt.util.Listener;
 import nxt.Account;
+import nxt.AccountLedger.LedgerEvent;
 import nxt.Appendix.Message;
 import nxt.TransactionImpl.BuilderImpl;
 
@@ -57,15 +57,16 @@ public final class AT extends AT_Machine_State {
 			public void notify(Block block) {
 				for(Long id : pendingFees.keySet()) {
 					Account atAccount = Account.getAccount(id);
-					atAccount.addToBalanceAndUnconfirmedBalanceNQT(-pendingFees.get(id));
+					atAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.AUTOMATED_TRANSACTION_FEE, id, -pendingFees.get(id));
 				}
 				List<TransactionImpl> transactions = new ArrayList<>();
 				for(AT_Transaction atTransaction : pendingTransactions) {
-					Account.getAccount(AT_API_Helper.getLong(atTransaction.getSenderId())).addToBalanceAndUnconfirmedBalanceNQT(-atTransaction.getAmount());
-					Account.addOrGetAccount(AT_API_Helper.getLong(atTransaction.getRecipientId())).addToBalanceAndUnconfirmedBalanceNQT(atTransaction.getAmount());
+				    // XXX Using block.getId() for now but probably should be the AT's accountId. Changes needed to AT_Transaction for this.
+					Account.getAccount(AT_API_Helper.getLong(atTransaction.getSenderId())).addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.AUTOMATED_TRANSACTION_PAYMENT, block.getId(), -atTransaction.getAmount());
+					Account.addOrGetAccount(AT_API_Helper.getLong(atTransaction.getRecipientId())).addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.AUTOMATED_TRANSACTION_PAYMENT, block.getId(), atTransaction.getAmount());
 					
 					TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl((byte)1, Genesis.CREATOR_PUBLIC_KEY,
-							atTransaction.getAmount(), 0L, block.getTimestamp(), (short)1440, Attachment.AT_PAYMENT);
+							atTransaction.getAmount(), 0L, (short)1440, Attachment.AT_PAYMENT);
 					
 					builder.senderId(AT_API_Helper.getLong(atTransaction.getSenderId()))
 						.recipientId(AT_API_Helper.getLong(atTransaction.getRecipientId()))
@@ -77,7 +78,7 @@ public final class AT extends AT_Machine_State {
 					
 					byte[] message = atTransaction.getMessage();
 					if(message != null) {
-						builder.message(new Appendix.Message(message));
+						builder.appendix(new Appendix.Message(message));
 					}
 					
 					try {
@@ -92,7 +93,7 @@ public final class AT extends AT_Machine_State {
 				}
 				
 				if(transactions.size() > 0) {
-					try (Connection con = Db.getConnection()) {
+					try (Connection con = Db.db.getConnection()) {
 						TransactionDb.saveTransactions(con, transactions);
 					}
 					catch(SQLException e) {
@@ -261,7 +262,7 @@ public final class AT extends AT_Machine_State {
 	
 	private static final VersionedEntityDbTable<AT> atTable = new VersionedEntityDbTable<AT>("at", atDbKeyFactory) {
 		@Override
-		protected AT load(Connection con, ResultSet rs) throws SQLException {
+		protected AT load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
 			//return new AT(rs);
 			throw new RuntimeException("AT attempted to be created with atTable.load");
 		}
@@ -284,7 +285,7 @@ public final class AT extends AT_Machine_State {
 
 	private static final VersionedEntityDbTable<ATState> atStateTable = new VersionedEntityDbTable<ATState>("at_state", atStateDbKeyFactory) {
 		@Override
-		protected ATState load(Connection con, ResultSet rs) throws SQLException {
+		protected ATState load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
 			return new ATState(rs);
 		}
 		@Override
@@ -300,7 +301,7 @@ public final class AT extends AT_Machine_State {
 	
 	public static Collection<Long> getAllATIds() 
 	{
-		try ( Connection con = Db.getConnection();
+		try ( Connection con = Db.db.getConnection();
 				PreparedStatement pstmt = con.prepareStatement( "SELECT id FROM at WHERE latest = TRUE" ) )
 		{
 			ResultSet result = pstmt.executeQuery();
@@ -321,7 +322,7 @@ public final class AT extends AT_Machine_State {
 	}
 
 	public static AT getAT(Long id) {
-		try (Connection con = Db.getConnection();
+		try (Connection con = Db.db.getConnection();
 				PreparedStatement pstmt = con.prepareStatement("SELECT at.id, at.creator_id, at.name, at.description, at.version, "
 				+ "at_state.state, at.csize, at.dsize, at.c_user_stack_bytes, at.c_call_stack_bytes, "
 				+ "at.creation_height, at_state.sleep_between, at_state.next_height, at_state.freeze_when_same_balance, at_state.min_activate_amount, "
@@ -345,7 +346,7 @@ public final class AT extends AT_Machine_State {
 	}
 
 	public static List<Long> getATsIssuedBy(Long accountId) {
-		try (Connection con = Db.getConnection();
+		try (Connection con = Db.db.getConnection();
 				PreparedStatement pstmt = con.prepareStatement("SELECT id "
 				+ "FROM at "
 				+ "WHERE latest = TRUE AND creator_id = ? "
@@ -389,7 +390,7 @@ public final class AT extends AT_Machine_State {
 		at.saveState();
 
 		Account account = Account.addOrGetAccount(atId);
-		account.apply(new byte[32], height);
+		account.apply(new byte[32]);
 	}
 
 	public void saveState() {
@@ -495,7 +496,7 @@ public final class AT extends AT_Machine_State {
 
 	public static List< Long > getOrderedATs(){
 		List< Long > orderedATs = new ArrayList<>();
-		try (Connection con = Db.getConnection();
+		try (Connection con = Db.db.getConnection();
 				PreparedStatement pstmt = con.prepareStatement("SELECT at.id FROM at "
 				+ "INNER JOIN at_state ON at.id = at_state.at_id INNER JOIN account ON at.id = account.id "
 				+ "WHERE at.latest = TRUE AND at_state.latest = TRUE AND account.latest = TRUE "
@@ -521,7 +522,7 @@ public final class AT extends AT_Machine_State {
 
 
 	static boolean isATAccountId(Long id) {
-		try ( Connection con = Db.getConnection();
+		try ( Connection con = Db.db.getConnection();
 				PreparedStatement pstmt = con.prepareStatement( "SELECT id FROM at WHERE id = ? AND latest = TRUE" ) )
 		{
 			pstmt.setLong(1, id);

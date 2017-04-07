@@ -280,6 +280,66 @@ public final class Account {
 
     }
 
+    public static final class RewardRecipientAssignment {
+        
+        public final Long accountId;
+        private Long prevRecipientId;
+        private Long recipientId;
+        private int fromHeight;
+        private final DbKey dbKey;
+        
+        private RewardRecipientAssignment(Long accountId, Long prevRecipientId, Long recipientId, int fromHeight) {
+            this.accountId = accountId;
+            this.prevRecipientId = prevRecipientId;
+            this.recipientId = recipientId;
+            this.fromHeight = fromHeight;
+            this.dbKey = rewardRecipientAssignmentDbKeyFactory.newKey(this.accountId);
+        }
+        
+        private RewardRecipientAssignment(ResultSet rs, DbKey dbKey) throws SQLException {
+            this.accountId = rs.getLong("account_id");
+            this.dbKey = dbKey;
+            this.prevRecipientId = rs.getLong("prev_recip_id");
+            this.recipientId = rs.getLong("recip_id");
+            this.fromHeight = (int) rs.getLong("from_height");
+        }
+        
+        private void save(Connection con) throws SQLException {
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO reward_recip_assign "
+                    + "(account_id, prev_recip_id, recip_id, from_height, height, latest) KEY (account_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
+                int i = 0;
+                pstmt.setLong(++i, this.accountId);
+                pstmt.setLong(++i, this.prevRecipientId);
+                pstmt.setLong(++i, this.recipientId);
+                pstmt.setInt(++i, this.fromHeight);
+                pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
+                pstmt.executeUpdate();
+            }
+        }
+        
+        public long getAccountId() {
+            return accountId;
+        }
+        
+        public long getPrevRecipientId() {
+            return prevRecipientId;
+        }
+        
+        public long getRecipientId() {
+            return recipientId;
+        }
+        
+        public int getFromHeight() {
+            return fromHeight;
+        }
+        
+        public void setRecipient(long newRecipientId, int fromHeight) {
+            prevRecipientId = recipientId;
+            recipientId = newRecipientId;
+            this.fromHeight = fromHeight;
+        }
+    }
+
     public static final class AccountInfo {
 
         private final long accountId;
@@ -482,6 +542,29 @@ public final class Account {
             account.save(con);
         }
 
+    };
+
+    private static final DbKey.LongKeyFactory<RewardRecipientAssignment> rewardRecipientAssignmentDbKeyFactory = new DbKey.LongKeyFactory<RewardRecipientAssignment>("account_id") {
+        
+        @Override
+        public DbKey newKey(RewardRecipientAssignment assignment) {
+            return assignment.dbKey;
+        }
+
+    };
+    
+    private static final VersionedEntityDbTable<RewardRecipientAssignment> rewardRecipientAssignmentTable = new VersionedEntityDbTable<RewardRecipientAssignment>("reward_recip_assign", rewardRecipientAssignmentDbKeyFactory) {
+        
+        @Override
+        protected RewardRecipientAssignment load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            return new RewardRecipientAssignment(rs, dbKey);
+        }
+        
+        @Override
+        protected void save(Connection con, RewardRecipientAssignment assignment) throws SQLException {
+            assignment.save(con);
+        }
+    
     };
 
     private static final DbKey.LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new DbKey.LongKeyFactory<AccountInfo>("account_id") {
@@ -995,6 +1078,36 @@ public final class Account {
         return accountInfoTable.search(query, DbClause.EMPTY_CLAUSE, from, to);
     }
 
+    public static RewardRecipientAssignment getRewardRecipientAssignment(long accountId) {
+        return rewardRecipientAssignmentTable.get(rewardRecipientAssignmentDbKeyFactory.newKey(accountId));
+    }
+    
+    public static void setRewardRecipientAssignment(long accountId, Long recipientId) {
+        int currentHeight = Nxt.getBlockchain().getHeight();
+        RewardRecipientAssignment assignment = getRewardRecipientAssignment(accountId);
+        if (assignment == null) {
+            assignment = new RewardRecipientAssignment(accountId, accountId, recipientId, (int) (currentHeight + Constants.BURST_REWARD_RECIPIENT_ASSIGNMENT_WAIT_TIME));
+        } else {
+            assignment.setRecipient(recipientId, (int) (currentHeight + Constants.BURST_REWARD_RECIPIENT_ASSIGNMENT_WAIT_TIME));
+        }
+        rewardRecipientAssignmentTable.insert(assignment);
+    }
+
+    private static DbClause getAccountsWithRewardRecipientClause(final long recipientId, final int height) {
+        return new DbClause(" recip_id = ? AND from_height <= ? ") {
+            @Override
+            public int set(PreparedStatement pstmt, int index) throws SQLException {
+                pstmt.setLong(index++, recipientId);
+                pstmt.setInt(index++, height);
+                return index;
+            }
+        };
+    }
+    
+    public static DbIterator<RewardRecipientAssignment> getAccountsWithRewardRecipient(long recipientId) {
+        return rewardRecipientAssignmentTable.getManyBy(getAccountsWithRewardRecipientClause(recipientId, Nxt.getBlockchain().getHeight() + 1), 0, -1);
+    }
+
     static {
 
         Nxt.getBlockchainProcessor().addListener(block -> {
@@ -1099,6 +1212,11 @@ public final class Account {
     }
 
     private void save(Connection con) throws SQLException {
+        // XXX BURST: This is commented out in old BURST - but WHY?
+        // Adding forced throw here to enable the code path and find out when it's called
+        throw new RuntimeException("Account.save(con) code path was called - this is forbidden in BURST - WHY?");
+        
+        /*
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, "
                 + "balance, unconfirmed_balance, forged_balance, "
                 + "active_lessee_id, has_control_phasing, height, latest) "
@@ -1113,6 +1231,7 @@ public final class Account {
             pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
             pstmt.executeUpdate();
         }
+        */
     }
 
     private void save() {
@@ -1390,6 +1509,14 @@ public final class Account {
         return controls;
     }
 
+    public RewardRecipientAssignment getRewardRecipientAssignment() {
+        return getRewardRecipientAssignment(this.id);
+    }
+    
+    public void setRewardRecipientAssignment(Long recipientId) {
+        setRewardRecipientAssignment(this.id, recipientId);
+    }
+    
     void leaseEffectiveBalance(long lesseeId, int period) {
         int height = Nxt.getBlockchain().getHeight();
         AccountLease accountLease = accountLeaseTable.get(accountDbKeyFactory.newKey(this));

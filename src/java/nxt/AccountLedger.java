@@ -429,6 +429,11 @@ public class AccountLedger {
         // TYPE_ACCOUNT_CONTROL
             ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING(32, true),
             ACCOUNT_CONTROL_PHASING_ONLY(55, true),
+        // BURST
+            REWARD_RECIPIENT_ASSIGNMENT(201, true),
+            AUTOMATED_TRANSACTION_CREATION(202, false),
+            AUTOMATED_TRANSACTION_PAYMENT(203, false),
+            AUTOMATED_TRANSACTION_FEE(204, false),
         // TYPE_CURRENCY
             CURRENCY_DELETION(33, true),
             CURRENCY_DISTRIBUTION(34, true),

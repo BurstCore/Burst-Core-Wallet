@@ -517,7 +517,7 @@ public abstract class AT_Controller {
 		{
 			totalAmount += tx.getAmount();
 			AT.addPendingTransaction(tx);
-			Logger.logDebugMessage("Transaction to " + Convert.toUnsignedLong(AT_API_Helper.getLong(tx.getRecipientId())) + " amount " + tx.getAmount() );
+			Logger.logDebugMessage("Transaction to " + Long.toUnsignedString(AT_API_Helper.getLong(tx.getRecipientId())) + " amount " + tx.getAmount() );
 
 		}
 		return totalAmount;
