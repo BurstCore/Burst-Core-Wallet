@@ -20,7 +20,7 @@ public final class GetMiningInfo extends APIServlet.APIRequestHandler {
 	}
 	
 	@Override
-	JSONStreamAware processRequest(HttpServletRequest req) {
+	protected JSONStreamAware processRequest(HttpServletRequest req) {
 		JSONObject response = new JSONObject();
 		
 		response.put("height", Long.toString(Nxt.getBlockchain().getHeight() + 1));

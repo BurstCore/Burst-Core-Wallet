@@ -13,7 +13,7 @@ import nxt.AT;
 import nxt.Account;
 import nxt.Appendix;
 import nxt.Constants;
-import nxt.db.Db;
+import nxt.Db;
 import nxt.Nxt;
 import nxt.Transaction;
 import nxt.crypto.Crypto;
@@ -435,7 +435,7 @@ public class AT_API_Platform_Impl extends AT_API_Impl {
 	}
 
 	protected static Long findTransaction(int startHeight , int endHeight , Long atID, int numOfTx, long minAmount){
-		try (Connection con = Db.getConnection();
+		try (Connection con = Db.db.getConnection();
 				PreparedStatement pstmt = con.prepareStatement("SELECT id FROM transaction "
 						+ "WHERE height>= ? AND height < ? and recipient_id = ? AND amount >= ? "
 						+ "ORDER BY height, id "
@@ -460,7 +460,7 @@ public class AT_API_Platform_Impl extends AT_API_Impl {
 	}
 
 	protected static int findTransactionHeight(Long transactionId, int height, Long atID, long minAmount){
-		try (Connection con = Db.getConnection();
+		try (Connection con = Db.db.getConnection();
 				PreparedStatement pstmt = con.prepareStatement("SELECT id FROM transaction "
 						+ "WHERE height= ? and recipient_id = ? AND amount >= ? "
 						+ "ORDER BY height, id")){

@@ -21,6 +21,9 @@ import nxt.AccountLedger.LedgerEvent;
 import nxt.Attachment.AbstractAttachment;
 import nxt.NxtException.ValidationException;
 import nxt.VoteWeighting.VotingModel;
+import nxt.at.AT_Constants;
+import nxt.at.AT_Controller;
+import nxt.at.AT_Exception;
 import nxt.util.Convert;
 import nxt.util.Logger;
 import org.apache.tika.Tika;
@@ -41,6 +44,8 @@ public abstract class TransactionType {
     private static final byte TYPE_COLORED_COINS = 2;
     private static final byte TYPE_DIGITAL_GOODS = 3;
     private static final byte TYPE_ACCOUNT_CONTROL = 4;
+    static final byte TYPE_BURST_MINING = 20;
+    static final byte TYPE_AUTOMATED_TRANSACTIONS = 22;
     static final byte TYPE_MONETARY_SYSTEM = 5;
     private static final byte TYPE_DATA = 6;
     static final byte TYPE_SHUFFLING = 7;
@@ -80,6 +85,11 @@ public abstract class TransactionType {
 
     private static final byte SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING = 0;
     private static final byte SUBTYPE_ACCOUNT_CONTROL_PHASING_ONLY = 1;
+
+    private static final byte SUBTYPE_BURST_MINING_REWARD_RECIPIENT_ASSIGNMENT = 0;
+    
+    static final byte SUBTYPE_AUTOMATED_TRANSACTIONS_AT_CREATION = 0;
+    static final byte SUBTYPE_AUTOMATED_TRANSACTIONS_AT_PAYMENT = 1;
 
     private static final byte SUBTYPE_DATA_TAGGED_DATA_UPLOAD = 0;
     private static final byte SUBTYPE_DATA_TAGGED_DATA_EXTEND = 1;
@@ -170,6 +180,13 @@ public abstract class TransactionType {
                         return TransactionType.AccountControl.EFFECTIVE_BALANCE_LEASING;
                     case SUBTYPE_ACCOUNT_CONTROL_PHASING_ONLY:
                         return TransactionType.AccountControl.SET_PHASING_ONLY;
+                    default:
+                        return null;
+                }
+            case TYPE_BURST_MINING:
+                switch (subtype) {
+                    case SUBTYPE_BURST_MINING_REWARD_RECIPIENT_ASSIGNMENT:
+                        return TransactionType.BurstMining.REWARD_RECIPIENT_ASSIGNMENT;
                     default:
                         return null;
                 }
@@ -2978,6 +2995,267 @@ public abstract class TransactionType {
 
         };
 
+    }
+
+    public static abstract class BurstMining extends TransactionType {
+        
+        private BurstMining() {}
+        
+        @Override
+        public final byte getType() {
+            return TransactionType.TYPE_BURST_MINING;
+        }
+        
+        @Override
+        final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            return true;
+        }
+        
+        @Override
+        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        
+        public static final TransactionType REWARD_RECIPIENT_ASSIGNMENT = new BurstMining() {
+            
+            @Override
+            public final byte getSubtype() {
+                return TransactionType.SUBTYPE_BURST_MINING_REWARD_RECIPIENT_ASSIGNMENT;
+            }
+            
+            @Override
+            public LedgerEvent getLedgerEvent() {
+                return LedgerEvent.REWARD_RECIPIENT_ASSIGNMENT;
+            }
+            
+            @Override
+            public String getName() {
+                return "RewardRecipientAssignment";
+            }
+            
+            @Override
+            AbstractAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
+                return new Attachment.BurstMiningRewardRecipientAssignment(buffer, transactionVersion);
+            }
+
+            @Override
+            AbstractAttachment parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
+                return new Attachment.BurstMiningRewardRecipientAssignment(attachmentData);
+            }
+            
+            @Override
+            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+                senderAccount.setRewardRecipientAssignment(recipientAccount.getId());
+            }
+            
+            @Override
+            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+                if (Nxt.getBlockchain().getHeight() < Constants.DIGITAL_GOODS_STORE_BLOCK) {
+                    return false; // sync fails after 7007 without this
+                }
+                return TransactionType.isDuplicate(REWARD_RECIPIENT_ASSIGNMENT, Long.toUnsignedString(transaction.getSenderId()), duplicates, true);    // XXX Assuming "exclusive" based on old BURST
+            }
+            
+            @Override
+            void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+                long height = Nxt.getBlockchain().getLastBlock().getHeight() + 1;
+                Account sender = Account.getAccount(transaction.getSenderId());
+                Account.RewardRecipientAssignment rewardAssignment = sender.getRewardRecipientAssignment();
+                if (rewardAssignment != null && rewardAssignment.getFromHeight() >= height) {
+                    throw new NxtException.NotCurrentlyValidException("Cannot reassign reward recipient before previous goes into effect: " + transaction.getJSONObject());
+                }
+                byte[] recipientPublicKey = Account.getPublicKey(transaction.getRecipientId());
+                if (recipientPublicKey == null) {
+                    throw new NxtException.NotValidException("Reward recipient must have public key saved in blockchain: " + transaction.getJSONObject());
+                }
+                if (transaction.getAmountNQT() != 0 || transaction.getFeeNQT() != Constants.ONE_NXT) {
+                    throw new NxtException.NotValidException("Reward recipient assignment transaction must have 0 send amount and 1 fee: " + transaction.getJSONObject());
+                }
+                if (height < Constants.BURST_REWARD_RECIPIENT_ASSIGNMENT_START_BLOCK) {
+                    throw new NxtException.NotCurrentlyValidException("Reward recipient assignment not allowed before block " + Constants.BURST_REWARD_RECIPIENT_ASSIGNMENT_START_BLOCK);
+                }
+            }
+            
+            @Override
+            public boolean canHaveRecipient() {
+                return true;
+            }
+            
+            @Override
+            public boolean mustHaveRecipient() {
+                return false;
+            }
+            
+            @Override
+            public boolean isPhasingSafe() {
+                return true;
+            }
+            
+        };
+    }
+
+    public static abstract class AutomatedTransactions extends TransactionType {
+        private AutomatedTransactions() {}
+        
+        @Override
+        public final byte getType(){
+            return TransactionType.TYPE_AUTOMATED_TRANSACTIONS;
+        }
+        
+        @Override
+        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            return true;
+        }
+        
+        @Override
+        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        
+        @Override
+        final void validateAttachment(Transaction transaction) throws NxtException.ValidationException {
+            if (transaction.getAmountNQT() != 0) {
+                throw new NxtException.NotValidException("Invalid automated transaction transaction");
+            }
+            doValidateAttachment(transaction);
+        }
+
+        abstract void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException;
+
+        @Override
+        public boolean isPhasingSafe() {
+            return true;
+        }
+
+        public static final TransactionType AUTOMATED_TRANSACTION_CREATION = new AutomatedTransactions() {
+
+            @Override
+            public byte getSubtype() {
+                return TransactionType.SUBTYPE_AUTOMATED_TRANSACTIONS_AT_CREATION;
+            }
+
+            @Override
+            public LedgerEvent getLedgerEvent() {
+                return LedgerEvent.AUTOMATED_TRANSACTION_CREATION;
+            }
+
+            @Override
+            public String getName() {
+                return "AutomatedTransactionCreation";
+            }
+
+            @Override
+            AbstractAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
+                // TODO Auto-generated method stub
+                //System.out.println("parsing byte AT attachment");
+                Attachment.AutomatedTransactionsCreation attachment = new Attachment.AutomatedTransactionsCreation(buffer, transactionVersion);
+                //System.out.println("byte AT attachment parsed");
+                return attachment;
+            }
+
+            @Override
+            AbstractAttachment parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
+                // TODO Auto-generated method stub
+                //System.out.println("parsing at attachment");
+                Attachment.AutomatedTransactionsCreation atCreateAttachment = new Attachment.AutomatedTransactionsCreation(attachmentData);
+                //System.out.println("attachment parsed");
+                return atCreateAttachment;
+            }
+
+            @Override
+            void doValidateAttachment(Transaction transaction) throws ValidationException {
+                //System.out.println("validating attachment");
+                if (Nxt.getBlockchain().getHeight() < Constants.AUTOMATED_TRANSACTION_BLOCK){
+                    throw new NxtException.NotYetEnabledException("Automated Transactions not yet enabled at height " + Nxt.getBlockchain().getHeight());
+                }
+                if (transaction.getSignature() != null && Account.getAccount(transaction.getId()) != null) {
+                    byte[] existingAccountPublicKey = Account.getPublicKey(transaction.getId());
+                    if (existingAccountPublicKey != null) 
+                        throw new NxtException.NotValidException("Account with id already exists");
+                }
+                Attachment.AutomatedTransactionsCreation attachment = (Attachment.AutomatedTransactionsCreation) transaction.getAttachment();
+                long totalPages = 0;
+                try {
+                    totalPages = AT_Controller.checkCreationBytes(attachment.getCreationBytes(), Nxt.getBlockchain().getHeight());
+                } catch(AT_Exception e) {
+                    throw new NxtException.NotCurrentlyValidException("Invalid AT creation bytes", e);
+                }
+                long requiredFee = totalPages * AT_Constants.getInstance().COST_PER_PAGE( transaction.getHeight() );
+                if (transaction.getFeeNQT() <  requiredFee) {
+                    throw new NxtException.NotValidException("Insufficient fee for AT creation. Minimum: " + Long.toUnsignedString(requiredFee / Constants.ONE_NXT));
+                }
+                if(Nxt.getBlockchain().getHeight() >= Constants.AT_FIX_BLOCK_3) {
+                    if(attachment.getName().length() > Constants.MAX_AUTOMATED_TRANSACTION_NAME_LENGTH) {
+                        throw new NxtException.NotValidException("Name of automated transaction over size limit");
+                    }
+                    if(attachment.getDescription().length() > Constants.MAX_AUTOMATED_TRANSACTION_DESCRIPTION_LENGTH) {
+                        throw new NxtException.NotValidException("Description of automated transaction over size limit");
+                    }
+                }
+                //System.out.println("validating success");
+            }
+
+            @Override
+            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+                // TODO Auto-generated method stub
+                Attachment.AutomatedTransactionsCreation attachment = (Attachment.AutomatedTransactionsCreation) transaction.getAttachment();
+                Long atId = transaction.getId();
+                //System.out.println("Applying AT attachent");
+                AT.addAT( transaction.getId() , transaction.getSenderId() , attachment.getName() , attachment.getDescription() , attachment.getCreationBytes() , transaction.getHeight() ); 
+                //System.out.println("At with id "+atId+" successfully applied");
+            }
+
+            @Override
+            public boolean canHaveRecipient() {
+                // TODO Auto-generated method stub
+                return false;
+            }
+            
+        };
+        
+        public static final TransactionType AT_PAYMENT = new AutomatedTransactions() {
+            
+            @Override
+            public final byte getSubtype() {
+                return TransactionType.SUBTYPE_AUTOMATED_TRANSACTIONS_AT_PAYMENT;
+            }
+
+            @Override
+            public LedgerEvent getLedgerEvent() {
+                return LedgerEvent.AUTOMATED_TRANSACTION_PAYMENT;
+            }
+
+            @Override
+            public String getName() {
+                return "AutomatedTransactionPayment";
+            }
+
+            @Override
+            AbstractAttachment parseAttachment(ByteBuffer buffer, byte transactionVersion) throws NxtException.NotValidException {
+                return Attachment.AT_PAYMENT;
+            }
+
+            @Override
+            AbstractAttachment parseAttachment(JSONObject attachmentData) throws NxtException.NotValidException {
+                return Attachment.AT_PAYMENT;
+            }
+
+            @Override
+            void doValidateAttachment(Transaction transaction) throws NxtException.ValidationException {
+                /*if (transaction.getAmountNQT() <= 0 || transaction.getAmountNQT() >= Constants.MAX_BALANCE_NQT) {
+                    throw new NxtException.NotValidException("Invalid ordinary payment");
+                }*/
+                throw new NxtException.NotValidException("AT payment never validates");
+            }
+
+            @Override
+            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+                // TODO Auto-generated method stub
+            }
+
+            @Override
+            public boolean canHaveRecipient() {
+                return true;
+            }
+            
+        };
+        
     }
 
     public static abstract class Data extends TransactionType {

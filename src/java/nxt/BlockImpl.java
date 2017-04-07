@@ -268,12 +268,14 @@ final class BlockImpl implements Block {
         JSONArray transactionsData = new JSONArray();
         getTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
         json.put("transactions", transactionsData);
+        if (nonce == null)
+            throw new IllegalStateException("Can't convert Block to JSON due to null nonce");
         json.put("nonce", Long.toUnsignedString(nonce));
         json.put("blockATs", Convert.toHexString( blockATs ));
         return json;
     }
 
-    static BlockImpl parseBlock(JSONObject blockData) throws NxtException.NotValidException {
+    static BlockImpl parseBlock(JSONObject blockData) throws NxtException.NotValidException, BlockchainProcessor.BlockOutOfOrderException {
         try {
             int version = ((Long) blockData.get("version")).intValue();
             int timestamp = ((Long) blockData.get("timestamp")).intValue();
@@ -331,6 +333,8 @@ final class BlockImpl implements Block {
             if (version > 1) {
                 buffer.put(previousBlockHash);
             }
+            if (nonce == null)
+                throw new IllegalStateException("Can't serialize block due to null nonce");
             buffer.putLong(nonce);
             if(blockATs != null)
                 buffer.put(blockATs);
@@ -342,21 +346,53 @@ final class BlockImpl implements Block {
         return bytes;
     }
 
-    boolean verifyBlockSignature() {
+    boolean verifyBlockSignature() throws BlockchainProcessor.BlockOutOfOrderException {
         return checkSignature() && Account.setOrVerify(getGeneratorId(), getGeneratorPublicKey());
     }
 
     private volatile boolean hasValidSignature = false;
 
-    private boolean checkSignature() {
+    private boolean checkSignature() throws BlockchainProcessor.BlockOutOfOrderException {
         if (! hasValidSignature) {
-            byte[] data = Arrays.copyOf(bytes(), bytes.length - 64);
-            hasValidSignature = blockSignature != null && Crypto.verify(blockSignature, data, getGeneratorPublicKey(), version >= 3);
+            try {
+                
+                BlockImpl previousBlock = BlockchainImpl.getInstance().getBlock(getPreviousBlockId());
+                if (previousBlock == null) {
+                    throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", this);
+                }
+                
+                byte[] generatorPublicKey = getGeneratorPublicKey();
+                byte[] publicKey = generatorPublicKey;
+                
+                if (previousBlock.getHeight() + 1 >= Constants.BURST_REWARD_RECIPIENT_ASSIGNMENT_START_BLOCK) {
+                    Account genAccount = Account.getAccount(generatorPublicKey); 
+                    Account.RewardRecipientAssignment rewardAssignment = genAccount == null ? null : genAccount.getRewardRecipientAssignment();
+                    
+                    if (rewardAssignment != null) {
+                        if (previousBlock.getHeight() + 1 >= rewardAssignment.getFromHeight()) {
+                            publicKey = Account.getPublicKey(rewardAssignment.getRecipientId());
+                        } else {
+                            publicKey = Account.getPublicKey(rewardAssignment.getPrevRecipientId());
+                        }
+                    }
+                }
+                
+                byte[] data = Arrays.copyOf(bytes(), bytes.length - 64);
+                hasValidSignature = blockSignature != null && Crypto.verify(blockSignature, data, publicKey, version >= 3);
+
+            } catch (RuntimeException e) {
+
+                Logger.logMessage("Error verifying block signature", e);
+                return false;
+
+            }
+            
         }
+        
         return hasValidSignature;
     }
 
-    boolean verifyGenerationSignature() throws BlockchainProcessor.BlockOutOfOrderException {
+    boolean verifyGenerationSignature() throws BlockchainProcessor.BlockOutOfOrderException, BlockchainProcessor.BlockNotAcceptedException {
 
         try {
 
@@ -365,32 +401,20 @@ final class BlockImpl implements Block {
                 throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", this);
             }
 
-            if (version == 1 && !Crypto.verify(generationSignature, previousBlock.generationSignature, getGeneratorPublicKey(), false)) {
+            // In case the verifier-threads are not done with this yet - do it now
+            synchronized(this) {
+                if(this.pocTime == null)
+                    preVerify();
+            }
+
+            byte[] correctGenerationSignature = Generator.calculateGenerationSignature(previousBlock.getGenerationSignature(), previousBlock.getGeneratorId());
+            if (!Arrays.equals(generationSignature, correctGenerationSignature))
                 return false;
-            }
 
-            Account account = Account.getAccount(getGeneratorId());
-            long effectiveBalance = account == null ? 0 : account.getEffectiveBalanceNXT();
-            if (effectiveBalance <= 0) {
-                return false;
-            }
+            int elapsedTime = timestamp - previousBlock.timestamp;
+            BigInteger pTime = this.pocTime.divide(BigInteger.valueOf(previousBlock.getBaseTarget()));
 
-            MessageDigest digest = Crypto.sha256();
-            byte[] generationSignatureHash;
-            if (version == 1) {
-                generationSignatureHash = digest.digest(generationSignature);
-            } else {
-                digest.update(previousBlock.generationSignature);
-                generationSignatureHash = digest.digest(getGeneratorPublicKey());
-                if (!Arrays.equals(generationSignature, generationSignatureHash)) {
-                    return false;
-                }
-            }
-
-            BigInteger hit = new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
-
-            return Generator.verifyHit(hit, BigInteger.valueOf(effectiveBalance), previousBlock, timestamp)
-                    || (this.height < Constants.TRANSPARENT_FORGING_BLOCK_5 && Arrays.binarySearch(badBlocks, this.getId()) >= 0);
+            return BigInteger.valueOf(elapsedTime).compareTo(pTime) > 0;
 
         } catch (RuntimeException e) {
 
@@ -399,11 +423,6 @@ final class BlockImpl implements Block {
 
         }
 
-    }
-
-    private static final long[] badBlocks = new long[] {};
-    static {
-        Arrays.sort(badBlocks);
     }
 
     void apply() {
@@ -424,16 +443,34 @@ final class BlockImpl implements Block {
                 }
                 totalBackFees += backFees[i];
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(this.height - i - 1).getGeneratorId());
-                Logger.logDebugMessage("Back fees %f NXT to forger at height %d", ((double)backFees[i])/Constants.ONE_NXT, this.height - i - 1);
+                Logger.logDebugMessage("Back fees %f BURST to forger at height %d", ((double)backFees[i])/Constants.ONE_NXT, this.height - i - 1);
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
                 previousGeneratorAccount.addToForgedBalanceNQT(backFees[i]);
             }
         }
         if (totalBackFees != 0) {
-            Logger.logDebugMessage("Fee reduced by %f NXT at height %d", ((double)totalBackFees)/Constants.ONE_NXT, this.height);
+            Logger.logDebugMessage("Fee reduced by %f BURST at height %d", ((double)totalBackFees)/Constants.ONE_NXT, this.height);
         }
         generatorAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.BLOCK_GENERATED, getId(), totalFeeNQT - totalBackFees);
         generatorAccount.addToForgedBalanceNQT(totalFeeNQT - totalBackFees);
+        
+        // BURST-specific block reward
+        if (height < Constants.BURST_REWARD_RECIPIENT_ASSIGNMENT_START_BLOCK) {
+            generatorAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.BLOCK_GENERATED, getId(), getBlockReward());
+            generatorAccount.addToForgedBalanceNQT(getBlockReward());
+        } else {
+            Account rewardAccount;
+            Account.RewardRecipientAssignment rewardAssignment = generatorAccount.getRewardRecipientAssignment();
+            if (rewardAssignment == null) {
+                rewardAccount = generatorAccount;
+            } else if (height >= rewardAssignment.getFromHeight()) {
+                rewardAccount = Account.getAccount(rewardAssignment.getRecipientId());
+            } else {
+                rewardAccount = Account.getAccount(rewardAssignment.getPrevRecipientId());
+            }
+            rewardAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.BLOCK_GENERATED, getId(), getBlockReward());
+            rewardAccount.addToForgedBalanceNQT(getBlockReward());
+        }
     }
 
     void setPrevious(BlockImpl block) {
@@ -509,6 +546,43 @@ final class BlockImpl implements Block {
     @Override
     public boolean isVerified() {
         return pocTime != null;
+    }
+
+    @Override
+    public void preVerify() throws BlockchainProcessor.BlockNotAcceptedException {
+        preVerify(null);
+    }
+
+    public void preVerify(byte[] scoopData) throws BlockchainProcessor.BlockNotAcceptedException {
+        synchronized(this) {
+            // Remove from todo-list:
+            synchronized(BlockchainProcessorImpl.blockCache) {
+                BlockchainProcessorImpl.unverified.remove(this.getId());
+            }
+    
+            // Just in case its already verified
+            if (this.pocTime != null)
+                return;
+    
+            for(TransactionImpl transaction : getTransactions()) {
+                if (!transaction.verifySignature()) {
+                    Logger.logMessage("Bad transaction signature during block pre-verification for tx: " + Long.toUnsignedString(transaction.getId()) + " at block height: " + getHeight());
+                    throw new BlockchainProcessor.TransactionNotAcceptedException("Invalid signature for tx: " + Long.toUnsignedString(transaction.getId()) + "at block height: " + getHeight(), transaction);
+                }
+            }
+
+            // only set pocTime, marking block as verified, if all the transactions have verified
+            try {
+                if (scoopData == null) {
+                    this.pocTime = Generator.calculatePOCTime(getGeneratorId(), nonce, generationSignature, getScoopNum());
+                } else {
+                    this.pocTime = Generator.calculatePOCTime(getGeneratorId(), nonce, generationSignature, scoopData);
+                }
+            } catch (RuntimeException e) {
+                Logger.logMessage("Error pre-verifying block generation signature", e);
+                return;
+            }
+        }
     }
 
     @Override

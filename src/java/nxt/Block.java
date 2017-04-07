@@ -71,6 +71,10 @@ public interface Block {
 
     boolean isVerified();
 
+    void preVerify() throws BlockchainProcessor.BlockNotAcceptedException;
+
+    void preVerify(byte[] scoopData) throws BlockchainProcessor.BlockNotAcceptedException;
+
     Peer getPeer();
 
     void setPeer(Peer peer);

@@ -45,8 +45,4 @@ public class MiningPlot {
     public byte[] getScoop(int pos) {
         return Arrays.copyOfRange(data, pos * SCOOP_SIZE, (pos + 1) * SCOOP_SIZE);
     }
-
-    public void hashScoop(Shabal256 md, int pos) {
-        md.update(data, pos * SCOOP_SIZE, SCOOP_SIZE);
-    }
 }

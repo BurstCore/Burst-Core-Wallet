@@ -22,6 +22,8 @@ import nxt.util.Listener;
 import nxt.util.Listeners;
 import nxt.util.Logger;
 import nxt.util.ThreadPool;
+import nxt.util.MiningPlot;
+import fr.cryptohash.Shabal256;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -36,6 +38,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public final class Generator implements Comparable<Generator> {
 
@@ -228,6 +232,47 @@ public final class Generator implements Comparable<Generator> {
         }
     }
 
+    public static BigInteger calculatePOCTime(long accountId, long nonce, byte[] genSig, byte[] scoopData) {
+        Shabal256 md = new Shabal256();
+        md.update(genSig);
+        md.update(scoopData);
+        byte[] hash = md.digest();
+        return new BigInteger(1, new byte[] {hash[7], hash[6], hash[5], hash[4], hash[3], hash[2], hash[1], hash[0]});
+    }
+
+    public static BigInteger calculatePOCTime(long accountId, long nonce, byte[] genSig, int scoop) {
+        MiningPlot plot = new MiningPlot(accountId, nonce);
+        byte[] scoopData = plot.getScoop(scoop);
+        
+        return calculatePOCTime(accountId, nonce, genSig, scoopData);
+    }
+    
+    // XXX stub placeholder for now until Generator is converted to BURST form
+    public static boolean submitNonce(String secretPhrase, long nonce, byte[] publicKey) {
+        return false;
+    }
+    
+    // XXX stub placeholder for now until Generator is converted to BURST form
+    public static boolean submitNonce(String secretPhrase, long nonce) {
+        byte[] publicKey = Crypto.getPublicKey(secretPhrase);
+        return submitNonce(secretPhrase, nonce, publicKey);
+    }
+    
+    // XXX stub placeholder for now until Generator is converted to BURST form
+    public static BigInteger getPOCTime() {
+        return new BigInteger(0, new byte[] {});
+    }
+    
+    public static byte[] calculateGenerationSignature(byte[] lastGenSig, long lastGenId) {
+        ByteBuffer gensigbuf = ByteBuffer.allocate(32 + 8);
+        gensigbuf.put(lastGenSig);
+        gensigbuf.putLong(lastGenId);
+
+        Shabal256 md = new Shabal256();
+        md.update(gensigbuf.array());
+        return md.digest();
+    }
+
     static void setDelay(int delay) {
         Generator.delayTime = delay;
     }
@@ -268,7 +313,6 @@ public final class Generator implements Comparable<Generator> {
         return block.getTimestamp()
                 + hit.divide(BigInteger.valueOf(block.getBaseTarget()).multiply(effectiveBalance)).longValue();
     }
-
 
     private final long accountId;
     private final String secretPhrase;
