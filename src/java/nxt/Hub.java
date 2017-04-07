@@ -68,6 +68,7 @@ public class Hub {
 
     public static List<Hit> getHubHits(Block block) {
 
+        /* Unused in BURST
         synchronized (Hub.class) {
             if (block.getId() == lastBlockId && lastHits != null) {
                 return lastHits;
@@ -103,6 +104,9 @@ public class Hub {
             lastBlockId = currentLastBlockId;
         }
         return lastHits;
+        */
+        
+        return null;
 
     }
 

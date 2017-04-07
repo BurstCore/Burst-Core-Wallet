@@ -433,6 +433,7 @@ public final class Users {
                 Users.sendNewDataToAll(response);
             }, BlockchainProcessor.Event.BLOCK_PUSHED);
 
+            /* Unused in BURST
             Generator.addListener(generator -> {
                 JSONObject response = new JSONObject();
                 response.put("response", "setBlockGenerationDeadline");
@@ -443,6 +444,7 @@ public final class Users {
                     }
                 });
             }, Generator.Event.GENERATION_DEADLINE);
+            */
         }
 
     }

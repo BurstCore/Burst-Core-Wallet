@@ -18,6 +18,7 @@ package nxt.user;
 
 import nxt.Generator;
 import nxt.crypto.Crypto;
+import nxt.util.Convert;
 import nxt.util.JSON;
 import nxt.util.Logger;
 import org.json.simple.JSONArray;
@@ -71,14 +72,20 @@ final class User {
     }
 
     void lockAccount() {
+        /* Unused in BURST
         Generator.stopForging(secretPhrase);
+        */
         secretPhrase = null;
     }
 
     long unlockAccount(String secretPhrase) {
         this.publicKey = Crypto.getPublicKey(secretPhrase);
         this.secretPhrase = secretPhrase;
+        /* Unused in BURST
         return Generator.startForging(secretPhrase).getAccountId();
+         */
+        byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
+        return Convert.fullHashToId(publicKeyHash);
     }
 
     synchronized void processPendingResponses(HttpServletRequest req, HttpServletResponse resp) throws IOException {

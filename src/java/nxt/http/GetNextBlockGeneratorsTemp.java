@@ -27,6 +27,8 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
+import static nxt.http.JSONResponses.NOT_FORGING;
+
 /**
  * <p>
  * The GetNextBlockGenerators API will return the next block generators ordered by the
@@ -69,6 +71,7 @@ public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandl
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws NxtException {
+        /* Unused in BURST
         JSONObject response = new JSONObject();
         int limit = Math.max(1, ParameterParser.getInt(req, "limit", 1, Integer.MAX_VALUE, false));
         Blockchain blockchain = Nxt.getBlockchain();
@@ -100,6 +103,9 @@ public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandl
             blockchain.readUnlock();
         }
         return response;
+        */
+        
+        return NOT_FORGING; 
     }
 
     /**

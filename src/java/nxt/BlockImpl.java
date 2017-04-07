@@ -62,7 +62,7 @@ final class BlockImpl implements Block {
 
     // BURST-specific from here on
     private Long nonce;
-    private BigInteger pocTime = null;
+    private BigInteger prescaledPOCTime = null;
     private final byte[] blockATs;
     private Peer downloadedFrom = null;
 
@@ -403,7 +403,7 @@ final class BlockImpl implements Block {
 
             // In case the verifier-threads are not done with this yet - do it now
             synchronized(this) {
-                if(this.pocTime == null)
+                if(this.prescaledPOCTime == null)
                     preVerify();
             }
 
@@ -412,9 +412,9 @@ final class BlockImpl implements Block {
                 return false;
 
             int elapsedTime = timestamp - previousBlock.timestamp;
-            BigInteger pTime = this.pocTime.divide(BigInteger.valueOf(previousBlock.getBaseTarget()));
+            BigInteger POCTime = this.prescaledPOCTime.divide(BigInteger.valueOf(previousBlock.getBaseTarget()));
 
-            return BigInteger.valueOf(elapsedTime).compareTo(pTime) > 0;
+            return BigInteger.valueOf(elapsedTime).compareTo(POCTime) > 0;
 
         } catch (RuntimeException e) {
 
@@ -545,7 +545,7 @@ final class BlockImpl implements Block {
 
     @Override
     public boolean isVerified() {
-        return pocTime != null;
+        return prescaledPOCTime != null;
     }
 
     @Override
@@ -561,7 +561,7 @@ final class BlockImpl implements Block {
             }
     
             // Just in case its already verified
-            if (this.pocTime != null)
+            if (this.prescaledPOCTime != null)
                 return;
     
             for(TransactionImpl transaction : getTransactions()) {
@@ -571,12 +571,12 @@ final class BlockImpl implements Block {
                 }
             }
 
-            // only set pocTime, marking block as verified, if all the transactions have verified
+            // only set POC time, marking block as verified, if all the transactions have verified
             try {
                 if (scoopData == null) {
-                    this.pocTime = Generator.calculatePOCTime(getGeneratorId(), nonce, generationSignature, getScoopNum());
+                    this.prescaledPOCTime = Generator.calculatePrescaledPOCTime(getGeneratorId(), nonce.longValue(), generationSignature, getScoopNum());
                 } else {
-                    this.pocTime = Generator.calculatePOCTime(getGeneratorId(), nonce, generationSignature, scoopData);
+                    this.prescaledPOCTime = Generator.calculatePrescaledPOCTime(getGeneratorId(), nonce.longValue(), generationSignature, scoopData);
                 }
             } catch (RuntimeException e) {
                 Logger.logMessage("Error pre-verifying block generation signature", e);
@@ -607,14 +607,7 @@ final class BlockImpl implements Block {
 
     @Override
     public int getScoopNum() {
-        ByteBuffer posbuf = ByteBuffer.allocate(32 + 8);
-        posbuf.put(generationSignature);
-        posbuf.putLong(getHeight());
-
-        Shabal256 md = new Shabal256();
-        md.update(posbuf.array());
-        BigInteger hashnum = new BigInteger(1, md.digest());
-        return hashnum.mod(BigInteger.valueOf(MiningPlot.SCOOPS_PER_PLOT)).intValue();
+        return Generator.calculateScoopNum(generationSignature, getHeight());
     }
 
     @Override
