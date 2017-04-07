@@ -16,7 +16,6 @@
 
 package nxt;
 
-import burst.account.AccountAsset;
 import nxt.AccountLedger.LedgerEntry;
 import nxt.AccountLedger.LedgerEvent;
 import nxt.AccountLedger.LedgerHolding;
@@ -59,6 +58,77 @@ public final class Account {
         PHASING_ONLY
     }
 
+
+    public static final class AccountAsset {
+
+        private final long accountId;
+        private final long assetId;
+        private final DbKey dbKey;
+        private long quantityQNT;
+        private long unconfirmedQuantityQNT;
+
+        private AccountAsset(long accountId, long assetId, long quantityQNT, long unconfirmedQuantityQNT) {
+            this.accountId = accountId;
+            this.assetId = assetId;
+            this.dbKey = accountAssetDbKeyFactory.newKey(this.accountId, this.assetId);
+            this.quantityQNT = quantityQNT;
+            this.unconfirmedQuantityQNT = unconfirmedQuantityQNT;
+        }
+
+        private AccountAsset(ResultSet rs, DbKey dbKey) throws SQLException {
+            this.accountId = rs.getLong("account_id");
+            this.assetId = rs.getLong("asset_id");
+            this.dbKey = dbKey;
+            this.quantityQNT = rs.getLong("quantity");
+            this.unconfirmedQuantityQNT = rs.getLong("unconfirmed_quantity");
+        }
+
+        private void save(Connection con) throws SQLException {
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset "
+                    + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) "
+                    + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
+                int i = 0;
+                pstmt.setLong(++i, this.accountId);
+                pstmt.setLong(++i, this.assetId);
+                pstmt.setLong(++i, this.quantityQNT);
+                pstmt.setLong(++i, this.unconfirmedQuantityQNT);
+                pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
+                pstmt.executeUpdate();
+            }
+        }
+
+        public long getAccountId() {
+            return accountId;
+        }
+
+        public long getAssetId() {
+            return assetId;
+        }
+
+        public long getQuantityQNT() {
+            return quantityQNT;
+        }
+
+        public long getUnconfirmedQuantityQNT() {
+            return unconfirmedQuantityQNT;
+        }
+
+        private void save() {
+            checkBalance(this.accountId, this.quantityQNT, this.unconfirmedQuantityQNT);
+            if (this.quantityQNT > 0 || this.unconfirmedQuantityQNT > 0) {
+                accountAssetTable.insert(this);
+            } else {
+                accountAssetTable.delete(this);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "AccountAsset account_id: " + Long.toUnsignedString(accountId) + " asset_id: " + Long.toUnsignedString(assetId)
+                    + " quantity: " + quantityQNT + " unconfirmedQuantity: " + unconfirmedQuantityQNT;
+        }
+
+    }
 
     public static class RewardRecipientAssignment {
 
@@ -586,7 +656,7 @@ public final class Account {
 
         @Override
         public DbKey newKey(AccountAsset accountAsset) {
-            return accountAsset.getDbKey();
+            return accountAsset.dbKey;
         }
 
     };
@@ -1540,11 +1610,11 @@ public final class Account {
         long assetBalance = accountAsset == null ? 0 : accountAsset.quantityQNT;
         assetBalance = Math.addExact(assetBalance, quantityQNT);
         if (accountAsset == null) {
-            accountAsset = new AccountAsset(this.id, assetId, assetBalance, 0, accountAssetDbKeyFactory);
+            accountAsset = new AccountAsset(this.id, assetId, assetBalance, 0);
         } else {
-            accountAsset.setQuantityQNT(assetBalance);
+            accountAsset.quantityQNT = assetBalance;
         }
-        accountAsset.save(accountAssetTable);
+        accountAsset.save();
         listeners.notify(this, Event.ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
         if (AccountLedger.mustLogEntry(this.id, false)) {
@@ -1559,14 +1629,14 @@ public final class Account {
         }
         AccountAsset accountAsset;
         accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(this.id, assetId));
-        long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityQNT();
+        long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityQNT;
         unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityQNT);
         if (accountAsset == null) {
-            accountAsset = new AccountAsset(this.id, assetId, 0, unconfirmedAssetBalance,accountAssetDbKeyFactory);
+            accountAsset = new AccountAsset(this.id, assetId, 0, unconfirmedAssetBalance);
         } else {
-            accountAsset.setUnconfirmedQuantityQNT(unconfirmedAssetBalance);
+            accountAsset.unconfirmedQuantityQNT = unconfirmedAssetBalance;
         }
-        accountAsset.save(accountAssetTable);
+        accountAsset.save();
         listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.UNCONFIRMED_ASSET_BALANCE);
         if (AccountLedger.mustLogEntry(this.id, true)) {
@@ -1582,17 +1652,17 @@ public final class Account {
         }
         AccountAsset accountAsset;
         accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(this.id, assetId));
-        long assetBalance = accountAsset == null ? 0 : accountAsset.getQuantityQNT();
+        long assetBalance = accountAsset == null ? 0 : accountAsset.quantityQNT;
         assetBalance = Math.addExact(assetBalance, quantityQNT);
-        long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityQNT();
+        long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityQNT;
         unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityQNT);
         if (accountAsset == null) {
-            accountAsset = new AccountAsset(this.id, assetId, assetBalance, unconfirmedAssetBalance, accountAssetDbKeyFactory);
+            accountAsset = new AccountAsset(this.id, assetId, assetBalance, unconfirmedAssetBalance);
         } else {
-            accountAsset.setQuantityQNT(assetBalance);
-            accountAsset.setUnconfirmedQuantityQNT(unconfirmedAssetBalance);
+            accountAsset.quantityQNT = assetBalance;
+            accountAsset.unconfirmedQuantityQNT = unconfirmedAssetBalance;
         }
-        accountAsset.save(accountAssetTable);
+        accountAsset.save();
         listeners.notify(this, Event.ASSET_BALANCE);
         listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
@@ -1786,7 +1856,7 @@ public final class Account {
         save();
     }
 
-    public static void checkBalance(long accountId, long confirmed, long unconfirmed) {
+    private static void checkBalance(long accountId, long confirmed, long unconfirmed) {
         if (accountId == Genesis.CREATOR_ID) {
             return;
         }
