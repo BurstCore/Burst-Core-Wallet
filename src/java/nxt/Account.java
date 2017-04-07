@@ -58,6 +58,7 @@ public final class Account {
         PHASING_ONLY
     }
 
+
     public static final class AccountAsset {
 
         private final long accountId;
@@ -539,32 +540,10 @@ public final class Account {
 
         @Override
         protected void save(Connection con, Account account) throws SQLException {
-            account.save(con);
+            //account.save(con);
+            account.save();
         }
 
-    };
-
-    private static final DbKey.LongKeyFactory<RewardRecipientAssignment> rewardRecipientAssignmentDbKeyFactory = new DbKey.LongKeyFactory<RewardRecipientAssignment>("account_id") {
-        
-        @Override
-        public DbKey newKey(RewardRecipientAssignment assignment) {
-            return assignment.dbKey;
-        }
-
-    };
-    
-    private static final VersionedEntityDbTable<RewardRecipientAssignment> rewardRecipientAssignmentTable = new VersionedEntityDbTable<RewardRecipientAssignment>("reward_recip_assign", rewardRecipientAssignmentDbKeyFactory) {
-        
-        @Override
-        protected RewardRecipientAssignment load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new RewardRecipientAssignment(rs, dbKey);
-        }
-        
-        @Override
-        protected void save(Connection con, RewardRecipientAssignment assignment) throws SQLException {
-            assignment.save(con);
-        }
-    
     };
 
     private static final DbKey.LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new DbKey.LongKeyFactory<AccountInfo>("account_id") {
@@ -641,6 +620,27 @@ public final class Account {
             publicKey.save(con);
         }
 
+    };
+
+    private static final DbKey.LongKeyFactory<RewardRecipientAssignment> rewardRecipientAssignmentDbKeyFactory = new DbKey.LongKeyFactory<RewardRecipientAssignment>("account_id") {
+
+        @Override
+        public DbKey newKey(RewardRecipientAssignment assignment) {
+            return assignment.dbKey;
+        }
+    };
+
+    private static final VersionedEntityDbTable<RewardRecipientAssignment> rewardRecipientAssignmentTable = new VersionedEntityDbTable<RewardRecipientAssignment>("reward_recip_assign", rewardRecipientAssignmentDbKeyFactory) {
+
+        @Override
+        protected RewardRecipientAssignment load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            return new RewardRecipientAssignment(rs, dbKey);
+        }
+
+        @Override
+        protected void save(Connection con, RewardRecipientAssignment assignment) throws SQLException {
+            assignment.save(con);
+        }
     };
 
     private static final DbKey.LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new DbKey.LinkKeyFactory<AccountAsset>("account_id", "asset_id") {
@@ -1177,7 +1177,6 @@ public final class Account {
     }
 
     static void init() {}
-
 
     private final long id;
     private final DbKey dbKey;

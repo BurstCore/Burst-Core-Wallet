@@ -247,6 +247,22 @@ public final class Generator implements Comparable<Generator> {
         return calculatePOCTime(accountId, nonce, genSig, scoopData);
     }
     
+    // XXX stub placeholder for now until Generator is converted to BURST form
+    public static boolean submitNonce(String secretPhrase, long nonce, byte[] publicKey) {
+        return false;
+    }
+    
+    // XXX stub placeholder for now until Generator is converted to BURST form
+    public static boolean submitNonce(String secretPhrase, long nonce) {
+        byte[] publicKey = Crypto.getPublicKey(secretPhrase);
+        return submitNonce(secretPhrase, nonce, publicKey);
+    }
+    
+    // XXX stub placeholder for now until Generator is converted to BURST form
+    public static BigInteger getPOCTime() {
+        return new BigInteger(0, new byte[] {});
+    }
+    
     public static byte[] calculateGenerationSignature(byte[] lastGenSig, long lastGenId) {
         ByteBuffer gensigbuf = ByteBuffer.allocate(32 + 8);
         gensigbuf.put(lastGenSig);
