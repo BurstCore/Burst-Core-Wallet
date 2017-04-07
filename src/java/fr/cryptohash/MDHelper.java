@@ -3,7 +3,7 @@
 package fr.cryptohash;
 
 /**
- * <p>This class implements the padding common to MD4, MD5, the SHA family,
+ * <p>This class implements the padding common to MD5, the SHA family,
  * and RIPEMD-160. This code works as long as the internal block length
  * is a power of 2, which is the case for all these algorithms.</p>
  *
@@ -41,7 +41,7 @@ package fr.cryptohash;
 abstract class MDHelper extends DigestEngine {
 
 	/**
-	 * Create the object. Little-endian padding is for MD4, MD5 and
+	 * Create the object. Little-endian padding is for MD5 and
 	 * RIPEMD-160; the SHA family uses big-endian padding. The
 	 * MD padding includes an encoding of the input message bit length,
 	 * which is over 64 bits for some algorithms, 128-bit for others
@@ -58,7 +58,7 @@ abstract class MDHelper extends DigestEngine {
 	}
 
 	/**
-	 * Create the object. Little-endian padding is for MD4, MD5 and
+	 * Create the object. Little-endian padding is for MD5 and
 	 * RIPEMD-160; the SHA family uses big-endian padding. The
 	 * MD padding includes an encoding of the input message bit length,
 	 * which is over 64 bits for some algorithms, 128-bit for others

@@ -6,8 +6,7 @@ package fr.cryptohash;
  * This class implements Shabal for all output sizes from 32 to 512 bits
  * (inclusive, only multiples of 32 are supported). The output size must
  * be provided as parameter to the constructor. Alternatively, you may
- * use the {@link Shabal192}, {@link Shabal224}, {@link Shabal256},
- * {@link Shabal384} or {@link Shabal512} classes for size-specific
+ * use the {@link Shabal256} classes for size-specific
  * variants which offer a nullary constructor.
  *
  * <pre>
