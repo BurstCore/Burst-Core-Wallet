@@ -37,12 +37,6 @@
  * which helps with the implementation of {@link fr.cryptohash.Digest
  * Digest}; most hash function implementations in this package use that
  * base class.</li>
- * <li>{@link fr.cryptohash.HMAC HMAC}: an implementation of the HMAC
- * message authentication code (see
- * <a href="http://tools.ietf.org/html/rfc2104">RFC 2104</a>).
- * {@link fr.cryptohash.HMAC HMAC} implements {@link fr.cryptohash.Digest}
- * but is initialized with an underlying hash function implementation, and
- * a secret key.</li>
  * </ul>
  *
  * <pre>
