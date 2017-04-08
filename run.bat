@@ -56,8 +56,8 @@
 		echo using Java home directory "%javaDir%"
 	)
 
-:startJava	
-	start "NXT NRS from %~dp0" "%javaDir%"\bin\java.exe -cp classes;lib\*;conf;addons\classes;addons\lib\* -Dnxt.runtime.mode=desktop nxt.Nxt
+:startJava
+	start "BURST" "%javaDir%\bin\java.exe" -cp burst.jar;lib\*;conf nxt.Nxt	
 
 :endProcess 
 	endlocal
