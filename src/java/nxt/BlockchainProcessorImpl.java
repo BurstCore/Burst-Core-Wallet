@@ -35,6 +35,8 @@ import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -1380,6 +1382,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             List<TransactionImpl> transactions = new ArrayList<>();
             for (int i = 0; i < Genesis.GENESIS_RECIPIENTS.length; i++) {
+                Logger.logInfoMessage("Adding Genesis Recipient:" + Genesis.GENESIS_RECIPIENTS[i]);
                 TransactionImpl transaction = new TransactionImpl.BuilderImpl((byte) 0, Genesis.CREATOR_PUBLIC_KEY,
                         Genesis.GENESIS_AMOUNTS[i] * Constants.ONE_NXT, 0, (short) 0,
                         Attachment.ORDINARY_PAYMENT)
@@ -1392,15 +1395,42 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         .build();
                 transactions.add(transaction);
             }
+            Logger.logInfoMessage("Done processing Transactions for Genesis Recipients - In Burst it should be None!");
             Collections.sort(transactions, Comparator.comparingLong(Transaction::getId));
             MessageDigest digest = Crypto.sha256();
             for (TransactionImpl transaction : transactions) {
                 digest.update(transaction.bytes());
             }
-            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 128, digest.digest(),
-                    Genesis.CREATOR_PUBLIC_KEY, new byte[64], Genesis.GENESIS_BLOCK_SIGNATURE, null, transactions, 0L, null); // nonce 0 and no ATs
-            genesisBlock.setPrevious(null);
+            Logger.logInfoMessage("Done updating digest for Genesis Creation");
+            // ToDo: Clean this up after the DB has been verified
+            //BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 128, digest.digest(),
+            //        Genesis.CREATOR_PUBLIC_KEY, new byte[64], Genesis.GENESIS_BLOCK_SIGNATURE, null, transactions, 0L, null); // nonce 0 and no ATs
+
+            ByteBuffer bf = ByteBuffer.allocate( 0 );
+            bf.order( ByteOrder.LITTLE_ENDIAN );
+            byte[] byteATs = bf.array();
+
+/*
+            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, 0, transactions.size() * 128, digest.digest(),
+                    Genesis.CREATOR_PUBLIC_KEY, new byte[32], Genesis.GENESIS_BLOCK_SIGNATURE, null, transactions, 0L, byteATs);
+*/
+
+            /*BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength,
+            byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
+            byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id,
+            List<TransactionImpl> blockTransactions, Long nonce, byte[] blockATs)        */
+            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, 0, 0,
+                                                   // version   timestamp    previousblock    AmountNQT         totalFee      //payload length
+                    digest.digest(), 8628161281313630310L, new byte[32], Genesis.GENESIS_BLOCK_SIGNATURE,
+                //  payloadhash      generatorID                 gen sig       block Sig
+                    null, BigInteger.ZERO, 0,0L, 0, 1,
+                //  previosuhash         diff                baseTarget, nextBlockID     height   id
+                    transactions, 0L, new byte[0]);
+                // transactions        nonce       bytesAT
+            //byteATs
+            Logger.logInfoMessage("Ready to addBlock(genesisBlock)");
             addBlock(genesisBlock);
+            Logger.logInfoMessage("Genesis Block added successfully");
             return true;
         } catch (NxtException.ValidationException e) {
             Logger.logMessage(e.getMessage());
