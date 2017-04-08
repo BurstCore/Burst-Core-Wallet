@@ -39,7 +39,9 @@ class NxtDbVersion extends DbVersion {
                         + "previous_block_hash BINARY(32), cumulative_difficulty VARBINARY NOT NULL, base_target BIGINT NOT NULL, "
                         + "next_block_id BIGINT, "
                         + "height INT NOT NULL, generation_signature BINARY(64) NOT NULL, "
-                        + "block_signature BINARY(64) NOT NULL, payload_hash BINARY(32) NOT NULL, generator_id BIGINT NOT NULL, nonce BIGINT NOT NULL)");
+                        + "block_signature BINARY(64) NOT NULL, payload_hash BINARY(32) NOT NULL, "
+                        + "generator_id BIGINT NOT NULL, nonce BIGINT NOT NULL, "
+                        + "ats VARBINARY(2147483647))");
             case 2:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_id_idx ON block (id)");
             case 3:
@@ -348,11 +350,22 @@ class NxtDbVersion extends DbVersion {
             case 129:
                 apply("ALTER TABLE goods ADD COLUMN IF NOT EXISTS parsed_tags ARRAY");
             case 130:
+                apply("CREATE TABLE IF NOT EXISTS reward_recip_assign (db_id IDENTITY, account_id BIGINT NOT NULL, "
+                        + "prev_recip_id BIGINT NOT NULL, recip_id BIGINT NOT NULL, from_height INT NOT NULL, "
+                        + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+            case 131:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS reward_recip_assign_account_id_height_idx ON reward_recip_assign (account_id, height DESC)");
+            case 132:
+                apply("CREATE INDEX IF NOT EXISTS reward_recip_assign_recip_id_height_idx ON reward_recip_assign (recip_id, height DESC)");
+
+                /*
+            case 130:
                 apply(null);
             case 131:
                 apply(null);
             case 132:
                 apply(null);
+                */
             case 133:
                 apply(null);
             case 134:
@@ -364,6 +377,7 @@ class NxtDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS tag_in_stock_count_idx ON tag (in_stock_count DESC, height DESC)");
             case 137:
                 apply(null);
+                // No Currency Table in Burst
             case 138:
                 apply("CREATE TABLE IF NOT EXISTS currency (db_id IDENTITY, id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
                         + "name VARCHAR NOT NULL, name_lower VARCHAR AS LOWER (name) NOT NULL, code VARCHAR NOT NULL, "
@@ -377,6 +391,7 @@ class NxtDbVersion extends DbVersion {
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS currency_id_height_idx ON currency (id, height DESC)");
             case 140:
                 apply("CREATE INDEX IF NOT EXISTS currency_account_id_idx ON currency (account_id)");
+
             case 141:
                 apply("CREATE TABLE IF NOT EXISTS account_currency (db_id IDENTITY, account_id BIGINT NOT NULL, "
                         + "currency_id BIGINT NOT NULL, units BIGINT NOT NULL, unconfirmed_units BIGINT NOT NULL, height INT NOT NULL, "
