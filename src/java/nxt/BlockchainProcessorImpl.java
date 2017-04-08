@@ -2044,7 +2044,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 blockListeners.notify(currentBlock, Event.RESCAN_BEGIN);
                 long currentBlockId = currentBlock.getId();
                 if (height == 0) {
+                    Logger.logInfoMessage("Processing BlockchainProcessorImpl.scan() Special Case: Height == 0");
                     blockchain.setLastBlock(currentBlock); // special case to avoid no last block
+                    Logger.logInfoMessage("CreatorID is:" + Genesis.CREATOR_ID); // This is coming out 0
+                    Logger.logInfoMessage("Genesis Public Key is:" + Genesis.CREATOR_PUBLIC_KEY);
                     Account.addOrGetAccount(Genesis.CREATOR_ID).apply(Genesis.CREATOR_PUBLIC_KEY);
                 } else {
                     blockchain.setLastBlock(BlockDb.findBlockAtHeight(height - 1));
