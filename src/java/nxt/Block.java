@@ -88,5 +88,7 @@ public interface Block {
     byte[] getBlockATs();
 
     long getBlockReward();
+    
+    void setHeight(int height);
 
 }

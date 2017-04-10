@@ -66,6 +66,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 final class BlockchainProcessorImpl implements BlockchainProcessor {
 
+    /* Not used in BURST as it forked NXT way after these came into effect and the blockchain is wildly different anyway
     private static final byte[] CHECKSUM_TRANSPARENT_FORGING =
             new byte[] {
                     -122, -111, -35, 76, 59, 79, -75, 117, 34, 2, -70, -65, -38, 59, 0, 57,
@@ -81,6 +82,9 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     -90, -42, -57, -76, 88, -49, 127, 6, -47, -72, -39, -56, 51, 90, -90, -105,
                     121, 71, -94, -97, 49, -24, -12, 86, 7, -48, 90, -91, -24, -105, -17, -104
             };
+    */
+    
+    // Could use these in BURST at a later date although values will have to be changed
     private static final byte[] CHECKSUM_MONETARY_SYSTEM_BLOCK = Constants.isTestnet ?
             new byte[] {
                     119, 51, 105, -101, -74, -49, -49, 19, 11, 103, -84, 80, -46, -5, 51, 42,
@@ -608,8 +612,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         break;
                     }
                     BlockImpl block = peerBlock.getBlock();
-                    if (blockchain.getLastBlock().getId() == block.getPreviousBlockId()) {
+                    BlockImpl lastBlock = blockchain.getLastBlock(); 
+                    if (lastBlock.getId() == block.getPreviousBlockId()) {
                         try {
+                            block.setHeight(lastBlock.getHeight() + 1); // BURST: need to set the block's height so it can be validated
                             pushBlock(block);
                         } catch (BlockNotAcceptedException e) {
                             peerBlock.getPeer().blacklist(e);
@@ -641,8 +647,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             int pushedForkBlocks = 0;
             if (blockchain.getLastBlock().getId() == commonBlock.getId()) {
                 for (BlockImpl block : forkBlocks) {
-                    if (blockchain.getLastBlock().getId() == block.getPreviousBlockId()) {
+                    BlockImpl lastBlock = blockchain.getLastBlock(); 
+                    if (lastBlock.getId() == block.getPreviousBlockId()) {
                         try {
+                            block.setHeight(lastBlock.getHeight() + 1); // BURST: need to set the block's height so it can be validated
                             pushBlock(block);
                             pushedForkBlocks += 1;
                         } catch (BlockNotAcceptedException e) {
@@ -668,6 +676,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 for (int i = myPoppedOffBlocks.size() - 1; i >= 0; i--) {
                     BlockImpl block = myPoppedOffBlocks.remove(i);
                     try {
+                        // BURST: hoping popped-off block has height set
                         pushBlock(block);
                     } catch (BlockNotAcceptedException e) {
                         Logger.logErrorMessage("Popped off block no longer acceptable: " + block.getJSONObject().toJSONString(), e);
@@ -758,7 +767,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             List<JSONObject> nextBlocks = (List<JSONObject>)response.get("nextBlocks");
             if (nextBlocks == null)
                 return null;
-            if (nextBlocks.size() > 36) {
+            if (nextBlocks.size() > 1440) { // increased to old BURST hard-coded size reference src/java/nxt/peer/GetNextBlocks.java line 29 
                 Logger.logDebugMessage("Obsolete or rogue peer " + peer.getHost() + " sends too many nextBlocks, blacklisting");
                 peer.blacklist("Too many nextBlocks");
                 return null;
@@ -996,6 +1005,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private final Listener<Block> checksumListener = block -> {
+        /* Not used in BURST (see comment near top of file)
         if (block.getHeight() == Constants.TRANSPARENT_FORGING_BLOCK) {
             if (! verifyChecksum(CHECKSUM_TRANSPARENT_FORGING, 0, Constants.TRANSPARENT_FORGING_BLOCK)) {
                 popOffTo(0);
@@ -1041,6 +1051,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 popOffTo(Constants.CHECKSUM_BLOCK_21);
             }
         }
+        */
     };
 
     private BlockchainProcessorImpl() {
@@ -1204,6 +1215,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         BlockImpl block = BlockImpl.parseBlock(request);
         BlockImpl lastBlock = blockchain.getLastBlock();
         if (block.getPreviousBlockId() == lastBlock.getId()) {
+            block.setHeight(lastBlock.getHeight() + 1); // BURST: need to set the block's height so it can be validated
             pushBlock(block);
         } else if (block.getPreviousBlockId() == lastBlock.getPreviousBlockId() && block.getTimestamp() < lastBlock.getTimestamp()) {
             blockchain.writeLock();
@@ -1214,11 +1226,13 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 BlockImpl previousBlock = blockchain.getBlock(lastBlock.getPreviousBlockId());
                 lastBlock = popOffTo(previousBlock).get(0);
                 try {
+                    block.setHeight(lastBlock.getHeight() + 1); // BURST: need to set the block's height so it can be validated
                     pushBlock(block);
                     TransactionProcessorImpl.getInstance().processLater(lastBlock.getTransactions());
                     Logger.logDebugMessage("Last block " + lastBlock.getStringId() + " was replaced by " + block.getStringId());
                 } catch (BlockNotAcceptedException e) {
                     Logger.logDebugMessage("Replacement block failed to be accepted, pushing back our last block");
+                    // BURST: hoping this block already has height set
                     pushBlock(lastBlock);
                     TransactionProcessorImpl.getInstance().processLater(block.getTransactions());
                 }
@@ -1905,6 +1919,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
         BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountNQT, totalFeeNQT, payloadLength,
                 payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase, null, null); // XXX temporary null scoop and blockATs
+
+        block.setHeight(previousBlock.getHeight() + 1); // BURST: need to set the block's height so it can be validated
 
         try {
             pushBlock(block);

@@ -62,7 +62,7 @@ final class BlockImpl implements Block {
 
     // BURST-specific from here on
     private Long nonce;
-    private BigInteger prescaledPOCTime = null;
+    private BigInteger unscaledPOCTime = null;
     private final byte[] blockATs;
     private Peer downloadedFrom = null;
 
@@ -407,8 +407,13 @@ final class BlockImpl implements Block {
 
             // In case the verifier-threads are not done with this yet - do it now
             synchronized(this) {
-                if(this.prescaledPOCTime == null)
-                    preVerify();
+                if(this.unscaledPOCTime == null)
+                    try {
+                        preVerify();
+                    } catch (IllegalStateException e) {
+                        // probably height not set but we can't carry on
+                        throw e;
+                    }
             }
 
             byte[] correctGenerationSignature = Generator.calculateGenerationSignature(previousBlock.getGenerationSignature(), previousBlock.getGeneratorId());
@@ -416,7 +421,7 @@ final class BlockImpl implements Block {
                 return false;
 
             int elapsedTime = timestamp - previousBlock.timestamp;
-            BigInteger POCTime = this.prescaledPOCTime.divide(BigInteger.valueOf(previousBlock.getBaseTarget()));
+            BigInteger POCTime = this.unscaledPOCTime.divide(BigInteger.valueOf(previousBlock.getBaseTarget()));
 
             return BigInteger.valueOf(elapsedTime).compareTo(POCTime) > 0;
 
@@ -549,7 +554,7 @@ final class BlockImpl implements Block {
 
     @Override
     public boolean isVerified() {
-        return prescaledPOCTime != null;
+        return unscaledPOCTime != null;
     }
 
     @Override
@@ -565,7 +570,7 @@ final class BlockImpl implements Block {
             }
     
             // Just in case its already verified
-            if (this.prescaledPOCTime != null)
+            if (this.unscaledPOCTime != null)
                 return;
     
             for(TransactionImpl transaction : getTransactions()) {
@@ -578,13 +583,13 @@ final class BlockImpl implements Block {
             // only set POC time, marking block as verified, if all the transactions have verified
             try {
                 if (scoopData == null) {
-                    this.prescaledPOCTime = Generator.calculatePrescaledPOCTime(getGeneratorId(), nonce.longValue(), generationSignature, getScoopNum());
+                    this.unscaledPOCTime = Generator.calculateUnscaledPOCTime(getGeneratorId(), nonce.longValue(), generationSignature, getScoopNum());
                 } else {
-                    this.prescaledPOCTime = Generator.calculatePrescaledPOCTime(getGeneratorId(), nonce.longValue(), generationSignature, scoopData);
+                    this.unscaledPOCTime = Generator.calculateUnscaledPOCTime(getGeneratorId(), nonce.longValue(), generationSignature, scoopData);
                 }
             } catch (RuntimeException e) {
                 Logger.logMessage("Error pre-verifying block generation signature", e);
-                return;
+                throw e;
             }
         }
     }
@@ -630,6 +635,11 @@ final class BlockImpl implements Block {
                 .divide(BigInteger.valueOf(100).pow(month)).longValue() * Constants.ONE_NXT;
         
         return reward;
+    }
+
+    @Override
+    public void setHeight(int height) {
+        this.height = height;
     }
 
 }
