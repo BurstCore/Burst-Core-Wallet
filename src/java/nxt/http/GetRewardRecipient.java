@@ -28,13 +28,13 @@ public final class GetRewardRecipient extends APIServlet.APIRequestHandler {
 		Account.RewardRecipientAssignment assignment = account.getRewardRecipientAssignment();
 		long height = Nxt.getBlockchain().getLastBlock().getHeight();
 		if(account == null || assignment == null) {
-			response.put("rewardRecipient", Convert.toUnsignedLong(account.getId()));
+			response.put("rewardRecipient", Long.toUnsignedString(account.getId()));
 		}
 		else if(assignment.getFromHeight() > height + 1) {
-			response.put("rewardRecipient", Convert.toUnsignedLong(assignment.getPrevRecipientId()));
+			response.put("rewardRecipient", Long.toUnsignedString(assignment.getPrevRecipientId()));
 		}
 		else {
-			response.put("rewardRecipient", Convert.toUnsignedLong(assignment.getRecipientId()));
+			response.put("rewardRecipient", Long.toUnsignedString(assignment.getRecipientId()));
 		}
 		
 		return response;
