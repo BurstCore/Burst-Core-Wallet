@@ -1402,32 +1402,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 digest.update(transaction.bytes());
             }
             Logger.logInfoMessage("Done updating digest for Genesis Creation");
-            // ToDo: Clean this up after the DB has been verified
-            //BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, Constants.MAX_BALANCE_NQT, 0, transactions.size() * 128, digest.digest(),
-            //        Genesis.CREATOR_PUBLIC_KEY, new byte[64], Genesis.GENESIS_BLOCK_SIGNATURE, null, transactions, 0L, null); // nonce 0 and no ATs
+            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0L, 0L, 0L, transactions.size() * 128, digest.digest(),
+                    Genesis.CREATOR_ID, Genesis.GENESIS_GENERATION_SIGNATURE, Genesis.GENESIS_BLOCK_SIGNATURE, 
+                    null, Genesis.GENESIS_CUMULATIVE_DIFFICULTY, Genesis.GENESIS_BASE_TARGET, 0L, 0, Genesis.GENESIS_BLOCK_ID,
+                    transactions, 0L, null); // nonce 0 and no ATs
 
-            ByteBuffer bf = ByteBuffer.allocate( 0 );
-            bf.order( ByteOrder.LITTLE_ENDIAN );
-            byte[] byteATs = bf.array();
-
-/*
-            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, 0, transactions.size() * 128, digest.digest(),
-                    Genesis.CREATOR_PUBLIC_KEY, new byte[32], Genesis.GENESIS_BLOCK_SIGNATURE, null, transactions, 0L, byteATs);
-*/
-
-            /*BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength,
-            byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
-            byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id,
-            List<TransactionImpl> blockTransactions, Long nonce, byte[] blockATs)        */
-            BlockImpl genesisBlock = new BlockImpl(-1, 0, 0, 0, 0, 0,
-                                                   // version   timestamp    previousblock    AmountNQT         totalFee      //payload length
-                    digest.digest(), 8628161281313630310L, new byte[32], Genesis.GENESIS_BLOCK_SIGNATURE,
-                //  payloadhash      generatorID                 gen sig       block Sig
-                    null, BigInteger.ZERO, 0,0L, 0, 1,
-                //  previosuhash         diff                baseTarget, nextBlockID     height   id
-                    transactions, 0L, new byte[0]);
-                // transactions        nonce       bytesAT
-            //byteATs
             Logger.logInfoMessage("Ready to addBlock(genesisBlock)");
             addBlock(genesisBlock);
             Logger.logInfoMessage("Genesis Block added successfully");
