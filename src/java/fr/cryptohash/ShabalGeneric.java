@@ -152,7 +152,7 @@ public class ShabalGeneric implements Digest {
 		for (int i = 0; i < len; i ++) {
 			if ((i & 3) == 0)
 				w = state[j ++];
-			outbuf[i] = (byte)w;
+			outbuf[i + off] = (byte)w; // BURST special?
 			w >>>= 8;
 		}
 		reset();

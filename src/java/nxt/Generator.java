@@ -130,7 +130,7 @@ public final class Generator {
         return listeners.removeListener(listener, eventType);
     }
 
-    public static BigInteger calculatePrescaledPOCTime(long accountId, long nonce, byte[] genSig, byte[] scoopData) {
+    public static BigInteger calculateUnscaledPOCTime(long accountId, long nonce, byte[] genSig, byte[] scoopData) {
         Shabal256 md = new Shabal256();
         md.update(genSig);
         md.update(scoopData);
@@ -138,23 +138,23 @@ public final class Generator {
         return new BigInteger(1, new byte[] {hash[7], hash[6], hash[5], hash[4], hash[3], hash[2], hash[1], hash[0]});
     }
 
-    public static BigInteger calculatePrescaledPOCTime(long accountId, long nonce, byte[] genSig, int scoop) {
+    public static BigInteger calculateUnscaledPOCTime(long accountId, long nonce, byte[] genSig, int scoopNum) {
         MiningPlot plot = new MiningPlot(accountId, nonce);
-        byte[] scoopData = plot.getScoop(scoop);
+        byte[] scoopData = plot.getScoop(scoopNum);
 
-        return calculatePrescaledPOCTime(accountId, nonce, genSig, scoopData);
+        return calculateUnscaledPOCTime(accountId, nonce, genSig, scoopData);
     }
 
     public static BigInteger calculatePOCTime(long accountId, long nonce, byte[] genSig, int scoop, long baseTarget) {
-        BigInteger prescaledPOCTime = calculatePrescaledPOCTime(accountId, nonce, genSig, scoop);
+        BigInteger unscaledPOCTime = calculateUnscaledPOCTime(accountId, nonce, genSig, scoop);
         
-        return prescaledPOCTime.divide(BigInteger.valueOf(baseTarget));
+        return unscaledPOCTime.divide(BigInteger.valueOf(baseTarget));
     }
 
     public static BigInteger calculatePOCTime(long accountId, long nonce, byte[] genSig, byte[] scoopData, long baseTarget) {
-        BigInteger prescaledPOCTime = calculatePrescaledPOCTime(accountId, nonce, genSig, scoopData);
+        BigInteger unscaledPOCTime = calculateUnscaledPOCTime(accountId, nonce, genSig, scoopData);
         
-        return prescaledPOCTime.divide(BigInteger.valueOf(baseTarget));
+        return unscaledPOCTime.divide(BigInteger.valueOf(baseTarget));
     }
 
     public static BigInteger submitNonce(String secretPhrase, long nonce, byte[] publicKey) {
