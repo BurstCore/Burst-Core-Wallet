@@ -296,9 +296,13 @@ final class BlockImpl implements Block {
             byte[] blockATs = Convert.parseHexString((String) blockData.get("blockATs"));
             BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash, generatorPublicKey,
                     generationSignature, blockSignature, previousBlockHash, blockTransactions, nonce, blockATs);
+            
+            // We will have to defer this as the previous block might not be available yet and so can't check the signature
+            /*
             if (!block.checkSignature()) {
                 throw new NxtException.NotValidException("Invalid block signature");
             }
+            */
             return block;
         } catch (NxtException.NotValidException|RuntimeException e) {
             Logger.logDebugMessage("Failed to parse block: " + blockData.toJSONString());

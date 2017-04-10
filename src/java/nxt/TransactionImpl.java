@@ -610,7 +610,7 @@ final class TransactionImpl implements Transaction {
                 buffer.putInt(timestamp);
                 buffer.putShort(deadline);
                 buffer.put(getSenderPublicKey());
-                buffer.putLong(type.canHaveRecipient() ? recipientId : Genesis.CREATOR_ID);
+                buffer.putLong(type.canHaveRecipient() ? recipientId : 0L); // BURST uses 0L not CREATOR_ID
                 if (useNQT()) {
                     buffer.putLong(amountNQT);
                     buffer.putLong(feeNQT);
