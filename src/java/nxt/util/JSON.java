@@ -47,7 +47,7 @@ public final class JSON {
     }
 
     public static JSONStreamAware prepareRequest(final JSONObject json) {
-        json.put("protocol", 1);
+        json.put("protocol", "B1");
         return prepare(json);
     }
 
