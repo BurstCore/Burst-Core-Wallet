@@ -540,8 +540,7 @@ public final class Account {
 
         @Override
         protected void save(Connection con, Account account) throws SQLException {
-            //account.save(con);
-            account.save();
+            account.save(con);
         }
 
     };
@@ -1211,11 +1210,7 @@ public final class Account {
     }
 
     private void save(Connection con) throws SQLException {
-        // XXX BURST: This is commented out in old BURST - but WHY?
-        // Adding forced throw here to enable the code path and find out when it's called
-        throw new RuntimeException("Account.save(con) code path was called - this is forbidden in BURST - WHY?");
-        
-        /*
+        // BURST: This was commented out in old BURST - but WHY?
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, "
                 + "balance, unconfirmed_balance, forged_balance, "
                 + "active_lessee_id, has_control_phasing, height, latest) "
@@ -1230,7 +1225,6 @@ public final class Account {
             pstmt.setInt(++i, Nxt.getBlockchain().getHeight());
             pstmt.executeUpdate();
         }
-        */
     }
 
     private void save() {
