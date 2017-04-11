@@ -508,46 +508,90 @@ final class BlockImpl implements Block {
     }
 
     private void calculateBaseTarget(BlockImpl previousBlock) {
-        long prevBaseTarget = previousBlock.baseTarget;
-        if (previousBlock.getHeight() < Constants.SHUFFLING_BLOCK) {
-            baseTarget = BigInteger.valueOf(prevBaseTarget)
-                    .multiply(BigInteger.valueOf(this.timestamp - previousBlock.timestamp))
-                    .divide(BigInteger.valueOf(60)).longValue();
-            if (baseTarget < 0 || baseTarget > Constants.MAX_BASE_TARGET) {
-                baseTarget = Constants.MAX_BASE_TARGET;
-            }
-            if (baseTarget < prevBaseTarget / 2) {
-                baseTarget = prevBaseTarget / 2;
-            }
-            if (baseTarget == 0) {
-                baseTarget = 1;
-            }
-            long twofoldCurBaseTarget = prevBaseTarget * 2;
-            if (twofoldCurBaseTarget < 0) {
+        if (this.getId() == Genesis.GENESIS_BLOCK_ID && previousBlockId == 0) {
+            baseTarget = Constants.INITIAL_BASE_TARGET;
+            cumulativeDifficulty = BigInteger.ZERO;
+        } else if (this.height < 4) {
+            baseTarget = Constants.INITIAL_BASE_TARGET;
+            cumulativeDifficulty = previousBlock.cumulativeDifficulty.add(Convert.two64.divide(BigInteger.valueOf(Constants.INITIAL_BASE_TARGET)));
+        } else if (this.height < Constants.BURST_DIFF_ADJUST_CHANGE_BLOCK) {
+            Block itBlock = previousBlock;
+            BigInteger avgBaseTarget = BigInteger.valueOf(itBlock.getBaseTarget());
+
+            do {
+                itBlock = Nxt.getBlockchain().getBlock(itBlock.getPreviousBlockId());
+                avgBaseTarget = avgBaseTarget.add(BigInteger.valueOf(itBlock.getBaseTarget()));
+            } while (itBlock.getHeight() > this.height - 4);
+
+            avgBaseTarget = avgBaseTarget.divide(BigInteger.valueOf(4));
+            long difTime = this.timestamp - itBlock.getTimestamp();
+
+            long curBaseTarget = avgBaseTarget.longValue();
+            long newBaseTarget = BigInteger.valueOf(curBaseTarget)
+                    .multiply(BigInteger.valueOf(difTime))
+                    .divide(BigInteger.valueOf(240 * 4)).longValue();
+
+            if (newBaseTarget < 0 || newBaseTarget > Constants.MAX_BASE_TARGET)
+                newBaseTarget = Constants.MAX_BASE_TARGET;
+
+            if (newBaseTarget < (curBaseTarget * 9 / 10))
+                newBaseTarget = curBaseTarget * 9 / 10;
+
+            if (newBaseTarget == 0)
+                newBaseTarget = 1;
+
+            long twofoldCurBaseTarget = curBaseTarget * 11 / 10;
+            
+            if (twofoldCurBaseTarget < 0)
                 twofoldCurBaseTarget = Constants.MAX_BASE_TARGET;
-            }
-            if (baseTarget > twofoldCurBaseTarget) {
-                baseTarget = twofoldCurBaseTarget;
-            }
-        } else if (previousBlock.getHeight() % 2 == 0) {
-            BlockImpl block = BlockDb.findBlockAtHeight(previousBlock.getHeight() - 2);
-            int blocktimeAverage = (this.timestamp - block.timestamp) / 3;
-            if (blocktimeAverage > 60) {
-                baseTarget = (prevBaseTarget * Math.min(blocktimeAverage, Constants.MAX_BLOCKTIME_LIMIT)) / 60;
-            } else {
-                baseTarget = prevBaseTarget - prevBaseTarget * Constants.BASE_TARGET_GAMMA
-                        * (60 - Math.max(blocktimeAverage, Constants.MIN_BLOCKTIME_LIMIT)) / 6000;
-            }
-            if (baseTarget < 0 || baseTarget > Constants.MAX_BASE_TARGET_2) {
-                baseTarget = Constants.MAX_BASE_TARGET_2;
-            }
-            if (baseTarget < Constants.MIN_BASE_TARGET) {
-                baseTarget = Constants.MIN_BASE_TARGET;
-            }
+
+            if (newBaseTarget > twofoldCurBaseTarget)
+                newBaseTarget = twofoldCurBaseTarget;
+
+            baseTarget = newBaseTarget;
+            cumulativeDifficulty = previousBlock.cumulativeDifficulty.add(Convert.two64.divide(BigInteger.valueOf(baseTarget)));
         } else {
-            baseTarget = prevBaseTarget;
+            Block itBlock = previousBlock;
+            BigInteger avgBaseTarget = BigInteger.valueOf(itBlock.getBaseTarget());
+            int blockCounter = 1;
+
+            do {
+                itBlock = Nxt.getBlockchain().getBlock(itBlock.getPreviousBlockId());
+                blockCounter++;
+                avgBaseTarget = (avgBaseTarget.multiply(BigInteger.valueOf(blockCounter))
+                        .add(BigInteger.valueOf(itBlock.getBaseTarget())))
+                        .divide(BigInteger.valueOf(blockCounter + 1));
+            } while (blockCounter < 24);
+
+            long difTime = this.timestamp - itBlock.getTimestamp();
+            long targetTimespan = 24 * 4 * 60;
+
+            if (difTime < targetTimespan / 2)
+                difTime = targetTimespan / 2;
+
+            if (difTime > targetTimespan * 2)
+                difTime = targetTimespan * 2;
+
+            long curBaseTarget = previousBlock.getBaseTarget();
+            long newBaseTarget = avgBaseTarget
+                    .multiply(BigInteger.valueOf(difTime))
+                    .divide(BigInteger.valueOf(targetTimespan)).longValue();
+
+            if (newBaseTarget < 0 || newBaseTarget > Constants.MAX_BASE_TARGET)
+                newBaseTarget = Constants.MAX_BASE_TARGET;
+
+            if (newBaseTarget == 0)
+                newBaseTarget = 1;
+
+            if (newBaseTarget < curBaseTarget * 8 / 10)
+                newBaseTarget = curBaseTarget * 8 / 10;
+
+            if (newBaseTarget > curBaseTarget * 12 / 10)
+                newBaseTarget = curBaseTarget * 12 / 10;
+
+            baseTarget = newBaseTarget;
+            cumulativeDifficulty = previousBlock.cumulativeDifficulty.add(Convert.two64.divide(BigInteger.valueOf(baseTarget)));
         }
-        cumulativeDifficulty = previousBlock.cumulativeDifficulty.add(Convert.two64.divide(BigInteger.valueOf(baseTarget)));
     }
 
     // BURST-specific from here on
