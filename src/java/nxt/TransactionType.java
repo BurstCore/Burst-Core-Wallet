@@ -1308,7 +1308,7 @@ public abstract class TransactionType {
             @Override
             boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 return Nxt.getBlockchain().getHeight() > Constants.SHUFFLING_BLOCK
-                        && isDuplicate(Messaging.ACCOUNT_INFO, getName(), duplicates, true);
+                        && isDuplicate(Messaging.ACCOUNT_INFO, Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
             }
 
             @Override
@@ -3051,7 +3051,7 @@ public abstract class TransactionType {
                 if (Nxt.getBlockchain().getHeight() < Constants.DIGITAL_GOODS_STORE_BLOCK) {
                     return false; // sync fails after 7007 without this
                 }
-                return TransactionType.isDuplicate(REWARD_RECIPIENT_ASSIGNMENT, Long.toUnsignedString(transaction.getSenderId()), duplicates, true);    // XXX Assuming "exclusive" based on old BURST
+                return TransactionType.isDuplicate(REWARD_RECIPIENT_ASSIGNMENT, Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
             }
             
             @Override
