@@ -612,10 +612,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                         break;
                     }
                     BlockImpl block = peerBlock.getBlock();
-                    BlockImpl lastBlock = blockchain.getLastBlock(); 
-                    if (lastBlock.getId() == block.getPreviousBlockId()) {
+                    if (blockchain.getLastBlock().getId() == block.getPreviousBlockId()) {
                         try {
-                            block.setHeight(lastBlock.getHeight() + 1); // BURST: need to set the block's height so it can be validated
                             pushBlock(block);
                         } catch (BlockNotAcceptedException e) {
                             peerBlock.getPeer().blacklist(e);
@@ -647,10 +645,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             int pushedForkBlocks = 0;
             if (blockchain.getLastBlock().getId() == commonBlock.getId()) {
                 for (BlockImpl block : forkBlocks) {
-                    BlockImpl lastBlock = blockchain.getLastBlock(); 
-                    if (lastBlock.getId() == block.getPreviousBlockId()) {
+                    if (blockchain.getLastBlock().getId() == block.getPreviousBlockId()) {
                         try {
-                            block.setHeight(lastBlock.getHeight() + 1); // BURST: need to set the block's height so it can be validated
                             pushBlock(block);
                             pushedForkBlocks += 1;
                         } catch (BlockNotAcceptedException e) {
@@ -676,7 +672,6 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 for (int i = myPoppedOffBlocks.size() - 1; i >= 0; i--) {
                     BlockImpl block = myPoppedOffBlocks.remove(i);
                     try {
-                        // BURST: hoping popped-off block has height set
                         pushBlock(block);
                     } catch (BlockNotAcceptedException e) {
                         Logger.logErrorMessage("Popped off block no longer acceptable: " + block.getJSONObject().toJSONString(), e);
@@ -1215,7 +1210,6 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         BlockImpl block = BlockImpl.parseBlock(request);
         BlockImpl lastBlock = blockchain.getLastBlock();
         if (block.getPreviousBlockId() == lastBlock.getId()) {
-            block.setHeight(lastBlock.getHeight() + 1); // BURST: need to set the block's height so it can be validated
             pushBlock(block);
         } else if (block.getPreviousBlockId() == lastBlock.getPreviousBlockId() && block.getTimestamp() < lastBlock.getTimestamp()) {
             blockchain.writeLock();
@@ -1226,13 +1220,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 BlockImpl previousBlock = blockchain.getBlock(lastBlock.getPreviousBlockId());
                 lastBlock = popOffTo(previousBlock).get(0);
                 try {
-                    block.setHeight(lastBlock.getHeight() + 1); // BURST: need to set the block's height so it can be validated
                     pushBlock(block);
                     TransactionProcessorImpl.getInstance().processLater(lastBlock.getTransactions());
                     Logger.logDebugMessage("Last block " + lastBlock.getStringId() + " was replaced by " + block.getStringId());
                 } catch (BlockNotAcceptedException e) {
                     Logger.logDebugMessage("Replacement block failed to be accepted, pushing back our last block");
-                    // BURST: hoping this block already has height set
                     pushBlock(lastBlock);
                     TransactionProcessorImpl.getInstance().processLater(block.getTransactions());
                 }
@@ -1431,7 +1423,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    private void pushBlock(final BlockImpl block) throws BlockNotAcceptedException {
+    private void pushBlock(BlockImpl block) throws BlockNotAcceptedException {
 
         int curTime = Nxt.getEpochTime();
 
@@ -1919,8 +1911,6 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
         BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountNQT, totalFeeNQT, payloadLength,
                 payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase, null, null); // XXX temporary null scoop and blockATs
-
-        block.setHeight(previousBlock.getHeight() + 1); // BURST: need to set the block's height so it can be validated
 
         try {
             pushBlock(block);

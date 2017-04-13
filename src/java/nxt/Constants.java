@@ -162,7 +162,7 @@ public final class Constants {
     public static final int PHASING_BLOCK = isTestnet ? 0 : 360000;
     public static final int CHECKSUM_BLOCK_16 = isTestnet ? 0 : 360000;
     // BURST: Following constant is abused a lot for various non-shuffling purposes, like calculate minimum fee support
-    public static final int SHUFFLING_BLOCK = isTestnet ? 0 : 360000;
+    public static final int SHUFFLING_BLOCK = isTestnet ? 2500 : 360000;
     public static final int CHECKSUM_BLOCK_17 = isTestnet ? 0 : 360000;
     public static final int CHECKSUM_BLOCK_18 = isTestnet ? 0 : 360000;
     public static final int CHECKSUM_BLOCK_19 = isTestnet ? 0 : 360000;
