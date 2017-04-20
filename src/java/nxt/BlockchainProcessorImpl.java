@@ -1434,6 +1434,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 Db.db.beginTransaction();
                 previousLastBlock = blockchain.getLastBlock();
 
+                block.setHeight(previousLastBlock.getHeight() + 1); // BURST: need to set the block's height so it can be validated
                 validate(block, previousLastBlock, curTime);
 
                 Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
