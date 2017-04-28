@@ -100,10 +100,10 @@
                         input.caret(pos.end, pos.end);
                     } else {
                         var curValUpper = curVal.toUpperCase();
-                        var addressStart = curValUpper.indexOf('NXT-', 4);
+                        var addressStart = curValUpper.indexOf('BURST-', 4);
                         if (addressStart > 0) {
                             var insertedAddress = curValUpper.substr(addressStart, 24);
-                            if (/NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/.test(insertedAddress)) {
+                            if (/BURST\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/.test(insertedAddress)) {
                                 //since pasting into a msked field will first trigger androidInputEvent, search for inserted address and use it
                                 input.val(insertedAddress);
                             }
@@ -146,7 +146,7 @@
 
                         if (settings.unmask !== false) {
                             //backspace, remove
-                            if ((pos.begin == 0 && pos.end == 24) || (currentInput == "NXT-____-____-____-_____" && pos.begin == 4)) {
+                            if ((pos.begin == 0 && pos.end == 24) || (currentInput == "BURST-____-____-____-_____" && pos.begin == 4)) {
                                 input.val("");
                                 $(this).trigger("unmask");
                                 return;
@@ -223,18 +223,18 @@
                 }), defaultBuffer = buffer.join(""), focusText = input.val();
                 input.bind("keyup.remask", function(e) {
                     if (input.val().toLowerCase() == "nxt-") {
-                        input.val("").mask("NXT-****-****-****-*****")./*unbind(".remask").*/trigger("focus");
+                        input.val("").mask("BURST-****-****-****-*****")./*unbind(".remask").*/trigger("focus");
                     }
                 }).bind("paste.remask", function(e) {
                     setTimeout(function() {
                         var newInput = input.val();
                         var pastedData = newInput.substring(4).toUpperCase();
-                        if (/NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/i.test(pastedData)) {
-                            var newAddress = String(pastedData.match("NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}"));
+                        if (/BURST\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/i.test(pastedData)) {
+                            var newAddress = String(pastedData.match("BURST\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}"));
                             input.val(newAddress);
                             checkVal(true);
-                        } else if (/^NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/i.test(newInput) || /^NXT[A-Z0-9]{17}/i.test(newInput)) {
-                            input.mask("NXT-****-****-****-*****").trigger("checkRecipient")/*.unbind(".remask")*/;
+                        } else if (/^BURST\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/i.test(newInput) || /^BURST[A-Z0-9]{17}/i.test(newInput)) {
+                            input.mask("BURST-****-****-****-*****").trigger("checkRecipient")/*.unbind(".remask")*/;
                         }
                     }, 0);
                 });

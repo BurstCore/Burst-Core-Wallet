@@ -179,7 +179,7 @@ var NRS = (function(NRS, $) {
 					var transaction = response.transactions[i];
                     var transactionType = getTransactionType(transaction);
                     var receiving;
-					if (/^NXT\-/i.test(String(NRS.userInfoModal.user))) {
+					if (/^BURST\-/i.test(String(NRS.userInfoModal.user))) {
 						receiving = (transaction.recipientRS == NRS.userInfoModal.user);
 					} else {
 						receiving = (transaction.recipient == NRS.userInfoModal.user);
