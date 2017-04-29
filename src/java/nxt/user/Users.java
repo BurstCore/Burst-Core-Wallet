@@ -145,7 +145,7 @@ public final class Users {
             }
 
             ServletHandler userHandler = new ServletHandler();
-            ServletHolder userHolder = userHandler.addServletWithMapping(UserServlet.class, "/nxt");
+            ServletHolder userHolder = userHandler.addServletWithMapping(UserServlet.class, "/burst");
             userHolder.setAsyncSupported(true);
 
             if (Nxt.getBooleanProperty("nxt.uiServerCORS")) {

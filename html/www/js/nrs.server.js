@@ -245,7 +245,7 @@ var NRS = (function (NRS, $, undefined) {
         var type = (NRS.isRequirePost(requestType) || "secretPhrase" in data || "doNotSign" in data || "adminPassword" in data ? "POST" : "GET");
         var url;
         if (options.remoteNode) {
-            url = options.remoteNode.getUrl() + "/nxt";
+            url = options.remoteNode.getUrl() + "/burst";
         } else {
             url = NRS.getRequestPath(options.noProxy);
         }
@@ -1581,7 +1581,7 @@ var NRS = (function (NRS, $, undefined) {
     function addAddressData(data) {
         if (typeof data == "object" && ("recipient" in data)) {
             var address = new NxtAddress();
-            if (/^NXT\-/i.test(data.recipient)) {
+            if (/^BURST\-/i.test(data.recipient)) {
                 data.recipientRS = data.recipient;
                 if (address.set(data.recipient)) {
                     data.recipient = address.account_id();

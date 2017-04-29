@@ -113,7 +113,7 @@ public final class Convert {
             return 0;
         }
         account = account.toUpperCase();
-        if (account.startsWith("NXT-")) {
+        if (account.startsWith("BURST-")) {
             return Crypto.rsDecode(account.substring(4));
         } else {
             return Long.parseUnsignedLong(account);
@@ -121,7 +121,7 @@ public final class Convert {
     }
 
     public static String rsAccount(long accountId) {
-        return "NXT-" + Crypto.rsEncode(accountId);
+        return "BURST-" + Crypto.rsEncode(accountId);
     }
 
     public static long fullHashToId(byte[] hash) {

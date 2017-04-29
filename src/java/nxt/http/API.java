@@ -232,11 +232,11 @@ public final class API {
                 apiHandlers.addHandler(contextHandler);
             }
 
-            ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/nxt");
+            ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/burst");
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
                     null, Math.max(Nxt.getIntProperty("nxt.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
-            servletHolder = apiHandler.addServlet(APIProxyServlet.class, "/nxt-proxy");
+            servletHolder = apiHandler.addServlet(APIProxyServlet.class, "/burst-proxy");
             servletHolder.setInitParameters(Collections.singletonMap("idleTimeout",
                     "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
@@ -245,7 +245,7 @@ public final class API {
 
             GzipHandler gzipHandler = new GzipHandler();
             if (!Nxt.getBooleanProperty("nxt.enableAPIServerGZIPFilter")) {
-                gzipHandler.setExcludedPaths("/nxt", "/nxt-proxy");
+                gzipHandler.setExcludedPaths("/burst", "/burst-proxy");
             }
             gzipHandler.setIncludedMethods("GET", "POST");
             gzipHandler.setMinGzipSize(nxt.peer.Peers.MIN_COMPRESS_SIZE);

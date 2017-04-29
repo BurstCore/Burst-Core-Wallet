@@ -159,13 +159,13 @@ var NRS = (function (NRS, $, undefined) {
             };
         }
 
-        if (!/^\d+$/.test(data.id) && !/^NXT\-/i.test(data.id)) {
+        if (!/^\d+$/.test(data.id) && !/^BURST\-/i.test(data.id)) {
             return {
                 "error": $.t("error_asset_or_account_id_invalid")
             };
         }
 
-        if (/^NXT\-/i.test(data.id)) {
+        if (/^BURST\-/i.test(data.id)) {
             NRS.sendRequest("getAssetsByIssuer", {
                 "account": data.id
             }, function (response) {
@@ -883,7 +883,7 @@ var NRS = (function (NRS, $, undefined) {
             $("#asset_exchange_clear_search").hide();
         } else {
             assetSearch = [];
-            if (/NXT\-/i.test(input)) {
+            if (/BURST\-/i.test(input)) {
                 $.each(assets, function (key, asset) {
                     if (asset.accountRS.toLowerCase() == input || asset.accountRS.toLowerCase().indexOf(input) !== -1) {
                         assetSearch.push(asset.asset);

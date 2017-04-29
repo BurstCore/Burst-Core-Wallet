@@ -260,7 +260,7 @@ var NRS = (function(NRS, $) {
 			"page": "main",
 			"searchStr": ""
 		};
-		$(".dgs_search input[name=q]").val("").trigger("unmask").mask("NXT-****-****-****-*****");
+		$(".dgs_search input[name=q]").val("").trigger("unmask").mask("BURST-****-****-****-*****");
 		$(".dgs_fulltext_search input[name=fs_q]").val("");
 		$(".dgs_search_pageheader_addon").hide();
 		$("#dgs_search_contents").empty();
@@ -1151,7 +1151,7 @@ var NRS = (function(NRS, $) {
 
 		if (seller == "") {
 			NRS.pages.dgs_search();
-		} else if (/^(NXT\-)/i.test(seller)) {
+		} else if (/^(BURST\-)/i.test(seller)) {
 			var address = new NxtAddress();
 
 			if (!address.set(seller)) {

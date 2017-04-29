@@ -389,7 +389,7 @@ var NRS = (function (NRS, $, undefined) {
 
         if (data.type == "account") {
             if (!(/acct:(.*)@nxt/.test(data.aliasURI)) && !(/nacc:(.*)/.test(data.aliasURI))) {
-                if (/^(NXT\-)/i.test(data.aliasURI)) {
+                if (/^(BURST\-)/i.test(data.aliasURI)) {
                     var address = new NxtAddress();
 
                     if (!address.set(data.aliasURI)) {
@@ -441,7 +441,7 @@ var NRS = (function (NRS, $, undefined) {
         } else if (type == "account") {
             $("#register_alias_uri_label").html($.t("account_id"));
             registerAliasUri.prop("placeholder", $.t("account_id"));
-            registerAliasUri.val("").mask("NXT-****-****-****-*****");
+            registerAliasUri.val("").mask("BURST-****-****-****-*****");
 
             if (uri) {
                 var match = uri.match(/acct:(.*)@nxt/i);
@@ -461,7 +461,7 @@ var NRS = (function (NRS, $, undefined) {
                     } else {
                         uri = "";
                     }
-                } else if (!/^NXT\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/i.test(uri)) {
+                } else if (!/^BURST\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{5}/i.test(uri)) {
                     uri = NRS.accountRS;
                 }
 
