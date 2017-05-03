@@ -40,8 +40,7 @@ class NxtDbVersion extends DbVersion {
                         + "next_block_id BIGINT, "
                         + "height INT NOT NULL, generation_signature BINARY(64) NOT NULL, "
                         + "block_signature BINARY(64) NOT NULL, payload_hash BINARY(32) NOT NULL, "
-                        + "generator_id BIGINT NOT NULL, nonce BIGINT NOT NULL, "
-                        + "ats VARBINARY(2147483647))");
+                        + "generator_id BIGINT NOT NULL, nonce BIGINT NOT NULL)");
             case 2:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_id_idx ON block (id)");
             case 3:
@@ -578,19 +577,24 @@ class NxtDbVersion extends DbVersion {
             case 222:
                 apply("CREATE INDEX IF NOT EXISTS exchange_height_idx ON exchange(height)");
             case 223:
-                apply(null);
+                apply("CREATE TABLE IF NOT EXISTS at (db_id IDENTITY, id BIGINT NOT NULL, creator_id BIGINT NOT NULL, name VARCHAR, description VARCHAR, "
+                        + "version SMALLINT NOT NULL, csize INT NOT NULL, dsize INT NOT NULL, c_user_stack_bytes INT NOT NULL, c_call_stack_bytes INT NOT NULL, "
+                        + "creation_height INT NOT NULL, ap_code BINARY NOT NULL, "
+                        + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 224:
-                apply(null);
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS at_id_height_idx ON at (id, height DESC)");
             case 225:
-                apply(null);
+                apply("CREATE INDEX IF NOT EXISTS at_creator_id_height_idx ON at (creator_id, height DESC)");
             case 226:
-                apply(null);
+                apply("CREATE TABLE IF NOT EXISTS at_state (db_id IDENTITY, at_id BIGINT NOT NULL, state BINARY NOT NULL, prev_height INT NOT NULL, "
+                        + "next_height INT NOT NULL, sleep_between INT NOT NULL, "
+                        + "prev_balance BIGINT NOT NULL, freeze_when_same_balance BOOLEAN NOT NULL, min_activate_amount BIGINT NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 227:
-                apply(null);
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS at_state_at_id_height_idx ON at_state (at_id, height DESC)");
             case 228:
-                apply(null);
+                apply("CREATE INDEX IF NOT EXISTS at_state_id_next_height_height_idx ON at_state (at_id, next_height, height DESC)");
             case 229:
-                apply(null);
+                apply("ALTER TABLE block ADD COLUMN IF NOT EXISTS ats BINARY");
             case 230:
                 apply("CREATE INDEX IF NOT EXISTS trade_height_idx ON trade(height)");
             case 231:

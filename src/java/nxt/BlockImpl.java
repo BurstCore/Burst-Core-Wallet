@@ -608,11 +608,6 @@ final class BlockImpl implements Block {
 
     public void preVerify(byte[] scoopData) throws BlockchainProcessor.BlockNotAcceptedException {
         synchronized(this) {
-            // Remove from todo-list:
-            synchronized(BlockchainProcessorImpl.blockCache) {
-                BlockchainProcessorImpl.unverified.remove(this.getId());
-            }
-    
             // Just in case its already verified
             if (this.unscaledPOCTime != null)
                 return;

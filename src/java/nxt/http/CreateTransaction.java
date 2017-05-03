@@ -143,6 +143,9 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         if (attachment.getTransactionType().canHaveRecipient() && recipientId != 0) {
             Account recipient = Account.getAccount(recipientId);
             if ("true".equalsIgnoreCase(req.getParameter("encryptedMessageIsPrunable"))) {
+                if (Nxt.getBlockchain().getHeight() < Constants.PRUNABLE_MESSAGE_BLOCK)
+                    return FEATURE_NOT_AVAILABLE;
+
                 prunableEncryptedMessage = (Appendix.PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient, true);
             } else {
                 encryptedMessage = (Appendix.EncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient, false);
@@ -152,6 +155,9 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         Appendix.Message message = null;
         Appendix.PrunablePlainMessage prunablePlainMessage = null;
         if ("true".equalsIgnoreCase(req.getParameter("messageIsPrunable"))) {
+            if (Nxt.getBlockchain().getHeight() < Constants.PRUNABLE_MESSAGE_BLOCK)
+                return FEATURE_NOT_AVAILABLE;
+
             prunablePlainMessage = (Appendix.PrunablePlainMessage) ParameterParser.getPlainMessage(req, true);
         } else {
             message = (Appendix.Message) ParameterParser.getPlainMessage(req, false);

@@ -349,6 +349,7 @@ public final class Nxt {
                 AccountLedger.init();
                 Alias.init();
                 Asset.init();
+                AT.init();
                 DigitalGoodsStore.init();
                 Hub.init();
                 Order.init();

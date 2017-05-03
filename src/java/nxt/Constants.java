@@ -157,19 +157,23 @@ public final class Constants {
     public static final int MAX_REFERENCED_TRANSACTION_TIMESPAN = 60 * 1440 * 60;
     public static final int DIGITAL_GOODS_STORE_BLOCK = isTestnet ? 2500 : 11800;
     // Following values don't exist in old BURST 
-    // so will probably need to be set to a nominal value (e.g. 360000) when hard forking to v1.11+  
-    public static final int MONETARY_SYSTEM_BLOCK = isTestnet ? 0 : 360000;
-    public static final int PHASING_BLOCK = isTestnet ? 0 : 360000;
-    public static final int CHECKSUM_BLOCK_16 = isTestnet ? 0 : 360000;
+    // so will probably need to be set to a nominal value (e.g. 360000) when hard forking to v1.11+
+    public static final int BURST_REBASE_FORK_BLOCK = 360000;
+
+    public static final int MONETARY_SYSTEM_BLOCK = isTestnet ? 0 : BURST_REBASE_FORK_BLOCK;
+    public static final int PHASING_BLOCK = isTestnet ? 0 : BURST_REBASE_FORK_BLOCK;
+    public static final int CHECKSUM_BLOCK_16 = isTestnet ? 0 : BURST_REBASE_FORK_BLOCK;
     // BURST: Following constant is abused a lot for various non-shuffling purposes, like calculate minimum fee support
-    public static final int SHUFFLING_BLOCK = isTestnet ? 2500 : 360000;
-    public static final int CHECKSUM_BLOCK_17 = isTestnet ? 0 : 360000;
-    public static final int CHECKSUM_BLOCK_18 = isTestnet ? 0 : 360000;
-    public static final int CHECKSUM_BLOCK_19 = isTestnet ? 0 : 360000;
-    public static final int FXT_BLOCK = isTestnet ? 0 : 360000;
-    public static final int CHECKSUM_BLOCK_20 = isTestnet ? 0 : 360000;
-    public static final int CHECKSUM_BLOCK_21 = isTestnet ? 0 : 360000;
-    public static final int CHECKSUM_BLOCK_22 = isTestnet ? 0 : 360000;
+    public static final int SHUFFLING_BLOCK = isTestnet ? 2500 : BURST_REBASE_FORK_BLOCK;
+    public static final int CHECKSUM_BLOCK_17 = isTestnet ? 0 : BURST_REBASE_FORK_BLOCK;
+    public static final int CHECKSUM_BLOCK_18 = isTestnet ? 0 : BURST_REBASE_FORK_BLOCK;
+    public static final int CHECKSUM_BLOCK_19 = isTestnet ? 0 : BURST_REBASE_FORK_BLOCK;
+    public static final int FXT_BLOCK = isTestnet ? 0 : BURST_REBASE_FORK_BLOCK;
+    public static final int CHECKSUM_BLOCK_20 = isTestnet ? 0 : BURST_REBASE_FORK_BLOCK;
+    public static final int CHECKSUM_BLOCK_21 = isTestnet ? 0 : BURST_REBASE_FORK_BLOCK;
+    public static final int CHECKSUM_BLOCK_22 = isTestnet ? 0 : BURST_REBASE_FORK_BLOCK;
+
+    public static final int PRUNABLE_MESSAGE_BLOCK = isTestnet ? 20000 : BURST_REBASE_FORK_BLOCK;
 
     public static final int LAST_CHECKSUM_BLOCK = isTestnet ? 0 : 348000; // BURST (2017-04-11)
     // LAST_KNOWN_BLOCK must also be set in html/www/js/nrs.constants.js
