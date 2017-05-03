@@ -16,6 +16,9 @@
 
 package nxt;
 
+import nxt.at.AT_Block;
+import nxt.at.AT_Controller;
+import nxt.at.AT_Exception;
 import nxt.crypto.Crypto;
 import nxt.db.DbIterator;
 import nxt.db.DerivedDbTable;
@@ -1112,12 +1115,6 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     }
 
-    // blockCache for faster sync
-    public static final Map<Long, Block> blockCache = new HashMap<Long, Block>();
-    public static final Map<Long, Long> reverseCache = new HashMap<Long, Long>();
-    public static final List<Long> unverified = new LinkedList<Long>();
-    private static int blockCacheSize = 0;
-
     @Override
     public boolean addListener(Listener<Block> listener, BlockchainProcessor.Event eventType) {
         return blockListeners.addListener(listener, eventType);
@@ -1868,12 +1865,9 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             .thenComparingInt(UnconfirmedTransaction::getHeight)
             .thenComparingLong(UnconfirmedTransaction::getId);
 
-    // XXX stub placeholder
-    void generateBlock(String secretPhrase, byte[] publicKey, long nonce) throws BlockNotAcceptedException {
-        
-    }
-    
-    void generateBlock(String secretPhrase, int blockTimestamp) throws BlockNotAcceptedException {
+    public void generateBlock(String secretPhrase, byte[] publicKey, long nonce, int blockTimestamp) throws BlockNotAcceptedException {
+        // publicKey is for generator, which is the miner if submitted via a pool, used to create block's generationSignature
+        // secretPhrase is for submitter, possibly the pool itself, used to create block's blockSignature
 
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
         if (blockchain.getHeight() >= Constants.PHASING_BLOCK) {
@@ -1904,14 +1898,30 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             totalFeeNQT += transaction.getFeeNQT();
             payloadLength += transaction.getFullSize();
         }
+
+        // ATs for block
+        AT.clearPendingFees();
+        AT.clearPendingTransactions();
+        AT_Block atBlock = AT_Controller.getCurrentBlockATs( Constants.MAX_PAYLOAD_LENGTH - payloadLength , previousBlock.getHeight() + 1 );
+        byte[] byteATs = atBlock.getBytesForBlock();
+
+        // digesting AT Bytes
+        if (byteATs!=null)
+        {
+            payloadLength += byteATs.length;
+            totalFeeNQT += atBlock.getTotalFees();
+            totalAmountNQT += atBlock.getTotalAmount();
+
+        }
+
         byte[] payloadHash = digest.digest();
-        digest.update(previousBlock.getGenerationSignature());
-        final byte[] publicKey = Crypto.getPublicKey(secretPhrase);
-        byte[] generationSignature = digest.digest(publicKey);
+
+        byte[] generationSignature = Generator.calculateGenerationSignature(previousBlock.getGenerationSignature(), previousBlock.getGeneratorId());
+
         byte[] previousBlockHash = Crypto.sha256().digest(previousBlock.bytes());
 
         BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountNQT, totalFeeNQT, payloadLength,
-                payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase, null, null); // XXX temporary null scoop and blockATs
+                payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase, nonce, byteATs);
 
         try {
             pushBlock(block);

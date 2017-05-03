@@ -79,7 +79,7 @@ public final class Convert {
         return String.valueOf(chars);
     }
 
-    /* Depricated from JAVA 7
+    /* Deprecated from JAVA 7
     public static String toUnsignedLong(long objectId) {
         if (objectId >= 0) {
             return String.valueOf(objectId);

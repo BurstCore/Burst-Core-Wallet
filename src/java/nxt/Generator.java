@@ -52,6 +52,7 @@ public final class Generator {
     private static long lastBlockId;
 
     private static volatile GeneratorState generatorState = null;
+    private static final Object generatorLockObj = new Object();
 
     private static final Runnable generateBlocksThread = new Runnable() {
 
@@ -91,7 +92,7 @@ public final class Generator {
                         }
 
                         int elapsedTime = Nxt.getEpochTime() - lastBlock.getTimestamp();
-                        if (BigInteger.valueOf(elapsedTime).compareTo(generatorState.getPOCTime()) <= 0)
+                        if (BigInteger.valueOf(elapsedTime).compareTo(generatorState.getPOCTime()) < 0)
                             return; // too soon
 
                         // OK to attempt forge
@@ -164,8 +165,8 @@ public final class Generator {
         GeneratorState newState = new GeneratorState(secretPhrase, nonce, publicKey, accountId);
         BigInteger newPOCTime = newState.getPOCTime();
         
-        synchronized (generatorState) {
-            if (generatorState != null || newPOCTime.compareTo(generatorState.getPOCTime()) < 0)
+        synchronized (generatorLockObj) {
+            if (generatorState == null || newPOCTime.compareTo(generatorState.getPOCTime()) < 0)
                 generatorState = newState;
         }
 
@@ -205,6 +206,7 @@ public final class Generator {
         private final byte[] publicKey;
         private final BigInteger POCTime;
         private final long nonce;
+        private final int scoopNum;
 
         public GeneratorState(String secretPhrase, long nonce, byte[] publicKey, long accountId) {
             this.secretPhrase = secretPhrase;
@@ -217,7 +219,7 @@ public final class Generator {
             byte[] lastGenSig = lastBlock.getGenerationSignature();
             long lastGeneratorId = lastBlock.getGeneratorId();
             byte[] newGenSig = calculateGenerationSignature(lastGenSig, lastGeneratorId);
-            int scoopNum = calculateScoopNum(newGenSig, lastBlock.getHeight() + 1);
+            this.scoopNum = calculateScoopNum(newGenSig, lastBlock.getHeight() + 1);
 
             POCTime = calculatePOCTime(accountId, nonce, newGenSig, scoopNum, lastBlock.getBaseTarget());
         }
@@ -238,7 +240,7 @@ public final class Generator {
             int start = Nxt.getEpochTime();
             while (true) {
                 try {
-                    BlockchainProcessorImpl.getInstance().generateBlock(secretPhrase, publicKey, nonce);
+                    BlockchainProcessorImpl.getInstance().generateBlock(secretPhrase, publicKey, nonce, start);
                     return;
                 } catch (BlockchainProcessor.TransactionNotAcceptedException e) {
                     // the bad transaction has been expunged, try again
