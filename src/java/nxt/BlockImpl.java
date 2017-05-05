@@ -417,13 +417,20 @@ final class BlockImpl implements Block {
             }
 
             byte[] correctGenerationSignature = Generator.calculateGenerationSignature(previousBlock.getGenerationSignature(), previousBlock.getGeneratorId());
-            if (!Arrays.equals(generationSignature, correctGenerationSignature))
+            if (!Arrays.equals(generationSignature, correctGenerationSignature)) {
+                Logger.logDebugMessage("verifyGenerationSignature expected %s but block has %s", Convert.toHexString(correctGenerationSignature), Convert.toHexString(generationSignature));
                 return false;
+            }
 
             int elapsedTime = timestamp - previousBlock.timestamp;
             BigInteger POCTime = this.unscaledPOCTime.divide(BigInteger.valueOf(previousBlock.getBaseTarget()));
 
-            return BigInteger.valueOf(elapsedTime).compareTo(POCTime) > 0;
+            boolean deadline_passed = BigInteger.valueOf(elapsedTime).compareTo(POCTime) >= 0;
+
+            if (!deadline_passed)
+                Logger.logDebugMessage("Block's timestamp %d is too soon: previous timestamp %d + PoC deadline %d = %d", timestamp, previousBlock.timestamp, POCTime.longValue(), previousBlock.timestamp + POCTime.longValue());
+
+            return deadline_passed;
 
         } catch (RuntimeException e) {
 
