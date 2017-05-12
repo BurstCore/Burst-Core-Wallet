@@ -26,10 +26,9 @@ public final class SubmitNonce extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) {
-        String secret = req.getParameter("secretPhrase");
+        String secret = Convert.emptyToNull(req.getParameter("secretPhrase"));
         Long nonce = Convert.parseUnsignedLong(req.getParameter("nonce"));
-
-        String accountId = req.getParameter("accountId");
+        String accountIdParam = Convert.emptyToNull(req.getParameter("accountId"));
 
         JSONObject response = new JSONObject();
 
@@ -44,20 +43,21 @@ public final class SubmitNonce extends APIServlet.APIRequestHandler {
         }
 
         byte[] secretPublicKey = Crypto.getPublicKey(secret);
-        Account secretAccount = Account.getAccount(secretPublicKey);
+        long secretAccountId = Account.getId(secretPublicKey);
+        byte[] publicKey = null;
         
-        if (secretAccount != null) {
-            Account genAccount;
-            if (accountId != null) {
-                genAccount = Account.getAccount(Convert.parseAccountId(accountId));
-            } else {
-                genAccount = secretAccount;
-            }
+        if (accountIdParam != null) {
+            // generator's account needs to exist, have a public key AND reward recipient set to secretAccountId
+            long accountId = Convert.parseAccountId(accountIdParam);
+            Account genAccount = null;
+
+            if (accountId != 0)
+                genAccount = Account.getAccount(accountId);
 
             if (genAccount != null) {
                 Account.RewardRecipientAssignment assignment = genAccount.getRewardRecipientAssignment();
-                Long rewardId;
-                
+                long rewardId;
+
                 if (assignment == null) {
                     rewardId = genAccount.getId();
                 } else if (assignment.getFromHeight() > Nxt.getBlockchain().getHeight() + 1) {
@@ -65,26 +65,25 @@ public final class SubmitNonce extends APIServlet.APIRequestHandler {
                 } else {
                     rewardId = assignment.getRecipientId();
                 }
-                
-                if (rewardId != secretAccount.getId()) {
+
+                if (rewardId != secretAccountId) {
                     response.put("result", "Passphrase does not match reward recipient");
                     return response;
                 }
-            } else {
-                response.put("result", "Passphrase is for a different account");
+            }
+
+            publicKey = Account.getPublicKey(accountId);
+
+            if (genAccount == null || publicKey == null) {
+                response.put("result", "Passthrough mining requires public key in blockchain");
                 return response;
             }
         }
 
         BigInteger POCTime = null;
-        if (accountId == null || secretAccount == null) {
+        if (publicKey == null) {
             POCTime = Generator.submitNonce(secret, nonce);
         } else {
-            byte[] publicKey = Account.getPublicKey(Convert.parseUnsignedLong(accountId));
-            if (publicKey == null) {
-                response.put("result", "Passthrough mining requires public key in blockchain");
-                return response;
-            }
             POCTime = Generator.submitNonce(secret, nonce, publicKey);
         }
 

@@ -282,7 +282,9 @@ public enum APIEnum {
     GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", GetNextBlockGeneratorsTemp.instance),
     GET_MINING_INFO("getMiningInfo", GetMiningInfo.instance),
     SUBMIT_NONCE("submitNonce", SubmitNonce.instance),
-    GET_REWARD_RECIPIENT("getRewardRecipient", GetRewardRecipient.instance)
+    GET_REWARD_RECIPIENT("getRewardRecipient", GetRewardRecipient.instance),
+    GET_ACCOUNTS_WITH_REWARD_RECIPIENT("getAccountsWithRewardRecipient", GetAccountsWithRewardRecipient.instance),
+    SET_REWARD_RECIPIENT("setRewardRecipient", SetRewardRecipient.instance)
     ;
 
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
