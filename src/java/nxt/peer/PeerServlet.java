@@ -258,7 +258,7 @@ public final class PeerServlet extends WebSocketServlet {
         try (CountingInputReader cr = new CountingInputReader(inputReader, Peers.MAX_REQUEST_SIZE)) {
             JSONObject request = (JSONObject)JSONValue.parseWithException(cr);
             peer.updateDownloadedVolume(cr.getCount());
-            if (request.get("protocol") == null || !((Number)request.get("protocol")).equals("B1")) {
+            if (request.get("protocol") == null || !request.get("protocol").equals("B1")) {
                 Logger.logDebugMessage("Unsupported protocol " + request.get("protocol"));
                 return UNSUPPORTED_PROTOCOL;
             }
