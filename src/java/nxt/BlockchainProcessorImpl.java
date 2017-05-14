@@ -1920,10 +1920,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
         byte[] previousBlockHash = Crypto.sha256().digest(previousBlock.bytes());
 
-        BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountNQT, totalFeeNQT, payloadLength,
-                payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase, nonce, byteATs);
-
         try {
+            BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountNQT, totalFeeNQT, payloadLength,
+                    payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase, nonce, byteATs);
+
             pushBlock(block);
             blockListeners.notify(block, Event.BLOCK_GENERATED);
             Logger.logDebugMessage("Account " + Long.toUnsignedString(block.getGeneratorId()) + " generated block " + block.getStringId()
@@ -1944,6 +1944,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         } catch (BlockNotAcceptedException e) {
             Logger.logDebugMessage("Generate block failed: " + e.getMessage());
             throw e;
+        } catch (NxtException.NotValidException e) {
+            Logger.logErrorMessage("Generate block failed: " + e.getMessage()); // should never get here
         }
     }
 

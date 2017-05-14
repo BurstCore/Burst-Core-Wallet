@@ -246,6 +246,8 @@ final class BlockDb {
                     cumulativeDifficulty, baseTarget, nextBlockId, height, id, loadTransactions ? TransactionDb.findBlockTransactions(con, id) : null, nonce, blockATs);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
+        } catch (NxtException.NotValidException e) {
+            throw new RuntimeException(e.toString(), e); // should never get here
         }
     }
 
