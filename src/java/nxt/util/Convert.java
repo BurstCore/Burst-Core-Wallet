@@ -114,7 +114,7 @@ public final class Convert {
         }
         account = account.toUpperCase();
         if (account.startsWith("BURST-")) {
-            return Crypto.rsDecode(account.substring(4));
+            return Crypto.rsDecode(account.substring(6));
         } else {
             return Long.parseUnsignedLong(account);
         }
