@@ -41,6 +41,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -1420,6 +1421,24 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
+    private final static class TransactionTotals {
+        private final long amount;
+        private final long fee;
+
+        public TransactionTotals(long amount, long fee) {
+            this.amount = amount;
+            this.fee = fee;
+        }
+
+        public long getAmount() {
+            return amount;
+        }
+
+        public long getFee() {
+            return fee;
+        }
+    }
+
     private void pushBlock(BlockImpl block) throws BlockNotAcceptedException {
 
         int curTime = Nxt.getEpochTime();
@@ -1438,13 +1457,13 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 List<TransactionImpl> validPhasedTransactions = new ArrayList<>();
                 List<TransactionImpl> invalidPhasedTransactions = new ArrayList<>();
                 validatePhasedTransactions(previousLastBlock.getHeight(), validPhasedTransactions, invalidPhasedTransactions, duplicates);
-                validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
+                TransactionTotals totals = validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
                 block.setPrevious(previousLastBlock);
                 blockListeners.notify(block, Event.BEFORE_BLOCK_ACCEPT);
                 TransactionProcessorImpl.getInstance().requeueAllUnconfirmedTransactions();
                 addBlock(block);
-                accept(block, validPhasedTransactions, invalidPhasedTransactions, duplicates);
+                accept(block, totals, validPhasedTransactions, invalidPhasedTransactions, duplicates);
 
                 Db.db.commitTransaction();
             } catch (Exception e) {
@@ -1532,7 +1551,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    private void validateTransactions(BlockImpl block, BlockImpl previousLastBlock, int curTime, Map<TransactionType, Map<String, Integer>> duplicates,
+    private TransactionTotals validateTransactions(BlockImpl block, BlockImpl previousLastBlock, int curTime, Map<TransactionType, Map<String, Integer>> duplicates,
                                       boolean fullValidation) throws BlockNotAcceptedException {
         long payloadLength = 0;
         long calculatedTotalAmount = 0;
@@ -1595,9 +1614,9 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             payloadLength += transaction.getFullSize();
             digest.update(transaction.bytes());
         }
-        if (calculatedTotalAmount != block.getTotalAmountNQT() || calculatedTotalFee != block.getTotalFeeNQT()) {
+        /*if (calculatedTotalAmount != block.getTotalAmountNQT() || calculatedTotalFee != block.getTotalFeeNQT()) {
             throw new BlockNotAcceptedException("Total amount or fee don't match transaction totals", block);
-        }
+        }*/
         if (!Arrays.equals(digest.digest(), block.getPayloadHash())) {
             throw new BlockNotAcceptedException("Payload hash doesn't match", block);
         }
@@ -1605,10 +1624,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new BlockNotAcceptedException("Transaction payload length " + payloadLength + " does not match block payload length "
                     + block.getPayloadLength(), block);
         }
+        return new TransactionTotals(calculatedTotalAmount, calculatedTotalFee);
     }
 
-    private void accept(BlockImpl block, List<TransactionImpl> validPhasedTransactions, List<TransactionImpl> invalidPhasedTransactions,
-                        Map<TransactionType, Map<String, Integer>> duplicates) throws TransactionNotAcceptedException {
+    private void accept(BlockImpl block, TransactionTotals totals, List<TransactionImpl> validPhasedTransactions, List<TransactionImpl> invalidPhasedTransactions,
+                        Map<TransactionType, Map<String, Integer>> duplicates) throws TransactionNotAcceptedException, BlockNotAcceptedException {
         try {
             isProcessingBlock = true;
             for (TransactionImpl transaction : block.getTransactions()) {
@@ -1616,6 +1636,33 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new TransactionNotAcceptedException("Double spending", transaction);
                 }
             }
+            long calculatedRemainingAmount = 0;
+            long calculatedRemainingFee = 0;
+            //ATs
+            AT_Block atBlock;
+            AT.clearPendingFees();
+            AT.clearPendingTransactions();
+            try {
+                atBlock = AT_Controller.validateATs( block.getBlockATs() , Nxt.getBlockchain().getHeight());
+            } catch (NoSuchAlgorithmException e) {
+                //should never reach that point
+                throw new BlockNotAcceptedException( "md5 does not exist", block );
+            } catch (AT_Exception e) {
+                throw new BlockNotAcceptedException("ats are not matching at block height " + Nxt.getBlockchain().getHeight(), block );
+            }
+            calculatedRemainingAmount += atBlock.getTotalAmount();
+            calculatedRemainingFee += atBlock.getTotalFees();
+            //ATs
+
+            if(totals != null) {
+                if(totals.getAmount() + calculatedRemainingAmount != block.getTotalAmountNQT()) {
+                    throw new BlockNotAcceptedException("Calculated remaining amount doesn't add up", block);
+                }
+                if(totals.getFee() + calculatedRemainingFee != block.getTotalFeeNQT()) {
+                    throw new BlockNotAcceptedException("Calculated remaining fee doesn't add up", block);
+                }
+            }
+
             blockListeners.notify(block, Event.BEFORE_BLOCK_APPLY);
             block.apply();
             validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotes(transaction));
@@ -2079,6 +2126,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                                 List<TransactionImpl> validPhasedTransactions = new ArrayList<>();
                                 List<TransactionImpl> invalidPhasedTransactions = new ArrayList<>();
                                 validatePhasedTransactions(blockchain.getHeight(), validPhasedTransactions, invalidPhasedTransactions, duplicates);
+                                TransactionTotals totals = null;
                                 if (validate && currentBlockId != Genesis.GENESIS_BLOCK_ID) {
                                     int curTime = Nxt.getEpochTime();
                                     validate(currentBlock, blockchain.getLastBlock(), curTime);
@@ -2087,7 +2135,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                                     if (!Arrays.equals(blockBytes, BlockImpl.parseBlock(blockJSON).bytes())) {
                                         throw new NxtException.NotValidException("Block JSON cannot be parsed back to the same block");
                                     }
-                                    validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
+                                    totals = validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
                                     for (TransactionImpl transaction : currentBlock.getTransactions()) {
                                         byte[] transactionBytes = transaction.bytes();
                                         if (currentBlock.getHeight() > Constants.NQT_BLOCK
@@ -2104,7 +2152,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                                 }
                                 blockListeners.notify(currentBlock, Event.BEFORE_BLOCK_ACCEPT);
                                 blockchain.setLastBlock(currentBlock);
-                                accept(currentBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
+                                accept(currentBlock, totals, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                                 currentBlockId = currentBlock.getNextBlockId();
                                 Db.db.clearCache();
                                 Db.db.commitTransaction();
