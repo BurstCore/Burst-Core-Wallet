@@ -1567,9 +1567,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 throw new TransactionNotAcceptedException("Transaction signature verification failed at height " + previousLastBlock.getHeight(), transaction);
             }
             if (fullValidation) {
-                // cfb: Block 303 contains a transaction which expired before the block timestamp
                 if (transaction.getTimestamp() > block.getTimestamp() + Constants.MAX_TIMEDRIFT
-                        || (transaction.getExpiration() < block.getTimestamp() && previousLastBlock.getHeight() != 303)) {
+                        || (transaction.getExpiration() < block.getTimestamp())) {
                     throw new TransactionNotAcceptedException("Invalid transaction timestamp " + transaction.getTimestamp()
                             + ", current time is " + curTime + ", block timestamp is " + block.getTimestamp(), transaction);
                 }
