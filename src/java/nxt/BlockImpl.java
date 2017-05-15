@@ -67,7 +67,8 @@ final class BlockImpl implements Block {
     private Peer downloadedFrom = null;
 
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<TransactionImpl> transactions, String secretPhrase, Long nonce, byte[] blockATs) {
+              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<TransactionImpl> transactions, String secretPhrase, Long nonce, byte[] blockATs)
+            throws NxtException.NotValidException {
         this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
                 generatorPublicKey, generationSignature, null, previousBlockHash, transactions, nonce, blockATs);
         blockSignature = Crypto.sign(bytes(), secretPhrase);
@@ -75,7 +76,8 @@ final class BlockImpl implements Block {
     }
 
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<TransactionImpl> transactions, Long nonce, byte[] blockATs) {
+              byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<TransactionImpl> transactions, Long nonce, byte[] blockATs)
+            throws NxtException.NotValidException {
         this.version = version;
         this.timestamp = timestamp;
         this.previousBlockId = previousBlockId;
@@ -89,6 +91,15 @@ final class BlockImpl implements Block {
         this.previousBlockHash = previousBlockHash;
         if (transactions != null) {
             this.blockTransactions = Collections.unmodifiableList(transactions);
+
+            // old burst requires sorted transactions
+            long previousId = 0;
+            for (Transaction transaction : this.blockTransactions) {
+                if (transaction.getId() <= previousId && previousId != 0) {
+                    throw new NxtException.NotValidException("Block transactions are not sorted!");
+                }
+                previousId = transaction.getId();
+            }
         }
         this.nonce = nonce;
         this.blockATs = blockATs;
@@ -97,7 +108,8 @@ final class BlockImpl implements Block {
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength,
               byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
               byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id,
-              List<TransactionImpl> blockTransactions, Long nonce, byte[] blockATs) {
+              List<TransactionImpl> blockTransactions, Long nonce, byte[] blockATs)
+            throws NxtException.NotValidException {
         this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
                 null, generationSignature, blockSignature, previousBlockHash, null, nonce, blockATs);
         this.cumulativeDifficulty = cumulativeDifficulty;
