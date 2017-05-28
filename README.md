@@ -22,7 +22,7 @@ in such a way that no trusted third parties are required anymore.
     - *Debian* - `http://www.webupd8.org/2014/03/how-to-install-oracle-java-8-in-debian.html`
     - *FreeBSD* - `pkg install openjdk8`
 
-  - *repository* - `git clone https://github.com/BurstNation/Burst-Core-Wallet.git`
+  - *repository* - `git clone https://github.com/burstcore/Burst-Core-Wallet.git`
   
 ----
 ## Run it! ##
@@ -76,7 +76,7 @@ in such a way that no trusted third parties are required anymore.
     - https://en.wikipedia.org/wiki/Burstcoin
 
   - on the forums:
-    - burstnation.com
+    - burst-team.us
     
 ----
 
