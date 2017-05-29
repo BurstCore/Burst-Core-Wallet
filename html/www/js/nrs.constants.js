@@ -145,6 +145,7 @@ var NRS = (function (NRS, $) {
         return null;
     }
 
+	/*
     NRS.getVotingModelName = function (code) {
         return getKeyByValue(NRS.constants.VOTING_MODELS, code);
     };
@@ -152,6 +153,7 @@ var NRS = (function (NRS, $) {
     NRS.getVotingModelCode = function (name) {
         return NRS.constants.VOTING_MODELS[name];
     };
+	*/
 
     NRS.getMinBalanceModelName = function (code) {
         return getKeyByValue(NRS.constants.MIN_BALANCE_MODELS, code);
@@ -165,6 +167,7 @@ var NRS = (function (NRS, $) {
         return getKeyByValue(NRS.constants.HASH_ALGORITHMS, code);
     };
 
+	/*
     NRS.getShufflingStage = function (code) {
         return getKeyByValue(NRS.constants.SHUFFLING_STAGES, code);
     };
@@ -172,7 +175,8 @@ var NRS = (function (NRS, $) {
     NRS.getShufflingParticipantState = function (code) {
         return getKeyByValue(NRS.constants.SHUFFLING_PARTICIPANTS_STATES, code);
     };
-
+    */
+	
     NRS.getPeerState = function (code) {
         return getKeyByValue(NRS.constants.PEER_STATES, code);
     };
