@@ -1,4 +1,3 @@
-
 <div class="modal fade" id="send_money_modal" data-transaction-type="0" data-transaction-subtype="0" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-700">
         <div class="modal-content">
@@ -305,12 +304,13 @@
                 <h4 class="modal-title" data-i18n="account_details">Account Details</h4>
             </div>
             <div class="modal-body">
+                <!-- Burst does not support Leasing or Phasing
                 <ul class="nav nav-pills nav-justified" style="margin-bottom:10px">
                     <li class="active" id="account_details_balance_nav" data-tab="balance"><a href="#" data-i18n="account_details">Account Details</a></li>
                     <li data-tab="leasing"><a href="#" data-i18n="account_leasing">Account Leasing</a></li>
                     <li data-tab="account_control"><a href="#" data-i18n="account_control">Account Control</a></li>
                 </ul>
-
+                -->
                 <div id="account_details_modal_balance" class="account_details_modal_content" style="display:none">
                     <div class="callout callout-danger" id="account_balance_warning" style="display:none"></div>
 
@@ -349,6 +349,7 @@
                                     <div id="account_details_modal_account_qr_code"></div>
                                 </td>
                             </tr>
+                            <!--  Not In Burst
                             <tr>
                                 <td style="font-weight: bold"><span data-i18n="passphrase_qr_code">Passphrase QR Code</span>:</td>
                                 <td>
@@ -358,6 +359,7 @@
                                     <div id="account_details_modal_passphrase_qr_code"></div>
                                 </td>
                             </tr>
+                            -->
                         </tbody>
                     </table>
                  </div>
