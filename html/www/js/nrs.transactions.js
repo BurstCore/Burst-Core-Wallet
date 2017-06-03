@@ -406,12 +406,12 @@ var NRS = (function(NRS, $, undefined) {
 						if (vm == 1) {
 							$popoverTypeTR.find("td:first").html($.t('accounts', 'Accounts') + ":");
 							$popoverTypeTR.find("td:last").html(String(attachment.phasingWhitelist ? attachment.phasingWhitelist.length : ""));
-							votesFormatted = NRS.convertToNXT(responsePoll.result) + " / " + NRS.convertToNXT(attachment.phasingQuorum) + " NXT";
+							votesFormatted = NRS.convertToNXT(responsePoll.result) + " / " + NRS.convertToNXT(attachment.phasingQuorum) + " Burst";
 							$popoverVotesTR.find("td:last").html(votesFormatted);
 						}
 						if (mbModel == 1) {
 							if (minBalance > 0) {
-								minBalanceFormatted = NRS.convertToNXT(minBalance) + " NXT";
+								minBalanceFormatted = NRS.convertToNXT(minBalance) + " Burst";
 								$approveBtn.data('minBalanceFormatted', minBalanceFormatted.escapeHTML());
 							}
 						}
@@ -573,8 +573,8 @@ var NRS = (function(NRS, $, undefined) {
         }
         var change = entry.change;
         var balance = entry.balance;
-        var balanceType = "nxt";
-        var balanceEntity = "NXT";
+        var balanceType = "Burst";
+        var balanceEntity = "Burst";
         var holdingIcon = "";
         if (change < 0) {
             change = String(change).substring(1);
