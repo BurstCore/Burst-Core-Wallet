@@ -1,19 +1,3 @@
-/******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers.                             *
- * Copyright © 2016-2017 Jelurida IP B.V.                                     *
- *                                                                            *
- * See the LICENSE.txt file at the top-level directory of this distribution   *
- * for licensing information.                                                 *
- *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,*
- * no part of the Nxt software, including this file, may be copied, modified, *
- * propagated, or distributed except according to the terms contained in the  *
- * LICENSE.txt file.                                                          *
- *                                                                            *
- * Removal or modification of this copyright notice is prohibited.            *
- *                                                                            *
- ******************************************************************************/
-
 /**
  * @depends {nrs.js}
  */
@@ -422,12 +406,12 @@ var NRS = (function(NRS, $, undefined) {
 						if (vm == 1) {
 							$popoverTypeTR.find("td:first").html($.t('accounts', 'Accounts') + ":");
 							$popoverTypeTR.find("td:last").html(String(attachment.phasingWhitelist ? attachment.phasingWhitelist.length : ""));
-							votesFormatted = NRS.convertToNXT(responsePoll.result) + " / " + NRS.convertToNXT(attachment.phasingQuorum) + " NXT";
+							votesFormatted = NRS.convertToNXT(responsePoll.result) + " / " + NRS.convertToNXT(attachment.phasingQuorum) + " Burst";
 							$popoverVotesTR.find("td:last").html(votesFormatted);
 						}
 						if (mbModel == 1) {
 							if (minBalance > 0) {
-								minBalanceFormatted = NRS.convertToNXT(minBalance) + " NXT";
+								minBalanceFormatted = NRS.convertToNXT(minBalance) + " Burst";
 								$approveBtn.data('minBalanceFormatted', minBalanceFormatted.escapeHTML());
 							}
 						}
@@ -557,7 +541,7 @@ var NRS = (function(NRS, $, undefined) {
         html += "<td style='vertical-align:middle;text-align:right;" + feeColor + "'>" + formattedFee + "</td>";
 		html += "<td style='vertical-align:middle;'>" + ((NRS.getAccountLink(t, "sender") == "/" && t.type == 2) ? "Asset Exchange" : NRS.getAccountLink(t, "sender")) + " ";
 		html += "<i class='fa fa-arrow-circle-right' style='color:#777;'></i> " + ((NRS.getAccountLink(t, "recipient") == "/" && t.type == 2) ? "Asset Exchange" : NRS.getAccountLink(t, "recipient")) + "</td>";
-		html += "<td class='td_transaction_phasing' style='min-width:100px;vertical-align:middle;text-align:center;'></td>";
+		//html += "<td class='td_transaction_phasing' style='min-width:100px;vertical-align:middle;text-align:center;'></td>";
 		html += "<td style='vertical-align:middle;text-align:center;'>" + (t.confirmed ? NRS.getBlockLink(t.height, null, true) : "-") + "</td>";
 		html += "<td class='confirmations' style='vertical-align:middle;text-align:center;font-size:12px;'>";
 		html += "<span class='show_popover' data-content='" + (t.confirmed ? NRS.formatAmount(t.confirmations) + " " + $.t("confirmations") : $.t("unconfirmed_transaction")) + "' ";
@@ -589,8 +573,8 @@ var NRS = (function(NRS, $, undefined) {
         }
         var change = entry.change;
         var balance = entry.balance;
-        var balanceType = "nxt";
-        var balanceEntity = "NXT";
+        var balanceType = "Burst";
+        var balanceEntity = "Burst";
         var holdingIcon = "";
         if (change < 0) {
             change = String(change).substring(1);

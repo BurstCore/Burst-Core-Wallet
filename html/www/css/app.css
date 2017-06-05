@@ -264,12 +264,12 @@ img {
 }
 .small-box {
   background: #217ba5; /* Old browsers */
-  background: -moz-linear-gradient(left,  #217ba5 0%, #56b3d8 100%); /* FF3.6+ */
-  background: -webkit-gradient(linear, left top, right top, color-stop(0%,#217ba5), color-stop(100%,#56b3d8)); /* Chrome,Safari4+ */
-  background: -webkit-linear-gradient(left,  #217ba5 0%,#56b3d8 100%); /* Chrome10+,Safari5.1+ */
-  background: -o-linear-gradient(left,  #217ba5 0%,#56b3d8 100%); /* Opera 11.10+ */
-  background: -ms-linear-gradient(left,  #217ba5 0%,#56b3d8 100%); /* IE10+ */
-  background: linear-gradient(to right,  #217ba5 0%,#56b3d8 100%); /* W3C */
+  background: -moz-linear-gradient(left,  #217ba5 0%, #01ff70 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, right top, color-stop(0%,#217ba5), color-stop(100%,#01ff70)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(left,  #217ba5 0%,#01ff70 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(left,  #217ba5 0%,#01ff70 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(left,  #217ba5 0%,#01ff70 100%); /* IE10+ */
+  background: linear-gradient(to right,  #217ba5 0%,#01ff70 100%); /* W3C */
   filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#217ba5', endColorstr='#56b3d8',GradientType=1 ); /* IE6-9 */
 }
 
