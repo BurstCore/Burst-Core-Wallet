@@ -174,6 +174,7 @@ public abstract class TransactionType {
                     default:
                         return null;
                 }
+                /*
             case TYPE_ACCOUNT_CONTROL:
                 switch (subtype) {
                     case SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING:
@@ -183,6 +184,7 @@ public abstract class TransactionType {
                     default:
                         return null;
                 }
+                */
             case TYPE_BURST_MINING:
                 switch (subtype) {
                     case SUBTYPE_BURST_MINING_REWARD_RECIPIENT_ASSIGNMENT:
@@ -190,6 +192,7 @@ public abstract class TransactionType {
                     default:
                         return null;
                 }
+                /*
             case TYPE_MONETARY_SYSTEM:
                 return MonetarySystem.findTransactionType(subtype);
             case TYPE_DATA:
@@ -203,6 +206,7 @@ public abstract class TransactionType {
                 }
             case TYPE_SHUFFLING:
                 return ShufflingTransaction.findTransactionType(subtype);
+                */
             default:
                 return null;
         }

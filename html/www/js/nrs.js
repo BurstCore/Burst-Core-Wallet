@@ -410,7 +410,7 @@ var NRS = (function(NRS, $, undefined) {
 		stateIntervalSeconds = seconds;
 		stateInterval = setInterval(function() {
 			NRS.getState(null);
-			NRS.updateForgingStatus();
+			//NRS.updateForgingStatus(); Not needed in Burst 
 		}, 1000 * seconds);
 	};
 
