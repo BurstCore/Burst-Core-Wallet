@@ -910,6 +910,7 @@ var NRS = (function(NRS, $, undefined) {
 		});
 	};
 
+	/* Not needed in Burst
 	NRS.updateApprovalRequests = function() {
 		var params = {
 			"account": NRS.account,
@@ -938,7 +939,7 @@ var NRS = (function(NRS, $, undefined) {
 		if (NRS.currentPage == 'approval_requests_account') {
 			NRS.loadPage(NRS.currentPage);
 		}
-	};
+	}; 
 
 	NRS.pages.approval_requests_account = function() {
 		var params = {
@@ -965,7 +966,8 @@ var NRS = (function(NRS, $, undefined) {
 			NRS.addPhasingInfoToTransactionRows(response.transactions);
 		});
 	};
-
+	*/
+	
 	NRS.incoming.transactions = function() {
 		NRS.loadPage("transactions");
 	};
@@ -1002,12 +1004,14 @@ var NRS = (function(NRS, $, undefined) {
 			"type": 'PAGE',
 			"page": 'transactions'
 		};
+		/* Not in Burst 
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 		options = {
 			"titleHTML": '<span data-i18n="approval_requests">Approval Requests</span>',
 			"type": 'PAGE',
 			"page": 'approval_requests_account'
-		};
+		}; 
+		*/
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 	};
 
