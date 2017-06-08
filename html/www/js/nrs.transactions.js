@@ -661,10 +661,12 @@ var NRS = (function(NRS, $, undefined) {
 		html += '<i class="fa fa-circle-o"></i>&nbsp; <span data-i18n="unconfirmed">Unconfirmed</span></a></li>';
 		typeNavi.append(html);
 
+		/* No Phasing in Burst 
 		html  = '<li role="presentation"><a href="#" data-transaction-type="phasing" ';
 		html += 'data-toggle="popover" data-placement="top" data-content="Phasing (Pending)" data-container="body" data-i18n="[data-content]phasing_pending">';
 		html += '<i class="fa fa-gavel"></i>&nbsp; <span data-i18n="phasing">Phasing</span></a></li>';
 		typeNavi.append(html);
+		*/
 
 		html  = '<li role="presentation"><a href="#" data-transaction-type="all_unconfirmed" ';
 		html += 'data-toggle="popover" data-placement="top" data-content="Unconfirmed (Everyone)" data-container="body" data-i18n="[data-content]unconfirmed_everyone">';
@@ -992,12 +994,14 @@ var NRS = (function(NRS, $, undefined) {
 			"type": 'PAGE',
 			"page": 'ledger'
 		};
+		/*
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 		options = {
 			"titleHTML": '<span data-i18n="account_properties">Account Properties</span>',
 			"type": 'PAGE',
 			"page": 'account_properties'
 		};
+		*/
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 		options = {
 			"titleHTML": '<span data-i18n="my_transactions">My Transactions</span>',
