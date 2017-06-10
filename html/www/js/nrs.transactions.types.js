@@ -211,7 +211,8 @@ var NRS = (function(NRS, $, undefined) {
                     'receiverPage': "purchased_dgs"
                 }
             }
-        },
+        }
+		/* ,   // Not in Burst
         4: {
             'title': "Account Control",
             'i18nKeyTitle': 'account_control',
@@ -341,7 +342,7 @@ var NRS = (function(NRS, $, undefined) {
                     'iconHTML': '<i class="fa fa-thumbs-down"></i>'
                 }
             }
-        }
+        }*/
     };
 
     NRS.subtype = {};
